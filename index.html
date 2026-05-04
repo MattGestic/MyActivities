@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Programme Library</title>
+  <style>
+    :root {
+      --navy-deep:  #0D1B2A;
+      --navy-mid:   #1F2F46;
+      --navy-light: #3E5C76;
+      --navy-muted: #5C7E9A;
+      --border:     #D1D9E0;
+      --bg:         #F2F5F9;
+      --text:       #1A2332;
+      --muted:      #5A6880;
+      --accent:     #3B82F6;
+      --danger:     #EF4444;
+      --green:      #22C55E;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-size: 14px;
+      color: var(--text);
+      background: var(--bg);
+      min-height: 100vh;
+    }
+
+    /* ═══ HEADER ════════════════════════════════════════════ */
+    .app-header {
+      background: var(--navy-deep);
+      color: #fff;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      box-shadow: 0 2px 10px rgba(0,0,0,.4);
+    }
+
+    .app-brand {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+    .app-brand-title {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+    .app-brand-sub {
+      font-size: 9px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--navy-muted);
+    }
+
+    .header-actions { display: flex; gap: 8px; align-items: center; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      font-family: inherit;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+    .btn:disabled { opacity: .35; cursor: not-allowed; }
+
+    .btn-new       { background: var(--accent); color: #fff; }
+    .btn-new:hover { background: #2563EB; }
+
+    .btn-ghost { background: rgba(255,255,255,.08); color: rgba(255,255,255,.6); border: 1px solid rgba(255,255,255,.12); }
+    .btn-ghost:hover { background: rgba(255,255,255,.15); color: #fff; }
+
+    .token-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--danger);
+      margin-right: 2px;
+      transition: background .3s;
+    }
+    .token-dot.set { background: var(--green); }
+
+    @media (max-width: 500px) {
+      .app-brand-sub { display: none; }
+      .btn           { padding: 7px 11px; font-size: 10px; }
+    }
+
+    /* ═══ TOKEN MODAL ════════════════════════════════════════ */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.55);
+      z-index: 500;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: #fff;
+      border-radius: 10px;
+      padding: 28px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.3);
+    }
+    .modal h2 {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--navy-mid);
+      margin-bottom: 8px;
+    }
+    .modal p {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.55;
+      margin-bottom: 18px;
+    }
+    .modal p a { color: var(--accent); text-decoration: none; }
+    .modal p a:hover { text-decoration: underline; }
+
+    .modal label {
+      display: block;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+    .modal input[type=text],
+    .modal input[type=password] {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 8px 10px;
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--text);
+      margin-bottom: 18px;
+      outline: none;
+      transition: border-color .15s;
+    }
+    .modal input:focus { border-color: var(--accent); }
+
+    .modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
+    .btn-save-token { background: var(--accent); color: #fff; padding: 9px 20px; border-radius: 5px; border: none; font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; font-family: inherit; cursor: pointer; }
+    .btn-save-token:hover { background: #2563EB; }
+    .btn-cancel { background: none; border: 1px solid var(--border); color: var(--muted); padding: 9px 16px; border-radius: 5px; font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; font-family: inherit; cursor: pointer; }
+    .btn-cancel:hover { background: var(--bg); }
+
+    /* ═══ MAIN ═══════════════════════════════════════════════ */
+    .main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 28px 20px 60px;
+    }
+
+    /* ── No-token banner ─────────────────────────────────── */
+    .token-banner {
+      display: none;
+      background: #FFF7ED;
+      border: 1px solid #FED7AA;
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-bottom: 22px;
+      font-size: 13px;
+      color: #92400E;
+      gap: 10px;
+      align-items: center;
+    }
+    .token-banner.show { display: flex; }
+    .token-banner button {
+      margin-left: auto;
+      background: #F97316;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      padding: 6px 14px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* ── Section header ──────────────────────────────────── */
+    .section-hd {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .section-hd h2 {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .btn-refresh {
+      background: none;
+      border: none;
+      color: var(--navy-muted);
+      font-size: 12px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: all .12s;
+    }
+    .btn-refresh:hover { background: #E2E8F0; color: var(--accent); }
+
+    /* ── States ──────────────────────────────────────────── */
+    .state-box {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--muted);
+    }
+    .state-box .icon { font-size: 36px; margin-bottom: 12px; }
+    .state-box p { font-size: 13px; }
+    .state-box .hint { font-size: 11px; margin-top: 6px; opacity: .7; }
+
+    .spinner {
+      width: 28px; height: 28px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin: 0 auto 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Programme table ─────────────────────────────────── */
+    .prog-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 5px rgba(0,0,0,.07);
+      border: 1px solid var(--border);
+    }
+
+    .prog-table thead th {
+      background: var(--navy-mid);
+      color: rgba(255,255,255,.6);
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      padding: 10px 14px;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    .prog-table tbody tr {
+      border-bottom: 1px solid #EDF2F7;
+      transition: background .1s;
+    }
+    .prog-table tbody tr:last-child { border-bottom: none; }
+    .prog-table tbody tr:hover { background: #F7FAFF; }
+
+    .prog-table td { padding: 12px 14px; vertical-align: middle; }
+
+    .prog-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--navy-mid);
+    }
+    .prog-meta {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #E2E8F0;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 99px;
+      letter-spacing: .04em;
+    }
+    .badge-week { background: #DBEAFE; color: #1E40AF; }
+
+    .btn-open {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      padding: 7px 16px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background .15s;
+      white-space: nowrap;
+    }
+    .btn-open:hover { background: #2563EB; }
+
+    .col-name   { width: auto; }
+    .col-athlete { width: 20%; }
+    .col-week   { width: 8%; }
+    .col-action { width: 90px; text-align: right; }
+
+    @media (max-width: 520px) {
+      .col-athlete { display: none; }
+      .col-week    { display: none; }
+    }
+
+    /* ── Error ───────────────────────────────────────────── */
+    .error-box {
+      background: #FEF2F2;
+      border: 1px solid #FECACA;
+      border-radius: 8px;
+      padding: 14px 18px;
+      color: #991B1B;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══════════════════════════════════════════════ -->
+<header class="app-header">
+  <div class="app-brand">
+    <span class="app-brand-title">Programme</span>
+    <span class="app-brand-sub">Library</span>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-ghost" onclick="openSettings()">
+      <span class="token-dot" id="token-dot"></span>
+      ⚙ Settings
+    </button>
+    <a href="programme.html" class="btn btn-new">+ New Programme</a>
+  </div>
+</header>
+
+<!-- ═══ TOKEN MODAL ═══════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModalOnOverlay(event)">
+  <div class="modal">
+    <h2>GitHub Settings</h2>
+    <p>
+      Enter your GitHub Personal Access Token (PAT) with <strong>repo</strong> scope.
+      The token is stored in your browser only — never committed to the repo.<br><br>
+      <a href="https://github.com/settings/tokens" target="_blank">→ Generate a token on GitHub</a>
+    </p>
+    <label>Personal Access Token</label>
+    <input type="password" id="token-input" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save-token" onclick="saveToken()">Save Token</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MAIN ══════════════════════════════════════════════════ -->
+<main class="main">
+
+  <!-- No-token banner -->
+  <div class="token-banner" id="token-banner">
+    ⚠ No GitHub token set — programmes can't be loaded until you add one.
+    <button onclick="openSettings()">Set Token</button>
+  </div>
+
+  <!-- Programme list -->
+  <div class="section-hd">
+    <h2>Programmes</h2>
+    <button class="btn-refresh" onclick="loadProgrammes()">↺ Refresh</button>
+  </div>
+
+  <div id="list-area">
+    <div class="state-box">
+      <div class="spinner"></div>
+      <p>Loading…</p>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  const GH_OWNER  = 'MattGestic';
+  const GH_REPO   = 'MyActivities';
+  const GH_PATH   = 'programmes';
+
+  /* ── Token ────────────────────────────────────────────── */
+  function getToken() { return localStorage.getItem('gh_pat') || ''; }
+
+  function setToken(t) {
+    if (t) localStorage.setItem('gh_pat', t);
+    else   localStorage.removeItem('gh_pat');
+    updateTokenUI();
+  }
+
+  function updateTokenUI() {
+    const hasToken = !!getToken();
+    const dot = document.getElementById('token-dot');
+    const banner = document.getElementById('token-banner');
+    if (dot)    dot.className   = 'token-dot' + (hasToken ? ' set' : '');
+    if (banner) banner.className = 'token-banner' + (hasToken ? '' : ' show');
+  }
+
+  /* ── Token modal ──────────────────────────────────────── */
+  function openSettings() {
+    document.getElementById('token-input').value = getToken();
+    document.getElementById('modal-overlay').classList.add('open');
+    setTimeout(() => document.getElementById('token-input').focus(), 50);
+  }
+
+  function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('open');
+  }
+
+  function closeModalOnOverlay(e) {
+    if (e.target === document.getElementById('modal-overlay')) closeModal();
+  }
+
+  function saveToken() {
+    const val = document.getElementById('token-input').value.trim();
+    setToken(val);
+    closeModal();
+    loadProgrammes();
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeModal();
+    if (e.key === 'Enter' && document.getElementById('modal-overlay').classList.contains('open')) saveToken();
+  });
+
+  /* ── GitHub API ───────────────────────────────────────── */
+  async function ghFetch(path) {
+    const token = getToken();
+    const resp  = await fetch(
+      `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${path}`,
+      {
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+        }
+      }
+    );
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.message || `GitHub API ${resp.status}`);
+    }
+    return resp.json();
+  }
+
+  /* ── Content decode ───────────────────────────────────── */
+  function decodeB64(b64) {
+    const binary = atob(b64.replace(/\s/g, ''));
+    const bytes  = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return new TextDecoder().decode(bytes);
+  }
+
+  function extractState(html) {
+    const m = html.match(/window\.__PT_STATE__\s*=\s*(\{[\s\S]*?\});/);
+    if (m) try { return JSON.parse(m[1]); } catch(e) {}
+    return null;
+  }
+
+  function prettifyFilename(name) {
+    return name.replace(/\.html$/, '').replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  /* ── Load programmes ──────────────────────────────────── */
+  async function loadProgrammes() {
+    const area = document.getElementById('list-area');
+    area.innerHTML = `<div class="state-box"><div class="spinner"></div><p>Loading from GitHub…</p></div>`;
+
+    if (!getToken()) {
+      area.innerHTML = `<div class="state-box"><div class="icon">🔑</div><p>Set your GitHub token to load programmes.</p><p class="hint">Click ⚙ Settings above.</p></div>`;
+      return;
+    }
+
+    try {
+      const files = await ghFetch(GH_PATH);
+      const htmlFiles = files.filter(f => f.type === 'file' && f.name.endsWith('.html'));
+
+      if (!htmlFiles.length) {
+        area.innerHTML = `<div class="state-box"><div class="icon">📋</div><p>No programmes yet.</p><p class="hint">Click + New Programme to create your first one.</p></div>`;
+        return;
+      }
+
+      // Fetch each file to extract metadata
+      const programmes = await Promise.all(htmlFiles.map(async f => {
+        try {
+          const data  = await ghFetch(`${GH_PATH}/${f.name}`);
+          const html  = decodeB64(data.content);
+          const state = extractState(html);
+          return {
+            file:    f.name,
+            name:    state?.meta?.name    || prettifyFilename(f.name),
+            athlete: state?.meta?.athlete || '—',
+            week:    state?.meta?.week    || '—',
+            date:    state?.meta?.date    || '',
+          };
+        } catch(e) {
+          return { file: f.name, name: prettifyFilename(f.name), athlete: '—', week: '—', date: '' };
+        }
+      }));
+
+      renderTable(programmes);
+
+    } catch(err) {
+      area.innerHTML = `<div class="error-box">⚠ Failed to load programmes: ${err.message}</div>`;
+    }
+  }
+
+  /* ── Render table ─────────────────────────────────────── */
+  function renderTable(programmes) {
+    const area = document.getElementById('list-area');
+
+    const rows = programmes.map(p => `
+      <tr>
+        <td class="col-name">
+          <div class="prog-name">${esc(p.name)}</div>
+          <div class="prog-meta">${esc(p.file)}</div>
+        </td>
+        <td class="col-athlete">${esc(p.athlete)}</td>
+        <td class="col-week">
+          ${p.week !== '—' ? `<span class="badge badge-week">W${esc(p.week)}</span>` : '—'}
+        </td>
+        <td class="col-action">
+          <a href="programme.html?file=${encodeURIComponent(p.file)}" class="btn-open">Open</a>
+        </td>
+      </tr>
+    `).join('');
+
+    area.innerHTML = `
+      <table class="prog-table">
+        <thead>
+          <tr>
+            <th class="col-name">Programme</th>
+            <th class="col-athlete">Athlete</th>
+            <th class="col-week">Week</th>
+            <th class="col-action"></th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+  }
+
+  function esc(s) {
+    return String(s || '')
+      .replace(/&/g,'&amp;').replace(/"/g,'&quot;')
+      .replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  /* ── Init ─────────────────────────────────────────────── */
+  window.onload = function() {
+    updateTokenUI();
+    loadProgrammes();
+    if (!getToken()) setTimeout(openSettings, 400);
+  };
+</script>
+</body>
+</html>
