@@ -1,0 +1,649 @@
+<!DOCTYPE html><html lang="en"><head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Programme Tracker</title>
+  <style>
+    :root {
+      --navy-deep:  #0D1B2A;
+      --navy-mid:   #1F2F46;
+      --navy-light: #3E5C76;
+      --navy-muted: #5C7E9A;
+      --border:     #D1D9E0;
+      --bg:         #F2F5F9;
+      --text:       #1A2332;
+      --muted:      #5A6880;
+      --accent:     #3B82F6;
+      --danger:     #EF4444;
+      --green:      #22C55E;
+      --banner-h:   54px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-size: 14px;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    /* ═══ TIMER BANNER — fixed to TOP, above everything ═══════ */
+    .timer-banner {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: var(--banner-h);
+      z-index: 400;
+      background: #0A1520;
+      border-bottom: 3px solid var(--navy-light);
+      padding: 0 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transform: translateY(-100%);
+      transition: transform .28s cubic-bezier(.4,0,.2,1), border-color .4s;
+    }
+    .timer-banner.visible     { transform: translateY(0); }
+    .timer-banner.phase-active  { border-bottom-color: #4ADE80; }
+    .timer-banner.phase-recover { border-bottom-color: #FCD34D; }
+    .timer-banner.phase-complete { border-bottom-color: var(--accent); }
+    .timer-banner.paused .tb-time { opacity: .4; }
+
+    .tb-info { flex: 1; min-width: 0; }
+    .tb-exercise { font-size: 13px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tb-progress  { font-size: 10px; color: var(--navy-muted); margin-top: 1px; }
+
+    .tb-center { text-align: center; flex-shrink: 0; padding: 0 8px; }
+    .tb-phase  { font-size: 9px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; margin-bottom: 1px; }
+    .tb-phase.active   { color: #4ADE80; }
+    .tb-phase.recover  { color: #FCD34D; }
+    .tb-phase.complete { color: #60A5FA; }
+    .tb-time { font-size: 24px; font-weight: 900; color: #fff; font-variant-numeric: tabular-nums; line-height: 1; }
+
+    .tb-controls { display: flex; gap: 5px; flex-shrink: 0; }
+    .tc-btn {
+      background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.11);
+      border-radius: 5px; color: rgba(255,255,255,.65);
+      width: 34px; height: 34px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; cursor: pointer; transition: all .12s; font-family: inherit;
+    }
+    .tc-btn:hover { background: rgba(255,255,255,.15); color: #fff; }
+    .tc-stop { border-color: rgba(239,68,68,.25); color: rgba(239,68,68,.65); }
+    .tc-stop:hover { background: rgba(239,68,68,.15); color: var(--danger); border-color: var(--danger); }
+
+    /* When banner is showing, push header down */
+    body.timer-banner-active .app-header { top: var(--banner-h); }
+
+    /* ═══ APP HEADER — always visible, sticky ═════════════════ */
+    .app-header {
+      background: var(--navy-deep);
+      color: #fff;
+      padding: 9px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      box-shadow: 0 2px 10px rgba(0,0,0,.4);
+      transition: top .28s cubic-bezier(.4,0,.2,1);
+      min-height: 50px;
+    }
+
+    .btn-toggle {
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.14);
+      color: rgba(255,255,255,.6);
+      border-radius: 5px;
+      width: 34px; height: 34px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; cursor: pointer; flex-shrink: 0;
+      transition: all .12s;
+    }
+    .btn-toggle:hover { background: rgba(255,255,255,.16); color: #fff; }
+
+    /* Collapsed summary: date | name */
+    .header-summary {
+      flex: 1; min-width: 0;
+      display: flex; align-items: baseline; gap: 8px;
+      overflow: hidden;
+    }
+    .hs-date {
+      font-size: 12px; font-weight: 700; color: rgba(255,255,255,.55);
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .hs-sep { color: rgba(255,255,255,.2); font-size: 13px; flex-shrink: 0; }
+    .hs-name {
+      font-size: 13px; font-weight: 700; color: rgba(255,255,255,.85);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      letter-spacing: .04em;
+    }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      gap: 5px; padding: 8px 14px; border: none; border-radius: 5px;
+      cursor: pointer; font-size: 11px; font-weight: 700; letter-spacing: .07em;
+      text-transform: uppercase; font-family: inherit; transition: all .15s; white-space: nowrap;
+    }
+    .btn:disabled { opacity: .3; cursor: not-allowed; }
+    .btn-save { background: var(--accent); color: #fff; }
+    .btn-save:hover:not(:disabled) { background: #2563EB; }
+
+    /* ═══ COLLAPSIBLE META PANEL ══════════════════════════════ */
+    .meta-panel {
+      background: var(--navy-mid);
+      overflow: hidden;
+      max-height: 1200px;
+      transition: max-height .35s cubic-bezier(.4,0,.2,1), opacity .25s;
+      opacity: 1;
+      border-bottom: 3px solid var(--navy-light);
+    }
+    .meta-panel.collapsed {
+      max-height: 0;
+      opacity: 0;
+      border-bottom-width: 0;
+    }
+
+    .meta-panel-inner { padding: 12px 16px 14px; }
+
+    /* Panel action row: GitHub + Export */
+    .panel-actions {
+      display: flex; gap: 8px; margin-bottom: 13px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+    }
+    .btn-github {
+      background: rgba(255,255,255,.07); color: rgba(255,255,255,.55);
+      border: 1px solid rgba(255,255,255,.14);
+    }
+    .btn-github:not(:disabled):hover { background: rgba(255,255,255,.14); color: #fff; }
+    .btn-github.active { background: rgba(34,197,94,.15); border-color: rgba(34,197,94,.35); color: #4ADE80; }
+
+    .btn-export { background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.18); }
+    .btn-export:hover:not(:disabled) { background: rgba(255,255,255,.18); }
+
+    /* Meta fields grid */
+    .meta-row { display: grid; gap: 11px; margin-bottom: 11px; }
+    .meta-row-2  { grid-template-columns: 2fr 1.5fr; }
+    .meta-row-2s { grid-template-columns: 2fr 1.5fr; }
+    @media (max-width: 500px) {
+      .meta-row-2  { grid-template-columns: 1fr; }
+      .meta-row-2s { grid-template-columns: 1fr 1fr; }
+    }
+
+    .meta-field label {
+      display: block; font-size: 9px; font-weight: 700;
+      letter-spacing: .1em; text-transform: uppercase;
+      color: var(--navy-muted); margin-bottom: 4px;
+    }
+    .meta-inp {
+      width: 100%; background: rgba(255,255,255,.09);
+      border: 1px solid rgba(255,255,255,.13); border-radius: 4px;
+      padding: 6px 8px; color: #fff; font-size: 13px; font-family: inherit;
+    }
+    .meta-inp::placeholder { color: rgba(255,255,255,.25); }
+    .meta-inp:focus { outline: none; border-color: var(--accent); background: rgba(255,255,255,.14); }
+    textarea.meta-inp { resize: vertical; min-height: 48px; line-height: 1.45; }
+
+    /* ── Interval section ─────────────────────────────────── */
+    .interval-section {
+      border-top: 1px solid rgba(255,255,255,.07);
+      padding-top: 11px;
+      margin-top: 2px;
+    }
+    .interval-title {
+      font-size: 9px; font-weight: 700; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--navy-muted);
+      display: block; margin-bottom: 8px;
+    }
+    .interval-inputs {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    }
+    .interval-group {
+      display: flex; align-items: center; gap: 6px;
+      color: rgba(255,255,255,.55); font-size: 12px;
+    }
+    .interval-inp {
+      width: 52px; background: rgba(255,255,255,.11);
+      border: 1px solid rgba(255,255,255,.17); border-radius: 4px;
+      padding: 4px 6px; color: #fff; font-size: 13px; font-weight: 700;
+      font-family: inherit; text-align: center; outline: none;
+    }
+    .interval-inp:focus { border-color: var(--accent); }
+    .interval-inp[type=number]::-webkit-outer-spin-button,
+    .interval-inp[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+    .interval-inp[type=number] { -moz-appearance: textfield; }
+    .interval-sep { color: rgba(255,255,255,.15); font-size: 18px; line-height: 1; }
+
+    .total-duration {
+      margin-left: auto; font-size: 11px; font-weight: 700; letter-spacing: .06em;
+      color: rgba(255,255,255,.45); background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.1); border-radius: 5px;
+      padding: 4px 10px; white-space: nowrap;
+    }
+    .total-duration span { color: rgba(255,255,255,.85); }
+
+    /* ── Audio row ────────────────────────────────────────── */
+    .audio-row {
+      display: flex; align-items: center; gap: 12px;
+      border-top: 1px solid rgba(255,255,255,.07);
+      padding-top: 10px; margin-top: 10px; flex-wrap: wrap;
+    }
+    .toggle-wrap { display: flex; align-items: center; gap: 8px; }
+    .toggle-label { font-size: 11px; color: rgba(255,255,255,.5); }
+    .toggle-switch { position: relative; width: 38px; height: 21px; display: inline-block; flex-shrink: 0; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .toggle-track { position: absolute; inset: 0; border-radius: 99px; background: rgba(255,255,255,.15); cursor: pointer; transition: background .22s; }
+    .toggle-track::before { content: ''; position: absolute; width: 15px; height: 15px; border-radius: 50%; left: 3px; top: 3px; background: rgba(255,255,255,.7); transition: transform .22s, background .22s; }
+    .toggle-switch input:checked + .toggle-track { background: var(--green); }
+    .toggle-switch input:checked + .toggle-track::before { transform: translateX(17px); background: #fff; }
+    .vol-group { display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,.55); font-size: 12px; }
+    .vol-slider { -webkit-appearance: none; appearance: none; width: 90px; height: 4px; border-radius: 2px; background: rgba(255,255,255,.2); outline: none; cursor: pointer; }
+    .vol-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 15px; height: 15px; border-radius: 50%; background: #fff; cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+    .vol-slider::-moz-range-thumb { width: 15px; height: 15px; border-radius: 50%; background: #fff; cursor: pointer; border: none; }
+    .vol-pct { font-size: 11px; color: rgba(255,255,255,.45); min-width: 30px; }
+
+    /* ═══ MAIN ════════════════════════════════════════════════ */
+    .main { padding: 16px 16px 32px; max-width: 1080px; margin: 0 auto; }
+
+    /* ═══ BLOCK WRAP ══════════════════════════════════════════ */
+    .block-wrap { margin-bottom: 22px; }
+    .block-above { display: flex; align-items: center; justify-content: space-between; padding: 0 2px 5px; }
+    .block-above-left { display: flex; align-items: baseline; gap: 7px; }
+    .block-above-right { display: flex; align-items: center; gap: 8px; }
+    .block-num { font-size: 11px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; color: var(--navy-mid); }
+    .block-dur { font-size: 10px; color: var(--navy-muted); font-weight: 500; }
+    .btn-start-timer {
+      background: rgba(59,130,246,.12); border: 1px solid rgba(59,130,246,.28);
+      color: var(--accent); border-radius: 4px; padding: 3px 10px;
+      font-size: 10px; font-weight: 700; font-family: inherit;
+      letter-spacing: .05em; text-transform: uppercase; cursor: pointer; transition: all .12s;
+    }
+    .btn-start-timer:hover { background: rgba(59,130,246,.22); border-color: var(--accent); }
+    .btn-start-timer.running { background: rgba(34,197,94,.15); border-color: rgba(34,197,94,.35); color: var(--green); }
+    .btn-del-block { background: none; border: none; color: rgba(239,68,68,.45); font-size: 10px; font-weight: 700; font-family: inherit; letter-spacing: .04em; text-transform: uppercase; cursor: pointer; padding: 2px 5px; border-radius: 3px; transition: all .12s; }
+    .btn-del-block:hover { color: var(--danger); background: #FEF2F2; }
+
+    /* ═══ BLOCK CARD ══════════════════════════════════════════ */
+    .block { background: #fff; border-radius: 8px; box-shadow: 0 1px 5px rgba(0,0,0,.07); overflow: hidden; border: 1px solid var(--border); }
+    .block-header { background: var(--navy-mid); padding: 9px 13px; display: flex; align-items: center; gap: 10px; }
+    .block-name-inp { flex: 1; background: transparent; border: none; border-bottom: 1px solid transparent; color: #fff; font-size: 13px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; font-family: inherit; outline: none; padding: 2px 0; min-width: 0; }
+    .block-name-inp:focus { border-bottom-color: rgba(255,255,255,.38); }
+    .block-name-inp::placeholder { color: rgba(255,255,255,.28); }
+
+    .repeat-ctrl { display: flex; align-items: center; gap: 5px; background: rgba(0,0,0,.22); border: 1px solid rgba(255,255,255,.13); border-radius: 5px; padding: 4px 9px; flex-shrink: 0; }
+    .repeat-lbl { font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.38); }
+    .repeat-x { color: rgba(255,255,255,.28); font-size: 14px; line-height: 1; }
+    .repeat-inp { width: 32px; background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.18); border-radius: 3px; color: #fff; font-size: 14px; font-weight: 700; text-align: center; padding: 2px 3px; font-family: inherit; outline: none; }
+    .repeat-inp:focus { border-color: var(--accent); }
+    .repeat-inp[type=number]::-webkit-outer-spin-button,
+    .repeat-inp[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+    .repeat-inp[type=number] { -moz-appearance: textfield; }
+
+    /* ═══ TABLE ═══════════════════════════════════════════════ */
+    .tbl-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th { padding: 7px 8px; text-align: left; font-size: 9.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; background: #F0F4F8; color: var(--muted); border-bottom: 2px solid var(--border); }
+    .th-ex { width: 40%; } .th-reps { width: 13%; } .th-wt { width: 14%; } .th-del { width: 30px; }
+    .th-sub { display: block; font-size: 8px; font-weight: 400; opacity: .6; margin-top: 2px; text-transform: lowercase; letter-spacing: .02em; }
+    tbody tr { transition: background .1s; }
+    tbody tr:hover { background: #FAFBFD; }
+    td { border-bottom: 1px solid #EDF2F7; padding: 3px 6px; vertical-align: middle; }
+    td.td-del { text-align: center; }
+    td input { width: 100%; border: none; background: transparent; padding: 5px 4px; font-family: inherit; font-size: 13px; color: var(--text); outline: none; border-radius: 3px; }
+    td input:focus { background: rgba(59,130,246,.05); }
+    td input::placeholder { color: #C4CDD8; }
+    .btn-del-row { background: none; border: none; color: #C8D3DC; cursor: pointer; font-size: 17px; line-height: 1; padding: 3px 5px; border-radius: 3px; transition: all .12s; }
+    .btn-del-row:hover { color: var(--danger); background: #FEF2F2; }
+
+    /* ═══ BLOCK FOOTER ════════════════════════════════════════ */
+    .block-footer { padding: 7px 10px; border-top: 1px solid #EDF2F7; }
+    .btn-add-row { width: 100%; background: none; border: 1px dashed var(--border); border-radius: 5px; color: var(--muted); font-size: 12px; font-weight: 600; font-family: inherit; padding: 6px 12px; cursor: pointer; text-align: left; transition: all .15s; }
+    .btn-add-row:hover { border-color: var(--accent); color: var(--accent); background: #EFF6FF; }
+
+    /* ═══ BOTTOM CONTROLS ═════════════════════════════════════ */
+    .bottom-controls { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 4px 0 40px; }
+    .btn-add-block { background: var(--navy-mid); color: #fff; border: none; border-radius: 6px; padding: 10px 24px; font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; font-family: inherit; cursor: pointer; transition: background .15s; }
+    .btn-add-block:hover { background: var(--navy-light); }
+    .btn-reset-bottom { background: none; border: none; color: var(--muted); font-size: 11px; font-weight: 600; font-family: inherit; letter-spacing: .05em; text-transform: uppercase; cursor: pointer; padding: 4px 2px; transition: color .12s; }
+    .btn-reset-bottom:hover { color: var(--danger); }
+
+    /* ═══ STATUS BAR ══════════════════════════════════════════ */
+    .status-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--navy-deep); padding: 5px 16px; display: flex; justify-content: space-between; align-items: center; font-size: 10.5px; color: rgba(255,255,255,.32); z-index: 100; }
+    .status-msg { transition: color .2s; }
+    .status-msg.ok   { color: var(--green); }
+    .status-msg.warn { color: #FBBF24; }
+    .status-hint { font-size: 9px; letter-spacing: .06em; text-transform: uppercase; }
+
+    /* ═══ FULLSCREEN TIMER ════════════════════════════════════ */
+    .timer-fullscreen {
+      position: fixed; inset: 0; z-index: 300;
+      display: flex; flex-direction: column;
+      background: var(--navy-deep);
+      transform: translateY(100%);
+      transition: transform .3s cubic-bezier(.4,0,.2,1), background .5s;
+    }
+    .timer-fullscreen.visible     { transform: translateY(0); }
+    .timer-fullscreen.phase-active  { background: #166534; }
+    .timer-fullscreen.phase-recover { background: #92400E; }
+    .timer-fullscreen.phase-complete { background: #1E3A5F; }
+    .timer-fullscreen.paused .tf-time { opacity: .4; }
+
+    .tf-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px 0; }
+    .tf-progress { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,.45); }
+    .tf-close { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15); border-radius: 6px; color: rgba(255,255,255,.6); width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; font-size: 17px; cursor: pointer; font-family: inherit; transition: all .12s; }
+    .tf-close:hover { background: rgba(239,68,68,.2); color: var(--danger); border-color: rgba(239,68,68,.3); }
+
+    .tf-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; gap: 14px; }
+    .tf-exercise { font-size: 30px; font-weight: 900; color: #fff; letter-spacing: .04em; text-transform: uppercase; line-height: 1.15; max-width: 90%; }
+    .tf-phase { font-size: 13px; font-weight: 800; letter-spacing: .2em; text-transform: uppercase; color: rgba(255,255,255,.6); }
+    .tf-time { font-size: 104px; font-weight: 900; color: #fff; line-height: 1; font-variant-numeric: tabular-nums; text-shadow: 0 6px 30px rgba(0,0,0,.35); transition: opacity .2s; }
+    @media (max-width: 400px) { .tf-exercise { font-size: 22px; } .tf-time { font-size: 76px; } }
+    .tf-next { font-size: 13px; color: rgba(255,255,255,.4); letter-spacing: .03em; }
+
+    .tf-controls { display: flex; gap: 10px; padding: 16px 20px 36px; justify-content: center; flex-wrap: wrap; }
+    .tfc-btn { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.18); border-radius: 8px; color: #fff; padding: 12px 20px; font-size: 12px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; font-family: inherit; cursor: pointer; transition: all .15s; display: flex; align-items: center; gap: 6px; }
+    .tfc-btn:hover { background: rgba(255,255,255,.2); }
+    .tfc-compact { background: rgba(0,0,0,.2); color: rgba(255,255,255,.65); }
+    .tfc-compact:hover { background: rgba(0,0,0,.35); color: #fff; }
+    .tfc-stop { border-color: rgba(239,68,68,.35); color: rgba(239,68,68,.9); }
+    .tfc-stop:hover { background: rgba(239,68,68,.2); }
+
+    /* ═══ EXERCISE AUTOCOMPLETE ════════════════════════════════ */
+    #ac-dropdown {
+      display: none; position: fixed; z-index: 1000;
+      background: #fff; border: 1px solid var(--border);
+      border-radius: 8px; box-shadow: 0 8px 28px rgba(0,0,0,.14);
+      max-height: 260px; overflow-y: auto; font-size: 13px;
+      overscroll-behavior: contain;
+    }
+    #ac-dropdown.open { display: block; }
+    .ac-category {
+      padding: 6px 12px 3px; font-size: 9px; font-weight: 800;
+      letter-spacing: .1em; text-transform: uppercase; color: var(--navy-muted);
+      background: #F8FAFC; border-bottom: 1px solid #F0F4F8;
+      position: sticky; top: 0;
+    }
+    .ac-item {
+      padding: 9px 14px; cursor: pointer; color: var(--text);
+      border-bottom: 1px solid #F5F7FA; transition: background .08s;
+    }
+    .ac-item:last-child { border-bottom: none; }
+    .ac-item:hover, .ac-item.focused { background: #EFF6FF; color: var(--accent); }
+    .ac-match { font-weight: 700; }
+    .ac-custom-add {
+      padding: 9px 14px; color: var(--accent); font-size: 12px;
+      font-weight: 600; cursor: pointer; border-top: 1px solid var(--border);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .ac-custom-add:hover { background: #EFF6FF; }
+    .ac-empty { padding: 14px; color: var(--muted); font-size: 12px; text-align: center; }
+  </style>
+<script>window.__PT_STATE__ = {"meta":{"name":"Full Body Hit","athlete":"Matthew Garrett","coach":"Matthew Garrett","week":"1","date":"2026-05-04","checkin":"","comments":"","active":"45","recover":"30","tones":true,"volume":"80"},"blocks":[{"name":"SHOULDERS + ARMS","repeat":4,"exercises":[{"name":"Dumbbell Shoulder Press","reps":"16","weight":"45","notes":""},{"name":"Hammer Curl","reps":"20","weight":"45","notes":"10 ea/ side"}]},{"name":"LOWER and Core","repeat":4,"exercises":[{"name":"Goblet Squat","reps":"15","weight":"60-90","notes":""},{"name":"Bird Dog","reps":"10/side","weight":"BW","notes":""}]},{"name":"PULL + CONDITIONING","repeat":4,"exercises":[{"name":"Chin-ups","reps":"10","weight":"BW","notes":""},{"name":"KB Swing","reps":"20","weight":"40-60","notes":""},{"name":"Push Up","reps":"25","weight":"BW","notes":""}]}],"_saved":"2026-05-05T02:27:46.255Z"};</script></head>
+<body>
+
+<!-- ═══ EXERCISE AUTOCOMPLETE DROPDOWN ══════════════════════ -->
+<div id="ac-dropdown"></div>
+
+<!-- ═══ TIMER BANNER (top, above header) ══════════════════════ -->
+<div class="timer-banner" id="timer-banner">
+  <div class="tb-info">
+    <div class="tb-exercise" id="tb-exercise">—</div>
+    <div class="tb-progress" id="tb-progress"></div>
+  </div>
+  <div class="tb-center">
+    <div class="tb-phase" id="tb-phase">ACTIVE</div>
+    <div class="tb-time" id="tb-time">0:45</div>
+  </div>
+  <div class="tb-controls">
+    <button class="tc-btn" id="tc-pause" onclick="pauseTimer()" title="Pause / Resume">⏸</button>
+    <button class="tc-btn" onclick="skipPhase()" title="Skip">⏭</button>
+    <button class="tc-btn" onclick="toggleMode()" title="Fullscreen">↗</button>
+    <button class="tc-btn tc-stop" onclick="stopTimer()" title="Stop">✕</button>
+  </div>
+</div>
+
+<!-- ═══ APP HEADER — always visible ═══════════════════════════ -->
+<header class="app-header">
+  <button class="btn-toggle" id="btn-toggle" onclick="toggleMeta()" title="Expand / collapse">▼</button>
+  <div class="header-summary">
+    <span class="hs-date" id="hs-date">—</span>
+    <span class="hs-sep">|</span>
+    <span class="hs-name" id="hs-name">Programme</span>
+  </div>
+  <button class="btn btn-save" onclick="saveLocal()">💾 Save</button>
+</header>
+
+<!-- ═══ COLLAPSIBLE META PANEL ════════════════════════════════ -->
+<div class="meta-panel" id="meta-panel">
+  <div class="meta-panel-inner">
+
+    <!-- GitHub + Export in panel -->
+    <div class="panel-actions">
+      <button class="btn btn-github" id="btn-github" onclick="saveToGitHub()">⬆ GitHub</button>
+      <button class="btn btn-export" onclick="exportFile()">⬇ Export</button>
+    </div>
+
+    <div class="meta-row meta-row-2">
+      <div class="meta-field"><label>Programme Name</label><input id="m-name" class="meta-inp" placeholder="e.g. Strength Phase 1"></div>
+      <div class="meta-field"><label>Athlete</label><input id="m-athlete" class="meta-inp" placeholder="Athlete name"></div>
+    </div>
+    <div class="meta-row meta-row-2">
+      <div class="meta-field"><label>Coach / Author</label><input id="m-coach" class="meta-inp" placeholder="Coach name"></div>
+      <div class="meta-field"><label>Week</label><input id="m-week" class="meta-inp" placeholder="1"></div>
+    </div>
+    <div class="meta-row meta-row-2s" style="margin-bottom:11px;">
+      <div class="meta-field"><label>Date</label><input id="m-date" class="meta-inp" type="date"></div>
+      <div class="meta-field"><label>Check-in Time</label><input id="m-checkin" class="meta-inp" type="time"></div>
+    </div>
+    <div class="meta-field" style="margin-bottom:12px;">
+      <label>Comments</label>
+      <textarea id="m-comments" class="meta-inp" placeholder="Session notes, how you're feeling, focus for today…" rows="2"></textarea>
+    </div>
+
+    <!-- Interval section — title on own line, inputs below -->
+    <div class="interval-section">
+      <span class="interval-title">Programme Interval</span>
+      <div class="interval-inputs">
+        <div class="interval-group">
+          <span>Active</span>
+          <input id="m-active" class="interval-inp" type="number" value="45" min="1" max="999">
+          <span>sec</span>
+        </div>
+        <span class="interval-sep">|</span>
+        <div class="interval-group">
+          <span>Recover</span>
+          <input id="m-recover" class="interval-inp" type="number" value="30" min="0" max="999">
+          <span>sec</span>
+        </div>
+        <div class="total-duration" id="total-duration">Total — <span>—</span></div>
+      </div>
+    </div>
+
+    <!-- Audio settings -->
+    <div class="audio-row">
+      <span class="interval-title" style="margin-bottom:0;">Audio</span>
+      <div class="toggle-wrap">
+        <label class="toggle-switch">
+          <input type="checkbox" id="m-tones" checked="">
+          <span class="toggle-track"></span>
+        </label>
+        <span class="toggle-label" id="tones-lbl">On</span>
+      </div>
+      <div class="vol-group">
+        <span>Volume</span>
+        <input type="range" id="m-volume" class="vol-slider" min="0" max="100" value="80">
+        <span class="vol-pct" id="m-volume-pct">80%</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ MAIN ════════════════════════════════════════════════ -->
+<main class="main">
+  <div id="blocks"></div>
+  <div class="bottom-controls">
+    <button class="btn-add-block" onclick="addBlock()">+ Add Block</button>
+    <button class="btn-reset-bottom" onclick="resetEntries()">↺ Reset entries</button>
+  </div>
+</main>
+
+<!-- ═══ STATUS BAR ════════════════════════════════════════════ -->
+<div class="status-bar">
+  <span class="status-msg" id="status">Loading…</span>
+  <span class="status-hint" id="status-hint">Local</span>
+</div>
+
+<!-- ═══ FULLSCREEN TIMER ══════════════════════════════════════ -->
+<div class="timer-fullscreen" id="timer-fullscreen">
+  <div class="tf-header">
+    <div class="tf-progress" id="tf-progress">Round 1 of 1 · Exercise 1 of 1</div>
+    <button class="tf-close" onclick="stopTimer()">✕</button>
+  </div>
+  <div class="tf-body">
+    <div class="tf-exercise" id="tf-exercise">—</div>
+    <div class="tf-phase" id="tf-phase">ACTIVE</div>
+    <div class="tf-time" id="tf-time">0:45</div>
+    <div class="tf-next" id="tf-next"></div>
+  </div>
+  <div class="tf-controls">
+    <button class="tfc-btn" id="tf-pause" onclick="pauseTimer()">⏸ Pause</button>
+    <button class="tfc-btn" onclick="skipPhase()">⏭ Skip</button>
+    <button class="tfc-btn tfc-compact" onclick="toggleMode()">↙ Compact</button>
+    <button class="tfc-btn tfc-stop" onclick="stopTimer()">✕ Stop</button>
+  </div>
+</div>
+
+<script>
+  /* ── GitHub config ─────────────────────────────────────── */
+  const GH_OWNER  = 'MattGestic';
+  const GH_REPO   = 'MyActivities';
+  const GH_BRANCH = 'main';
+  const GH_PATH   = 'programmes';
+
+  let _ghSHA = null, _ghFileName = null;
+
+  /* ── App state ─────────────────────────────────────────── */
+  let blockCount  = 0;
+  let saveTimer   = null;
+  let tmplHTML    = '';
+  let metaExpanded = true;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    let raw = document.documentElement.outerHTML;
+    raw = raw.replace(/<script>window\.__PT_STATE__[\s\S]*?<\/script>/, '');
+    tmplHTML = raw;
+  });
+
+  /* ── Helpers ───────────────────────────────────────────── */
+  const $  = id => document.getElementById(id);
+  const gv = id => $(id) ? $(id).value : '';
+  const sv = (id, v) => { if ($(id)) $(id).value = (v != null) ? v : ''; };
+
+  function esc(s) {
+    return String(s || '')
+      .replace(/&/g,'&amp;').replace(/"/g,'&quot;')
+      .replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+  function setText(id, val) { const el=$(id); if(el) el.textContent = val; }
+
+  function setStatus(msg, cls) { const el=$('status'); el.textContent=msg; el.className='status-msg '+(cls||''); }
+  function setHint(msg)        { const el=$('status-hint'); if(el) el.textContent=msg; }
+
+  function fmt(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return d.toLocaleDateString('en-GB') + ' ' + d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  }
+  function fmtTime(s) { return Math.floor(s/60) + ':' + String(s%60).padStart(2,'0'); }
+
+  /* ── Collapsible meta panel ────────────────────────────── */
+  function toggleMeta() {
+    metaExpanded = !metaExpanded;
+    const panel = $('meta-panel');
+    const btn   = $('btn-toggle');
+    panel.classList.toggle('collapsed', !metaExpanded);
+    btn.textContent = metaExpanded ? '▲' : '▼';
+    updateHeaderSummary();
+  }
+
+  function updateHeaderSummary() {
+    const dateVal = gv('m-date');
+    const nameVal = gv('m-name') || 'Programme';
+    let dateStr = '—';
+    if (dateVal) {
+      const d = new Date(dateVal + 'T00:00:00');
+      dateStr = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+    }
+    const nameStr = nameVal.length > 24 ? nameVal.slice(0, 24) + '...' : nameVal;
+    setText('hs-date', dateStr);
+    setText('hs-name', nameStr);
+  }
+
+  /* ── GitHub helpers ────────────────────────────────────── */
+  function getToken() { return localStorage.getItem('gh_pat') || ''; }
+
+  function encodeContent(str) {
+    const bytes = new TextEncoder().encode(str);
+    let bin = ''; const chunk = 8192;
+    for (let i=0; i<bytes.length; i+=chunk)
+      bin += String.fromCharCode(...bytes.subarray(i, Math.min(i+chunk, bytes.length)));
+    return btoa(bin);
+  }
+
+  function decodeContent(b64) {
+    const bin = atob(b64.replace(/\s/g,''));
+    const bytes = new Uint8Array(bin.length);
+    for (let i=0; i<bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new TextDecoder().decode(bytes);
+  }
+
+  async function ghFetch(path, method, body) {
+    const token = getToken();
+    if (!token) throw new Error('No GitHub token — set via index page ⚙ Settings');
+    const resp = await fetch(
+      `https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${path}`,
+      { method: method||'GET', headers:{'Authorization':`token ${token}`,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'}, body: body?JSON.stringify(body):undefined }
+    );
+    if (!resp.ok) { const e=await resp.json().catch(()=>({})); throw new Error(e.message||`GitHub ${resp.status}`); }
+    return resp.json();
+  }
+
+  function extractStateFromHTML(html) {
+    const m = html.match(/window\.__PT_STATE__\s*=\s*(\{[\s\S]*?\});/);
+    if (m) try { return JSON.parse(m[1]); } catch(e) {}
+    return null;
+  }
+
+  function updateGHButton() {
+    const btn = $('btn-github');
+    if (!btn) return;
+    btn.disabled = !getToken();
+    btn.className = 'btn btn-github' + (_ghSHA ? ' active' : '');
+  }
+
+  async function loadFromGitHub(fileName) {
+    setStatus('Loading from GitHub…','');
+    try {
+      const data  = await ghFetch(`${GH_PATH}/${fileName}`);
+      const html  = decodeContent(data.content);
+      const state = extractStateFromHTML(html);
+      if (state) { loadState(state); _ghSHA=data.sha; _ghFileName=fileName; setHint('GitHub — '+fileName); setStatus('Loaded from GitHub','ok'); }
+      else { loadDefaults(); _ghSHA=data.sha; _ghFileName=fileName; setStatus('No state found, showing defaults','warn'); }
+      updateGHButton();
+    } catch(err) { setStatus('GitHub load failed: '+err.message,'warn'); loadLocal(); }
+  }
+
+  async function saveToGitHub() {
+    if (!getToken()) { setStatus('No token — set via index page ⚙ Settings','warn'); return; }
+    if (!_ghFileName) {
+      const m = getState().meta;
+      _ghFileName = [m.name||'programme', m.athlete||'athlete', 'W'+(m.week||'?')]
+        .join('-').replace(/\s+/g,'-').replace(/[^a-zA-Z0-9\-_]/g,'').toLowerCase()+'.html';
+    }
+    const state = getState(); state._saved = new Date().toISOString();
+    const inject = `
+
+
+</body></html>
