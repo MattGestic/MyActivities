@@ -554,7 +554,7 @@
           ${p.week !== '—' ? `<span class="badge badge-week">W${esc(p.week)}</span>` : '—'}
         </td>
         <td class="col-action">
-          <a href="programme.html?file=${encodeURIComponent(p.file)}" class="btn-open">Open</a>
+          <a href="programmes/${encodeURIComponent(p.file)}" class="btn-open">Open</a>
         </td>
       </tr>
     `).join('');
