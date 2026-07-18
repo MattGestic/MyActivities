@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HIIT FIT Audio Sampler</title>
+  <style>
+    :root, [data-theme="dark"] {
+      --color-bg-app: #090e1a;
+      --color-bg-surface: #111827;
+      --color-bg-card: #1a2235;
+      --color-bg-card-elevated: #1e2d45;
+      --color-text-primary: #f8fafc;
+      --color-text-secondary: #94a3b8;
+      --color-text-muted: #64748b;
+      --color-border-subtle: rgba(255,255,255,0.08);
+      --color-action-primary: #84cc16;
+      --color-action-primary-hover: #a3e635;
+      --color-action-primary-pressed: #65a30d;
+      --color-action-disabled: #374151;
+      --color-success: #84cc16;
+      --color-warning: #f59e0b;
+      --color-danger: #ef4444;
+      --color-focus-ring: #84cc16;
+      --color-action-foreground: var(--color-bg-app);
+      --font-body: Inter, system-ui, sans-serif;
+      --font-display: Oswald, Impact, sans-serif;
+      --font-mono: SFMono-Regular, ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    }
+    [data-theme="light"] {
+      --color-bg-app: #f4f5f7;
+      --color-bg-surface: #ffffff;
+      --color-bg-card: #f9fafb;
+      --color-bg-card-elevated: #ffffff;
+      --color-text-primary: #0f172a;
+      --color-text-secondary: #475569;
+      --color-text-muted: #94a3b8;
+      --color-border-subtle: rgba(0,0,0,0.08);
+      --color-action-primary: #65a30d;
+      --color-action-primary-hover: #84cc16;
+      --color-action-primary-pressed: #4d7c0f;
+      --color-action-disabled: #e2e8f0;
+      --color-success: #65a30d;
+      --color-warning: #d97706;
+      --color-danger: #dc2626;
+      --color-focus-ring: #65a30d;
+      --color-action-foreground: var(--color-text-primary);
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html { min-height: 100%; background: var(--color-bg-app); }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--color-text-primary);
+      background: var(--color-bg-app);
+      font-family: var(--font-body);
+      -webkit-font-smoothing: antialiased;
+    }
+    button { font: inherit; -webkit-tap-highlight-color: transparent; }
+    button:focus-visible { outline: 3px solid var(--color-focus-ring); outline-offset: 3px; }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 68px;
+      padding: 12px 20px;
+      background: var(--color-bg-surface);
+      border-bottom: 1px solid var(--color-border-subtle);
+    }
+    .brand {
+      color: var(--color-action-primary);
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+    .theme-toggle {
+      display: flex;
+      gap: 4px;
+      padding: 4px;
+      border: 1px solid var(--color-border-subtle);
+      border-radius: 999px;
+      background: var(--color-bg-card);
+    }
+    .theme-toggle button {
+      min-height: 36px;
+      padding: 6px 12px;
+      border: 0;
+      border-radius: 999px;
+      color: var(--color-text-muted);
+      background: transparent;
+      font-family: var(--font-display);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+    .theme-toggle button[aria-pressed="true"] {
+      color: var(--color-action-foreground);
+      background: var(--color-action-primary);
+    }
+    .page-shell { width: min(100%, 720px); margin: 0 auto; padding: 40px 20px 64px; }
+    .eyebrow, .section-title, .badge {
+      font-family: var(--font-display);
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+    .eyebrow {
+      margin: 0 0 12px;
+      color: var(--color-action-primary);
+      font-size: 11px;
+      letter-spacing: 0.2em;
+    }
+    h1 {
+      max-width: 14ch;
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: clamp(34px, 10vw, 56px);
+      line-height: 1;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+    .lede {
+      max-width: 38rem;
+      margin: 20px 0 0;
+      color: var(--color-text-secondary);
+      font-size: 16px;
+      line-height: 1.6;
+    }
+    .launcher {
+      margin-top: 32px;
+      padding: 20px;
+      border: 1px solid var(--color-border-subtle);
+      border-radius: 16px;
+      background: var(--color-bg-surface);
+    }
+    .launcher-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+    .section-title { margin: 0; color: var(--color-text-muted); font-size: 10px; letter-spacing: 0.18em; }
+    .badge {
+      padding: 3px 8px;
+      border-radius: 6px;
+      color: var(--color-action-foreground);
+      background: var(--color-action-primary);
+      font-size: 9px;
+      letter-spacing: 0.12em;
+    }
+    .launch-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    .launch-button {
+      min-height: 52px;
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-family: var(--font-display);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+    .launch-button--primary { color: var(--color-action-foreground); background: var(--color-action-primary); border: 0; }
+    .launch-button--primary:hover { background: var(--color-action-primary-hover); }
+    .launch-button--primary:active { background: var(--color-action-primary-pressed); }
+    .launch-button--secondary {
+      color: var(--color-text-primary);
+      background: var(--color-bg-card);
+      border: 1px solid var(--color-border-subtle);
+    }
+    .launch-button--secondary:hover { background: var(--color-bg-card-elevated); }
+    .notes { display: grid; gap: 12px; margin-top: 32px; }
+    .note-card { padding: 20px; border: 1px solid var(--color-border-subtle); border-radius: 16px; background: var(--color-bg-surface); }
+    .note-card h2 { margin: 0 0 8px; font-family: var(--font-display); font-size: 16px; letter-spacing: 0.04em; text-transform: uppercase; }
+    .note-card p { margin: 0; color: var(--color-text-secondary); font-size: 14px; line-height: 1.55; }
+    .guide-link {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      margin-top: 12px;
+      color: var(--color-action-primary);
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      text-underline-offset: 4px;
+    }
+    pre {
+      overflow-x: auto;
+      margin: 16px 0 0;
+      padding: 16px;
+      border-radius: 12px;
+      color: var(--color-text-secondary);
+      background: var(--color-bg-card);
+      border: 1px solid var(--color-border-subtle);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.65;
+    }
+    code { font-family: inherit; }
+    @media (min-width: 640px) {
+      .page-shell { padding-inline: 32px; }
+      .launch-grid, .notes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .note-card--wide { grid-column: 1 / -1; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">HIIT FIT · AUDIO</div>
+    <div class="theme-toggle" aria-label="Preview theme">
+      <button type="button" data-theme-value="dark" aria-pressed="true">Dark</button>
+      <button type="button" data-theme-value="light" aria-pressed="false">Light</button>
+    </div>
+  </header>
+
+  <main class="page-shell">
+    <p class="eyebrow">Modular audio scaffold</p>
+    <h1>Hear every cue before you train.</h1>
+    <p class="lede">A mobile-first sampling screen for checking cue volume and previewing every programme, block, activity, and rest sound.</p>
+
+    <section class="launcher" aria-labelledby="launcher-title">
+      <div class="launcher-head">
+        <h2 class="section-title" id="launcher-title">Open sampler</h2>
+        <span class="badge">Import ready</span>
+      </div>
+      <div class="launch-grid">
+        <button class="launch-button launch-button--primary" type="button" data-open-mode="dialog">Open as dialog</button>
+        <button class="launch-button launch-button--secondary" type="button" data-open-mode="fullscreen">Open full screen</button>
+      </div>
+    </section>
+
+    <section class="notes" aria-label="Integration notes">
+      <article class="note-card">
+        <h2>One import</h2>
+        <p>The helper creates the component, initializes browser audio from the button gesture, and handles closing and cleanup.</p>
+        <pre><code>import { openAudioSampler } from "./audioSampler.js";
+
+button.onclick = () =&gt;
+  openAudioSampler({ mode: "dialog" });</code></pre>
+      </article>
+      <article class="note-card">
+        <h2>Theme compatible</h2>
+        <p>The component reads RepStack’s shared color and font tokens. Switching the host document between dark and light themes updates it automatically.</p>
+      </article>
+      <article class="note-card note-card--wide">
+        <h2>Pause, resume, terminate</h2>
+        <p>The countdown remains the timing authority. Pause freezes the audio clock and preserves cue position; resume continues both timelines. Terminate cancels current and future cues.</p>
+        <pre><code>await pauseTimerAudio();
+await resumeTimerAudio();
+terminateTimerAudio();</code></pre>
+        <a class="guide-link" href="./AUDIO_SAMPLER.md">Read the implementation guide →</a>
+      </article>
+    </section>
+  </main>
+
+  <script type="module">
+    import { openAudioSampler } from "./audioSampler.js";
+
+    document.querySelectorAll("[data-open-mode]").forEach((button) => {
+      button.addEventListener("click", () => openAudioSampler({ mode: button.dataset.openMode }));
+    });
+
+    document.querySelectorAll("[data-theme-value]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const theme = button.dataset.themeValue;
+        document.documentElement.dataset.theme = theme;
+        document.querySelectorAll("[data-theme-value]").forEach((item) => {
+          item.setAttribute("aria-pressed", String(item.dataset.themeValue === theme));
+        });
+      });
+    });
+  </script>
+</body>
+</html>
