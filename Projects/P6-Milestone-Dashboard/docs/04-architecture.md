@@ -81,6 +81,8 @@ The Customize sidebar docks via a `body.cv-open{margin-left:300px}` class toggle
 
 The repo `MattGestic/MyActivities` hosts multiple independent applications, each on its own orphan branch which serves as that application's main. Branches share no history. This app's branch is `p6-milestone-dashboard`.
 
+The default branch `main-projects-hub` is the repository hub: index, governing documents common to all projects, and the governed `Resources/` library. It holds no application code. Repository-wide standards defined there (branch model, project kit structure, versioning, documentation conventions, resource intake) govern this project and are not restated in this file.
+
 ```
 Projects/P6-Milestone-Dashboard/
 ├── CLAUDE.md                  Constraints a new session must load before touching code

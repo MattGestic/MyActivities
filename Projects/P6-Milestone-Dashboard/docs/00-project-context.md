@@ -20,7 +20,7 @@ Instance: Eskay Creek PFS Deliverable Milestone Dashboard
 - **User:** Matthew Garrett — Engineering Technical Lead / Study Coordinator, Ausenco Engineering Canada Inc.
 - **Project:** Eskay Creek 2026 Pre-Feasibility Study, Study No. 103787-13, client Skeena Gold & Silver Ltd. Integrates Snip and Albino satellite deposit ore into the existing Eskay Creek processing plant.
 - **Repo:** `MattGestic/MyActivities`
-- **Branch (this app's main):** `p6-milestone-dashboard` — orphan branch, no shared history with `main`. Other independent apps in this repo use their own branch as their main.
+- **Branch (this app's main):** `p6-milestone-dashboard` — orphan branch, no shared history with any other branch. Other independent apps in this repo use their own branch as their main. Repository-wide standards live on the default branch `main-projects-hub`.
 - **Working file:** `Projects/P6-Milestone-Dashboard/src/milestone-dashboard.html`
 - **Hosting:** None. Local file, opened directly in a browser. No server, no deploy target.
 - **Current live URL:** N/A — distributed as a file.

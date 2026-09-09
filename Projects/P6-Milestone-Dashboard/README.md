@@ -64,7 +64,9 @@ Projects/P6-Milestone-Dashboard/
 
 This repository hosts several independent applications, each on its own **orphan branch** which acts as that application's main. Branches share no history, so an unrelated app never appears in this app's diffs.
 
-This application's main branch is **`p6-milestone-dashboard`**. Do not merge it into `main`.
+This application's main branch is **`p6-milestone-dashboard`**. Do not merge it into any other branch.
+
+The default branch `main-projects-hub` holds the repository index, the governing documents common to all projects, and the governed `Resources/` library. Repository-wide standards live there and are not restated here.
 
 ## Versioning
 
