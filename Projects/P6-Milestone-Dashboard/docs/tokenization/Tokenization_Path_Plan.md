@@ -6,6 +6,8 @@
 
 ---
 
+**Theme-blind literals are done (v3.1.0-P2).** A colour frozen at one theme's value was its own defect class, separate from Phases 1 to 3, and it is cleared: see the Measurement Log and the theme-blind pass section in `Token_Migration_Log.md`. Re-check it with `python3 tools/theme_check.py`, which fails loudly if any probe stops toggling. The phases below are unaffected and still outstanding.
+
 ## Colour — remaining phases
 
 **Phase 1 — Free wins.** Some hardcoded colours already exactly match a defined token (see `matches_existing_token` column in the audit CSV — this column is populated fresh each time the CSV is regenerated, so check it directly rather than a remembered count). Mechanical find-and-replace, zero design decisions.

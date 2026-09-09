@@ -8,6 +8,44 @@
 | TEST-02 | Pending | Live ingest of `data/schedules/103787-13_PFS_Weekly_Update_DD-2026-08-29.xlsx` through the `.xlsx` import path | EARS | Not run | TD-04 |
 | TEST-03 | 2026-09-09 | Post-migration smoke test: does the committed `src/milestone-dashboard.html` still open and render the baked-in baseline correctly after the file move | Headless Chromium render, DOM assertion | Pass | None |
 | TEST-04 | 2026-09-09 | Tokenization audit reproducibility: does an independently written implementation of the documented audit method reproduce the v1 Measurement Log figures | Reconciliation against v1 output | **Fail** — v1 figures not reproducible at full documented scope | TD-06, TD-07 |
+| TEST-05 | 2026-09-09 | Theme toggle: does every probed element's computed colour change between light and dark, before and after the v3.1.0-P2 tokenization pass | `tools/theme_check.py`, computed styles, EARS | Pass after fix (before: 7 of 16 frozen) | None outstanding |
+| TEST-06 | 2026-09-09 | Post-change regression: does the dashboard still render the baked-in baseline unchanged after the tokenization pass and version bump | Headless Chromium render, DOM assertion | Pass | TD-10 raised from the finding below |
+
+### TEST-05 detail
+
+`tools/theme_check.py` injects a probe into a temporary copy, flips `data-theme` between light and dark, and reads `getComputedStyle` for colour, background, all four borders and outline on each probe. It is a measurement of the rendered result, not of the CSS text.
+
+| | Before | After |
+|---|---|---|
+| Probes expecting to toggle | 16 | 16 |
+| Toggling correctly | 9 | **16** |
+| Frozen (identical in both themes) | **7** | **0** |
+| Constant by design, correctly frozen | 1 | 1 |
+
+Frozen before the fix: `.sticky-search-icon`, `.sticky-search-clear`, `.s-track`, `.s-future`, `.dep-tooltip`, `.dep-comment-close`, `.dep-comment-ids`.
+
+**Worst case, and the reason this mattered:** `.dep-comment-panel` had its background reading a token that toggles to `rgba(253, 253, 252, 0.92)` in light mode, while its text stayed frozen at `rgb(232, 238, 248)`. Near-white text on a near-white panel. The dependency comment panel was effectively unreadable in light theme.
+
+Two control probes (`#icon-bar`, `body`) were already tokenized and toggled in both runs, which is what proves the harness detects a real difference rather than reporting everything as frozen.
+
+**One false-positive class was found and excluded before any code changed.** The audit initially flagged five `.rpt-hd` literals as theme-blind. They are `var(--token, #fallback)` fallbacks, which resolve only when the token is undefined and therefore still follow the toggle. Acting on them would have meant changing code that already worked. `tools/colour_audit.py` now detects the fallback position and reports it separately.
+
+### TEST-06 detail
+
+| Assertion | Result |
+|---|---|
+| Page loads, no console errors | Pass |
+| Rows and markers rendered | Pass — 163 rows, 196 markers, unchanged from TEST-03 |
+| App summary stat | Pass — `159 tasks` / `198 milestones`, unchanged |
+| `APP_VERSION` propagates to icon-bar label | Pass — `v3.1.0-P2` |
+| `APP_VERSION` propagates to page title | **Failed on first run**, then fixed and re-tested — see below |
+| Version literals in file | Pass — exactly one, the `APP_VERSION` constant itself |
+
+**Correction to TEST-03.** TEST-03 recorded "`APP_VERSION` propagates to page title: Pass". That was wrong. The `<title>` contained its own hardcoded `v3.1.0-P1` and never read `APP_VERSION` at all; the assertion passed only because the hardcoded string happened to equal the constant at the time. Bumping to P2 exposed it — the tab read P1 while the icon bar read P2.
+
+This is recorded rather than quietly corrected because the single-source-of-truth invariant is one the project explicitly protects, and a test that passes by coincidence is worse than no test. The title and the static label text now both derive from `APP_VERSION` at load, and the assertion is a real one: exactly one version literal exists in the file. Raised as TD-10 (closed in the same change).
+
+An em dash was removed from the title in the same edit, since the tab title is user-facing text and the project bans em dashes there.
 
 ### TEST-04 detail
 
@@ -41,7 +79,7 @@ Rendered `src/milestone-dashboard.html` in headless Chromium (`--virtual-time-bu
 | `#tbody` present and populated | Pass — 163 `<tr>` rendered (activity rows plus band headers) |
 | Milestone markers rendered | Pass — 196 `.m-wrap` elements in the rendered week window |
 | App's own summary stat | Pass — reports `159 tasks` / `198 milestones`, matching the documented baseline exactly |
-| `APP_VERSION` propagates to page title | Pass — `...Deliverables Dashboard v3.1.0-P1` |
+| `APP_VERSION` propagates to page title | ~~Pass~~ — **incorrect, corrected by TEST-06.** The title was a hardcoded literal that happened to equal the constant. |
 | `APP_VERSION` propagates to icon-bar label | Pass — `Schedule Reporting and Evaluation Tool | v3.1.0-P1` |
 
 Note: 196 rendered marker elements against a reported 198 milestones is expected, not a defect — the summary counts the data model, the DOM counts what falls inside the rendered week window. Flagged here only so a future session does not read it as a discrepancy.
@@ -107,5 +145,6 @@ Source file shape confirmed by static inspection of the workbook: 192 data rows,
 
 | Date | Accepted criteria | Exceptions accepted | Publish target | Version/tag |
 |---|---|---|---|---|
+| 2026-09-09 | TEST-05 theme toggle (0 frozen of 16), TEST-06 render regression (163 rows / 196 markers / 159 tasks / 198 milestones unchanged), single version literal asserted | Colour occurrences with no token match not yet triaged; spacing and text tokens untouched; board phase bands, discipline band rows, marker icon states and remarks field states still not tokenized | File distribution | v3.1.0-P2 |
 | Pre-migration | TEST-01 full feature regression | Banding (FEAT-10), sorting/icon customisation (FEAT-11), JSON round-trip (FEAT-13) all knowingly not built. Tokenization (FEAT-14) knowingly incomplete. Label collision same-row only. Header aliases exact-match only. | File distribution | v3.1.0-P1 |
 | 2026-09-09 | Migration to git repository, project kit established | TD-01 version discrepancy open; companion tokenization docs (TD-03) not yet located | Branch `p6-milestone-dashboard` | Migration commit |

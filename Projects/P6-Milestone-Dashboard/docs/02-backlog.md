@@ -34,7 +34,7 @@ Status baseline is the delivered v3.1.0-P1 build. Features marked `Published` we
 | FEAT-11 | EPIC-07 | Row sorting + per-type icon customisation | US-19 | L | M | Not started | Labelled "Future" in the UI. Genuinely not built, not partially built. |
 | FEAT-12 | EPIC-08 | Single-file zero-dependency distribution | US-20 | H | L | Published | Constraint, not a feature to be traded away. |
 | FEAT-13 | EPIC-05 | Import previously exported JSON model (round-trip) | US-16 | M | M | Not started | Export is one-directional by design today. This is new work, not a bug fix. |
-| FEAT-14 | EPIC-06 | Tokenization retrofit (colour / spacing / text) | — | M | **H** | Dev | Complexity raised from M on 2026-09-09: the corrected audit shows materially more remaining work than v1 reported. Never state counts here — read the Measurement Log's latest row per metric. Follow the Token Migration Log methodology, do not restart. |
+| FEAT-14 | EPIC-06 | Tokenization retrofit (colour / spacing / text) | — | M | **H** | Dev — theme-blind class complete, Phase 1/2 and spacing/text outstanding | Complexity raised from M on 2026-09-09: the corrected audit shows materially more remaining work than v1 reported. Never state counts here — read the Measurement Log's latest row per metric. Follow the Token Migration Log methodology, do not restart. |
 | FEAT-15 | EPIC-08 | Git repository migration + project kit | — | H | L | Published | Orphan branch `p6-milestone-dashboard` as the app's main. Tagged `v3.1.0-P1`. |
 | FEAT-16 | EPIC-06 | Lessons-learned capture and promotion of general rules to repository governance | — | M | L | Published | `docs/06-lessons-learned.md`. Two rules promoted to `Governance/` on the hub branch. |
 
@@ -50,7 +50,9 @@ Status baseline is the delivered v3.1.0-P1 build. Features marked `Published` we
 | TASK-06 | FEAT-14 | Continue colour tokenization pass, role before value | Open | Near-identical hexes may be genuinely different semantic states. See the log for why some were deliberately kept separate. |
 | TASK-10 | FEAT-14 | Commit a reproducible tokenization audit (`tools/colour_audit.py`) and reconcile it against the v1 figures | Done | v1 matched hex only and counted token definitions as references. Reconciliation table in the Migration Log. |
 | TASK-11 | FEAT-14 | Phase 1: mechanical substitution of the 28 colour occurrences already matching a defined token exactly | Open | Pure substitution, zero design decisions. Safe to batch independently. |
-| TASK-12 | FEAT-14 | Phase 2: triage the 27 repeat-use colour values, including the 32 `rgba()` occurrences v1 never measured | Open | Role before hex proximity. |
+| TASK-12 | FEAT-14 | Phase 2: triage the repeat-use colour values, including the `rgba()` set v1 never measured | Open | Role before hex proximity. Counts live in the Measurement Log, not here. |
+| TASK-14 | FEAT-14 | Theme-blind pass: replace every literal frozen at one theme's value, and prove it with computed styles in both themes | Done | v3.1.0-P2. Zero theme-blind occurrences remain. `tools/theme_check.py` added. |
+| TASK-15 | FEAT-15 | Make the page title derive from `APP_VERSION` instead of a hardcoded literal | Done | TD-10. Exactly one version literal now exists in the file. |
 | TASK-13 | FEAT-16 | Promote the two general lessons (verification methodology, append-only measurement logs) to repository governance | Done | Applied on `main-projects-hub`. |
 | TASK-07 | FEAT-02 | Decide whether `headerAliases` should move from exact-match to fuzzy | Open | Accepted gap today. `"BL1 Start"` will not match a `"bl start"` alias. Primary `Start`/`Finish` cover the core need. |
 | TASK-08 | FEAT-03 | Multi-line short-title vertical bleed into neighbouring rows | Open | Separate, smaller problem than the same-row collision system. |

@@ -18,6 +18,7 @@ Read this before touching any file in this project. It is the short form; `docs/
 | `docs/06-lessons-learned.md` | Patterns that caused real bugs here. Prevention, not record-keeping. |
 | `docs/tokenization/` | Migration Log (component status + append-only Measurement Log), Path Plan, generated audit CSV |
 | `tools/colour_audit.py` | Regenerates the audit CSV and every Measurement Log metric |
+| `tools/theme_check.py` | Compares computed styles across light and dark. Non-zero exit if anything expected to toggle is frozen. |
 | `docs/handoff/` | Archive of the original claude.ai chat-to-code handoff |
 
 Read `docs/03-todo.md` first in any session. One fact lives in one file — reference by ID, do not restate.
@@ -34,7 +35,7 @@ Any proposal that breaks one of these conflicts with `docs/04-architecture.md`. 
 
 ## Do not change
 
-- `APP_VERSION` is the only place the version string is written. The title, icon-bar label, and export payload all read from it. Never hand-edit any of the three.
+- `APP_VERSION` is the only place the version string is written. The title, icon-bar label, and export payload all read from it at load. Never hand-edit any of the three, and never reintroduce a version literal into the markup — the `<title>` used to carry one and silently went stale for a full version (TD-10). The real assertion is that `grep -c "3\.[0-9]*\.[0-9]*-P" src/milestone-dashboard.html` returns exactly 1.
 - `.m-lbl-stack` must stay a genuine DOM child of `.m-wrap`, not a sibling in the table cell.
 - `drawDepLines()` is the single choke point for dependency rendering. Its defensive reset of SVG layer visibility and stuck drag state on every run is load-bearing.
 - The Activity ID autocomplete uses `onmousedown` + `event.preventDefault()`. Load-bearing. Removing it reintroduces a focus-stealing bug.
@@ -89,6 +90,16 @@ python3 tools/colour_audit.py
 ```
 
 It regenerates the CSV and prints every Measurement Log metric. Append the results as new rows. **Never edit or delete a prior row** — the log is the history, and the last row per metric is the current figure.
+
+**Also run the theme check before and after any colour change:**
+
+```
+python3 tools/theme_check.py
+```
+
+It flips `data-theme` and compares computed styles in both themes, exiting non-zero if anything expected to toggle is frozen. A colour hardcoded to one theme's value looks perfectly correct in that theme, so reading the CSS does not catch this class. It found seven frozen elements at v3.1.0-P2, including a comment panel that was near-white text on a near-white background in light mode.
+
+Note that `var(--token, #fallback)` fallbacks are **not** defects. They resolve only when the token is undefined, so they still toggle. The audit reports them separately, and treating them as defects would mean changing working code.
 
 **Never write a count into prose**, here or in any doc. Prose says what a metric means and where to find it. The number lives only in the Measurement Log. This rule exists because the tracking docs previously drifted 3-4x out of date with no trigger to revisit them.
 

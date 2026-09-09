@@ -84,13 +84,30 @@ def in_spans(pos: int, spans: list[tuple[int, int]]) -> bool:
     return any(a <= pos < b for a, b in spans)
 
 
-def defined_tokens(style: str, spans: list[tuple[int, int]]) -> dict[str, str]:
-    """Map normalised token value -> token name, from the definition blocks."""
-    tokens: dict[str, str] = {}
+def block_theme(style: str, start: int) -> str:
+    """Which theme a token-definition block belongs to: light, dark or base."""
+    head = style[start : style.index("{", start)]
+    m = re.search(r"data-theme\s*=\s*[\"']?(\w+)", head)
+    return m.group(1) if m else "base"
+
+
+def defined_tokens(style: str, spans: list[tuple[int, int]]) -> dict[str, list[tuple[str, str]]]:
+    """Map normalised token value -> [(token name, theme), ...].
+
+    A value can be defined in more than one theme block. Keeping every
+    definition (rather than the first) is what lets the audit tell a
+    theme-blind hardcoded colour from a legitimately constant one: a literal
+    matching only the dark theme's value is frozen dark in light mode.
+    """
+    tokens: dict[str, list[tuple[str, str]]] = {}
     for a, b in spans:
+        theme = block_theme(style, a)
         for m in TOKEN_DEF_RE.finditer(style[a:b]):
             name, value = m.group(1), m.group(2).strip().rstrip(";").strip()
-            tokens.setdefault(normalise_colour(value), name)
+            key = normalise_colour(value)
+            entry = (name, theme)
+            if entry not in tokens.setdefault(key, []):
+                tokens[key].append(entry)
     return tokens
 
 
@@ -116,6 +133,33 @@ def enclosing_declaration(style: str, pos: int) -> tuple[str, str]:
     decl = style[start:end].strip()
     m = DECL_RE.match(decl)
     return (m.group(1).strip(), m.group(2).strip()) if m else ("", decl)
+
+
+def in_var_fallback(style: str, pos: int) -> bool:
+    """True if the literal at pos is the fallback arm of a var() call.
+
+    var(--tok, #hex) uses #hex only when --tok is undefined, so such a literal
+    still follows the theme toggle and is not a tokenization defect. Walk back
+    from the occurrence: if an unclosed "var(" opens before it and a comma
+    separates them, the literal is in the fallback position.
+    """
+    depth = 0
+    i = pos - 1
+    saw_comma = False
+    while i >= 0 and pos - i < 200:
+        ch = style[i]
+        if ch == ")":
+            depth += 1
+        elif ch == "(":
+            if depth == 0:
+                return saw_comma and style[max(0, i - 3): i] == "var"
+            depth -= 1
+        elif ch == "," and depth == 0:
+            saw_comma = True
+        elif ch in ";{}":
+            return False
+        i -= 1
+    return False
 
 
 def enclosing_selector(style: str, pos: int) -> str:
@@ -145,6 +189,25 @@ def audit(html_path: pathlib.Path, csv_path: pathlib.Path) -> dict[str, object]:
             if prop.startswith("--"):
                 continue  # a token definition outside the theme blocks
             line = html.count("\n", 0, style_offset + m.start()) + 1
+            defs = tokens.get(norm, [])
+            themes = sorted({t for _, t in defs})
+            fallback = in_var_fallback(style, m.start())
+            # A literal that matches a token defined in exactly one theme is
+            # frozen at that theme's value: it cannot follow the toggle.
+            #
+            # Unless it is a var() fallback. var(--tok, #hex) resolves to #hex
+            # only when --tok is undefined, so a fallback still toggles
+            # correctly and is NOT a defect. Reporting those as theme-blind
+            # produced five false positives on the first pass, all in .rpt-hd,
+            # which would have meant "fixing" code that already worked.
+            if fallback:
+                verdict = "var() fallback, toggles correctly"
+            elif len(themes) == 1 and themes[0] in ("light", "dark"):
+                verdict = f"theme-blind ({themes[0]}-only)"
+            elif defs:
+                verdict = "matches token in all themes"
+            else:
+                verdict = ""
             rows.append(
                 {
                     "line": line,
@@ -153,7 +216,9 @@ def audit(html_path: pathlib.Path, csv_path: pathlib.Path) -> dict[str, object]:
                     "raw_value": raw,
                     "normalised_value": norm,
                     "declaration": value,
-                    "matches_existing_token": tokens.get(norm, ""),
+                    "matches_existing_token": "|".join(n for n, _ in defs),
+                    "defined_in_themes": "|".join(themes),
+                    "toggle_verdict": verdict,
                 }
             )
 
@@ -166,7 +231,8 @@ def audit(html_path: pathlib.Path, csv_path: pathlib.Path) -> dict[str, object]:
                            fieldnames=list(rows[0].keys()) if rows else
                            ["line", "selector", "property", "raw_value",
                             "normalised_value", "declaration",
-                            "matches_existing_token"])
+                            "matches_existing_token", "defined_in_themes",
+                            "toggle_verdict"])
         w.writeheader()
         w.writerows(rows)
 
