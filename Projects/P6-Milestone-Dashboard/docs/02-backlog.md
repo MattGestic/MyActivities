@@ -13,7 +13,7 @@ Status baseline is the delivered v3.1.0-P1 build. Features marked `Published` we
 | EPIC-03 | Annotation and assessment | FEAT-05 | 1/1 published |
 | EPIC-04 | Filtering and view control | FEAT-06, FEAT-07 | 2/2 published |
 | EPIC-05 | Export and round-trip | FEAT-08, FEAT-13 | 1/2 published |
-| EPIC-06 | Design system tokenization | FEAT-14 | 0/1 published |
+| EPIC-06 | Design system tokenization and development discipline | FEAT-14, FEAT-16 | 1/2 published |
 | EPIC-07 | Grouping and presentation (future) | FEAT-10, FEAT-11 | 0/2 published |
 | EPIC-08 | Repository and delivery | FEAT-12, FEAT-15 | 1/2 published |
 
@@ -34,8 +34,9 @@ Status baseline is the delivered v3.1.0-P1 build. Features marked `Published` we
 | FEAT-11 | EPIC-07 | Row sorting + per-type icon customisation | US-19 | L | M | Not started | Labelled "Future" in the UI. Genuinely not built, not partially built. |
 | FEAT-12 | EPIC-08 | Single-file zero-dependency distribution | US-20 | H | L | Published | Constraint, not a feature to be traded away. |
 | FEAT-13 | EPIC-05 | Import previously exported JSON model (round-trip) | US-16 | M | M | Not started | Export is one-directional by design today. This is new work, not a bug fix. |
-| FEAT-14 | EPIC-06 | Tokenization retrofit (colour / spacing / text) | — | M | M | Dev | Colour approx 50/50 tokenized. Spacing/text tokens applied to recently touched components only. Follow the Token Migration Log methodology, do not restart. |
-| FEAT-15 | EPIC-08 | Git repository migration + project kit | — | H | L | Dev | This session. Orphan branch `p6-milestone-dashboard` as the app's main. |
+| FEAT-14 | EPIC-06 | Tokenization retrofit (colour / spacing / text) | — | M | **H** | Dev | Complexity raised from M on 2026-09-09: the corrected audit shows materially more remaining work than v1 reported. Never state counts here — read the Measurement Log's latest row per metric. Follow the Token Migration Log methodology, do not restart. |
+| FEAT-15 | EPIC-08 | Git repository migration + project kit | — | H | L | Published | Orphan branch `p6-milestone-dashboard` as the app's main. Tagged `v3.1.0-P1`. |
+| FEAT-16 | EPIC-06 | Lessons-learned capture and promotion of general rules to repository governance | — | M | L | Published | `docs/06-lessons-learned.md`. Two rules promoted to `Governance/` on the hub branch. |
 
 ## Tasks
 
@@ -44,9 +45,13 @@ Status baseline is the delivered v3.1.0-P1 build. Features marked `Published` we
 | TASK-01 | FEAT-15 | Create orphan branch, project skeleton, migrate v3.1.0-P1 file, schedule sample and handoff doc | Done | 2026-09-09 |
 | TASK-02 | FEAT-15 | Write six-file project kit back-derived from the delivered build | Done | 2026-09-09 |
 | TASK-03 | FEAT-15 | Add project `CLAUDE.md` so future sessions inherit the constraints without re-reading the handoff | Done | 2026-09-09 |
-| TASK-04 | FEAT-15 | Migrate the companion docs (`Token_Migration_Log.md`, `Tokenization_Path_Plan.md`, `Hardcoded_Colour_Audit.csv`) into `docs/` | Open | Referenced by the handoff but not supplied with it. Needed before FEAT-14 continues. |
-| TASK-05 | FEAT-14 | Retrofit `--space-0..7` across older CSS still using raw pixel values | Open | Check what is already close before adding any new value. |
+| TASK-04 | FEAT-15 | Migrate the companion docs into `docs/tokenization/` | Done | Log and path plan supplied 2026-09-09. Audit CSV regenerated rather than recovered. |
+| TASK-05 | FEAT-14 | Retrofit `--space-0..7` across older CSS still using raw pixel values | Open | 173 raw px declarations against 38 `var(--space-N)` calls. Check what is already close before adding any new value. |
 | TASK-06 | FEAT-14 | Continue colour tokenization pass, role before value | Open | Near-identical hexes may be genuinely different semantic states. See the log for why some were deliberately kept separate. |
+| TASK-10 | FEAT-14 | Commit a reproducible tokenization audit (`tools/colour_audit.py`) and reconcile it against the v1 figures | Done | v1 matched hex only and counted token definitions as references. Reconciliation table in the Migration Log. |
+| TASK-11 | FEAT-14 | Phase 1: mechanical substitution of the 28 colour occurrences already matching a defined token exactly | Open | Pure substitution, zero design decisions. Safe to batch independently. |
+| TASK-12 | FEAT-14 | Phase 2: triage the 27 repeat-use colour values, including the 32 `rgba()` occurrences v1 never measured | Open | Role before hex proximity. |
+| TASK-13 | FEAT-16 | Promote the two general lessons (verification methodology, append-only measurement logs) to repository governance | Done | Applied on `main-projects-hub`. |
 | TASK-07 | FEAT-02 | Decide whether `headerAliases` should move from exact-match to fuzzy | Open | Accepted gap today. `"BL1 Start"` will not match a `"bl start"` alias. Primary `Start`/`Finish` cover the core need. |
 | TASK-08 | FEAT-03 | Multi-line short-title vertical bleed into neighbouring rows | Open | Separate, smaller problem than the same-row collision system. |
 | TASK-09 | FEAT-10 | Banding Phase 1: auto-derivation of row collections | Open | Blocked on FEAT-10 go-ahead. |

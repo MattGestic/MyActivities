@@ -15,6 +15,9 @@ Read this before touching any file in this project. It is the short form; `docs/
 | `docs/03-todo.md` | `TD-##` tactical items. Has the current next code task at the bottom. |
 | `docs/04-architecture.md` | Runtime structure, data mapping, state model, decisions log |
 | `docs/05-test-log.md` | `TEST-##` / `UT-##`, acceptance criteria, publish record |
+| `docs/06-lessons-learned.md` | Patterns that caused real bugs here. Prevention, not record-keeping. |
+| `docs/tokenization/` | Migration Log (component status + append-only Measurement Log), Path Plan, generated audit CSV |
+| `tools/colour_audit.py` | Regenerates the audit CSV and every Measurement Log metric |
 | `docs/handoff/` | Archive of the original claude.ai chat-to-code handoff |
 
 Read `docs/03-todo.md` first in any session. One fact lives in one file — reference by ID, do not restate.
@@ -53,13 +56,41 @@ Any proposal that breaks one of these conflicts with `docs/04-architecture.md`. 
 
 This file has a real history of code that read correctly and behaved wrongly at runtime: CSS specificity conflicts, browser focus-stealing, a stuck-invisible SVG layer. **A code read-through is not a test.** Back any claim of "fixed" or "working" with an actual result — computed style check, DOM state check, before/after comparison. Test the interaction.
 
+Three specific traps, each from a real wasted cycle (`docs/06-lessons-learned.md` §1):
+
+- **Measure the element, not its parent.** Sticky headers were declared broken because the whole `<tr>` bounding box was measured; the row was never sticky, only cells inside it were.
+- **Never self-verify from a screenshot.** For active/selected/checked state, read `classList` or computed style. A compressed image was misread as the wrong button being highlighted.
+- **A passing diff is not a passing test.** "No regression" was reported from code review alone more than once, and was wrong.
+
 Do not re-verify the TEST-01 regression audit in `docs/05-test-log.md`. It was done directly against the file at handoff. Treat it as ground truth and spend verification effort on new work.
+
+## Traps this file has already hit
+
+Full detail and root causes in `docs/06-lessons-learned.md`. Each cost a real cycle.
+
+- **Range checks need both bounds.** `dateToCol()` clamped early dates onto column 0 because only the upper bound was tested. The first fix then over-corrected and would have excluded valid first-week dates. Boundary fixes need just-inside and just-outside tests on **both** sides.
+- **Test N=3, not just the reported N=2.** The label collision system re-collided on the third marker in a cluster because it was built as a two-state toggle.
+- **"The code exists" is not "the code is wired up."** Dependency lines went stale because `drawDepLines()` was never added to the `rerender()` cascade. Tooltips never fired on real milestones because the listener was only bound to baseline ghosts. When a pipeline gains a stage, audit every entry point that should trigger it.
+- **A control that sets state must also show state.** The dependency All-on/All-off buttons never reflected which was active. Build both directions together.
+- **`border-collapse: collapse` silently kills `position: sticky` on table cells.** This table uses `separate` with `border-spacing: 0` for that reason. Do not change it.
+- **Flex children default to `min-width: auto`,** which blocks wrapping regardless of `overflow-wrap` or `max-width`. Text in a flex container that must wrap needs explicit `min-width: 0`.
+- **Never `innerHTML`-rebuild the subtree containing the clicked element inside its own click handler** without `stopPropagation()`. The bubble phase reaches a detached node, and a document-level click-outside listener fires. This closed the milestone dialog on every internal link click.
 
 ## Tokenization discipline
 
 No invented values without cause. Every colour, spacing, and text token so far was derived from what the file already predominantly used. Before adding a value, check what is already close. Merge two colours on **role**, not on hex proximity — several "looked identical" clusters turned out to be genuinely different semantic states.
 
-`docs/02-backlog.md` TASK-04 / TD-03: the Token Migration Log, Tokenization Path Plan, and Hardcoded Colour Audit are referenced by the handoff but were not supplied. FEAT-14 should not resume without them.
+Docs live in `docs/tokenization/`: the Migration Log (component status + the append-only Measurement Log), the Path Plan (remaining phases), and the generated `Hardcoded_Colour_Audit.csv`.
+
+**Before starting any tokenization phase, re-run the audit:**
+
+```
+python3 tools/colour_audit.py
+```
+
+It regenerates the CSV and prints every Measurement Log metric. Append the results as new rows. **Never edit or delete a prior row** — the log is the history, and the last row per metric is the current figure.
+
+**Never write a count into prose**, here or in any doc. Prose says what a metric means and where to find it. The number lives only in the Measurement Log. This rule exists because the tracking docs previously drifted 3-4x out of date with no trigger to revisit them.
 
 ## Working style
 
