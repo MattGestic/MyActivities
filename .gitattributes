@@ -1,0 +1,9 @@
+# The dashboard is a single large HTML file edited in place. Keep line endings
+# stable across Windows/OneDrive and Linux so diffs stay readable.
+*.html text eol=lf
+*.md   text eol=lf
+*.csv  text eol=lf
+
+# Binary schedule exports — never diff or merge these.
+*.xlsx binary
+*.xls  binary
