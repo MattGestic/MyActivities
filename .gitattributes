@@ -1,0 +1,11 @@
+# Hub branch: governance docs, templates, catalogue. No application code.
+# Keep line endings stable across Windows/OneDrive and Linux.
+*.md   text eol=lf
+*.svg  text eol=lf
+*.csv  text eol=lf
+*.json text eol=lf
+
+*.xlsx binary
+*.docx binary
+*.pptx binary
+*.pdf  binary
