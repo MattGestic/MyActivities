@@ -50,4 +50,6 @@ Lead with the answer. Structured, short, no filler. Acronyms used freely without
 
 **Every "do not change" rule carries its reason.** A rule without a reason gets removed by whoever comes next, and the bug comes back.
 
+**Never write a number expected to change into prose.** Counts, percentages, coverage figures and remaining-work totals go in an append-only measurement log — append rows, never edit or delete one. Prose says what a metric means and where to find it. Commit the measuring script next to what it measures. Full rules in `Governance/03-documentation-standard.md`.
+
 Full conventions in `Governance/03-documentation-standard.md`.

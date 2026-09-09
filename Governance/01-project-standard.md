@@ -11,6 +11,7 @@ Projects/<App-Name>/
 ├── src/                   The application
 ├── releases/              Point-in-time version snapshots (see 02-versioning-standard.md)
 ├── data/                  Reference/sample inputs for testing, if the app ingests anything
+├── tools/                 Scripts that measure or check the project (see below)
 └── docs/
     ├── 00-project-context.md
     ├── 01-requirements.md
@@ -18,12 +19,15 @@ Projects/<App-Name>/
     ├── 03-todo.md
     ├── 04-architecture.md
     ├── 05-test-log.md
+    ├── 06-lessons-learned.md
     └── handoff/           Archive of any migration or handover document
 ```
 
-`src/`, `releases/`, `data/` and `handoff/` are omitted only where genuinely not applicable. The six `docs/` files and both root files are always present.
+`src/`, `releases/`, `data/`, `tools/` and `handoff/` are omitted only where genuinely not applicable. The seven `docs/` files and both root files are always present.
 
-## The six-file kit
+**`tools/` is not optional once a project measures anything about itself.** A measurement script committed next to what it measures can be diffed, reviewed, and reproduced. One that lives on someone's machine cannot, and its drift from its own documented method is invisible until somebody reimplements it. See the append-only measurement log rules in `03-documentation-standard.md`.
+
+## The seven-file kit
 
 One fact lives in exactly one file. Other files reference it by ID rather than restating it. This is what stops requirements, backlog, and decisions being re-litigated every session.
 
@@ -35,6 +39,9 @@ One fact lives in exactly one file. Other files reference it by ID rather than r
 | `03-todo.md` | `TD-##` short-lived tactical items: standalone bugs, next actions, blockers with no feature parent. Ends with the current next code task on one line. | Continuously |
 | `04-architecture.md` | Front-end/back-end split, hosting strategy, runtime structure, data mapping, state model, decisions log | Phase 3, then on architecture-impacting changes |
 | `05-test-log.md` | `TEST-##` automated runs, `UT-##` live user tests, feedback triage, acceptance and publish record | Phase 5 onward |
+| `06-lessons-learned.md` | Patterns that caused a real bug or a wasted cycle, grouped by pattern with root cause and recommendation | Whenever one is learned |
+
+**On `06-lessons-learned.md`:** its purpose is prevention, not record-keeping. A lesson that stays only in this file has not done its job — once a lesson hardens into a rule, put the rule in the project's `CLAUDE.md` (or here, if it is general) and leave the reason in the lessons file. A rule without its reason gets removed by whoever comes next, and the bug comes back.
 
 ### ID hierarchy
 
@@ -76,6 +83,20 @@ Do not jump to a later phase's output format on an earlier phase's input. If ski
 Back any claim of "fixed" or "working" with an actual result: a computed style check, a DOM state assertion, a test run, a before/after comparison. Record it in `05-test-log.md` with what was asserted and what came back.
 
 Where a project's test log already records a completed regression audit, treat it as ground truth. Do not re-verify it from scratch — spend verification effort on the new work.
+
+### Three rules that came from real wasted cycles
+
+*Adopted 2026-09-09, from the P6 Milestone Dashboard. Each caused a wrong conclusion that survived review.*
+
+1. **Measure the element, not a parent.** When verifying a CSS property on a specific element, measure that element directly. A parent can behave differently — sticky headers were declared broken after measuring a whole `<tr>` whose cells, not the row, were the sticky things.
+2. **Never self-verify from a screenshot.** For state checks (active, selected, checked), read `classList` or computed style directly. Screenshots are for showing the user, not for confirming your own work; a compressed image was misread as the wrong control being highlighted.
+3. **A passing diff is not a passing test.** Code that reads correctly can still fail at runtime through browser quirks, event timing, or CSS specificity. Exercise the actual interaction and assert the resulting state.
+
+### Report what happened
+
+If a test fails, say so and show the output. If a step was skipped, say it was skipped. If a measurement disagrees with a recorded one, reconcile it before adopting either figure, and record why they differed.
+
+A finding that contradicts an earlier claim of yours gets written down, not quietly corrected. The quiet correction loses the reason the earlier claim looked right, which is the thing that stops it recurring.
 
 ## `CLAUDE.md` contract
 
