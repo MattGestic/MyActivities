@@ -56,6 +56,13 @@ Append new rows here as measurements are taken. Never edit or delete a prior row
 | 2026-09-10 | `tools/theme_check.py`, after the v3.1.0-P8 pass | Probes expected to be constant, correctly frozen | 2 |
 | 2026-09-10 | `tools/theme_check.py`, contrast now resolves a transparent element to its nearest painting ancestor | Probes below 3.0:1, before the `.row-num` token fix | 1 |
 | 2026-09-10 | `tools/theme_check.py`, contrast now resolves a transparent element to its nearest painting ancestor | Probes below 3.0:1, after the `.row-num` token fix | 0 |
+| 2026-09-10 | Audit script v3, after the v3.1.0-P9 mount manager | Hardcoded colour occurrences | 54 |
+| 2026-09-10 | Audit script v3, after the v3.1.0-P9 mount manager | Colour occurrences matching an existing token exactly | 11 |
+| 2026-09-10 | `tools/theme_check.py`, mount panel and import dialog probes added | Probes expected to toggle | 41 |
+| 2026-09-10 | `tools/theme_check.py`, after the v3.1.0-P9 pass | Probes expected to toggle, frozen | 0 |
+| 2026-09-10 | `tools/theme_check.py`, after the v3.1.0-P9 pass | Probes expected to be constant, correctly frozen | 4 |
+| 2026-09-10 | `tools/theme_check.py`, first run of the new mount-panel probes | Probes below 3.0:1, before the token fixes | 2 |
+| 2026-09-10 | `tools/theme_check.py`, after the token fixes | Probes below 3.0:1 | 0 |
 
 **Re-running the audit:** run `python3 tools/colour_audit.py` from the project root. It regenerates `Hardcoded_Colour_Audit.csv` and prints every metric above.
 

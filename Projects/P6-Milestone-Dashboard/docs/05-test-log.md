@@ -17,6 +17,7 @@
 | TEST-11 | 2026-09-10 | Chain-first stage merging, against two reported failures (Bronson Connector Road, Snip Single Line Diagrams) plus the two over-merge guards | `tools/import_check.py`, targeted ID probes | **Pass** — PFS 115 to 110 rows | None outstanding |
 | TEST-12 | 2026-09-10 | Dependency-first row building (pass 1 logic, pass 2 deliverable identity), 8 over-merge guards and 8 chain probes, both datasets | `tools/import_check.py` + `tools/xer_to_aoa.py`, targeted ID probes | **Pass** — 8/8 guards, PFS 110 to 108 rows, EPCM 1948 to 1898 | TD-26 |
 | TEST-13 | 2026-09-10 | Convergence relaxation (a high-fan-in milestone stands alone only above a measured predecessor threshold), row numbers per banding, and milestone drag between rows driven by real pointer gestures | `tools/import_check.py` + synthesised `PointerEvent` gestures in headless Chromium | **Pass** — 8/8 guards, PFS 108 to 105 rows, drag verified on both input paths | TD-28, TD-29 |
+| TEST-14 | 2026-09-10 | Mount manager (three slots, unmount/remount), model export identity and naming, payload validation, and selective annotation import | `tools/import_check.py` harness driving the real panel, export and validator; export round-tripped back through its own validator | **Pass** — 3/3 slots, 5/5 rejection cases, selective import isolates a single category | TD-30 (closed same pass), TD-31, TD-32, TD-33 |
 
 ### TEST-13 detail
 
@@ -100,6 +101,82 @@ That change also surfaced two findings on `.s-track` and `.s-future`, which were
 "x", and querying the rendered board confirmed neither class is ever applied to
 text anywhere in the app. The probes now carry no content, so the toggle
 assertion still holds and no impossible text case is measured.
+
+### TEST-14 detail
+
+**1. Mount panel.** Three fixed slots render on a clean load and after an
+import. Baseline is listed with zero action buttons, which is the assertion
+that it cannot be unmounted. Importing the reference export flips the schedule
+slot to an `override active` badge carrying file name, data date (29-Aug-26),
+report date and load time, with the baseline still listed above it at
+15-Aug-26 — so the override reads as an override rather than as the only
+source. Unmount reverts to baseline (159 tasks / 198 milestones, `SEED_*`
+untouched) and the slot returns to a Mount button.
+
+**2. Export identity and naming.** `exportModel()` was captured at the Blob and
+anchor boundary rather than by inspecting the code:
+
+| Assertion | Result |
+|---|---|
+| Filename matches `eskay-dashboard_model_<data date>_<stamp>.json` | `eskay-dashboard_model_2026-08-29_20260910-1600.json` |
+| `kind` | `eskay-milestone-dashboard-model` |
+| `schemaVersion` | 1 |
+| `exportedAt` present | yes |
+
+**3. Validation.** Driven by feeding a real export straight back into the
+validator, plus four constructed failures. Nothing in the validator reads the
+filename; all five verdicts come from payload contents.
+
+| Case | Verdict |
+|---|---|
+| Real export, matching schedule | accepted, no warnings |
+| Malformed JSON | rejected, parse error surfaced |
+| `kind` of another producer | rejected, names the kind it found |
+| `schemaVersion` 99 | rejected, names both versions |
+| Valid but carries no annotations | rejected |
+| Legacy export with no identity block | accepted with a warning, read on contents |
+
+The data-date mismatch check was tested in **both** directions, because a
+warning that only ever stays quiet is indistinguishable from dead code:
+
+| Payload | Warning |
+|---|---|
+| `scheduleDataDate` matches what is mounted | none |
+| `scheduleDataDate` 2026-07-04 against 29-Aug-26 mounted | fires, naming both dates |
+| Field absent (legacy) | none, check skipped rather than guessed |
+
+**4. Selective import.** The dialog lists six categories with live counts and
+disables the ones the file cannot supply. With all three annotation stores
+cleared, only "Milestone comments" was ticked:
+
+| Store | After importing comments only |
+|---|---|
+| `MS_COMMENTS` | 1 |
+| `MS_HEALTH_OVERRIDE` | 0 |
+| `MS_SHORT_TITLES` | 0 |
+| `ANNOT_MOUNT.applied` | `['comments']` |
+
+The annotations slot then shows the file, the data date it was saved against,
+its export time, its load time, and what was actually imported from it.
+
+**Defect found and fixed during this test.** Two, both mine, neither visible by
+reading:
+
+- The mismatch warning first compared `p.dataDate` — which is the week-ending
+  **label** of the now column ("13-Sep"), not a data date — against a real data
+  date, so it fired on every clean round trip. A `scheduleDataDate` field was
+  added and the comparison moved onto it.
+- `.mnt-name` was written with `--color-text-small` (**1.18:1** on a dark card)
+  and `.mnt-badge` with `--color-purple-dark` on the accent wash (**1.13:1**).
+  TD-28 had already named the first token by value. Reading the CSS did not
+  catch either; the probes did. Raised as TD-33.
+
+**Pre-existing defect found.** `LAST_MARKUP_AT` was assigned but never
+declared, so it existed only as an implicit global **after** the first markup
+edit. `exportModel()` reads it, so exporting on a clean load threw a
+`ReferenceError` and the download silently never happened. It survived this
+long because every manual export test had made an edit first. Declared and
+closed as TD-30.
 
 ### TEST-05 detail
 
@@ -441,5 +518,6 @@ Source file shape confirmed by static inspection of the workbook: 192 data rows,
 | 2026-09-10 | TEST-11 chain-first merging; both reported failures fixed; both over-merge guards hold; baseline render unchanged | Sub-headings within a band still not built (TD-23); stage phrase list is fixed rather than learned | File distribution | v3.1.0-P6 |
 | 2026-09-10 | TEST-12 dependency-first rows, 8/8 guards, chains intact, baseline unchanged | Convergence nodes always stand alone even when name-compatible with one candidate row (TD-26); sub-headings still not built (TD-23) | File distribution | v3.1.0-P7 |
 | 2026-09-10 | TEST-13 convergence relaxation, row numbers and milestone drag; 8/8 guards; baseline render unchanged; theme check clean at 37 probes | Row drag itself not built (the handle slot is reserved, TD-29); moves are session-scoped and a re-import does not replay them (TD-27); sub-headings still not built (TD-23) | File distribution | v3.1.0-P8 |
+| 2026-09-10 | TEST-14 mount manager, export identity, validation and selective import; baseline render unchanged; theme check clean at 45 probes | Round trip covers the annotation layer only (TD-32); unmounting annotations does not roll back imported values (TD-31); two low-contrast tokens still need a sweep across their other consumers (TD-33) | File distribution | v3.1.0-P9 |
 | Pre-migration | TEST-01 full feature regression | Banding (FEAT-10), sorting/icon customisation (FEAT-11), JSON round-trip (FEAT-13) all knowingly not built. Tokenization (FEAT-14) knowingly incomplete. Label collision same-row only. Header aliases exact-match only. | File distribution | v3.1.0-P1 |
 | 2026-09-09 | Migration to git repository, project kit established | TD-01 version discrepancy open; companion tokenization docs (TD-03) not yet located | Branch `p6-milestone-dashboard` | Migration commit |

@@ -119,6 +119,33 @@ const PROBES = [
       const tr = mk('<tr class="data ms-drop-target"><td class="c-wk"></td></tr>', tbody);
       return tr.querySelector('td');
   }],
+  // Mount panel and the selective-import dialog. Small text on a card and on
+  // tinted message strips: exactly the shape that slipped past the contrast
+  // check before it resolved transparent elements to a painting ancestor.
+  ['.mnt-slot',                  'toggle',   () => mk('<div class="mnt-slot">x</div>')],
+  ['.mnt-name',                  'toggle',   () => {
+      const d = mk('<div class="mnt-slot"><div class="mnt-hd"><span class="mnt-name">Schedule</span></div></div>');
+      return d.querySelector('.mnt-name');
+  }],
+  ['.mnt-lines',                 'toggle',   () => {
+      const d = mk('<div class="mnt-slot"><div class="mnt-lines">Data date</div></div>');
+      return d.querySelector('.mnt-lines');
+  }],
+  // Saturated chip: the fill carries the meaning and the text is chosen
+  // against the fill, not the page, so frozen is correct.
+  ['.mnt-badge (constant)',      'constant', () => {
+      const d = mk('<div class="mnt-slot"><span class="mnt-badge">override</span></div>');
+      return d.querySelector('.mnt-badge');
+  }],
+  ['.annot-panel',               'toggle',   () => mk('<div class="annot-panel">x</div>')],
+  ['.annot-err',                 'toggle',   () => mk('<div class="annot-msg annot-err">error</div>')],
+  // Amber attention strip, same category: :root tokens, ink picked for the fill.
+  ['.annot-warn (constant)',     'constant', () => mk('<div class="annot-msg annot-warn">warning</div>')],
+  ['.annot-count',               'toggle',   () => {
+      const d = mk('<div class="annot-panel"><label class="annot-row"><span class="annot-count">12</span></label></div>');
+      return d.querySelector('.annot-count');
+  }],
+
   ['.row-num',                   'toggle',   () => {
       const tr = mk('<tr class="data"><td class="c-name"><span class="row-num">1</span></td></tr>', tbody);
       return tr.querySelector('.row-num');

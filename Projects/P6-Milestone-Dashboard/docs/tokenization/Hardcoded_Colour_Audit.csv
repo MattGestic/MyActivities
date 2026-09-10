@@ -1,55 +1,55 @@
 line,selector,property,raw_value,normalised_value,declaration,matches_existing_token,defined_in_themes,toggle_verdict,source
-326,#print-filter-note,background,#fff3cd,#fff3cd,#fff3cd,,,,style-block
-326,#print-filter-note,border-bottom,#e0b84a,#e0b84a,1px solid #e0b84a,,,,style-block
-326,#print-filter-note,color,#6b5000,#6b5000,#6b5000,,,,style-block
-327,.pfn-close,color,#6b5000,#6b5000,#6b5000,,,,style-block
-328,.pfn-close:hover,background,"rgba(107,80,0,.15)","rgba(107,80,0,.15)","rgba(107,80,0,.15)",,,,style-block
-332,#settings-drawer,box-shadow,"rgba(0,0,0,.25)","rgba(0,0,0,.25)","-2px 0 14px rgba(0,0,0,.25)",,,,style-block
-334,#settings-scrim,background,"rgba(10,12,30,.35)","rgba(10,12,30,.35)","rgba(10,12,30,.35)",,,,style-block
-345,.sd-cond-tag,background,#c07500,#c07500,"var(--color-status-risk,#c07500)",--color-status-risk|--color-status-risk-fill,dark,"var() fallback, toggles correctly",style-block
-352,.sd-field label,color,#445,#444455,#445,,,,style-block
-356,.ctrl-group label,color,#445,#444455,#445,,,,style-block
-373,.toggle-switch .tsw-slider:before,box-shadow,"rgba(0,0,0,.25)","rgba(0,0,0,.25)","0 1px 2px rgba(0,0,0,.25)",,,,style-block
-399,#filter-bar,box-shadow,"rgba(0,0,0,.18)","rgba(0,0,0,.18)","2px 0 14px rgba(0,0,0,.18)",--color-shadow-soft,base,matches token in all themes,style-block
-413,.id-suggest-dropdown,box-shadow,"rgba(0,0,0,.15)","rgba(0,0,0,.15)","0 4px 10px rgba(0,0,0,.15)",--color-health-rim,base,matches token in all themes,style-block
-452,.rpt-hd,color,#17191c,#17191c,"var(--color-text-ink,#17191c)",--color-text-primary|--color-text-ink|--color-text-on-panel|--color-btn-active-bg,light,"var() fallback, toggles correctly",style-block
-452,.rpt-hd,border-bottom,#e3e2de,#e3e2de,"1px solid var(--color-line-default,#e3e2de)",--color-border-panel|--color-line-default|--color-btn-inactive-border,light,"var() fallback, toggles correctly",style-block
-453,.rpt-hd .title,color,#17191c,#17191c,"var(--color-text-ink,#17191c)",--color-text-primary|--color-text-ink|--color-text-on-panel|--color-btn-active-bg,light,"var() fallback, toggles correctly",style-block
-454,.rpt-hd .title:hover,background,#f4f5f8,#f4f5f8,"var(--color-btn-hover-bg,#f4f5f8)",--color-bg-panel|--color-bg-subtle|--color-btn-hover-bg|--color-bg-subtle,dark|light,"var() fallback, toggles correctly",style-block
-455,.rpt-hd .title:focus,outline,#2f6fed,#2f6fed,"1.5px solid var(--color-status-track,#2f6fed)",--color-status-track,light,"var() fallback, toggles correctly",style-block
-455,.rpt-hd .title:focus,background,#fff,#ffffff,"var(--color-bg-elevated,#fff)",--color-bg-header|--color-bg-elevated|--color-dialog-elev|--color-btn-inactive-bg|--color-text-on-accent|--color-row-default-bg|--color-btn-primary-text|--color-btn-secondary-bg|--color-btn-active-text|--color-text-on-accent|--color-btn-primary-text|--color-health-none-fill,base|dark|light,"var() fallback, toggles correctly",style-block
-456,.rpt-hd .subtitle,color,#6f7480,#6f7480,"var(--color-text-muted,#6f7480)",--color-text-muted|--color-text-on-panel-muted|--color-btn-inactive-text,light,"var() fallback, toggles correctly",style-block
-487,tr.hdr-phase th,border-right,"rgba(255,255,255,.15)","rgba(255,255,255,.15)","0.5px solid rgba(255,255,255,.15)",,,,style-block
-488,tr.hdr-wk th,border-bottom,#99a,#9999aa,1.5px solid #99a,,,,style-block
-491,tr.hdr-wk th.past-wk,background,#e8e8e8,#e8e8e8,#e8e8e8,,,,style-block
-492,tr.hdr-wk th.past-wk:hover,background,#dcdcdc,#dcdcdc,#dcdcdc,,,,style-block
-562,"td.c-alloc,td.c-prog",background,#f7f7fa,#f7f7fa,#f7f7fa,,,,style-block
-675,#ingest-bar,border-bottom,#bcd6c8,#bcd6c8,1px solid #bcd6c8,,,,style-block
-677,#ingest-bar label,color,#245,#224455,#245,,,,style-block
-678,"#ingest-bar input[type=number],#ingest-bar input[type=date],#ingest-bar select",border,#a8c4b4,#a8c4b4,1px solid #a8c4b4,,,,style-block
-678,"#ingest-bar input[type=number],#ingest-bar input[type=date],#ingest-bar select",color,#223,#222233,#223,,,,style-block
-680,#ingest-bar .sect,color,#1a4a33,#1a4a33,#1a4a33,,,,style-block
-681,.ingest-status,color,#456,#445566,#456,,,,style-block
-682,.ingest-status.ok,color,#1a6b3a,#1a6b3a,#1a6b3a,,,,style-block
-683,.ingest-status.err,color,#b00020,#b00020,#b00020,,,,style-block
-685,#paste-box,border,#a8c4b4,#a8c4b4,1px solid #a8c4b4,,,,style-block
-686,#map-wrap,border,#bcd6c8,#bcd6c8,1px solid #bcd6c8,,,,style-block
-687,.map-hd,color,#245,#224455,#245,,,,style-block
-688,".map-hd .req,.map-cell .req",color,#b00020,#b00020,#b00020,,,,style-block
-691,.map-cell select,border,#b8c8c0,#b8c8c0,1px solid #b8c8c0,,,,style-block
-697,.import-pass.ok,color,#1a6b3a,#1a6b3a,#1a6b3a,,,,style-block
-698,.import-pass.err,color,#b00020,#b00020,#b00020,,,,style-block
-699,#diag-panel,background,#fff8f0,#fff8f0,#fff8f0,,,,style-block
-699,#diag-panel,border-bottom,#e0cdb8,#e0cdb8,1px solid #e0cdb8,,,,style-block
-702,.diag-tbl th,background,#f0e2d2,#f0e2d2,#f0e2d2,,,,style-block
-702,.diag-tbl th,border,#e0cdb8,#e0cdb8,1px solid #e0cdb8,,,,style-block
-702,.diag-tbl th,color,#5a3a1a,#5a3a1a,#5a3a1a,,,,style-block
-703,.diag-tbl td,border,#eee0d0,#eee0d0,1px solid #eee0d0,,,,style-block
-703,.diag-tbl td,color,#443,#444433,#443,,,,style-block
-704,.diag-tbl tr.dsev-err td,color,#8a0018,#8a0018,#8a0018,,,,style-block
-705,.diag-tbl tr.dsev-warn td,background,#fff6e5,#fff6e5,#fff6e5,,,,style-block
-706,.diag-none,color,#786,#778866,#786,,,,style-block
-707,.toggle-btn.diag-warn,background,#e8a020,#e8a020,#e8a020,,,,style-block
-707,.toggle-btn.diag-warn,border-color,#c88000,#c88000,#c88000,,,,style-block
-708,.toggle-btn.diag-err,border-color,#900,#990000,#900,,,,style-block
-731,.dep-comment-panel,box-shadow,"rgba(0,0,0,.3)","rgba(0,0,0,.3)","0 4px 16px rgba(0,0,0,.3)",,,,style-block
+330,#print-filter-note,background,#fff3cd,#fff3cd,#fff3cd,,,,style-block
+330,#print-filter-note,border-bottom,#e0b84a,#e0b84a,1px solid #e0b84a,,,,style-block
+330,#print-filter-note,color,#6b5000,#6b5000,#6b5000,,,,style-block
+331,.pfn-close,color,#6b5000,#6b5000,#6b5000,,,,style-block
+332,.pfn-close:hover,background,"rgba(107,80,0,.15)","rgba(107,80,0,.15)","rgba(107,80,0,.15)",,,,style-block
+336,#settings-drawer,box-shadow,"rgba(0,0,0,.25)","rgba(0,0,0,.25)","-2px 0 14px rgba(0,0,0,.25)",,,,style-block
+349,.sd-cond-tag,background,#c07500,#c07500,"var(--color-status-risk,#c07500)",--color-status-risk|--color-status-risk-fill,dark,"var() fallback, toggles correctly",style-block
+356,.sd-field label,color,#445,#444455,#445,,,,style-block
+360,.ctrl-group label,color,#445,#444455,#445,,,,style-block
+377,.toggle-switch .tsw-slider:before,box-shadow,"rgba(0,0,0,.25)","rgba(0,0,0,.25)","0 1px 2px rgba(0,0,0,.25)",,,,style-block
+403,#filter-bar,box-shadow,"rgba(0,0,0,.18)","rgba(0,0,0,.18)","2px 0 14px rgba(0,0,0,.18)",--color-shadow-soft,base,matches token in all themes,style-block
+417,.id-suggest-dropdown,box-shadow,"rgba(0,0,0,.15)","rgba(0,0,0,.15)","0 4px 10px rgba(0,0,0,.15)",--color-health-rim,base,matches token in all themes,style-block
+456,.rpt-hd,color,#17191c,#17191c,"var(--color-text-ink,#17191c)",--color-text-primary|--color-text-ink|--color-text-on-panel|--color-btn-active-bg,light,"var() fallback, toggles correctly",style-block
+456,.rpt-hd,border-bottom,#e3e2de,#e3e2de,"1px solid var(--color-line-default,#e3e2de)",--color-border-panel|--color-line-default|--color-btn-inactive-border,light,"var() fallback, toggles correctly",style-block
+457,.rpt-hd .title,color,#17191c,#17191c,"var(--color-text-ink,#17191c)",--color-text-primary|--color-text-ink|--color-text-on-panel|--color-btn-active-bg,light,"var() fallback, toggles correctly",style-block
+458,.rpt-hd .title:hover,background,#f4f5f8,#f4f5f8,"var(--color-btn-hover-bg,#f4f5f8)",--color-bg-panel|--color-bg-subtle|--color-btn-hover-bg|--color-bg-subtle,dark|light,"var() fallback, toggles correctly",style-block
+459,.rpt-hd .title:focus,outline,#2f6fed,#2f6fed,"1.5px solid var(--color-status-track,#2f6fed)",--color-status-track,light,"var() fallback, toggles correctly",style-block
+459,.rpt-hd .title:focus,background,#fff,#ffffff,"var(--color-bg-elevated,#fff)",--color-bg-header|--color-bg-elevated|--color-dialog-elev|--color-btn-inactive-bg|--color-text-on-accent|--color-row-default-bg|--color-btn-primary-text|--color-btn-secondary-bg|--color-btn-active-text|--color-text-on-accent|--color-btn-primary-text|--color-health-none-fill,base|dark|light,"var() fallback, toggles correctly",style-block
+460,.rpt-hd .subtitle,color,#6f7480,#6f7480,"var(--color-text-muted,#6f7480)",--color-text-muted|--color-text-on-panel-muted|--color-btn-inactive-text,light,"var() fallback, toggles correctly",style-block
+491,tr.hdr-phase th,border-right,"rgba(255,255,255,.15)","rgba(255,255,255,.15)","0.5px solid rgba(255,255,255,.15)",,,,style-block
+492,tr.hdr-wk th,border-bottom,#99a,#9999aa,1.5px solid #99a,,,,style-block
+495,tr.hdr-wk th.past-wk,background,#e8e8e8,#e8e8e8,#e8e8e8,,,,style-block
+496,tr.hdr-wk th.past-wk:hover,background,#dcdcdc,#dcdcdc,#dcdcdc,,,,style-block
+546,.mnt-dot-empty,box-shadow,#334,#333344,inset 0 0 0 1px var(--color-text-faint),--color-text-small,dark,theme-blind (dark-only),style-block
+618,"td.c-alloc,td.c-prog",background,#f7f7fa,#f7f7fa,#f7f7fa,,,,style-block
+731,#ingest-bar,border-bottom,#bcd6c8,#bcd6c8,1px solid #bcd6c8,,,,style-block
+733,#ingest-bar label,color,#245,#224455,#245,,,,style-block
+734,"#ingest-bar input[type=number],#ingest-bar input[type=date],#ingest-bar select",border,#a8c4b4,#a8c4b4,1px solid #a8c4b4,,,,style-block
+734,"#ingest-bar input[type=number],#ingest-bar input[type=date],#ingest-bar select",color,#223,#222233,#223,,,,style-block
+736,#ingest-bar .sect,color,#1a4a33,#1a4a33,#1a4a33,,,,style-block
+737,.ingest-status,color,#456,#445566,#456,,,,style-block
+738,.ingest-status.ok,color,#1a6b3a,#1a6b3a,#1a6b3a,,,,style-block
+739,.ingest-status.err,color,#b00020,#b00020,#b00020,,,,style-block
+741,#paste-box,border,#a8c4b4,#a8c4b4,1px solid #a8c4b4,,,,style-block
+742,#map-wrap,border,#bcd6c8,#bcd6c8,1px solid #bcd6c8,,,,style-block
+743,.map-hd,color,#245,#224455,#245,,,,style-block
+744,".map-hd .req,.map-cell .req",color,#b00020,#b00020,#b00020,,,,style-block
+747,.map-cell select,border,#b8c8c0,#b8c8c0,1px solid #b8c8c0,,,,style-block
+753,.import-pass.ok,color,#1a6b3a,#1a6b3a,#1a6b3a,,,,style-block
+754,.import-pass.err,color,#b00020,#b00020,#b00020,,,,style-block
+755,#diag-panel,background,#fff8f0,#fff8f0,#fff8f0,,,,style-block
+755,#diag-panel,border-bottom,#e0cdb8,#e0cdb8,1px solid #e0cdb8,,,,style-block
+758,.diag-tbl th,background,#f0e2d2,#f0e2d2,#f0e2d2,,,,style-block
+758,.diag-tbl th,border,#e0cdb8,#e0cdb8,1px solid #e0cdb8,,,,style-block
+758,.diag-tbl th,color,#5a3a1a,#5a3a1a,#5a3a1a,,,,style-block
+759,.diag-tbl td,border,#eee0d0,#eee0d0,1px solid #eee0d0,,,,style-block
+759,.diag-tbl td,color,#443,#444433,#443,,,,style-block
+760,.diag-tbl tr.dsev-err td,color,#8a0018,#8a0018,#8a0018,,,,style-block
+761,.diag-tbl tr.dsev-warn td,background,#fff6e5,#fff6e5,#fff6e5,,,,style-block
+762,.diag-none,color,#786,#778866,#786,,,,style-block
+763,.toggle-btn.diag-warn,background,#e8a020,#e8a020,#e8a020,,,,style-block
+763,.toggle-btn.diag-warn,border-color,#c88000,#c88000,#c88000,,,,style-block
+764,.toggle-btn.diag-err,border-color,#900,#990000,#900,,,,style-block
+787,.dep-comment-panel,box-shadow,"rgba(0,0,0,.3)","rgba(0,0,0,.3)","0 4px 16px rgba(0,0,0,.3)",,,,style-block
