@@ -21,6 +21,7 @@
 | TEST-15 | 2026-09-10 | Import failure handling: what the UI does when a file cannot be read, and whether a failure clears the previous file's state | Real `File` objects through `handleFile()` in headless Chromium, with the SheetJS CDN unreachable | **Pass after fix** — 4/4 cases; reproduced the reported symptom first | TD-34, TD-35 (both closed same pass), TD-36 |
 | TEST-16 | 2026-09-10 | Read-error diagnosis: does each `FileReader` `DOMException` produce its own cause and remedy, and does a transient failure recover on retry | `FileReader` stubbed to force a named exception a set number of times | **Pass** — 4 error names each diagnosed, retry recovers silently | TD-37, TD-38 (both closed same pass) |
 | TEST-17 | 2026-09-10 | Data date: placement under step 1, label, previous-Friday default across every weekday and at month/year boundaries, and that editing still drives ingest | Node for the date arithmetic, headless DOM probe for placement and wiring | **Pass** — 7/7 weekdays, 3/3 boundaries, field visible with no file loaded | TD-39 (closed same pass) |
+| TEST-18 | 2026-09-10 | Does a real click on the Import button complete an import, and is the form correctly torn down afterwards | Real `.click()` on the rendered button, in a normal page and inside an `about:srcdoc` iframe matching the user's viewer | **Pass after fix** — reproduced the stale form; second press now impossible | TD-40 (closed same pass) |
 
 ### TEST-13 detail
 
@@ -305,6 +306,46 @@ mirrors into the hidden one (`2026-08-28` in, `2026-08-28` out).
 **One probe assertion was wrong, not the code.** A check for "no stale `2026-07-29`
 literal" scanned the whole document and failed on a genuine baseline milestone
 date (SNIP-110) and on the explanatory comment. The default itself is computed.
+
+### TEST-18 detail
+
+Reported as "Import button doesn't click", with a screenshot showing the status
+line reading a **completed** build ("Built 105 deliverables / 146 milestones
+from 146 activities") while the form below still read "Ready to import" with
+Discard and Import. Those two states are contradictory under the code as
+written, which is what pointed at the defect.
+
+**A real click was tested, not a direct call to `runIngest()`.** In a normal
+page it worked: 159 tasks to 105, `DATA_SOURCE.mode` baseline to update, 105
+rows rendered, no errors. So the button and its handler were never broken.
+
+The screenshot's page was `about:srcdoc`, so the same test was run inside an
+iframe with the app in `srcdoc`, matching the viewer:
+
+| Measure | Before fix | After fix |
+|---|---|---|
+| Import completes on click | yes (159 to 105) | yes (159 to 105) |
+| `map-wrap-section` hidden afterwards | yes | yes |
+| **"Ready to import" panel cleared** | **no** | **yes** |
+| Import button still present afterwards | **yes** | no |
+| Second press | does nothing | not possible |
+| Uncaught errors | none | none |
+
+`runIngest()` hid the mapper and nulled `LAST_PARSE` but never cleared
+`import-summary-wrap`; `cancelIngest()` did. So a finished import looked
+unfinished, and pressing Import again hit `if(!LAST_PARSE)` and returned
+silently. The first press had worked.
+
+`runIngest()` with nothing staged now reports which file is already mounted
+rather than "Nothing parsed yet.", verified by calling it bare after a
+successful import: it explains itself and leaves the 105 tasks untouched.
+
+**The `Uncaught TypeError: Cannot set properties of null (setting 'onclick')` in
+the screenshot is not from this app.** It is reported at `about:srcdoc:6806`;
+the file is 5935 lines, and the app's only two `.onclick=` assignments are both
+made on elements created by `createElement` in the same statement, so neither
+can be null. Reproducing the app inside a `srcdoc` iframe produced no errors at
+all. The error comes from the viewer's own injected script.
 
 ### TEST-05 detail
 
@@ -650,5 +691,6 @@ Source file shape confirmed by static inspection of the workbook: 192 data rows,
 | 2026-09-10 | TEST-15 import failure handling, 4/4 cases; baseline render unchanged; theme check clean at 48 probes | `.xlsx` import still depends on reaching the SheetJS CDN and is impossible without it (TD-36, open) | File distribution | v3.1.0-P10 |
 | 2026-09-10 | TEST-16 read-error diagnosis and retry; TEST-15 re-run 4/4; baseline unchanged; theme check 49 probes | The user's own failure is not yet confirmed resolved — P11 names the cause, it does not remove it | File distribution | v3.1.0-P11 |
 | 2026-09-10 | TEST-17 data date placement, default and wiring; full suite re-run; baseline unchanged; theme check 49 probes | Previous-Friday rule returns the week before when today is a Friday, by design (see TEST-17) | File distribution | v3.1.0-P12 |
+| 2026-09-10 | TEST-18 real Import click in a normal page and in an `about:srcdoc` iframe; full suite re-run; baseline unchanged; theme check 49 probes | The viewer-injected `onclick` TypeError is outside this app and is not addressed here | File distribution | v3.1.0-P13 |
 | Pre-migration | TEST-01 full feature regression | Banding (FEAT-10), sorting/icon customisation (FEAT-11), JSON round-trip (FEAT-13) all knowingly not built. Tokenization (FEAT-14) knowingly incomplete. Label collision same-row only. Header aliases exact-match only. | File distribution | v3.1.0-P1 |
 | 2026-09-09 | Migration to git repository, project kit established | TD-01 version discrepancy open; companion tokenization docs (TD-03) not yet located | Branch `p6-milestone-dashboard` | Migration commit |
