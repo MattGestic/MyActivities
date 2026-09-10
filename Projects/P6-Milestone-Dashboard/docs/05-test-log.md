@@ -22,6 +22,7 @@
 | TEST-16 | 2026-09-10 | Read-error diagnosis: does each `FileReader` `DOMException` produce its own cause and remedy, and does a transient failure recover on retry | `FileReader` stubbed to force a named exception a set number of times | **Pass** — 4 error names each diagnosed, retry recovers silently | TD-37, TD-38 (both closed same pass) |
 | TEST-17 | 2026-09-10 | Data date: placement under step 1, label, previous-Friday default across every weekday and at month/year boundaries, and that editing still drives ingest | Node for the date arithmetic, headless DOM probe for placement and wiring | **Pass** — 7/7 weekdays, 3/3 boundaries, field visible with no file loaded | TD-39 (closed same pass) |
 | TEST-18 | 2026-09-10 | Does a real click on the Import button complete an import, and is the form correctly torn down afterwards | Real `.click()` on the rendered button, in a normal page and inside an `about:srcdoc` iframe matching the user's viewer | **Pass after fix** — reproduced the stale form; second press now impossible | TD-40 (closed same pass) |
+| TEST-19 | 2026-09-10 | Publish round trip: does a published file open cold with the schedule, timeline and annotations already in place, and does it carry nothing it should not | Publish captured at the Blob boundary, written to disk, then loaded as a separate page | **Pass after two fixes** | TD-41, TD-42 (both closed same pass), TD-43, TD-44 |
 
 ### TEST-13 detail
 
@@ -346,6 +347,55 @@ the file is 5935 lines, and the app's only two `.onclick=` assignments are both
 made on elements created by `createElement` in the same statement, so neither
 can be null. Reproducing the app inside a `srcdoc` iframe produced no errors at
 all. The error comes from the viewer's own injected script.
+
+### TEST-19 detail
+
+The publish path is only meaningful end to end, so the test publishes a file,
+writes it to disk, and opens **that file** as a separate page. Nothing is
+asserted about the publishing page.
+
+**Round trip, measured on the published file at load:**
+
+| Assertion | Result |
+|---|---|
+| Deliverables / milestones | 105 / 146, matching what was published |
+| Rows rendered from a cold start | 105 |
+| Markers rendered | 143 |
+| Timeline preserved | 39 week columns, now-column 14 |
+| `BASELINE_TIMELINE` replaced, not just the live one | 39 labels |
+| Data date field | 2026-08-29, the published date |
+| Comments / health / short titles / dependency visibility | 1 / 1 / 1 / 1 |
+| Import form offered on load | no |
+| Uncaught errors | none |
+| Script tags in the file | 2 (`#app-script`, `#published-state`) |
+| Tab title still carries `APP_VERSION` | yes |
+
+Published size 530 KB against a 435 KB source; the state block is ~94 KB.
+
+**Two defects found, both real, both raised.**
+
+**TD-41.** `const MS_COMMENTS={}` was declared *after* the init block, so
+`applyPublishedState()` — called from init — hit a temporal dead zone on it and
+threw. The catch turned that into a partial restore: the timeline, tasks and
+source applied, everything after the throw did not. The board looked correct
+while the data date field and published metadata were quietly wrong. Second
+instance of the class TD-30 raised.
+
+**TD-42.** `publishDashboard()` cloned every `script` element in the DOM. Any
+script injected by a browser extension, a document viewer wrapper, or a
+debugging snippet would be **baked into a file that then gets uploaded to
+SharePoint and opened by other people**. The app's script now carries
+`id="app-script"` and publish drops every other script, logging the count.
+
+**A long detour worth recording.** The page title in the published file kept
+losing its version, and this was investigated as a product defect across several
+rounds — top-level error capture, a `document.title` property trap, isolating
+the state block. The cause was the test harness: `import_check.py` injects its
+script into the page, publish cloned the live DOM, and the harness therefore
+ended up inside the published file and re-ran on load, calling `setReportTitle`
+and overwriting a title the product had set correctly. The harness was proving
+the feature worked and breaking it in the same step. It was only worth the cost
+because it exposed TD-42 underneath.
 
 ### TEST-05 detail
 
@@ -692,5 +742,6 @@ Source file shape confirmed by static inspection of the workbook: 192 data rows,
 | 2026-09-10 | TEST-16 read-error diagnosis and retry; TEST-15 re-run 4/4; baseline unchanged; theme check 49 probes | The user's own failure is not yet confirmed resolved — P11 names the cause, it does not remove it | File distribution | v3.1.0-P11 |
 | 2026-09-10 | TEST-17 data date placement, default and wiring; full suite re-run; baseline unchanged; theme check 49 probes | Previous-Friday rule returns the week before when today is a Friday, by design (see TEST-17) | File distribution | v3.1.0-P12 |
 | 2026-09-10 | TEST-18 real Import click in a normal page and in an `about:srcdoc` iframe; full suite re-run; baseline unchanged; theme check 49 probes | The viewer-injected `onclick` TypeError is outside this app and is not addressed here | File distribution | v3.1.0-P13 |
+| 2026-09-10 | TEST-19 publish round trip on a real published file; full suite re-run; baseline unchanged; theme check 49 probes | A published file still carries the original seeds as a fallback and is larger than needed (TD-43); readers can republish from a published file (TD-44, undecided); the SharePoint upload itself is not yet exercised with a real library | File distribution | v3.1.0-P14 |
 | Pre-migration | TEST-01 full feature regression | Banding (FEAT-10), sorting/icon customisation (FEAT-11), JSON round-trip (FEAT-13) all knowingly not built. Tokenization (FEAT-14) knowingly incomplete. Label collision same-row only. Header aliases exact-match only. | File distribution | v3.1.0-P1 |
 | 2026-09-09 | Migration to git repository, project kit established | TD-01 version discrepancy open; companion tokenization docs (TD-03) not yet located | Branch `p6-milestone-dashboard` | Migration commit |

@@ -32,7 +32,7 @@ Status baseline is the delivered v3.1.0-P1 build. Features marked `Published` we
 | FEAT-09 | EPIC-01 | Ingest diagnostics panel | US-17 | M | L | Published | Collapsible, hidden entirely when empty. |
 | FEAT-10 | EPIC-07 | Banding / row-collections (user-reorderable grouping) | US-18 | M | H | Not started | Fully specced. Phase 1 auto-derivation not begun. Assume none of it exists. |
 | FEAT-11 | EPIC-07 | Row sorting + per-type icon customisation | US-19 | L | M | Not started | Labelled "Future" in the UI. Genuinely not built, not partially built. |
-| FEAT-12 | EPIC-08 | Single-file zero-dependency distribution | US-20 | H | L | Published | Constraint, not a feature to be traded away. |
+| FEAT-12 | EPIC-08 | Single-file zero-dependency distribution | US-20 | H | L | Published | Constraint, not a feature to be traded away. v3.1.0-P14 adds publishing: the app writes a new standalone file with the current schedule built in, which is how a SharePoint-hosted copy carries its schedule to other readers. |
 | FEAT-13 | EPIC-05 | Import previously exported JSON model (round-trip) | US-16 | M | M | Dev — annotation layer done at v3.1.0-P9, schedule rehydration not built | Six independently selectable categories, validated on payload identity rather than filename. `tasks`/`milestones`/`timeline` are in the payload but do not rebuild the board (TD-32). |
 | FEAT-14 | EPIC-06 | Tokenization retrofit (colour / spacing / text) | — | M | **H** | Dev — theme-blind class complete, Phase 1/2 and spacing/text outstanding | Complexity raised from M on 2026-09-09: the corrected audit shows materially more remaining work than v1 reported. Never state counts here — read the Measurement Log's latest row per metric. Follow the Token Migration Log methodology, do not restart. |
 | FEAT-15 | EPIC-08 | Git repository migration + project kit | — | H | L | Published | Orphan branch `p6-milestone-dashboard` as the app's main. Tagged `v3.1.0-P1`. |
@@ -84,6 +84,9 @@ Status baseline is the delivered v3.1.0-P1 build. Features marked `Published` we
 | TASK-43 | FEAT-02 | Retry a failed file read once before reporting | Done | TD-38. v3.1.0-P11. Covers transient OneDrive hydration and antivirus locks. |
 | TASK-44 | FEAT-02 | Move the data date under step 1, relabel it, default to the previous Friday | Done | TD-39. v3.1.0-P12. Was hidden until a file loaded and defaulted to a stale literal. |
 | TASK-45 | FEAT-02 | Clear the import form on a successful ingest, not only on discard | Done | TD-40. v3.1.0-P13. |
+| TASK-46 | FEAT-12 | Publish: write a new standalone dashboard with the current schedule and annotations built in | Done | v3.1.0-P14. Satisfies the SharePoint requirement without breaking the single-file constraint. |
+| TASK-47 | FEAT-12 | Strip foreign scripts from a published file | Done | TD-42. Only `#app-script` travels. |
+| TASK-48 | FEAT-12 | Decide whether a published file should be able to republish itself | Open | TD-44. |
 | TASK-13 | FEAT-16 | Promote the two general lessons (verification methodology, append-only measurement logs) to repository governance | Done | Applied on `main-projects-hub`. |
 | TASK-07 | FEAT-02 | Decide whether `headerAliases` should move from exact-match to fuzzy | Open | Accepted gap today. `"BL1 Start"` will not match a `"bl start"` alias. Primary `Start`/`Finish` cover the core need. |
 | TASK-08 | FEAT-03 | Multi-line short-title vertical bleed into neighbouring rows | Open | Separate, smaller problem than the same-row collision system. |
