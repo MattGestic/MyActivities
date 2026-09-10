@@ -82,6 +82,7 @@ Status baseline is the delivered v3.1.0-P1 build. Features marked `Published` we
 | TASK-41 | FEAT-02, FEAT-12 | Decide how `.xlsx` import behaves when the SheetJS CDN is unreachable | Open | TD-36. The only dependency that can remove a whole input format. |
 | TASK-42 | FEAT-02 | Report the real `FileReader` DOMException and its remedy instead of a generic message | Done | TD-37. v3.1.0-P11. |
 | TASK-43 | FEAT-02 | Retry a failed file read once before reporting | Done | TD-38. v3.1.0-P11. Covers transient OneDrive hydration and antivirus locks. |
+| TASK-44 | FEAT-02 | Move the data date under step 1, relabel it, default to the previous Friday | Done | TD-39. v3.1.0-P12. Was hidden until a file loaded and defaulted to a stale literal. |
 | TASK-13 | FEAT-16 | Promote the two general lessons (verification methodology, append-only measurement logs) to repository governance | Done | Applied on `main-projects-hub`. |
 | TASK-07 | FEAT-02 | Decide whether `headerAliases` should move from exact-match to fuzzy | Open | Accepted gap today. `"BL1 Start"` will not match a `"bl start"` alias. Primary `Start`/`Finish` cover the core need. |
 | TASK-08 | FEAT-03 | Multi-line short-title vertical bleed into neighbouring rows | Open | Separate, smaller problem than the same-row collision system. |

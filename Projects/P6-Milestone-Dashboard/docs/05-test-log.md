@@ -20,6 +20,7 @@
 | TEST-14 | 2026-09-10 | Mount manager (three slots, unmount/remount), model export identity and naming, payload validation, and selective annotation import | `tools/import_check.py` harness driving the real panel, export and validator; export round-tripped back through its own validator | **Pass** — 3/3 slots, 5/5 rejection cases, selective import isolates a single category | TD-30 (closed same pass), TD-31, TD-32, TD-33 |
 | TEST-15 | 2026-09-10 | Import failure handling: what the UI does when a file cannot be read, and whether a failure clears the previous file's state | Real `File` objects through `handleFile()` in headless Chromium, with the SheetJS CDN unreachable | **Pass after fix** — 4/4 cases; reproduced the reported symptom first | TD-34, TD-35 (both closed same pass), TD-36 |
 | TEST-16 | 2026-09-10 | Read-error diagnosis: does each `FileReader` `DOMException` produce its own cause and remedy, and does a transient failure recover on retry | `FileReader` stubbed to force a named exception a set number of times | **Pass** — 4 error names each diagnosed, retry recovers silently | TD-37, TD-38 (both closed same pass) |
+| TEST-17 | 2026-09-10 | Data date: placement under step 1, label, previous-Friday default across every weekday and at month/year boundaries, and that editing still drives ingest | Node for the date arithmetic, headless DOM probe for placement and wiring | **Pass** — 7/7 weekdays, 3/3 boundaries, field visible with no file loaded | TD-39 (closed same pass) |
 
 ### TEST-13 detail
 
@@ -261,6 +262,49 @@ The TEST-15 suite was re-run and initially showed two cases failing again. Same
 `FileReader` virtual-time artifact as before, now needing a longer wait because
 the sequence is longer. At 4000ms all four are correct. Recorded a second time
 because it has now misled twice.
+
+### TEST-17 detail
+
+**Placement.** Measured on the rendered DOM, not from the markup:
+
+| Assertion | Result |
+|---|---|
+| Label | "Data date" |
+| Inside the Import section | yes |
+| Inside `advanced-input-wrap` (hidden until a file loads) | no |
+| Visible with no file loaded | **yes** (previously not) |
+| Precedes Report date | yes |
+| Precedes the file picker | yes |
+
+**Previous-Friday default.** The arithmetic was checked across a whole week and
+across boundaries rather than on one sample date:
+
+| Day | Resolves to | Days back |
+|---|---|---|
+| Sun 6 Sep | Fri 4 Sep | 2 |
+| Mon 7 Sep | Fri 4 Sep | 3 |
+| Tue 8 Sep | Fri 4 Sep | 4 |
+| Wed 9 Sep | Fri 4 Sep | 5 |
+| Thu 10 Sep | Fri 4 Sep | 6 |
+| **Fri 11 Sep** | **Fri 4 Sep** | **7** |
+| Sat 12 Sep | Fri 11 Sep | 1 |
+
+Month and year boundaries: 1 Jan 2026 → 26 Dec 2025; 1 Mar 2026 → 27 Feb 2026;
+3 Jan 2027 → 1 Jan 2027.
+
+**Assumption, stated because it is a real choice.** "Previous Friday" is read as
+the most recent Friday *strictly before* today, so on a Friday it returns the
+week before. A weekly update is cut to the week just closed, and that day's own
+update does not exist yet in the morning. A project that cuts its update on
+Friday itself would want same-day instead.
+
+**Wiring.** The visible field and the hidden `cfg-datadate` the ingest reads both
+initialise to the computed default and match; editing the visible field still
+mirrors into the hidden one (`2026-08-28` in, `2026-08-28` out).
+
+**One probe assertion was wrong, not the code.** A check for "no stale `2026-07-29`
+literal" scanned the whole document and failed on a genuine baseline milestone
+date (SNIP-110) and on the explanatory comment. The default itself is computed.
 
 ### TEST-05 detail
 
@@ -605,5 +649,6 @@ Source file shape confirmed by static inspection of the workbook: 192 data rows,
 | 2026-09-10 | TEST-14 mount manager, export identity, validation and selective import; baseline render unchanged; theme check clean at 45 probes | Round trip covers the annotation layer only (TD-32); unmounting annotations does not roll back imported values (TD-31); two low-contrast tokens still need a sweep across their other consumers (TD-33) | File distribution | v3.1.0-P9 |
 | 2026-09-10 | TEST-15 import failure handling, 4/4 cases; baseline render unchanged; theme check clean at 48 probes | `.xlsx` import still depends on reaching the SheetJS CDN and is impossible without it (TD-36, open) | File distribution | v3.1.0-P10 |
 | 2026-09-10 | TEST-16 read-error diagnosis and retry; TEST-15 re-run 4/4; baseline unchanged; theme check 49 probes | The user's own failure is not yet confirmed resolved — P11 names the cause, it does not remove it | File distribution | v3.1.0-P11 |
+| 2026-09-10 | TEST-17 data date placement, default and wiring; full suite re-run; baseline unchanged; theme check 49 probes | Previous-Friday rule returns the week before when today is a Friday, by design (see TEST-17) | File distribution | v3.1.0-P12 |
 | Pre-migration | TEST-01 full feature regression | Banding (FEAT-10), sorting/icon customisation (FEAT-11), JSON round-trip (FEAT-13) all knowingly not built. Tokenization (FEAT-14) knowingly incomplete. Label collision same-row only. Header aliases exact-match only. | File distribution | v3.1.0-P1 |
 | 2026-09-09 | Migration to git repository, project kit established | TD-01 version discrepancy open; companion tokenization docs (TD-03) not yet located | Branch `p6-milestone-dashboard` | Migration commit |
