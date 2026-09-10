@@ -12,6 +12,7 @@
 | TEST-06 | 2026-09-09 | Post-change regression: does the dashboard still render the baked-in baseline unchanged after the tokenization pass and version bump | Headless Chromium render, DOM assertion | Pass | TD-10 raised from the finding below |
 | TEST-07 | 2026-09-10 | Board tokenization: do rows, columns, marker labels, icons and status toggle correctly, and does any text lose contrast against its own background | `tools/theme_check.py` with board probes + WCAG contrast, EARS | Pass after one revert | None outstanding |
 | TEST-08 | 2026-09-10 | Post-change regression after the v3.1.0-P3 board pass | Headless Chromium render, DOM assertion | Pass | None |
+| TEST-09 | 2026-09-10 | Row model: one row per deliverable, stage chains collapsed. Run against two independent datasets, the PFS `.xlsx` and a 2857-activity EPCM `.xer` | `tools/import_check.py` + `tools/xer_to_aoa.py`, EARS | **Pass on PFS, no effect on EPCM** | TD-20 |
 
 ### TEST-05 detail
 
@@ -77,6 +78,36 @@ The genuine finding sits underneath it. `DEP_DATA` is a **baked-in constant pars
 #### Worth a look, not a failure
 
 The import yields 38 deliverable groups from 146 activities, against 159 groups in the baseline. Roughly 3.8 milestones per group versus 1.2. That may be correct given `minGroupSize` and a different source export, but it is a large enough shape change to be worth confirming against expectation. Raised as TD-18.
+
+### TEST-09 detail
+
+New row model: band is the deepest heading; within a band, activities sharing a deliverable stem collapse into one row **only** when corroborated, either by a finish-to-start link between them or by every member differing purely by a recognised stage phrase.
+
+| Dataset | Activities | Bands | Rows | Chains collapsed |
+|---|---|---|---|---|
+| PFS `.xlsx` (29-Aug-26) | 146 | 38 | **115** | 15 |
+| EPCM `.xer` (WE 2026.8.14) | 2857 | 449 | **2856** | 1 |
+
+PFS marker distribution: 100 rows with 1 marker, 6 with 2, 2 with 3, 7 with 4. The 4-marker rows are exactly the review sequences (`Process Design Criteria`, `PFD`, `Mass and Water Balance`, `MEL`), each carrying 8 corroborating finish-to-start links.
+
+`Predecessor Details` and `Successor Details` now auto-map: header score rose from 5 to 7. TD-16's ingest half is done.
+
+**The EPCM result is the finding.** The rule does essentially nothing on construction data, because construction activities are not named by review stage. Measured directly: the largest bands carry **zero** in-band finish-to-start edges (87 items / 0 edges, 52 / 0, 48 / 0, 44 / 0).
+
+Those activities are heavily sequenced, just not along the band axis. Grouping instead by the equipment tag embedded in the Activity ID (`CN-3110ST001-C1050`) finds the real chains:
+
+| Tag | Activities | Bands spanned | Internal FS links |
+|---|---|---|---|
+| `3110ST001` | 76 | 14 | 85 |
+| `4130ML001` | 68 | 7 | 87 |
+| `4110ST001` | 67 | 12 | 76 |
+| `4250ST002` | 63 | 15 | 74 |
+
+So the sequential structure the rule was meant to exploit is present, but it runs **across** bands rather than within one, and a 76-activity row would be worse than the problem being solved. Only 1285 of 2857 activities (70 tags) carry a recognisable tag at all.
+
+Left as an open design question (TD-20) rather than guessed at. The PFS behaviour is correct and shipped; the EPCM axis needs a decision.
+
+**Baseline regression:** unchanged at 163 rows / 196 markers / 159 tasks / 198 milestones, because the baked-in baseline bypasses `aggregate()` entirely. Theme check still 33 toggling, 0 frozen, 0 low-contrast.
 
 ### TEST-07 detail
 
@@ -226,5 +257,6 @@ Source file shape confirmed by static inspection of the workbook: 192 data rows,
 |---|---|---|---|---|
 | 2026-09-09 | TEST-05 theme toggle (0 frozen of 16), TEST-06 render regression (163 rows / 196 markers / 159 tasks / 198 milestones unchanged), single version literal asserted | Colour occurrences with no token match not yet triaged; spacing and text tokens untouched; board phase bands, discipline band rows, marker icon states and remarks field states still not tokenized | File distribution | v3.1.0-P2 |
 | 2026-09-10 | TEST-07 board toggle and contrast (33 toggling, 0 frozen, 0 below 3.0:1), TEST-08 render regression unchanged | Spacing and text tokens still untouched; colours outside the board with no token match not triaged; discipline band rows still not tokenized; hover and focus states are not probed headlessly | File distribution | v3.1.0-P3 |
+| 2026-09-10 | TEST-09 row model on two datasets; baseline render unchanged; theme check clean | EPCM/construction schedules gain nothing from the rule (TD-20 open); XER is converted by an external tool, not ingested by the app (TD-21) | File distribution | v3.1.0-P4 |
 | Pre-migration | TEST-01 full feature regression | Banding (FEAT-10), sorting/icon customisation (FEAT-11), JSON round-trip (FEAT-13) all knowingly not built. Tokenization (FEAT-14) knowingly incomplete. Label collision same-row only. Header aliases exact-match only. | File distribution | v3.1.0-P1 |
 | 2026-09-09 | Migration to git repository, project kit established | TD-01 version discrepancy open; companion tokenization docs (TD-03) not yet located | Branch `p6-milestone-dashboard` | Migration commit |

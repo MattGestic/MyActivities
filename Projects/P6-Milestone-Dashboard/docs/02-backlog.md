@@ -59,6 +59,10 @@ Status baseline is the delivered v3.1.0-P1 build. Features marked `Published` we
 | TASK-19 | FEAT-02 | Build a committed ingest harness (`tools/import_check.py`) and run TEST-02 against the reference export | Done | Drives the real pipeline; stubs only the SheetJS boundary, faithfully reproducing `raw:false` number formatting. |
 | TASK-20 | FEAT-04 | Read Predecessor/Successor columns on import instead of relying on baked-in `DEP_DATA` | Open | TD-16. Needs a mapper field pair and a `normalise` change. |
 | TASK-21 | FEAT-02 | Decide and implement handling for a constrained (`*`) finish date | Open | TD-15. Currently parsed then discarded. |
+| TASK-22 | FEAT-02 | Ingest Predecessor/Successor columns (mapper field, aliases, normalise) | Done | v3.1.0-P4. Header score 5 to 7 on the reference export. |
+| TASK-23 | FEAT-03 | Row model: one row per deliverable, stage chains collapsed with dependency corroboration | Done | v3.1.0-P4. PFS 146 activities to 115 rows. |
+| TASK-24 | FEAT-02 | XER extractor (`tools/xer_to_aoa.py`) for testing against real EPCM schedules | Done | Standalone tool, not app code. TD-21 covers in-app ingest. |
+| TASK-25 | FEAT-10 | Aggregation axis for EPCM/construction schedules | Open | TD-20. Blocks useful row grouping on anything but engineering-deliverable schedules. |
 | TASK-13 | FEAT-16 | Promote the two general lessons (verification methodology, append-only measurement logs) to repository governance | Done | Applied on `main-projects-hub`. |
 | TASK-07 | FEAT-02 | Decide whether `headerAliases` should move from exact-match to fuzzy | Open | Accepted gap today. `"BL1 Start"` will not match a `"bl start"` alias. Primary `Start`/`Finish` cover the core need. |
 | TASK-08 | FEAT-03 | Multi-line short-title vertical bleed into neighbouring rows | Open | Separate, smaller problem than the same-row collision system. |
