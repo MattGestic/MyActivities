@@ -13,6 +13,7 @@
 | TEST-07 | 2026-09-10 | Board tokenization: do rows, columns, marker labels, icons and status toggle correctly, and does any text lose contrast against its own background | `tools/theme_check.py` with board probes + WCAG contrast, EARS | Pass after one revert | None outstanding |
 | TEST-08 | 2026-09-10 | Post-change regression after the v3.1.0-P3 board pass | Headless Chromium render, DOM assertion | Pass | None |
 | TEST-09 | 2026-09-10 | Row model: one row per deliverable, stage chains collapsed. Run against two independent datasets, the PFS `.xlsx` and a 2857-activity EPCM `.xer` | `tools/import_check.py` + `tools/xer_to_aoa.py`, EARS | **Pass on PFS, no effect on EPCM** | TD-20 |
+| TEST-10 | 2026-09-10 | Mixed row-aggregation strategies selected per band (stage / tag / area / system / activity), against both datasets | `tools/import_check.py` + `tools/xer_to_aoa.py`, EARS | **Pass** — PFS unchanged at 115 rows, EPCM 2857 to 1948 | None outstanding |
 
 ### TEST-05 detail
 
@@ -78,6 +79,40 @@ The genuine finding sits underneath it. `DEP_DATA` is a **baked-in constant pars
 #### Worth a look, not a failure
 
 The import yields 38 deliverable groups from 146 activities, against 159 groups in the baseline. Roughly 3.8 milestones per group versus 1.2. That may be correct given `minGroupSize` and a different source export, but it is a large enough shape change to be worth confirming against expectation. Raised as TD-18.
+
+### TEST-10 detail
+
+One rule does not fit every schedule, so a strategy is now chosen per band from what that band's activities actually carry, rather than assumed.
+
+| Strategy | Key | Chosen when |
+|---|---|---|
+| `tag` | equipment/structure tag in the Activity ID | at least half the band's activities carry one |
+| `system` | process system matched in the activity name | 60%+ and band over the large-band threshold |
+| `area` | four-digit area code | 60%+ and band over the large-band threshold |
+| `stage` | deliverable stem, corroborated by a finish-to-start link or stage phrasing | fallback |
+| `activity` | one row per activity | nothing else applies |
+
+Choosing `tag` also rolls that band up from its full WBS path to its discipline, which is what lets one tag collect its stages into a single row. Keyed on the full path the same tag appears once per area and never merges.
+
+| Dataset | Activities | Rows | Bands by strategy | Max markers on a row |
+|---|---|---|---|---|
+| PFS `.xlsx` | 146 | **115** | stage 16, activity 22 | 4 |
+| EPCM `.xer` | 2857 | **1948** | tag 95, activity 208, stage 10, system 7, area 6 | 15 |
+
+PFS is byte-identical to v3.1.0-P4: 100 rows with 1 marker, 6 with 2, 2 with 3, 7 with 4. The engineering behaviour is unchanged by the addition of the construction strategies, which is the point.
+
+Discipline roll-up on the EPCM data, measured before implementation: Mechanical 267 activities to 33 rows, Electrical 359 to 30, Piping 90 to 24, Structural Steel 64 to 20, Platework 74 to 19.
+
+**Two regressions were caught by measurement during this pass and fixed, not shipped.**
+
+1. Rolling every band up to its discipline unconditionally diluted the stage ratio of engineering bands, so chains fell back to one row each and PFS rose from 115 rows to 121. The roll-up is now a consequence of choosing `tag`, never a precondition.
+2. Gating stage clustering behind a staged-fraction threshold lost real chains in mixed bands, leaving PFS at 119. Stage is self-corroborating (it merges only on a finish-to-start link or on every member differing purely by a stage phrase, and otherwise returns one row per activity), so it cannot over-merge and is now the fallback rather than `activity`. That restored 115 exactly.
+
+A row that grows past `maxRowMarkers` (15) is split by the work-type prefix of the Activity ID rather than shipped. Without it the EPCM fabrication area bucket produced a single 95-marker row, which is less readable than the ungrouped activities it replaced. 16 such splits occurred.
+
+`INGEST_CONFIG.rowStrategy` defaults to `'auto'` and can be forced to any single strategy for a schedule that does not classify cleanly.
+
+**Scope boundary:** this changes row grouping only. Sub-headings within a band, the second half of the agreed rule ("either subheadings or rows depending on numbers"), are not built. 1769 of the EPCM rows still carry a single marker, concentrated in the 208 `activity` bands.
 
 ### TEST-09 detail
 
@@ -258,5 +293,6 @@ Source file shape confirmed by static inspection of the workbook: 192 data rows,
 | 2026-09-09 | TEST-05 theme toggle (0 frozen of 16), TEST-06 render regression (163 rows / 196 markers / 159 tasks / 198 milestones unchanged), single version literal asserted | Colour occurrences with no token match not yet triaged; spacing and text tokens untouched; board phase bands, discipline band rows, marker icon states and remarks field states still not tokenized | File distribution | v3.1.0-P2 |
 | 2026-09-10 | TEST-07 board toggle and contrast (33 toggling, 0 frozen, 0 below 3.0:1), TEST-08 render regression unchanged | Spacing and text tokens still untouched; colours outside the board with no token match not triaged; discipline band rows still not tokenized; hover and focus states are not probed headlessly | File distribution | v3.1.0-P3 |
 | 2026-09-10 | TEST-09 row model on two datasets; baseline render unchanged; theme check clean | EPCM/construction schedules gain nothing from the rule (TD-20 open); XER is converted by an external tool, not ingested by the app (TD-21) | File distribution | v3.1.0-P4 |
+| 2026-09-10 | TEST-10 mixed strategies on both datasets; PFS unchanged at 115 rows; baseline render unchanged; theme check clean | Sub-headings within a band not built; 208 EPCM bands still fall back to one row per activity; discipline and system term lists are fixed rather than learned | File distribution | v3.1.0-P5 |
 | Pre-migration | TEST-01 full feature regression | Banding (FEAT-10), sorting/icon customisation (FEAT-11), JSON round-trip (FEAT-13) all knowingly not built. Tokenization (FEAT-14) knowingly incomplete. Label collision same-row only. Header aliases exact-match only. | File distribution | v3.1.0-P1 |
 | 2026-09-09 | Migration to git repository, project kit established | TD-01 version discrepancy open; companion tokenization docs (TD-03) not yet located | Branch `p6-milestone-dashboard` | Migration commit |
