@@ -23,33 +23,33 @@ line,selector,property,raw_value,normalised_value,declaration,matches_existing_t
 488,tr.hdr-wk th,border-bottom,#99a,#9999aa,1.5px solid #99a,,,,style-block
 491,tr.hdr-wk th.past-wk,background,#e8e8e8,#e8e8e8,#e8e8e8,,,,style-block
 492,tr.hdr-wk th.past-wk:hover,background,#dcdcdc,#dcdcdc,#dcdcdc,,,,style-block
-545,"td.c-alloc,td.c-prog",background,#f7f7fa,#f7f7fa,#f7f7fa,,,,style-block
-658,#ingest-bar,border-bottom,#bcd6c8,#bcd6c8,1px solid #bcd6c8,,,,style-block
-660,#ingest-bar label,color,#245,#224455,#245,,,,style-block
-661,"#ingest-bar input[type=number],#ingest-bar input[type=date],#ingest-bar select",border,#a8c4b4,#a8c4b4,1px solid #a8c4b4,,,,style-block
-661,"#ingest-bar input[type=number],#ingest-bar input[type=date],#ingest-bar select",color,#223,#222233,#223,,,,style-block
-663,#ingest-bar .sect,color,#1a4a33,#1a4a33,#1a4a33,,,,style-block
-664,.ingest-status,color,#456,#445566,#456,,,,style-block
-665,.ingest-status.ok,color,#1a6b3a,#1a6b3a,#1a6b3a,,,,style-block
-666,.ingest-status.err,color,#b00020,#b00020,#b00020,,,,style-block
-668,#paste-box,border,#a8c4b4,#a8c4b4,1px solid #a8c4b4,,,,style-block
-669,#map-wrap,border,#bcd6c8,#bcd6c8,1px solid #bcd6c8,,,,style-block
-670,.map-hd,color,#245,#224455,#245,,,,style-block
-671,".map-hd .req,.map-cell .req",color,#b00020,#b00020,#b00020,,,,style-block
-674,.map-cell select,border,#b8c8c0,#b8c8c0,1px solid #b8c8c0,,,,style-block
-680,.import-pass.ok,color,#1a6b3a,#1a6b3a,#1a6b3a,,,,style-block
-681,.import-pass.err,color,#b00020,#b00020,#b00020,,,,style-block
-682,#diag-panel,background,#fff8f0,#fff8f0,#fff8f0,,,,style-block
-682,#diag-panel,border-bottom,#e0cdb8,#e0cdb8,1px solid #e0cdb8,,,,style-block
-685,.diag-tbl th,background,#f0e2d2,#f0e2d2,#f0e2d2,,,,style-block
-685,.diag-tbl th,border,#e0cdb8,#e0cdb8,1px solid #e0cdb8,,,,style-block
-685,.diag-tbl th,color,#5a3a1a,#5a3a1a,#5a3a1a,,,,style-block
-686,.diag-tbl td,border,#eee0d0,#eee0d0,1px solid #eee0d0,,,,style-block
-686,.diag-tbl td,color,#443,#444433,#443,,,,style-block
-687,.diag-tbl tr.dsev-err td,color,#8a0018,#8a0018,#8a0018,,,,style-block
-688,.diag-tbl tr.dsev-warn td,background,#fff6e5,#fff6e5,#fff6e5,,,,style-block
-689,.diag-none,color,#786,#778866,#786,,,,style-block
-690,.toggle-btn.diag-warn,background,#e8a020,#e8a020,#e8a020,,,,style-block
-690,.toggle-btn.diag-warn,border-color,#c88000,#c88000,#c88000,,,,style-block
-691,.toggle-btn.diag-err,border-color,#900,#990000,#900,,,,style-block
-714,.dep-comment-panel,box-shadow,"rgba(0,0,0,.3)","rgba(0,0,0,.3)","0 4px 16px rgba(0,0,0,.3)",,,,style-block
+562,"td.c-alloc,td.c-prog",background,#f7f7fa,#f7f7fa,#f7f7fa,,,,style-block
+675,#ingest-bar,border-bottom,#bcd6c8,#bcd6c8,1px solid #bcd6c8,,,,style-block
+677,#ingest-bar label,color,#245,#224455,#245,,,,style-block
+678,"#ingest-bar input[type=number],#ingest-bar input[type=date],#ingest-bar select",border,#a8c4b4,#a8c4b4,1px solid #a8c4b4,,,,style-block
+678,"#ingest-bar input[type=number],#ingest-bar input[type=date],#ingest-bar select",color,#223,#222233,#223,,,,style-block
+680,#ingest-bar .sect,color,#1a4a33,#1a4a33,#1a4a33,,,,style-block
+681,.ingest-status,color,#456,#445566,#456,,,,style-block
+682,.ingest-status.ok,color,#1a6b3a,#1a6b3a,#1a6b3a,,,,style-block
+683,.ingest-status.err,color,#b00020,#b00020,#b00020,,,,style-block
+685,#paste-box,border,#a8c4b4,#a8c4b4,1px solid #a8c4b4,,,,style-block
+686,#map-wrap,border,#bcd6c8,#bcd6c8,1px solid #bcd6c8,,,,style-block
+687,.map-hd,color,#245,#224455,#245,,,,style-block
+688,".map-hd .req,.map-cell .req",color,#b00020,#b00020,#b00020,,,,style-block
+691,.map-cell select,border,#b8c8c0,#b8c8c0,1px solid #b8c8c0,,,,style-block
+697,.import-pass.ok,color,#1a6b3a,#1a6b3a,#1a6b3a,,,,style-block
+698,.import-pass.err,color,#b00020,#b00020,#b00020,,,,style-block
+699,#diag-panel,background,#fff8f0,#fff8f0,#fff8f0,,,,style-block
+699,#diag-panel,border-bottom,#e0cdb8,#e0cdb8,1px solid #e0cdb8,,,,style-block
+702,.diag-tbl th,background,#f0e2d2,#f0e2d2,#f0e2d2,,,,style-block
+702,.diag-tbl th,border,#e0cdb8,#e0cdb8,1px solid #e0cdb8,,,,style-block
+702,.diag-tbl th,color,#5a3a1a,#5a3a1a,#5a3a1a,,,,style-block
+703,.diag-tbl td,border,#eee0d0,#eee0d0,1px solid #eee0d0,,,,style-block
+703,.diag-tbl td,color,#443,#444433,#443,,,,style-block
+704,.diag-tbl tr.dsev-err td,color,#8a0018,#8a0018,#8a0018,,,,style-block
+705,.diag-tbl tr.dsev-warn td,background,#fff6e5,#fff6e5,#fff6e5,,,,style-block
+706,.diag-none,color,#786,#778866,#786,,,,style-block
+707,.toggle-btn.diag-warn,background,#e8a020,#e8a020,#e8a020,,,,style-block
+707,.toggle-btn.diag-warn,border-color,#c88000,#c88000,#c88000,,,,style-block
+708,.toggle-btn.diag-err,border-color,#900,#990000,#900,,,,style-block
+731,.dep-comment-panel,box-shadow,"rgba(0,0,0,.3)","rgba(0,0,0,.3)","0 4px 16px rgba(0,0,0,.3)",,,,style-block

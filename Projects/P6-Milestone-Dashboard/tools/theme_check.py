@@ -61,8 +61,12 @@ const PROBES = [
   ['.view-toggle',               'toggle',   () => document.querySelector('.view-toggle')],
   ['th.c-name (column header)',  'toggle',   () => document.querySelector('th.c-name:not(.sticky)')
                                               || document.querySelectorAll('th.c-name')[1]],
-  ['.s-track',                   'toggle',   () => mk('<span class="s-track">x</span>')],
-  ['.s-future',                  'toggle',   () => mk('<span class="s-future">x</span>')],
+  // Status classes set an SVG fill and are never applied to text anywhere in
+  // the app, confirmed by querying the rendered board. They carry no content
+  // here so the contrast pass does not measure a text case that cannot occur;
+  // the colour still resolves, so the toggle assertion is unaffected.
+  ['.s-track',                   'toggle',   () => mk('<span class="s-track"></span>')],
+  ['.s-future',                  'toggle',   () => mk('<span class="s-future"></span>')],
   ['hist now-col',               'toggle',   () => {
       const tr = mk('<tr class="hist-row"><td class="c-wk now-col"></td></tr>', tbody);
       return tr.querySelector('td');
@@ -107,6 +111,18 @@ const PROBES = [
       return tr.querySelector('td');
   }],
   ['.remarks:empty placeholder', 'toggle',   () => mk('<div class="remarks"></div>')],
+
+  // Milestone drag states. The drop-target wash is a translucent :root
+  // constant, so it is only themed by virtue of the row background beneath it.
+  // Probing the composite is the only way to prove that actually holds.
+  ['tr.data.ms-drop-target td',  'toggle',   () => {
+      const tr = mk('<tr class="data ms-drop-target"><td class="c-wk"></td></tr>', tbody);
+      return tr.querySelector('td');
+  }],
+  ['.row-num',                   'toggle',   () => {
+      const tr = mk('<tr class="data"><td class="c-name"><span class="row-num">1</span></td></tr>', tbody);
+      return tr.querySelector('.row-num');
+  }],
 
   // Icon default states. Each paints from its own --color-icon-* token.
   ['icon s-done',                'toggle',   () => mk('<svg class="ms-icon filled s-done"></svg>')],
@@ -153,6 +169,19 @@ function snapshot(theme) {
     rec._hasText = Array.from(el.childNodes)
       .filter(n => n.nodeType === 3)
       .map(n => n.textContent).join('').trim().length > 0;
+    // Text on a transparent element is still read against something. Walk up
+    // to the nearest ancestor that actually paints, so a colour chosen for one
+    // surface and dropped onto another is measured rather than skipped.
+    // Missing this is how a row number ended up at 2:1 in dark mode.
+    rec._effectiveBg = (function(){
+      let n = el;
+      while (n && n !== document.documentElement) {
+        const b = getComputedStyle(n).backgroundColor;
+        if (b && b !== 'rgba(0, 0, 0, 0)' && b !== 'transparent') return b;
+        n = n.parentElement;
+      }
+      return getComputedStyle(document.body).backgroundColor;
+    })();
     out[name] = rec;
   }
   return out;
@@ -255,7 +284,10 @@ def contrast_report(data):
                 continue  # nothing to read; an empty dot inherits an unused colour
             bg = rec.get("background-color", "")
             if not bg or bg == "rgba(0, 0, 0, 0)":
-                continue  # transparent: the element does not own its backdrop
+                # Transparent: read against whatever ancestor actually paints.
+                bg = rec.get("_effectiveBg", "")
+            if not bg or bg == "rgba(0, 0, 0, 0)":
+                continue
             c = contrast(rec.get("color", ""), bg, page)
             if c is not None and c < MIN_CONTRAST:
                 findings.append((theme, name, rec.get("color"), bg, c))
@@ -278,7 +310,7 @@ def main():
         if l is None or d is None:
             missing.append(name)
             continue
-        differing = [p for p in l if p != "_hasText" and l[p] != d[p]]
+        differing = [p for p in l if p not in ("_hasText","_effectiveBg") and l[p] != d[p]]
         if differing:
             # Something changed with the theme. That is what we want for a
             # "toggle" probe, and merely informational for a "constant" one.
@@ -296,7 +328,7 @@ def main():
         print("FROZEN (identical in both themes, expected to toggle):")
         for name, _, l, _ in frozen_defects:
             shown = {p: v for p, v in l.items()
-                     if p != "_hasText" and v and v != "rgba(0, 0, 0, 0)"}
+                     if p not in ("_hasText","_effectiveBg") and v and v != "rgba(0, 0, 0, 0)"}
             print(f"  {name:<28} {shown}")
         print()
     if ok:

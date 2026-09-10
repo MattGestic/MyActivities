@@ -16,6 +16,90 @@
 | TEST-10 | 2026-09-10 | Mixed row-aggregation strategies selected per band (stage / tag / area / system / activity), against both datasets | `tools/import_check.py` + `tools/xer_to_aoa.py`, EARS | **Pass** — PFS unchanged at 115 rows, EPCM 2857 to 1948 | None outstanding |
 | TEST-11 | 2026-09-10 | Chain-first stage merging, against two reported failures (Bronson Connector Road, Snip Single Line Diagrams) plus the two over-merge guards | `tools/import_check.py`, targeted ID probes | **Pass** — PFS 115 to 110 rows | None outstanding |
 | TEST-12 | 2026-09-10 | Dependency-first row building (pass 1 logic, pass 2 deliverable identity), 8 over-merge guards and 8 chain probes, both datasets | `tools/import_check.py` + `tools/xer_to_aoa.py`, targeted ID probes | **Pass** — 8/8 guards, PFS 110 to 108 rows, EPCM 1948 to 1898 | TD-26 |
+| TEST-13 | 2026-09-10 | Convergence relaxation (a high-fan-in milestone stands alone only above a measured predecessor threshold), row numbers per banding, and milestone drag between rows driven by real pointer gestures | `tools/import_check.py` + synthesised `PointerEvent` gestures in headless Chromium | **Pass** — 8/8 guards, PFS 108 to 105 rows, drag verified on both input paths | TD-28, TD-29 |
+
+### TEST-13 detail
+
+Three separate changes, verified separately.
+
+**1. Convergence relaxation (TD-26).** A milestone with in-band predecessors in
+more than one row was always split into its own row. That put "Site Plan
+-Client Review" on a standalone row, which was reported as wrong: the intent is
+to isolate milestones that carry real dependent weight, not any milestone whose
+two predecessors happen to sit in different rows.
+
+The threshold was chosen from the measured distribution of total predecessors
+across the 146 activities in the reference export, not picked:
+
+| Total predecessors | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 9 | 14 | 28 |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Activities | 11 | 67 | 36 | 13 | 8 | 3 | 1 | 1 | 3 | 2 | 1 |
+
+0 to 4 covers 124 of 146 (85%), then the tail thins out. The natural cut is at
+5 or 6. **6 was chosen, not 5**, because `SNIP-161` "MEL - Issue for Client
+Review" sits at exactly 5 and belongs in the Mechanical Equipment List chain; a
+threshold of 5 would have pulled it out and traded one reported defect for
+another. The external-share condition (30% of predecessors outside the band) is
+a second, independent route to standalone, so a milestone drawing widely from
+elsewhere still separates even below 6.
+
+Measured outcome, PFS reference export:
+
+| Probe | Before (P7) | After (P8) |
+|---|---|---|
+| Rows | 108 | 105 |
+| `SNIP-189` Site Plan -Client Review | standalone | merged with `SNIP-300` Preliminary Overall Site Plan |
+| `SNIP-161` MEL - Issue for Client Review | in the 5-marker MEL chain | unchanged |
+| `SNIP-255` / `SNIP-258` Draft Report (14 and 7 predecessors) | — | still grouped, above threshold but name-compatible |
+| Bronson Connector Road chain | 4 markers | 4 markers |
+| Snip Single Line Diagrams chain | 4 markers | 4 markers |
+| Over-merge guards (7 Stage Gate approvals + Draft TOC) | 8/8 standalone | 8/8 standalone |
+
+**2. Row numbers.** 105 of 105 imported data rows and 159 of 159 baseline rows
+render a number, restarting at 1 in each of the 14 bandings. The number is a
+flex slot beside the health dot rather than a text prefix, because the drag
+handle lands in the same slot in the next stage.
+
+**3. Milestone drag.** Verified by dispatching real `PointerEvent`s, not by
+calling the handler:
+
+| Assertion | Mouse | Touch |
+|---|---|---|
+| Arms on `pointerdown` | yes | yes |
+| Does not drag under the 4px threshold | yes | n/a |
+| Early move stays a page scroll, drag disarmed | n/a | yes |
+| Drag starts after the 400ms hold | n/a | yes |
+| Ghost follows the pointer | yes | yes |
+| Row under the pointer highlights as the drop target | yes | yes |
+| Marker lands in the target row | yes | yes (0 to 1 markers) |
+| Click suppressed so the dialog does not open | yes | yes |
+| Ghost hidden and all drag state cleared on drop | yes | yes |
+
+The target row re-lays itself out because the drop calls `scheduleRerender(true)`
+and the existing three-band label-collision system runs again. Proven by moving
+a marker into a row holding a marker one column away: the target row went from
+`mid` to `mid, top`, so the incoming marker was pushed to a different vertical
+band rather than overlapping.
+
+Annotations survive a move. `msKeyFor()` falls back to a composite embedding the
+row ref when a milestone carries no SNIP id, so a move would silently orphan
+that milestone's health override, comment and short title. `moveMilestoneToRow()`
+re-points all three stores; the probe sets all three, moves the milestone, and
+asserts they are readable under the new key and gone from the old one.
+
+**Defect found and fixed during this test.** `.row-num` was first written with
+`--color-text-faint`, which measures **1.99:1** on a dark row. The contrast check
+did not catch it, because it skipped any element with a transparent background,
+and a row number has no background of its own. The checker now resolves a
+transparent element to its nearest painting ancestor, which reproduced the
+finding; the token was changed to `--color-text-muted` (4.68:1 light, 5.18:1
+dark), the same token `.remarks` already uses on that surface. Raised as TD-28.
+
+That change also surfaced two findings on `.s-track` and `.s-future`, which were
+**probe artifacts, not defects**: both probes wrapped the class around a literal
+"x", and querying the rendered board confirmed neither class is ever applied to
+text anywhere in the app. The probes now carry no content, so the toggle
+assertion still holds and no impossible text case is measured.
 
 ### TEST-05 detail
 
@@ -356,5 +440,6 @@ Source file shape confirmed by static inspection of the workbook: 192 data rows,
 | 2026-09-10 | TEST-10 mixed strategies on both datasets; PFS unchanged at 115 rows; baseline render unchanged; theme check clean | Sub-headings within a band not built; 208 EPCM bands still fall back to one row per activity; discipline and system term lists are fixed rather than learned | File distribution | v3.1.0-P5 |
 | 2026-09-10 | TEST-11 chain-first merging; both reported failures fixed; both over-merge guards hold; baseline render unchanged | Sub-headings within a band still not built (TD-23); stage phrase list is fixed rather than learned | File distribution | v3.1.0-P6 |
 | 2026-09-10 | TEST-12 dependency-first rows, 8/8 guards, chains intact, baseline unchanged | Convergence nodes always stand alone even when name-compatible with one candidate row (TD-26); sub-headings still not built (TD-23) | File distribution | v3.1.0-P7 |
+| 2026-09-10 | TEST-13 convergence relaxation, row numbers and milestone drag; 8/8 guards; baseline render unchanged; theme check clean at 37 probes | Row drag itself not built (the handle slot is reserved, TD-29); moves are session-scoped and a re-import does not replay them (TD-27); sub-headings still not built (TD-23) | File distribution | v3.1.0-P8 |
 | Pre-migration | TEST-01 full feature regression | Banding (FEAT-10), sorting/icon customisation (FEAT-11), JSON round-trip (FEAT-13) all knowingly not built. Tokenization (FEAT-14) knowingly incomplete. Label collision same-row only. Header aliases exact-match only. | File distribution | v3.1.0-P1 |
 | 2026-09-09 | Migration to git repository, project kit established | TD-01 version discrepancy open; companion tokenization docs (TD-03) not yet located | Branch `p6-milestone-dashboard` | Migration commit |
