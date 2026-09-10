@@ -19,6 +19,7 @@
 | TEST-13 | 2026-09-10 | Convergence relaxation (a high-fan-in milestone stands alone only above a measured predecessor threshold), row numbers per banding, and milestone drag between rows driven by real pointer gestures | `tools/import_check.py` + synthesised `PointerEvent` gestures in headless Chromium | **Pass** — 8/8 guards, PFS 108 to 105 rows, drag verified on both input paths | TD-28, TD-29 |
 | TEST-14 | 2026-09-10 | Mount manager (three slots, unmount/remount), model export identity and naming, payload validation, and selective annotation import | `tools/import_check.py` harness driving the real panel, export and validator; export round-tripped back through its own validator | **Pass** — 3/3 slots, 5/5 rejection cases, selective import isolates a single category | TD-30 (closed same pass), TD-31, TD-32, TD-33 |
 | TEST-15 | 2026-09-10 | Import failure handling: what the UI does when a file cannot be read, and whether a failure clears the previous file's state | Real `File` objects through `handleFile()` in headless Chromium, with the SheetJS CDN unreachable | **Pass after fix** — 4/4 cases; reproduced the reported symptom first | TD-34, TD-35 (both closed same pass), TD-36 |
+| TEST-16 | 2026-09-10 | Read-error diagnosis: does each `FileReader` `DOMException` produce its own cause and remedy, and does a transient failure recover on retry | `FileReader` stubbed to force a named exception a set number of times | **Pass** — 4 error names each diagnosed, retry recovers silently | TD-37, TD-38 (both closed same pass) |
 
 ### TEST-13 detail
 
@@ -227,6 +228,39 @@ the app: `FileReader` callbacks had not fired inside the 700ms wait under
 Chromium's virtual-time budget. Extending the wait showed all four correct.
 Recorded because the first reading looked like a real regression and would have
 been reported as one.
+
+### TEST-16 detail
+
+The user hit a real failure on their own `.xlsx` and sent a screenshot. The
+message read "The file could not be read from disk." and the block offered only
+"Pick another file". Both details identify the path exactly: `FileReader.onerror`
+on the workbook branch, with `offerPaste` false.
+
+**That rules out the CDN.** `ensureXLSX()` had resolved, so SheetJS loaded fine
+and TD-36 was not the cause — the prediction made when P10 shipped was wrong,
+and the error name would have said so on the first screenshot had it been shown.
+
+Forced each `DOMException` by stubbing `FileReader`:
+
+| Forced name | Reported as | Hints | Retry attempts |
+|---|---|---|---|
+| `NotReadableError` | "Windows would not let the browser read the file" | open in Excel / cloud-only OneDrive / antivirus | 2 |
+| `NotFoundError` | "The file was not there when the browser went to read it" | moved or renamed / sync replaced it | 2 |
+| `SecurityError` | "The browser was not permitted to read the file" | policy blocking / copy it locally | 2 |
+| unrecognised name | generic, but still names the exception | close it elsewhere / OneDrive download | 2 |
+
+Transient case, failing once then succeeding: failure block never shown, Import
+button appears, 2 attempts. So a placeholder that hydrates on the second try
+costs the user nothing.
+
+Paste is now offered on this path. Withholding it in P10 was wrong: a file that
+cannot be READ says nothing about whether the app can handle the data once it
+has it.
+
+The TEST-15 suite was re-run and initially showed two cases failing again. Same
+`FileReader` virtual-time artifact as before, now needing a longer wait because
+the sequence is longer. At 4000ms all four are correct. Recorded a second time
+because it has now misled twice.
 
 ### TEST-05 detail
 
@@ -570,5 +604,6 @@ Source file shape confirmed by static inspection of the workbook: 192 data rows,
 | 2026-09-10 | TEST-13 convergence relaxation, row numbers and milestone drag; 8/8 guards; baseline render unchanged; theme check clean at 37 probes | Row drag itself not built (the handle slot is reserved, TD-29); moves are session-scoped and a re-import does not replay them (TD-27); sub-headings still not built (TD-23) | File distribution | v3.1.0-P8 |
 | 2026-09-10 | TEST-14 mount manager, export identity, validation and selective import; baseline render unchanged; theme check clean at 45 probes | Round trip covers the annotation layer only (TD-32); unmounting annotations does not roll back imported values (TD-31); two low-contrast tokens still need a sweep across their other consumers (TD-33) | File distribution | v3.1.0-P9 |
 | 2026-09-10 | TEST-15 import failure handling, 4/4 cases; baseline render unchanged; theme check clean at 48 probes | `.xlsx` import still depends on reaching the SheetJS CDN and is impossible without it (TD-36, open) | File distribution | v3.1.0-P10 |
+| 2026-09-10 | TEST-16 read-error diagnosis and retry; TEST-15 re-run 4/4; baseline unchanged; theme check 49 probes | The user's own failure is not yet confirmed resolved — P11 names the cause, it does not remove it | File distribution | v3.1.0-P11 |
 | Pre-migration | TEST-01 full feature regression | Banding (FEAT-10), sorting/icon customisation (FEAT-11), JSON round-trip (FEAT-13) all knowingly not built. Tokenization (FEAT-14) knowingly incomplete. Label collision same-row only. Header aliases exact-match only. | File distribution | v3.1.0-P1 |
 | 2026-09-09 | Migration to git repository, project kit established | TD-01 version discrepancy open; companion tokenization docs (TD-03) not yet located | Branch `p6-milestone-dashboard` | Migration commit |

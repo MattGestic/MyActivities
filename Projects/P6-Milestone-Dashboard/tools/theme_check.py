@@ -142,6 +142,10 @@ const PROBES = [
       const d = mk('<div class="imp-fail"><div class="imp-fail-hd">Could not read</div></div>');
       return d.querySelector('.imp-fail-hd');
   }],
+  ['.imp-fail-hints li',         'toggle',   () => {
+      const d = mk('<div class="imp-fail"><div class="imp-fail-msg"><ul class="imp-fail-hints"><li>close it in Excel</li></ul></div></div>');
+      return d.querySelector('.imp-fail-hints li');
+  }],
   ['.imp-fail-msg',              'toggle',   () => {
       const d = mk('<div class="imp-fail"><div class="imp-fail-msg">why it failed</div></div>');
       return d.querySelector('.imp-fail-msg');
