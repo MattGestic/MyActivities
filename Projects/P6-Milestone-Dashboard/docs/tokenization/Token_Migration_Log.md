@@ -38,6 +38,16 @@ Append new rows here as measurements are taken. Never edit or delete a prior row
 | 2026-09-09 23:30 | Audit script v2, after the v3.1.0-P2 theme-blind pass | Theme-blind colour occurrences | 0 |
 | 2026-09-09 23:30 | `tools/theme_check.py`, computed styles in both themes | Probes expected to toggle, frozen | 0 |
 | 2026-09-09 23:30 | `tools/theme_check.py` | Probes expected to toggle, toggling correctly | 16 |
+| 2026-09-10 | Audit script v3, scope extended to inline `style=` attributes (TD-12) | Hardcoded colour occurrences | 100 |
+| 2026-09-10 | Audit script v3, inline `style=` attributes only | Hardcoded colour occurrences | 1 |
+| 2026-09-10 | Audit script v3, after the v3.1.0-P3 board pass | Hardcoded colour occurrences | 54 |
+| 2026-09-10 | Audit script v3, after the v3.1.0-P3 board pass | Distinct hardcoded colour values | 43 |
+| 2026-09-10 | Audit script v3, after the v3.1.0-P3 board pass | Colour occurrences matching an existing token exactly | 10 |
+| 2026-09-10 | Audit script v3, after the v3.1.0-P3 board pass | Theme-blind colour occurrences | 0 |
+| 2026-09-10 | `tools/theme_check.py`, board probes added | Probes expected to toggle | 33 |
+| 2026-09-10 | `tools/theme_check.py` | Probes expected to toggle, frozen | 0 |
+| 2026-09-10 | `tools/theme_check.py` | Probes expected to be constant, correctly frozen | 2 |
+| 2026-09-10 | `tools/theme_check.py`, WCAG contrast of own text over own background, both themes | Probes below 3.0:1 | 0 |
 
 **Re-running the audit:** run `python3 tools/colour_audit.py` from the project root. It regenerates `Hardcoded_Colour_Audit.csv` and prints every metric above.
 
@@ -58,6 +68,39 @@ v2 was written independently from the documented method, then reconciled against
 | px font-size | 101 | 100 | Off by one, within the noise of two independently written regexes. |
 
 **Net effect: v1 systematically understated the remaining work** — on colour by excluding `rgba()`, and on spacing both by over-counting references and under-counting raw px. Plan against the v2 rows.
+
+### Board pass, v3.1.0-P3 (2026-09-10)
+
+Tokenized the board interior: rows, columns, marker labels, icons and status.
+
+**Icons now have a default token state each.** Icons paint from `currentColor`, so before this they inherited whatever the status text class set and could not be retuned without moving the text with them. Each state now has its own alias, resolving per theme because `:root` and the theme blocks both target `<html>`:
+
+| Token | Defaults to |
+|---|---|
+| `--color-icon-done` | `--color-text-ink` |
+| `--color-icon-track` | `--color-status-track` |
+| `--color-icon-risk` | `--color-status-risk-fill` |
+| `--color-icon-crit` | `--color-status-crit` |
+| `--color-icon-future` | `--color-status-future` |
+| `--color-icon-baseline` | `--color-text-note` |
+| `--color-icon-na` | `--color-text-ink` |
+
+Point one of these at a different value to restyle a single icon state without touching the status palette. This is the groundwork the "per-type icon customisation" future item needs.
+
+**Per theme:** `--color-col-filtered-bg`, `--color-row-hover-bg`, `--color-subtotal-accent`.
+
+**Constant by design, in the non-themed `:root`:** phase band fills `--color-band-1..5` plus `--color-band-divider`; accent washes (alpha over whatever is beneath, so one value is right in both themes); health dot fills and rims; shadows; the history bar gradient stop; and the marker label backings.
+
+**A change measured, judged wrong, and reverted in the same pass.** The marker label backings were first split per theme, which made them toggle. The contrast check then measured dark-theme label text at **1.16:1 to 1.97:1**: the backings are stickers sitting over the board, and the label text colour was chosen against the sticker rather than against the page, so following the theme made them unreadable. They were moved back to constant. The original white backing was correct design, not a defect. This is the second time this pass that a "fix" would have broken working code, after the `var()` fallbacks in P2.
+
+**Two additions to the tooling, both from things that nearly slipped through:**
+
+- The audit now scans inline `style=` attributes as well as the `<style>` block (TD-12). It immediately found a theme-blind `#c00000` inside JS-generated diagnostics markup. The `source` column says which of the two a row came from.
+- `theme_check.py` now measures WCAG contrast of each probe's own text over its own background in both themes, and fails below 3.0:1. A "does it toggle" check cannot see a text colour that changed in step with its background and stayed unreadable, which is exactly what the label backings did.
+
+Contrast findings are judged on an element's **own** text nodes. An earlier version counted descendants and reported the sticky corner search cell at 1.00:1, which was a probe artifact: its visible glyphs are children carrying their own tokenized colours.
+
+**Scope boundary:** colour only. Spacing and text tokens are still untouched, and colours with no token match outside the board were not triaged.
 
 ### Theme-blind pass, v3.1.0-P2 (2026-09-09)
 
@@ -99,13 +142,13 @@ A defect found in v2 during this same run is recorded here rather than quietly f
 | Dependency lines | Tokenized | 2026-09-09 |
 | Dependency tooltip + comment panel | Tokenized — was frozen at dark values, near-white text over a background that toggled to near-white | 2026-09-09 |
 | Settings drawer / View Controls sidebar | Tokenized | 2026-09-09 |
-| Board phase bands | Not tokenized — hardcoded hex per phase (`.pb0`–`.pb3`) | 2026-09-09 (re-checked, unchanged) |
-| Discipline band rows | Not tokenized | 2026-09-04 (not re-checked this pass) |
-| Health dot colours | Partial — fills still hardcoded; the crit borders now use `--color-crit-border` | 2026-09-09 |
+| Board phase bands | Tokenized — `--color-band-1..5`, constant by design | 2026-09-10 |
+| Discipline band rows | Not tokenized | 2026-09-10 (re-checked, unchanged) |
+| Health dot colours | Tokenized — `--color-health-*` fills and rims, constant by design | 2026-09-10 |
 | Milestone status text (`.s-done`/`.s-track`/`.s-future`) | Tokenized — all three were frozen at dark values | 2026-09-09 |
-| Milestone marker icon states (DONE/TRACK/RISK/CRIT/FUTURE) | Not tokenized | 2026-09-04 (not re-checked this pass) |
+| Milestone marker icon states (DONE/TRACK/RISK/CRIT/FUTURE) | Tokenized — one `--color-icon-*` default state per icon | 2026-09-10 |
 | Subtotal row | Tokenized — week-column bands now use `--color-col-past-bg` / `--color-col-filtered-alt-bg`; a malformed colour declaration was also repaired | 2026-09-09 |
-| Remarks field states | Not tokenized | 2026-09-04 (not re-checked this pass) |
+| Remarks field states | Tokenized — accent washes plus `--color-text-faint` placeholder | 2026-09-10 |
 
 Update the status cell **and** the date together whenever a row is re-checked, whether or not the status changed — an unchanged status with a fresh date is still useful information (confirms it wasn't silently missed).
 

@@ -10,6 +10,8 @@
 | TEST-04 | 2026-09-09 | Tokenization audit reproducibility: does an independently written implementation of the documented audit method reproduce the v1 Measurement Log figures | Reconciliation against v1 output | **Fail** — v1 figures not reproducible at full documented scope | TD-06, TD-07 |
 | TEST-05 | 2026-09-09 | Theme toggle: does every probed element's computed colour change between light and dark, before and after the v3.1.0-P2 tokenization pass | `tools/theme_check.py`, computed styles, EARS | Pass after fix (before: 7 of 16 frozen) | None outstanding |
 | TEST-06 | 2026-09-09 | Post-change regression: does the dashboard still render the baked-in baseline unchanged after the tokenization pass and version bump | Headless Chromium render, DOM assertion | Pass | TD-10 raised from the finding below |
+| TEST-07 | 2026-09-10 | Board tokenization: do rows, columns, marker labels, icons and status toggle correctly, and does any text lose contrast against its own background | `tools/theme_check.py` with board probes + WCAG contrast, EARS | Pass after one revert | None outstanding |
+| TEST-08 | 2026-09-10 | Post-change regression after the v3.1.0-P3 board pass | Headless Chromium render, DOM assertion | Pass | None |
 
 ### TEST-05 detail
 
@@ -29,6 +31,37 @@ Frozen before the fix: `.sticky-search-icon`, `.sticky-search-clear`, `.s-track`
 Two control probes (`#icon-bar`, `body`) were already tokenized and toggled in both runs, which is what proves the harness detects a real difference rather than reporting everything as frozen.
 
 **One false-positive class was found and excluded before any code changed.** The audit initially flagged five `.rpt-hd` literals as theme-blind. They are `var(--token, #fallback)` fallbacks, which resolve only when the token is undefined and therefore still follow the toggle. Acting on them would have meant changing code that already worked. `tools/colour_audit.py` now detects the fallback position and reports it separately.
+
+### TEST-07 detail
+
+Probe set extended from 17 to 35, adding the board: marker label, short title and hours backings, alt-row label, past and filtered week columns, subtotal hours, remarks placeholder, all six icon states, and constant-by-design probes for phase bands and health dots.
+
+| | Result |
+|---|---|
+| Probes expecting to toggle | 33 |
+| Toggling correctly | **33** |
+| Frozen | **0** |
+| Constant by design, correctly frozen | 2 |
+| Probes below 3.0:1 contrast, either theme | **0** |
+
+**A change was measured, judged wrong, and reverted inside this test.** The marker label backings were first made per-theme, and they did toggle. The newly added contrast check then measured dark-theme label text at 1.16:1 to 1.97:1 against those backings. The backings are stickers over the board and the label text colour was chosen against the sticker, not the page, so making them follow the theme rendered them unreadable. They were moved back to constant, tokenized in the non-themed `:root`. The original constant white was correct design, not a defect.
+
+That is the second time in two passes that the audit pointed at something which turned out to be working as intended, after the `var()` fallbacks in TEST-05. Both are recorded because the pattern matters more than either instance: a tokenization signal is a candidate, not a verdict.
+
+**Why the contrast check was added.** A "does it toggle" assertion cannot see a text colour that changed in step with its background and stayed unreadable. Toggling and legibility are different properties and need different measurements.
+
+**One contrast finding was a probe artifact, not a defect.** An earlier run reported the sticky corner cell at 1.00:1, white on white. That cell's own text is whitespace; its visible glyphs are children carrying their own tokenized colours. The check now judges an element's own text nodes only, and the probe targets a real column header rather than the sticky corner.
+
+### TEST-08 detail
+
+| Assertion | Result |
+|---|---|
+| Page loads, no console errors | Pass |
+| Rows and markers | Pass — 163 rows, 196 markers, unchanged since TEST-03 |
+| App summary stat | Pass — `159 tasks` / `198 milestones`, unchanged |
+| Icons rendered | Pass — 221 `.ms-icon` elements |
+| `APP_VERSION` propagates to title and label | Pass — `v3.1.0-P3` |
+| Version literals in file | Pass — exactly one |
 
 ### TEST-06 detail
 
@@ -146,5 +179,6 @@ Source file shape confirmed by static inspection of the workbook: 192 data rows,
 | Date | Accepted criteria | Exceptions accepted | Publish target | Version/tag |
 |---|---|---|---|---|
 | 2026-09-09 | TEST-05 theme toggle (0 frozen of 16), TEST-06 render regression (163 rows / 196 markers / 159 tasks / 198 milestones unchanged), single version literal asserted | Colour occurrences with no token match not yet triaged; spacing and text tokens untouched; board phase bands, discipline band rows, marker icon states and remarks field states still not tokenized | File distribution | v3.1.0-P2 |
+| 2026-09-10 | TEST-07 board toggle and contrast (33 toggling, 0 frozen, 0 below 3.0:1), TEST-08 render regression unchanged | Spacing and text tokens still untouched; colours outside the board with no token match not triaged; discipline band rows still not tokenized; hover and focus states are not probed headlessly | File distribution | v3.1.0-P3 |
 | Pre-migration | TEST-01 full feature regression | Banding (FEAT-10), sorting/icon customisation (FEAT-11), JSON round-trip (FEAT-13) all knowingly not built. Tokenization (FEAT-14) knowingly incomplete. Label collision same-row only. Header aliases exact-match only. | File distribution | v3.1.0-P1 |
 | 2026-09-09 | Migration to git repository, project kit established | TD-01 version discrepancy open; companion tokenization docs (TD-03) not yet located | Branch `p6-milestone-dashboard` | Migration commit |

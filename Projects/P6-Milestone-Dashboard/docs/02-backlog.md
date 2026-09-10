@@ -53,6 +53,9 @@ Status baseline is the delivered v3.1.0-P1 build. Features marked `Published` we
 | TASK-12 | FEAT-14 | Phase 2: triage the repeat-use colour values, including the `rgba()` set v1 never measured | Open | Role before hex proximity. Counts live in the Measurement Log, not here. |
 | TASK-14 | FEAT-14 | Theme-blind pass: replace every literal frozen at one theme's value, and prove it with computed styles in both themes | Done | v3.1.0-P2. Zero theme-blind occurrences remain. `tools/theme_check.py` added. |
 | TASK-15 | FEAT-15 | Make the page title derive from `APP_VERSION` instead of a hardcoded literal | Done | TD-10. Exactly one version literal now exists in the file. |
+| TASK-16 | FEAT-14 | Extend the colour audit to inline `style=` attributes | Done | TD-12. Found a theme-blind literal in generated markup on the first run. |
+| TASK-17 | FEAT-14 | Tokenize the board: rows, columns, marker labels, icons, status | Done | v3.1.0-P3. Icons gained one default token state each. |
+| TASK-18 | FEAT-14 | Add WCAG contrast measurement to the theme check | Done | Caught a regression this pass that the toggle check could not see. |
 | TASK-13 | FEAT-16 | Promote the two general lessons (verification methodology, append-only measurement logs) to repository governance | Done | Applied on `main-projects-hub`. |
 | TASK-07 | FEAT-02 | Decide whether `headerAliases` should move from exact-match to fuzzy | Open | Accepted gap today. `"BL1 Start"` will not match a `"bl start"` alias. Primary `Start`/`Finish` cover the core need. |
 | TASK-08 | FEAT-03 | Multi-line short-title vertical bleed into neighbouring rows | Open | Separate, smaller problem than the same-row collision system. |

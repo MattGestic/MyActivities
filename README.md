@@ -8,7 +8,7 @@ This repository hosts several independent applications. Each application lives o
 |---|---|
 | `main-projects-hub` | **Default branch.** Repository index, governing documents common to all projects, and the governed `Resources/` library. Holds no application code. |
 | `p6-milestone-dashboard` | This branch. P6 Milestone Dashboard (Eskay Creek PFS deliverable milestone tracking). |
-| `MyFitnessPOC` | MyActivities fitness programme site (proof of concept). |
+| others | See the register on `main-projects-hub`. |
 
 Repository-wide standards — branch model, project kit structure, versioning, documentation conventions, and resource intake governance — live on `main-projects-hub`. This branch follows them; it does not restate them.
 

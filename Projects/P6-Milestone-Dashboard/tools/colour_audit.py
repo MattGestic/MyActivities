@@ -16,6 +16,11 @@ Method (from Token_Migration_Log.md, "Re-running the audit"):
   approach for --space-* / --text-* references vs raw px in padding, margin,
   gap and font-size.
 
+Scope: the <style> block plus inline style="" attributes in the markup. Inline
+styles were originally out of scope, which hid a theme-blind gridline until an
+exact-count assertion tripped over it (TD-12). The `source` column says which
+of the two a row came from.
+
 Usage:
   python3 tools/colour_audit.py [path-to-html] [-o output.csv]
 Defaults to src/milestone-dashboard.html and
@@ -172,6 +177,55 @@ def enclosing_selector(style: str, pos: int) -> str:
     return re.sub(r"\s+", " ", sel.splitlines()[-1].strip() if sel else "")
 
 
+INLINE_STYLE_RE = re.compile(r'style\s*=\s*"([^"]*)"')
+
+
+def classify(norm: str, tokens: dict, fallback: bool) -> tuple[str, list, list]:
+    """Shared verdict logic for a colour literal, wherever it was found."""
+    defs = tokens.get(norm, [])
+    themes = sorted({t for _, t in defs})
+    if fallback:
+        verdict = "var() fallback, toggles correctly"
+    elif len(themes) == 1 and themes[0] in ("light", "dark"):
+        verdict = f"theme-blind ({themes[0]}-only)"
+    elif defs:
+        verdict = "matches token in all themes"
+    else:
+        verdict = ""
+    return verdict, defs, themes
+
+
+def _scan_inline_styles(html: str, tokens: dict) -> list[dict]:
+    """Colour literals inside style="" attributes in the markup."""
+    body = html[html.index("</style>"):] if "</style>" in html else html
+    offset = html.index("</style>") if "</style>" in html else 0
+    out = []
+    for attr in INLINE_STYLE_RE.finditer(body):
+        decls = attr.group(1)
+        base = offset + attr.start(1)
+        for regex in (HEX_RE, RGB_RE):
+            for m in regex.finditer(decls):
+                norm = normalise_colour(m.group(0))
+                prop, value = enclosing_declaration(decls + ";", m.start())
+                fallback = in_var_fallback(decls, m.start())
+                verdict, defs, themes = classify(norm, tokens, fallback)
+                # Element identity for an inline style is the tag it sits on.
+                tag = re.search(r"<(\w+)[^>]*$", body[:attr.start()] + "<x")
+                out.append({
+                    "line": html.count("\n", 0, base + m.start()) + 1,
+                    "selector": f"[inline] {(tag.group(1) if tag else '?')}",
+                    "property": prop,
+                    "raw_value": m.group(0),
+                    "normalised_value": norm,
+                    "declaration": value,
+                    "matches_existing_token": "|".join(n for n, _ in defs),
+                    "defined_in_themes": "|".join(themes),
+                    "toggle_verdict": verdict,
+                    "source": "inline-style",
+                })
+    return out
+
+
 def audit(html_path: pathlib.Path, csv_path: pathlib.Path) -> dict[str, object]:
     html = html_path.read_text(encoding="utf-8", errors="replace")
     style, style_offset = extract_style(html)
@@ -179,6 +233,7 @@ def audit(html_path: pathlib.Path, csv_path: pathlib.Path) -> dict[str, object]:
     tokens = defined_tokens(style, spans)
 
     rows = []
+    rows.extend(_scan_inline_styles(html, tokens))
     for regex in (HEX_RE, RGB_RE):
         for m in regex.finditer(style):
             if in_spans(m.start(), spans):
@@ -219,6 +274,7 @@ def audit(html_path: pathlib.Path, csv_path: pathlib.Path) -> dict[str, object]:
                     "matches_existing_token": "|".join(n for n, _ in defs),
                     "defined_in_themes": "|".join(themes),
                     "toggle_verdict": verdict,
+                    "source": "style-block",
                 }
             )
 
@@ -232,7 +288,7 @@ def audit(html_path: pathlib.Path, csv_path: pathlib.Path) -> dict[str, object]:
                            ["line", "selector", "property", "raw_value",
                             "normalised_value", "declaration",
                             "matches_existing_token", "defined_in_themes",
-                            "toggle_verdict"])
+                            "toggle_verdict", "source"])
         w.writeheader()
         w.writerows(rows)
 
