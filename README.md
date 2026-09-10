@@ -16,8 +16,9 @@ This branch holds no application code. It carries three things:
 
 | Project | Branch | Status | Version | Docs |
 |---|---|---|---|---|
-| **P6 Milestone Dashboard** (SRET) — Eskay Creek PFS deliverable milestone tracking | `p6-milestone-dashboard` | Active | `3.1.0-P1` | [README](https://github.com/MattGestic/MyActivities/blob/p6-milestone-dashboard/Projects/P6-Milestone-Dashboard/README.md) · [kit](https://github.com/MattGestic/MyActivities/tree/p6-milestone-dashboard/Projects/P6-Milestone-Dashboard/docs) |
+| **P6 Milestone Dashboard** (SRET) — Eskay Creek PFS deliverable milestone tracking | `p6-milestone-dashboard` | Active | `3.1.0-P3` | [README](https://github.com/MattGestic/MyActivities/blob/p6-milestone-dashboard/Projects/P6-Milestone-Dashboard/README.md) · [kit](https://github.com/MattGestic/MyActivities/tree/p6-milestone-dashboard/Projects/P6-Milestone-Dashboard/docs) |
 | **MyFitnessPOC** — fitness programme site | `MyFitnessPOC` | Proof of concept | — | — |
+| *(unclassified)* | `my-workout-programs` | Needs triage — same tree as `MyFitnessPOC`; confirm which is authoritative and archive the other | — | — |
 | *(unclassified)* | `agent/hiit-audio-package` | Needs triage — classify or delete | — | — |
 
 Register rules:
