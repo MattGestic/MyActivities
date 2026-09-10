@@ -15,6 +15,7 @@
 | TEST-09 | 2026-09-10 | Row model: one row per deliverable, stage chains collapsed. Run against two independent datasets, the PFS `.xlsx` and a 2857-activity EPCM `.xer` | `tools/import_check.py` + `tools/xer_to_aoa.py`, EARS | **Pass on PFS, no effect on EPCM** | TD-20 |
 | TEST-10 | 2026-09-10 | Mixed row-aggregation strategies selected per band (stage / tag / area / system / activity), against both datasets | `tools/import_check.py` + `tools/xer_to_aoa.py`, EARS | **Pass** — PFS unchanged at 115 rows, EPCM 2857 to 1948 | None outstanding |
 | TEST-11 | 2026-09-10 | Chain-first stage merging, against two reported failures (Bronson Connector Road, Snip Single Line Diagrams) plus the two over-merge guards | `tools/import_check.py`, targeted ID probes | **Pass** — PFS 115 to 110 rows | None outstanding |
+| TEST-12 | 2026-09-10 | Dependency-first row building (pass 1 logic, pass 2 deliverable identity), 8 over-merge guards and 8 chain probes, both datasets | `tools/import_check.py` + `tools/xer_to_aoa.py`, targeted ID probes | **Pass** — 8/8 guards, PFS 110 to 108 rows, EPCM 1948 to 1898 | TD-26 |
 
 ### TEST-05 detail
 
@@ -80,6 +81,38 @@ The genuine finding sits underneath it. `DEP_DATA` is a **baked-in constant pars
 #### Worth a look, not a failure
 
 The import yields 38 deliverable groups from 146 activities, against 159 groups in the baseline. Roughly 3.8 milestones per group versus 1.2. That may be correct given `minGroupSize` and a different source export, but it is a large enough shape change to be worth confirming against expectation. Raised as TD-18.
+
+### TEST-12 detail
+
+Row building is now two passes, dependency first.
+
+**Pass 1, schedule logic.** Within a band: an activity whose only in-band predecessor sits in a row continues that row. An activity with several in-band predecessors that all already sit in **one** row also continues it. An activity whose predecessors span **different** rows is a convergence point and stays on its own.
+
+**Pass 2, deliverable identity.** Each dependency-formed row is re-read by name and split where the members are plainly different deliverables. Two discriminators, both needed:
+
+| Discriminator | Catches |
+|---|---|
+| Fewer than 2 shared identity tokens, unless the token sets are identical | CAPEX vs OPEX (share only "issued"); Draft TOC vs Draft Report (share only "draft"). The identical-set arm is what lets "PFD" match "PFD", a single-token identity that can never reach a count of two. |
+| Differing numbers after the stage strip | Stage Gate No.1 vs No.3, No.2 vs No.4 vs No.5. These genuinely run in sequence, so dependency alone merges them, and no amount of shared wording separates them. |
+
+Dependency-first found more real chains than name-first did, because it does not depend on the wording holding steady across a chain.
+
+| | PFS `.xlsx` | EPCM `.xer` |
+|---|---|---|
+| Activities | 146 | 2857 |
+| Rows | **108** (was 110) | **1898** (was 1948) |
+| Chains merged | 16 | 15 |
+| Pass-2 splits | 7 | 2 |
+
+**Guards, all 1 member as required:** Stage Gate No.1, No.2, No.3, No.4; CAPEX; OPEX; Draft TOC; SRK Process cost estimate. 8 of 8.
+
+**Chains, all merged:** PFD 4, Bronson Connector Road 4, Snip Single Line Diagrams 4, Process Design Criteria 4.
+
+#### One consequence worth a decision (TD-26)
+
+`SNIP-189` "Site Plan -Client Review" now stands alone rather than joining the Site Plan row. It has two in-band finish-to-start predecessors in different rows, `SNIP-300` "Preliminary Overall Site Plan" and `SNIP-173` "Site Plan -Internal Review", so pass 1 classifies it as a convergence point. That is the specified rule behaving correctly.
+
+It is arguably still the same deliverable. A refinement would be: where a convergence node is name-compatible with exactly one of its candidate rows, join that one. Not implemented, because the rule as agreed says a convergence point stands alone, and this is exactly the judgement the rule reserved.
 
 ### TEST-11 detail
 
@@ -322,5 +355,6 @@ Source file shape confirmed by static inspection of the workbook: 192 data rows,
 | 2026-09-10 | TEST-09 row model on two datasets; baseline render unchanged; theme check clean | EPCM/construction schedules gain nothing from the rule (TD-20 open); XER is converted by an external tool, not ingested by the app (TD-21) | File distribution | v3.1.0-P4 |
 | 2026-09-10 | TEST-10 mixed strategies on both datasets; PFS unchanged at 115 rows; baseline render unchanged; theme check clean | Sub-headings within a band not built; 208 EPCM bands still fall back to one row per activity; discipline and system term lists are fixed rather than learned | File distribution | v3.1.0-P5 |
 | 2026-09-10 | TEST-11 chain-first merging; both reported failures fixed; both over-merge guards hold; baseline render unchanged | Sub-headings within a band still not built (TD-23); stage phrase list is fixed rather than learned | File distribution | v3.1.0-P6 |
+| 2026-09-10 | TEST-12 dependency-first rows, 8/8 guards, chains intact, baseline unchanged | Convergence nodes always stand alone even when name-compatible with one candidate row (TD-26); sub-headings still not built (TD-23) | File distribution | v3.1.0-P7 |
 | Pre-migration | TEST-01 full feature regression | Banding (FEAT-10), sorting/icon customisation (FEAT-11), JSON round-trip (FEAT-13) all knowingly not built. Tokenization (FEAT-14) knowingly incomplete. Label collision same-row only. Header aliases exact-match only. | File distribution | v3.1.0-P1 |
 | 2026-09-09 | Migration to git repository, project kit established | TD-01 version discrepancy open; companion tokenization docs (TD-03) not yet located | Branch `p6-milestone-dashboard` | Migration commit |

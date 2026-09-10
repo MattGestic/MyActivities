@@ -64,6 +64,7 @@ Status baseline is the delivered v3.1.0-P1 build. Features marked `Published` we
 | TASK-24 | FEAT-02 | XER extractor (`tools/xer_to_aoa.py`) for testing against real EPCM schedules | Done | Standalone tool, not app code. TD-21 covers in-app ingest. |
 | TASK-25 | FEAT-10 | Aggregation axis for EPCM/construction schedules | Done | TD-20. v3.1.0-P5, mixed strategies per band. |
 | TASK-26 | FEAT-10 | Sub-headings within a band, chosen by count | Open | TD-23. The unbuilt half of the agreed row rule. |
+| TASK-27 | FEAT-03 | Dependency-first row building with a deliverable-identity second pass | Done | v3.1.0-P7. 8/8 over-merge guards, PFS 108 rows, EPCM 1898. |
 | TASK-13 | FEAT-16 | Promote the two general lessons (verification methodology, append-only measurement logs) to repository governance | Done | Applied on `main-projects-hub`. |
 | TASK-07 | FEAT-02 | Decide whether `headerAliases` should move from exact-match to fuzzy | Open | Accepted gap today. `"BL1 Start"` will not match a `"bl start"` alias. Primary `Start`/`Finish` cover the core need. |
 | TASK-08 | FEAT-03 | Multi-line short-title vertical bleed into neighbouring rows | Open | Separate, smaller problem than the same-row collision system. |
