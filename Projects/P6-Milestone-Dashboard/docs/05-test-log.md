@@ -18,6 +18,7 @@
 | TEST-12 | 2026-09-10 | Dependency-first row building (pass 1 logic, pass 2 deliverable identity), 8 over-merge guards and 8 chain probes, both datasets | `tools/import_check.py` + `tools/xer_to_aoa.py`, targeted ID probes | **Pass** — 8/8 guards, PFS 110 to 108 rows, EPCM 1948 to 1898 | TD-26 |
 | TEST-13 | 2026-09-10 | Convergence relaxation (a high-fan-in milestone stands alone only above a measured predecessor threshold), row numbers per banding, and milestone drag between rows driven by real pointer gestures | `tools/import_check.py` + synthesised `PointerEvent` gestures in headless Chromium | **Pass** — 8/8 guards, PFS 108 to 105 rows, drag verified on both input paths | TD-28, TD-29 |
 | TEST-14 | 2026-09-10 | Mount manager (three slots, unmount/remount), model export identity and naming, payload validation, and selective annotation import | `tools/import_check.py` harness driving the real panel, export and validator; export round-tripped back through its own validator | **Pass** — 3/3 slots, 5/5 rejection cases, selective import isolates a single category | TD-30 (closed same pass), TD-31, TD-32, TD-33 |
+| TEST-15 | 2026-09-10 | Import failure handling: what the UI does when a file cannot be read, and whether a failure clears the previous file's state | Real `File` objects through `handleFile()` in headless Chromium, with the SheetJS CDN unreachable | **Pass after fix** — 4/4 cases; reproduced the reported symptom first | TD-34, TD-35 (both closed same pass), TD-36 |
 
 ### TEST-13 detail
 
@@ -177,6 +178,55 @@ edit. `exportModel()` reads it, so exporting on a clean load threw a
 `ReferenceError` and the download silently never happened. It survived this
 long because every manual export test had made an edit first. Declared and
 closed as TD-30.
+
+### TEST-15 detail
+
+Raised by the user as "the import button doesn't show when a file is uploaded".
+**Reproduced before changing anything**, by pushing real `File` objects through
+`handleFile()` with the SheetJS CDN unreachable — which is what a locked-down
+network, an offline machine, or a strict policy on a `file://` page all look
+like.
+
+**Reproduction, on the build as shipped:**
+
+| Observed | Value |
+|---|---|
+| `2 · Map columns` section visible | no |
+| Import button present in the DOM | no |
+| Only signal | `ingest-status`, 9.5px italic |
+| Its text | "SheetJS could not be loaded (offline?). Save the schedule as CSV and use the paste box." |
+
+The button was never broken. The `.xlsx` load failed, `showMapper()` was never
+reached, and the step that renders the button rendered nothing. Because that
+step is labelled "Appears once a file loads", its absence reads as a broken
+control rather than as an error.
+
+**A second, more dangerous defect surfaced while reproducing.** Loading a good
+file and then a bad one left the good file's column mapping and Import button
+on screen, because each failure path called `setIngestStatus(...)` and returned
+without clearing `LAST_PARSE`. The board would import file A while naming file
+B. Raised as TD-34.
+
+**After the fix**, all four cases measured:
+
+| Case | Import button | Map section | Failure block |
+|---|---|---|---|
+| Clean load, `.xlsx`, CDN blocked | hidden | hidden | shown, with the reason and two actions |
+| Good CSV after that failure | **shown** | shown | cleared |
+| Bad file after a good one | **hidden** | hidden | shown (TD-34: was previously still offering Import) |
+| File with no data rows | hidden | hidden | shown |
+
+The failure block names the file, states why it failed, says that mapping and
+the Import button stay hidden until a file reads cleanly, and offers "Use the
+paste box instead" and "Pick another file". The SheetJS message was rewritten
+to say what actually happened and what still works, rather than guessing
+"(offline?)".
+
+Two probe runs initially showed the CSV cases failing. That was the probe, not
+the app: `FileReader` callbacks had not fired inside the 700ms wait under
+Chromium's virtual-time budget. Extending the wait showed all four correct.
+Recorded because the first reading looked like a real regression and would have
+been reported as one.
 
 ### TEST-05 detail
 
@@ -519,5 +569,6 @@ Source file shape confirmed by static inspection of the workbook: 192 data rows,
 | 2026-09-10 | TEST-12 dependency-first rows, 8/8 guards, chains intact, baseline unchanged | Convergence nodes always stand alone even when name-compatible with one candidate row (TD-26); sub-headings still not built (TD-23) | File distribution | v3.1.0-P7 |
 | 2026-09-10 | TEST-13 convergence relaxation, row numbers and milestone drag; 8/8 guards; baseline render unchanged; theme check clean at 37 probes | Row drag itself not built (the handle slot is reserved, TD-29); moves are session-scoped and a re-import does not replay them (TD-27); sub-headings still not built (TD-23) | File distribution | v3.1.0-P8 |
 | 2026-09-10 | TEST-14 mount manager, export identity, validation and selective import; baseline render unchanged; theme check clean at 45 probes | Round trip covers the annotation layer only (TD-32); unmounting annotations does not roll back imported values (TD-31); two low-contrast tokens still need a sweep across their other consumers (TD-33) | File distribution | v3.1.0-P9 |
+| 2026-09-10 | TEST-15 import failure handling, 4/4 cases; baseline render unchanged; theme check clean at 48 probes | `.xlsx` import still depends on reaching the SheetJS CDN and is impossible without it (TD-36, open) | File distribution | v3.1.0-P10 |
 | Pre-migration | TEST-01 full feature regression | Banding (FEAT-10), sorting/icon customisation (FEAT-11), JSON round-trip (FEAT-13) all knowingly not built. Tokenization (FEAT-14) knowingly incomplete. Label collision same-row only. Header aliases exact-match only. | File distribution | v3.1.0-P1 |
 | 2026-09-09 | Migration to git repository, project kit established | TD-01 version discrepancy open; companion tokenization docs (TD-03) not yet located | Branch `p6-milestone-dashboard` | Migration commit |

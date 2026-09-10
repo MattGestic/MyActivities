@@ -77,6 +77,9 @@ Status baseline is the delivered v3.1.0-P1 build. Features marked `Published` we
 | TASK-36 | FEAT-13 | Selective annotation import, one checkbox per category | Done | v3.1.0-P9. Six categories, counts shown, whole file or just the comments. |
 | TASK-37 | FEAT-13 | Rebuild the board from a mounted model's tasks/milestones/timeline | Open | TD-32. The payload carries them; nothing consumes them. |
 | TASK-38 | FEAT-14 | Sweep every consumer of `--color-text-small` and `--color-purple-dark` | Open | TD-33. Both measured below 1.2:1 in dark on the surfaces used this pass. |
+| TASK-39 | FEAT-02 | Route every import failure through one handler that clears stale parse state | Done | TD-34. v3.1.0-P10. A failure could previously leave the prior file importable. |
+| TASK-40 | FEAT-02 | Show a visible failure block where the column-mapping step would have appeared | Done | TD-35. v3.1.0-P10. Names the file, the reason and the remedy. |
+| TASK-41 | FEAT-02, FEAT-12 | Decide how `.xlsx` import behaves when the SheetJS CDN is unreachable | Open | TD-36. The only dependency that can remove a whole input format. |
 | TASK-13 | FEAT-16 | Promote the two general lessons (verification methodology, append-only measurement logs) to repository governance | Done | Applied on `main-projects-hub`. |
 | TASK-07 | FEAT-02 | Decide whether `headerAliases` should move from exact-match to fuzzy | Open | Accepted gap today. `"BL1 Start"` will not match a `"bl start"` alias. Primary `Start`/`Finish` cover the core need. |
 | TASK-08 | FEAT-03 | Multi-line short-title vertical bleed into neighbouring rows | Open | Separate, smaller problem than the same-row collision system. |

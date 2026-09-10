@@ -137,6 +137,15 @@ const PROBES = [
       const d = mk('<div class="mnt-slot"><span class="mnt-badge">override</span></div>');
       return d.querySelector('.mnt-badge');
   }],
+  ['.imp-fail',                  'toggle',   () => mk('<div class="imp-fail">x</div>')],
+  ['.imp-fail-hd',               'toggle',   () => {
+      const d = mk('<div class="imp-fail"><div class="imp-fail-hd">Could not read</div></div>');
+      return d.querySelector('.imp-fail-hd');
+  }],
+  ['.imp-fail-msg',              'toggle',   () => {
+      const d = mk('<div class="imp-fail"><div class="imp-fail-msg">why it failed</div></div>');
+      return d.querySelector('.imp-fail-msg');
+  }],
   ['.annot-panel',               'toggle',   () => mk('<div class="annot-panel">x</div>')],
   ['.annot-err',                 'toggle',   () => mk('<div class="annot-msg annot-err">error</div>')],
   // Amber attention strip, same category: :root tokens, ink picked for the fill.
