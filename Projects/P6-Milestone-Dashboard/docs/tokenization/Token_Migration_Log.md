@@ -48,6 +48,14 @@ Append new rows here as measurements are taken. Never edit or delete a prior row
 | 2026-09-10 | `tools/theme_check.py` | Probes expected to toggle, frozen | 0 |
 | 2026-09-10 | `tools/theme_check.py` | Probes expected to be constant, correctly frozen | 2 |
 | 2026-09-10 | `tools/theme_check.py`, WCAG contrast of own text over own background, both themes | Probes below 3.0:1 | 0 |
+| 2026-09-10 | Audit script v3, after the v3.1.0-P8 pass | Hardcoded colour occurrences | 54 |
+| 2026-09-10 | Audit script v3, after the v3.1.0-P8 pass | Distinct hardcoded colour values | 43 |
+| 2026-09-10 | Audit script v3, after the v3.1.0-P8 pass | Colour occurrences matching an existing token exactly | 10 |
+| 2026-09-10 | `tools/theme_check.py`, drag-state and row-number probes added | Probes expected to toggle | 35 |
+| 2026-09-10 | `tools/theme_check.py`, after the v3.1.0-P8 pass | Probes expected to toggle, frozen | 0 |
+| 2026-09-10 | `tools/theme_check.py`, after the v3.1.0-P8 pass | Probes expected to be constant, correctly frozen | 2 |
+| 2026-09-10 | `tools/theme_check.py`, contrast now resolves a transparent element to its nearest painting ancestor | Probes below 3.0:1, before the `.row-num` token fix | 1 |
+| 2026-09-10 | `tools/theme_check.py`, contrast now resolves a transparent element to its nearest painting ancestor | Probes below 3.0:1, after the `.row-num` token fix | 0 |
 
 **Re-running the audit:** run `python3 tools/colour_audit.py` from the project root. It regenerates `Hardcoded_Colour_Audit.csv` and prints every metric above.
 
