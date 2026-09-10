@@ -14,6 +14,7 @@
 | TEST-08 | 2026-09-10 | Post-change regression after the v3.1.0-P3 board pass | Headless Chromium render, DOM assertion | Pass | None |
 | TEST-09 | 2026-09-10 | Row model: one row per deliverable, stage chains collapsed. Run against two independent datasets, the PFS `.xlsx` and a 2857-activity EPCM `.xer` | `tools/import_check.py` + `tools/xer_to_aoa.py`, EARS | **Pass on PFS, no effect on EPCM** | TD-20 |
 | TEST-10 | 2026-09-10 | Mixed row-aggregation strategies selected per band (stage / tag / area / system / activity), against both datasets | `tools/import_check.py` + `tools/xer_to_aoa.py`, EARS | **Pass** — PFS unchanged at 115 rows, EPCM 2857 to 1948 | None outstanding |
+| TEST-11 | 2026-09-10 | Chain-first stage merging, against two reported failures (Bronson Connector Road, Snip Single Line Diagrams) plus the two over-merge guards | `tools/import_check.py`, targeted ID probes | **Pass** — PFS 115 to 110 rows | None outstanding |
 
 ### TEST-05 detail
 
@@ -79,6 +80,32 @@ The genuine finding sits underneath it. `DEP_DATA` is a **baked-in constant pars
 #### Worth a look, not a failure
 
 The import yields 38 deliverable groups from 146 activities, against 159 groups in the baseline. Roughly 3.8 milestones per group versus 1.2. That may be correct given `minGroupSize` and a different source export, but it is a large enough shape change to be worth confirming against expectation. Raised as TD-18.
+
+### TEST-11 detail
+
+Two deliverables were reported as splitting across rows when they should each be one. Both are clean finish-to-start chains in the source; the names drift across the chain, and keying on the name split them.
+
+| Reported | Chain | Why it split |
+|---|---|---|
+| Bronson Connector Road | `SNIP-159 → 164 → 169 → 174` | The first three read "Acceptance Review Memo", the last reads "**Update and issue** Memo-Final Issue". Different stem. |
+| Snip Single Line Diagrams | `SNIP-170 → 181 → 192 → 229` | "Diagram**s**" against "Diagram" mid-chain, plus a doubled suffix "-final Issue-Final Issue". |
+
+**Fix: chain first, name second.** Activities are joined along in-band finish-to-start links, and the name is used only as a guard against joining two genuinely different deliverables. A join requires both ends to carry a stage phrase and to share at least two identity tokens, and the whole component must share two tokens as well.
+
+Two bugs of mine were fixed in the process:
+
+1. `deliverableStem` used `indexOf` where a **suffix** match needs `lastIndexOf`. In "…-final issue-final issue" the first occurrence fails the end-of-string test, so nothing was stripped at all and `SNIP-229` never matched its own chain. Stripping now also repeats, since P6 carries doubled suffixes.
+2. A linear chain walk requiring exactly one successor stopped at the first branch. P6 carries redundant skip-links: Process Design Criteria has both `115→123` and `115→134`. Replaced with connected components over the FS edges.
+
+| Probe | Expected | Result |
+|---|---|---|
+| `SNIP-159` and `SNIP-174` | one row | **4 members, same row** |
+| `SNIP-198` "MTO and Model Review" | separate, despite being FS-linked from 174 | **1 member** — carries no stage phrase, so the chain breaks there |
+| `SNIP-170` and `SNIP-229` | one row | **4 members, same row** |
+| `SNIP-115` and `SNIP-134` | one row | 4 members |
+| `SNIP-204` / `SNIP-320` SRK Process vs Mining | separate | **1 each** — no FS link between them |
+
+PFS: 146 activities to **110 rows**, 15 chains merged, ten rows carrying 4 markers against seven at v3.1.0-P5. EPCM is unchanged at 1948 rows: its bands resolve to the tag, area and system strategies, which this change does not touch.
 
 ### TEST-10 detail
 
@@ -294,5 +321,6 @@ Source file shape confirmed by static inspection of the workbook: 192 data rows,
 | 2026-09-10 | TEST-07 board toggle and contrast (33 toggling, 0 frozen, 0 below 3.0:1), TEST-08 render regression unchanged | Spacing and text tokens still untouched; colours outside the board with no token match not triaged; discipline band rows still not tokenized; hover and focus states are not probed headlessly | File distribution | v3.1.0-P3 |
 | 2026-09-10 | TEST-09 row model on two datasets; baseline render unchanged; theme check clean | EPCM/construction schedules gain nothing from the rule (TD-20 open); XER is converted by an external tool, not ingested by the app (TD-21) | File distribution | v3.1.0-P4 |
 | 2026-09-10 | TEST-10 mixed strategies on both datasets; PFS unchanged at 115 rows; baseline render unchanged; theme check clean | Sub-headings within a band not built; 208 EPCM bands still fall back to one row per activity; discipline and system term lists are fixed rather than learned | File distribution | v3.1.0-P5 |
+| 2026-09-10 | TEST-11 chain-first merging; both reported failures fixed; both over-merge guards hold; baseline render unchanged | Sub-headings within a band still not built (TD-23); stage phrase list is fixed rather than learned | File distribution | v3.1.0-P6 |
 | Pre-migration | TEST-01 full feature regression | Banding (FEAT-10), sorting/icon customisation (FEAT-11), JSON round-trip (FEAT-13) all knowingly not built. Tokenization (FEAT-14) knowingly incomplete. Label collision same-row only. Header aliases exact-match only. | File distribution | v3.1.0-P1 |
 | 2026-09-09 | Migration to git repository, project kit established | TD-01 version discrepancy open; companion tokenization docs (TD-03) not yet located | Branch `p6-milestone-dashboard` | Migration commit |
