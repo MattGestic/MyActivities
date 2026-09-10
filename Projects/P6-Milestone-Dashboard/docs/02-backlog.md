@@ -22,7 +22,7 @@ Status baseline is the delivered v3.1.0-P1 build. Features marked `Published` we
 | ID | Epic | Feature | Linked US | Impact | Complexity | Status | Notes |
 |---|---|---|---|---|---|---|---|
 | FEAT-01 | EPIC-01 | Baked-in baseline schedule | US-01 | H | L | Published | 15-Aug-2026 P6 export, 159 tasks / 198 milestones. |
-| FEAT-02 | EPIC-01 | Live schedule import (xlsx / paste / delimited) | US-02, US-03, US-04 | H | H | Published | `Parse.workbook()` / `Parse.delimited()`, `INGEST_CONFIG.headerAliases`, leaf/group hierarchy detection, `classify()`/`aggregate()`. |
+| FEAT-02 | EPIC-01 | Live schedule import (xlsx / paste / delimited) | US-02, US-03, US-04 | H | H | Published — TEST-02 run 2026-09-10, two gaps open (TD-15, TD-16) | `Parse.workbook()` / `Parse.delimited()`, `INGEST_CONFIG.headerAliases`, leaf/group hierarchy detection, `classify()`/`aggregate()`. |
 | FEAT-03 | EPIC-02 | Week-grid milestone rendering + collision bands | US-05, US-06 | H | H | Published | 3-band cycling, scoped to same-row common case. |
 | FEAT-04 | EPIC-02 | Dependency line system | US-07 | M | H | Published | `drawDepLines()` single choke point with defensive reset. |
 | FEAT-05 | EPIC-03 | Milestone dialog: health override, short title, comment | US-08, US-09 | H | M | Published | 5-state health override, comment autosave, actualised-date shading. |
@@ -56,6 +56,9 @@ Status baseline is the delivered v3.1.0-P1 build. Features marked `Published` we
 | TASK-16 | FEAT-14 | Extend the colour audit to inline `style=` attributes | Done | TD-12. Found a theme-blind literal in generated markup on the first run. |
 | TASK-17 | FEAT-14 | Tokenize the board: rows, columns, marker labels, icons, status | Done | v3.1.0-P3. Icons gained one default token state each. |
 | TASK-18 | FEAT-14 | Add WCAG contrast measurement to the theme check | Done | Caught a regression this pass that the toggle check could not see. |
+| TASK-19 | FEAT-02 | Build a committed ingest harness (`tools/import_check.py`) and run TEST-02 against the reference export | Done | Drives the real pipeline; stubs only the SheetJS boundary, faithfully reproducing `raw:false` number formatting. |
+| TASK-20 | FEAT-04 | Read Predecessor/Successor columns on import instead of relying on baked-in `DEP_DATA` | Open | TD-16. Needs a mapper field pair and a `normalise` change. |
+| TASK-21 | FEAT-02 | Decide and implement handling for a constrained (`*`) finish date | Open | TD-15. Currently parsed then discarded. |
 | TASK-13 | FEAT-16 | Promote the two general lessons (verification methodology, append-only measurement logs) to repository governance | Done | Applied on `main-projects-hub`. |
 | TASK-07 | FEAT-02 | Decide whether `headerAliases` should move from exact-match to fuzzy | Open | Accepted gap today. `"BL1 Start"` will not match a `"bl start"` alias. Primary `Start`/`Finish` cover the core need. |
 | TASK-08 | FEAT-03 | Multi-line short-title vertical bleed into neighbouring rows | Open | Separate, smaller problem than the same-row collision system. |

@@ -5,7 +5,7 @@
 | ID | Date | Scope | Framework used | Pass/Fail | Defects raised |
 |---|---|---|---|---|---|
 | TEST-01 | 2026-09-09 (pre-migration) | Full regression audit of v3.1.0-P1 against every major feature built across the chat development history. Direct file inspection, not assumed. | Feature-presence checklist | Pass — no drops or regressions | None |
-| TEST-02 | Pending | Live ingest of `data/schedules/103787-13_PFS_Weekly_Update_DD-2026-08-29.xlsx` through the `.xlsx` import path | EARS | Not run | TD-04 |
+| TEST-02 | 2026-09-10 | Live ingest of `data/schedules/103787-13_PFS_Weekly_Update_DD-2026-08-29.xlsx` through the `.xlsx` import path | `tools/import_check.py`, EARS | **Mixed** — 8 pass, 1 fail, 1 not testable here, 1 criterion was itself wrong | TD-15, TD-16, TD-17 |
 | TEST-03 | 2026-09-09 | Post-migration smoke test: does the committed `src/milestone-dashboard.html` still open and render the baked-in baseline correctly after the file move | Headless Chromium render, DOM assertion | Pass | None |
 | TEST-04 | 2026-09-09 | Tokenization audit reproducibility: does an independently written implementation of the documented audit method reproduce the v1 Measurement Log figures | Reconciliation against v1 output | **Fail** — v1 figures not reproducible at full documented scope | TD-06, TD-07 |
 | TEST-05 | 2026-09-09 | Theme toggle: does every probed element's computed colour change between light and dark, before and after the v3.1.0-P2 tokenization pass | `tools/theme_check.py`, computed styles, EARS | Pass after fix (before: 7 of 16 frozen) | None outstanding |
@@ -31,6 +31,52 @@ Frozen before the fix: `.sticky-search-icon`, `.sticky-search-clear`, `.s-track`
 Two control probes (`#icon-bar`, `body`) were already tokenized and toggled in both runs, which is what proves the harness detects a real difference rather than reporting everything as frozen.
 
 **One false-positive class was found and excluded before any code changed.** The audit initially flagged five `.rpt-hd` literals as theme-blind. They are `var(--token, #fallback)` fallbacks, which resolve only when the token is undefined and therefore still follow the toggle. Acting on them would have meant changing code that already worked. `tools/colour_audit.py` now detects the fallback position and reports it separately.
+
+### TEST-02 detail
+
+`tools/import_check.py` drives the application's real pipeline: `Parse.workbook` header detection, `Parse.autoMap`, `showMapper`, `runIngest`, `normalise`, `classify`, `join`, `aggregate`, `buildTimeline`, `parseLooseDate`, the diagnostics panel and the resulting DOM.
+
+**What is stubbed, and why it matters.** SheetJS is loaded from cdnjs on demand and this environment's proxy refuses that host, so the library cannot load here. The stub stands in at exactly the app's boundary with it (`XLSX.read` plus `XLSX.utils.sheet_to_json`) and returns an array-of-arrays built from the same workbook in Python.
+
+That stub had to be faithful in one specific way. The app calls `sheet_to_json` with `raw:false`, so SheetJS applies each cell's number format before the app sees the value. Every date cell in this export carries builtin `numFmtId` 15 (`d-mmm-yy`), so a stored serial such as `46352` reaches the app as `29-Aug-26`, **not** as a bare number. Building the stub the naive way would have tested a code path the real import never takes.
+
+**Consequence:** the Excel-serial branch in `parseLooseDate` is not reachable through the `.xlsx` route at all. It still matters for pasted and delimited input, where raw numbers do arrive.
+
+#### Results
+
+| AC | Criterion | Result |
+|---|---|---|
+| AC-01 | SheetJS loads and parses the workbook | **Not tested** — CDN blocked in this environment. Needs a network-enabled run. |
+| AC-02 | All columns auto-map without manual override | **Pass** — header score 5, sheet `TASK`, 192 data rows. `id`/`name`/`start`/`finish`/`float` all mapped. `status`/`wbs`/`budget`/`pct` map to -1 because this export has no such columns, which is correct, not a failure. |
+| AC-03 | 146 leaf activities, 46 group rows | **Pass** — 146 milestones built, group rows skipped as hierarchy labels. Matches the static count exactly. |
+| AC-04 | A bare Excel serial renders the same calendar date | **Pass, with the caveat above** — `parseLooseDate('46352')` returns 2026-11-26 correctly, but no serial reaches this route. |
+| AC-05 | Trailing ` A` recorded as actualised | **Pass** — 49 milestones flagged actual. |
+| AC-06 | Trailing `*` recorded as constrained, distinctly from actualised | **Fail** — see below. |
+| AC-07 | Blank finish skipped without aborting or corrupting adjacent rows | **Pass** — 192 rows in, 146 activities out, import completed. Blank-finish rows are skipped silently by design. |
+| AC-08 | Data date / report date is not blank (TD-02 regression) | **Pass** — renders `29-Aug-26`, no "not set" fallback triggered. TD-02 did not recur. |
+| AC-09 | Baked-in baseline left unmodified and restorable | **Pass** — `SEED_TASKS` 159 and `SEED_MILESTONES` 198 unchanged after import. |
+| AC-10 | Dependency lines drawn between corresponding markers | **Criterion was wrong** — see below. |
+| AC-11 | Diagnostics lists skipped rows, hidden when empty | **Pass on the first half** — panel visible, badge reads `Diagnostics (151) 3 warning(s)`, entries split 56 `normalise/info`, 92 `classify/info`, 3 `aggregate/warn`. Hidden-when-empty was not exercised, since this import produced entries. |
+
+#### AC-06 failure: the finish-date constrained flag is discarded
+
+The workbook contains 8 starred dates. Seven are in the **Start** column and one (`E13`, `11-Sep-26*`) is in the **Finish** column.
+
+`parseLooseDate` detects the star correctly in both cases, verified directly. But `normalise` records only `startStarred` on the activity it builds. `fin.starred` is parsed and then dropped on the floor, so the one constrained **finish** date loses its marker. Measured: `startStarred` 7, finish-starred 0 against 1 present.
+
+This is a gap in the original design rather than a regression: the handoff describes the star as tracked "so a start date carrying it can still show that marker in the dialog", i.e. start only. The acceptance criterion asserted more than the app ever promised. Raised as TD-15 rather than fixed here, because adding the field alone would produce data nothing consumes.
+
+#### AC-10 was a bad criterion, and one real finding behind it
+
+The probe found zero dependency lines after import. Before concluding anything, the same measurement was run against the **baseline** with no import at all: also zero, with `DEP_VIS` empty. Dependency lines are opt-in per milestone, so zero is the correct default and the criterion was simply wrong. It is restated below.
+
+The genuine finding sits underneath it. `DEP_DATA` is a **baked-in constant parsed from the 22-Aug-26 export**, and the column mapper exposes no predecessor or successor field, so `normalise` never reads the `Predecessor Details` / `Successor Details` columns that are present in every export. **An import never refreshes dependency data.** Coverage against the 29-Aug import: 143 activity IDs in `DEP_DATA`, 106 of them not in the imported set, and 1 imported activity (`A1000`) with no dependency data at all. Raised as TD-16.
+
+**Restated criterion (AC-10r):** when a user enables dependencies for a milestone, the system shall draw lines to the corresponding markers using dependency data from the currently loaded schedule.
+
+#### Worth a look, not a failure
+
+The import yields 38 deliverable groups from 146 activities, against 159 groups in the baseline. Roughly 3.8 milestones per group versus 1.2. That may be correct given `minGroupSize` and a different source export, but it is a large enough shape change to be worth confirming against expectation. Raised as TD-18.
 
 ### TEST-07 detail
 
