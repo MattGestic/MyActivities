@@ -25,6 +25,7 @@
 | TEST-19 | 2026-09-10 | Publish round trip: does a published file open cold with the schedule, timeline and annotations already in place, and does it carry nothing it should not | Publish captured at the Blob boundary, written to disk, then loaded as a separate page | **Pass after two fixes** | TD-41, TD-42 (both closed same pass), TD-43, TD-44 |
 | TEST-20 | 2026-09-11 | Does a published file describe itself correctly: mount slots, baseline counts, and the header provenance line | Publish probe extended to capture all three mount slots and the header meta | **Pass after fix** — reproduced the user's report first | TD-47, TD-48 (both closed same pass) |
 | TEST-21 | 2026-09-11 | Six requested changes: published schedule as the update, Source cell after a drag, empty-row delete, gutter alignment, column master toggle scope, header chrome colour | Publish round trip plus a combined DOM probe driving each interaction | **5 pass, 1 delivered failing** — the requested `#f4f5f8` is 1.79:1 on the light header | TD-50 (open), TD-51 to TD-55 (closed) |
+| TEST-22 | 2026-09-11 | Heading bar split into two containers with responsive stacking, subtitle relocated, and the search moved to its own sticky row | Bounding-rect measurement at two viewport widths, and again after 900px of real scroll inside `#scroll-wrap` | **Pass** | TD-56, TD-57 (both closed) |
 
 ### TEST-13 detail
 
@@ -477,6 +478,44 @@ nobody had seen it: the previous values measured 1.5:1 (`--color-text-note`) and
 at 1.79:1 and has been left failing rather than suppressed. TD-50 carries the
 decision: darken the header, or keep it light and use a dark token.
 
+### TEST-22 detail
+
+**Layout, measured by bounding rect rather than read from the CSS.**
+
+| Assertion | 1600px | 700px |
+|---|---|---|
+| Title and details on one line | **yes** | no (stacked, as intended) |
+| Details to the right of the title | yes | n/a, stacked |
+| Details right-aligned to the bar | yes | yes |
+| Subtitle below the whole bar | yes | yes |
+| Search row above the month bands | yes | yes |
+
+At 700px the details container drops to `x:10, y:60` under the title at
+`x:10, y:40` — stacked, left-aligned, full width.
+
+**Stickiness, which is the part that could have broken.** The search moved into
+its own `tr.hdr-search` at the top of the table head, so the two rows below it
+had to be re-offset. Both now derive from a single `--hdr-search-h` rather than
+the previous hardcoded `top:19.5px`.
+
+The first run of this test proved nothing: `window.scrollTo(0,1200)` left
+`scrollY` at 0, because the board scrolls inside `#scroll-wrap`, not the page.
+Re-run against the real container with `scrollTop = 900`:
+
+| Row | Top → bottom (1600px) | Top → bottom (700px) |
+|---|---|---|
+| Search | 77 → 103 | 110 → 136 |
+| Phase (months) | 103 → 119 | 136 → 152 |
+| Week | 122 → 145 | 156 → 178 |
+
+Three rows stacked in order with no overlap, and the search row's top equals the
+scroll container's top, so it is genuinely pinned. Measured on the `th`
+elements, not the `tr` — per the lesson that a row's bounding box is not what is
+sticky here.
+
+**Subtitle text** reads "Exported milestone view of P6 schedule shown by activity
+end dates". Taken from a partly garbled dictation and flagged as an assumption.
+
 ### TEST-05 detail
 
 `tools/theme_check.py` injects a probe into a temporary copy, flips `data-theme` between light and dark, and reads `getComputedStyle` for colour, background, all four borders and outline on each probe. It is a measurement of the rendered result, not of the CSS text.
@@ -825,5 +864,6 @@ Source file shape confirmed by static inspection of the workbook: 192 data rows,
 | 2026-09-10 | TEST-19 publish round trip on a real published file; full suite re-run; baseline unchanged; theme check 49 probes | A published file still carries the original seeds as a fallback and is larger than needed (TD-43); readers can republish from a published file (TD-44, undecided); the SharePoint upload itself is not yet exercised with a real library | File distribution | v3.1.0-P14 |
 | 2026-09-11 | TEST-20 published-file provenance; TEST-19 unchanged; baseline render unchanged; theme check 50 probes | The SharePoint upload itself is now user-confirmed working; provenance wording not yet reviewed by a reader of a published file | File distribution | v3.1.0-P16 |
 | 2026-09-11 | TEST-21 five of six changes verified; baseline render unchanged | **Contrast gate failing by design pending TD-50**: the requested `#f4f5f8` is 1.79:1 on the light header. Delivered as asked and reported, not suppressed. | File distribution | v3.1.0-P18 |
+| 2026-09-11 | TEST-22 heading layout and sticky search row; full suite re-run; baseline render unchanged | **Contrast gate still failing by design pending TD-50** (two probes at 1.79:1, delivered as requested). Subtitle wording is an assumption from garbled dictation. | File distribution | v3.1.0-P19 |
 | Pre-migration | TEST-01 full feature regression | Banding (FEAT-10), sorting/icon customisation (FEAT-11), JSON round-trip (FEAT-13) all knowingly not built. Tokenization (FEAT-14) knowingly incomplete. Label collision same-row only. Header aliases exact-match only. | File distribution | v3.1.0-P1 |
 | 2026-09-09 | Migration to git repository, project kit established | TD-01 version discrepancy open; companion tokenization docs (TD-03) not yet located | Branch `p6-milestone-dashboard` | Migration commit |
