@@ -144,6 +144,14 @@ const PROBES = [
       const tr = mk('<tr class="hist-row"><td class="c-name">history</td></tr>', tbody);
       return tr.querySelector('td');
   }],
+  // Chrome text on --color-bg-header. Deliberately one value for both themes,
+  // so 'constant'; the contrast pass is what judges whether that value works on
+  // each header colour, and it currently does not on the light one.
+  ['#icon-bar .ib-label (constant)', 'constant', () => document.getElementById('ib-label')],
+  ['.rpt-hd .subtitle (constant)',   'constant', () => {
+      const d = mk('<div class="rpt-hd"><span class="subtitle">subtitle text</span></div>');
+      return d.querySelector('.subtitle');
+  }],
   ['.imp-fail',                  'toggle',   () => mk('<div class="imp-fail">x</div>')],
   ['.imp-fail-hd',               'toggle',   () => {
       const d = mk('<div class="imp-fail"><div class="imp-fail-hd">Could not read</div></div>');
