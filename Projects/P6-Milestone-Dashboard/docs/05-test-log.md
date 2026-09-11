@@ -25,6 +25,7 @@
 | TEST-19 | 2026-09-10 | Publish round trip: does a published file open cold with the schedule, timeline and annotations already in place, and does it carry nothing it should not | Publish captured at the Blob boundary, written to disk, then loaded as a separate page | **Pass after two fixes** | TD-41, TD-42 (both closed same pass), TD-43, TD-44 |
 | TEST-20 | 2026-09-11 | Does a published file describe itself correctly: mount slots, baseline counts, and the header provenance line | Publish probe extended to capture all three mount slots and the header meta | **Pass after fix** — reproduced the user's report first | TD-47, TD-48 (both closed same pass) |
 | TEST-21 | 2026-09-11 | Six requested changes: published schedule as the update, Source cell after a drag, empty-row delete, gutter alignment, column master toggle scope, header chrome colour | Publish round trip plus a combined DOM probe driving each interaction | **5 pass, 1 delivered failing** — the requested `#f4f5f8` is 1.79:1 on the light header | TD-50 (open), TD-51 to TD-55 (closed) |
+| TEST-23 | 2026-09-11 | Every kind of board markup survives a publish, and the two layout changes replay onto a schedule that has never seen them | `tools/persist_check.py` — three stages against real headless renders: edit and capture both real downloads, read the published file back, replay the exported model onto a clean board | **Pass** (20 checks) | TD-27, TD-58, TD-59, TD-60, TD-61 (all closed) |
 | TEST-22 | 2026-09-11 | Heading bar split into two containers with responsive stacking, subtitle relocated, and the search moved to its own sticky row | Bounding-rect measurement at two viewport widths, and again after 900px of real scroll inside `#scroll-wrap` | **Pass** | TD-56, TD-57 (both closed) |
 
 ### TEST-13 detail
@@ -516,6 +517,58 @@ sticky here.
 **Subtitle text** reads "Exported milestone view of P6 schedule shown by activity
 end dates". Taken from a partly garbled dictation and flagged as an assumption.
 
+### TEST-23 detail
+
+`tools/persist_check.py`. The question is asked in three places because the three
+paths had drifted apart before and nothing tested them together.
+
+Both downloads are captured by stubbing `URL.createObjectURL` at the app's
+boundary with the browser, so the payloads asserted are the ones the real
+`publishDashboard()` and `exportModel()` produce. Nothing is reimplemented.
+
+**Stage 1 — one of every kind of edit**, against the real functions: a drag
+through `moveMilestoneToRow()`, a milestone comment, a health override, a custom
+short title, a dependency-line comment, row health and a remark set on the
+rendered row, and a row removal through `deleteRow()`.
+
+**Stage 2 — the published file, opened cold.**
+
+| Assertion | Result |
+|---|---|
+| Dependency-line comment | present |
+| Milestone comment, health override, short title | all present |
+| Milestone sits on the row it was dragged to | yes |
+| Row health and remark applied to the rendered row | yes, after the TD-59 fix |
+| Removed row stayed removed | yes |
+| Move and removal records carried as history | yes |
+| Markup line describes the edits rather than "no markup edits yet" | yes |
+
+**Stage 3 — replay onto a clean board that has never seen any of it.** This is
+the case a merge cannot cover and the one TD-27 was open on. The clean board is
+asserted to start in the pre-move state first, so "it was already there" cannot
+be mistaken for a working replay.
+
+| Assertion | Result |
+|---|---|
+| Clean board starts with the milestone on its original row | yes |
+| Move replays onto the new schedule | yes |
+| Row removal replays | yes |
+| Dependency comment imports | yes |
+| Importing the same file twice changes nothing further | yes, no extra move records |
+
+**Two probe faults, recorded because both first read as product defects.** The
+first run put the row override and the row deletion on the same row: the row the
+milestone had just left was the row that then qualified as empty, so a correctly
+discarded override looked like a lost one. The second read the markup line from
+an element id that does not exist, and reported an empty string as a pass. Both
+are the same trap as the TEST-22 scroll container: the probe was wrong, and a
+less careful reading would have produced a fix for a defect that was not there.
+
+A third fault was real. Stage 1's output element was appended to the body before
+the publish, so the published clone carried an empty copy of it and stage 2's
+reader matched that one instead of its own output. The element is now created
+only at the moment it is written, and the reader takes the last match.
+
 ### TEST-05 detail
 
 `tools/theme_check.py` injects a probe into a temporary copy, flips `data-theme` between light and dark, and reads `getComputedStyle` for colour, background, all four borders and outline on each probe. It is a measurement of the rendered result, not of the CSS text.
@@ -865,5 +918,6 @@ Source file shape confirmed by static inspection of the workbook: 192 data rows,
 | 2026-09-11 | TEST-20 published-file provenance; TEST-19 unchanged; baseline render unchanged; theme check 50 probes | The SharePoint upload itself is now user-confirmed working; provenance wording not yet reviewed by a reader of a published file | File distribution | v3.1.0-P16 |
 | 2026-09-11 | TEST-21 five of six changes verified; baseline render unchanged | **Contrast gate failing by design pending TD-50**: the requested `#f4f5f8` is 1.79:1 on the light header. Delivered as asked and reported, not suppressed. | File distribution | v3.1.0-P18 |
 | 2026-09-11 | TEST-22 heading layout and sticky search row; full suite re-run; baseline render unchanged | **Contrast gate still failing by design pending TD-50** (two probes at 1.79:1, delivered as requested). Subtitle wording is an assumption from garbled dictation. | File distribution | v3.1.0-P19 |
+| 2026-09-11 | TEST-23 persistence round trip, 20/20; full suite re-run; baseline render unchanged at 163 rows / 196 markers / 159 tasks / 198 milestones | **Contrast gate still failing by design pending TD-50** (two probes at 1.79:1, delivered as requested). Replayed import categories do not yet report how many entries actually landed (TD-62). | File distribution | v3.1.0-P20 |
 | Pre-migration | TEST-01 full feature regression | Banding (FEAT-10), sorting/icon customisation (FEAT-11), JSON round-trip (FEAT-13) all knowingly not built. Tokenization (FEAT-14) knowingly incomplete. Label collision same-row only. Header aliases exact-match only. | File distribution | v3.1.0-P1 |
 | 2026-09-09 | Migration to git repository, project kit established | TD-01 version discrepancy open; companion tokenization docs (TD-03) not yet located | Branch `p6-milestone-dashboard` | Migration commit |
