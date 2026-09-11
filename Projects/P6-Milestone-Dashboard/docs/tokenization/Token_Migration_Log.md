@@ -63,6 +63,9 @@ Append new rows here as measurements are taken. Never edit or delete a prior row
 | 2026-09-10 | `tools/theme_check.py`, after the v3.1.0-P9 pass | Probes expected to be constant, correctly frozen | 4 |
 | 2026-09-10 | `tools/theme_check.py`, first run of the new mount-panel probes | Probes below 3.0:1, before the token fixes | 2 |
 | 2026-09-10 | `tools/theme_check.py`, after the token fixes | Probes below 3.0:1 | 0 |
+| 2026-09-11 | `tools/theme_check.py`, `tr.hist-row` probe added after the header colour change | Probes expected to toggle | 46 |
+| 2026-09-11 | `tools/theme_check.py`, header `#ffffff` to `#a6bbdc`, before darkening the muted token | Probes below 3.0:1 | 2 |
+| 2026-09-11 | `tools/theme_check.py`, after darkening `--color-text-on-panel-muted` to `#575c67` | Probes below 3.0:1 | 0 |
 
 **Re-running the audit:** run `python3 tools/colour_audit.py` from the project root. It regenerates `Hardcoded_Colour_Audit.csv` and prints every metric above.
 

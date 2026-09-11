@@ -137,6 +137,13 @@ const PROBES = [
       const d = mk('<div class="mnt-slot"><span class="mnt-badge">override</span></div>');
       return d.querySelector('.mnt-badge');
   }],
+  // Shares --color-text-on-panel-muted with the sticky search controls but sits
+  // on --color-bg-header, and had no probe — which is why a header colour change
+  // could drop it below the bar unnoticed.
+  ['tr.hist-row td.c-name',      'toggle',   () => {
+      const tr = mk('<tr class="hist-row"><td class="c-name">history</td></tr>', tbody);
+      return tr.querySelector('td');
+  }],
   ['.imp-fail',                  'toggle',   () => mk('<div class="imp-fail">x</div>')],
   ['.imp-fail-hd',               'toggle',   () => {
       const d = mk('<div class="imp-fail"><div class="imp-fail-hd">Could not read</div></div>');
