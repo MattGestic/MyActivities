@@ -23,6 +23,7 @@
 | TEST-17 | 2026-09-10 | Data date: placement under step 1, label, previous-Friday default across every weekday and at month/year boundaries, and that editing still drives ingest | Node for the date arithmetic, headless DOM probe for placement and wiring | **Pass** — 7/7 weekdays, 3/3 boundaries, field visible with no file loaded | TD-39 (closed same pass) |
 | TEST-18 | 2026-09-10 | Does a real click on the Import button complete an import, and is the form correctly torn down afterwards | Real `.click()` on the rendered button, in a normal page and inside an `about:srcdoc` iframe matching the user's viewer | **Pass after fix** — reproduced the stale form; second press now impossible | TD-40 (closed same pass) |
 | TEST-19 | 2026-09-10 | Publish round trip: does a published file open cold with the schedule, timeline and annotations already in place, and does it carry nothing it should not | Publish captured at the Blob boundary, written to disk, then loaded as a separate page | **Pass after two fixes** | TD-41, TD-42 (both closed same pass), TD-43, TD-44 |
+| TEST-20 | 2026-09-11 | Does a published file describe itself correctly: mount slots, baseline counts, and the header provenance line | Publish probe extended to capture all three mount slots and the header meta | **Pass after fix** — reproduced the user's report first | TD-47, TD-48 (both closed same pass) |
 
 ### TEST-13 detail
 
@@ -397,6 +398,38 @@ and overwriting a title the product had set correctly. The harness was proving
 the feature worked and breaking it in the same step. It was only worth the cost
 because it exposed TD-42 underneath.
 
+### TEST-20 detail
+
+Reported as "I uploaded and saved it as a new dashboard, the current I had
+loaded didn't save into the copy." **It had saved.** The published file held 105
+tasks, 146 milestones, 105 rendered rows, 143 markers and all four annotation
+stores. What failed was everything that *describes* the file.
+
+Reproduced by extending the publish probe to read the mount panel and header:
+
+| Surface | Before | After |
+|---|---|---|
+| Baseline slot counts | 159 / 198 (the original seeds) | **105 / 146** |
+| Baseline slot badge | `embedded` | `published` |
+| Baseline provenance | none | "Built into this file on … (v…)" |
+| Header baseline | "Baseline DD 15th Aug" | "Published DD 29-Aug-26" |
+| Header update | "No update imported" | "Built into this file" |
+| Schedule slot | "Nothing mounted / Showing the embedded baseline" | "No override mounted / The published schedule above is what this file shows" |
+
+Each old value was literally true of the internals — there genuinely is no
+mounted update in a published file, and `SEED_*` genuinely is the embedded data
+— and every one of them was wrong about what the user had just done.
+
+Root causes: `renderMounts()` read `SEED_TASKS`/`SEED_MILESTONES` rather than
+`BASELINE_TASKS`/`BASELINE_MILESTONES`, which are the same in a shipped build and
+different in a published one; `BASELINE_LABEL_TEXT` was a `const` the publish
+path never updated; and two strings were worded for the non-published case only.
+
+**Why it shipped:** TEST-19 asserted the payload and the rendered board, never
+what the UI said about them. The probe now captures all three mount slots and
+the header meta line, and the non-published panel is asserted in the same run so
+the two wordings cannot drift.
+
 ### TEST-05 detail
 
 `tools/theme_check.py` injects a probe into a temporary copy, flips `data-theme` between light and dark, and reads `getComputedStyle` for colour, background, all four borders and outline on each probe. It is a measurement of the rendered result, not of the CSS text.
@@ -743,5 +776,6 @@ Source file shape confirmed by static inspection of the workbook: 192 data rows,
 | 2026-09-10 | TEST-17 data date placement, default and wiring; full suite re-run; baseline unchanged; theme check 49 probes | Previous-Friday rule returns the week before when today is a Friday, by design (see TEST-17) | File distribution | v3.1.0-P12 |
 | 2026-09-10 | TEST-18 real Import click in a normal page and in an `about:srcdoc` iframe; full suite re-run; baseline unchanged; theme check 49 probes | The viewer-injected `onclick` TypeError is outside this app and is not addressed here | File distribution | v3.1.0-P13 |
 | 2026-09-10 | TEST-19 publish round trip on a real published file; full suite re-run; baseline unchanged; theme check 49 probes | A published file still carries the original seeds as a fallback and is larger than needed (TD-43); readers can republish from a published file (TD-44, undecided); the SharePoint upload itself is not yet exercised with a real library | File distribution | v3.1.0-P14 |
+| 2026-09-11 | TEST-20 published-file provenance; TEST-19 unchanged; baseline render unchanged; theme check 50 probes | The SharePoint upload itself is now user-confirmed working; provenance wording not yet reviewed by a reader of a published file | File distribution | v3.1.0-P16 |
 | Pre-migration | TEST-01 full feature regression | Banding (FEAT-10), sorting/icon customisation (FEAT-11), JSON round-trip (FEAT-13) all knowingly not built. Tokenization (FEAT-14) knowingly incomplete. Label collision same-row only. Header aliases exact-match only. | File distribution | v3.1.0-P1 |
 | 2026-09-09 | Migration to git repository, project kit established | TD-01 version discrepancy open; companion tokenization docs (TD-03) not yet located | Branch `p6-milestone-dashboard` | Migration commit |
