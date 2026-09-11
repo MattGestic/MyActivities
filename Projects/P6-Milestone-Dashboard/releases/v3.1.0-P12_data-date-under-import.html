@@ -8,11 +8,7 @@
 /* ===== THEME TOKENS — light (default, approved) and dark (preserves prior look, ready for future toggle) ===== */
 html[data-theme="light"]{
   /* Backgrounds */
-  /* Darkened from #a6bbdc so the requested #f4f5f8 chrome text is legible on it
-     (1.79:1 there, 7.53:1 here). See TD-50. Darkening moved every text colour
-     on this surface, so the header now has its own text tokens rather than
-     borrowing the panel's. */
-  --color-bg-header:#2e4f82;
+  --color-bg-header:#ffffff;
   --color-bg-panel:#f4f5f8;
   --color-bg-subtle:#f4f5f8;
   --color-bg-canvas:#fdfdfc;
@@ -33,16 +29,7 @@ html[data-theme="light"]{
   --color-text-label:#8a8f99;
   --color-text-mono:#848994;
   --color-text-on-panel:#17191c;
-  /* Muted secondary text on the PANEL only. It used to serve the header as
-     well, which is what TD-46 named as a latent trap and TD-50 then proved:
-     darkening the header dropped this pairing to 1.22:1. Header surfaces now
-     use --color-text-on-header-muted, and this one is single-surface again.
-     6.15:1 on the panel. */
-  --color-text-on-panel-muted:#575c67;
-  /* Bold emphasis inside panel text. It borrowed --color-bg-header, which
-     happened to read as blue emphasis in light and was a dark navy on a dark
-     panel in dark (1.31:1). A background token is not a text token. */
-  --color-text-emphasis:#2e4f82;
+  --color-text-on-panel-muted:#6f7480;
   --color-text-small:#4c515c;
   --color-text-faint:#8a8f99;
   --color-text-note:#8a8f99;
@@ -136,7 +123,6 @@ html[data-theme="dark"]{
   --color-text-mono:#b7c6e0;
   --color-text-on-panel:#cde;
   --color-text-on-panel-muted:#8ab;
-  --color-text-emphasis:#c4d2e8;
   --color-text-small:#334;
   --color-text-faint:#556;
   --color-text-note:#889;
@@ -238,21 +224,6 @@ html[data-theme="dark"]{
      dialog became a second consumer; a translucent wash over whatever is
      beneath, so it is correct as a non-themed constant. */
   --color-scrim:rgba(10,12,30,.35);
-  /* Chrome text sitting on --color-bg-header: the icon-bar version label and the
-     report subtitle. Requested value. Non-themed because the dark header is
-     already dark and takes the same near-white treatment. See TD-50 for the
-     measured contrast against the light header. */
-  --color-text-on-header:#f4f5f8;
-  /* Secondary text on the same surface: the report detail fields, the sticky
-     search placeholder and icons, and the history rows. Non-themed for the same
-     reason as the line above, and measured on both headers (5.37:1 light,
-     11.41:1 dark). */
-  --color-text-on-header-muted:#c4d2e8;
-  /* Hover and focus wash for editable chrome ON the header. A near-white
-     background there would hide the light text it sits under, so these are
-     translucent lifts of the header itself rather than panel colours. */
-  --color-bg-header-hover:rgba(255,255,255,.12);
-  --color-bg-header-focus:rgba(255,255,255,.18);
   --color-shadow-dialog-near:var(--color-shadow-dialog-near);
   --color-shadow-dialog-far:var(--color-shadow-dialog-far);
 
@@ -340,10 +311,10 @@ body.cv-open{margin-left:300px}
 #icon-bar{background:var(--color-bg-header);padding:var(--space-2) var(--space-4);display:flex;align-items:center;gap:var(--space-3);flex-wrap:nowrap;overflow-x:auto;position:relative;z-index:30}
 .ib-right-icons{display:flex;align-items:center;gap:12px}
 .sticky-search-box{display:flex;align-items:center;gap:var(--space-1);height:100%;padding:0 var(--space-2) 0 0}
-.sticky-search-icon{border:none;background:transparent;color:var(--color-text-on-header-muted);cursor:pointer;font-size:11px;padding:3px 4px;flex-shrink:0;position:relative;display:inline-flex;align-items:center}
-.sticky-search-box input{flex:1;min-width:0;font-size:var(--text-sm);border:none;background:transparent;color:var(--color-text-on-header);padding:var(--space-1) 0}
-.sticky-search-box input::placeholder{color:var(--color-text-on-header-muted);opacity:.85;font-style:italic}
-.sticky-search-clear{border:none;background:transparent;color:var(--color-text-on-header-muted);cursor:pointer;font-size:10px;padding:2px 3px;flex-shrink:0}
+.sticky-search-icon{border:none;background:transparent;color:var(--color-text-on-panel-muted);cursor:pointer;font-size:11px;padding:3px 4px;flex-shrink:0;position:relative;display:inline-flex;align-items:center}
+.sticky-search-box input{flex:1;min-width:0;font-size:var(--text-sm);border:none;background:transparent;color:var(--color-text-on-panel);padding:var(--space-1) 0}
+.sticky-search-box input::placeholder{color:var(--color-text-on-panel-muted);opacity:.85;font-style:italic}
+.sticky-search-clear{border:none;background:transparent;color:var(--color-text-on-panel-muted);cursor:pointer;font-size:10px;padding:2px 3px;flex-shrink:0}
 .sticky-search-clear:hover{color:var(--color-status-crit)}
 .icon-btn{width:26px;height:26px;border-radius:5px;border:1px solid var(--color-border-panel);background:var(--color-bg-panel);color:var(--color-text-on-panel);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:13px;position:relative}
 .icon-btn:hover{background:var(--color-btn-icon-hover-bg)}
@@ -351,7 +322,7 @@ body.cv-open{margin-left:300px}
 .icon-btn.on{background:var(--color-accent-purple);border-color:var(--color-accent-purple);color:var(--color-text-on-accent)}
 .icon-btn .dot{position:absolute;top:-3px;right:-3px;width:7px;height:7px;border-radius:50%;background:var(--color-crit);display:none}
 .icon-btn .dot.show{display:block}
-#icon-bar .ib-label{font-size:9px;color:var(--color-text-on-header);margin-left:var(--space-1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1 1 auto}
+#icon-bar .ib-label{font-size:9px;color:var(--color-text-note);margin-left:var(--space-1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1 1 auto}
 #dirty-indicator{display:none;margin-left:auto;font-size:9px;color:var(--color-chip-attention-bg);font-weight:600;padding:2px 8px;border:1px solid var(--color-chip-attention-bg);border-radius:10px;white-space:nowrap}
 #btn-remove-all-filters{font-size:9px;font-weight:600;color:var(--color-chip-attention-bg);background:none;padding:2px 8px;border:1px solid var(--color-chip-attention-bg);border-radius:10px;white-space:nowrap;cursor:pointer}
 #btn-remove-all-filters:hover{background:var(--color-chip-attention-bg);color:var(--color-chip-attention-ink)}
@@ -422,11 +393,11 @@ input[type=range]{width:110px;cursor:pointer}
 .cv-cols-grid{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
 .cv-remarks-row{margin-top:var(--space-3);padding-top:var(--space-3);border-top:1px solid var(--color-filter-border)}
 .sd-src-box{background:var(--color-bg-elevated);border:1px solid var(--color-input-border);border-radius:4px;padding:7px 8px;font-size:9.5px;color:var(--color-text-small);line-height:1.5}
-.sd-src-box b{color:var(--color-text-emphasis)}
+.sd-src-box b{color:var(--color-bg-header)}
 .sd-src-box .src-row{display:flex;justify-content:space-between;gap:8px}
 
 .sd-src-text{background:var(--color-bg-elevated);border:1px solid var(--color-input-border);border-radius:4px;padding:7px 8px;font-size:9.5px;color:var(--color-text-small);line-height:1.6;margin-top:6px}
-.sd-src-text b{color:var(--color-text-emphasis)}
+.sd-src-text b{color:var(--color-bg-header)}
 
 /* ---- Filter panel: horizontal strip below title, above meta row (filter/sort row + display controls row) ---- */
 #filter-bar{position:fixed;top:0;left:0;bottom:0;width:300px;max-width:88vw;background:var(--color-filter-bg);border-right:1px solid var(--color-filter-border);box-shadow:2px 0 14px rgba(0,0,0,.18);display:flex;flex-direction:column;gap:0;font-size:10px;padding:var(--space-2) 0 var(--space-6);transform:translateX(-100%);transition:transform .18s ease;z-index:700;overflow-y:auto}
@@ -482,42 +453,25 @@ input[type=range]{width:110px;cursor:pointer}
   .icon-btn{border-color:var(--color-line-default);color:var(--color-text-note);background:var(--color-bg-elevated)}
 }
 
-/* One heading bar holding two containers: the report title on the left and the
-   report detail fields pushed to the right. They sit on one line while there is
-   room and stack when there is not, which is what flex-wrap plus a right
-   container that only claims the space it needs gives us without a breakpoint.
-   The subtitle sits under the whole bar rather than under the title, so the two
-   containers can align to a single baseline. */
-.rpt-hd{background:var(--color-bg-header);color:var(--color-text-on-header);padding:6px 10px 4px;display:flex;flex-direction:column;gap:3px;position:relative;z-index:30;border-bottom:1px solid var(--color-line-default,#e3e2de)}
-.rpt-hd-bar{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px;width:100%}
-.rpt-hd-left{flex:1 1 260px;min-width:0}
-.rpt-hd-right{flex:0 1 auto;margin-left:auto;justify-content:flex-end}
-/* Once the two containers wrap onto separate lines the right one is no longer
-   opposite anything, so it drops its right alignment and reads as a second row. */
-@media (max-width:900px){
-  .rpt-hd-right{margin-left:0;justify-content:flex-start;width:100%}
-}
-.rpt-hd .title{font-size:12px;font-weight:600;color:var(--color-text-on-header);cursor:text;border-radius:3px;padding:1px 3px;margin:-1px -3px}
-.rpt-hd .title:hover{background:var(--color-bg-header-hover)}
-.rpt-hd .title:focus{outline:1.5px solid var(--color-status-track,#2f6fed);background:var(--color-bg-header-focus)}
-.rpt-hd .subtitle{font-size:10px;font-weight:400;color:var(--color-text-on-header);font-style:italic}
+.rpt-hd{background:var(--color-bg-header);color:var(--color-text-ink,#17191c);padding:6px 10px 4px;display:flex;flex-direction:column;gap:2px;position:relative;z-index:30;border-bottom:1px solid var(--color-line-default,#e3e2de)}
+.rpt-hd .title{font-size:12px;font-weight:600;color:var(--color-text-ink,#17191c);cursor:text;border-radius:3px;padding:1px 3px;margin:-1px -3px}
+.rpt-hd .title:hover{background:var(--color-btn-hover-bg,#f4f5f8)}
+.rpt-hd .title:focus{outline:1.5px solid var(--color-status-track,#2f6fed);background:var(--color-bg-elevated,#fff)}
+.rpt-hd .subtitle{font-size:10px;font-weight:400;color:var(--color-text-muted,#6f7480);font-style:italic}
 .rpt-hd .vtag{background:var(--color-accent-purple);color:var(--color-text-on-accent);font-size:8.5px;padding:1px 6px;border-radius:3px;margin-left:6px;font-weight:600;letter-spacing:.03em}
-/* Was its own full-width bar under the title; it is now the right-hand
-   container of the heading bar, so it brings the field typography and drops the
-   background, padding and stacking context. */
-.rpt-sub{color:var(--color-text-on-header-muted);display:flex;flex-wrap:wrap;gap:4px 18px;font-size:9px;align-items:baseline}
+.rpt-sub{background:var(--color-bg-panel);color:var(--color-text-on-panel-muted);padding:3px 10px;display:flex;flex-wrap:wrap;gap:10px 18px;font-size:9px;align-items:center;position:relative;z-index:30}
 .rpt-sub-group{display:flex;flex-wrap:wrap;gap:16px;align-items:center}
 .rpt-sub-id{flex:0 0 auto}
 .rpt-sub-meta{flex:1 1 auto}
 .rpt-sub-view{flex:0 0 auto;margin-left:auto}
-.rpt-sub-divider{color:var(--color-text-on-header-muted);opacity:.6;flex:0 0 auto}
+.rpt-sub-divider{color:var(--color-text-note);opacity:.6;flex:0 0 auto}
 .view-toggle{display:inline-flex;border:1px solid var(--color-vt-divider);border-radius:4px;overflow:hidden;vertical-align:middle;margin-left:2px}
 .vt-btn{font-size:9px;padding:2px 8px;border:none;background:var(--color-bg-panel);color:var(--color-text-on-panel-muted);cursor:pointer;font-weight:600}
 .vt-btn:hover:not(:disabled):not(.active){background:var(--color-btn-icon-hover-bg)}
 .vt-btn+.vt-btn{border-left:1px solid var(--color-vt-divider)}
 .vt-btn.active{background:var(--color-accent-purple);color:var(--color-text-on-accent)}
 .vt-btn:disabled{opacity:.4;cursor:not-allowed}
-.rpt-sub b{color:var(--color-text-on-header)}
+.rpt-sub b{color:var(--color-text-on-panel)}
 .rpt-sub .today{color:var(--color-subtotal-accent)}
 
 #scroll-wrap{overflow-x:auto;overflow-y:auto;max-height:calc(100vh - 150px);position:relative}
@@ -534,14 +488,8 @@ table{border-collapse:separate;border-spacing:0;table-layout:fixed;width:max-con
 td.sticky,th.sticky{position:sticky;left:0;z-index:10;background:inherit}
 thead tr th.sticky{z-index:20}
 
-/* Height of the search row, and therefore the offset every header row below it
-   sticks at. Kept as one variable so the three rows cannot drift apart. */
-:root{--hdr-search-h:26px}
-tr.hdr-search th{position:sticky;top:0;z-index:27;background:var(--color-bg-header);
-  height:var(--hdr-search-h);padding:0;border-bottom:0.5px solid var(--color-line-default)}
-tr.hdr-search th.sticky{z-index:28}
-tr.hdr-phase th{font-size:9px;font-weight:500;color:var(--color-text-on-accent);padding:3px 4px;text-align:center;border-right:0.5px solid rgba(255,255,255,.15);white-space:nowrap;position:sticky;top:var(--hdr-search-h);z-index:25}
-tr.hdr-wk th{font-size:8px;color:var(--color-text-small);padding:2px 2px;text-align:center;border-right:0.5px solid var(--color-line-default);border-bottom:1.5px solid #99a;white-space:nowrap;line-height:1.2;background:var(--color-bg-subtle);cursor:pointer;user-select:none;position:sticky;top:calc(var(--hdr-search-h) + 19.5px);z-index:24}
+tr.hdr-phase th{font-size:9px;font-weight:500;color:var(--color-text-on-accent);padding:3px 4px;text-align:center;border-right:0.5px solid rgba(255,255,255,.15);white-space:nowrap;position:sticky;top:0;z-index:25}
+tr.hdr-wk th{font-size:8px;color:var(--color-text-small);padding:2px 2px;text-align:center;border-right:0.5px solid var(--color-line-default);border-bottom:1.5px solid #99a;white-space:nowrap;line-height:1.2;background:var(--color-bg-subtle);cursor:pointer;user-select:none;position:sticky;top:19.5px;z-index:24}
 tr.hdr-wk th.sticky{z-index:26}
 tr.hdr-wk th:hover{background:var(--color-accent-tint-bg)}
 tr.hdr-wk th.past-wk{background:#e8e8e8;color:var(--color-text-small)}
@@ -572,17 +520,9 @@ tr.data:hover td{background:var(--color-row-hover-bg)!important}
    --color-text-muted, not --color-text-faint: faint is scoped to text that
    sits on a label backing, and measures 1.99:1 on a dark row. Muted is the
    same token .remarks uses on this surface and holds 4.5:1+ in both themes. */
-/* Row number, delete control and health dot share one fixed-width gutter so
-   the deliverable names line up regardless of whether a row is numbered 1 or
-   105, and so the number never collides with the dot. */
-.row-gutter{display:inline-flex;align-items:center;gap:4px;vertical-align:baseline;margin-right:2px}
-.row-del{border:none;background:transparent;color:var(--color-crit-text);cursor:pointer;
-  font-size:11px;line-height:1;padding:0 2px;border-radius:2px;flex:0 0 auto}
-.row-del:hover{background:var(--color-crit-tint-bg)}
-.row-num{display:inline-block;min-width:17px;text-align:right;font-size:8px;
+.row-num{display:inline-block;min-width:15px;text-align:right;font-size:8px;
   font-variant-numeric:tabular-nums;color:var(--color-text-muted);
   flex:0 0 auto;user-select:none;line-height:1.4}
-.health-dot{margin-right:0}
 /* Milestone drag. The ghost follows the pointer; the candidate row is washed
    with the accent so the target is unambiguous on a dense board. */
 .m-wrap.ms-dragging{opacity:.35}
@@ -785,7 +725,7 @@ tr.subtotal-row td.c-wk.filter-col{background:var(--color-col-filtered-alt-bg) !
 tr.subtotal-row td.c-wk.empty-wk{color:var(--color-text-faint);font-weight:400}
 
 tr.hist-row td{background:var(--color-bg-panel) !important;padding:0;border-top:1px solid var(--color-row-selected);border-bottom:1px solid var(--color-row-selected)}
-tr.hist-row td.c-name,tr.hist-row td.c-ref,tr.hist-row td.c-hrs,tr.hist-row td.c-alloc,tr.hist-row td.c-prog,tr.hist-row td.c-type,tr.hist-row td.c-doc,tr.hist-row td.c-task,tr.hist-row td.c-src{color:var(--color-text-on-header-muted);font-size:8.5px;text-align:right;padding:4px 6px;font-style:italic;background:var(--color-bg-header) !important}
+tr.hist-row td.c-name,tr.hist-row td.c-ref,tr.hist-row td.c-hrs,tr.hist-row td.c-alloc,tr.hist-row td.c-prog,tr.hist-row td.c-type,tr.hist-row td.c-doc,tr.hist-row td.c-task,tr.hist-row td.c-src{color:var(--color-text-on-panel-muted);font-size:8.5px;text-align:right;padding:4px 6px;font-style:italic;background:var(--color-bg-header) !important}
 tr.hist-row td.c-wk{height:56px;position:relative;padding:0;border-right:0.5px solid var(--color-border-panel) !important;background:var(--color-bg-panel) !important}
 tr.hist-row td.c-wk.past-col{background:var(--color-col-past-bg) !important}
 tr.hist-row td.c-wk.now-col{background:var(--color-col-filtered-alt-bg) !important}
@@ -985,7 +925,6 @@ tr.hist-row td.c-wk.filter-col{background:var(--color-purple-deep) !important}
       <button class="toggle-btn" onclick="resetChanges()" style="background:var(--color-crit);color:var(--color-text-on-accent);border-color:var(--color-crit-border);text-transform:none;letter-spacing:0;font-weight:600">Clear all comments</button>
     </div>
     <div class="ctrl-group">
-      <button class="toggle-btn active" onclick="publishDashboard()" title="Write a new standalone HTML file with the current schedule and annotations built in. Upload that to SharePoint and anyone who opens it sees this data, with nothing to import.">&#128190; Save as new dashboard</button>
       <button class="toggle-btn" onclick="exportModel()">&#11015; Export model JSON</button>
       <button class="toggle-btn" onclick="exportCSV()">&#11015; Export CSV (status &amp; remarks)</button>
     </div>
@@ -1104,28 +1043,25 @@ tr.hist-row td.c-wk.filter-col{background:var(--color-purple-deep) !important}
 </div>
 
 <div class="rpt-hd">
-  <div class="rpt-hd-bar">
-    <div class="rpt-hd-left">
-      <span class="title" id="rpt-title-text" contenteditable="true" spellcheck="false" title="Click to edit the report title">Eskay | Snip PFS &amp; Technical Report 2026 &mdash; Deliverables Dashboard</span>
-    </div>
-    <div class="rpt-hd-right rpt-sub">
-      <div class="rpt-sub-group">
-        <span>Project No.: <b>103787-13</b></span>
-        <span>Report date: <b id="meta-reportdate">&mdash;</b></span>
-        <span>Data date: <b id="meta-datadate">&mdash;</b></span>
-      </div>
-      <span class="rpt-sub-divider">|</span>
-      <div class="rpt-sub-group">
-        <span>Activities: <b id="meta-count">&mdash;</b></span>
-        <span>Baseline: <b id="meta-baseline">&mdash;</b></span>
-        <span>Updated by: <b>Matthew Garrett</b></span>
-      </div>
-      <div class="rpt-sub-group rpt-sub-view">
-        <span>View: <span class="view-toggle"><button class="vt-btn active" id="vt-baseline" onclick="setViewMode('baseline')">Baseline</button><button class="vt-btn" id="vt-update" onclick="setViewMode('update')" disabled title="Import a schedule to enable this view">Update</button></span></span>
-      </div>
-    </div>
+  <span class="title" id="rpt-title-text" contenteditable="true" spellcheck="false" title="Click to edit the report title">Eskay | Snip PFS &amp; Technical Report 2026 &mdash; Deliverables Dashboard</span>
+  <span class="subtitle">An ingested view of the exported P6 schedule &mdash; every activity end date shown as a milestone, rows aggregated by schedule hierarchy.</span>
+</div>
+
+<div class="rpt-sub">
+  <div class="rpt-sub-group rpt-sub-id">
+    <span>No.: <b>103787-13</b></span>
+    <span>Baseline: <b id="meta-baseline">&mdash;</b></span>
+    <span>Schedule update: <b id="meta-update-file">&mdash;</b></span>
+    <span>Activities: <b id="meta-count">&mdash;</b></span>
   </div>
-  <span class="subtitle">Exported milestone view of P6 schedule shown by activity end dates</span>
+  <span class="rpt-sub-divider">|</span>
+  <div class="rpt-sub-group rpt-sub-meta">
+    <span>Report date: <b id="meta-reportdate">&mdash;</b></span>
+    <span>Updated by: <b>Matthew Garrett</b></span>
+  </div>
+  <div class="rpt-sub-group rpt-sub-view">
+    <span>View: <span class="view-toggle"><button class="vt-btn active" id="vt-baseline" onclick="setViewMode('baseline')">Baseline</button><button class="vt-btn" id="vt-update" onclick="setViewMode('update')" disabled title="Import a schedule to enable this view">Update</button></span></span>
+  </div>
 </div>
 
 <div id="top-filter-bar">
@@ -1365,24 +1301,14 @@ tr.hist-row td.c-wk.filter-col{background:var(--color-purple-deep) !important}
   <col class="c-src" id="col-src">
 </colgroup>
 <thead>
-<!-- The search sits on its own row rather than sharing the month band's line.
-     It stays inside the table so it keeps the sticky behaviour the corner cell
-     gave it; the rows below it are offset by --hdr-search-h so the three header
-     rows still stack correctly when the board is scrolled. The colspan is
-     deliberately larger than the column count, which browsers clamp, because
-     the week columns are built at render time. -->
-<tr class="hdr-search" id="search-hdr">
-  <th class="c-name sticky" style="text-align:left;padding:0">
+<tr class="hdr-phase" id="phase-hdr">
+  <th class="c-name sticky" style="background:var(--color-bg-header);text-align:left;padding:0">
     <div class="sticky-search-box">
       <button class="sticky-search-icon" id="btn-filter-icon" onclick="toggleTopFilterBar()" title="Show/hide the full filter panel">&#128269;<span class="dot" id="filter-dot"></span></button>
       <input type="text" id="sticky-title-search" placeholder="Search activity name" oninput="onTitleFilterInput(this)">
       <button class="sticky-search-clear" id="sticky-title-clear" onclick="clearOneFilter('filter-title')" title="Clear this filter" aria-label="Clear title search" style="display:none">&#10005;</button>
     </div>
   </th>
-  <th colspan="1000"></th>
-</tr>
-<tr class="hdr-phase" id="phase-hdr">
-  <th class="c-name sticky" style="background:var(--color-bg-header);text-align:left;padding:0"></th>
   <th class="c-ref col-ref" style="background:var(--color-bg-header)"></th>
   <th class="c-hrs col-hrs" style="background:var(--color-bg-header)"></th>
   <th class="c-alloc col-alloc" style="background:var(--color-bg-header)"></th>
@@ -1450,12 +1376,12 @@ tr.hist-row td.c-wk.filter-col{background:var(--color-purple-deep) !important}
   </div>
 </div>
 
-<script id="app-script">
+<script>
 // Single source of truth for the version string shown in <title>, the icon-bar
 // label, and embedded in exported JSON — bump this one place, everything else
 // reads from it, so the three copies can't silently drift apart the way the
 // title/label/export payload just had for a long stretch of unversioned work.
-const APP_VERSION='3.1.0-P21';
+const APP_VERSION='3.1.0-P12';
 // ============================================================
 // TIMELINE
 // ============================================================
@@ -3117,11 +3043,6 @@ function formatShortTitleDisplay(id,titleText){
 // same way. Falls back to an auto-shortened version of the real activity
 // name until the user explicitly overrides one from the milestone card.
 const MS_SHORT_TITLES={};
-// Free-text comment per milestone, entered from the milestone card. Declared
-// here with the other two annotation stores rather than beside the dialog code
-// that uses it: it was previously declared after the init block, so anything
-// init touched it from hit a temporal dead zone. Publishing did exactly that.
-const MS_COMMENTS={};
 // Milestone-level health override — a traffic light in the milestone card that
 // lets a user manually flag a specific milestone's health, independent of its
 // computed schedule state. When set, it takes priority over the computed
@@ -3205,18 +3126,11 @@ function escapeHtml(s){
 // The target row's markers therefore re-lay themselves out; nothing here
 // positions anything by hand.
 //
-// A move is recorded against the milestone's identity, not against the key it
-// happens to have after the move, so it can be replayed onto a schedule that
-// has never seen it (TD-27). msKeyFor falls back to a composite embedding the
-// row ref, which is exactly what a move changes, so replaying by that key
-// would never match a freshly imported milestone sitting on its original row.
+// Session-scoped, like the other display-layer annotations: a re-import
+// rebuilds the model and the move is not replayed (TD-27).
 // ============================================================
-// Moves made against the mounted schedule. Carried in both the publish payload
-// and the model export, and replayed on import.
+// Moves made this session, for the export payload and for diagnostics.
 const MS_MOVES=[];
-// Rows the user removed. Recorded for the same reason: a re-import brings the
-// row back, and the removal is a deliberate layout decision worth keeping.
-const DELETED_ROWS=[];
 const MS_DRAG={
   active:false,armed:false,suppressClick:false,
   wrap:null,ms:null,fromRef:null,startX:0,startY:0,holdTimer:null,
@@ -3279,53 +3193,6 @@ function msDragEnd(commit){
   moveMilestoneToRow(ms,toRef);
 }
 
-// Rebuild the Source cell for the given rows from the milestones they now hold.
-// Remove a row that holds no milestones. Only reachable from the control that
-// appears on such a row, but re-checked here: a debounced rerender means the
-// board a click was aimed at may be one state behind.
-function deleteRow(ref,ev){
-  if(ev) ev.stopPropagation();
-  const task=TASKS.filter(function(t){return t.ref===ref;})[0];
-  if(!task) return;
-  if(milestonesForRow(ref).length){
-    setIngestStatus('That row still has milestones on it, so it was not removed.','err');
-    scheduleRerender(true); return;
-  }
-  if(!confirm('Remove the row "'+task.name+'"?\n\nIt has no milestones left. This affects the '+
-              (VIEW_MODE==='update'?'imported update':'baseline')+' view only and is not written back to P6.')) return;
-  // Drop it from the active view and from whichever dataset that view reads, so
-  // it does not reappear on the next rebuild.
-  [TASKS, VIEW_MODE==='update'?UPDATE_TASKS:BASELINE_TASKS].forEach(function(arr){
-    if(!arr) return;
-    const i=arr.indexOf(task);
-    if(i>=0) arr.splice(i,1);
-  });
-  DELETED_ROWS.push({ref:ref,name:task.name});
-  diag('aggregate','info','Row removed by user: '+task.name,ref);
-  noteMarkup();
-  scheduleRerender(true);
-  setIngestStatus('Removed "'+task.name+'".','ok');
-}
-
-function milestonesForRow(ref){
-  return MILESTONES.filter(function(m){return m.ref===ref&&(m.active||'Yes')==='Yes';});
-}
-function refreshRowSources(refs){
-  const seen={};
-  refs.forEach(function(ref){
-    if(!ref||seen[ref]) return; seen[ref]=1;
-    const task=TASKS.filter(function(t){return t.ref===ref;})[0];
-    if(!task) return;
-    const ids=[], used={};
-    MILESTONES.forEach(function(m){
-      if(m.ref!==ref) return;
-      const id=extractSnipId(m.notes)||m.id||'';
-      if(id&&!used[id]){ used[id]=1; ids.push(id); }
-    });
-    task.src=ids.join(', ');
-  });
-}
-
 // Repoint the milestone and rebuild. Debounced rerender per the project rule.
 //
 // The annotation key falls back to a composite that embeds the row ref when a
@@ -3342,73 +3209,9 @@ function moveMilestoneToRow(ms,toRef){
       if(oldKey in store){ store[newKey]=store[oldKey]; delete store[oldKey]; }
     });
   }
-  // The Source cell lists the activity IDs behind a row, built once at
-  // aggregate time. Moving a milestone changes which IDs a row represents, so
-  // both the row it left and the row it joined are rebuilt from what they now
-  // hold, otherwise Source keeps describing the pre-drag grouping.
-  refreshRowSources([from,toRef]);
-  // id is the only stable handle across a re-import. Where a milestone has
-  // none, type and date identify it well enough within the row it started on,
-  // which is what the replay matches against.
-  MS_MOVES.push({key:newKey,from:from,to:toRef,
-                 id:extractSnipId(ms.notes)||'',type:ms.type,date:ms.date});
-  noteMarkup();
+  MS_MOVES.push({key:newKey,from:from,to:toRef});
   diag('aggregate','info','Milestone moved by user from row '+from+' to '+toRef,newKey);
   scheduleRerender(true);
-}
-
-// Replay recorded moves onto whatever milestones are currently loaded. Used by
-// the model import, where the schedule underneath may be a later P6 export that
-// has never seen these moves. Order matters: a milestone moved A to B to C is
-// two records, and the second only matches once the first has been applied.
-function applyMilestoneMoves(list){
-  if(!Array.isArray(list)||!list.length) return 0;
-  const touched={};
-  let applied=0;
-  list.forEach(function(mv){
-    if(!mv||!mv.to) return;
-    const hit=MILESTONES.filter(function(m){
-      if(mv.id) return extractSnipId(m.notes)===mv.id;
-      return m.ref===mv.from&&m.type===mv.type&&m.date===mv.date;
-    })[0];
-    if(!hit) return;
-    if(hit.ref===mv.to){ return; }       // already where the record wants it
-    touched[hit.ref]=1; touched[mv.to]=1;
-    const oldKey=msKeyFor(hit);
-    hit.ref=mv.to;
-    const newKey=msKeyFor(hit);
-    if(newKey!==oldKey){
-      [MS_HEALTH_OVERRIDE,MS_COMMENTS,MS_SHORT_TITLES].forEach(function(store){
-        if(oldKey in store){ store[newKey]=store[oldKey]; delete store[oldKey]; }
-      });
-    }
-    MS_MOVES.push(Object.assign({},mv,{key:newKey}));
-    applied++;
-  });
-  if(applied) refreshRowSources(Object.keys(touched));
-  return applied;
-}
-
-// Replay recorded row removals. A row that came back with milestones on it is
-// left alone: deleteRow refuses that case interactively and the replay must not
-// be a way around it.
-function applyRowDeletions(list){
-  if(!Array.isArray(list)||!list.length) return 0;
-  let applied=0;
-  list.forEach(function(d){
-    const ref=d&&d.ref;
-    if(!ref) return;
-    const task=TASKS.filter(function(t){return t.ref===ref;})[0];
-    if(!task||milestonesForRow(ref).length) return;
-    [TASKS, VIEW_MODE==='update'?UPDATE_TASKS:BASELINE_TASKS].forEach(function(arr){
-      if(!arr) return;
-      const i=arr.indexOf(task);
-      if(i>=0) arr.splice(i,1);
-    });
-    DELETED_ROWS.push({ref:ref,name:task.name});
-    applied++;
-  });
-  return applied;
 }
 
 function attachMilestoneDrag(wrap,m){
@@ -3518,16 +3321,8 @@ function renderRows(){
     rowNumInBand++;
     tr.setAttribute('data-rownum',rowNumInBand);
     let nameHtml='<div class="dname-wrap">';
-    nameHtml+='<span class="row-gutter">';
     nameHtml+='<span class="row-num" title="Row '+rowNumInBand+' in this heading">'+rowNumInBand+'</span>';
-    // A row with no milestones left carries no information, which normally only
-    // happens after its last marker is dragged elsewhere. Offer to remove it
-    // there and then rather than leaving an empty line on the board.
-    if(!milestonesForRow(task.ref).length)
-      nameHtml+='<button class="row-del" title="This row has no milestones left \u2014 remove it" '+
-                'onclick="deleteRow(\''+task.ref+'\',event)">\u00d7</button>';
     nameHtml+='<span class="health-dot h-'+health+'" data-orig-health="'+health+'" data-current-health="'+health+'" title="'+healthTitle+'" onclick="openHealthPicker(this,event)"></span>';
-    nameHtml+='</span>';
     nameHtml+='<span class="dname">'+escapeHtml(task.name)+'</span>';
     nameHtml+='<span class="remarks" contenteditable="true" spellcheck="false" data-original="'+escapeHtml(task.remarks||'')+'">'+escapeHtml(task.remarks||'')+'</span>';
     nameHtml+='</div>';
@@ -3950,18 +3745,17 @@ function setReportTitle(v){
 // Strictly BEFORE today: on a Friday this returns the Friday a week earlier,
 // because that day's own update has not been produced yet. Assumption worth
 // knowing if a project cuts its update on Friday morning.
-function mostRecentFriday(from){
+function previousFriday(from){
   const d=from?new Date(from.getTime()):new Date();
   d.setHours(0,0,0,0);
-  // getDay(): Sun 0 ... Fri 5. On a Friday this returns today: a data date is
-  // set on the day the export is taken, and the week that just closed is the
-  // one being reported, so stepping back to the previous week was wrong.
-  const back=(d.getDay()-5+7)%7;
+  // getDay(): Sun 0 ... Fri 5. Step back at least one day, then to the Friday.
+  let back=(d.getDay()-5+7)%7;
+  if(back===0) back=7;
   d.setDate(d.getDate()-back);
   return d;
 }
-function mostRecentFridayISO(from){
-  const d=mostRecentFriday(from);
+function previousFridayISO(from){
+  const d=previousFriday(from);
   return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());
 }
 
@@ -4077,12 +3871,10 @@ function setSingleCol(col,on){
   const cgCol=document.getElementById('col-'+col);
   if(cgCol) cgCol.style.display=vis;
 }
-// Columns only. Remarks is a per-row field rather than a column, and the
-// milestone label and hours toggles govern what is drawn ON the board rather
-// than which table columns exist — hiding every column should not also strip
-// the labels off the markers, which is what it used to do.
+// Remarks is deliberately excluded — it's a per-row field, not a column, so the
+// master toggle only governs the table-column and milestone-display buttons.
 function toggleAllCols(btn){
-  const ids=['btn-ref','btn-hrs','btn-alloc','btn-prog','btn-type','btn-doc','btn-task','btn-src'];
+  const ids=['btn-ref','btn-hrs','btn-alloc','btn-prog','btn-type','btn-doc','btn-task','btn-src','btn-lbl','btn-mhrs'];
   const anyOn=ids.some(id=>{
     const el=document.getElementById(id);
     return el.type==='checkbox'?el.checked:el.classList.contains('active');
@@ -4306,10 +4098,7 @@ document.addEventListener('click',function(e){
 // toggled between without losing edits made in either view.
 const BASELINE_TASKS=SEED_TASKS.slice(), BASELINE_MILESTONES=SEED_MILESTONES.slice(), BASELINE_TIMELINE=SEED_TIMELINE;
 const BASELINE_SOURCE={mode:'baseline',label:'Baseline DD 15th Aug',dataDate:new Date(2026,7,15),file:'103787-13_Eskay_Creek_PFS__Weekly_Update_Schedule-DD-Aug_15_2026.xlsx'};
-// Not const: a published file replaces the baseline, and the header has to say
-// so. Left as a literal it announced "Baseline DD 15th Aug" on a file whose
-// baseline was actually the published schedule.
-let BASELINE_LABEL_TEXT='Baseline DD 15th Aug';
+const BASELINE_LABEL_TEXT='Baseline DD 15th Aug';
 let UPDATE_TASKS=null, UPDATE_MILESTONES=null, UPDATE_TIMELINE=null, UPDATE_SOURCE=null;
 let VIEW_MODE='baseline';
 let VIEW_OVERRIDES={baseline:{},update:{}};
@@ -4572,18 +4361,12 @@ window.addEventListener('beforeunload',function(e){
 function updateHeaderMeta(){
   const el=document.getElementById('meta-source');
   if(el) el.textContent=DATA_SOURCE.label;
-  // This element did not exist in the markup until the header was reordered, so
-  // the write was dead and nobody noticed it was producing the now-column label
-  // ("W/E 13-Sep") rather than the schedule's data date. They are different
-  // things: the now column follows Report date, the data date follows the P6
-  // export's as-of date.
   const dd=document.getElementById('meta-datadate');
-  if(dd) dd.textContent=fmtTipDate(DATA_SOURCE.dataDate);
+  if(dd) dd.textContent='W/E '+WE_LABELS[NOW_COL]+'-'+String(WE_DATES[NOW_COL].getFullYear()).slice(2);
   const bl=document.getElementById('meta-baseline');
   if(bl) bl.textContent=BASELINE_LABEL_TEXT||BASELINE_SOURCE.label;
-  // "Schedule update" left the header in the reorder. The Mounted Sources panel
-  // states the same thing with more detail (file, data date, load time, and
-  // whether it is published), so this is not a loss of information.
+  const uf=document.getElementById('meta-update-file');
+  if(uf) uf.textContent=IMPORTED_SETTINGS?IMPORTED_SETTINGS.file:'No update imported';
   const cnt=document.getElementById('meta-count');
   if(cnt) cnt.textContent=TASKS.length+' tasks \u00B7 '+MILESTONES.length+' milestones';
   const rd=document.getElementById('meta-reportdate');
@@ -4974,12 +4757,7 @@ function togglePaste(){
 }
 
 function runIngest(){
-  if(!LAST_PARSE){
-    setIngestStatus(IMPORTED_SETTINGS
-      ? 'Already imported \u2014 '+IMPORTED_SETTINGS.file+' is mounted. Pick a file again to import a different one.'
-      : 'Nothing to import yet \u2014 choose a schedule file or paste the export first.','err');
-    return;
-  }
+  if(!LAST_PARSE){setIngestStatus('Nothing parsed yet.','err');return;}
   DIAG=[];
   const map={};
   ['id','name','finish','start','float','status','wbs','budget','pct','pred','succ'].forEach(function(f){
@@ -5064,21 +4842,12 @@ function runIngest(){
       riskFloat:riskF,
       importedAt:new Date()
     };
-    LAST_USER_IMPORT=true;
     const wasViewingUpdate=(VIEW_MODE==='update');
     VIEW_MODE='update';
     TASKS=UPDATE_TASKS.slice();MILESTONES=UPDATE_MILESTONES.slice();
     DATA_SOURCE=Object.assign({},UPDATE_SOURCE);
     document.getElementById('map-wrap').style.display='none';
   const mws=document.getElementById('map-wrap-section'); if(mws) mws.style.display='none';
-  // The "Ready to import / Discard / Import" panel has to go too. It was left
-  // on screen after a successful import, which made a finished import look
-  // unfinished: the obvious response is to press Import again, and because
-  // LAST_PARSE has just been nulled that second press does nothing at all.
-  // Reported as "the import button doesn't click" — the first press had
-  // worked. cancelIngest() already cleared this; the success path did not.
-  const isw=document.getElementById('import-summary-wrap'); if(isw) isw.innerHTML='';
-  clearImportFailure();
   LAST_PARSE=null;LAST_MAP=null;
   renderCurrentImportSummary();
   updateAdvancedSettingsVisibility();
@@ -5117,7 +4886,7 @@ function discardUpdate(){
   const di=document.getElementById('dirty-indicator');
   if(di) di.classList.remove('show');
   const ddMain=document.getElementById('cfg-datadate-main');
-  if(ddMain) ddMain.value=mostRecentFridayISO();
+  if(ddMain) ddMain.value=previousFridayISO();
   rerender(VIEW_OVERRIDES.baseline||{});
   updateViewToggleUI();
   setIngestStatus('Imported update discarded \u2014 showing project baseline.','ok');
@@ -5219,22 +4988,10 @@ const ANNOT_CATEGORIES=[
   {key:'rowOverrides',label:'Row health and remarks',
    count:function(p){ return Object.keys(p.overrides||{}).length; },
    apply:function(p){ PENDING_ROW_OVERRIDES=p.overrides||{}; }},
-  {key:'depComments', label:'Dependency line comments',
-   count:function(p){ return Object.keys(p.dependencyComments||{}).length; },
-   apply:function(p){ Object.assign(DEP_COMMENTS,p.dependencyComments||{}); }},
   {key:'depVis',      label:'Dependency line visibility',
    count:function(p){ return Object.keys(p.dependencyVisibility||{}).length; },
    apply:function(p){ Object.assign(DEP_VIS,p.dependencyVisibility||{});
                       if(typeof p.showDependencyCounts==='boolean') SHOW_COUNTS=p.showDependencyCounts; }},
-  // These two replay an action rather than merging a store, so they are the
-  // only categories that can decline: a milestone the current schedule does not
-  // carry, or a row that came back with milestones on it, is skipped.
-  {key:'msMoves',     label:'Milestone row moves',
-   count:function(p){ return (p.milestoneMoves||[]).length; },
-   apply:function(p){ applyMilestoneMoves(p.milestoneMoves||[]); }},
-  {key:'rowDeletes',  label:'Removed rows',
-   count:function(p){ return (p.deletedRows||[]).length; },
-   apply:function(p){ applyRowDeletions(p.deletedRows||[]); }},
   {key:'reportMeta',  label:'Report title and date',
    count:function(p){ return (p.reportTitle?1:0)+(p.reportDate?1:0); },
    apply:function(p){ if(p.reportTitle) setReportTitle(p.reportTitle);
@@ -5306,9 +5063,7 @@ function mountSlotHtml(o){
       (o.badge?'<span class="mnt-badge">'+escapeHtml(o.badge)+'</span>':'')+
     '</div>'+
     '<div class="mnt-title">'+o.title+'</div>'+
-    // Conditional lines are passed as '' rather than being spliced out by each
-    // caller, so drop the empties here or they render as blank rows.
-    '<div class="mnt-lines">'+o.lines.filter(function(l){return l;}).join('<br>')+'</div>'+
+    '<div class="mnt-lines">'+o.lines.join('<br>')+'</div>'+
     '<div class="mnt-actions">'+o.actions+'</div>'+
   '</div>';
 }
@@ -5318,50 +5073,29 @@ function renderMounts(){
   if(!body) return;
   const slots=[];
 
-  // Counts come from BASELINE_*, not SEED_*. They are the same file in a
-  // shipped build and different in a published one, and reading the seeds there
-  // reported 159/198 above a 105-row board.
-  // A published schedule mounts as the Schedule slot, so the baseline slot is
-  // always the embedded baseline and its counts always come from BASELINE_*.
-  const pub=PUBLISHED_META;
   slots.push(mountSlotHtml({
     state:'locked', name:'Baseline', badge:'embedded',
-    title:'<b>'+escapeHtml(BASELINE_SOURCE.file||'Embedded baseline')+'</b>',
+    title:'<b>'+escapeHtml(BASELINE_SOURCE.file)+'</b>',
     lines:['Data date: <b>'+fmtTipDate(BASELINE_SOURCE.dataDate)+'</b>',
-           BASELINE_TASKS.length+' deliverables / '+BASELINE_MILESTONES.length+' milestones'],
+           SEED_TASKS.length+' deliverables / '+SEED_MILESTONES.length+' milestones'],
     actions:'<span class="mnt-note">Built in. Cannot be unmounted.</span>'}));
 
   if(IMPORTED_SETTINGS){
     const s=IMPORTED_SETTINGS;
-    const isPub=!!pub&&!LAST_USER_IMPORT;
     slots.push(mountSlotHtml({
-      state:'active', name:'Schedule', badge:isPub?'published':'override active',
+      state:'active', name:'Schedule', badge:'override active',
       title:'<b>'+escapeHtml(s.file)+'</b>',
       lines:['Data date: <b>'+(s.dataDate?fmtTipDate(s.dataDate):'not set')+'</b>'+
                ' &middot; Report date: <b>'+(s.reportDate?fmtTipDate(s.reportDate):'not set')+'</b>',
-             (isPub
-               ? 'Built into this file on <b>'+fmtStamp(pub.publishedAt)+'</b>'+
-                 (pub.fromVersion?' (v'+escapeHtml(pub.fromVersion)+')':'')
-               : 'Loaded: <b>'+fmtStamp(s.importedAt)+'</b>'),
-             // Only worth a line once the file has been through more than one
-             // publish, which is the case a reader cannot otherwise see.
-             (isPub&&PUBLISH_CHAIN.length>1
-               ? 'Republished <b>'+(PUBLISH_CHAIN.length-1)+'</b> time'+
-                 (PUBLISH_CHAIN.length===2?'':'s')+' since the original, first published <b>'+
-                 fmtStamp(PUBLISH_CHAIN[0].at?new Date(PUBLISH_CHAIN[0].at):null)+'</b>'
-               : ''),
-             s.tasks+' deliverables / '+s.milestones+' milestones'],
+             'Loaded: <b>'+fmtStamp(s.importedAt)+'</b>',
+             s.tasks+' deliverables / '+s.milestones+' milestones from '+s.rows+' activities'],
       actions:'<button class="toggle-btn mnt-btn" onclick="unmountSchedule()">Unmount</button>'+
               '<button class="toggle-btn mnt-btn" onclick="remountSchedule()">Remount…</button>'}));
   } else {
     slots.push(mountSlotHtml({
       state:'empty', name:'Schedule',
-      title:'<span class="mnt-none">No override mounted</span>',
-      // In a published file an empty Schedule slot is the normal, correct
-      // state, so it must not read as "your schedule did not load".
-      lines:[pub
-        ? 'The published schedule above is what this file shows. Mount a newer P6 export only to override it.'
-        : 'Showing the embedded baseline.'],
+      title:'<span class="mnt-none">Nothing mounted</span>',
+      lines:['Showing the embedded baseline.'],
       actions:'<button class="toggle-btn mnt-btn" onclick="remountSchedule()">Mount…</button>'}));
   }
 
@@ -5508,219 +5242,6 @@ function applyAnnotSelection(){
   setIngestStatus('Mounted '+ANNOT_MOUNT.file+' — imported '+names.join(', ')+'.','ok');
 }
 
-
-// ============================================================
-// PUBLISH — write a new standalone dashboard with this data built in
-// ------------------------------------------------------------
-// A fixed requirement is that the app is one file, kept on SharePoint, opened
-// by other people. Two facts constrain how the current schedule can reach
-// those people:
-//
-//   1. A browser cannot write back to the file it was loaded from, so the file
-//      can never absorb an import and carry it to the next reader.
-//   2. SharePoint Online serves .html under the strict file-handling model and
-//      will not execute it in the browser, so readers open a local copy.
-//
-// So the schedule does not persist — it gets baked in. This writes a NEW
-// self-contained file whose starting state is whatever is on screen now, which
-// the publisher then uploads in place of the previous one. Readers open it and
-// the schedule is simply there, with no import step and no network at all.
-//
-// Rather than rewriting the SEED_* literals by string surgery, which would mean
-// regenerating and re-escaping tens of thousands of lines and would break the
-// moment the data shape changed, a single state block is injected ahead of the
-// app's own script. applyPublishedState() at load prefers it over the seeds.
-// One insertion point, one reader, nothing to drift.
-// ============================================================
-
-// Containers the app fills at runtime. A published file must ship with these
-// empty or it carries a stale copy of the board as dead markup — measured at
-// 603 KB of a 1,038 KB serialisation, more than half the file.
-const PUBLISH_CLEAR_IDS=['tbody','mount-body','import-summary-wrap','import-error-wrap',
-  'map-wrap','diag-body','annot-dialog-body','current-import-advanced','dep-line-layer'];
-
-function publishStatePayload(){
-  const at=new Date().toISOString();
-  return {
-    publishedAt:at,
-    fromVersion:APP_VERSION,
-    // Republishing from a published file is supported, so the file has to say
-    // how many hands it has passed through. Each publish appends one entry;
-    // the last is always this one, and the first is the publish that came off
-    // a real P6 import.
-    publishChain:PUBLISH_CHAIN.concat([{at:at,fromVersion:APP_VERSION}]),
-    // The board itself, as the new baseline.
-    tasks:TASKS, milestones:MILESTONES,
-    timeline:{labels:WE_LABELS.slice(),dates:WE_DATES.map(function(d){return d.toISOString();}),
-              months:MONTHS.slice(),nowCol:NOW_COL},
-    source:{label:DATA_SOURCE.label,file:DATA_SOURCE.file||'',
-            dataDate:isoDay(DATA_SOURCE.dataDate instanceof Date?DATA_SOURCE.dataDate:mountedDataDateISO()
-                            ?new Date(mountedDataDateISO()+'T00:00:00'):null)},
-    reportTitle:document.getElementById('rpt-title-text').textContent.trim(),
-    reportDate:isoDay(REPORT_META.reportDate),
-    // Annotations travel with it, so a published file is a status report and
-    // not a blank board someone has to mark up again.
-    overrides:snapshotOverrides(),
-    milestoneComments:MS_COMMENTS,
-    milestoneHealthOverrides:MS_HEALTH_OVERRIDE,
-    milestoneShortTitles:MS_SHORT_TITLES,
-    // Comments left on dependency lines were reaching neither payload, so they
-    // were the one kind of comment a published file silently dropped.
-    dependencyComments:DEP_COMMENTS,
-    dependencyVisibility:DEP_VIS,
-    showDependencyCounts:SHOW_COUNTS,
-    // Milestone moves and row removals are already baked into tasks and
-    // milestones above. These travel as history, so a reader can see what was
-    // changed and a later export from the published file still carries it.
-    milestoneMoves:MS_MOVES,
-    deletedRows:DELETED_ROWS,
-    markupCount:MARKUP_COUNT,
-    lastMarkupAt:LAST_MARKUP_AT?LAST_MARKUP_AT.toISOString():null
-  };
-}
-
-// Applied at load, before the first render, when the file was published rather
-// than shipped. Overwrites the baseline in place: a published file's Baseline
-// IS the schedule it was published from.
-function applyPublishedState(){
-  const p=window.__PUBLISHED_STATE__;
-  if(!p) return false;
-  try{
-    // The published schedule is installed as the UPDATE, not the baseline.
-    // Overwriting the baseline destroyed the one thing the baseline exists for:
-    // comparison against the original 15-Aug dataset. A published file now opens
-    // in the Update view with the embedded baseline intact behind it, so the
-    // view toggle and the baseline overlay still work for a reader.
-    const tl={labels:p.timeline.labels.slice(),
-              dates:p.timeline.dates.map(function(d){return new Date(d);}),
-              months:p.timeline.months.slice(),
-              nowCol:p.timeline.nowCol};
-    UPDATE_TIMELINE=tl;
-    applyTimeline(tl);
-
-    UPDATE_TASKS=p.tasks.slice();
-    UPDATE_MILESTONES=p.milestones.slice();
-    TASKS=UPDATE_TASKS.slice(); MILESTONES=UPDATE_MILESTONES.slice();
-    VIEW_MODE='update';
-
-    const pubDD=(p.source&&p.source.dataDate)?new Date(p.source.dataDate+'T00:00:00'):null;
-    UPDATE_SOURCE={mode:'update',
-      label:(p.source&&p.source.label)||'Published schedule',
-      dataDate:pubDD, file:(p.source&&p.source.file)||'(published)'};
-    DATA_SOURCE=Object.assign({},UPDATE_SOURCE);
-    // The mount panel and the per-import disclosure both read IMPORTED_SETTINGS,
-    // so a published file has to populate it or it reports nothing mounted.
-    IMPORTED_SETTINGS={
-      file:(p.source&&p.source.file)||'(published)',
-      dataDate:pubDD, reportDate:p.reportDate?new Date(p.reportDate+'T00:00:00'):new Date(),
-      rows:p.tasks.length, tasks:p.tasks.length, milestones:p.milestones.length,
-      weekEndingDay:INGEST_CONFIG.weekEndingDay,
-      horizonBefore:INGEST_CONFIG.horizonWeeksBefore,
-      horizonAfter:INGEST_CONFIG.horizonWeeksAfter,
-      critFloat:INGEST_CONFIG.critFloat, riskFloat:INGEST_CONFIG.riskFloat,
-      importedAt:p.publishedAt?new Date(p.publishedAt):new Date()
-    };
-    // The on-screen heading is already carried by the cloned markup, and
-    // setReportTitle only sets the browser tab title — which must keep deriving
-    // from APP_VERSION (TD-10). So reportTitle is recorded in the payload for
-    // provenance but deliberately not re-applied here.
-    if(p.reportDate)  REPORT_META.reportDate=new Date(p.reportDate+'T00:00:00');
-
-    Object.assign(MS_COMMENTS,p.milestoneComments||{});
-    Object.assign(MS_HEALTH_OVERRIDE,p.milestoneHealthOverrides||{});
-    Object.assign(MS_SHORT_TITLES,p.milestoneShortTitles||{});
-    Object.assign(DEP_COMMENTS,p.dependencyComments||{});
-    Object.assign(DEP_VIS,p.dependencyVisibility||{});
-    if(typeof p.showDependencyCounts==='boolean') SHOW_COUNTS=p.showDependencyCounts;
-    // Not replayed: the milestones and tasks installed above already sit where
-    // these records put them. Restoring the records keeps the history visible
-    // and keeps a later export from the published file complete.
-    if(Array.isArray(p.milestoneMoves)) p.milestoneMoves.forEach(function(mv){ MS_MOVES.push(mv); });
-    if(Array.isArray(p.deletedRows))    p.deletedRows.forEach(function(d){ DELETED_ROWS.push(d); });
-    // A published file that reported "no markup edits yet" was describing the
-    // file rather than the work in it, the same class of defect as TD-47.
-    if(typeof p.markupCount==='number') MARKUP_COUNT=p.markupCount;
-    if(p.lastMarkupAt) LAST_MARKUP_AT=new Date(p.lastMarkupAt);
-    // Row health and remarks key on rendered rows, so they wait for the build.
-    PENDING_ROW_OVERRIDES=p.overrides||null;
-    VIEW_OVERRIDES.update=p.overrides||{};
-    PUBLISHED_META={publishedAt:p.publishedAt?new Date(p.publishedAt):null,
-                    fromVersion:p.fromVersion||null};
-    // A file published before the chain existed carries only the single stamp,
-    // so synthesise a one-entry chain from it rather than showing nothing.
-    PUBLISH_CHAIN=Array.isArray(p.publishChain)&&p.publishChain.length
-      ? p.publishChain.slice()
-      : [{at:p.publishedAt||null,fromVersion:p.fromVersion||null}];
-    return true;
-  }catch(e){
-    // A malformed state block must not take the whole dashboard down; fall back
-    // to the embedded seeds and say so.
-    diag('pipeline','err','Published state could not be applied: '+e.message,'');
-    return false;
-  }
-}
-let PUBLISHED_META=null;
-// One entry per publish, oldest first. Empty in a shipped build.
-let PUBLISH_CHAIN=[];
-// Set when a human imports a schedule in this session, so a published file can
-// tell its own built-in schedule apart from one the reader mounted over it.
-let LAST_USER_IMPORT=false;
-
-function publishDashboard(){
-  try{
-    setIngestStatus('Building the published file\u2026','');
-    // Serialise a CLONE so the live page is never torn down under the user.
-    const root=document.documentElement.cloneNode(true);
-    PUBLISH_CLEAR_IDS.forEach(function(id){
-      const el=root.querySelector('#'+id); if(el) el.innerHTML='';
-    });
-    // Header cells and columns the render appends; the first nine header cells
-    // and the non-week columns are static markup and must survive.
-    root.querySelectorAll('#phase-hdr th:nth-child(n+10)').forEach(function(e){e.remove();});
-    root.querySelectorAll('#week-hdr th.col-wk').forEach(function(e){e.remove();});
-    root.querySelectorAll('colgroup col.col-wk').forEach(function(e){e.remove();});
-    const wf=root.querySelector('#week-filter'); if(wf) while(wf.options.length>1) wf.remove(1);
-    const ghost=root.querySelector('#ms-drag-ghost'); if(ghost) ghost.remove();
-    // Any state block from a file that was itself published: replaced, not stacked.
-    const old=root.querySelector('#published-state'); if(old) old.remove();
-    // Only the app's own script may travel. Anything else in the DOM at publish
-    // time was injected by something other than this file — a browser extension,
-    // a document viewer that wraps the page, a debugging snippet — and baking a
-    // third party's code into a file that gets uploaded to SharePoint and opened
-    // by other people is not acceptable. Caught by a test harness whose own
-    // injected script was cloned into a published file and re-ran on load.
-    let dropped=0;
-    root.querySelectorAll('script').forEach(function(sc){
-      if(sc.id!=='app-script'){ sc.remove(); dropped++; }
-    });
-    if(dropped) diag('pipeline','info','Publish removed '+dropped+' script(s) that are not part of this file','');
-
-    const json=JSON.stringify(publishStatePayload())
-      // A closing script tag appearing inside the data would end the block
-      // early, so the angle brackets are escaped. Note this comment cannot
-      // spell that tag out either, for exactly the same reason.
-      .replace(/</g,'\\u003c').replace(/>/g,'\\u003e').replace(/&/g,'\\u0026');
-    const block=root.ownerDocument.createElement('script');
-    block.id='published-state';
-    block.textContent='window.__PUBLISHED_STATE__='+json+';';
-    // Ahead of the app's own script, so the state exists before init runs.
-    const head=root.querySelector('head'); head.appendChild(block);
-
-    const out='<!doctype html>\n'+root.outerHTML;
-    const dd=(DATA_SOURCE.dataDate instanceof Date)?isoDay(DATA_SOURCE.dataDate):(mountedDataDateISO()||'nodate');
-    const name='Eskay_Snip_PFS_Dashboard_'+dd+'.html';
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(new Blob([out],{type:'text/html'}));
-    a.download=name; a.click();
-    setTimeout(function(){URL.revokeObjectURL(a.href);},4000);
-    const mb=Math.round(out.length/10485.76)/100;
-    setIngestStatus('Saved '+name+' ('+mb+' MB) \u2014 '+TASKS.length+' rows built in. Upload it to SharePoint in place of the previous file.','ok');
-    markSaved();
-  }catch(err){
-    setIngestStatus('Could not build the published file: '+err.message,'err');
-  }
-}
-
 function exportModel(){
   const payload={
                  // Identity block. A file's NAME is a convenience for humans and is
@@ -5748,15 +5269,9 @@ function exportModel(){
                  // entered state, same category as the row overrides above, and belong in
                  // a full model export for the same reason those do.
                  dependencyVisibility:DEP_VIS,
-                 dependencyComments:DEP_COMMENTS,
                  milestoneHealthOverrides:MS_HEALTH_OVERRIDE,
                  milestoneComments:MS_COMMENTS,
                  milestoneShortTitles:MS_SHORT_TITLES,
-                 // Layout work the user did on the board. Unlike the stores
-                 // above these are replayed rather than merged, so they can be
-                 // carried onto next week's P6 export instead of being redone.
-                 milestoneMoves:MS_MOVES,
-                 deletedRows:DELETED_ROWS,
                  showDependencyCounts:SHOW_COUNTS};
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
   const a=document.createElement('a');
@@ -6196,12 +5711,8 @@ document.getElementById('dep-tooltip').addEventListener('click',()=>{
 // INIT
 // ============================================================
 (function(){
-  // A published file carries its schedule in a state block ahead of this
-  // script. Applied before anything renders, so the first paint is already the
-  // published data rather than the embedded seeds flashing first.
-  const isPublished=applyPublishedState();
   // Was hardcoded to 2026-07-29, which went stale the moment the baseline did.
-  const defaultDD=isPublished?(isoDay(BASELINE_SOURCE.dataDate)||mostRecentFridayISO()):mostRecentFridayISO();
+  const defaultDD=previousFridayISO();
   const dd=document.getElementById('cfg-datadate');
   if(dd) dd.value=defaultDD;
   const ddMain=document.getElementById('cfg-datadate-main');
@@ -6215,21 +5726,14 @@ document.getElementById('dep-tooltip').addEventListener('click',()=>{
   rebuildWeekFilter();
   rebuildBandingFilter();
   updateSubtotals();
-  // Row health and remarks key on rendered rows, so applyPublishedState parks
-  // them here rather than writing them at load. rerender() drains this queue,
-  // but init builds the first paint through renderRows() directly and did not,
-  // so a published file showed every other annotation and silently dropped
-  // these two until something happened to trigger a rebuild.
-  if(PENDING_ROW_OVERRIDES){ applyOverrides(PENDING_ROW_OVERRIDES); PENDING_ROW_OVERRIDES=null; }
   updateHeaderMeta();
   renderDiagnostics();
 })();
 // ===== Theme toggle — functional light/dark switch, architecture ready for a future
 // full dark-mode pass. Light is the approved default; dark preserves the prior palette. =====
 // ===== Milestone dialog — rich card, replaces the old plain-text hover tooltip on the
-// primary milestone markers. Comments persist the same way as dependency-line comments.
-// MS_COMMENTS itself is declared with its two siblings further up, because this
-// point in the file is AFTER the init block that now reads it. =====
+// primary milestone markers. Comments persist the same way as dependency-line comments. =====
+const MS_COMMENTS={};
 let msDialogFor=null;
 
 function statusClassOf(state){ return (state||'FUTURE').toLowerCase(); }

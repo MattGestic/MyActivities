@@ -17,6 +17,17 @@
 | TEST-11 | 2026-09-10 | Chain-first stage merging, against two reported failures (Bronson Connector Road, Snip Single Line Diagrams) plus the two over-merge guards | `tools/import_check.py`, targeted ID probes | **Pass** — PFS 115 to 110 rows | None outstanding |
 | TEST-12 | 2026-09-10 | Dependency-first row building (pass 1 logic, pass 2 deliverable identity), 8 over-merge guards and 8 chain probes, both datasets | `tools/import_check.py` + `tools/xer_to_aoa.py`, targeted ID probes | **Pass** — 8/8 guards, PFS 110 to 108 rows, EPCM 1948 to 1898 | TD-26 |
 | TEST-13 | 2026-09-10 | Convergence relaxation (a high-fan-in milestone stands alone only above a measured predecessor threshold), row numbers per banding, and milestone drag between rows driven by real pointer gestures | `tools/import_check.py` + synthesised `PointerEvent` gestures in headless Chromium | **Pass** — 8/8 guards, PFS 108 to 105 rows, drag verified on both input paths | TD-28, TD-29 |
+| TEST-14 | 2026-09-10 | Mount manager (three slots, unmount/remount), model export identity and naming, payload validation, and selective annotation import | `tools/import_check.py` harness driving the real panel, export and validator; export round-tripped back through its own validator | **Pass** — 3/3 slots, 5/5 rejection cases, selective import isolates a single category | TD-30 (closed same pass), TD-31, TD-32, TD-33 |
+| TEST-15 | 2026-09-10 | Import failure handling: what the UI does when a file cannot be read, and whether a failure clears the previous file's state | Real `File` objects through `handleFile()` in headless Chromium, with the SheetJS CDN unreachable | **Pass after fix** — 4/4 cases; reproduced the reported symptom first | TD-34, TD-35 (both closed same pass), TD-36 |
+| TEST-16 | 2026-09-10 | Read-error diagnosis: does each `FileReader` `DOMException` produce its own cause and remedy, and does a transient failure recover on retry | `FileReader` stubbed to force a named exception a set number of times | **Pass** — 4 error names each diagnosed, retry recovers silently | TD-37, TD-38 (both closed same pass) |
+| TEST-17 | 2026-09-10 | Data date: placement under step 1, label, previous-Friday default across every weekday and at month/year boundaries, and that editing still drives ingest | Node for the date arithmetic, headless DOM probe for placement and wiring | **Pass** — 7/7 weekdays, 3/3 boundaries, field visible with no file loaded | TD-39 (closed same pass) |
+| TEST-18 | 2026-09-10 | Does a real click on the Import button complete an import, and is the form correctly torn down afterwards | Real `.click()` on the rendered button, in a normal page and inside an `about:srcdoc` iframe matching the user's viewer | **Pass after fix** — reproduced the stale form; second press now impossible | TD-40 (closed same pass) |
+| TEST-19 | 2026-09-10 | Publish round trip: does a published file open cold with the schedule, timeline and annotations already in place, and does it carry nothing it should not | Publish captured at the Blob boundary, written to disk, then loaded as a separate page | **Pass after two fixes** | TD-41, TD-42 (both closed same pass), TD-43, TD-44 |
+| TEST-20 | 2026-09-11 | Does a published file describe itself correctly: mount slots, baseline counts, and the header provenance line | Publish probe extended to capture all three mount slots and the header meta | **Pass after fix** — reproduced the user's report first | TD-47, TD-48 (both closed same pass) |
+| TEST-21 | 2026-09-11 | Six requested changes: published schedule as the update, Source cell after a drag, empty-row delete, gutter alignment, column master toggle scope, header chrome colour | Publish round trip plus a combined DOM probe driving each interaction | **5 pass, 1 delivered failing** — the requested `#f4f5f8` is 1.79:1 on the light header | TD-50 (open), TD-51 to TD-55 (closed) |
+| TEST-24 | 2026-09-11 | Header darkened and its text tokens split out; data date rule on a Friday; republish provenance chain | Contrast measured on every text colour landing on `--color-bg-header` in both themes; the date rule driven through the real function on all seven weekdays plus month and year boundaries; the chain built by the real payload function | **Pass**, contrast gate green | TD-50, TD-46, TD-44, TD-63, TD-64 (all closed) |
+| TEST-23 | 2026-09-11 | Every kind of board markup survives a publish, and the two layout changes replay onto a schedule that has never seen them | `tools/persist_check.py` — three stages against real headless renders: edit and capture both real downloads, read the published file back, replay the exported model onto a clean board | **Pass** (20 checks) | TD-27, TD-58, TD-59, TD-60, TD-61 (all closed) |
+| TEST-22 | 2026-09-11 | Heading bar split into two containers with responsive stacking, subtitle relocated, and the search moved to its own sticky row | Bounding-rect measurement at two viewport widths, and again after 900px of real scroll inside `#scroll-wrap` | **Pass** | TD-56, TD-57 (both closed) |
 
 ### TEST-13 detail
 
@@ -100,6 +111,514 @@ That change also surfaced two findings on `.s-track` and `.s-future`, which were
 "x", and querying the rendered board confirmed neither class is ever applied to
 text anywhere in the app. The probes now carry no content, so the toggle
 assertion still holds and no impossible text case is measured.
+
+### TEST-14 detail
+
+**1. Mount panel.** Three fixed slots render on a clean load and after an
+import. Baseline is listed with zero action buttons, which is the assertion
+that it cannot be unmounted. Importing the reference export flips the schedule
+slot to an `override active` badge carrying file name, data date (29-Aug-26),
+report date and load time, with the baseline still listed above it at
+15-Aug-26 — so the override reads as an override rather than as the only
+source. Unmount reverts to baseline (159 tasks / 198 milestones, `SEED_*`
+untouched) and the slot returns to a Mount button.
+
+**2. Export identity and naming.** `exportModel()` was captured at the Blob and
+anchor boundary rather than by inspecting the code:
+
+| Assertion | Result |
+|---|---|
+| Filename matches `eskay-dashboard_model_<data date>_<stamp>.json` | `eskay-dashboard_model_2026-08-29_20260910-1600.json` |
+| `kind` | `eskay-milestone-dashboard-model` |
+| `schemaVersion` | 1 |
+| `exportedAt` present | yes |
+
+**3. Validation.** Driven by feeding a real export straight back into the
+validator, plus four constructed failures. Nothing in the validator reads the
+filename; all five verdicts come from payload contents.
+
+| Case | Verdict |
+|---|---|
+| Real export, matching schedule | accepted, no warnings |
+| Malformed JSON | rejected, parse error surfaced |
+| `kind` of another producer | rejected, names the kind it found |
+| `schemaVersion` 99 | rejected, names both versions |
+| Valid but carries no annotations | rejected |
+| Legacy export with no identity block | accepted with a warning, read on contents |
+
+The data-date mismatch check was tested in **both** directions, because a
+warning that only ever stays quiet is indistinguishable from dead code:
+
+| Payload | Warning |
+|---|---|
+| `scheduleDataDate` matches what is mounted | none |
+| `scheduleDataDate` 2026-07-04 against 29-Aug-26 mounted | fires, naming both dates |
+| Field absent (legacy) | none, check skipped rather than guessed |
+
+**4. Selective import.** The dialog lists six categories with live counts and
+disables the ones the file cannot supply. With all three annotation stores
+cleared, only "Milestone comments" was ticked:
+
+| Store | After importing comments only |
+|---|---|
+| `MS_COMMENTS` | 1 |
+| `MS_HEALTH_OVERRIDE` | 0 |
+| `MS_SHORT_TITLES` | 0 |
+| `ANNOT_MOUNT.applied` | `['comments']` |
+
+The annotations slot then shows the file, the data date it was saved against,
+its export time, its load time, and what was actually imported from it.
+
+**Defect found and fixed during this test.** Two, both mine, neither visible by
+reading:
+
+- The mismatch warning first compared `p.dataDate` — which is the week-ending
+  **label** of the now column ("13-Sep"), not a data date — against a real data
+  date, so it fired on every clean round trip. A `scheduleDataDate` field was
+  added and the comparison moved onto it.
+- `.mnt-name` was written with `--color-text-small` (**1.18:1** on a dark card)
+  and `.mnt-badge` with `--color-purple-dark` on the accent wash (**1.13:1**).
+  TD-28 had already named the first token by value. Reading the CSS did not
+  catch either; the probes did. Raised as TD-33.
+
+**Pre-existing defect found.** `LAST_MARKUP_AT` was assigned but never
+declared, so it existed only as an implicit global **after** the first markup
+edit. `exportModel()` reads it, so exporting on a clean load threw a
+`ReferenceError` and the download silently never happened. It survived this
+long because every manual export test had made an edit first. Declared and
+closed as TD-30.
+
+### TEST-15 detail
+
+Raised by the user as "the import button doesn't show when a file is uploaded".
+**Reproduced before changing anything**, by pushing real `File` objects through
+`handleFile()` with the SheetJS CDN unreachable — which is what a locked-down
+network, an offline machine, or a strict policy on a `file://` page all look
+like.
+
+**Reproduction, on the build as shipped:**
+
+| Observed | Value |
+|---|---|
+| `2 · Map columns` section visible | no |
+| Import button present in the DOM | no |
+| Only signal | `ingest-status`, 9.5px italic |
+| Its text | "SheetJS could not be loaded (offline?). Save the schedule as CSV and use the paste box." |
+
+The button was never broken. The `.xlsx` load failed, `showMapper()` was never
+reached, and the step that renders the button rendered nothing. Because that
+step is labelled "Appears once a file loads", its absence reads as a broken
+control rather than as an error.
+
+**A second, more dangerous defect surfaced while reproducing.** Loading a good
+file and then a bad one left the good file's column mapping and Import button
+on screen, because each failure path called `setIngestStatus(...)` and returned
+without clearing `LAST_PARSE`. The board would import file A while naming file
+B. Raised as TD-34.
+
+**After the fix**, all four cases measured:
+
+| Case | Import button | Map section | Failure block |
+|---|---|---|---|
+| Clean load, `.xlsx`, CDN blocked | hidden | hidden | shown, with the reason and two actions |
+| Good CSV after that failure | **shown** | shown | cleared |
+| Bad file after a good one | **hidden** | hidden | shown (TD-34: was previously still offering Import) |
+| File with no data rows | hidden | hidden | shown |
+
+The failure block names the file, states why it failed, says that mapping and
+the Import button stay hidden until a file reads cleanly, and offers "Use the
+paste box instead" and "Pick another file". The SheetJS message was rewritten
+to say what actually happened and what still works, rather than guessing
+"(offline?)".
+
+Two probe runs initially showed the CSV cases failing. That was the probe, not
+the app: `FileReader` callbacks had not fired inside the 700ms wait under
+Chromium's virtual-time budget. Extending the wait showed all four correct.
+Recorded because the first reading looked like a real regression and would have
+been reported as one.
+
+### TEST-16 detail
+
+The user hit a real failure on their own `.xlsx` and sent a screenshot. The
+message read "The file could not be read from disk." and the block offered only
+"Pick another file". Both details identify the path exactly: `FileReader.onerror`
+on the workbook branch, with `offerPaste` false.
+
+**That rules out the CDN.** `ensureXLSX()` had resolved, so SheetJS loaded fine
+and TD-36 was not the cause — the prediction made when P10 shipped was wrong,
+and the error name would have said so on the first screenshot had it been shown.
+
+Forced each `DOMException` by stubbing `FileReader`:
+
+| Forced name | Reported as | Hints | Retry attempts |
+|---|---|---|---|
+| `NotReadableError` | "Windows would not let the browser read the file" | open in Excel / cloud-only OneDrive / antivirus | 2 |
+| `NotFoundError` | "The file was not there when the browser went to read it" | moved or renamed / sync replaced it | 2 |
+| `SecurityError` | "The browser was not permitted to read the file" | policy blocking / copy it locally | 2 |
+| unrecognised name | generic, but still names the exception | close it elsewhere / OneDrive download | 2 |
+
+Transient case, failing once then succeeding: failure block never shown, Import
+button appears, 2 attempts. So a placeholder that hydrates on the second try
+costs the user nothing.
+
+Paste is now offered on this path. Withholding it in P10 was wrong: a file that
+cannot be READ says nothing about whether the app can handle the data once it
+has it.
+
+The TEST-15 suite was re-run and initially showed two cases failing again. Same
+`FileReader` virtual-time artifact as before, now needing a longer wait because
+the sequence is longer. At 4000ms all four are correct. Recorded a second time
+because it has now misled twice.
+
+### TEST-17 detail
+
+**Placement.** Measured on the rendered DOM, not from the markup:
+
+| Assertion | Result |
+|---|---|
+| Label | "Data date" |
+| Inside the Import section | yes |
+| Inside `advanced-input-wrap` (hidden until a file loads) | no |
+| Visible with no file loaded | **yes** (previously not) |
+| Precedes Report date | yes |
+| Precedes the file picker | yes |
+
+**Previous-Friday default.** The arithmetic was checked across a whole week and
+across boundaries rather than on one sample date:
+
+| Day | Resolves to | Days back |
+|---|---|---|
+| Sun 6 Sep | Fri 4 Sep | 2 |
+| Mon 7 Sep | Fri 4 Sep | 3 |
+| Tue 8 Sep | Fri 4 Sep | 4 |
+| Wed 9 Sep | Fri 4 Sep | 5 |
+| Thu 10 Sep | Fri 4 Sep | 6 |
+| **Fri 11 Sep** | **Fri 4 Sep** | **7** |
+| Sat 12 Sep | Fri 11 Sep | 1 |
+
+Month and year boundaries: 1 Jan 2026 → 26 Dec 2025; 1 Mar 2026 → 27 Feb 2026;
+3 Jan 2027 → 1 Jan 2027.
+
+**Assumption, stated because it is a real choice.** "Previous Friday" is read as
+the most recent Friday *strictly before* today, so on a Friday it returns the
+week before. A weekly update is cut to the week just closed, and that day's own
+update does not exist yet in the morning. A project that cuts its update on
+Friday itself would want same-day instead.
+
+**Wiring.** The visible field and the hidden `cfg-datadate` the ingest reads both
+initialise to the computed default and match; editing the visible field still
+mirrors into the hidden one (`2026-08-28` in, `2026-08-28` out).
+
+**One probe assertion was wrong, not the code.** A check for "no stale `2026-07-29`
+literal" scanned the whole document and failed on a genuine baseline milestone
+date (SNIP-110) and on the explanatory comment. The default itself is computed.
+
+### TEST-18 detail
+
+Reported as "Import button doesn't click", with a screenshot showing the status
+line reading a **completed** build ("Built 105 deliverables / 146 milestones
+from 146 activities") while the form below still read "Ready to import" with
+Discard and Import. Those two states are contradictory under the code as
+written, which is what pointed at the defect.
+
+**A real click was tested, not a direct call to `runIngest()`.** In a normal
+page it worked: 159 tasks to 105, `DATA_SOURCE.mode` baseline to update, 105
+rows rendered, no errors. So the button and its handler were never broken.
+
+The screenshot's page was `about:srcdoc`, so the same test was run inside an
+iframe with the app in `srcdoc`, matching the viewer:
+
+| Measure | Before fix | After fix |
+|---|---|---|
+| Import completes on click | yes (159 to 105) | yes (159 to 105) |
+| `map-wrap-section` hidden afterwards | yes | yes |
+| **"Ready to import" panel cleared** | **no** | **yes** |
+| Import button still present afterwards | **yes** | no |
+| Second press | does nothing | not possible |
+| Uncaught errors | none | none |
+
+`runIngest()` hid the mapper and nulled `LAST_PARSE` but never cleared
+`import-summary-wrap`; `cancelIngest()` did. So a finished import looked
+unfinished, and pressing Import again hit `if(!LAST_PARSE)` and returned
+silently. The first press had worked.
+
+`runIngest()` with nothing staged now reports which file is already mounted
+rather than "Nothing parsed yet.", verified by calling it bare after a
+successful import: it explains itself and leaves the 105 tasks untouched.
+
+**The `Uncaught TypeError: Cannot set properties of null (setting 'onclick')` in
+the screenshot is not from this app.** It is reported at `about:srcdoc:6806`;
+the file is 5935 lines, and the app's only two `.onclick=` assignments are both
+made on elements created by `createElement` in the same statement, so neither
+can be null. Reproducing the app inside a `srcdoc` iframe produced no errors at
+all. The error comes from the viewer's own injected script.
+
+### TEST-19 detail
+
+The publish path is only meaningful end to end, so the test publishes a file,
+writes it to disk, and opens **that file** as a separate page. Nothing is
+asserted about the publishing page.
+
+**Round trip, measured on the published file at load:**
+
+| Assertion | Result |
+|---|---|
+| Deliverables / milestones | 105 / 146, matching what was published |
+| Rows rendered from a cold start | 105 |
+| Markers rendered | 143 |
+| Timeline preserved | 39 week columns, now-column 14 |
+| `BASELINE_TIMELINE` replaced, not just the live one | 39 labels |
+| Data date field | 2026-08-29, the published date |
+| Comments / health / short titles / dependency visibility | 1 / 1 / 1 / 1 |
+| Import form offered on load | no |
+| Uncaught errors | none |
+| Script tags in the file | 2 (`#app-script`, `#published-state`) |
+| Tab title still carries `APP_VERSION` | yes |
+
+Published size 530 KB against a 435 KB source; the state block is ~94 KB.
+
+**Two defects found, both real, both raised.**
+
+**TD-41.** `const MS_COMMENTS={}` was declared *after* the init block, so
+`applyPublishedState()` — called from init — hit a temporal dead zone on it and
+threw. The catch turned that into a partial restore: the timeline, tasks and
+source applied, everything after the throw did not. The board looked correct
+while the data date field and published metadata were quietly wrong. Second
+instance of the class TD-30 raised.
+
+**TD-42.** `publishDashboard()` cloned every `script` element in the DOM. Any
+script injected by a browser extension, a document viewer wrapper, or a
+debugging snippet would be **baked into a file that then gets uploaded to
+SharePoint and opened by other people**. The app's script now carries
+`id="app-script"` and publish drops every other script, logging the count.
+
+**A long detour worth recording.** The page title in the published file kept
+losing its version, and this was investigated as a product defect across several
+rounds — top-level error capture, a `document.title` property trap, isolating
+the state block. The cause was the test harness: `import_check.py` injects its
+script into the page, publish cloned the live DOM, and the harness therefore
+ended up inside the published file and re-ran on load, calling `setReportTitle`
+and overwriting a title the product had set correctly. The harness was proving
+the feature worked and breaking it in the same step. It was only worth the cost
+because it exposed TD-42 underneath.
+
+### TEST-20 detail
+
+Reported as "I uploaded and saved it as a new dashboard, the current I had
+loaded didn't save into the copy." **It had saved.** The published file held 105
+tasks, 146 milestones, 105 rendered rows, 143 markers and all four annotation
+stores. What failed was everything that *describes* the file.
+
+Reproduced by extending the publish probe to read the mount panel and header:
+
+| Surface | Before | After |
+|---|---|---|
+| Baseline slot counts | 159 / 198 (the original seeds) | **105 / 146** |
+| Baseline slot badge | `embedded` | `published` |
+| Baseline provenance | none | "Built into this file on … (v…)" |
+| Header baseline | "Baseline DD 15th Aug" | "Published DD 29-Aug-26" |
+| Header update | "No update imported" | "Built into this file" |
+| Schedule slot | "Nothing mounted / Showing the embedded baseline" | "No override mounted / The published schedule above is what this file shows" |
+
+Each old value was literally true of the internals — there genuinely is no
+mounted update in a published file, and `SEED_*` genuinely is the embedded data
+— and every one of them was wrong about what the user had just done.
+
+Root causes: `renderMounts()` read `SEED_TASKS`/`SEED_MILESTONES` rather than
+`BASELINE_TASKS`/`BASELINE_MILESTONES`, which are the same in a shipped build and
+different in a published one; `BASELINE_LABEL_TEXT` was a `const` the publish
+path never updated; and two strings were worded for the non-published case only.
+
+**Why it shipped:** TEST-19 asserted the payload and the rendered board, never
+what the UI said about them. The probe now captures all three mount slots and
+the header meta line, and the non-published panel is asserted in the same run so
+the two wordings cannot drift.
+
+### TEST-21 detail
+
+**1. Published schedule installs as the update, not the baseline.** Overwriting
+the baseline destroyed what the baseline is for. Measured on a published file
+opened cold:
+
+| Assertion | Result |
+|---|---|
+| `VIEW_MODE` on load | `update` |
+| Update toggle enabled and active | yes / yes |
+| `UPDATE_TASKS` | 105 |
+| `BASELINE_TASKS` / `BASELINE_MILESTONES` intact | **159 / 198** |
+| Baseline slot | `embedded`, 159 / 198 |
+| Schedule slot | `published`, the source file, 105 / 146, "Built into this file on…" |
+| Header baseline | "Baseline DD 15th Aug" |
+
+**2. Source cell follows a dragged milestone.** Moving `SNIP-142` from its own
+row into the `SNIP-152` row: source row `"SNIP-142"` → `""`, target row
+`"SNIP-152"` → `"SNIP-142, SNIP-152"`.
+
+**3. Empty-row delete.** The control appears on the emptied row and not on the
+populated one; deleting took `TASKS` 105 → 104, removed the row from the DOM,
+and removed it from `UPDATE_TASKS` so it does not return on the next rebuild.
+
+**4. Gutter.** `.row-gutter` renders with the row number and health dot as its
+only children, at a fixed width so names align across 1- and 3-digit numbers.
+
+**5. Column master toggle.** "Hide All Columns" hides the ref column
+(`refColHidden: true`) while milestone labels stay visible and the label toggle
+stays checked. Previously `btn-lbl` and `btn-mhrs` were in its id list.
+
+**6. Header chrome colour — delivered, and failing the gate.** `#f4f5f8` was
+applied to the icon-bar version label and the report subtitle as requested.
+Measured:
+
+| Surface | Contrast |
+|---|---|
+| `#f4f5f8` on dark header `#15182F` | 16.00:1 |
+| `#f4f5f8` on light header `#a6bbdc` | **1.79:1** |
+
+Neither element had a probe, which is why the surface was already wrong and
+nobody had seen it: the previous values measured 1.5:1 (`--color-text-note`) and
+2.40:1 (`--color-text-muted`). Probes added, so the contrast pass now **fails**
+at 1.79:1 and has been left failing rather than suppressed. TD-50 carries the
+decision: darken the header, or keep it light and use a dark token.
+
+### TEST-22 detail
+
+**Layout, measured by bounding rect rather than read from the CSS.**
+
+| Assertion | 1600px | 700px |
+|---|---|---|
+| Title and details on one line | **yes** | no (stacked, as intended) |
+| Details to the right of the title | yes | n/a, stacked |
+| Details right-aligned to the bar | yes | yes |
+| Subtitle below the whole bar | yes | yes |
+| Search row above the month bands | yes | yes |
+
+At 700px the details container drops to `x:10, y:60` under the title at
+`x:10, y:40` — stacked, left-aligned, full width.
+
+**Stickiness, which is the part that could have broken.** The search moved into
+its own `tr.hdr-search` at the top of the table head, so the two rows below it
+had to be re-offset. Both now derive from a single `--hdr-search-h` rather than
+the previous hardcoded `top:19.5px`.
+
+The first run of this test proved nothing: `window.scrollTo(0,1200)` left
+`scrollY` at 0, because the board scrolls inside `#scroll-wrap`, not the page.
+Re-run against the real container with `scrollTop = 900`:
+
+| Row | Top → bottom (1600px) | Top → bottom (700px) |
+|---|---|---|
+| Search | 77 → 103 | 110 → 136 |
+| Phase (months) | 103 → 119 | 136 → 152 |
+| Week | 122 → 145 | 156 → 178 |
+
+Three rows stacked in order with no overlap, and the search row's top equals the
+scroll container's top, so it is genuinely pinned. Measured on the `th`
+elements, not the `tr` — per the lesson that a row's bounding box is not what is
+sticky here.
+
+**Subtitle text** reads "Exported milestone view of P6 schedule shown by activity
+end dates". Taken from a partly garbled dictation and flagged as an assumption.
+
+### TEST-24 detail
+
+**The header.** `--color-bg-header` moved from `#a6bbdc` to `#2e4f82`, which is
+what the user chose when given the TD-50 options. Measured, both themes:
+
+| Text on the header | Light `#2e4f82` | Dark `#15182F` |
+|---|---|---|
+| `--color-text-on-header` `#f4f5f8` (requested) | **7.53:1** (was 1.79:1) | 16.00:1 |
+| `--color-text-on-header-muted` `#c4d2e8` (new) | **5.37:1** | 11.41:1 |
+| `--color-text-on-accent` `#ffffff` (`.sd-hd`) | 8.21:1 | 17.45:1 |
+
+Darkening moved every text colour on that surface, which is exactly the TD-46
+trap. Values that would have shipped broken if the token had not been split:
+`--color-text-on-panel-muted` at **1.22:1**, `--color-text-ink` (the report
+title) at **2.14:1**, `--color-text-note` (the field divider) at **2.53:1**.
+None of the three was a new defect introduced here; each was a pairing that
+only worked because the header happened to be light.
+
+**The contrast gate is green for the first time since v3.1.0-P15.** 58 probes,
+0 frozen, 0 below 3.0:1, exit 0.
+
+Two probes were reclassified from `toggle` to `constant`: the sticky search
+icon and clear button. They moved from a themed panel token to the non-themed
+header token, so they are no longer expected to differ between themes. Both
+headers are now dark and take the same light text. Recorded because
+reclassifying a probe is indistinguishable from silencing one unless the reason
+is written down.
+
+**A defect the sweep found (TD-64).** Adding a probe for every consumer of
+`--color-bg-header` caught two that use it as a *text* colour rather than a
+background. At `#a6bbdc` that was 1.79:1 on the panel; in dark it was the navy
+header on a dark panel at **1.31:1**, and had been since the dark palette was
+written. Now `--color-text-emphasis`, themed per surface.
+
+**The data date rule**, driven through the real function rather than
+reimplemented:
+
+| From | Returns |
+|---|---|
+| Sun 6 Sep … Thu 10 Sep | 4 Sep (the Friday just gone) |
+| **Fri 11 Sep** | **11 Sep, the same day** |
+| Sat 12 Sep | 11 Sep |
+| Thu 1 Oct (month boundary) | 25 Sep |
+| **Fri 1 Jan 2027** (year boundary) | **1 Jan 2027, the same day** |
+
+**The republish chain.** A file already carrying two publish entries, published
+again through the real `publishStatePayload()`: three entries, the original
+first entry preserved, the last entry stamped with this build and sharing the
+payload's own `publishedAt`.
+
+### TEST-23 detail
+
+`tools/persist_check.py`. The question is asked in three places because the three
+paths had drifted apart before and nothing tested them together.
+
+Both downloads are captured by stubbing `URL.createObjectURL` at the app's
+boundary with the browser, so the payloads asserted are the ones the real
+`publishDashboard()` and `exportModel()` produce. Nothing is reimplemented.
+
+**Stage 1 — one of every kind of edit**, against the real functions: a drag
+through `moveMilestoneToRow()`, a milestone comment, a health override, a custom
+short title, a dependency-line comment, row health and a remark set on the
+rendered row, and a row removal through `deleteRow()`.
+
+**Stage 2 — the published file, opened cold.**
+
+| Assertion | Result |
+|---|---|
+| Dependency-line comment | present |
+| Milestone comment, health override, short title | all present |
+| Milestone sits on the row it was dragged to | yes |
+| Row health and remark applied to the rendered row | yes, after the TD-59 fix |
+| Removed row stayed removed | yes |
+| Move and removal records carried as history | yes |
+| Markup line describes the edits rather than "no markup edits yet" | yes |
+
+**Stage 3 — replay onto a clean board that has never seen any of it.** This is
+the case a merge cannot cover and the one TD-27 was open on. The clean board is
+asserted to start in the pre-move state first, so "it was already there" cannot
+be mistaken for a working replay.
+
+| Assertion | Result |
+|---|---|
+| Clean board starts with the milestone on its original row | yes |
+| Move replays onto the new schedule | yes |
+| Row removal replays | yes |
+| Dependency comment imports | yes |
+| Importing the same file twice changes nothing further | yes, no extra move records |
+
+**Two probe faults, recorded because both first read as product defects.** The
+first run put the row override and the row deletion on the same row: the row the
+milestone had just left was the row that then qualified as empty, so a correctly
+discarded override looked like a lost one. The second read the markup line from
+an element id that does not exist, and reported an empty string as a pass. Both
+are the same trap as the TEST-22 scroll container: the probe was wrong, and a
+less careful reading would have produced a fix for a defect that was not there.
+
+A third fault was real. Stage 1's output element was appended to the body before
+the publish, so the published clone carried an empty copy of it and stage 2's
+reader matched that one instead of its own output. The element is now created
+only at the moment it is written, and the reader takes the last match.
 
 ### TEST-05 detail
 
@@ -441,5 +960,16 @@ Source file shape confirmed by static inspection of the workbook: 192 data rows,
 | 2026-09-10 | TEST-11 chain-first merging; both reported failures fixed; both over-merge guards hold; baseline render unchanged | Sub-headings within a band still not built (TD-23); stage phrase list is fixed rather than learned | File distribution | v3.1.0-P6 |
 | 2026-09-10 | TEST-12 dependency-first rows, 8/8 guards, chains intact, baseline unchanged | Convergence nodes always stand alone even when name-compatible with one candidate row (TD-26); sub-headings still not built (TD-23) | File distribution | v3.1.0-P7 |
 | 2026-09-10 | TEST-13 convergence relaxation, row numbers and milestone drag; 8/8 guards; baseline render unchanged; theme check clean at 37 probes | Row drag itself not built (the handle slot is reserved, TD-29); moves are session-scoped and a re-import does not replay them (TD-27); sub-headings still not built (TD-23) | File distribution | v3.1.0-P8 |
+| 2026-09-10 | TEST-14 mount manager, export identity, validation and selective import; baseline render unchanged; theme check clean at 45 probes | Round trip covers the annotation layer only (TD-32); unmounting annotations does not roll back imported values (TD-31); two low-contrast tokens still need a sweep across their other consumers (TD-33) | File distribution | v3.1.0-P9 |
+| 2026-09-10 | TEST-15 import failure handling, 4/4 cases; baseline render unchanged; theme check clean at 48 probes | `.xlsx` import still depends on reaching the SheetJS CDN and is impossible without it (TD-36, open) | File distribution | v3.1.0-P10 |
+| 2026-09-10 | TEST-16 read-error diagnosis and retry; TEST-15 re-run 4/4; baseline unchanged; theme check 49 probes | The user's own failure is not yet confirmed resolved — P11 names the cause, it does not remove it | File distribution | v3.1.0-P11 |
+| 2026-09-10 | TEST-17 data date placement, default and wiring; full suite re-run; baseline unchanged; theme check 49 probes | Previous-Friday rule returns the week before when today is a Friday, by design (see TEST-17) | File distribution | v3.1.0-P12 |
+| 2026-09-10 | TEST-18 real Import click in a normal page and in an `about:srcdoc` iframe; full suite re-run; baseline unchanged; theme check 49 probes | The viewer-injected `onclick` TypeError is outside this app and is not addressed here | File distribution | v3.1.0-P13 |
+| 2026-09-10 | TEST-19 publish round trip on a real published file; full suite re-run; baseline unchanged; theme check 49 probes | A published file still carries the original seeds as a fallback and is larger than needed (TD-43); readers can republish from a published file (TD-44, undecided); the SharePoint upload itself is not yet exercised with a real library | File distribution | v3.1.0-P14 |
+| 2026-09-11 | TEST-20 published-file provenance; TEST-19 unchanged; baseline render unchanged; theme check 50 probes | The SharePoint upload itself is now user-confirmed working; provenance wording not yet reviewed by a reader of a published file | File distribution | v3.1.0-P16 |
+| 2026-09-11 | TEST-21 five of six changes verified; baseline render unchanged | **Contrast gate failing by design pending TD-50**: the requested `#f4f5f8` is 1.79:1 on the light header. Delivered as asked and reported, not suppressed. | File distribution | v3.1.0-P18 |
+| 2026-09-11 | TEST-22 heading layout and sticky search row; full suite re-run; baseline render unchanged | **Contrast gate still failing by design pending TD-50** (two probes at 1.79:1, delivered as requested). Subtitle wording is an assumption from garbled dictation. | File distribution | v3.1.0-P19 |
+| 2026-09-11 | TEST-23 persistence round trip, 20/20; full suite re-run; baseline render unchanged at 163 rows / 196 markers / 159 tasks / 198 milestones | **Contrast gate still failing by design pending TD-50** (two probes at 1.79:1, delivered as requested). Replayed import categories do not yet report how many entries actually landed (TD-62). | File distribution | v3.1.0-P20 |
+| 2026-09-11 | TEST-24 header darkening and token split, data date on a Friday, republish chain; full suite re-run; baseline render unchanged | **Contrast gate green, 0 below 3.0:1** for the first time since v3.1.0-P15. The `.xlsx` CDN dependency (TD-36) is still open and is now the only outstanding High. | File distribution | v3.1.0-P21 |
 | Pre-migration | TEST-01 full feature regression | Banding (FEAT-10), sorting/icon customisation (FEAT-11), JSON round-trip (FEAT-13) all knowingly not built. Tokenization (FEAT-14) knowingly incomplete. Label collision same-row only. Header aliases exact-match only. | File distribution | v3.1.0-P1 |
 | 2026-09-09 | Migration to git repository, project kit established | TD-01 version discrepancy open; companion tokenization docs (TD-03) not yet located | Branch `p6-milestone-dashboard` | Migration commit |

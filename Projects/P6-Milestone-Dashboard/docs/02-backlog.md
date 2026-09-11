@@ -8,11 +8,11 @@ Status baseline is the delivered v3.1.0-P1 build. Features marked `Published` we
 
 | ID | Epic | Features | Status |
 |---|---|---|---|
-| EPIC-01 | Schedule ingest and data model | FEAT-01, FEAT-02, FEAT-09 | 3/3 published |
+| EPIC-01 | Schedule ingest and data model | FEAT-01, FEAT-02, FEAT-09, FEAT-17 | 4/4 published |
 | EPIC-02 | Timeline rendering | FEAT-03, FEAT-04 | 2/2 published |
 | EPIC-03 | Annotation and assessment | FEAT-05 | 1/1 published |
 | EPIC-04 | Filtering and view control | FEAT-06, FEAT-07 | 2/2 published |
-| EPIC-05 | Export and round-trip | FEAT-08, FEAT-13 | 1/2 published |
+| EPIC-05 | Export and round-trip | FEAT-08, FEAT-13 | 1/2 published, FEAT-13 part-built |
 | EPIC-06 | Design system tokenization and development discipline | FEAT-14, FEAT-16 | 1/2 published |
 | EPIC-07 | Grouping and presentation (future) | FEAT-10, FEAT-11 | 0/2 published |
 | EPIC-08 | Repository and delivery | FEAT-12, FEAT-15 | 1/2 published |
@@ -32,11 +32,12 @@ Status baseline is the delivered v3.1.0-P1 build. Features marked `Published` we
 | FEAT-09 | EPIC-01 | Ingest diagnostics panel | US-17 | M | L | Published | Collapsible, hidden entirely when empty. |
 | FEAT-10 | EPIC-07 | Banding / row-collections (user-reorderable grouping) | US-18 | M | H | Not started | Fully specced. Phase 1 auto-derivation not begun. Assume none of it exists. |
 | FEAT-11 | EPIC-07 | Row sorting + per-type icon customisation | US-19 | L | M | Not started | Labelled "Future" in the UI. Genuinely not built, not partially built. |
-| FEAT-12 | EPIC-08 | Single-file zero-dependency distribution | US-20 | H | L | Published | Constraint, not a feature to be traded away. |
-| FEAT-13 | EPIC-05 | Import previously exported JSON model (round-trip) | US-16 | M | M | Not started | Export is one-directional by design today. This is new work, not a bug fix. |
+| FEAT-12 | EPIC-08 | Single-file zero-dependency distribution | US-20 | H | L | Published | Constraint, not a feature to be traded away. v3.1.0-P14 adds publishing: the app writes a new standalone file with the current schedule built in, which is how a SharePoint-hosted copy carries its schedule to other readers. |
+| FEAT-13 | EPIC-05 | Import previously exported JSON model (round-trip) | US-16 | M | M | Dev — annotation layer done at v3.1.0-P9, schedule rehydration not built | Six independently selectable categories, validated on payload identity rather than filename. `tasks`/`milestones`/`timeline` are in the payload but do not rebuild the board (TD-32). |
 | FEAT-14 | EPIC-06 | Tokenization retrofit (colour / spacing / text) | — | M | **H** | Dev — theme-blind class complete, Phase 1/2 and spacing/text outstanding | Complexity raised from M on 2026-09-09: the corrected audit shows materially more remaining work than v1 reported. Never state counts here — read the Measurement Log's latest row per metric. Follow the Token Migration Log methodology, do not restart. |
 | FEAT-15 | EPIC-08 | Git repository migration + project kit | — | H | L | Published | Orphan branch `p6-milestone-dashboard` as the app's main. Tagged `v3.1.0-P1`. |
 | FEAT-16 | EPIC-06 | Lessons-learned capture and promotion of general rules to repository governance | — | M | L | Published | `docs/06-lessons-learned.md`. Two rules promoted to `Governance/` on the hub branch. |
+| FEAT-17 | EPIC-01 | Mount manager: three fixed source slots with unmount and remount | — | H | M | Published | v3.1.0-P9. Baseline (locked) / Schedule / Annotations, each showing file name, data date and load time, so an active override is visible as an override. |
 
 ## Tasks
 
@@ -70,6 +71,22 @@ Status baseline is the delivered v3.1.0-P1 build. Features marked `Published` we
 | TASK-30 | FEAT-03 | Drag a milestone from one row to another, mouse and touch | Done | v3.1.0-P8. Pointer Events; 4px threshold on mouse, 400ms hold on touch. Target row re-bands via the existing collision system. |
 | TASK-31 | FEAT-11 | Row dragging (reorder rows within a banding) | Open | TD-29. The handle slot and `data-rownum` are in place; the interaction is not. |
 | TASK-32 | FEAT-14 | Re-run the contrast check across transparent-background components now the blind spot is closed | Open | TD-28. `--color-text-small` measures 1.18:1 on a dark row. |
+| TASK-33 | FEAT-17 | Mount panel: three fixed slots, each with name, data date and load time | Done | v3.1.0-P9. Replaces the single "Currently Imported Schedule" summary. |
+| TASK-34 | FEAT-17 | Unmount and remount actions per slot | Done | v3.1.0-P9. Baseline is locked; unmounting a schedule reverts to it and leaves annotations alone. |
+| TASK-35 | FEAT-13 | Model export identity block and file naming convention | Done | v3.1.0-P9. `kind` + `schemaVersion` + `exportedAt`; validation never reads the filename. |
+| TASK-36 | FEAT-13 | Selective annotation import, one checkbox per category | Done | v3.1.0-P9. Six categories, counts shown, whole file or just the comments. |
+| TASK-37 | FEAT-13 | Rebuild the board from a mounted model's tasks/milestones/timeline | Open | TD-32. The payload carries them; nothing consumes them. |
+| TASK-38 | FEAT-14 | Sweep every consumer of `--color-text-small` and `--color-purple-dark` | Open | TD-33. Both measured below 1.2:1 in dark on the surfaces used this pass. |
+| TASK-39 | FEAT-02 | Route every import failure through one handler that clears stale parse state | Done | TD-34. v3.1.0-P10. A failure could previously leave the prior file importable. |
+| TASK-40 | FEAT-02 | Show a visible failure block where the column-mapping step would have appeared | Done | TD-35. v3.1.0-P10. Names the file, the reason and the remedy. |
+| TASK-41 | FEAT-02, FEAT-12 | Decide how `.xlsx` import behaves when the SheetJS CDN is unreachable | Open | TD-36. The only dependency that can remove a whole input format. |
+| TASK-42 | FEAT-02 | Report the real `FileReader` DOMException and its remedy instead of a generic message | Done | TD-37. v3.1.0-P11. |
+| TASK-43 | FEAT-02 | Retry a failed file read once before reporting | Done | TD-38. v3.1.0-P11. Covers transient OneDrive hydration and antivirus locks. |
+| TASK-44 | FEAT-02 | Move the data date under step 1, relabel it, default to the previous Friday | Done | TD-39. v3.1.0-P12. Was hidden until a file loaded and defaulted to a stale literal. |
+| TASK-45 | FEAT-02 | Clear the import form on a successful ingest, not only on discard | Done | TD-40. v3.1.0-P13. |
+| TASK-46 | FEAT-12 | Publish: write a new standalone dashboard with the current schedule and annotations built in | Done | v3.1.0-P14. Satisfies the SharePoint requirement without breaking the single-file constraint. |
+| TASK-47 | FEAT-12 | Strip foreign scripts from a published file | Done | TD-42. Only `#app-script` travels. |
+| TASK-48 | FEAT-12 | Decide whether a published file should be able to republish itself | Open | TD-44. |
 | TASK-13 | FEAT-16 | Promote the two general lessons (verification methodology, append-only measurement logs) to repository governance | Done | Applied on `main-projects-hub`. |
 | TASK-07 | FEAT-02 | Decide whether `headerAliases` should move from exact-match to fuzzy | Open | Accepted gap today. `"BL1 Start"` will not match a `"bl start"` alias. Primary `Start`/`Finish` cover the core need. |
 | TASK-08 | FEAT-03 | Multi-line short-title vertical bleed into neighbouring rows | Open | Separate, smaller problem than the same-row collision system. |

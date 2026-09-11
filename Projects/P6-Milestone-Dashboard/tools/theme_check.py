@@ -56,8 +56,12 @@ const table = mk('<table style="position:absolute;left:-9999px"><tbody></tbody><
 const tbody = table.querySelector('tbody');
 
 const PROBES = [
-  ['.sticky-search-icon',        'toggle',   () => document.querySelector('.sticky-search-icon')],
-  ['.sticky-search-clear',       'toggle',   () => document.querySelector('.sticky-search-clear')],
+  // These two moved from --color-text-on-panel-muted (themed) to
+  // --color-text-on-header-muted (constant) when the light header darkened, so
+  // they are no longer expected to toggle: both headers are now dark and take
+  // the same light text. Reclassified deliberately, not to silence a failure.
+  ['.sticky-search-icon (constant)',  'constant', () => document.querySelector('.sticky-search-icon')],
+  ['.sticky-search-clear (constant)', 'constant', () => document.querySelector('.sticky-search-clear')],
   ['.view-toggle',               'toggle',   () => document.querySelector('.view-toggle')],
   ['th.c-name (column header)',  'toggle',   () => document.querySelector('th.c-name:not(.sticky)')
                                               || document.querySelectorAll('th.c-name')[1]],
@@ -119,6 +123,91 @@ const PROBES = [
       const tr = mk('<tr class="data ms-drop-target"><td class="c-wk"></td></tr>', tbody);
       return tr.querySelector('td');
   }],
+  // Mount panel and the selective-import dialog. Small text on a card and on
+  // tinted message strips: exactly the shape that slipped past the contrast
+  // check before it resolved transparent elements to a painting ancestor.
+  ['.mnt-slot',                  'toggle',   () => mk('<div class="mnt-slot">x</div>')],
+  ['.mnt-name',                  'toggle',   () => {
+      const d = mk('<div class="mnt-slot"><div class="mnt-hd"><span class="mnt-name">Schedule</span></div></div>');
+      return d.querySelector('.mnt-name');
+  }],
+  ['.mnt-lines',                 'toggle',   () => {
+      const d = mk('<div class="mnt-slot"><div class="mnt-lines">Data date</div></div>');
+      return d.querySelector('.mnt-lines');
+  }],
+  // Saturated chip: the fill carries the meaning and the text is chosen
+  // against the fill, not the page, so frozen is correct.
+  ['.mnt-badge (constant)',      'constant', () => {
+      const d = mk('<div class="mnt-slot"><span class="mnt-badge">override</span></div>');
+      return d.querySelector('.mnt-badge');
+  }],
+  // EVERY text surface painted on --color-bg-header is probed here. The header
+  // moved twice (white -> #a6bbdc -> #2e4f82) and each move silently broke a
+  // pairing that had no probe, so the rule now is: a background token gets a
+  // probe per text colour that lands on it, not per component someone remembers.
+  ['tr.hist-row td.c-name',      'toggle',   () => {
+      const tr = mk('<tr class="hist-row"><td class="c-name">history</td></tr>', tbody);
+      return tr.querySelector('td');
+  }],
+  // Chrome text on --color-bg-header. Deliberately one value for both themes,
+  // so 'constant'; the contrast pass judges whether that value works on each
+  // header colour.
+  ['#icon-bar .ib-label (constant)', 'constant', () => document.getElementById('ib-label')],
+  ['.rpt-hd .subtitle (constant)',   'constant', () => {
+      const d = mk('<div class="rpt-hd"><span class="subtitle">subtitle text</span></div>');
+      return d.querySelector('.subtitle');
+  }],
+  ['.rpt-hd .title (constant)',      'constant', () => {
+      const d = mk('<div class="rpt-hd"><span class="title">Report title</span></div>');
+      return d.querySelector('.title');
+  }],
+  ['.rpt-sub (constant)',            'constant', () => {
+      const d = mk('<div class="rpt-hd"><div class="rpt-sub">Project No 12345</div></div>');
+      return d.querySelector('.rpt-sub');
+  }],
+  ['.rpt-sub b (constant)',          'constant', () => {
+      const d = mk('<div class="rpt-hd"><div class="rpt-sub"><b>29-Aug-26</b></div></div>');
+      return d.querySelector('b');
+  }],
+  ['.rpt-sub-divider (constant)',    'constant', () => {
+      const d = mk('<div class="rpt-hd"><div class="rpt-sub"><span class="rpt-sub-divider">|</span></div></div>');
+      return d.querySelector('.rpt-sub-divider');
+  }],
+  // The sticky search sits on the header in both the icon bar and its own
+  // header row. Its input text was --color-text-on-panel, which is near-black.
+  ['.sticky-search-box input (constant)', 'constant', () => {
+      const d = mk('<div id="icon-bar-probe" style="background:var(--color-bg-header)">'
+                 + '<div class="sticky-search-box"><input value="search text"></div></div>');
+      return d.querySelector('input');
+  }],
+  // --color-bg-header is also used AS TEXT, bold, on the panel. At #a6bbdc that
+  // pairing was 1.79:1 and had no probe either.
+  ['.sd-src-box b',              'toggle',   () => {
+      const d = mk('<div class="sd-src-box"><b>Project Update</b></div>');
+      return d.querySelector('b');
+  }],
+  ['.imp-fail',                  'toggle',   () => mk('<div class="imp-fail">x</div>')],
+  ['.imp-fail-hd',               'toggle',   () => {
+      const d = mk('<div class="imp-fail"><div class="imp-fail-hd">Could not read</div></div>');
+      return d.querySelector('.imp-fail-hd');
+  }],
+  ['.imp-fail-hints li',         'toggle',   () => {
+      const d = mk('<div class="imp-fail"><div class="imp-fail-msg"><ul class="imp-fail-hints"><li>close it in Excel</li></ul></div></div>');
+      return d.querySelector('.imp-fail-hints li');
+  }],
+  ['.imp-fail-msg',              'toggle',   () => {
+      const d = mk('<div class="imp-fail"><div class="imp-fail-msg">why it failed</div></div>');
+      return d.querySelector('.imp-fail-msg');
+  }],
+  ['.annot-panel',               'toggle',   () => mk('<div class="annot-panel">x</div>')],
+  ['.annot-err',                 'toggle',   () => mk('<div class="annot-msg annot-err">error</div>')],
+  // Amber attention strip, same category: :root tokens, ink picked for the fill.
+  ['.annot-warn (constant)',     'constant', () => mk('<div class="annot-msg annot-warn">warning</div>')],
+  ['.annot-count',               'toggle',   () => {
+      const d = mk('<div class="annot-panel"><label class="annot-row"><span class="annot-count">12</span></label></div>');
+      return d.querySelector('.annot-count');
+  }],
+
   ['.row-num',                   'toggle',   () => {
       const tr = mk('<tr class="data"><td class="c-name"><span class="row-num">1</span></td></tr>', tbody);
       return tr.querySelector('.row-num');
