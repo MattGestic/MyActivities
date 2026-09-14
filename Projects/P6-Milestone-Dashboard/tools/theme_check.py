@@ -56,12 +56,12 @@ const table = mk('<table style="position:absolute;left:-9999px"><tbody></tbody><
 const tbody = table.querySelector('tbody');
 
 const PROBES = [
-  // These two moved from --color-text-on-panel-muted (themed) to
-  // --color-text-on-header-muted (constant) when the light header darkened, so
-  // they are no longer expected to toggle: both headers are now dark and take
-  // the same light text. Reclassified deliberately, not to silence a failure.
-  ['.sticky-search-icon (constant)',  'constant', () => document.querySelector('.sticky-search-icon')],
-  ['.sticky-search-clear (constant)', 'constant', () => document.querySelector('.sticky-search-clear')],
+  // These moved onto the header when it darkened (constant text), and have now
+  // moved again into the filter bar, which is a themed panel. So they are back
+  // to toggling. The label carries no "(constant)" precisely because the
+  // classification has changed twice and the file should state which it is.
+  ['.sticky-search-icon',  'toggle', () => document.querySelector('.sticky-search-icon')],
+  ['.sticky-search-clear', 'toggle', () => document.querySelector('.sticky-search-clear')],
   ['.view-toggle',               'toggle',   () => document.querySelector('.view-toggle')],
   ['th.c-name (column header)',  'toggle',   () => document.querySelector('th.c-name:not(.sticky)')
                                               || document.querySelectorAll('th.c-name')[1]],
@@ -173,10 +173,10 @@ const PROBES = [
       const d = mk('<div class="rpt-hd"><div class="rpt-sub"><span class="rpt-sub-divider">|</span></div></div>');
       return d.querySelector('.rpt-sub-divider');
   }],
-  // The sticky search sits on the header in both the icon bar and its own
-  // header row. Its input text was --color-text-on-panel, which is near-black.
-  ['.sticky-search-box input (constant)', 'constant', () => {
-      const d = mk('<div id="icon-bar-probe" style="background:var(--color-bg-header)">'
+  // The search now lives inline with the other filters, on the filter bar's
+  // panel, so it is probed against that surface rather than the board header.
+  ['.sticky-search-box input', 'toggle', () => {
+      const d = mk('<div id="top-filter-bar" class="open">'
                  + '<div class="sticky-search-box"><input value="search text"></div></div>');
       return d.querySelector('input');
   }],

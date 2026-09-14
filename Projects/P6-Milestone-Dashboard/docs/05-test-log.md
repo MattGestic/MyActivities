@@ -25,6 +25,7 @@
 | TEST-19 | 2026-09-10 | Publish round trip: does a published file open cold with the schedule, timeline and annotations already in place, and does it carry nothing it should not | Publish captured at the Blob boundary, written to disk, then loaded as a separate page | **Pass after two fixes** | TD-41, TD-42 (both closed same pass), TD-43, TD-44 |
 | TEST-20 | 2026-09-11 | Does a published file describe itself correctly: mount slots, baseline counts, and the header provenance line | Publish probe extended to capture all three mount slots and the header meta | **Pass after fix** — reproduced the user's report first | TD-47, TD-48 (both closed same pass) |
 | TEST-21 | 2026-09-11 | Six requested changes: published schedule as the update, Source cell after a drag, empty-row delete, gutter alignment, column master toggle scope, header chrome colour | Publish round trip plus a combined DOM probe driving each interaction | **5 pass, 1 delivered failing** — the requested `#f4f5f8` is 1.79:1 on the light header | TD-50 (open), TD-51 to TD-55 (closed) |
+| TEST-26 | 2026-09-14 | Ten presentation and default changes, each measured in the running app | Computed style, bounding rects and text ranges on a real render; controls driven both ways; milestone card opened by a real marker click | **Pass**, two defects found and fixed first | TD-68, TD-69, TD-70, TD-71 (all closed) |
 | TEST-25 | 2026-09-14 | An imported board presents its bands in the schedule's own order | `tools/order_check.py` — derives the schedule's section sequence from the workbook itself, runs a real import, then places each board band back onto the sheet by the row of its first activity and asserts those rows strictly increase | **Pass** on P22, **fails on P21** with 7 bands out of order | TD-65, TD-66 (closed), TD-67 (open) |
 | TEST-24 | 2026-09-11 | Header darkened and its text tokens split out; data date rule on a Friday; republish provenance chain | Contrast measured on every text colour landing on `--color-bg-header` in both themes; the date rule driven through the real function on all seven weekdays plus month and year boundaries; the chain built by the real payload function | **Pass**, contrast gate green | TD-50, TD-46, TD-44, TD-63, TD-64 (all closed) |
 | TEST-23 | 2026-09-11 | Every kind of board markup survives a publish, and the two layout changes replay onto a schedule that has never seen them | `tools/persist_check.py` — three stages against real headless renders: edit and capture both real downloads, read the published file back, replay the exported model onto a clean board | **Pass** (20 checks) | TD-27, TD-58, TD-59, TD-60, TD-61 (all closed) |
@@ -518,6 +519,55 @@ sticky here.
 
 **Subtitle text** reads "Exported milestone view of P6 schedule shown by activity
 end dates". Taken from a partly garbled dictation and flagged as an assumption.
+
+### TEST-26 detail
+
+Every item measured against a real render rather than read off the diff.
+
+| Requested | Measured |
+|---|---|
+| No derived-weights remark on generated rows | rows carrying that note: **0** (ingest path and the baked seeds) |
+| Columns collapsed by default | `colState` all false; a `col-ref` cell and its `colgroup` entry both `display:none` at first paint |
+| Milestone labels off by default | `.m-lbl` `display:none`; the toggle unchecked |
+| View Controls on the right | open state flush to the viewport's right edge; closed 300px clear of it |
+| Its launcher beside Settings | `btn-style-icon` immediately precedes `btn-settings-icon` in the icon group |
+| App name and version top right | label right-aligned, icon group still hard against the right edge |
+| Report details under the subtitle | details left edge matches the title's text left edge; details sit below the subtitle |
+| Comments icon fits its button | 26x26 button, 24x24 content, no overflow |
+| Gutter spacing, remarks aligned to the title | gutter gap 9px, fixed 42px; **title text and remark text both start at x=52** |
+| Subtitle wording | exact string asserted |
+| Predecessor / dependency lists | two columns side by side, comma-space joined, collapsed by default, hidden for a milestone with no id |
+| Search inline with the filters | search inside `#top-filter-bar`, the separate header row gone, bar open by default on its grey panel |
+
+Controls were then driven in both directions: Show All Columns makes the ref
+cell `table-cell`, Hide All returns it to `none`, and the label toggle brings
+`.m-lbl` back to `block`. A control that changes a default has to still work in
+both directions, which is the standing rule here.
+
+**Two defects found by measuring, both invisible in the diff.**
+
+TD-70: `.remarks` set `margin-left` twice in the same rule. The new gutter
+indent was written first and the original `-3px` second, so the later
+declaration won and the indent did nothing. The remark text measured at x=49
+against a title at x=52 and only a text-range measurement showed it, because
+the element's box edge and its text differ by the 3px padding.
+
+TD-69: `body.cv-open` still applied `margin-left:300px`, correct only while the
+panel opened from the left. With the panel on the right the board was pushed
+away from it.
+
+**A third finding was the harness, not the app.** After the TD-69 fix the panel
+still measured 300px off-screen with the open class demonstrably matching.
+Chromium's `--virtual-time-budget` fast-forwards timers but does not advance the
+CSS transition clock, so `getComputedStyle` reported the transition's start
+value however long the probe waited. Disabling the transition and forcing a
+reflow gave `translateX(0)` and a right edge flush with the viewport. Recorded
+rather than quietly worked around, because on the first reading it looked like a
+real layout defect and a less careful pass would have "fixed" working CSS.
+
+Baseline render unchanged at 163 rows / 196 markers / 159 tasks / 198
+milestones. TEST-25 board order, TEST-23 persistence 20/20, ingest and the
+contrast gate all re-run clean.
 
 ### TEST-25 detail
 
@@ -1020,5 +1070,6 @@ Source file shape confirmed by static inspection of the workbook: 192 data rows,
 | 2026-09-11 | TEST-23 persistence round trip, 20/20; full suite re-run; baseline render unchanged at 163 rows / 196 markers / 159 tasks / 198 milestones | **Contrast gate still failing by design pending TD-50** (two probes at 1.79:1, delivered as requested). Replayed import categories do not yet report how many entries actually landed (TD-62). | File distribution | v3.1.0-P20 |
 | 2026-09-11 | TEST-24 header darkening and token split, data date on a Friday, republish chain; full suite re-run; baseline render unchanged | **Contrast gate green, 0 below 3.0:1** for the first time since v3.1.0-P15. The `.xlsx` CDN dependency (TD-36) is still open and is now the only outstanding High. | File distribution | v3.1.0-P21 |
 | 2026-09-14 | TEST-25 board order follows the schedule; full suite re-run; baseline render unchanged; contrast gate green | The schedule's inner headings within a band are still collapsed into the discipline and not shown (TD-67, with TD-23). `.xlsx` CDN dependency (TD-36) still open. | File distribution | v3.1.0-P22 |
+| 2026-09-14 | TEST-26 ten presentation and default changes; full suite re-run; baseline render unchanged; contrast gate green | The schedule's inner headings within a band are still not shown (TD-67, awaiting the user's choice). `.xlsx` CDN dependency (TD-36) still open. | File distribution | v3.1.0-P23 |
 | Pre-migration | TEST-01 full feature regression | Banding (FEAT-10), sorting/icon customisation (FEAT-11), JSON round-trip (FEAT-13) all knowingly not built. Tokenization (FEAT-14) knowingly incomplete. Label collision same-row only. Header aliases exact-match only. | File distribution | v3.1.0-P1 |
 | 2026-09-09 | Migration to git repository, project kit established | TD-01 version discrepancy open; companion tokenization docs (TD-03) not yet located | Branch `p6-milestone-dashboard` | Migration commit |
