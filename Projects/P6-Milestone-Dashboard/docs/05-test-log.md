@@ -25,6 +25,7 @@
 | TEST-19 | 2026-09-10 | Publish round trip: does a published file open cold with the schedule, timeline and annotations already in place, and does it carry nothing it should not | Publish captured at the Blob boundary, written to disk, then loaded as a separate page | **Pass after two fixes** | TD-41, TD-42 (both closed same pass), TD-43, TD-44 |
 | TEST-20 | 2026-09-11 | Does a published file describe itself correctly: mount slots, baseline counts, and the header provenance line | Publish probe extended to capture all three mount slots and the header meta | **Pass after fix** — reproduced the user's report first | TD-47, TD-48 (both closed same pass) |
 | TEST-21 | 2026-09-11 | Six requested changes: published schedule as the update, Source cell after a drag, empty-row delete, gutter alignment, column master toggle scope, header chrome colour | Publish round trip plus a combined DOM probe driving each interaction | **5 pass, 1 delivered failing** — the requested `#f4f5f8` is 1.79:1 on the light header | TD-50 (open), TD-51 to TD-55 (closed) |
+| TEST-25 | 2026-09-14 | An imported board presents its bands in the schedule's own order | `tools/order_check.py` — derives the schedule's section sequence from the workbook itself, runs a real import, then places each board band back onto the sheet by the row of its first activity and asserts those rows strictly increase | **Pass** on P22, **fails on P21** with 7 bands out of order | TD-65, TD-66 (closed), TD-67 (open) |
 | TEST-24 | 2026-09-11 | Header darkened and its text tokens split out; data date rule on a Friday; republish provenance chain | Contrast measured on every text colour landing on `--color-bg-header` in both themes; the date rule driven through the real function on all seven weekdays plus month and year boundaries; the chain built by the real payload function | **Pass**, contrast gate green | TD-50, TD-46, TD-44, TD-63, TD-64 (all closed) |
 | TEST-23 | 2026-09-11 | Every kind of board markup survives a publish, and the two layout changes replay onto a schedule that has never seen them | `tools/persist_check.py` — three stages against real headless renders: edit and capture both real downloads, read the published file back, replay the exported model onto a clean board | **Pass** (20 checks) | TD-27, TD-58, TD-59, TD-60, TD-61 (all closed) |
 | TEST-22 | 2026-09-11 | Heading bar split into two containers with responsive stacking, subtitle relocated, and the search moved to its own sticky row | Bounding-rect measurement at two viewport widths, and again after 900px of real scroll inside `#scroll-wrap` | **Pass** | TD-56, TD-57 (both closed) |
@@ -518,6 +519,53 @@ sticky here.
 **Subtitle text** reads "Exported milestone view of P6 schedule shown by activity
 end dates". Taken from a partly garbled dictation and flagged as an assumption.
 
+### TEST-25 detail
+
+The expected order is **derived from the workbook**, not typed into the test: in
+this export a heading row carries indented text in the Activity ID column and an
+empty Activity Name, so walking the sheet with an indent stack gives the section
+in force over every activity. Band names cannot be compared one to one, because
+the tag strategy rolls inner sections up into a discipline. Positions can, and
+that is the assertion: place each board band back onto the sheet by the row of
+its first activity, and require those rows to strictly increase.
+
+**On v3.1.0-P22** the board walks the schedule top to bottom:
+
+| Board band | First activity | Sheet row |
+|---|---|---|
+| Key Milestones | SNIP-101 | 2 |
+| Inputs From Others | SNIP-136 | 28 |
+| Project Management | SNIP-105 | 36 |
+| Engineering: Process | SNIP-118 | 49 |
+| Engineering: Mechanical & Piping | SNIP-128 | 69 |
+| Engineering: Layout | SNIP-300 | 86 |
+| Engineering: Civil | SNIP-146 | 97 |
+| Engineering: Structural & Concrete | SNIP-215 | 118 |
+| Engineering: Electrical & Instrumentation | SNIP-124 | 131 |
+| Engineering: Site Services | SNIP-202 | 160 |
+| Project Execution Plan / Schedule | SNIP-214 | 162 |
+| Capital and Operating Cost Estimate | SNIP-232 | 173 |
+| Financial Model | SNIP-242 | 182 |
+| Technical Report | SNIP-255 | 189 |
+
+Strictly increasing, and the board opens with the section the schedule opens
+with.
+
+**Run against the shipped v3.1.0-P21 the same check fails**, which is what makes
+it worth having: seven bands out of order, the board opening on Capital and
+Operating Cost Estimate at sheet row 167 while Key Milestones at row 2 came
+fourth. That reproduces the user's report exactly.
+
+**The first version of this check passed for the wrong reason (TD-66).** It
+looked for heading rows with an empty Activity ID column, which is the inverse of
+this export's shape, so it derived nothing, printed an empty expected list, and
+fell through to a weaker id-monotonicity heuristic that happened to pass. An
+empty derivation now exits with an error instead.
+
+Baseline render unchanged at 163 rows / 196 markers / 159 tasks / 198
+milestones. The seeds carry no WBS and form a single ungrouped band, which is
+why the shipped board never showed this defect and only a real import exposed it.
+
 ### TEST-24 detail
 
 **The header.** `--color-bg-header` moved from `#a6bbdc` to `#2e4f82`, which is
@@ -971,5 +1019,6 @@ Source file shape confirmed by static inspection of the workbook: 192 data rows,
 | 2026-09-11 | TEST-22 heading layout and sticky search row; full suite re-run; baseline render unchanged | **Contrast gate still failing by design pending TD-50** (two probes at 1.79:1, delivered as requested). Subtitle wording is an assumption from garbled dictation. | File distribution | v3.1.0-P19 |
 | 2026-09-11 | TEST-23 persistence round trip, 20/20; full suite re-run; baseline render unchanged at 163 rows / 196 markers / 159 tasks / 198 milestones | **Contrast gate still failing by design pending TD-50** (two probes at 1.79:1, delivered as requested). Replayed import categories do not yet report how many entries actually landed (TD-62). | File distribution | v3.1.0-P20 |
 | 2026-09-11 | TEST-24 header darkening and token split, data date on a Friday, republish chain; full suite re-run; baseline render unchanged | **Contrast gate green, 0 below 3.0:1** for the first time since v3.1.0-P15. The `.xlsx` CDN dependency (TD-36) is still open and is now the only outstanding High. | File distribution | v3.1.0-P21 |
+| 2026-09-14 | TEST-25 board order follows the schedule; full suite re-run; baseline render unchanged; contrast gate green | The schedule's inner headings within a band are still collapsed into the discipline and not shown (TD-67, with TD-23). `.xlsx` CDN dependency (TD-36) still open. | File distribution | v3.1.0-P22 |
 | Pre-migration | TEST-01 full feature regression | Banding (FEAT-10), sorting/icon customisation (FEAT-11), JSON round-trip (FEAT-13) all knowingly not built. Tokenization (FEAT-14) knowingly incomplete. Label collision same-row only. Header aliases exact-match only. | File distribution | v3.1.0-P1 |
 | 2026-09-09 | Migration to git repository, project kit established | TD-01 version discrepancy open; companion tokenization docs (TD-03) not yet located | Branch `p6-milestone-dashboard` | Migration commit |

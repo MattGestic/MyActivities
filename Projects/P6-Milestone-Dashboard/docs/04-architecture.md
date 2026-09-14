@@ -107,6 +107,7 @@ The version lives only in `APP_VERSION`. The working file keeps a stable filenam
 | Label collision: 3-band cycling, same-row only | General N-marker collision solver | Covers the common case. A 4+ marker cluster in a very tight span can still partially overlap — an explicit, acknowledged scope boundary. | Pre-migration |
 | Exact-match header aliases, not fuzzy | Fuzzy/levenshtein matching | Primary `Start`/`Finish` already cover the core need. Fuzzy risks silent mis-mapping, which is worse than a visible failure. | Pre-migration |
 | Orphan branch per app | Monorepo on one `main`; separate repos | Apps are independent; a shared `main` makes every diff noisy. A separate repo per app fragments a personal workspace. | 2026-09-09 |
+| Board order follows the schedule's own order | Alphabetical by WBS path; by phase; by date | The board presents the client's schedule, so it presents it in the client's sequence. Anything else makes the reader reconcile two orderings, and the schedule's order carries meaning the dashboard does not know. **This rule was assumed rather than recorded, and the code did the opposite for as long as import existed (TD-65).** | 2026-09-14 |
 | Stable filename + git tags for versioning | Keep versioned filenames | Versioned filenames make every change a whole-file add, defeating the point of migrating to git. | 2026-09-09 |
 
 ---
