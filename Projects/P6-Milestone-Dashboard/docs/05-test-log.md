@@ -25,6 +25,7 @@
 | TEST-19 | 2026-09-10 | Publish round trip: does a published file open cold with the schedule, timeline and annotations already in place, and does it carry nothing it should not | Publish captured at the Blob boundary, written to disk, then loaded as a separate page | **Pass after two fixes** | TD-41, TD-42 (both closed same pass), TD-43, TD-44 |
 | TEST-20 | 2026-09-11 | Does a published file describe itself correctly: mount slots, baseline counts, and the header provenance line | Publish probe extended to capture all three mount slots and the header meta | **Pass after fix** — reproduced the user's report first | TD-47, TD-48 (both closed same pass) |
 | TEST-21 | 2026-09-11 | Six requested changes: published schedule as the update, Source cell after a drag, empty-row delete, gutter alignment, column master toggle scope, header chrome colour | Publish round trip plus a combined DOM probe driving each interaction | **5 pass, 1 delivered failing** — the requested `#f4f5f8` is 1.79:1 on the light header | TD-50 (open), TD-51 to TD-55 (closed) |
+| TEST-27 | 2026-09-14 | Dependency tooltip and notes dialog show one row per activity as `#ID: Title`, truncated | Real builders driven with a real ID pair; text-range alignment; a 400 character title forced to prove the box does not grow | **Pass** | TD-72 (closed), TD-73 (open) |
 | TEST-26 | 2026-09-14 | Ten presentation and default changes, each measured in the running app | Computed style, bounding rects and text ranges on a real render; controls driven both ways; milestone card opened by a real marker click | **Pass**, two defects found and fixed first | TD-68, TD-69, TD-70, TD-71 (all closed) |
 | TEST-25 | 2026-09-14 | An imported board presents its bands in the schedule's own order | `tools/order_check.py` — derives the schedule's section sequence from the workbook itself, runs a real import, then places each board band back onto the sheet by the row of its first activity and asserts those rows strictly increase | **Pass** on P22, **fails on P21** with 7 bands out of order | TD-65, TD-66 (closed), TD-67 (open) |
 | TEST-24 | 2026-09-11 | Header darkened and its text tokens split out; data date rule on a Friday; republish provenance chain | Contrast measured on every text colour landing on `--color-bg-header` in both themes; the date rule driven through the real function on all seven weekdays plus month and year boundaries; the chain built by the real payload function | **Pass**, contrast gate green | TD-50, TD-46, TD-44, TD-63, TD-64 (all closed) |
@@ -519,6 +520,35 @@ sticky here.
 
 **Subtitle text** reads "Exported milestone view of P6 schedule shown by activity
 end dates". Taken from a partly garbled dictation and flagged as an assumption.
+
+### TEST-27 detail
+
+Driven through the real `depIdRowsHtml`, `showTooltip` and `openCommentPanel`
+with an ID pair taken off the board, not a hand-built fixture.
+
+| Assertion | Result |
+|---|---|
+| One row per activity | 2 rows, second below the first |
+| Font a step smaller | 10px to **9px**, tooltip and notes dialog both |
+| IDs left aligned with each other | yes, by text range |
+| Titles left aligned with each other | yes, by text range |
+| Title truncated, not wrapped | `white-space:nowrap`, `text-overflow:ellipsis` |
+| Notes dialog uses the same rows | same builder, same 9px, same ellipsis |
+| Click-to-copy unchanged | still `#SNIP-127 | #SNIP-166` |
+
+**The truncation is proved, not assumed.** A 400 character title was forced into
+the first row and the tooltip's height stayed at 33px, with the title element's
+`scrollWidth` exceeding its `clientWidth`. Asserting the CSS properties alone
+would have passed even if a flex child had refused to shrink, which is the
+standing trap here: `min-width:0` on `.dep-id-title` is load-bearing, because a
+flex child defaults to `min-width:auto` and will not shrink below its content.
+
+Two probes added for the new colours, since the ID and the title are now
+separate colours on the dialog background rather than one inherited colour.
+Contrast gate 60 probes, 0 frozen, 0 below 3.0:1.
+
+Baseline render unchanged at 163 rows / 196 markers / 159 tasks / 198
+milestones; board order, persistence 20/20 and ingest all re-run clean.
 
 ### TEST-26 detail
 
@@ -1071,5 +1101,6 @@ Source file shape confirmed by static inspection of the workbook: 192 data rows,
 | 2026-09-11 | TEST-24 header darkening and token split, data date on a Friday, republish chain; full suite re-run; baseline render unchanged | **Contrast gate green, 0 below 3.0:1** for the first time since v3.1.0-P15. The `.xlsx` CDN dependency (TD-36) is still open and is now the only outstanding High. | File distribution | v3.1.0-P21 |
 | 2026-09-14 | TEST-25 board order follows the schedule; full suite re-run; baseline render unchanged; contrast gate green | The schedule's inner headings within a band are still collapsed into the discipline and not shown (TD-67, with TD-23). `.xlsx` CDN dependency (TD-36) still open. | File distribution | v3.1.0-P22 |
 | 2026-09-14 | TEST-26 ten presentation and default changes; full suite re-run; baseline render unchanged; contrast gate green | The schedule's inner headings within a band are still not shown (TD-67, awaiting the user's choice). `.xlsx` CDN dependency (TD-36) still open. | File distribution | v3.1.0-P23 |
+| 2026-09-14 | TEST-27 dependency tooltip and notes dialog format; full suite re-run; baseline unchanged; contrast gate green | ID navigation is not built (TD-73, open). Inner band headings still not shown (TD-67). `.xlsx` CDN dependency (TD-36) open. | File distribution | v3.1.0-P24 |
 | Pre-migration | TEST-01 full feature regression | Banding (FEAT-10), sorting/icon customisation (FEAT-11), JSON round-trip (FEAT-13) all knowingly not built. Tokenization (FEAT-14) knowingly incomplete. Label collision same-row only. Header aliases exact-match only. | File distribution | v3.1.0-P1 |
 | 2026-09-09 | Migration to git repository, project kit established | TD-01 version discrepancy open; companion tokenization docs (TD-03) not yet located | Branch `p6-milestone-dashboard` | Migration commit |

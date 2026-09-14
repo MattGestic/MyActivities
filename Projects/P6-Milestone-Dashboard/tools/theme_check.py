@@ -79,6 +79,21 @@ const PROBES = [
   ['.dep-comment-panel',         'toggle',   () => mk('<div class="dep-comment-panel">x</div>')],
   ['.dep-comment-close',         'toggle',   () => mk('<button class="dep-comment-close">x</button>')],
   ['.dep-comment-ids',           'toggle',   () => mk('<span class="dep-comment-ids">x</span>')],
+  // New in P24: the id and the title are separate colours inside the tooltip,
+  // so each gets its own probe against the dialog background rather than
+  // letting the .dep-tooltip probe stand for both.
+  ['.dep-id (tooltip)',          'toggle',   () => {
+      const d = mk('<div class="dep-tooltip"><span class="dep-id-row">'
+                 + '<span class="dep-id">#SNIP-127:</span>'
+                 + '<span class="dep-id-title">Mine Operations Data</span></span></div>');
+      return d.querySelector('.dep-id');
+  }],
+  ['.dep-id-title (tooltip)',    'toggle',   () => {
+      const d = mk('<div class="dep-tooltip"><span class="dep-id-row">'
+                 + '<span class="dep-id">#SNIP-127:</span>'
+                 + '<span class="dep-id-title">Mine Operations Data</span></span></div>');
+      return d.querySelector('.dep-id-title');
+  }],
   ['dep-panel textarea',         'toggle',   () => {
       const p = mk('<div class="dep-comment-panel"><textarea></textarea></div>');
       return p.querySelector('textarea');
