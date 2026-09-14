@@ -79,6 +79,28 @@ const PROBES = [
   ['.dep-comment-panel',         'toggle',   () => mk('<div class="dep-comment-panel">x</div>')],
   ['.dep-comment-close',         'toggle',   () => mk('<button class="dep-comment-close">x</button>')],
   ['.dep-comment-ids',           'toggle',   () => mk('<span class="dep-comment-ids">x</span>')],
+  // New in P26: total float is its own column in the milestone card, so its
+  // value and its label are two more text colours on the dialog background.
+  ['.ms-float-val',              'toggle',   () => {
+      const d = mk('<div class="ms-dialog"><div class="ms-float-col">'
+                 + '<span class="ms-float-val">26 day</span>'
+                 + '<span class="ms-float-lbl">float</span></div></div>');
+      return d.querySelector('.ms-float-val');
+  }],
+  ['.ms-float-lbl',              'toggle',   () => {
+      const d = mk('<div class="ms-dialog"><div class="ms-float-col">'
+                 + '<span class="ms-float-val">26 day</span>'
+                 + '<span class="ms-float-lbl">float</span></div></div>');
+      return d.querySelector('.ms-float-lbl');
+  }],
+  // The month band highlight when the week filter is on: white on the accent,
+  // overriding the month's own inline background.
+  ['tr.hdr-phase th.filter-mo', 'constant', () => {
+      const t = mk('<table><thead><tr class="hdr-phase">'
+                 + '<th class="mo-band filter-mo" style="background:#2e6f4e">Sep 2026</th>'
+                 + '</tr></thead></table>');
+      return t.querySelector('th');
+  }],
   // New in P24: the id and the title are separate colours inside the tooltip,
   // so each gets its own probe against the dialog background rather than
   // letting the .dep-tooltip probe stand for both.

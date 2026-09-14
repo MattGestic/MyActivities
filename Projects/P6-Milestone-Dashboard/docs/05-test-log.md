@@ -25,6 +25,7 @@
 | TEST-19 | 2026-09-10 | Publish round trip: does a published file open cold with the schedule, timeline and annotations already in place, and does it carry nothing it should not | Publish captured at the Blob boundary, written to disk, then loaded as a separate page | **Pass after two fixes** | TD-41, TD-42 (both closed same pass), TD-43, TD-44 |
 | TEST-20 | 2026-09-11 | Does a published file describe itself correctly: mount slots, baseline counts, and the header provenance line | Publish probe extended to capture all three mount slots and the header meta | **Pass after fix** — reproduced the user's report first | TD-47, TD-48 (both closed same pass) |
 | TEST-21 | 2026-09-11 | Six requested changes: published schedule as the update, Source cell after a drag, empty-row delete, gutter alignment, column master toggle scope, header chrome colour | Publish round trip plus a combined DOM probe driving each interaction | **5 pass, 1 delivered failing** — the requested `#f4f5f8` is 1.79:1 on the light header | TD-50 (open), TD-51 to TD-55 (closed) |
+| TEST-29 | 2026-09-14 | Week filter highlights the heading only; month highlight is white; milestone card reordered with a float column | Filter driven through `setFilterWeek`, computed backgrounds compared against an unfiltered cell; card measured on an **imported** milestone that actually has a discipline and a float | **Pass**, after two assertions were found passing vacuously | TD-79, TD-80, TD-81 (all closed) |
 | TEST-28 | 2026-09-14 | Marker placement is a property of the cell; title in the top row; activity title wrap toggle | Every marker's centre measured as a percentage of its cell's **padding box**, the frame it is positioned in; N=3, 4 and 5 forced into a real cell | **Pass** | TD-74, TD-75, TD-76, TD-77 (closed), TD-78 (open) |
 | TEST-27 | 2026-09-14 | Dependency tooltip and notes dialog show one row per activity as `#ID: Title`, truncated | Real builders driven with a real ID pair; text-range alignment; a 400 character title forced to prove the box does not grow | **Pass** | TD-72 (closed), TD-73 (open) |
 | TEST-26 | 2026-09-14 | Ten presentation and default changes, each measured in the running app | Computed style, bounding rects and text ranges on a real render; controls driven both ways; milestone card opened by a real marker click | **Pass**, two defects found and fixed first | TD-68, TD-69, TD-70, TD-71 (all closed) |
@@ -521,6 +522,43 @@ sticky here.
 
 **Subtitle text** reads "Exported milestone view of P6 schedule shown by activity
 end dates". Taken from a partly garbled dictation and flagged as an assumption.
+
+### TEST-29 detail
+
+**The week filter**, driven through the app's own `setFilterWeek`:
+
+| Assertion | Result |
+|---|---|
+| Body cells no longer painted | filtered cell background equals a plain cell's; border width 0 |
+| Cells still tagged for fit-to-screen | `.filter-col` still applied, and fit-to-screen still finds its columns |
+| Week heading highlighted | white on the accent |
+| Month heading highlighted | "Sep 2026", **white** on the accent |
+| Clearing the filter clears all three marks | week 0, month 0, column 0 |
+
+**The milestone card.** Measured by bounding rect: the parent heading sits above
+the title, the short title below it, and the float column beside both, spanning
+their full height with the value above the label. The label measures 11px, the
+same as the short title field, which is what was asked. The title no longer
+carries the float tag.
+
+**Two assertions passed vacuously on the first run.** The card was opened on the
+first marker on the board, which is a baseline seed: every seed carries the
+discipline "Unassigned", so the parent heading was `display:none`, and seeds
+carry no float, so the float column was hidden too. "Parent above title" was
+comparing against a zero rect, and the float column was never rendered at all.
+Re-run against an **imported** milestone with a real discipline (Key Milestones)
+and a real float (26 day), both assertions became meaningful and both hold.
+Recorded because the first run reported a clean pass on two things it had not
+tested.
+
+One correction during the work: the float column initially took only its own
+content height, so its divider stopped short of the short title. `align-items`
+on the row was `flex-start`; set to `stretch` with the content centred, the
+column runs beside both rows as a column should.
+
+Contrast gate 63 probes, 0 frozen, 0 below 3.0:1, with new probes for the float
+value, the float label and the highlighted month band. Board order, persistence
+20/20, ingest and the baseline render all re-run clean.
 
 ### TEST-28 detail
 
@@ -1151,5 +1189,6 @@ Source file shape confirmed by static inspection of the workbook: 192 data rows,
 | 2026-09-14 | TEST-26 ten presentation and default changes; full suite re-run; baseline render unchanged; contrast gate green | The schedule's inner headings within a band are still not shown (TD-67, awaiting the user's choice). `.xlsx` CDN dependency (TD-36) still open. | File distribution | v3.1.0-P23 |
 | 2026-09-14 | TEST-27 dependency tooltip and notes dialog format; full suite re-run; baseline unchanged; contrast gate green | ID navigation is not built (TD-73, open). Inner band headings still not shown (TD-67). `.xlsx` CDN dependency (TD-36) open. | File distribution | v3.1.0-P24 |
 | 2026-09-14 | TEST-28 marker placement, title row, activity title wrap; full suite re-run; contrast gate green | Crowded cells still overlap slightly at the default column width (TD-78). ID navigation (TD-73), inner band headings (TD-67) and the `.xlsx` CDN dependency (TD-36) all open. | File distribution | v3.1.0-P25 |
+| 2026-09-14 | TEST-29 filter highlight and milestone card layout; full suite re-run; contrast gate green | ID navigation (TD-73), inner band headings (TD-67), crowded cells (TD-78) and the `.xlsx` CDN dependency (TD-36) all open. | File distribution | v3.1.0-P26 |
 | Pre-migration | TEST-01 full feature regression | Banding (FEAT-10), sorting/icon customisation (FEAT-11), JSON round-trip (FEAT-13) all knowingly not built. Tokenization (FEAT-14) knowingly incomplete. Label collision same-row only. Header aliases exact-match only. | File distribution | v3.1.0-P1 |
 | 2026-09-09 | Migration to git repository, project kit established | TD-01 version discrepancy open; companion tokenization docs (TD-03) not yet located | Branch `p6-milestone-dashboard` | Migration commit |
