@@ -25,6 +25,7 @@
 | TEST-19 | 2026-09-10 | Publish round trip: does a published file open cold with the schedule, timeline and annotations already in place, and does it carry nothing it should not | Publish captured at the Blob boundary, written to disk, then loaded as a separate page | **Pass after two fixes** | TD-41, TD-42 (both closed same pass), TD-43, TD-44 |
 | TEST-20 | 2026-09-11 | Does a published file describe itself correctly: mount slots, baseline counts, and the header provenance line | Publish probe extended to capture all three mount slots and the header meta | **Pass after fix** — reproduced the user's report first | TD-47, TD-48 (both closed same pass) |
 | TEST-21 | 2026-09-11 | Six requested changes: published schedule as the update, Source cell after a drag, empty-row delete, gutter alignment, column master toggle scope, header chrome colour | Publish round trip plus a combined DOM probe driving each interaction | **5 pass, 1 delivered failing** — the requested `#f4f5f8` is 1.79:1 on the light header | TD-50 (open), TD-51 to TD-55 (closed) |
+| TEST-28 | 2026-09-14 | Marker placement is a property of the cell; title in the top row; activity title wrap toggle | Every marker's centre measured as a percentage of its cell's **padding box**, the frame it is positioned in; N=3, 4 and 5 forced into a real cell | **Pass** | TD-74, TD-75, TD-76, TD-77 (closed), TD-78 (open) |
 | TEST-27 | 2026-09-14 | Dependency tooltip and notes dialog show one row per activity as `#ID: Title`, truncated | Real builders driven with a real ID pair; text-range alignment; a 400 character title forced to prove the box does not grow | **Pass** | TD-72 (closed), TD-73 (open) |
 | TEST-26 | 2026-09-14 | Ten presentation and default changes, each measured in the running app | Computed style, bounding rects and text ranges on a real render; controls driven both ways; milestone card opened by a real marker click | **Pass**, two defects found and fixed first | TD-68, TD-69, TD-70, TD-71 (all closed) |
 | TEST-25 | 2026-09-14 | An imported board presents its bands in the schedule's own order | `tools/order_check.py` — derives the schedule's section sequence from the workbook itself, runs a real import, then places each board band back onto the sheet by the row of its first activity and asserts those rows strictly increase | **Pass** on P22, **fails on P21** with 7 bands out of order | TD-65, TD-66 (closed), TD-67 (open) |
@@ -520,6 +521,53 @@ sticky here.
 
 **Subtitle text** reads "Exported milestone view of P6 schedule shown by activity
 end dates". Taken from a partly garbled dictation and flagged as an assumption.
+
+### TEST-28 detail
+
+**Marker placement**, measured across the whole rendered board:
+
+| Assertion | Result |
+|---|---|
+| A lone marker is centred in its cell | **186 of 186** cells |
+| Cells sharing markers offset along x | 5 of 5, distinct x for every marker |
+| and alternate above and below | 5 of 5 |
+| No centre inside the 10% clearance | **0 violations**; tightest actual clearance 28% |
+| Row heights preserved by the strut | unchanged |
+
+**The first reading said 0 of 186 were centred, and the probe was wrong.** Every
+marker measured 1.4% off on both axes, a consistent 0.5px. An absolutely
+positioned element resolves its percentages against its containing block's
+**padding box**, while `getBoundingClientRect()` on the cell returns the
+**border box**, and this table's cells carry a 1px bottom and 0.5px right
+border. Measured in the frame the marker is actually positioned in, all 186 are
+exact. Same family as the standing "measure the element, not its parent" trap,
+and recorded because the first number looked like a total failure of the change.
+
+**N=3 was tested, not just the N=2 the board happens to contain.** The reference
+schedule never puts more than two markers in one cell, so three, four and five
+were cloned into a real cell and measured:
+
+| Markers in one cell | Centres (x,y as % of cell) | Clearance violations |
+|---|---|---|
+| 3 | 24,28 · 50,72 · 76,28 | 0 |
+| 4 | 11,28 · 37,72 · 63,28 · 89,72 | 0 |
+| 5 | 10,28 · 30,72 · 50,28 · 70,72 · 90,28 | 0 |
+
+**A limit found rather than assumed (TD-78).** At three or more, the icons
+overlap slightly at the default 36px week column: three 15px icons do not fit a
+36px cell however they are arranged. Re-measured at a 60px column, the overlap
+is **0** for both three and four. Widening the vertical alternation instead
+would push icons past the row boundary and reintroduce the defect this change
+fixes, so the column width is the right remedy.
+
+**Title and wrap toggle.** The report title now sits in the icon bar at 13px,
+`white-space:nowrap` with an ellipsis, expanding while focused for editing. The
+wrap toggle defaults off, `.dname` computes `nowrap` and clips; switching it on
+gives `normal` and switching back returns `nowrap`, so the control shows and
+sets state in both directions.
+
+Contrast gate 60 probes, 0 frozen, 0 below 3.0:1. Board order, persistence
+20/20 and ingest all re-run clean.
 
 ### TEST-27 detail
 
@@ -1102,5 +1150,6 @@ Source file shape confirmed by static inspection of the workbook: 192 data rows,
 | 2026-09-14 | TEST-25 board order follows the schedule; full suite re-run; baseline render unchanged; contrast gate green | The schedule's inner headings within a band are still collapsed into the discipline and not shown (TD-67, with TD-23). `.xlsx` CDN dependency (TD-36) still open. | File distribution | v3.1.0-P22 |
 | 2026-09-14 | TEST-26 ten presentation and default changes; full suite re-run; baseline render unchanged; contrast gate green | The schedule's inner headings within a band are still not shown (TD-67, awaiting the user's choice). `.xlsx` CDN dependency (TD-36) still open. | File distribution | v3.1.0-P23 |
 | 2026-09-14 | TEST-27 dependency tooltip and notes dialog format; full suite re-run; baseline unchanged; contrast gate green | ID navigation is not built (TD-73, open). Inner band headings still not shown (TD-67). `.xlsx` CDN dependency (TD-36) open. | File distribution | v3.1.0-P24 |
+| 2026-09-14 | TEST-28 marker placement, title row, activity title wrap; full suite re-run; contrast gate green | Crowded cells still overlap slightly at the default column width (TD-78). ID navigation (TD-73), inner band headings (TD-67) and the `.xlsx` CDN dependency (TD-36) all open. | File distribution | v3.1.0-P25 |
 | Pre-migration | TEST-01 full feature regression | Banding (FEAT-10), sorting/icon customisation (FEAT-11), JSON round-trip (FEAT-13) all knowingly not built. Tokenization (FEAT-14) knowingly incomplete. Label collision same-row only. Header aliases exact-match only. | File distribution | v3.1.0-P1 |
 | 2026-09-09 | Migration to git repository, project kit established | TD-01 version discrepancy open; companion tokenization docs (TD-03) not yet located | Branch `p6-milestone-dashboard` | Migration commit |
