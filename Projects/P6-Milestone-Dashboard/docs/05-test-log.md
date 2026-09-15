@@ -25,6 +25,7 @@
 | TEST-19 | 2026-09-10 | Publish round trip: does a published file open cold with the schedule, timeline and annotations already in place, and does it carry nothing it should not | Publish captured at the Blob boundary, written to disk, then loaded as a separate page | **Pass after two fixes** | TD-41, TD-42 (both closed same pass), TD-43, TD-44 |
 | TEST-20 | 2026-09-11 | Does a published file describe itself correctly: mount slots, baseline counts, and the header provenance line | Publish probe extended to capture all three mount slots and the header meta | **Pass after fix** — reproduced the user's report first | TD-47, TD-48 (both closed same pass) |
 | TEST-21 | 2026-09-11 | Six requested changes: published schedule as the update, Source cell after a drag, empty-row delete, gutter alignment, column master toggle scope, header chrome colour | Publish round trip plus a combined DOM probe driving each interaction | **5 pass, 1 delivered failing** — the requested `#f4f5f8` is 1.79:1 on the light header | TD-50 (open), TD-51 to TD-55 (closed) |
+| TEST-31 | 2026-09-15 | Does an import span the schedule's own dates rather than a fixed window; does a typed range override it; does a user-typed range narrow the board, survive a rebuild and intersect the week dropdown | `tools/p28_check.py`. The expected span is derived from the WORKBOOK here, independently of the app, so the assertion is against the source. The decisive setup check is that no milestone fails to plot, not that a timeline was built | **Pass 34/34**, after a probe counting every row's cells and a real dead-fitter bug were found | TD-89 to TD-93 (all closed) |
 | TEST-30 | 2026-09-15 | Are the dependency counts legible rather than merely present; does the baseline overlay place each ghost on its pair's Y, in its own baseline date's column, behind everything; does the A3 preview hold the board at page width and put it back on the way out | `tools/p27_check.py`. Chips measured for position, size, backing and overlap against their own icon and label stack, not for existence. Ghosts paired through the `data-ghost-for` link rather than guessed from position. Page frame measured against a live `100mm` probe, not an assumed 96dpi | **Pass 32/32**, after a board-duplication bug, a ghost hidden under its pair, and two vacuous assertions were found | TD-82, TD-83, TD-84, TD-85, TD-86, TD-87 (all closed), TD-88 (open) |
 | TEST-29 | 2026-09-14 | Week filter highlights the heading only; month highlight is white; milestone card reordered with a float column | Filter driven through `setFilterWeek`, computed backgrounds compared against an unfiltered cell; card measured on an **imported** milestone that actually has a discipline and a float | **Pass**, after two assertions were found passing vacuously | TD-79, TD-80, TD-81 (all closed) |
 | TEST-28 | 2026-09-14 | Marker placement is a property of the cell; title in the top row; activity title wrap toggle | Every marker's centre measured as a percentage of its cell's **padding box**, the frame it is positioned in; N=3, 4 and 5 forced into a real cell | **Pass** | TD-74, TD-75, TD-76, TD-77 (closed), TD-78 (open) |
@@ -523,6 +524,69 @@ sticky here.
 
 **Subtitle text** reads "Exported milestone view of P6 schedule shown by activity
 end dates". Taken from a partly garbled dictation and flagged as an assumption.
+
+### TEST-31 detail
+
+`tools/p28_check.py`, 34 assertions over the two halves of one request.
+
+**Setup: the base range comes from the data.** The expected span is derived
+from the workbook inside the Python half, by walking its date columns, so the
+app is checked against the source rather than against itself.
+
+| Assertion | Result |
+|---|---|
+| The range section is hidden until a file loads, shown once it does | passes |
+| The note names the schedule's own span before Import is pressed | 01-May-26 to 26-Nov-26 |
+| Both fields start blank, meaning the full span | passes |
+| The section is put away once the import is built | passes |
+| **Every imported milestone lands in a column** | **0 outside the board** |
+| The board starts within a week of the earliest date it must show | 4 days of lead |
+| The board ends within a week of the latest date it must show | 3 days of tail |
+| The import summary states the range used, and the data's own span | passes |
+| A typed range is narrower, covers what was typed, and is recorded as typed | 14 weeks vs 31 |
+| Clearing the fields restores the full derived range | 31 weeks |
+| The app's earliest and latest dates match the workbook's | 01-May-26 / 26-Nov-26, exact |
+
+Measured against v3.1.0-P27 on the same export, the fixed window was wrong in
+both directions at once: **3 milestones unplotted and 3 horizon warnings**, on
+a **39 column** board. P28 gives **0**, **0**, and **31 columns** — it lost
+three real milestones off the end while padding eight empty weeks onto the
+front.
+
+**Filter: a user-typed range narrows the board.**
+
+| Assertion | Result |
+|---|---|
+| Every week column is shown before filtering | 31 of 31 |
+| A date range narrows the visible columns | 9 of 31 |
+| No column outside the range is still shown, and none inside it was hidden | 0 and 0 |
+| The month bands span exactly the columns still shown | 9 colspan vs 9 columns |
+| Rows with nothing in the range are hidden | 67 of 105 |
+| A week selection outside the range cannot reach back outside it | 0 leaked |
+| The range survives a full rebuild | 9 vs 9 |
+| Clearing, and Remove all filters, both release the columns | 31 of 31 |
+| A from-date alone clamps one end and leaves the other open | hi = last column |
+| A backwards range is read as the range the user meant | same 9 columns |
+| The A3 preview fits only the columns the range left | 9 columns at 72px |
+
+Both directions of the column assertion are checked deliberately: a filter that
+hid *everything* would satisfy "nothing outside the range is shown" on its own.
+
+**Two findings.**
+
+The first two runs compared column counts of 3255 against 31. The probe counted
+week cells across every row rather than the header row, so every count was
+multiplied by the row count. A probe bug, but it hid the month-colspan
+assertion behind a meaningless comparison until it was fixed.
+
+The second is a real defect in shipped code, and it is why the print-plus-range
+assertion is in this check at all (TD-92). `fitToScreen()` and `fitPrintPage()`
+both measured `document.querySelector('tr.data')`, the first data row in the
+document, to learn how wide the non-week columns are. A hidden row has no
+layout, so every cell in it reports `offsetParent === null`: with any filter
+active that hid the first row, both functions found zero measurable week cells
+and returned having done nothing. The A3 preview simply refused to refit. Both
+now take the first row that is actually laid out.
 
 ### TEST-30 detail
 
@@ -1274,5 +1338,6 @@ Source file shape confirmed by static inspection of the workbook: 192 data rows,
 | 2026-09-14 | TEST-28 marker placement, title row, activity title wrap; full suite re-run; contrast gate green | Crowded cells still overlap slightly at the default column width (TD-78). ID navigation (TD-73), inner band headings (TD-67) and the `.xlsx` CDN dependency (TD-36) all open. | File distribution | v3.1.0-P25 |
 | 2026-09-14 | TEST-29 filter highlight and milestone card layout; full suite re-run; contrast gate green | ID navigation (TD-73), inner band headings (TD-67), crowded cells (TD-78) and the `.xlsx` CDN dependency (TD-36) all open. | File distribution | v3.1.0-P26 |
 | 2026-09-15 | TEST-30 dependency-count chips, baseline overlay placement and the A3 print preview, 32/32; full suite re-run; baseline render unchanged; contrast gate green | The board overflows an A3 portrait sheet at the full week horizon even at the minimum column width; the preview states this rather than clipping silently. A duplicate dark-theme declaration of `--color-bg-subtle` is open (TD-88). ID navigation (TD-73), inner band headings (TD-67), crowded cells (TD-78) and the `.xlsx` CDN dependency (TD-36) all open. | File distribution | v3.1.0-P27 |
+| 2026-09-15 | TEST-31 date range at setup and as a filter, 34/34; full suite re-run; baseline render unchanged; contrast gate green | The board no longer refills the screen width after a range narrows it; fit-to-screen and the A3 preview both do, and both now work with a filter active (TD-92). `--color-bg-subtle` duplicate open (TD-88). ID navigation (TD-73), inner band headings (TD-67), crowded cells (TD-78) and the `.xlsx` CDN dependency (TD-36) all open. | File distribution | v3.1.0-P28 |
 | Pre-migration | TEST-01 full feature regression | Banding (FEAT-10), sorting/icon customisation (FEAT-11), JSON round-trip (FEAT-13) all knowingly not built. Tokenization (FEAT-14) knowingly incomplete. Label collision same-row only. Header aliases exact-match only. | File distribution | v3.1.0-P1 |
 | 2026-09-09 | Migration to git repository, project kit established | TD-01 version discrepancy open; companion tokenization docs (TD-03) not yet located | Branch `p6-milestone-dashboard` | Migration commit |
