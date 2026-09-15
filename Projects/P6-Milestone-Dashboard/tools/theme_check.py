@@ -93,6 +93,23 @@ const PROBES = [
                  + '<span class="ms-float-lbl">float</span></div></div>');
       return d.querySelector('.ms-float-lbl');
   }],
+  // New in P27: the dependency-count chips. Each carries the colour of the
+  // dependency LINE it counts, backed by the constant label sticker. The
+  // predecessor blue is themed and the dependency purple is not, which is why
+  // the two are typed differently; theme-scoping the sticker itself is the
+  // TD-28 trap, so it stays constant and the ink is chosen against it.
+  ['.ms-count.pred',             'toggle',   () => {
+      const w = mk('<span class="m-wrap"><span class="ms-count pred">4</span></span>');
+      return w.querySelector('.ms-count');
+  }],
+  ['.ms-count.succ',             'constant', () => {
+      const w = mk('<span class="m-wrap"><span class="ms-count succ">7</span></span>');
+      return w.querySelector('.ms-count');
+  }],
+  // The A3 print-preview banner. Constant on purpose, like every other
+  // attention chip: the saturated fill carries the meaning and the ink is
+  // chosen against the fill, not against the page.
+  ['.pm-banner',                 'constant', () => mk('<div class="pm-banner" style="display:block">Print preview</div>')],
   // The month band highlight when the week filter is on: white on the accent,
   // overriding the month's own inline background.
   ['tr.hdr-phase th.filter-mo', 'constant', () => {

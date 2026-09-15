@@ -25,6 +25,7 @@
 | TEST-19 | 2026-09-10 | Publish round trip: does a published file open cold with the schedule, timeline and annotations already in place, and does it carry nothing it should not | Publish captured at the Blob boundary, written to disk, then loaded as a separate page | **Pass after two fixes** | TD-41, TD-42 (both closed same pass), TD-43, TD-44 |
 | TEST-20 | 2026-09-11 | Does a published file describe itself correctly: mount slots, baseline counts, and the header provenance line | Publish probe extended to capture all three mount slots and the header meta | **Pass after fix** — reproduced the user's report first | TD-47, TD-48 (both closed same pass) |
 | TEST-21 | 2026-09-11 | Six requested changes: published schedule as the update, Source cell after a drag, empty-row delete, gutter alignment, column master toggle scope, header chrome colour | Publish round trip plus a combined DOM probe driving each interaction | **5 pass, 1 delivered failing** — the requested `#f4f5f8` is 1.79:1 on the light header | TD-50 (open), TD-51 to TD-55 (closed) |
+| TEST-30 | 2026-09-15 | Are the dependency counts legible rather than merely present; does the baseline overlay place each ghost on its pair's Y, in its own baseline date's column, behind everything; does the A3 preview hold the board at page width and put it back on the way out | `tools/p27_check.py`. Chips measured for position, size, backing and overlap against their own icon and label stack, not for existence. Ghosts paired through the `data-ghost-for` link rather than guessed from position. Page frame measured against a live `100mm` probe, not an assumed 96dpi | **Pass 32/32**, after a board-duplication bug, a ghost hidden under its pair, and two vacuous assertions were found | TD-82, TD-83, TD-84, TD-85, TD-86, TD-87 (all closed), TD-88 (open) |
 | TEST-29 | 2026-09-14 | Week filter highlights the heading only; month highlight is white; milestone card reordered with a float column | Filter driven through `setFilterWeek`, computed backgrounds compared against an unfiltered cell; card measured on an **imported** milestone that actually has a discipline and a float | **Pass**, after two assertions were found passing vacuously | TD-79, TD-80, TD-81 (all closed) |
 | TEST-28 | 2026-09-14 | Marker placement is a property of the cell; title in the top row; activity title wrap toggle | Every marker's centre measured as a percentage of its cell's **padding box**, the frame it is positioned in; N=3, 4 and 5 forced into a real cell | **Pass** | TD-74, TD-75, TD-76, TD-77 (closed), TD-78 (open) |
 | TEST-27 | 2026-09-14 | Dependency tooltip and notes dialog show one row per activity as `#ID: Title`, truncated | Real builders driven with a real ID pair; text-range alignment; a 400 character title forced to prove the box does not grow | **Pass** | TD-72 (closed), TD-73 (open) |
@@ -522,6 +523,88 @@ sticky here.
 
 **Subtitle text** reads "Exported milestone view of P6 schedule shown by activity
 end dates". Taken from a partly garbled dictation and flagged as an assumption.
+
+### TEST-30 detail
+
+`tools/p27_check.py`. One run, four subjects, 32 assertions. Three real defects
+and one probe defect surfaced during the run and are recorded because each one
+passed a reading of the code.
+
+**The dependency counts.** The reported symptom was "the button isn't working,
+the numbers aren't displayed". Both halves were true, for two unrelated reasons.
+
+| Assertion | Result |
+|---|---|
+| Chips render when the toggle is on | 262 chips |
+| The measurements had a sample to measure | 262 sampled |
+| The toggle did not duplicate the board | 159 rows before, 159 after |
+| Every chip sits level with its own icon (within 2px) | 0 off |
+| Every chip is at least 10 x 9 (the old ones measured 4.5 x 8) | 0 too small |
+| Every chip has a backing | 0 unbacked |
+| No chip is under its own label stack | 0 covered |
+| Chip value matches `DEP_DATA` | 262 checked, 0 wrong |
+| Toggling off clears the chips and the class | 0 left |
+
+The first cause (TD-82) is that `onCountsToggle()` called `renderRows()`
+directly. `renderRows()` **appends**; `teardown()` is what empties the tbody,
+and it only runs inside `rerender()`. So each toggle left the whole previous
+board in place and built a second copy under it. Turning counts off then looked
+like a no-op, because the 262 chips still on screen belonged to the copy that
+same click had just added. The second cause (TD-83) is that the chips, even on
+the fresh copy, were 8px unbacked digits placed fully outside the icon on the
+boundary between two rows, with the label stack over the right-hand one.
+
+**The baseline overlay**, driven through a real import of the Aug-29 export,
+switched to the Update view and toggled on:
+
+| Assertion | Result |
+|---|---|
+| Ghosts are drawn | 143 |
+| Every ghost matched back to a live marker by Activity ID | 143 paired, 0 unpaired |
+| Ghost column is its own baseline date's column | 0 in the wrong week |
+| Ghost Y equals its pair's Y (within 1.5px) | 0 off |
+| Ghost paints behind its live marker | 0 not behind |
+| Ghost uses the greyed baseline icon | 0 not greyed |
+| An unmoved ghost is offset clear of its own live icon | 91 same-column, 0 hidden |
+| Tooltip names the live baseline label | passes |
+| Ghosts carry no count chips | 0 |
+| Row count unchanged across every toggle | 105 throughout |
+
+Two findings here. Offsetting an unmoved ghost from the **cell centre** left
+three of them under a marker, because a cell holding several markers spreads
+them off centre; the offset is now taken from the ghost's own pair. And the
+first pairing attempt inferred the pair from position, which reported three
+false failures: two markers in one row can share a baseline column and the
+guess picked the wrong one. The ghost now names its pair in `data-ghost-for`,
+which is both a better probe and inspectable in devtools.
+
+**The A3 print preview.** Page geometry is measured against a live `100mm`
+probe element rather than an assumed 96dpi, since the browser's CSS pixel ratio
+is not guaranteed.
+
+| Assertion | Result |
+|---|---|
+| Body enters print-mode | passes |
+| The View Controls panel was closed | passes |
+| An `@page` rule is injected for A3 portrait | `@page{size:297mm 420mm;margin:8mm}` |
+| The page frame is one A3 sheet wide | 1123px vs 1122px expected |
+| The preview banner is shown | passes |
+| Week columns were refitted | 36px to 20px |
+| The board fits the page, or the banner says it cannot | banner states it |
+| Leaving clears print-mode, the `@page` rule and the week width | passes |
+| Leaving reopens the View Controls panel it closed | passes |
+| The page frame is `display:contents` again | passes |
+
+**Known and stated, not hidden:** at the full 39-week horizon the board does not
+fit an A3 portrait sheet even at the 20px minimum column width. The preview says
+so in its banner and names the remedy (hide columns, or filter the week range)
+rather than clipping silently.
+
+**Vacuous passes (TD-87).** The first run of this probe read the chips
+synchronously after the toggle, before the debounced rerender had rebuilt the
+board. Every chip assertion passed against an empty set. This is the third
+occurrence in this project (TD-66, and the P26 float column), so each probe that
+measures a set now asserts its sample size as its own check.
 
 ### TEST-29 detail
 
@@ -1190,5 +1273,6 @@ Source file shape confirmed by static inspection of the workbook: 192 data rows,
 | 2026-09-14 | TEST-27 dependency tooltip and notes dialog format; full suite re-run; baseline unchanged; contrast gate green | ID navigation is not built (TD-73, open). Inner band headings still not shown (TD-67). `.xlsx` CDN dependency (TD-36) open. | File distribution | v3.1.0-P24 |
 | 2026-09-14 | TEST-28 marker placement, title row, activity title wrap; full suite re-run; contrast gate green | Crowded cells still overlap slightly at the default column width (TD-78). ID navigation (TD-73), inner band headings (TD-67) and the `.xlsx` CDN dependency (TD-36) all open. | File distribution | v3.1.0-P25 |
 | 2026-09-14 | TEST-29 filter highlight and milestone card layout; full suite re-run; contrast gate green | ID navigation (TD-73), inner band headings (TD-67), crowded cells (TD-78) and the `.xlsx` CDN dependency (TD-36) all open. | File distribution | v3.1.0-P26 |
+| 2026-09-15 | TEST-30 dependency-count chips, baseline overlay placement and the A3 print preview, 32/32; full suite re-run; baseline render unchanged; contrast gate green | The board overflows an A3 portrait sheet at the full week horizon even at the minimum column width; the preview states this rather than clipping silently. A duplicate dark-theme declaration of `--color-bg-subtle` is open (TD-88). ID navigation (TD-73), inner band headings (TD-67), crowded cells (TD-78) and the `.xlsx` CDN dependency (TD-36) all open. | File distribution | v3.1.0-P27 |
 | Pre-migration | TEST-01 full feature regression | Banding (FEAT-10), sorting/icon customisation (FEAT-11), JSON round-trip (FEAT-13) all knowingly not built. Tokenization (FEAT-14) knowingly incomplete. Label collision same-row only. Header aliases exact-match only. | File distribution | v3.1.0-P1 |
 | 2026-09-09 | Migration to git repository, project kit established | TD-01 version discrepancy open; companion tokenization docs (TD-03) not yet located | Branch `p6-milestone-dashboard` | Migration commit |
