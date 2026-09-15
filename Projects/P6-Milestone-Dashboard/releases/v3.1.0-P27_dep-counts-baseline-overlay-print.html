@@ -491,22 +491,6 @@ input[type=range]{width:110px;cursor:pointer}
 #top-filter-bar .filter-btn:hover{background:var(--color-btn-secondary-hover-bg)}
 #top-filter-bar .filter-btn:active{background:var(--color-btn-secondary-pressed-bg)}
 #top-filter-bar .filter-info{font-size:var(--text-xs);color:var(--color-text-muted);font-style:italic}
-/* Date range filter. Matched to the selects beside it rather than left as the
-   browser's native control, which sizes itself from the platform font and sat
-   a good deal taller than everything else on the row. */
-#top-filter-bar input[type="date"]{font-size:var(--text-sm);padding:var(--space-1) var(--space-2);
-  border-radius:4px;border:1px solid var(--color-input-border);background:var(--color-bg-elevated);
-  color:var(--color-text-on-panel);font-family:inherit;line-height:1.2}
-#top-filter-bar input[type="date"]:focus{outline:1.5px solid var(--color-status-track);outline-offset:-1px}
-.tfb-range-sep{font-size:var(--text-sm);color:var(--color-text-muted)}
-/* Hidden rather than removed, so clearing the range does not reflow the row
-   and shift every control after it sideways. */
-#btn-clear-date-range{visibility:hidden}
-/* Step 3 of setup uses the same two controls on the settings drawer's panel
-   background, which is a different surface from the filter bar. */
-#range-wrap-section input[type="date"]{font-size:10px;padding:2px 4px;border-radius:3px;
-  border:1px solid var(--color-input-border);background:var(--color-bg-elevated);
-  color:var(--color-text-on-panel);font-family:inherit}
 #filter-bar .ctrl-group label{color:var(--color-btn-primary-bg)}
 
 
@@ -1232,16 +1216,6 @@ body.counts-on .m-lbl-stack{margin-left:calc(var(--count-chip-w) + 5px)}
     <div id="map-wrap"></div>
   </div>
 
-  <div id="range-wrap-section" style="border-top:1px solid var(--color-line-default);padding:10px 14px;display:none">
-    <div class="sd-sect-title">3 &middot; Date range <span class="sd-cond-tag">Appears once a file loads</span></div>
-    <div class="row" style="margin-top:6px">
-      <label>From:</label><input type="date" id="cfg-range-from" oninput="onBaseRangeEdit()">
-      <label>To:</label><input type="date" id="cfg-range-to" oninput="onBaseRangeEdit()">
-      <button class="toggle-btn" id="btn-range-reset" onclick="resetBaseRange()" title="Clear both fields, so the board spans the whole schedule">Reset to full range</button>
-    </div>
-    <div class="sd-note" id="range-note" style="margin-top:4px">Left blank, the board spans the imported schedule&rsquo;s own earliest and latest dates. Set either field to hold it to a narrower window instead. Activities outside the range are listed under Diagnostics rather than dropped silently.</div>
-  </div>
-
   <div id="advanced-input-wrap" style="display:none">
   <div class="sd-sect-title" style="padding:12px 14px 0;border-top:1px solid var(--color-line-default);display:flex;align-items:center;gap:8px">
     <span style="flex:1;border-top:1px solid var(--color-line-default);height:0"></span>
@@ -1361,14 +1335,6 @@ body.counts-on .m-lbl-stack{margin-left:calc(var(--count-chip-w) + 5px)}
     </select>
     <button class="filter-btn" onclick="filterCurrentWeek()">Current week</button>
     <button class="filter-btn" onclick="filterNext4()">Next 4 weeks</button>
-  </div>
-  <div class="tfb-group">
-    <label>Date range:</label>
-    <input type="date" id="filter-date-from" onchange="applyFilter()" title="Show weeks from this date onward">
-    <span class="tfb-range-sep">to</span>
-    <input type="date" id="filter-date-to" onchange="applyFilter()" title="Show weeks up to this date">
-    <button class="fb-field-clear" id="btn-clear-date-range" onclick="clearDateRangeFilter()" title="Clear the date range" aria-label="Clear date range">&#10005;</button>
-    <button class="filter-btn" onclick="setDateRangeToFullSpan()" title="Set the range back to the whole board">Full span</button>
   </div>
   <span class="filter-info" id="filter-info">Click a health dot or remarks field to edit &middot; Click week header to filter</span>
 </div>
@@ -1681,7 +1647,7 @@ body.counts-on .m-lbl-stack{margin-left:calc(var(--count-chip-w) + 5px)}
 // label, and embedded in exported JSON — bump this one place, everything else
 // reads from it, so the three copies can't silently drift apart the way the
 // title/label/export payload just had for a long stretch of unversioned work.
-const APP_VERSION='3.1.0-P28';
+const APP_VERSION='3.1.0-P27';
 // ============================================================
 // TIMELINE
 // ============================================================
@@ -3119,153 +3085,21 @@ function weekEndOf(d,weekDay){
   x.setDate(x.getDate()+diff);
   return x;
 }
-// Labels and month bands from a list of week-ending dates. Both timeline
-// builders below end here, so the two cannot produce differently shaped
-// timelines — the repeated failure in this file is two paths that must agree
-// drifting apart (TD-59, TD-71, TD-82).
-function timelineFromWeekDates(dates,nowCol){
-  const labels=dates.map(function(d){
-    return String(d.getDate()).padStart(2,'0')+'-'+MONTH_NAMES[d.getMonth()];
-  });
+function buildTimeline(dataDate,before,after,weekDay){
+  const anchor=weekEndOf(dataDate,weekDay);
+  const dates=[],labels=[];
+  for(let i=-before;i<=after;i++){
+    const d=new Date(anchor.getTime());d.setDate(d.getDate()+i*7);
+    dates.push(d);
+    labels.push(String(d.getDate()).padStart(2,'0')+'-'+MONTH_NAMES[d.getMonth()]);
+  }
   const months=[];
   dates.forEach(function(d){
     const lbl=MONTH_NAMES[d.getMonth()]+' '+d.getFullYear();
     if(months.length&&months[months.length-1].label===lbl) months[months.length-1].span++;
     else months.push({label:lbl,span:1,bg:MONTH_BG[d.getMonth()]||'#1e2240'});
   });
-  return {labels:labels,dates:dates,months:months,
-          nowCol:Math.max(0,Math.min(dates.length-1,nowCol))};
-}
-function buildTimeline(dataDate,before,after,weekDay){
-  const anchor=weekEndOf(dataDate,weekDay);
-  const dates=[];
-  for(let i=-before;i<=after;i++){
-    const d=new Date(anchor.getTime());d.setDate(d.getDate()+i*7);
-    dates.push(d);
-  }
-  return timelineFromWeekDates(dates,before);
-}
-// Timeline spanning an explicit date range rather than a fixed count of weeks
-// either side of the data date. Both ends are rounded OUTWARD to the enclosing
-// week, so a range taken from the schedule's own earliest and latest dates
-// always has a column for both of them: rounding the start inward would drop
-// the very activity that defined it.
-// MAX_TIMELINE_WEEKS is a guard, not a preference. A single mis-parsed date in
-// the year 2199 would otherwise build a timeline with ten thousand columns and
-// hang the page; the caller is told when it bites rather than silently losing
-// the tail of the schedule.
-const MAX_TIMELINE_WEEKS=520;
-function buildTimelineFromRange(fromDate,toDate,weekDay,nowDate){
-  const first=weekEndOf(fromDate,weekDay);
-  const last=weekEndOf(toDate,weekDay);
-  const dates=[];
-  let cur=new Date(first.getTime());
-  let truncated=false;
-  while(cur<=last){
-    dates.push(new Date(cur.getTime()));
-    if(dates.length>=MAX_TIMELINE_WEEKS){ truncated=(cur<last); break; }
-    cur.setDate(cur.getDate()+7);
-  }
-  if(!dates.length) dates.push(first);
-  // Index of the week holding the data date. applyTimeline() recomputes this
-  // from the report date straight afterwards, so it only has to be sane.
-  let nowCol=0;
-  if(nowDate){
-    const nowWeek=weekEndOf(nowDate,weekDay).getTime();
-    for(let i=0;i<dates.length;i++){ if(dates[i].getTime()>=nowWeek){ nowCol=i; break; } nowCol=i; }
-  }
-  const tl=timelineFromWeekDates(dates,nowCol);
-  tl.truncated=truncated;
-  return tl;
-}
-// Earliest and latest dates actually present in a dataset, which is what the
-// base range is derived from at import. Reads both ends of every milestone
-// (start and finish) and every task span, because a deliverable that starts
-// inside the range and finishes outside it still needs a column to finish in.
-// ---- Base date range, step 3 of setup -----------------------------------
-// The range the imported board spans. Held here rather than read off the two
-// fields at render time, so the note under them can say what the LAST import
-// actually used even after the fields have been edited since.
-let LAST_DATA_RANGE=null;
-// Shown exactly while there is a parse waiting to be imported, so it tracks
-// the mapper. Hiding it also CLEARS it: a range typed against one schedule,
-// carried silently onto the next file, would quietly clip a board whose span
-// has nothing to do with it.
-function setRangeSectionVisible(on){
-  const sect=document.getElementById('range-wrap-section');
-  if(sect) sect.style.display=on?'block':'none';
-  if(!on){
-    const f=document.getElementById('cfg-range-from'), t=document.getElementById('cfg-range-to');
-    if(f) f.value=''; if(t) t.value='';
-    LAST_DATA_RANGE=null;
-  } else {
-    renderBaseRangeNote('ready');
-  }
-}
-function onBaseRangeEdit(){
-  // Only the note changes here. Nothing re-imports until Import is pressed,
-  // and saying otherwise would be the same lie as a stale field.
-  renderBaseRangeNote('edited');
-}
-function resetBaseRange(){
-  document.getElementById('cfg-range-from').value='';
-  document.getElementById('cfg-range-to').value='';
-  renderBaseRangeNote('reset');
-}
-function renderBaseRangeNote(state){
-  const note=document.getElementById('range-note');
-  if(!note) return;
-  const dataPart=LAST_DATA_RANGE
-    ? 'The imported schedule runs '+fmtTipDate(LAST_DATA_RANGE.min)+' to '+fmtTipDate(LAST_DATA_RANGE.max)+'. '
-    : '';
-  const tail={
-    edited:'Press Import to build the board over the range above. Either field left blank uses the schedule’s own end.',
-    reset:'Both fields cleared, so the board will span the whole schedule.',
-    ready:'Leave both blank to span all of it, or set either field to hold the board to a narrower window.'
-  }[state]||'';
-  note.textContent=dataPart+tail+
-    ' Anything outside the range is listed under Diagnostics rather than dropped silently.';
-}
-// Derives the imported schedule's own span as soon as the file is parsed, so
-// the min and max are on screen while the range can still be set, rather than
-// only being discoverable after an import has already been built over them.
-//
-// Runs normalise() with the auto-detected mapping only. The authoritative
-// range is re-derived inside runIngest() from the AGGREGATED data, which is
-// what the board is actually built over; this is a preview of the input. The
-// two are kept from disagreeing by leaving the fields BLANK here: blank means
-// "the schedule's own range", so the number shown and the number used are the
-// same fact read at two moments, not two values that can drift.
-function previewBaseRange(){
-  LAST_DATA_RANGE=null;
-  try{
-    if(LAST_PARSE&&LAST_MAP){
-      const acts=normalise(LAST_PARSE,LAST_MAP);
-      // normalise() yields activities, not milestones, so their finish and
-      // start fields are read under the names deriveScheduleRange expects.
-      LAST_DATA_RANGE=deriveScheduleRange(
-        acts.map(function(a){ return {startDate:a.start,endDate:a.finish}; }), []);
-    }
-  }catch(e){
-    // A mapping the user has not finished choosing can fail here. That is not
-    // an import failure and must not read like one: the note simply falls back
-    // to describing what the fields do.
-    LAST_DATA_RANGE=null;
-  }
-  renderBaseRangeNote('ready');
-}
-function deriveScheduleRange(tasks,milestones){
-  let min=null,max=null;
-  const take=function(v){
-    const t=msDateMs(v);
-    if(isNaN(t)) return;
-    if(min===null||t<min) min=t;
-    if(max===null||t>max) max=t;
-  };
-  (milestones||[]).forEach(function(m){ take(m.date); take(m.start); });
-  (tasks||[]).forEach(function(t){ take(t.startDate); take(t.endDate); });
-  if(min===null||max===null) return null;
-  return {min:new Date(min),max:new Date(max)};
+  return {labels:labels,dates:dates,months:months,nowCol:before};
 }
 
 // ============================================================
@@ -4430,21 +4264,8 @@ function setReportDate(v){
 // (respecting an active week-range filter, not the full unfiltered schedule),
 // so "fit" means fit the range currently being looked at, not everything ever
 // imported.
-// The first data row that is actually laid out. Both fitters measure a row to
-// learn the width of the non-week columns, and both used to take the first
-// tr.data in the document. A hidden row has no layout, so every cell in it
-// reports offsetParent === null: with any filter active that hid the first
-// row, both fitters found zero measurable week cells and returned doing
-// nothing at all. Silent, and easy to read as the button being dead.
-function firstVisibleDataRow(){
-  const rows=document.querySelectorAll('tr.data');
-  for(let i=0;i<rows.length;i++){
-    if(rows[i].offsetParent!==null) return rows[i];
-  }
-  return rows[0]||null;
-}
 function fitToScreen(){
-  const row=firstVisibleDataRow();
+  const row=document.querySelector('tr.data');
   if(!row) return;
   // A week-range filter (Current week / Next 4 weeks / etc) only highlights
   // matching columns via .filter-col — it never actually hides the others —
@@ -4553,7 +4374,7 @@ function togglePrintMode(force){
 // change while the preview is open can re-fit without cycling the mode.
 function fitPrintPage(){
   if(!PRINT_MODE) return;
-  const row=firstVisibleDataRow();
+  const row=document.querySelector('tr.data');
   if(!row) return;
   const wkCells=Array.from(row.querySelectorAll('td.col-wk')).filter(function(td){
     return td.offsetParent!==null&&getComputedStyle(td).display!=='none';
@@ -4784,15 +4605,6 @@ function clearFilter(){
   document.getElementById('filter-ids').value='';
   document.getElementById('filter-band').value='';
   document.getElementById('filter-title').value='';
-  document.getElementById('filter-date-from').value='';
-  document.getElementById('filter-date-to').value='';
-  // Cleared BEFORE applyDateRangeColumns(), which reads it to decide what to
-  // put back. Left set, "Remove all filters" would empty the fields and leave
-  // the board still narrowed to the range they had held.
-  DATE_RANGE_COLS=null;
-  applyDateRangeColumns();
-  const crb=document.getElementById('btn-clear-date-range');
-  if(crb) crb.style.visibility='hidden';
   syncTitleFilterInputs('');
   document.querySelectorAll('tr.hidden-row').forEach(el=>el.classList.remove('hidden-row'));
   document.querySelectorAll('th.filter-wk, td.filter-col, th.filter-mo').forEach(el=>{el.classList.remove('filter-wk');el.classList.remove('filter-col');el.classList.remove('filter-mo');});
@@ -4803,106 +4615,15 @@ function clearFilter(){
   document.getElementById('print-filter-note').classList.remove('show');
   updateSubtotals();
 }
-// ---- User-defined date range filter -------------------------------------
-// A second way of narrowing the board by time, alongside the week dropdown.
-// The two differ in what they do, deliberately:
-//   the WEEK filter marks a week and hides rows with nothing in it, leaving
-//     every column on screen (TD-79: painting the cells buried the markers);
-//   the DATE RANGE filter narrows the board itself, hiding the week columns
-//     outside it, which is what a range a user typed is asking for.
-// Both end up as one [lo,hi] column pair that the row test uses, so there is
-// a single definition of "in range" no matter which control set it.
-let DATE_RANGE_COLS=null;   // {lo,hi} while a range is active, else null
-
-// First and last week columns covered by a from/to pair. Either end may be
-// blank, meaning "open". Returns null when neither is set.
-// A from-date lands on the week that CONTAINS it (its week-ending column),
-// and a to-date likewise, so a range typed as the first and last day of a
-// month covers every week those days fall in rather than clipping the edges.
-function dateRangeToCols(fromStr,toStr){
-  if(!fromStr&&!toStr) return null;
-  if(!WE_DATES.length) return null;
-  let lo=0,hi=WE_DATES.length-1;
-  if(fromStr){
-    const f=msDateMs(fromStr);
-    if(!isNaN(f)){
-      lo=WE_DATES.length-1;                       // nothing at or after it
-      for(let i=0;i<WE_DATES.length;i++){ if(WE_DATES[i].getTime()>=f){ lo=i; break; } }
-    }
-  }
-  if(toStr){
-    const t=msDateMs(toStr);
-    if(!isNaN(t)){
-      hi=0;                                       // nothing at or before it
-      for(let i=0;i<WE_DATES.length;i++){ if(WE_DATES[i].getTime()>=t){ hi=i; break; } hi=i; }
-    }
-  }
-  // A backwards range is the user's typo, not a reason to show nothing.
-  // Swapping is the reading they meant; the summary line says what was used.
-  if(lo>hi){ const s=lo; lo=hi; hi=s; }
-  return {lo:lo,hi:hi};
-}
-// Hides the week columns outside the active range. Column visibility is set
-// on the cells AND on the <col> elements, because the table is table-layout:
-// fixed and the colgroup carries the widths.
-function applyDateRangeColumns(){
-  const inRange=function(c){ return !DATE_RANGE_COLS||(c>=DATE_RANGE_COLS.lo&&c<=DATE_RANGE_COLS.hi); };
-  document.querySelectorAll('th.col-wk[data-col],td.col-wk[data-col]').forEach(function(el){
-    const c=parseInt(el.getAttribute('data-col'),10);
-    el.style.display=inRange(c)?'':'none';
-  });
-  document.querySelectorAll('colgroup col.col-wk').forEach(function(col,i){
-    col.style.display=inRange(i)?'':'none';
-  });
-  // The month band spans several weeks, so its colspan has to shrink to the
-  // number of its weeks still showing, and a month with none left is hidden.
-  let cursor=0;
-  const moCells=document.querySelectorAll('#phase-hdr th.mo-band');
-  MONTHS.forEach(function(mo,i){
-    const cell=moCells[i]; const start=cursor; cursor+=mo.span;
-    if(!cell) return;
-    let shown=0;
-    for(let c=start;c<start+mo.span;c++){ if(inRange(c)) shown++; }
-    if(shown>0){ cell.style.display=''; cell.colSpan=shown; }
-    else cell.style.display='none';
-  });
-}
-function clearDateRangeFilter(){
-  document.getElementById('filter-date-from').value='';
-  document.getElementById('filter-date-to').value='';
-  applyFilter();
-}
-// Fills the fields with the board's own full span, as a starting point to
-// narrow from. Nothing is filtered out by it, which the summary line says.
-function setDateRangeToFullSpan(){
-  if(!WE_DATES.length) return;
-  const first=WE_DATES[0], last=WE_DATES[WE_DATES.length-1];
-  // The first column is a week ENDING date, so the span opens six days before
-  // it \u2014 the same lower bound dateToCol() uses.
-  const firstDay=new Date(first.getFullYear(),first.getMonth(),first.getDate()-6);
-  document.getElementById('filter-date-from').value=isoDay(firstDay);
-  document.getElementById('filter-date-to').value=isoDay(last);
-  applyFilter();
-}
-
 function applyFilter(){
   const wfVal=document.getElementById('week-filter').value;
   const idsRaw=(document.getElementById('filter-ids').value||'').trim();
   const idList=idsRaw?idsRaw.split(/[,\s]+/).map(s=>s.trim().toUpperCase()).filter(Boolean):[];
   const bandVal=document.getElementById('filter-band').value;
   const titleVal=(document.getElementById('filter-title').value||'').trim().toLowerCase();
-  const fromStr=(document.getElementById('filter-date-from').value||'');
-  const toStr=(document.getElementById('filter-date-to').value||'');
-  DATE_RANGE_COLS=dateRangeToCols(fromStr,toStr);
-  const rangeActive=!!DATE_RANGE_COLS;
-  const anyExtra=idList.length||bandVal||titleVal||rangeActive;
+  const anyExtra=idList.length||bandVal||titleVal;
 
   document.querySelectorAll('th.filter-wk, td.filter-col, th.filter-mo').forEach(el=>{el.classList.remove('filter-wk');el.classList.remove('filter-col');el.classList.remove('filter-mo');});
-  // Run on every pass, not only when a range is set: this is what puts the
-  // columns back when the range is cleared.
-  applyDateRangeColumns();
-  const clearRangeBtn=document.getElementById('btn-clear-date-range');
-  if(clearRangeBtn) clearRangeBtn.style.visibility=(fromStr||toStr)?'visible':'hidden';
 
   if(wfVal===''&&!anyExtra){
     document.querySelectorAll('tr.hidden-row').forEach(el=>el.classList.remove('hidden-row'));
@@ -4914,19 +4635,15 @@ function applyFilter(){
   }
 
   let lo=0,hi=NCOLS-1,weekActive=false;
-  // The range narrows the column window first; a week filter on top of it can
-  // only narrow further, never reach back outside the range.
-  if(rangeActive){ lo=DATE_RANGE_COLS.lo; hi=DATE_RANGE_COLS.hi; }
   if(wfVal!==''){
     weekActive=true;
     const targetCol=parseInt(wfVal,10);
     const mode=document.getElementById('filter-mode').value;
-    let wLo=targetCol,wHi=targetCol;
-    if(mode==='week-plus2') wHi=targetCol+2;
-    else if(mode==='week-plus4') wHi=targetCol+4;
-    else if(mode==='up-to'){wLo=0;wHi=targetCol;}
-    else if(mode==='from'){wLo=targetCol;wHi=NCOLS-1;}
-    lo=Math.max(lo,wLo); hi=Math.min(hi,wHi);
+    lo=targetCol;hi=targetCol;
+    if(mode==='week-plus2') hi=targetCol+2;
+    else if(mode==='week-plus4') hi=targetCol+4;
+    else if(mode==='up-to'){lo=0;hi=targetCol;}
+    else if(mode==='from'){lo=targetCol;hi=NCOLS-1;}
     for(let c=lo;c<=hi&&c<NCOLS;c++){
       const th=document.querySelector('th[data-col="'+c+'"]');
       if(th) th.classList.add('filter-wk');
@@ -4949,10 +4666,7 @@ function applyFilter(){
   let visibleRowCount=0;
   rows.forEach(row=>{
     let hit=true;
-    // One column test for both time controls. A row survives when it has a
-    // milestone inside the surviving [lo,hi] window, whether that window came
-    // from the week dropdown, the date range, or the two intersected.
-    if(weekActive||rangeActive){
+    if(weekActive){
       const colsAttr=row.getAttribute('data-cols');
       const cols=colsAttr?colsAttr.split(',').map(Number):[];
       hit=hit&&cols.some(c=>c>=lo&&c<=hi);
@@ -4983,12 +4697,6 @@ function applyFilter(){
   const cb1=document.getElementById('clear-btn'); if(cb1) cb1.classList.add('active');
   document.getElementById('btn-remove-all-filters').style.display='inline-block';
   const parts=[];
-  if(rangeActive){
-    const shown=DATE_RANGE_COLS.hi-DATE_RANGE_COLS.lo+1;
-    parts.push('date range '+fmtTipDate(fromStr||WE_DATES[DATE_RANGE_COLS.lo])+' to '+
-               fmtTipDate(toStr||WE_DATES[DATE_RANGE_COLS.hi])+
-               ' ('+shown+' of '+NCOLS+' weeks shown)');
-  }
   if(weekActive){
     const targetCol=parseInt(wfVal,10);
     const mode=document.getElementById('filter-mode').value;
@@ -5185,11 +4893,6 @@ function rerender(overrides){
   setWkWidth(document.getElementById('wk-width').value);
   setIcoSize(document.getElementById('ico-size').value);
   applyColState();
-  // teardown() rebuilt every cell, every <col> and every month band, so the
-  // date range's hidden columns are gone until the filter runs again. The
-  // week dropdown's own selection is rebuilt by rebuildWeekFilter() above and
-  // reads back off the control, so one call restores both.
-  applyFilter();
   if(!labelsVisible) document.querySelectorAll('.m-lbl').forEach(function(e){e.style.display='none';});
   if(!mHrsVisible) document.querySelectorAll('.m-hrs,.m-hrs-loe').forEach(function(e){e.style.display='none';});
   if(!remarksVisible) document.querySelectorAll('.remarks').forEach(function(e){e.style.display='none';});
@@ -5439,7 +5142,6 @@ function importFailed(fileName,message,offerPaste,hints){
   LAST_PARSE=null; LAST_MAP=null;
   const mw=document.getElementById('map-wrap'); if(mw){ mw.innerHTML=''; mw.style.display='none'; }
   const mws=document.getElementById('map-wrap-section'); if(mws) mws.style.display='none';
-  setRangeSectionVisible(false);
   const isw=document.getElementById('import-summary-wrap'); if(isw) isw.innerHTML='';
   updateAdvancedSettingsVisibility();
 
@@ -5557,33 +5259,9 @@ function renderCurrentImportSummary(){
   if(advWrap) advWrap.style.display='block';
   document.getElementById('current-import-advanced').innerHTML=
     'Week ending: <b>'+['Sunday','Monday','','','Thursday','Friday','Saturday'][s.weekEndingDay]+'</b><br>'+
-    baseRangeSummaryHtml(s)+
+    'Horizon: <b>'+s.horizonBefore+'</b> weeks before &middot; <b>'+s.horizonAfter+'</b> weeks after the data date<br>'+
     'Risk thresholds: CRIT &le; <b>'+s.critFloat+'</b> &middot; RISK &le; <b>'+s.riskFloat+'</b><br>'+
     'Imported at: <b>'+s.importedAt.toLocaleString()+'</b>';
-}
-// One line describing the span the board was built over, for the Currently
-// Imported Schedule panel. Three cases, and none of them may claim the other
-// two: an import that derived or was given a range; an import with no usable
-// dates at all, which still falls back to the fixed horizon; and a PUBLISHED
-// file, which carries a baked timeline and never ran an import, so it has no
-// range settings to report and its span is read off the timeline itself.
-function baseRangeSummaryHtml(s){
-  const how={data:'full schedule',typed:'set at import',partial:'one end set at import'};
-  if(s.baseRangeSource&&how[s.baseRangeSource]){
-    return 'Date range: <b>'+fmtTipDate(s.baseRangeFrom)+'</b> to <b>'+fmtTipDate(s.baseRangeTo)+
-           '</b> ('+s.baseRangeWeeks+' weeks, '+how[s.baseRangeSource]+')<br>'+
-           (s.dataRangeFrom?'Schedule data runs: <b>'+fmtTipDate(s.dataRangeFrom)+'</b> to <b>'+fmtTipDate(s.dataRangeTo)+'</b><br>':'');
-  }
-  if(s.baseRangeSource==='fallback'){
-    return 'Horizon: <b>'+s.horizonBefore+'</b> weeks before &middot; <b>'+s.horizonAfter+
-           '</b> weeks after the data date (the import carried no usable dates)<br>';
-  }
-  if(WE_DATES&&WE_DATES.length){
-    const f=WE_DATES[0], l=WE_DATES[WE_DATES.length-1];
-    const fd=new Date(f.getFullYear(),f.getMonth(),f.getDate()-6);
-    return 'Date range: <b>'+fmtTipDate(fd)+'</b> to <b>'+fmtTipDate(l)+'</b> ('+WE_DATES.length+' weeks, built into this file)<br>';
-  }
-  return '';
 }
 function showMapper(parsed){
   clearImportFailure();
@@ -5607,8 +5285,6 @@ function showMapper(parsed){
   wrap.innerHTML=h;
   wrap.style.display='block';
   document.getElementById('map-wrap-section').style.display='block';
-  setRangeSectionVisible(true);
-  previewBaseRange();
   updateAdvancedSettingsVisibility();
   renderImportSummary();
 }
@@ -5641,7 +5317,6 @@ document.addEventListener('change',function(e){
 function cancelIngest(){
   document.getElementById('map-wrap').style.display='none';
   const mws=document.getElementById('map-wrap-section'); if(mws) mws.style.display='none';
-  setRangeSectionVisible(false);
   const isw=document.getElementById('import-summary-wrap'); if(isw) isw.innerHTML='';
   LAST_PARSE=null;LAST_MAP=null;
   updateAdvancedSettingsVisibility();
@@ -5786,62 +5461,8 @@ function runIngest(){
     const agg=aggregate(acts);
     if(!agg.tasks.length){setIngestStatus('No deliverable groups formed \u2014 every group had fewer than '+INGEST_CONFIG.minGroupSize+' activities. Check the ID/WBS mapping.','err');renderDiagnostics();return;}
 
-    // ---- Base date range -------------------------------------------------
-    // The board used to span a fixed 12 weeks before the data date to 26 after
-    // it, a window unrelated to the schedule being imported: a long schedule
-    // lost its tail (out of horizon, plotted nowhere, a diagnostic only) and a
-    // short one got months of empty columns. The base range now comes from the
-    // data itself, and the setup fields override either end of it.
-    const dataRange=deriveScheduleRange(agg.tasks,agg.milestones);
-    const fromRaw=(document.getElementById('cfg-range-from').value||'').trim();
-    const toRaw=(document.getElementById('cfg-range-to').value||'').trim();
-    let rangeFrom=fromRaw?new Date(fromRaw+'T00:00:00'):null;
-    let rangeTo=toRaw?new Date(toRaw+'T00:00:00'):null;
-    if(rangeFrom&&isNaN(rangeFrom)){setIngestStatus('Date range "From" is not a valid date.','err');return;}
-    if(rangeTo&&isNaN(rangeTo)){setIngestStatus('Date range "To" is not a valid date.','err');return;}
-    if(rangeFrom&&rangeTo&&rangeFrom>rangeTo){
-      setIngestStatus('Date range "From" ('+isoDay(rangeFrom)+') is later than "To" ('+isoDay(rangeTo)+'). Swap them and try again.','err');
-      return;
-    }
-    let rangeSource='data';
-    let tl;
-    if(dataRange||rangeFrom||rangeTo){
-      // Either end left blank falls back to the data's own, so one typed field
-      // is a one-sided clamp rather than an all-or-nothing switch.
-      let lo=rangeFrom||(dataRange?dataRange.min:dd);
-      let hi=rangeTo||(dataRange?dataRange.max:dd);
-      if(lo>hi){ const s=lo; lo=hi; hi=s; }
-      // A default range that excluded the data date would leave the board with
-      // no current week. An explicitly typed one is left exactly as typed.
-      if(!fromRaw&&dd<lo) lo=dd;
-      if(!toRaw&&dd>hi) hi=dd;
-      if(fromRaw||toRaw) rangeSource=(fromRaw&&toRaw)?'typed':'partial';
-      tl=buildTimelineFromRange(lo,hi,INGEST_CONFIG.weekEndingDay,dd);
-      if(tl.truncated) diag('timeline','warn','Date range spans more than '+MAX_TIMELINE_WEEKS+' weeks; the board was cut at that point. Narrow the range under step 3.','');
-      // Both ends describe the BOARD, not the request. The columns are week
-      // ENDING dates and the range was rounded outward to enclose them, so the
-      // board opens six days before its first column; reporting the requested
-      // start instead understated it by up to a week and made the two ends of
-      // one sentence mean different things.
-      const firstCol=tl.dates[0];
-      INGEST_CONFIG.baseRangeFrom=isoDay(new Date(firstCol.getFullYear(),firstCol.getMonth(),firstCol.getDate()-6));
-      INGEST_CONFIG.baseRangeTo=isoDay(tl.dates[tl.dates.length-1]);
-    } else {
-      // Nothing datable in the import at all. The old fixed window is the only
-      // thing left to fall back on, and it is reported rather than assumed.
-      rangeSource='fallback';
-      tl=buildTimeline(dd,INGEST_CONFIG.horizonWeeksBefore,INGEST_CONFIG.horizonWeeksAfter,INGEST_CONFIG.weekEndingDay);
-      diag('timeline','warn','No usable dates found in the import, so the board falls back to the fixed window around the data date.','');
-      INGEST_CONFIG.baseRangeFrom='';
-      INGEST_CONFIG.baseRangeTo='';
-    }
+    const tl=buildTimeline(dd,INGEST_CONFIG.horizonWeeksBefore,INGEST_CONFIG.horizonWeeksAfter,INGEST_CONFIG.weekEndingDay);
     applyTimeline(tl);
-    // No write-back into the setup fields: the success path clears and hides
-    // that whole section a few lines below (LAST_PARSE is nulled, so there is
-    // nothing left to re-import), and writing values into controls that are
-    // about to be wiped is how a stale control gets to describe a live board.
-    // The range that was used is reported by the Currently Imported Schedule
-    // panel instead, which is the surface that survives the import.
 
     // out-of-horizon check
     const lo=WE_DATES[0],hi=WE_DATES[NCOLS-1];
@@ -5866,15 +5487,6 @@ function runIngest(){
       weekEndingDay:INGEST_CONFIG.weekEndingDay,
       horizonBefore:INGEST_CONFIG.horizonWeeksBefore,
       horizonAfter:INGEST_CONFIG.horizonWeeksAfter,
-      // The range the board was actually built over, and where it came from.
-      // The old horizon pair is kept because it is still what a dateless
-      // import falls back to, and the summary has to be able to say so.
-      baseRangeFrom:INGEST_CONFIG.baseRangeFrom||'',
-      baseRangeTo:INGEST_CONFIG.baseRangeTo||'',
-      baseRangeSource:rangeSource,
-      baseRangeWeeks:WE_LABELS.length,
-      dataRangeFrom:dataRange?isoDay(dataRange.min):'',
-      dataRangeTo:dataRange?isoDay(dataRange.max):'',
       critFloat:critF,
       riskFloat:riskF,
       importedAt:new Date()
@@ -5886,7 +5498,6 @@ function runIngest(){
     DATA_SOURCE=Object.assign({},UPDATE_SOURCE);
     document.getElementById('map-wrap').style.display='none';
   const mws=document.getElementById('map-wrap-section'); if(mws) mws.style.display='none';
-  setRangeSectionVisible(false);
   // The "Ready to import / Discard / Import" panel has to go too. It was left
   // on screen after a successful import, which made a finished import look
   // unfinished: the obvious response is to press Import again, and because
@@ -5923,7 +5534,6 @@ function discardUpdate(){
   LAST_PARSE=null;LAST_MAP=null;
   document.getElementById('map-wrap').style.display='none';
   const mws=document.getElementById('map-wrap-section'); if(mws) mws.style.display='none';
-  setRangeSectionVisible(false);
   renderCurrentImportSummary();
   updateAdvancedSettingsVisibility();
   VIEW_MODE='baseline';

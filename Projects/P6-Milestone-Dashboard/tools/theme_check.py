@@ -56,12 +56,12 @@ const table = mk('<table style="position:absolute;left:-9999px"><tbody></tbody><
 const tbody = table.querySelector('tbody');
 
 const PROBES = [
-  // These two moved from --color-text-on-panel-muted (themed) to
-  // --color-text-on-header-muted (constant) when the light header darkened, so
-  // they are no longer expected to toggle: both headers are now dark and take
-  // the same light text. Reclassified deliberately, not to silence a failure.
-  ['.sticky-search-icon (constant)',  'constant', () => document.querySelector('.sticky-search-icon')],
-  ['.sticky-search-clear (constant)', 'constant', () => document.querySelector('.sticky-search-clear')],
+  // These moved onto the header when it darkened (constant text), and have now
+  // moved again into the filter bar, which is a themed panel. So they are back
+  // to toggling. The label carries no "(constant)" precisely because the
+  // classification has changed twice and the file should state which it is.
+  ['.sticky-search-icon',  'toggle', () => document.querySelector('.sticky-search-icon')],
+  ['.sticky-search-clear', 'toggle', () => document.querySelector('.sticky-search-clear')],
   ['.view-toggle',               'toggle',   () => document.querySelector('.view-toggle')],
   ['th.c-name (column header)',  'toggle',   () => document.querySelector('th.c-name:not(.sticky)')
                                               || document.querySelectorAll('th.c-name')[1]],
@@ -79,6 +79,60 @@ const PROBES = [
   ['.dep-comment-panel',         'toggle',   () => mk('<div class="dep-comment-panel">x</div>')],
   ['.dep-comment-close',         'toggle',   () => mk('<button class="dep-comment-close">x</button>')],
   ['.dep-comment-ids',           'toggle',   () => mk('<span class="dep-comment-ids">x</span>')],
+  // New in P26: total float is its own column in the milestone card, so its
+  // value and its label are two more text colours on the dialog background.
+  ['.ms-float-val',              'toggle',   () => {
+      const d = mk('<div class="ms-dialog"><div class="ms-float-col">'
+                 + '<span class="ms-float-val">26 day</span>'
+                 + '<span class="ms-float-lbl">float</span></div></div>');
+      return d.querySelector('.ms-float-val');
+  }],
+  ['.ms-float-lbl',              'toggle',   () => {
+      const d = mk('<div class="ms-dialog"><div class="ms-float-col">'
+                 + '<span class="ms-float-val">26 day</span>'
+                 + '<span class="ms-float-lbl">float</span></div></div>');
+      return d.querySelector('.ms-float-lbl');
+  }],
+  // New in P27: the dependency-count chips. Each carries the colour of the
+  // dependency LINE it counts, backed by the constant label sticker. The
+  // predecessor blue is themed and the dependency purple is not, which is why
+  // the two are typed differently; theme-scoping the sticker itself is the
+  // TD-28 trap, so it stays constant and the ink is chosen against it.
+  ['.ms-count.pred',             'toggle',   () => {
+      const w = mk('<span class="m-wrap"><span class="ms-count pred">4</span></span>');
+      return w.querySelector('.ms-count');
+  }],
+  ['.ms-count.succ',             'constant', () => {
+      const w = mk('<span class="m-wrap"><span class="ms-count succ">7</span></span>');
+      return w.querySelector('.ms-count');
+  }],
+  // The A3 print-preview banner. Constant on purpose, like every other
+  // attention chip: the saturated fill carries the meaning and the ink is
+  // chosen against the fill, not against the page.
+  ['.pm-banner',                 'constant', () => mk('<div class="pm-banner" style="display:block">Print preview</div>')],
+  // The month band highlight when the week filter is on: white on the accent,
+  // overriding the month's own inline background.
+  ['tr.hdr-phase th.filter-mo', 'constant', () => {
+      const t = mk('<table><thead><tr class="hdr-phase">'
+                 + '<th class="mo-band filter-mo" style="background:#2e6f4e">Sep 2026</th>'
+                 + '</tr></thead></table>');
+      return t.querySelector('th');
+  }],
+  // New in P24: the id and the title are separate colours inside the tooltip,
+  // so each gets its own probe against the dialog background rather than
+  // letting the .dep-tooltip probe stand for both.
+  ['.dep-id (tooltip)',          'toggle',   () => {
+      const d = mk('<div class="dep-tooltip"><span class="dep-id-row">'
+                 + '<span class="dep-id">#SNIP-127:</span>'
+                 + '<span class="dep-id-title">Mine Operations Data</span></span></div>');
+      return d.querySelector('.dep-id');
+  }],
+  ['.dep-id-title (tooltip)',    'toggle',   () => {
+      const d = mk('<div class="dep-tooltip"><span class="dep-id-row">'
+                 + '<span class="dep-id">#SNIP-127:</span>'
+                 + '<span class="dep-id-title">Mine Operations Data</span></span></div>');
+      return d.querySelector('.dep-id-title');
+  }],
   ['dep-panel textarea',         'toggle',   () => {
       const p = mk('<div class="dep-comment-panel"><textarea></textarea></div>');
       return p.querySelector('textarea');
@@ -173,10 +227,10 @@ const PROBES = [
       const d = mk('<div class="rpt-hd"><div class="rpt-sub"><span class="rpt-sub-divider">|</span></div></div>');
       return d.querySelector('.rpt-sub-divider');
   }],
-  // The sticky search sits on the header in both the icon bar and its own
-  // header row. Its input text was --color-text-on-panel, which is near-black.
-  ['.sticky-search-box input (constant)', 'constant', () => {
-      const d = mk('<div id="icon-bar-probe" style="background:var(--color-bg-header)">'
+  // The search now lives inline with the other filters, on the filter bar's
+  // panel, so it is probed against that surface rather than the board header.
+  ['.sticky-search-box input', 'toggle', () => {
+      const d = mk('<div id="top-filter-bar" class="open">'
                  + '<div class="sticky-search-box"><input value="search text"></div></div>');
       return d.querySelector('input');
   }],
