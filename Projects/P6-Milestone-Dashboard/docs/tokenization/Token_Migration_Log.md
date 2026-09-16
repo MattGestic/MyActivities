@@ -83,6 +83,15 @@ Append new rows here as measurements are taken. Never edit or delete a prior row
 | 2026-09-16 | `tools/theme_check.py`, after the drawer background, note ink and accent ink fixes | Probes expected to toggle, frozen | 0 |
 | 2026-09-16 | `tools/theme_check.py`, after the drawer background, note ink and accent ink fixes | Probes below 3.0:1 | 0 |
 | 2026-09-16 | `tools/theme_check.py`, after the v3.1.0-P29 pass | Probes expected to be constant, correctly frozen | 16 |
+| 2026-09-16 | Audit script v3, after the v3.1.0-P30 multi-source pass | Hardcoded colour occurrences | 38 |
+| 2026-09-16 | Audit script v3, after the v3.1.0-P30 multi-source pass | Distinct hardcoded colour values | 34 |
+| 2026-09-16 | Audit script v3, after the v3.1.0-P30 multi-source pass | Colour occurrences matching an existing token exactly | 7 |
+| 2026-09-16 | Audit script v3, after the v3.1.0-P30 multi-source pass | `--space-*` token references in file | 68 |
+| 2026-09-16 | Audit script v3, after the v3.1.0-P30 multi-source pass | Hardcoded padding/margin/gap declarations (px) | 195 |
+| 2026-09-16 | Audit script v3, after the v3.1.0-P30 multi-source pass | `var(--text-*)` font-size references in file | 29 |
+| 2026-09-16 | Audit script v3, after the v3.1.0-P30 multi-source pass | Hardcoded font-size declarations (px) | 110 |
+| 2026-09-16 | `tools/theme_check.py`, after the v3.1.0-P30 pass | Probes expected to toggle, frozen | 0 |
+| 2026-09-16 | `tools/theme_check.py`, after the v3.1.0-P30 pass | Probes below 3.0:1 | 0 |
 
 **Re-running the audit:** run `python3 tools/colour_audit.py` from the project root. It regenerates `Hardcoded_Colour_Audit.csv` and prints every metric above.
 

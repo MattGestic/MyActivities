@@ -125,3 +125,23 @@ Two things came out of it:
 TD-88 recorded a duplicated `--color-bg-subtle` in the dark theme block and said it needed a consumer sweep before removal. The sweep, done here, shows the duplicate is what keeps the week header a light strip in dark theme, because `tr.hdr-wk th` paints `--color-text-small` on it and that token is `#334` in dark. Deleting the duplicate would have made the week header near-black on near-black.
 
 So the fix for the drawer was not to remove the duplicate but to stop depending on it: the panel takes `--color-bg-panel`, which already toggles. **When a duplicate has survived, find out what is standing on it before removing it.** The tidier change was the one that would have broken the board.
+
+## An id-based smoke test cannot see a reparented element
+
+A stray `</div>` in the new setup step closed `#settings-drawer` one level early. The browser reparented the Defaults panel, the Diagnostics panel and the whole action footer onto `<body>`. Every `getElementById` still resolved, every handler still fired, and the ad-hoc smoke probe reported a clean load with the right row and milestone counts.
+
+`tools/p29_check.py` caught it immediately, because it asks a different question: it queries **through** `#settings-drawer` rather than by id. `DR.querySelector('.sd-actions')` came back null and the probe threw.
+
+> A check that looks elements up by id is testing that the ids exist. A check that looks them up through their container is testing that the structure is what you think it is. Unbalanced markup only fails the second kind.
+
+This is why the structural assertions in `p29_check.py` are scoped to the panel rather than to the document, and why the theme probes mount inside the real drawer instead of on `document.body`.
+
+## The band-order assertion that could not tell the two outcomes apart
+
+`p30_check.py` appends the reference workbook to **itself**, so the two schedules carry identical band names. The first version of the assertion collected distinct band names and expected the count to double. It reported 14 against an expected 28 and looked like a real failure.
+
+It was the assertion that was wrong. A distinct-name count returns 14 whether the two schedules sit one after the other or are interleaved row by row: the measurement cannot distinguish the outcome being tested from its opposite. Counting **contiguous runs** of one band down the board can, and it holds: 28 runs, the second 14 matching the first.
+
+> Before trusting a failing assertion, check that it could have distinguished pass from fail in the first place. A measurement that returns the same value for both is not evidence either way.
+
+Same family as the vacuous passes (TD-66, TD-87), but the opposite symptom: a vacuous **failure**. Both come from not asking what else could produce this number.

@@ -272,14 +272,27 @@ PROBE = r"""
     setSettingsTab('import');
     const s1=document.getElementById('ingest-bar');
     const s3=document.getElementById('range-wrap-section');
-    R.notes.stepStateAtSetup={
-      one:s1.className, three:s3.className,
-      threeShown:getComputedStyle(s3).display!=='none'};
+    // Asserted as the invariant rather than by naming a step: P30 added a
+    // fourth step, which made "step 3 is the current one" false without
+    // anything being wrong. What must hold is that exactly one visible step is
+    // current, it is the last one, and every earlier visible step reads done.
+    const visSteps=Array.from(DR.querySelectorAll('.sd-step')).filter(function(el){
+      return getComputedStyle(el).display!=='none';
+    });
+    const currents=visSteps.filter(function(el){ return el.classList.contains('is-current'); });
+    const earlierAllDone=visSteps.slice(0,-1).every(function(el){ return el.classList.contains('is-done'); });
+    R.notes.stepStateAtSetup=visSteps.map(function(el){ return (el.id||'?')+':'+el.className; });
     ck('steps: the range step appears once a file is parsed',
        getComputedStyle(s3).display!=='none');
-    ck('steps: earlier steps read as done and the live one as current',
-       s1.classList.contains('is-done') && s3.classList.contains('is-current'),
-       s1.className+' | '+s3.className);
+    ck('steps: there are several visible steps to reason about', visSteps.length>=3, visSteps.length);
+    ck('steps: exactly one visible step is the current one',
+       currents.length===1, currents.length+' current');
+    ck('steps: the current step is the last visible one',
+       currents.length===1 && currents[0]===visSteps[visSteps.length-1],
+       currents.length?(currents[0].id||'?')+' vs '+(visSteps[visSteps.length-1].id||'?'):'none');
+    ck('steps: every step before it reads as done',
+       earlierAllDone && s1.classList.contains('is-done'),
+       R.notes.stepStateAtSetup.join(' | '));
 
     DIAG=[]; runIngest();
     await settle(); freeze();
