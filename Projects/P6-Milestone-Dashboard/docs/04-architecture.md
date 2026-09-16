@@ -71,11 +71,35 @@ Three distinct systems. Do not conflate them.
 |---|---|---|---|
 | Style / Customize View | `#filter-bar`, left docked sidebar | Palette icon | Layout, field visibility, label text sizing, dependency line visibility/thickness |
 | Top filter bar | `#top-filter-bar`, collapsible horizontal bar | Magnifying glass | Row filtering: Title contains, Banding, Activity ID(s), Week range |
-| Settings / Data Settings | `#settings-drawer`, right docked overlay | Gear | Actions, imported-schedule status, Import, Diagnostics |
+| Settings / Data Settings | `#settings-drawer`, right docked overlay | Gear | Four tabs: Sources (what is mounted), Import (the setup stepper), Defaults (settings that outlive an import), Diagnostics. Publish and the exports live in a sticky action footer reachable from every tab. |
 
 Plus the sticky-corner quick search in the top-left sticky table cell, two-way synced with the Top Filter Bar Title field.
 
 The Customize sidebar docks via a `body.cv-open{margin-left:300px}` class toggle rather than a DOM restructure, because `position:fixed` overlays (the sidebar included) are unaffected by an ancestor's margin. That is what lets it dock without disturbing the rest of the page.
+
+### The `sd-` component set and the drawer's spacing contract
+
+The Settings drawer is built from twelve `sd-` primitives rather than per-section markup. The rule, and the reason it is written down here rather than left to be inferred:
+
+**Nothing inside `#settings-drawer` may set `padding` or `margin` inline.** Every edge resolves to one of six tokens declared once on the drawer itself:
+
+| Token | Value | Role |
+|---|---|---|
+| `--sd-gutter` | `--space-6` | every left and right edge in the panel |
+| `--sd-group-pad` | `--space-6` | group top and bottom |
+| `--sd-row-y` | `--space-5` | row top and bottom |
+| `--sd-stack` | `--space-4` | label to helper to control |
+| `--sd-inline` | `--space-3` | between controls on one line |
+| `--sd-card-pad` | `--space-5` | inside a card |
+
+This is recorded because the previous arrangement was not a decision anyone made: it accumulated as 31 inline declarations across 18 values, each individually reasonable. An unwritten convention is one nobody can follow, which is the same failure mode as the board-order rule above. `tools/p29_check.py` asserts the contract rather than trusting it: the inline count must be zero, every group must report the same computed gutter, every interior row the same vertical step, every separator the same hairline, and every bordered surface a radius drawn from `--radius-sm/md/pill`.
+
+The primitives: `.sd-group` (titled block), `.sd-row` (label, helper, control; `--split` puts the control on a 160px label column), `.sd-card` (`--pick` selectable, `--empty` dashed), `.sd-badge` (five modifiers), `.sd-step` (`is-done`/`is-current`/`is-waiting`), `.sd-choice` (radio revealing its own body), `.sd-icon-pick`, `.sd-stat`, `.sd-actions` (sticky footer), plus `.sd-tabs`/`.sd-tab`/`.sd-tabpanel`. Nine of them replaced something that already existed in duplicate.
+
+Two colour rules fell out of building it, both worth stating because both were walked into:
+
+- **A fill token is not an ink token.** `--color-health-good` and `--color-purple-deep` are both used as fills elsewhere, so neither can be retuned for a dark panel without breaking the fill. Accent-coloured text on a themed panel is `--color-accent-ink`; success text is `--color-ok-text`. Merge on role, not on hex.
+- **The drawer takes `--color-bg-panel`, not `--color-bg-subtle`.** The latter is declared twice in the dark block (TD-88) and the light value wins, which is load-bearing for the week header (TD-98) and would have left the panel white in dark theme.
 
 ## Repository Architecture
 
@@ -109,6 +133,8 @@ The version lives only in `APP_VERSION`. The working file keeps a stable filenam
 | Orphan branch per app | Monorepo on one `main`; separate repos | Apps are independent; a shared `main` makes every diff noisy. A separate repo per app fragments a personal workspace. | 2026-09-09 |
 | Board order follows the schedule's own order | Alphabetical by WBS path; by phase; by date | The board presents the client's schedule, so it presents it in the client's sequence. Anything else makes the reader reconcile two orderings, and the schedule's order carries meaning the dashboard does not know. **This rule was assumed rather than recorded, and the code did the opposite for as long as import existed (TD-65).** | 2026-09-14 |
 | Baseline overlay is matched by Activity ID, placed at the baseline's own date on the live marker's row line, and painted behind everything | Match by row; match by title; overlay as a separate row; overlay as a date label | The Activity ID is the only key both datasets share and the only one that survives a row being regrouped. Taking Y from the live marker and X from the baseline date makes the horizontal gap between the pair the slip itself, readable without a legend. Behind, because the current schedule is what the board is about and the baseline is context for it. | 2026-09-15 |
+| The settings panel is a component set with one spacing contract, not per-section markup | Restyle the existing sections; a CSS framework; leave it and add the new controls in the same style | Two halves of multi-source work both add markup to this panel. Building them on 31 inline declarations across 18 values means writing the mess twice and then rewriting it. The contract is asserted by probe rather than claimed, because a convention nobody measures drifts back on the next change. | 2026-09-16 |
+| The drawer is tabbed, with a sticky action footer | One long scroll (as before); an accordion; a separate settings page | Six stacked sections put the terminal actions above the thing they act on and buried settings that outlive an import two disclosures deep inside Import. Tabs also give the setup flow somewhere to keep its shape: the steps show state instead of appearing and disappearing. | 2026-09-16 |
 | Print preview is a reversible mode, not a print action | A Print button calling `window.print()`; a permanent A3 `@page` rule; a separate print stylesheet only | Page fit is something to check and adjust before printing, not to discover in the print dialog. The `@page` rule is injected only while the mode is on, so a plain Ctrl+P is unaffected for anyone who did not ask for A3. The mode never travels into a published file. | 2026-09-15 |
 | | The board's date range is derived from the imported data, not from a fixed window around the data date | Keep the 12-before / 26-after window; make the window bigger; ask at import | The board exists to show a schedule, so its span is a property of that schedule. The fixed window was wrong in both directions on the same file: three milestones past its end plotted nowhere while eight empty weeks sat before its start. The window survives only as the fallback for an import carrying no usable dates, which is the one case where there is nothing to derive from. | 2026-09-15 |
 | The week filter marks; the date range filter narrows | Make both narrow; make both mark; one control with a mode | They answer different questions. "What is in week 12" wants the week marked in context, which is why painting its cells was reverted (TD-79). "Show me September to October" wants a September-to-October board. Both resolve to one [lo,hi] column pair, so there is a single definition of in-range and the two intersect rather than fight. | 2026-09-15 |

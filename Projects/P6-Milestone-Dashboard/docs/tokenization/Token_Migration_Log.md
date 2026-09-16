@@ -66,6 +66,23 @@ Append new rows here as measurements are taken. Never edit or delete a prior row
 | 2026-09-11 | `tools/theme_check.py`, `tr.hist-row` probe added after the header colour change | Probes expected to toggle | 46 |
 | 2026-09-11 | `tools/theme_check.py`, header `#ffffff` to `#a6bbdc`, before darkening the muted token | Probes below 3.0:1 | 2 |
 | 2026-09-11 | `tools/theme_check.py`, after darkening `--color-text-on-panel-muted` to `#575c67` | Probes below 3.0:1 | 0 |
+| 2026-09-16 | Audit script v3, after the v3.1.0-P29 settings-panel rebuild | Hardcoded colour occurrences | 38 |
+| 2026-09-16 | Audit script v3, after the v3.1.0-P29 settings-panel rebuild | Distinct hardcoded colour values | 34 |
+| 2026-09-16 | Audit script v3, after the v3.1.0-P29 settings-panel rebuild | Colour occurrences matching an existing token exactly | 7 |
+| 2026-09-16 | Audit script v3, after the v3.1.0-P29 settings-panel rebuild | `--space-*` token references in file | 68 |
+| 2026-09-16 | Audit script v3, after the v3.1.0-P29 settings-panel rebuild | Hardcoded padding/margin/gap declarations (px) | 194 |
+| 2026-09-16 | Audit script v3, after the v3.1.0-P29 settings-panel rebuild | `var(--text-*)` font-size references in file | 29 |
+| 2026-09-16 | Audit script v3, after the v3.1.0-P29 settings-panel rebuild | Hardcoded font-size declarations (px) | 109 |
+| 2026-09-16 | `tools/p29_check.py`, settings drawer only | Inline padding/margin declarations in the drawer markup, before | 31 |
+| 2026-09-16 | `tools/p29_check.py`, settings drawer only | Inline padding/margin declarations in the drawer markup, after | 0 |
+| 2026-09-16 | `tools/p29_check.py`, settings drawer only | Distinct values those declarations used, before | 18 |
+| 2026-09-16 | `tools/theme_check.py`, settings-drawer component probes added | Probes total | 90 |
+| 2026-09-16 | `tools/theme_check.py`, settings-drawer component probes added | Probes expected to toggle | 74 |
+| 2026-09-16 | `tools/theme_check.py`, first run of the new drawer probes | Probes expected to toggle, frozen | 1 |
+| 2026-09-16 | `tools/theme_check.py`, first run of the new drawer probes | Probes below 3.0:1 | 6 |
+| 2026-09-16 | `tools/theme_check.py`, after the drawer background, note ink and accent ink fixes | Probes expected to toggle, frozen | 0 |
+| 2026-09-16 | `tools/theme_check.py`, after the drawer background, note ink and accent ink fixes | Probes below 3.0:1 | 0 |
+| 2026-09-16 | `tools/theme_check.py`, after the v3.1.0-P29 pass | Probes expected to be constant, correctly frozen | 16 |
 
 **Re-running the audit:** run `python3 tools/colour_audit.py` from the project root. It regenerates `Hardcoded_Colour_Audit.csv` and prints every metric above.
 
@@ -159,7 +176,8 @@ A defect found in v2 during this same run is recorded here rather than quietly f
 | Milestone dialog | Tokenized | 2026-09-09 |
 | Dependency lines | Tokenized | 2026-09-09 |
 | Dependency tooltip + comment panel | Tokenized — was frozen at dark values, near-white text over a background that toggled to near-white | 2026-09-09 |
-| Settings drawer / View Controls sidebar | Tokenized | 2026-09-09 |
+| Settings drawer | Tokenized and rebuilt on the `sd-` component set at v3.1.0-P29. One gutter, one row step, one radius family, no inline spacing. Two hardcoded label inks, three import-status inks and two import-control borders replaced; three new tokens, `--color-ok-text`, `--color-accent-ink` and `--radius-sm/md/pill` | 2026-09-16 |
+| View Controls sidebar | Tokenized. Still on its own `.cv-*` classes; `.cv-sect-title` and three siblings paint `--color-purple-deep` on a dark panel in dark theme, which measures 1.79:1 (TD-97) | 2026-09-16 |
 | Board phase bands | Tokenized — `--color-band-1..5`, constant by design | 2026-09-10 |
 | Discipline band rows | Not tokenized | 2026-09-10 (re-checked, unchanged) |
 | Health dot colours | Tokenized — `--color-health-*` fills and rims, constant by design | 2026-09-10 |

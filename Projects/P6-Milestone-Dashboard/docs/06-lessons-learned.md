@@ -98,3 +98,30 @@ These two proved general, not project-specific, and now bind every project in th
 | A window that framed the data was inherited as a constant and never questioned, and was wrong in both directions at once on the same file | The board spanned a fixed 12 weeks before the data date to 26 after it. That happened to fit the seeded baseline it was written for, so it read as correct for as long as nobody imported a schedule shaped differently. On the real export it dropped three milestones past its end and padded eight empty weeks onto its front | **A framing constant is a claim about the data, and it should be derived from the data or justified against it.** The three lost milestones were not silent — they raised a diagnostic — but a warning that the board cannot show part of the schedule was being treated as information rather than as a defect. When a check reports the same thing on every run, decide whether it is a report or a symptom. |
 | A button did nothing, reported nothing, and had done nothing for as long as it had existed alongside filtering | Two fitters measured `document.querySelector('tr.data')` to learn a column width. A hidden row has no layout, so every cell in it returns `offsetParent === null`; with any filter that hid the first row, the visible-cell list came back empty and both functions returned early | **"The first one" is only safe where nothing can hide one.** Any query that takes the first match of something the UI can hide needs to take the first VISIBLE match instead. Also: an early return on an empty measurement is the quietest possible failure — the function did exactly what it was told and the user sees a dead control. Found by a test of a different feature, because the new feature made the hidden-row case ordinary rather than rare. |
 | The handoff's companion files were missing at migration and blocked FEAT-14 for a full cycle | Section 5 row 1 repeating itself: the files existed but were never delivered alongside the document that depended on them | Already captured. Worth noting that the predicted failure happened exactly as written, which is the argument for treating that row as a rule rather than an anecdote. |
+
+## A probe that outlives the thing it probed passes against nothing
+
+`tools/theme_check.py` carried four probes that built `.mnt-slot`, `.mnt-name`, `.mnt-lines` and `.mnt-badge` elements by hand. When v3.1.0-P29 replaced those classes, the probes kept passing: the constructed `<div>` still inherited the body's colours, and body colours toggle. Nothing failed, the count stayed green, and the mount panel had no contrast coverage at all.
+
+This is the fourth vacuous pass in this project (TD-66, the P26 float column, TD-87, and now this), and the first where the probe was measuring a live element that simply no longer had the class it was named for. The sample-size rule from TD-87 does not catch it, because the sample size is one.
+
+Two things came out of it:
+
+- **A probe that constructs its own subject must fail if the subject's class no longer exists.** The drawer probes now mount inside `#settings-drawer` through a helper that throws when the panel is missing, so the element is measured in the frame it really appears in, against the panel's own background and custom properties.
+- **Retire the probe in the same commit as the class.** A probe is part of the component, not part of the test suite's furniture.
+
+## The same run proved that reading the CSS could not have found either defect
+
+`--color-text-note` measured 2.98:1 on the drawer background and always had. The gate reported zero failures because no probe had ever put that ink on that background: the pairing existed in the product and not in the test. It only surfaced because the rebuild turned helper text from an occasional footnote into a primary component, which added the probe.
+
+`.ingest-status.ok` was frozen at a hardcoded `#1a6b3a`. The obvious replacement, `--color-health-good`, is a **fill** and is constant across themes by design, so using it as ink froze it again in a way that reads perfectly correct in the CSS. That is the TD-28 shape a third time, and it generalises:
+
+> A token's role is part of its name. A fill token pressed into service as ink will be frozen, or will be dark-on-dark, and neither is visible in the declaration.
+
+`--color-purple-deep` is the same trap with a twist: it is genuinely used as ink, as a fill, and as ink on a light tint, in three different places. There is no single value that satisfies all three in dark theme, so it cannot be fixed by retuning. The role had to be split (`--color-accent-ink`), which is the tokenisation rule this project already had written down and had not applied here.
+
+## A duplicate declaration can be load-bearing
+
+TD-88 recorded a duplicated `--color-bg-subtle` in the dark theme block and said it needed a consumer sweep before removal. The sweep, done here, shows the duplicate is what keeps the week header a light strip in dark theme, because `tr.hdr-wk th` paints `--color-text-small` on it and that token is `#334` in dark. Deleting the duplicate would have made the week header near-black on near-black.
+
+So the fix for the drawer was not to remove the duplicate but to stop depending on it: the panel takes `--color-bg-panel`, which already toggles. **When a duplicate has survived, find out what is standing on it before removing it.** The tidier change was the one that would have broken the board.
