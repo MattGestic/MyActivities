@@ -449,6 +449,78 @@ PROBE = r"""
        pathCount()===R.notes.depUnfiltered.paths && zeroSized()===0,
        pathCount()+' vs '+R.notes.depUnfiltered.paths);
 
+    // ================= 9. Markers and labels stay inside their row =========
+    // Reported from the field. Two offsets compounded: msCellPos() moves a
+    // shared marker off the cell midline by a fixed PERCENTAGE, and the label
+    // band then moved the stack again from there. A 25px stack in a 34px row
+    // has 4.5px of slack and the band was a fixed 15px, so a banded label
+    // necessarily landed on the neighbouring row: 31 of 150 stacks, worst
+    // 18.2px. Asserted across the slider range, because the failure only
+    // appears at particular combinations of row height and icon size.
+    clearFilter(); await settle();
+    const lblCb=document.getElementById('btn-lbl');
+    if(lblCb&&!lblCb.checked){ lblCb.checked=true; toggleLabels(lblCb); }
+    setShortTitleMode('both');
+    await settle(); await settle();
+    const containment=function(){
+      let markers=0,label=0,mOut=0,lOut=0,worst=-1e9;
+      document.querySelectorAll('tr[data-type="row"]:not(.hidden-row)').forEach(function(tr){
+        const rr=tr.getBoundingClientRect();
+        if(rr.height===0) return;
+        tr.querySelectorAll('.m-wrap:not(.m-ghost)').forEach(function(w){
+          const wr=w.getBoundingClientRect();
+          if(wr.width||wr.height){
+            markers++;
+            const ov=Math.max(rr.top-wr.top,wr.bottom-rr.bottom);
+            if(ov>0.5) mOut++;
+            if(ov>worst) worst=ov;
+          }
+          const st=w.querySelector('.m-lbl-stack');
+          if(st){
+            const sr=st.getBoundingClientRect();
+            if(sr.width||sr.height){
+              label++;
+              const ov2=Math.max(rr.top-sr.top,sr.bottom-rr.bottom);
+              if(ov2>0.5) lOut++;
+              if(ov2>worst) worst=ov2;
+            }
+          }
+        });
+      });
+      return {markers:markers,labels:label,markersOut:mOut,labelsOut:lOut,
+              worst:Math.round(worst*10)/10};
+    };
+    const settings=[[36,15],[72,15],[59,10],[32,15],[20,24]];
+    const results=[];
+    for(let i=0;i<settings.length;i++){
+      setWkWidth(settings[i][0]); setIcoSize(settings[i][1]); onSizeSliderRelease();
+      await settle(); await settle();
+      const c=containment();
+      c.at=settings[i][0]+'px/'+settings[i][1]+'px';
+      results.push(c);
+    }
+    R.notes.containment=results;
+    const sampled=results.every(function(c){ return c.markers>100&&c.labels>100; });
+    ck('placement: every slider setting had markers and labels to measure',
+       sampled, JSON.stringify(results.map(function(c){return c.at+':'+c.markers+'/'+c.labels;})));
+    const badM=results.filter(function(c){ return c.markersOut>0; });
+    const badL=results.filter(function(c){ return c.labelsOut>0; });
+    ck('placement: no marker sits outside its row at any slider setting',
+       badM.length===0, badM.map(function(c){return c.at+'='+c.markersOut;}).join(', '));
+    ck('placement: no label stack sits outside its row at any slider setting',
+       badL.length===0, badL.map(function(c){return c.at+'='+c.labelsOut;}).join(', '));
+    // Rows have to grow when labels are on, or the three bands cannot be
+    // separated without leaving the row.
+    R.notes.rowHWithLabels=getComputedStyle(document.documentElement).getPropertyValue('--row-min-h').trim();
+    ck('placement: rows are held taller while milestone labels are shown',
+       parseInt(R.notes.rowHWithLabels,10)>=48, R.notes.rowHWithLabels);
+    setShortTitleMode('off');
+    if(lblCb&&lblCb.checked){ lblCb.checked=false; toggleLabels(lblCb); }
+    await settle(); await settle();
+    R.notes.rowHNoLabels=getComputedStyle(document.documentElement).getPropertyValue('--row-min-h').trim();
+    ck('placement: and go back to the chosen height once labels are off',
+       parseInt(R.notes.rowHNoLabels,10)<48, R.notes.rowHNoLabels);
+
     R.ok=true;
   }catch(e){ R.ok=false; R.err=e.message; R.stack=(e.stack||'').split('\n').slice(0,4).join(' | '); }
   emit();
@@ -500,7 +572,8 @@ def main():
               "filterOptions", "filteredRows", "srcSchCells", "hdrCells", "bodyCells",
               "publishedSources", "restored", "afterViewSwitch", "idListLength", "debounce",
               "rangeStyleRules", "inlineHiddenCells", "hiddenCols",
-              "depUnfiltered", "depWithRange", "depWithWeek", "depAfterClear"):
+              "depUnfiltered", "depWithRange", "depWithWeek", "depAfterClear",
+              "containment", "rowHWithLabels", "rowHNoLabels"):
         if k in n:
             v = n[k]
             print(f"   {k}: {json.dumps(v) if isinstance(v, (list, dict)) else v}")

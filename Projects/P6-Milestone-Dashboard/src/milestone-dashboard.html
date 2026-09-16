@@ -343,6 +343,17 @@ html[data-theme="dark"]{
   --radius-sm:4px;     /* inputs, buttons, small chips */
   --radius-md:6px;     /* cards and other bordered surfaces */
   --radius-pill:999px; /* badges, tabs, anything fully rounded */
+
+  /* ===== Row height, and the label band that has to fit inside it =====
+     The label collision band was a fixed 15px. A label stack in ID + Title
+     mode is 25px tall, so in a 34px row it has 4.5px of slack each side and a
+     15px band necessarily puts it ~10.5px onto the neighbouring row. Measured
+     at 31 of 150 stacks overflowing, worst 18.2px (TD-108). That is geometry,
+     not tuning: keeping a 15px band needs a 55px row.
+     So the band is derived from the row height instead of fixed, and cannot
+     exceed the room actually available. 13px is half the stack, rounded up. */
+  --row-min-h:34px;
+  --lbl-band-dy:clamp(0px, calc(var(--row-min-h) / 2 - 13px), 15px);
 }
 
 *{box-sizing:border-box;margin:0;padding:0}
@@ -835,7 +846,7 @@ tr.phase-band.pb4 td{background:var(--color-band-5)}
 
 tr.disc td{background:var(--color-label-neutral-bg);font-size:9px;font-weight:600;color:var(--color-text-small);padding:2px 8px;letter-spacing:.04em;text-transform:uppercase;border-bottom:0.5px solid var(--color-line-default);position:relative;z-index:5}
 
-tr.data td{border-bottom:0.5px solid var(--color-line-default);border-right:0.5px solid var(--color-line-default);vertical-align:middle;background:var(--color-row-default-bg)}
+tr.data td{border-bottom:0.5px solid var(--color-line-default);border-right:0.5px solid var(--color-line-default);vertical-align:middle;background:var(--color-row-default-bg);height:var(--row-min-h)}
 tr.data.alt td{background:var(--color-row-alt-bg)}
 tr.data.gate-row td{background:var(--color-row-gate-bg)}
 tr.data:hover td{background:var(--color-row-hover-bg)!important}
@@ -1055,8 +1066,13 @@ td.c-wk.loe-span{background-image:linear-gradient(90deg,var(--color-accent-wash)
    up 15px from its own row's midline. The icon now stays where the cell put
    it and only the text moves; the stack is still a genuine child of .m-wrap,
    so it remains anchored to its own icon. */
-.m-wrap.lbl-band-top .m-lbl-stack{transform:translateY(calc(-50% - 15px))}
-.m-wrap.lbl-band-bottom .m-lbl-stack{transform:translateY(calc(-50% + 15px))}
+/* --lbl-band-dy is the WHOLE vertical offset, set per marker in renderRows():
+   the amount needed to undo the icon spread's own displacement, plus the band.
+   Two separate rules that each added their own fixed offset is what let the
+   icon spread and the label band compound into a stack sitting outside the
+   row. There is one number now, and it is computed where both inputs are
+   known. */
+.m-wrap .m-lbl-stack{transform:translateY(calc(-50% + var(--lbl-band-dy,0px)))}
 .m-lbl,.m-hrs{display:block;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   text-align:left;padding:2px 3px;border-radius:2px;box-sizing:border-box;letter-spacing:.02em;min-width:0}
 .m-title-label-row{display:flex;align-items:baseline;gap:3px;min-width:0}
@@ -1690,16 +1706,21 @@ body.counts-on .m-lbl-stack{margin-left:calc(var(--count-chip-w) + 5px)}
   <div class="cv-sect">
     <div class="cv-sect-title">Layout</div>
     <div class="cv-field-row">
-      <label>Week col: <span id="wk-width-val">36px</span></label>
-      <input type="range" id="wk-width" min="20" max="72" value="36" oninput="setWkWidth(this.value)" onchange="onSizeSliderRelease()">
-    </div>
-    <div class="cv-field-row">
       <label>Title col: <span id="name-width-val">220px</span></label>
       <input type="range" id="name-width" min="140" max="400" value="220" oninput="setNameWidth(this.value)" onchange="onSizeSliderRelease()">
     </div>
     <div class="cv-field-row">
       <label>Icon size: <span id="ico-size-val">15px</span></label>
       <input type="range" id="ico-size" min="10" max="24" value="15" oninput="setIcoSize(this.value)" onchange="onSizeSliderRelease()">
+    </div>
+    <div class="cv-field-row">
+      <label>Week col: <span id="wk-width-val">36px</span></label>
+      <input type="range" id="wk-width" min="20" max="72" value="36" oninput="setWkWidth(this.value)" onchange="onSizeSliderRelease()">
+    </div>
+    <div class="cv-field-row">
+      <label>Row height: <span id="row-height-val">34px</span></label>
+      <input type="range" id="row-height" min="28" max="72" value="34" oninput="setRowHeight(this.value)" onchange="onSizeSliderRelease()">
+      <span class="sd-note" id="row-height-note"></span>
     </div>
     <div class="toggle-switch-row">
       <span class="tsw-label">Allow activity title to wrap</span>
@@ -3876,6 +3897,7 @@ function setShortTitleMode(mode){
     const btn=document.getElementById('btn-title-mode-'+m);
     if(btn) btn.classList.toggle('active', mode==='off'?m==='off':(m===mode));
   });
+  applyRowHeight();
   scheduleRerender(true);
 }
 function formatShortTitleDisplay(id,titleText){
@@ -4382,6 +4404,10 @@ function renderRows(){
     // back where the 1st one is), which is exactly the multi-marker overlap
     // this is meant to fix.
     const LABEL_COLLISION_COLS=4;
+    // Half a label stack in ID + Title mode, which is the tallest it gets.
+    // Conservative on purpose: a one-line stack simply gets a smaller band
+    // than it strictly needed, which is the harmless direction to be wrong in.
+    const LABEL_STACK_HALF=16;
     const BAND_CLASSES=['','lbl-band-top','lbl-band-bottom'];
     // How many markers share each cell, known before any are placed, because
     // the rule for one is different from the rule for several.
@@ -4427,6 +4453,18 @@ function renderRows(){
         }
       }
       wrap.style.setProperty('--mx',pos.x+'%');
+      // msCellPos() spreads shared icons by a fixed PERCENTAGE of the cell and
+      // knows nothing about how big the icon is, so a large icon on a short row
+      // hangs out of it: measured 10 markers up to 2.7px outside the row at 24px
+      // icons on a 34px row. Clamp the centre so the icon fits, then put it back
+      // into percentage terms. This sits with the placement, NOT in the label
+      // branch below: a first attempt there only ran when a label was rendered,
+      // so the icons stayed outside the row whenever labels were off.
+      const _ih=iconSize/2, _rh=effectiveRowHeight();
+      if(_rh>iconSize){
+        const _want=(pos.y/100)*_rh;
+        pos.y=(Math.max(_ih,Math.min(_rh-_ih,_want))/_rh)*100;
+      }
       wrap.style.setProperty('--my',pos.y+'%');
       wkTd.appendChild(wrap);
       // The markers are positioned, so they no longer give the cell height.
@@ -4474,6 +4512,19 @@ function renderRows(){
         clusterBandIdx=0; // far enough from the last one — a fresh cluster starts back at mid-row
       }
       if(BAND_CLASSES[clusterBandIdx]) wrap.classList.add(BAND_CLASSES[clusterBandIdx]);
+      // The label stack is pinned to the CELL's midline, not the wrap's.
+      // msCellPos() moves the wrap off the midline to spread shared icons, and
+      // the band then moved the stack again from there, so the two offsets
+      // compounded and the stack ended up outside the row. Undoing the wrap's
+      // own displacement first means the band starts from the middle of the
+      // cell every time, and a band that fits the cell fits for every marker
+      // in it regardless of how the icons were spread.
+      const rowH=effectiveRowHeight();
+      const band=Math.max(0,Math.min(15,rowH/2-LABEL_STACK_HALF));
+      const undoSpread=((50-pos.y)/100)*rowH;
+      const bandSign=(BAND_CLASSES[clusterBandIdx]==='lbl-band-top')?-1
+                    :(BAND_CLASSES[clusterBandIdx]==='lbl-band-bottom')?1:0;
+      wrap.style.setProperty('--lbl-band-dy',(undoSpread+bandSign*band).toFixed(2)+'px');
       lastLabelCol=col;
       wrap.appendChild(stack);
 
@@ -5033,6 +5084,41 @@ function setWkWidth(v){
   document.documentElement.style.setProperty('--colw',v+'px');
   onSizeSliderDrag();
 }
+// The row height the user asked for. Milestone labels need more than the
+// default: a banded stack is 25px and the band is derived from the row, so at
+// 34px the three bands are only 4px apart and collided labels sit on top of
+// each other instead of overlapping the next row. 48px gives an 11px band,
+// which separates them and still fits. The slider is the floor, not the
+// ceiling, so asking for more than the floor is always honoured.
+const LABEL_ROW_MIN=48;
+let ROW_HEIGHT=34;
+function labelsNeedTallRows(){
+  return !!(typeof labelsVisible!=='undefined'&&labelsVisible)
+      || !!(typeof shortTitlesVisible!=='undefined'&&shortTitlesVisible);
+}
+function effectiveRowHeight(){
+  return labelsNeedTallRows()?Math.max(ROW_HEIGHT,LABEL_ROW_MIN):ROW_HEIGHT;
+}
+function applyRowHeight(){
+  const eff=effectiveRowHeight();
+  document.documentElement.style.setProperty('--row-min-h',eff+'px');
+  const val=document.getElementById('row-height-val');
+  if(val) val.textContent=ROW_HEIGHT+'px'+((eff!==ROW_HEIGHT)?' (using '+eff+'px)':'');
+  const note=document.getElementById('row-height-note');
+  if(note) note.textContent=(eff!==ROW_HEIGHT)
+    ? 'Milestone labels are on, so rows are held at '+LABEL_ROW_MIN+'px. Below that, labels that collide cannot be separated without leaving the row.'
+    : '';
+  const sl=document.getElementById('row-height');
+  if(sl&&String(sl.value)!==String(ROW_HEIGHT)) sl.value=ROW_HEIGHT;
+}
+let _rowHNeedsRebuild=false;
+function setRowHeight(v){
+  const next=parseInt(v,10)||34;
+  if(next!==ROW_HEIGHT) _rowHNeedsRebuild=true;
+  ROW_HEIGHT=next;
+  applyRowHeight();
+  onSizeSliderDrag();
+}
 function setNameWidth(v){
   document.getElementById('name-width-val').textContent=v+'px';
   const nameCol=document.getElementById('col-name');
@@ -5052,8 +5138,17 @@ function toggleDnameWrap(cb){
   // Row heights change, so anything measured off them has to be redrawn.
   if(typeof drawDepLines==='function') drawDepLines();
 }
+// Marker placement depends on the icon size (the clamp in renderRows keeps the
+// icon inside the row), and --my is written once at render time. Resizing the
+// SVGs in place therefore left every marker positioned for the PREVIOUS icon
+// size: at 24px on a 34px row that put 10 of them outside the row, and no
+// amount of clamping at render time could help because render never re-ran.
+// Flagged here and acted on at release, not on every drag tick.
+let _icoNeedsRebuild=false;
 function setIcoSize(v){
-  iconSize=parseInt(v,10);
+  const next=parseInt(v,10);
+  if(next!==iconSize) _icoNeedsRebuild=true;
+  iconSize=next;
   document.getElementById('ico-size-val').textContent=v+'px';
   document.querySelectorAll('.ms-icon').forEach(s=>{s.style.width=v+'px';s.style.height=v+'px';});
   onSizeSliderDrag();
@@ -5076,6 +5171,15 @@ function onSizeSliderRelease(){
   sizeSliderDragging=false;
   const layer=document.getElementById('dep-line-layer');
   if(layer) layer.style.visibility='';
+  // Row height and icon size both change where a marker is allowed to sit, and
+  // that is decided in renderRows(). Rebuild once, on release, so the drag
+  // itself stays cheap. scheduleRerender() per the project rule; it redraws
+  // the dependency lines itself at the end.
+  if(_icoNeedsRebuild||_rowHNeedsRebuild){
+    _icoNeedsRebuild=false; _rowHNeedsRebuild=false;
+    scheduleRerender(true);
+    return;
+  }
   drawDepLines();
 }
 const colState={ref:false,hrs:false,alloc:false,prog:false,type:false,doc:false,task:false,src:false,srcsch:false};
@@ -5148,7 +5252,7 @@ function toggleCol(col,btn){
   const cgCol=document.getElementById('col-'+col);
   if(cgCol) cgCol.style.display=vis;
 }
-function toggleLabels(cb){labelsVisible=cb.checked;document.querySelectorAll('.m-lbl').forEach(el=>el.style.display=labelsVisible?'':'none');}
+function toggleLabels(cb){labelsVisible=cb.checked;document.querySelectorAll('.m-lbl').forEach(el=>el.style.display=labelsVisible?'':'none');applyRowHeight();onSizeSliderRelease();}
 function toggleShortTitles(cb){shortTitlesVisible=cb.checked;document.querySelectorAll('.m-short-title').forEach(el=>el.style.display=shortTitlesVisible?'':'none');}
 function toggleMHours(cb){mHrsVisible=cb.checked;document.querySelectorAll('.m-hrs,.m-hrs-loe').forEach(el=>el.style.display=mHrsVisible?'':'none');}
 function toggleRemarks(cb){remarksVisible=cb.checked;document.querySelectorAll('.remarks').forEach(el=>el.style.display=remarksVisible?'':'none');}
@@ -5865,6 +5969,7 @@ function rerender(overrides){
   // reapply active display settings
   setWkWidth(document.getElementById('wk-width').value);
   setIcoSize(document.getElementById('ico-size').value);
+  applyRowHeight();
   applyColState();
   // teardown() rebuilt every cell, every <col> and every month band, so the
   // date range's hidden columns are gone until the filter runs again. The
@@ -7910,6 +8015,7 @@ document.getElementById('dep-tooltip').addEventListener('click',()=>{
   // paint through renderRows() rather than rerender(), so the same reapply the
   // rebuild does has to run here or the declared defaults never take effect.
   applyColState();
+  applyRowHeight();
   if(!labelsVisible) document.querySelectorAll('.m-lbl').forEach(function(e){e.style.display='none';});
   updateHeaderMeta();
   renderDiagnostics();
