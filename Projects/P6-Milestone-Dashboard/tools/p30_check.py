@@ -403,6 +403,52 @@ PROBE = r"""
     ck('perf: the filter still runs once the typing stops',
        afterSettle===1, afterSettle+' call(s) after settle');
 
+    // ================= 8. Dependency lines under a filter =================
+    // Reported from the field: "All on" drew nothing. The lines were being
+    // drawn, but markerCenter() measured markers whose row or week column the
+    // filter had hidden. Those elements are still in the DOM and still answer
+    // querySelector; they just have a zero rect, so every one of them resolved
+    // to the SAME point at the board's top-left corner. Measured at 308 of 331
+    // paths collapsed to zero size under a week plus date-range filter, which
+    // is indistinguishable from "the feature is broken".
+    clearFilter(); await settle();
+    setAllDep('pred',true); await settle();
+    const zeroSized=function(){
+      return Array.from(document.querySelectorAll('#dep-lines-g path.dep-line'))
+        .filter(function(pth){ const r=pth.getBoundingClientRect();
+          return r.width<0.5&&r.height<0.5; }).length;
+    };
+    const pathCount=function(){ return document.querySelectorAll('#dep-lines-g path.dep-line').length; };
+    R.notes.depUnfiltered={paths:pathCount(),zero:zeroSized()};
+    ck('deps: there are dependency lines to measure', pathCount()>50, pathCount());
+    ck('deps: no line is zero-sized with no filter', zeroSized()===0, zeroSized());
+
+    document.getElementById('filter-date-from').value='2026-09-01';
+    applyFilter(); await settle(); await settle();
+    R.notes.depWithRange={paths:pathCount(),zero:zeroSized()};
+    ck('deps: a date range does not collapse lines onto the board corner',
+       zeroSized()===0, zeroSized()+' of '+pathCount()+' zero-sized');
+    // applyFilter() is the choke point every filter goes through, so the lines
+    // must already have been redrawn by the time it returns. Without that they
+    // stayed frozen wherever the markers used to be.
+    ck('deps: the filter redrew the lines rather than leaving them stale',
+       pathCount()<R.notes.depUnfiltered.paths,
+       pathCount()+' after vs '+R.notes.depUnfiltered.paths+' before');
+
+    document.getElementById('week-filter').value='5';
+    document.getElementById('filter-mode').value='week-plus4';
+    applyFilter(); await settle(); await settle();
+    R.notes.depWithWeek={paths:pathCount(),zero:zeroSized(),
+      rows:document.querySelectorAll('tr[data-type="row"]:not(.hidden-row)').length};
+    ck('deps: with everything filtered out, no line is drawn at all rather than piled in the corner',
+       zeroSized()===0, zeroSized()+' of '+pathCount()+' zero-sized');
+
+    clearFilter(); await settle(); await settle();
+    R.notes.depAfterClear={paths:pathCount(),zero:zeroSized()};
+    ck('deps: clearing the filter brings every line back',
+       pathCount()===R.notes.depUnfiltered.paths && zeroSized()===0,
+       pathCount()+' vs '+R.notes.depUnfiltered.paths);
+
     R.ok=true;
   }catch(e){ R.ok=false; R.err=e.message; R.stack=(e.stack||'').split('\n').slice(0,4).join(' | '); }
   emit();
@@ -453,7 +499,8 @@ def main():
               "idCount", "idUnique", "suffixed", "rowIdCount", "twinId",
               "filterOptions", "filteredRows", "srcSchCells", "hdrCells", "bodyCells",
               "publishedSources", "restored", "afterViewSwitch", "idListLength", "debounce",
-              "rangeStyleRules", "inlineHiddenCells", "hiddenCols"):
+              "rangeStyleRules", "inlineHiddenCells", "hiddenCols",
+              "depUnfiltered", "depWithRange", "depWithWeek", "depAfterClear"):
         if k in n:
             v = n[k]
             print(f"   {k}: {json.dumps(v) if isinstance(v, (list, dict)) else v}")
