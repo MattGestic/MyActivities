@@ -504,22 +504,45 @@ PROBE = r"""
     ck('placement: every slider setting had markers and labels to measure',
        sampled, JSON.stringify(results.map(function(c){return c.at+':'+c.markers+'/'+c.labels;})));
     const badM=results.filter(function(c){ return c.markersOut>0; });
-    const badL=results.filter(function(c){ return c.labelsOut>0; });
     ck('placement: no marker sits outside its row at any slider setting',
        badM.length===0, badM.map(function(c){return c.at+'='+c.markersOut;}).join(', '));
-    ck('placement: no label stack sits outside its row at any slider setting',
-       badL.length===0, badL.map(function(c){return c.at+'='+c.labelsOut;}).join(', '));
-    // Rows have to grow when labels are on, or the three bands cannot be
-    // separated without leaving the row.
+    // A label stack IS allowed out of the row at P32, and this sweep runs at the
+    // 34px default. The user's instruction was that labels must never change
+    // layout, and the trade that buys is a banded label overlapping the gutter
+    // on a short row rather than the row growing underneath it. What stays
+    // asserted is that the spill is bounded by one label line. Whether the row
+    // height control clears it is measured across row heights in
+    // tools/p32_check.py, which is where that sweep lives.
+    // This probe's containment() reports ONE worst overflow across markers and
+    // labels, not a pair, so c.worstLabel was undefined and the bound came out
+    // NaN. Markers are asserted at zero just above, so any positive worst here
+    // can only be a label.
+    const spill=Math.max.apply(null,results.map(function(c){ return c.labelsOut?c.worst:0; }));
+    R.notes.labelSpill=results.map(function(c){ return c.at+':'+c.labelsOut; });
+    ck('placement: a label stack never spills more than one line past its row',
+       spill<=20, 'worst '+spill+'px');
+    // Inverted at P32. Rows used to be held at a 48px floor while labels were
+    // on, which is the coupling the user asked to be removed: a display toggle
+    // must not resize the board.
+    const hBefore=Array.from(document.querySelectorAll('tr[data-type="row"]:not(.hidden-row)'))
+      .map(function(tr){ return Math.round(tr.getBoundingClientRect().height*100)/100; });
     R.notes.rowHWithLabels=getComputedStyle(document.documentElement).getPropertyValue('--row-min-h').trim();
-    ck('placement: rows are held taller while milestone labels are shown',
-       parseInt(R.notes.rowHWithLabels,10)>=48, R.notes.rowHWithLabels);
     setShortTitleMode('off');
     if(lblCb&&lblCb.checked){ lblCb.checked=false; toggleLabels(lblCb); }
     await settle(); await settle();
+    const hAfter=Array.from(document.querySelectorAll('tr[data-type="row"]:not(.hidden-row)'))
+      .map(function(tr){ return Math.round(tr.getBoundingClientRect().height*100)/100; });
     R.notes.rowHNoLabels=getComputedStyle(document.documentElement).getPropertyValue('--row-min-h').trim();
-    ck('placement: and go back to the chosen height once labels are off',
-       parseInt(R.notes.rowHNoLabels,10)<48, R.notes.rowHNoLabels);
+    let moved=0;
+    for(let i=0;i<Math.min(hBefore.length,hAfter.length);i++)
+      if(Math.abs(hBefore[i]-hAfter[i])>0.5) moved++;
+    ck('placement: there were rows to compare across the label toggle',
+       hBefore.length>100&&hBefore.length===hAfter.length, hBefore.length+' vs '+hAfter.length);
+    ck('placement: turning milestone labels off changes no row height',
+       moved===0, moved+' of '+hBefore.length+' rows moved');
+    ck('placement: and the declared row height is the one the user asked for, either way',
+       R.notes.rowHWithLabels===R.notes.rowHNoLabels,
+       R.notes.rowHWithLabels+' vs '+R.notes.rowHNoLabels);
 
     R.ok=true;
   }catch(e){ R.ok=false; R.err=e.message; R.stack=(e.stack||'').split('\n').slice(0,4).join(' | '); }
@@ -573,7 +596,7 @@ def main():
               "publishedSources", "restored", "afterViewSwitch", "idListLength", "debounce",
               "rangeStyleRules", "inlineHiddenCells", "hiddenCols",
               "depUnfiltered", "depWithRange", "depWithWeek", "depAfterClear",
-              "containment", "rowHWithLabels", "rowHNoLabels"):
+              "containment", "rowHWithLabels", "rowHNoLabels", "labelSpill"):
         if k in n:
             v = n[k]
             print(f"   {k}: {json.dumps(v) if isinstance(v, (list, dict)) else v}")

@@ -147,3 +147,22 @@ The version lives only in `APP_VERSION`. The working file keeps a stable filenam
 **Rules:**
 - Amend on architecture-impacting changes only.
 - If a backlog item conflicts with a decision here, flag it before building.
+
+### Marker placement (v3.1.0-P32)
+
+A marker's position inside its cell is **an anchor plus a pixel offset**, never a percentage.
+
+`.m-wrap` anchors at `left:50%; top:50%`, which resolves against the cell's real padding box and therefore lands on the true centre of whatever height the row turns out to be. `msCellOffset()` then returns `--mdx`/`--mdy` in pixels, budgeted from `ROW_HEIGHT` and `COL_WIDTH`.
+
+Two properties make this safe, and both are the point:
+
+- **The budget is a minimum.** `ROW_HEIGHT` is what the user asked for; the rendered cell can only be taller, because content sets a floor. So an offset that fits the budget fits the cell. The error direction is "used less room than was available", which is invisible. A percentage had the opposite direction, and any correction applied to it had to be computed against an assumed height the render could not know.
+- **The offset does not scale with the row.** A percentage spread grew as row height rose, so raising the row scattered the markers. A pixel offset separates them by what an icon needs and no more.
+
+Markers sharing a cell cascade **diagonally**, `slot = i - (n-1)/2` on both axes: monotonic across and down, symmetric about the centre, and therefore incapable of putting two markers in one cell at the same position for any N. The rule it replaced alternated on `i%2` and produced two positions for every N.
+
+The label stack is pinned to the **cell's** midline by `--lbl-dy = -mdy + band`. Both terms are pixels in one frame, so the undo is exact and no row height appears in the sum.
+
+**Labels never affect layout.** The band is a fixed constant. A display toggle that resizes the board is not a display toggle, and the row height control is the user's lever for a condensed board. The accepted consequence is that a banded label on a short row overlaps the gutter rather than the row growing beneath it; it is bounded at one label line and clears entirely once the row has room.
+
+Anything `msCellOffset()` reads (icon size, column width, row height) must flag `_placementNeedsRebuild`, because `--mdx`/`--mdy` are written once at render time.

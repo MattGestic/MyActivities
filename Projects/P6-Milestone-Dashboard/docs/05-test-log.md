@@ -1345,3 +1345,61 @@ Source file shape confirmed by static inspection of the workbook: 192 data rows,
 | 2026-09-15 | TEST-31 date range at setup and as a filter, 34/34; full suite re-run; baseline render unchanged; contrast gate green | The board no longer refills the screen width after a range narrows it; fit-to-screen and the A3 preview both do, and both now work with a filter active (TD-92). `--color-bg-subtle` duplicate open (TD-88). ID navigation (TD-73), inner band headings (TD-67), crowded cells (TD-78) and the `.xlsx` CDN dependency (TD-36) all open. | File distribution | v3.1.0-P28 |
 | Pre-migration | TEST-01 full feature regression | Banding (FEAT-10), sorting/icon customisation (FEAT-11), JSON round-trip (FEAT-13) all knowingly not built. Tokenization (FEAT-14) knowingly incomplete. Label collision same-row only. Header aliases exact-match only. | File distribution | v3.1.0-P1 |
 | 2026-09-09 | Migration to git repository, project kit established | TD-01 version discrepancy open; companion tokenization docs (TD-03) not yet located | Branch `p6-milestone-dashboard` | Migration commit |
+
+---
+
+## TEST-34 — Marker placement, and three filter-row defects (v3.1.0-P32)
+
+`tools/p32_check.py`, **36/36**. Headless Chromium, the reference workbook through the real ingest pipeline.
+
+**Measured first, on P31, before any edit.** Two of the three diagnoses written from reading the source did not survive it and were corrected rather than built on:
+
+| Claim from source reading | Measured verdict |
+|---|---|
+| A frame mismatch pushes markers out of their row | **Refuted.** `markersOut: 0` and `labelsOut: 0` at every setting, including row 65 / ID + Title, which is the user's own configuration. The belief gap is a constant 1px (the bottom border), and at the low end of the slider the code under-estimates the row, which is the safe direction. |
+| The `i%2` spread only ever produces two bands | **Confirmed exactly.** `distinctY = 2` for every N from 2 to 6. N=3 is `[28, 72, 28]`. From N=5 the same-y pair overlaps: 0.6px at N=5, 3.5px at N=6. |
+| Toggling labels resizes rows without a rebuild | **Confirmed, worse than written.** 105 of 105 rows change 34.34 to 48px; 0 of 146 markers reposition. |
+
+Two findings the probe was not looking for: the spread is a fraction of the row, so scatter grows with row height (±7.5px at 34px, ±14px at 65px), and the Row height slider's bottom of range is dead (TD-117).
+
+### After
+
+| Group | Assertions |
+|---|---|
+| Offsets | a lone marker is dead centre; **no two markers in a cell share a y, for every N from 2 to 6**; the cascade is monotonic across and down; symmetric about the cell centre; no offset can put an icon past the row it was budgeted for, checked at four icon/column/row combinations |
+| Labels do not move layout | 105 rows compared; turning labels on changes **no** row height; nor does switching to ID + Title; **0 rerenders** behind the toggle |
+| Containment | 8 settings, 146 markers and 146 labels each; **no marker outside its row at any setting**; a label never spills more than one line (worst 8.9px); spill never increases as the row grows; and reaches zero, so the row height control is a real remedy rather than advice |
+| Ghosts | 146 of 146 paired, 0 off their pair's Y under the new transform |
+| Defect A | the toggle is outside the bar it hides; hiding really collapses the bar (1px); the toggle is still laid out and clickable (`offsetParent` non-null, 26px tall); it shows the state it sets; clicking restores the bar; the bar's own hide control sits 8px from the right edge |
+| Defect B | exactly one title field; it is the id `applyFilter` already reads; typing narrows the board (2 of 105); clearing restores it |
+| Defect C | the week filter narrows first; the health change actually happened; **the filter survives it**; survives any other rebuild, which is where the fault really was; and the restore is bounded at the top of the range |
+
+Marker containment by setting, labels on, ID + Title:
+
+| Setting | Markers out | Labels out | Worst label |
+|---|---|---|---|
+| row 34 / ico 15 / wk 36 | 0 | 28 | 8.9px |
+| row 34 / ico 24 / wk 36 | 0 | 28 | 8.9px |
+| row 48 / ico 15 / wk 36 | 0 | 28 | 2.1px |
+| row 65 / ico 15 / wk 36 | 0 | **0** | inside |
+| row 72 / ico 24 / wk 72 | 0 | **0** | inside |
+
+**Two assertions in the first run were wrong about the app rather than the app being wrong** (TD-118): the right-alignment check read `getComputedStyle().marginLeft` expecting the literal `auto`, which is never observable, and the ghost block measured an empty set because the baseline overlay is off by default. The sample-size rule caught the second, as designed.
+
+`tools/p30_check.py` moves to **67/67**: its two row-height assertions encoded the coupling the user asked to be removed and are inverted, and its label-containment assertion becomes a bounded-spill assertion, with the row-height sweep that proves the remedy living in `p32_check.py`.
+
+### Full suite at v3.1.0-P32
+
+| Suite | Result |
+|---|---|
+| TEST-34 placement and filter-row defects | **36/36** |
+| TEST-33 multi-source ingest | **67/67** |
+| TEST-32 settings panel design system | **49/49** |
+| TEST-31 date range | **34/34** |
+| TEST-30 counts, baseline overlay, print | **32/32** |
+| TEST-23 persistence round trip | **20/20** |
+| Ingest, board order | exit 0 |
+| Contrast gate | 0 frozen, 0 below 3.0:1 |
+| Baseline render | unchanged, 105 rows / 146 milestones imported |
+
+**Published:** `releases/v3.1.0-P32_marker-placement-and-filter-row-fixes.html`

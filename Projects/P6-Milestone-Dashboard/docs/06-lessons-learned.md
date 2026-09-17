@@ -145,3 +145,39 @@ It was the assertion that was wrong. A distinct-name count returns 14 whether th
 > Before trusting a failing assertion, check that it could have distinguished pass from fail in the first place. A measurement that returns the same value for both is not evidence either way.
 
 Same family as the vacuous passes (TD-66, TD-87), but the opposite symptom: a vacuous **failure**. Both come from not asking what else could produce this number.
+
+---
+
+## A correction the measurement refused (v3.1.0-P32)
+
+Three defects were written up from reading the source, with confidence, before a probe was run. **Two of the three were wrong.** The headline one, that a coordinate-frame mismatch was pushing markers out of their rows, measured `markersOut: 0` at every setting including the user's own. The belief gap was a constant 1px, and it pointed the safe way.
+
+The plan said measurement was step one and it was, which is the only reason the rework was built on the two real defects instead of the invented one. Had it been skipped, the fix would have been elaborate, plausible, and aimed at nothing.
+
+**A diagnosis read off the source is a hypothesis.** It earns the word "cause" after a measurement, not before. This is the same rule as "a code read-through is not a test", applied one step earlier: to the explanation, not just to the fix.
+
+## The two-state toggle, found in the second place it lived
+
+`CLAUDE.md` has carried this since P25: *"Test N=3, not just the reported N=2. The label collision system re-collided on the third marker in a cluster because it was built as a two-state toggle."*
+
+The **label** system was rebuilt as three bands then. The **icon** spread in the same function kept `y = 50 ± 22` on `i%2` and was never revisited, so it produced exactly two distinct positions for every N from 2 to 6 for four more partials. N=3 came out `[28, 72, 28]`.
+
+Writing a lesson down fixes the instance. It does not find the other places the same shape already exists. When a defect class is named, the next move is a search for that shape across the file, not only a fix where it was reported.
+
+## A control that hides something must outlive what it hides
+
+The only control that could reopen the filter row lived inside the filter row. Hiding it collapsed the container to `max-height: 0; overflow: hidden`, and the way back went with it.
+
+This is TD-92's shape again, and TD-105's: an element still in the DOM, still answering `querySelector`, with no layout whatsoever. Three separate defects in this project now trace to treating "present in the DOM" as "available to the user". The test that distinguishes them is `offsetParent !== null` or a non-zero rect, and it is the one the P32 check makes.
+
+## A rule applied in two of the three places that need it
+
+`rebuildBandingFilter()` and `rebuildSourceFilter()` both save their selection before rebuilding options and restore it after. `rebuildWeekFilter()` did neither, so `teardown()` dropped the selection and every `scheduleRerender(true)` silently cleared the week filter.
+
+It surfaced as "changing a health icon unfilters the dashboard", which is a true report of a symptom whose cause lives nowhere near health. **A user-reported trigger is one caller, not the defect.** The fix belonged at the rebuild, not at the health handler, and the check asserts both the reported path and the general one.
+
+## Assert the observable value, not the authored one
+
+A check read `getComputedStyle(el).marginLeft` expecting `"auto"` and got `"911.188px"`. `getComputedStyle` reports used values; `auto` is an input, never an output. Right-alignment is a position, so it has to be measured as one.
+
+Sibling of the padding-box/border-box finding at P25: both are cases of asserting in a frame the browser does not report in.
