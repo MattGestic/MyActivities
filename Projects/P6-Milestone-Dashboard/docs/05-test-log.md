@@ -1406,6 +1406,57 @@ Marker containment by setting, labels on, ID + Title:
 
 ---
 
+## TEST-36 — Marker anchoring and the measured header heights (v3.1.0-P34)
+
+`tools/p34_check.py`, **73/73**. Headless Chromium, the reference workbook through the real ingest pipeline, **run at three viewport widths** (390x844, 768x1024, 1440x900) because one width cannot tell a measured height from a constant that happens to be right.
+
+Six of the assertions are source-level greps rather than measurements, for the same reason: a literal that happens to be correct measures as correct.
+
+| Group | Assertions |
+|---|---|
+| Sequence | against the generator for n = 1 to 8: run of one is the middle band; run of two is top then bottom, leftmost up; run of three cascades top, middle, bottom; **the fourth resets to the top**, reversing TEST-35; the fifth is middle and the sixth bottom; no two adjacent markers in a run share a band |
+| Run boundary, both bounds | the threshold is a gap of three columns, i.e. two blank ones. Outer bound: 95 markers further than that from both neighbours, **0 off centre**. Inner bound: 3 markers at exactly the threshold, **0 runs wrongly broken** |
+| Pair rule | four cases (same cell and different cells, at three bands and at five), all symmetric about the midpoint with the leftmost up; the same-cell case now matches the different-cell case exactly |
+| SNIP-212 | its row still carries four markers in adjacent columns 18 to 21, and **it sits on the top band**, measured at all three widths |
+| Header seam | six display states (after import, two slider combinations, print mode, fit to screen, and back to default): the week band sticks exactly at the month row's measured height, **seam 0.00px in every one**, at every width; the offset is not 19.5px; `--hdr-phase-h` is written rather than left on its fallback |
+| Filter bar | open, closed and reopened at each width: **nothing clipped while open**, collapses to 0 when closed, and the cap is not the old 160px |
+| Board effect | run lengths and band distribution reported, not predicted, so the cost of the plain repeat stays visible |
+| Containment | 146 markers, **0 outside their row**, at every width |
+
+### What the three reported cases measured before anything was changed
+
+| Case | P33 build |
+|---|---|
+| Row 69, SNIP-212 | four markers at columns 18, 19, 20, 21 on the triangle wave, SNIP-212 on the middle band |
+| SNIP-218 / SNIP-219 | **different rows**, each the only marker in its row, both dead centre, at 1600 and at 390 wide |
+| Month header row | renders 16.00px against a hardcoded 19.5px sticky offset |
+| Filter bar at 390 wide | content 202px in a 159px box |
+| Filter bar at 1600 wide | 63px in 63px, nothing clipped |
+
+### Two findings from measuring first
+
+- **A diagnosis written from the source was refuted for the third time in three partials** (TD-129). The plan named a same-cell pair rule as the cause of the SNIP-218/219 markup. The two markers are in different rows and both already centred, so the rule it blamed was not what rendered. The pair rule was still wrong and is fixed, but as an inconsistency with no visible effect, which is what the check reports.
+- **The obvious fix for SNIP-212 does not work, and arithmetic caught it rather than a build.** Capping a run at three members splits row 69 into a run of three and a run of one, and a run of one is the middle band by definition, so SNIP-212 would have landed back where it started. The cycle itself had to change.
+
+### Full suite at v3.1.0-P34
+
+| Suite | Result |
+|---|---|
+| TEST-36 marker anchoring and header heights | **73/73** |
+| TEST-35 marker staggering | **38/38**, two sequence assertions moved with the reversal |
+| TEST-34 placement and filter-row defects | **35/35** |
+| TEST-33 multi-source ingest | **67/67** |
+| TEST-32 settings panel design system | **49/49** |
+| TEST-31 date range | **34/34** |
+| TEST-30 counts, baseline overlay, print | **32/32** |
+| TEST-23 persistence round trip | **20/20** |
+| Ingest, board order | exit 0 |
+| Contrast gate | 0 frozen, 0 below 3.0:1 |
+
+**Published:** `releases/v3.1.0-P34_marker-anchoring-and-compact-header.html`
+
+---
+
 ## TEST-35 — Proximity-scoped marker staggering (v3.1.0-P33)
 
 `tools/p33_check.py`, **38/38**. Headless Chromium, the reference workbook through the real ingest pipeline.

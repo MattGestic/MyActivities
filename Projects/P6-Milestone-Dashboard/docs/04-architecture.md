@@ -148,7 +148,7 @@ The version lives only in `APP_VERSION`. The working file keeps a stable filenam
 - Amend on architecture-impacting changes only.
 - If a backlog item conflicts with a decision here, flag it before building.
 
-### Marker placement (v3.1.0-P33)
+### Marker placement (v3.1.0-P34)
 
 Three rules, in order of how much they constrain everything else.
 
@@ -156,7 +156,13 @@ Three rules, in order of how much they constrain everything else.
 
 **2. The anchor is the cell's true centre; every offset is pixels.** `.m-wrap` sits at `left:50%; top:50%`, which resolves against the cell's real padding box whatever height the row turns out to be. `--mdx`/`--mdy` are pixel offsets budgeted from `ROW_HEIGHT` and `COL_WIDTH`, which are minimums the rendered cell can only exceed. So an offset that fits the budget fits the cell, and the error direction is "used less room than was available", which is invisible. A percentage had the opposite direction, needed correcting against a height the render could not know, and grew the spread as the row got taller.
 
-**3. Staggering is proximity-scoped.** A row's markers are walked in column order and cut into runs; a marker more than `MS_PROXIMITY_COLS` from the previous one starts a new run, and a run of one is dead centre. Four columns because that is about how wide a rendered label is, so a run is exactly the set whose labels can collide. Within a run: top/bottom for two, top/middle/bottom for three, and a triangle wave beyond, so the fourth is the middle band. A plain repeat would put markers one and four on the same line a few columns apart, which is the two-state trap this file has hit three times.
+**3. Staggering is proximity-scoped.** A row's markers are walked in column order and cut into runs. A run continues while consecutive markers are at most **two blank columns** apart, a gap of three (`MS_PROXIMITY_COLS`); anything further out starts a new run, and a run of one is dead centre.
+
+The threshold is a fixed count of schedule columns and is deliberately **not** derived from the rendered label width, which is what it was until P34. A label width moves with the label scale controls, so deriving the boundary from it meant changing the text size re-anchored every marker on the board. Marker anchoring answers to the data; only the data may move it.
+
+Within a run the levels **repeat**: top, middle, bottom, top, middle, bottom, with top and bottom for a run of two and the pair symmetric about the midpoint whatever cells its members occupy.
+
+P33 used a triangle wave here instead, so the fourth marker sat on the middle band, on the argument that a plain repeat puts markers one and four on the same line a few columns apart. **That argument is correct and the collision is real.** It was reversed at P34 against a rendered case: row 69 of the reference board carries four markers in directly adjacent columns and the fourth was wanted at the top. Capping the run length cannot deliver that, because a run of one is the middle band by definition. The collision is now an accepted cost, measured rather than avoided. Do not restore the wave from the old reasoning alone; it needs a rendered case of its own.
 
 **Band reuse is legitimate across cells and illegitimate within one.** Markers sharing a cell share an x, so the band is all that separates them. A cell holding more than three grows *its* row via `--row-h-eff`, by the minimum that gives each of them a line. Data-driven, never display-driven: a denser import can change row heights, no toggle ever does.
 
@@ -167,3 +173,22 @@ Three rules, in order of how much they constrain everything else.
 Anything `msCellOffset()` or the band reads (icon size, column width, row height) must flag `_placementNeedsRebuild`, because the offsets are written once at render time.
 
 **Hidden markers are derived, never stored.** `markerHidden()` reads the row's `hidden-row` class and the cell's `data-col` against `DATE_RANGE_COLS`, so it costs no layout and cannot go stale. A stored flag would need writing at four entry points, and this file has three separate defects from a rule applied at some and not others.
+
+### Sticky header offsets (v3.1.0-P34)
+
+The two header rows stack: the month band sticks at the top of the scroller, the week band directly below it. The week band's offset is **measured, never a literal**.
+
+`watchStickyHeights()` is the single writer. It puts two custom properties on `:root` from `ResizeObserver`s:
+
+| Property | Source | Read by |
+|---|---|---|
+| `--hdr-phase-h` | `#phase-hdr`'s row height | `tr.hdr-wk th { top }` |
+| `--tfb-h` | `#top-filter-bar`'s content height | `#top-filter-bar.open { max-height }` |
+
+Three rules that are load-bearing here:
+
+- **Observers, not hooks.** The alternative was hooks in `rerender()`, `applyRowHeight()`, `togglePrintMode()`, `fitToScreen()` and a window resize listener. Five entry points, and a missed entry point has cost this project a cycle four times. An observer has no call sites to forget. Both observed elements survive rerenders: `renderPhaseHdr()` appends cells to the same `<tr>` rather than replacing it.
+- **Measure the row, not a cell.** The month row's metadata cells carry `padding:0` and its month cells 3px, so a single `<th>` is shorter than the row and the week band would stick too high.
+- **The filter bar's cap over-estimates on purpose.** `scrollHeight` is read from whichever state the bar is in, and while it is closed its vertical padding has transitioned away, so an exact figure taken then would be short by that padding and clip on the way back open. A `max-height` that overshoots costs nothing visible; it is a cap, not a height.
+
+Both literals these replaced were wrong and had been for some time: the week band sat 3.5px below a 16px row, and the filter bar's 160px cap cut 43px off its own content at phone width.

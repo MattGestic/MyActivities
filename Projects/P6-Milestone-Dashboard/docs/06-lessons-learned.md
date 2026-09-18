@@ -216,3 +216,29 @@ The first same-cell implementation asked `msRunLevels(n)` for a sequence and got
 The row had already been grown to carry five bands. The generator simply had no way to use them, because its only input was how many markers there were, not where they sat.
 
 **When a rule has an exception that depends on context, the function applying it needs that context as an argument.** Passing `n` where the rule needs the columns is how the exception ends up unrepresentable.
+
+## A hardcoded constant standing in for a measured height (v3.1.0-P34)
+
+The week header row stuck at `top: calc(var(--hdr-search-h) + 19.5px)`. The `19.5px` was a stand-in for the month row's height. That row renders 16px, so a 3.5px band sat between the two sticky rows and data rows scrolled through the seam. It had been there at every viewport width, which is why it took a phone screenshot to notice: on a desktop the eye reads it as a border.
+
+The filter bar's `max-height: 160px` was the same shape. The bar wraps, so the cap is only correct at widths where the content happens to fit under it.
+
+Both are now measured from one `ResizeObserver` each. The alternative was hooking `rerender()`, `applyRowHeight()`, `togglePrintMode()`, `fitToScreen()` and a resize listener: five entry points, which is the trap recorded three times above. **An observer has no call sites to forget.**
+
+The generalisation, and the fourth time this family has appeared here: **a literal in CSS that names a rendered dimension is a hypothesis about that dimension.** It is right the day it is written and nothing revisits it. If CSS needs a dimension it cannot compute, measure it into a custom property and let one writer own it.
+
+Two details that only measurement would have given:
+
+- The month row's height had to be read from the **row**, not one of its cells. Its metadata cells carry `padding:0` and its month cells 3px, so a single `<th>` is shorter than the row.
+- The filter bar's cap has to **over-estimate**. `scrollHeight` is read from whichever state the bar is in, and while closed its vertical padding has transitioned away, so an exact figure taken then is short by that padding and clips on the way back open.
+
+## A diagnosis from the source, refuted for the third time in three partials (v3.1.0-P34)
+
+Three cases came in with red markup. The plan named a cause for each, read off the source with confidence. Measuring the build first:
+
+- **One diagnosis was simply wrong.** SNIP-218 and SNIP-219 were said to be two markers sharing a cell and getting an asymmetric pair of bands. They are in different rows, each the only marker in its row, and both already dead centre, at two viewport widths. The rule blamed for the screenshot had nothing to do with it. The rule was still inconsistent and was fixed, but as an inconsistency with no visible effect, and the check says so rather than claiming the screenshot.
+- **The rule the user chose did not reach the case they chose it for.** They specified that a run should break on more than two blank columns. The marker they wanted moved sits in a run of four directly adjacent columns, so no proximity threshold touches it. Shipping the rule and reporting that it changed nothing there was the honest move; quietly substituting a different rule was not.
+- **The obvious alternative fix failed on arithmetic, before any build.** Capping a run at three members would split that run into three plus one, and a run of one is the middle band by definition, so the marker would have landed back where it started. Checking that on paper cost a minute; discovering it in a render would have cost a cycle.
+
+This is now a standing habit rather than a lesson: **measure the current build against the reported case before writing the fix, and say what the measurement contradicted.** It has changed the plan in each of the last three partials.
+
