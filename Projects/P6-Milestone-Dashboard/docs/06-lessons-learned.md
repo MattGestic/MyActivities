@@ -34,6 +34,12 @@ Short-form, grouped by pattern. Each one caused a real bug or wasted a cycle. Pu
 | A published file showed every annotation except row health and remarks, which were in the file and correct | Those two are parked in `PENDING_ROW_OVERRIDES` because they key on rendered rows. `rerender()` drains that queue; the init path builds the first paint through `renderRows()` directly and never did. Two code paths that must end in the same state, only one of which was kept up to date | **Third instance of this exact shape** (import teardown in P13, seed-versus-baseline reads in P16). When state is deferred to "whenever the next rebuild happens", find every path that produces a rebuild — the first paint is one of them, and it is the path a reader of a published file always takes |
 | Dependency-line comments were dropped by both the publish and the export | Every other annotation store was added to both payloads as it was built; this one was written months earlier, lived beside the dependency-drawing code rather than with the other stores, and was never added to either | A store is not "saved" because the feature that writes it works. Persistence is a property of the payload, so the test has to enumerate the stores and assert each one, rather than asserting the ones it remembers |
 | A background token used as a text colour, invisible in one theme for as long as that theme existed | `--color-bg-header` coloured bold values in the source box. In light it happened to read as blue emphasis; in dark it was the navy header on a dark panel at 1.31:1. No probe, because the probe list was built per component and nobody thought of a background token as something that needs a contrast check | When a colour token changes role, it stops being covered by whatever checked it before. Probe **per text colour that lands on a background**, not per component, and include the tokens being used against their own name |
+| A check derived its own expected value, derived nothing, and passed anyway | The TEST-25 probe looked for heading rows with the wrong shape, got an empty list, printed an empty "expected" section and fell through to a weaker heuristic which passed | A derivation that returns nothing is a broken check, not a passing one. Assert the derivation produced something BEFORE asserting anything with it, and prove the check fails on the unfixed build |
+| The board reordered the client's schedule for as long as import existed, and no test noticed | The rule "present it in the schedule's order" was assumed by everyone and written down nowhere, so nothing asserted it. The baseline seeds carry no WBS, so the shipped board looked fine and only a real import exposed it | An expectation nobody wrote down is an expectation nothing tests. When a user says "we agreed X", check whether X is recorded: if it is not, that absence is itself the finding |
+| A CSS transition never completed under the headless probe, so a correct rule read as broken | Chromium's `--virtual-time-budget` fast-forwards timers but does not advance the CSS transition clock. `#filter-bar.open` matched, `matches()` returned true, and `getComputedStyle` still reported the start value however long the probe waited | **Third virtual-time artifact in this project.** When probing anything behind a `transition`, set `style.transition='none'` and force a reflow before reading, or assert the class rather than the animated value. A computed value that will not move while the selector demonstrably matches is the harness, not the CSS |
+| A panel moved side, and the page kept being pushed the old way | `body.cv-open{margin-left:300px}` was written when View Controls opened from the left. Moving the panel changed its own CSS but not the rule that makes room for it, so the board shifted away from the panel and the panel fell off the viewport | A panel's open-state page offset belongs to the panel. When moving one, grep for every rule keyed on its open class, not just the rules that name the panel |
+| Every marker measured 0.5px off centre, and the placement was exact | An absolutely positioned element resolves percentages against its containing block's **padding box**; `getBoundingClientRect()` on that container returns its **border box**. This table's cells carry a 1px bottom and 0.5px right border, so the two frames differ by exactly the offset seen | When checking a percentage-positioned element, build the container's padding box from its computed border widths and measure against that. A uniform small offset across every instance is a frame mismatch, not a placement bug |
+| A dialog test passed on two fields that were not rendered at all | The card was opened on the first marker on the board, which is always a baseline seed. Every seed carries discipline "Unassigned" and no float, so the parent heading and the float column were both `display:none`, and the position assertions compared against zero rects | Pick the fixture by the property under test, not by whatever is first. When asserting that an element is positioned, assert it is **visible** in the same breath, or a hidden element reports a zero rect and passes every comparison |
 
 ## 4. CSS behaviors that silently break things
 
@@ -84,4 +90,177 @@ These two proved general, not project-specific, and now bind every project in th
 | The same low-contrast token was walked into twice, on the pass immediately after it was documented by value | TD-28 recorded `--color-text-small` at 1.18:1 on a dark row. The next component built reached for it anyway, because it is the semantically obvious name for a small label and the number lived in a to-do file rather than next to the token | **A measured defect belongs next to the thing measured, not only in a tracker.** A comment on the token definition would have been read at the moment of choosing it; a to-do row was not. The probe caught it either way, which is the argument for probing every new component rather than only new colours. |
 | A new row-number element shipped into review at 1.99:1 contrast in dark mode, past a contrast check that reported zero findings | The check skipped any element whose own `background-color` was transparent, on the reasoning that such an element "does not own its backdrop". A row number sits directly on the row and owns nothing, so it fell straight through the skip and was never measured | **A verification tool's skip conditions are assumptions, and they need testing like any other code.** Every `continue` in a checker is a claim about what cannot go wrong there. When adding a component whose shape differs from what the tool has seen before, check whether the tool actually measured it, rather than reading a clean report as coverage. The fix was to resolve a transparent element to its nearest painting ancestor, which reproduced the defect immediately. |
 | Closing that blind spot produced two further findings that were not defects | Two probes wrapped an SVG-fill class around a literal "x". No element in the app ever applies those classes to text, so the measured case could not occur | Third instance of this exact pattern here (after `th.c-name` and AC-10). **Before acting on a finding from a synthetic probe, query the rendered app for the case the probe fabricates.** If it does not occur, the probe is wrong, not the code. Fixing it would have changed working code to satisfy a test of something that does not exist. |
+| A toggle that rebuilt the board **appended** a second copy of it instead of replacing it, for as long as the toggle has existed | `renderRows()` appends rows; the only thing that empties the tbody is `teardown()`, which runs inside `rerender()`. One handler called `renderRows()` on its own. Every use of that toggle added another 159 rows under the existing ones | **A render function that does not clear is only safe where something else just cleared.** The repo rule already said to call `scheduleRerender(true)` for a user action needing a rebuild; the one place that ignored it is the one place that broke. When a function's safety depends on its caller, say so at the function, and grep its call sites when the invariant is discovered rather than fixing only the reported one. The symptom was also perfectly misleading: turning the toggle OFF looked like a no-op because the elements that stayed on screen belonged to the copy the same click had just created. |
+| A feature was reported as not working when every element it draws was present, correctly valued, visible and measurable | The elements were 4.5 x 8px, unbacked, placed fully outside their icon on the boundary between two rows, and half-covered by another layer that starts at the same edge. `getBoundingClientRect()` reports all of that as fine | **Existence is not legibility, and a probe that asserts existence will pass on an invisible feature.** Assert position relative to the thing the element annotates, size against a floor a reader can actually resolve, and overlap against the layers that share its anchor. A screenshot is what exposed this, which is the narrow case where looking is worth more than measuring: not to verify, but to find out what to measure. |
+| An overlay meant to sit level with the marker it shadows was 3px below it and, in crowded cells, exactly underneath it | Two separate copies of a placement decision. The overlay took the **live** marker's x, which encodes the crowding of a different cell, and a CSS rule nudged it in both axes when only one axis was wanted. The "so it is not hidden" nudge was then measured from the cell centre, but a cell with several markers spreads them off centre, so the nudge moved the overlay onto one of them | **An offset that exists to separate two elements has to be measured from the element it is separating from, not from the container.** The container's centre is only the other element's position in the single-occupant case, which is exactly the case where the offset does not matter. |
+| A probe reported three false failures on correct code, and the fix was to change the product | Two markers in one row can share a baseline column, so the probe's attempt to infer which live marker an overlay belonged to picked the wrong one. The overlay now names its pair in a `data-` attribute | **When a probe cannot reconstruct a relationship the code knows, publish the relationship rather than loosening the assertion.** Loosening it would have hidden the real cases too. The attribute is also inspectable in devtools, so the product got better rather than just the test. |
+| Two assertions passed against an empty set, the third occurrence of this in one project | The toggle under test goes through a debounced rerender. The probe read the DOM synchronously, found nothing, and every "every element satisfies X" assertion was vacuously true | **`every()` over an empty set is the default failure mode of a DOM probe, not an edge case.** Every probe that measures a set now asserts its sample size as its own named check. Timers do fire under `--virtual-time-budget`, but only if the probe yields to them, which is a second entry in the growing list of virtual-time artefacts alongside transitions never completing. |
+| A window that framed the data was inherited as a constant and never questioned, and was wrong in both directions at once on the same file | The board spanned a fixed 12 weeks before the data date to 26 after it. That happened to fit the seeded baseline it was written for, so it read as correct for as long as nobody imported a schedule shaped differently. On the real export it dropped three milestones past its end and padded eight empty weeks onto its front | **A framing constant is a claim about the data, and it should be derived from the data or justified against it.** The three lost milestones were not silent — they raised a diagnostic — but a warning that the board cannot show part of the schedule was being treated as information rather than as a defect. When a check reports the same thing on every run, decide whether it is a report or a symptom. |
+| A button did nothing, reported nothing, and had done nothing for as long as it had existed alongside filtering | Two fitters measured `document.querySelector('tr.data')` to learn a column width. A hidden row has no layout, so every cell in it returns `offsetParent === null`; with any filter that hid the first row, the visible-cell list came back empty and both functions returned early | **"The first one" is only safe where nothing can hide one.** Any query that takes the first match of something the UI can hide needs to take the first VISIBLE match instead. Also: an early return on an empty measurement is the quietest possible failure — the function did exactly what it was told and the user sees a dead control. Found by a test of a different feature, because the new feature made the hidden-row case ordinary rather than rare. |
 | The handoff's companion files were missing at migration and blocked FEAT-14 for a full cycle | Section 5 row 1 repeating itself: the files existed but were never delivered alongside the document that depended on them | Already captured. Worth noting that the predicted failure happened exactly as written, which is the argument for treating that row as a rule rather than an anecdote. |
+
+## A probe that outlives the thing it probed passes against nothing
+
+`tools/theme_check.py` carried four probes that built `.mnt-slot`, `.mnt-name`, `.mnt-lines` and `.mnt-badge` elements by hand. When v3.1.0-P29 replaced those classes, the probes kept passing: the constructed `<div>` still inherited the body's colours, and body colours toggle. Nothing failed, the count stayed green, and the mount panel had no contrast coverage at all.
+
+This is the fourth vacuous pass in this project (TD-66, the P26 float column, TD-87, and now this), and the first where the probe was measuring a live element that simply no longer had the class it was named for. The sample-size rule from TD-87 does not catch it, because the sample size is one.
+
+Two things came out of it:
+
+- **A probe that constructs its own subject must fail if the subject's class no longer exists.** The drawer probes now mount inside `#settings-drawer` through a helper that throws when the panel is missing, so the element is measured in the frame it really appears in, against the panel's own background and custom properties.
+- **Retire the probe in the same commit as the class.** A probe is part of the component, not part of the test suite's furniture.
+
+## The same run proved that reading the CSS could not have found either defect
+
+`--color-text-note` measured 2.98:1 on the drawer background and always had. The gate reported zero failures because no probe had ever put that ink on that background: the pairing existed in the product and not in the test. It only surfaced because the rebuild turned helper text from an occasional footnote into a primary component, which added the probe.
+
+`.ingest-status.ok` was frozen at a hardcoded `#1a6b3a`. The obvious replacement, `--color-health-good`, is a **fill** and is constant across themes by design, so using it as ink froze it again in a way that reads perfectly correct in the CSS. That is the TD-28 shape a third time, and it generalises:
+
+> A token's role is part of its name. A fill token pressed into service as ink will be frozen, or will be dark-on-dark, and neither is visible in the declaration.
+
+`--color-purple-deep` is the same trap with a twist: it is genuinely used as ink, as a fill, and as ink on a light tint, in three different places. There is no single value that satisfies all three in dark theme, so it cannot be fixed by retuning. The role had to be split (`--color-accent-ink`), which is the tokenisation rule this project already had written down and had not applied here.
+
+## A duplicate declaration can be load-bearing
+
+TD-88 recorded a duplicated `--color-bg-subtle` in the dark theme block and said it needed a consumer sweep before removal. The sweep, done here, shows the duplicate is what keeps the week header a light strip in dark theme, because `tr.hdr-wk th` paints `--color-text-small` on it and that token is `#334` in dark. Deleting the duplicate would have made the week header near-black on near-black.
+
+So the fix for the drawer was not to remove the duplicate but to stop depending on it: the panel takes `--color-bg-panel`, which already toggles. **When a duplicate has survived, find out what is standing on it before removing it.** The tidier change was the one that would have broken the board.
+
+## An id-based smoke test cannot see a reparented element
+
+A stray `</div>` in the new setup step closed `#settings-drawer` one level early. The browser reparented the Defaults panel, the Diagnostics panel and the whole action footer onto `<body>`. Every `getElementById` still resolved, every handler still fired, and the ad-hoc smoke probe reported a clean load with the right row and milestone counts.
+
+`tools/p29_check.py` caught it immediately, because it asks a different question: it queries **through** `#settings-drawer` rather than by id. `DR.querySelector('.sd-actions')` came back null and the probe threw.
+
+> A check that looks elements up by id is testing that the ids exist. A check that looks them up through their container is testing that the structure is what you think it is. Unbalanced markup only fails the second kind.
+
+This is why the structural assertions in `p29_check.py` are scoped to the panel rather than to the document, and why the theme probes mount inside the real drawer instead of on `document.body`.
+
+## The band-order assertion that could not tell the two outcomes apart
+
+`p30_check.py` appends the reference workbook to **itself**, so the two schedules carry identical band names. The first version of the assertion collected distinct band names and expected the count to double. It reported 14 against an expected 28 and looked like a real failure.
+
+It was the assertion that was wrong. A distinct-name count returns 14 whether the two schedules sit one after the other or are interleaved row by row: the measurement cannot distinguish the outcome being tested from its opposite. Counting **contiguous runs** of one band down the board can, and it holds: 28 runs, the second 14 matching the first.
+
+> Before trusting a failing assertion, check that it could have distinguished pass from fail in the first place. A measurement that returns the same value for both is not evidence either way.
+
+Same family as the vacuous passes (TD-66, TD-87), but the opposite symptom: a vacuous **failure**. Both come from not asking what else could produce this number.
+
+---
+
+## A correction the measurement refused (v3.1.0-P32)
+
+Three defects were written up from reading the source, with confidence, before a probe was run. **Two of the three were wrong.** The headline one, that a coordinate-frame mismatch was pushing markers out of their rows, measured `markersOut: 0` at every setting including the user's own. The belief gap was a constant 1px, and it pointed the safe way.
+
+The plan said measurement was step one and it was, which is the only reason the rework was built on the two real defects instead of the invented one. Had it been skipped, the fix would have been elaborate, plausible, and aimed at nothing.
+
+**A diagnosis read off the source is a hypothesis.** It earns the word "cause" after a measurement, not before. This is the same rule as "a code read-through is not a test", applied one step earlier: to the explanation, not just to the fix.
+
+## The two-state toggle, found in the second place it lived
+
+`CLAUDE.md` has carried this since P25: *"Test N=3, not just the reported N=2. The label collision system re-collided on the third marker in a cluster because it was built as a two-state toggle."*
+
+The **label** system was rebuilt as three bands then. The **icon** spread in the same function kept `y = 50 ± 22` on `i%2` and was never revisited, so it produced exactly two distinct positions for every N from 2 to 6 for four more partials. N=3 came out `[28, 72, 28]`.
+
+Writing a lesson down fixes the instance. It does not find the other places the same shape already exists. When a defect class is named, the next move is a search for that shape across the file, not only a fix where it was reported.
+
+## A control that hides something must outlive what it hides
+
+The only control that could reopen the filter row lived inside the filter row. Hiding it collapsed the container to `max-height: 0; overflow: hidden`, and the way back went with it.
+
+This is TD-92's shape again, and TD-105's: an element still in the DOM, still answering `querySelector`, with no layout whatsoever. Three separate defects in this project now trace to treating "present in the DOM" as "available to the user". The test that distinguishes them is `offsetParent !== null` or a non-zero rect, and it is the one the P32 check makes.
+
+## A rule applied in two of the three places that need it
+
+`rebuildBandingFilter()` and `rebuildSourceFilter()` both save their selection before rebuilding options and restore it after. `rebuildWeekFilter()` did neither, so `teardown()` dropped the selection and every `scheduleRerender(true)` silently cleared the week filter.
+
+It surfaced as "changing a health icon unfilters the dashboard", which is a true report of a symptom whose cause lives nowhere near health. **A user-reported trigger is one caller, not the defect.** The fix belonged at the rebuild, not at the health handler, and the check asserts both the reported path and the general one.
+
+## Assert the observable value, not the authored one
+
+A check read `getComputedStyle(el).marginLeft` expecting `"auto"` and got `"911.188px"`. `getComputedStyle` reports used values; `auto` is an input, never an output. Right-alignment is a position, so it has to be measured as one.
+
+Sibling of the padding-box/border-box finding at P25: both are cases of asserting in a frame the browser does not report in.
+
+---
+
+## A probe that drove the model instead of the control (v3.1.0-P33)
+
+Three separate probes set placement by calling `setIcoSize(24)` and `setWkWidth(20)` directly. `rerender()` reapplies display settings by reading the slider **elements** back:
+
+```js
+setWkWidth(document.getElementById('wk-width').value);
+setIcoSize(document.getElementById('ico-size').value);
+```
+
+So every call was undone by the rebuild it triggered, and each sweep measured the default over and over while printing seven different setting labels. Two shipped checks had been reporting that way for a full partial.
+
+It surfaced sideways: a P33 assertion said 17 markers had left their row, the arithmetic said they could not, and a diagnostic printed `iconSize: 15` after being asked for 10. The failure was in the probe, and so was the earlier P32 baseline the comparison depended on.
+
+**Drive the control, not the model.** A probe that sets a variable the app treats as derived is testing a state the app will not hold. And when a check and the arithmetic disagree, suspect the check: it is the thing with no tests.
+
+Note the asymmetry that made this easy to miss. `applyRowHeight()` pushes `ROW_HEIGHT` onto its slider, so row height is variable-is-truth; `wk-width` and `ico-size` are slider-is-truth. Two conventions in one cascade.
+
+## Reviving a defect by moving its neighbour
+
+Anchoring the label stack at `left:50%` so it unfurls from behind its icon was a visual change with no obvious relation to dependency counts. But `body.counts-on` cleared the right-hand count chip with a margin measured from `left:100%`, so moving the anchor half an icon left put the stack back under the chip: TD-83, returning by a route nobody would think to check.
+
+`p27_check` caught it. A check written for one partial earned its keep three partials later, against a change that had nothing to do with it.
+
+**A positioned element's offsets are a contract with everything else positioned against it.** Before moving an anchor, grep for what else is measured from it.
+
+## A generator that knew the count but not the context
+
+The first same-cell implementation asked `msRunLevels(n)` for a sequence and got the triangle wave, which is right for markers in different cells and wrong inside one: five markers in a single cell came out `[0,1,2,1,0]`, putting two pairs on the same line in the one place where band reuse is illegitimate, because those markers share an x.
+
+The row had already been grown to carry five bands. The generator simply had no way to use them, because its only input was how many markers there were, not where they sat.
+
+**When a rule has an exception that depends on context, the function applying it needs that context as an argument.** Passing `n` where the rule needs the columns is how the exception ends up unrepresentable.
+
+## A hardcoded constant standing in for a measured height (v3.1.0-P34)
+
+The week header row stuck at `top: calc(var(--hdr-search-h) + 19.5px)`. The `19.5px` was a stand-in for the month row's height. That row renders 16px, so a 3.5px band sat between the two sticky rows and data rows scrolled through the seam. It had been there at every viewport width, which is why it took a phone screenshot to notice: on a desktop the eye reads it as a border.
+
+The filter bar's `max-height: 160px` was the same shape. The bar wraps, so the cap is only correct at widths where the content happens to fit under it.
+
+Both are now measured from one `ResizeObserver` each. The alternative was hooking `rerender()`, `applyRowHeight()`, `togglePrintMode()`, `fitToScreen()` and a resize listener: five entry points, which is the trap recorded three times above. **An observer has no call sites to forget.**
+
+The generalisation, and the fourth time this family has appeared here: **a literal in CSS that names a rendered dimension is a hypothesis about that dimension.** It is right the day it is written and nothing revisits it. If CSS needs a dimension it cannot compute, measure it into a custom property and let one writer own it.
+
+Two details that only measurement would have given:
+
+- The month row's height had to be read from the **row**, not one of its cells. Its metadata cells carry `padding:0` and its month cells 3px, so a single `<th>` is shorter than the row.
+- The filter bar's cap has to **over-estimate**. `scrollHeight` is read from whichever state the bar is in, and while closed its vertical padding has transitioned away, so an exact figure taken then is short by that padding and clips on the way back open.
+
+## A diagnosis from the source, refuted for the third time in three partials (v3.1.0-P34)
+
+Three cases came in with red markup. The plan named a cause for each, read off the source with confidence. Measuring the build first:
+
+- **One diagnosis was simply wrong.** SNIP-218 and SNIP-219 were said to be two markers sharing a cell and getting an asymmetric pair of bands. They are in different rows, each the only marker in its row, and both already dead centre, at two viewport widths. The rule blamed for the screenshot had nothing to do with it. The rule was still inconsistent and was fixed, but as an inconsistency with no visible effect, and the check says so rather than claiming the screenshot.
+- **The rule the user chose did not reach the case they chose it for.** They specified that a run should break on more than two blank columns. The marker they wanted moved sits in a run of four directly adjacent columns, so no proximity threshold touches it. Shipping the rule and reporting that it changed nothing there was the honest move; quietly substituting a different rule was not.
+- **The obvious alternative fix failed on arithmetic, before any build.** Capping a run at three members would split that run into three plus one, and a run of one is the middle band by definition, so the marker would have landed back where it started. Checking that on paper cost a minute; discovering it in a render would have cost a cycle.
+
+This is now a standing habit rather than a lesson: **measure the current build against the reported case before writing the fix, and say what the measurement contradicted.** It has changed the plan in each of the last three partials.
+
+
+## A rect that measures nothing inside a closed `<details>` (v3.1.0-P35)
+
+The new collapsible weight/hours row was asserted collapsed by reading `getBoundingClientRect().height` on the three fields inside it and requiring zero. All three came back non-zero at all three viewport widths, and the check failed.
+
+The code was right and the probe was wrong. Checked against a three-line page in the same headless build, a child of a **closed** `<details>` still reports a non-zero rect, for a plain `<div>` and for the `display:grid` this uses. `checkVisibility()` answers correctly (`false` shut, `true` open), and the `<details>` element's own height is a second, independent read: 16px shut, 66px open.
+
+Two things worth keeping from it:
+
+- **This is the sixth virtual-time/headless measurement artefact in this project**, after transitions never completing, `performance.now()` never advancing, timers needing the probe to yield, a probe driving the model instead of the control, and a probe outliving the element it measured. The pattern is always the same: a browser API that is correct in a real browser and misleading under `--dump-dom`. Treat any *new* measurement technique as unproven until it has been shown to distinguish the two states it is meant to distinguish.
+- **It failed loudly, which is the good outcome.** The same mistake in the other direction, requiring non-zero and getting it, would have been a vacuous pass. The reason it failed loudly is that the assertion was written against the state that is harder to produce accidentally.
+
+Two other probe defects in the same run, both of the standing families:
+
+- The tooltip assertion read `data-tip` off the wrap handle captured **before** the edit. A commit rerenders the board, so that handle is a detached node still carrying its pre-edit tooltip: the probe was measuring the old board. Same family as the probe that outlived the thing it probed; the fix is to re-query after anything that rebuilds.
+- The clamp assertion read the **store** after typing `-5`. The target's schedule value is 0 and `-5` clamps to 0, so the store correctly held nothing, and the assertion was measuring the deduplication rule rather than the clamp it was aimed at. **Assert the value the user sees**, not the intermediate the implementation happens to keep.
+
+## A card assertion that compared three fields while two were rendering (v3.1.0-P35)
+
+The Start / Finish / Progress row was asserted on the first suitable milestone the board offered. That milestone carries no separate start date, so its Start field is `display:none` and the "all three sit on one row" and "all three are the same text size" checks were comparing two boxes, passing, and saying three.
+
+**Second time a milestone-card assertion has compared against a field that was not being rendered** (TEST-29, where the card was opened on a baseline seed and the parent heading and float column were both `display:none`, so two position assertions ran against zero rects). The card hides fields that do not apply, so *any* assertion about its layout has to state which fields were actually showing, and a claim about a field only appears when a milestone that renders it has been opened on purpose.

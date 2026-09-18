@@ -647,12 +647,7 @@ input[type=range]{width:110px;cursor:pointer}
 #filter-bar.open{transform:translateX(0)}
 #filter-bar .fb-hd{padding:0 12px 10px;font-size:11px;font-weight:700;color:var(--color-purple-deep);display:flex;align-items:center;gap:6px}
 #top-filter-bar{background:var(--color-filter-bg);border-bottom:1px solid var(--color-filter-border);padding:0 var(--space-4);display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-4) var(--space-5);font-size:var(--text-sm);position:relative;z-index:30;max-height:0;overflow:hidden;transition:max-height .16s ease,padding .16s ease}
-/* The cap was the literal 160px. The bar is flex-wrap, so at phone width its
-   controls wrap onto more rows than that: measured at 390px the content came
-   to 202px against a 159px box, and the part cut off read as the panel
-   hiding under the header below it. --tfb-h is the bar's own measured
-   content height, written by watchStickyHeights(). */
-#top-filter-bar.open{padding:var(--space-3) var(--space-4);max-height:var(--tfb-h,160px)}
+#top-filter-bar.open{padding:var(--space-3) var(--space-4);max-height:160px}
 #top-filter-bar .tfb-group{display:flex;align-items:center;gap:var(--space-2);flex-wrap:wrap}
 .fb-sect-title{font-size:9.5px;font-weight:700;color:var(--color-purple-deep);text-transform:uppercase;letter-spacing:.04em;margin:10px 0 4px;padding-top:8px;border-top:1px solid var(--color-filter-border)}
 .fb-sect-title:first-child{margin-top:0;padding-top:0;border-top:none}
@@ -819,19 +814,17 @@ table{border-collapse:separate;border-spacing:0;table-layout:fixed;width:max-con
 td.sticky,th.sticky{position:sticky;left:0;z-index:10;background:inherit}
 thead tr th.sticky{z-index:20}
 
-/* The two header rows stack: the month band sticks at the top of the scroller
-   and the week band sticks directly below it. The week band's offset used to be
-   the literal 19.5px, a stand-in for the month row's height. It renders 16px,
-   so a 3.5px band sat between them that data rows scrolled through. It is
-   measured now and written to --hdr-phase-h by watchStickyHeights(). The
-   fallback keeps the old literal, so a browser without ResizeObserver is no
-   worse off than it was.
-   The search row that once sat above these is gone (it moved into the filter
-   bar) and its --hdr-search-h token went with it: declared 0px and never
-   written by anything, it was two variables with no writer where one variable
-   with one writer was wanted. */
-tr.hdr-phase th{font-size:9px;font-weight:500;color:var(--color-text-on-accent);padding:3px 4px;text-align:center;border-right:0.5px solid rgba(255,255,255,.15);white-space:nowrap;position:sticky;top:0;z-index:25}
-tr.hdr-wk th{font-size:8px;color:var(--color-text-small);padding:2px 2px;text-align:center;border-right:0.5px solid var(--color-line-default);border-bottom:1.5px solid #99a;white-space:nowrap;line-height:1.2;background:var(--color-bg-subtle);cursor:pointer;user-select:none;position:sticky;top:var(--hdr-phase-h,19.5px);z-index:24}
+/* Height of the search row, and therefore the offset every header row below it
+   sticks at. Kept as one variable so the three rows cannot drift apart. */
+/* The search moved into the filter bar, so there is no search row above the
+   month band and the stack starts at 0. Kept as a token rather than removed,
+   because the three sticky offsets are still derived from it. */
+:root{--hdr-search-h:0px}
+tr.hdr-search th{position:sticky;top:0;z-index:27;background:var(--color-bg-header);
+  height:var(--hdr-search-h);padding:0;border-bottom:0.5px solid var(--color-line-default)}
+tr.hdr-search th.sticky{z-index:28}
+tr.hdr-phase th{font-size:9px;font-weight:500;color:var(--color-text-on-accent);padding:3px 4px;text-align:center;border-right:0.5px solid rgba(255,255,255,.15);white-space:nowrap;position:sticky;top:var(--hdr-search-h);z-index:25}
+tr.hdr-wk th{font-size:8px;color:var(--color-text-small);padding:2px 2px;text-align:center;border-right:0.5px solid var(--color-line-default);border-bottom:1.5px solid #99a;white-space:nowrap;line-height:1.2;background:var(--color-bg-subtle);cursor:pointer;user-select:none;position:sticky;top:calc(var(--hdr-search-h) + 19.5px);z-index:24}
 tr.hdr-wk th.sticky{z-index:26}
 tr.hdr-wk th:hover{background:var(--color-accent-tint-bg)}
 tr.hdr-wk th.past-wk{background:#e8e8e8;color:var(--color-text-small)}
@@ -1266,11 +1259,7 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 
 
 /* ===== Milestone dialog — light minimalist card, per approved redesign ===== */
-/* Width and padding are 90% of what they were (340px / 16px 18px 15px), with
-   the card's vertical rhythm and its two largest type steps taken down with
-   them, so the shrink is the whole card rather than a narrower column of the
-   same content. The width is the assertable half: 306 is 340 x 0.9 exactly. */
-.ms-dialog{position:fixed;z-index:2147483647;box-sizing:border-box;width:min(306px,calc(100vw - 24px));padding:14px 16px 13px;background:var(--color-dialog-bg);color:var(--color-text-ink);border:1px solid var(--color-line-default);border-radius:12px;box-shadow:0 1px 2px var(--color-shadow-dialog-near),0 8px 24px var(--color-shadow-dialog-far);font-family:var(--font-sans)}
+.ms-dialog{position:fixed;z-index:2147483647;box-sizing:border-box;width:min(340px,calc(100vw - 24px));padding:16px 18px 15px;background:var(--color-dialog-bg);color:var(--color-text-ink);border:1px solid var(--color-line-default);border-radius:12px;box-shadow:0 1px 2px var(--color-shadow-dialog-near),0 8px 24px var(--color-shadow-dialog-far);font-family:var(--font-sans)}
 .ms-dialog[hidden]{display:none}
 .ms-dialog *,.ms-dialog *::before,.ms-dialog *::after{box-sizing:border-box}
 .ms-dialog-head{display:flex;align-items:center;justify-content:space-between;gap:var(--space-4)}
@@ -1283,7 +1272,7 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 .ms-dialog.status-crit .ms-status{color:var(--color-status-crit)}
 .ms-dialog.status-done .ms-status{color:var(--color-status-done)}
 .ms-dialog.status-future .ms-status{color:var(--color-status-future)}
-.ms-title{margin:0;font-weight:600;font-size:14.5px;line-height:1.28;letter-spacing:-.01em}
+.ms-title{margin:0;font-weight:600;font-size:16px;line-height:1.28;letter-spacing:-.01em}
 /* The parent heading now sits ABOVE the title, so it reads as the band the
    milestone belongs to before the milestone itself is named. */
 .ms-sub{margin:var(--space-2) 0 2px;font:450 11px var(--font-sans);color:var(--color-text-muted)}
@@ -1307,49 +1296,24 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 .ms-shorttitle-row input:hover{background:var(--color-accent-wash-weak)}
 .ms-shorttitle-row input:focus{background:var(--color-accent-wash);color:var(--color-purple-dark);outline:none;font-style:normal}
 .ms-shorttitle-row button{font-size:9px;font-weight:650;padding:0 9px;border-radius:5px;border:1px solid var(--color-accent-purple);background:var(--color-accent-purple);color:var(--color-text-on-accent);cursor:pointer}
-/* Start, Finish and Progress are one row. stretch rather than flex-end so the
-   divider beside Progress runs the row's full height, the same device the
-   float column already uses. */
-.ms-schedule{margin-top:12px;padding-top:10px;border-top:1px solid var(--color-line-hairline);display:flex;align-items:stretch;gap:10px}
-.ms-schedule .ms-field{display:flex;flex-direction:column;justify-content:flex-end;min-width:0}
-/* margin-left:auto rather than justify-content:space-between on the row, so the
-   divider stays hard against Progress whether or not Start is being shown. */
-.ms-prog-field{margin-left:auto;align-items:flex-end;padding-left:10px;
-  border-left:1px solid var(--color-line-hairline)}
-.ms-lbl{display:block;margin-bottom:4px;font:500 10px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--color-text-label)}
-/* One declaration for all three values in that row. Start was 14px against
-   Finish at 18px, which read as two different kinds of fact rather than one
-   row, and Progress has to match both or the row reads as two again. */
-.ms-date,.ms-prog-input{font-weight:600;font-size:14px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.ms-schedule{margin-top:14px;padding-top:12px;border-top:1px solid var(--color-line-hairline);display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.ms-lbl{display:block;margin-bottom:5px;font:500 10px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--color-text-label)}
+.ms-date{font-weight:600;font-size:18px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.ms-start-date{font-weight:500;font-size:14px}
 .ms-date.is-actualised,.ms-start-date.is-actualised{background:var(--color-ready-tint-bg);color:var(--color-status-done);border-radius:5px;padding:1px 6px;display:inline-block}
 .ms-type-inline{font-size:11px;color:var(--color-text-muted)}
 .ms-type-inline::before{content:'\00B7';margin:0 5px;color:var(--color-text-faint)}
-/* The editable Progress field. The wrapper carries the state, not the input:
-   ::before cannot be given to an <input>, and the edited indicator is the same
-   filled dot and accent wash the row remarks field uses for the same meaning. */
-.ms-prog-edit{display:inline-flex;align-items:baseline;gap:1px;padding:1px 3px;margin-right:-3px;border-radius:3px;transition:background .12s}
-.ms-prog-edit:hover{background:var(--color-accent-wash-weak)}
-.ms-prog-edit:focus-within{background:var(--color-accent-wash)}
-.ms-prog-input{width:2.9em;text-align:right;padding:0;border:none;outline:none;background:transparent;color:inherit;font-family:inherit}
-.ms-prog-pct{font-size:11px;color:var(--color-text-muted)}
-.ms-prog-edit.is-zero .ms-prog-input{color:var(--color-text-label)}
-.ms-prog-edit.changed{background:var(--color-accent-wash)}
-.ms-prog-edit.changed .ms-prog-input,.ms-prog-edit.changed .ms-prog-pct{color:var(--color-purple-dark)}
-.ms-prog-edit.changed::before{content:'\25CF';color:var(--color-accent-purple);font-size:7px;line-height:1;align-self:center;letter-spacing:1px}
-/* Weight and the two hours figures are reference values, not things read at a
-   glance, so they fold away. Collapsed by default, same as the ID lists. */
-.ms-metrics-fold{margin-top:10px;border-top:1px solid var(--color-line-hairline);padding-top:5px}
-.ms-metrics-fold summary{font-size:9px;color:var(--color-text-on-panel-muted);cursor:pointer;user-select:none;list-style:revert}
-.ms-metrics{display:grid;grid-template-columns:1fr 1fr 1fr;column-gap:12px}
-.ms-field{padding:9px 0 0}
-.ms-val{font-weight:600;font-size:13px;font-variant-numeric:tabular-nums}
+.ms-metrics{margin-top:12px;display:grid;grid-template-columns:1fr 1fr;column-gap:16px;border-top:1px solid var(--color-line-hairline)}
+.ms-field{padding:10px 0 0}
+.ms-metrics .ms-field:nth-child(1),.ms-metrics .ms-field:nth-child(2){padding-bottom:9px;border-bottom:1px solid var(--color-line-hairline)}
+.ms-val{font-weight:600;font-size:14px;font-variant-numeric:tabular-nums}
 .ms-val.is-zero{color:var(--color-text-label)}
-.ms-progress-track{margin-top:11px;height:3px;border-radius:99px;background:var(--color-status-track-bg);overflow:hidden}
+.ms-progress-track{margin-top:14px;height:3px;border-radius:99px;background:var(--color-status-track-bg);overflow:hidden}
 .ms-progress-fill{height:100%;border-radius:inherit;background:var(--color-status-track)}
 .ms-dialog.status-risk .ms-progress-fill{background:var(--color-status-risk-fill)}
 .ms-dialog.status-crit .ms-progress-fill{background:var(--color-status-crit)}
 .ms-dialog.status-done .ms-progress-fill{background:var(--color-status-done)}
-.ms-comment-block{margin-top:11px;padding-top:10px;border-top:1px solid var(--color-line-hairline)}
+.ms-comment-block{margin-top:13px;padding-top:11px;border-top:1px solid var(--color-line-hairline)}
 .ms-comment-head{display:flex;align-items:center;gap:var(--space-3);margin-bottom:5px}
 .ms-comment-dot{width:6px;height:6px;border-radius:50%;background:var(--color-comment-indicator);display:inline-block;margin-right:5px;flex-shrink:0}
 .ms-comment-dot.empty{background:transparent;border:1px solid var(--color-line-default)}
@@ -1374,7 +1338,7 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 .health-dot.mh-2{background:var(--color-health-good);border-color:var(--color-health-good-border)}
 .health-dot.mh-3{background:var(--color-health-watch);border-color:var(--color-health-watch-border)}
 .health-dot.mh-4{background:var(--color-crit);border-color:var(--color-crit-border)}
-.ms-toggles{margin-top:11px;padding-top:10px;border-top:1px solid var(--color-line-hairline);display:flex;flex-wrap:wrap;gap:6px 16px}
+.ms-toggles{margin-top:13px;padding-top:11px;border-top:1px solid var(--color-line-hairline);display:flex;flex-wrap:wrap;gap:6px 16px}
 .ms-toggle{display:flex;align-items:center;gap:6px;cursor:pointer;font:450 11px var(--font-sans);color:var(--color-text-small)}
 .ms-toggle input{width:12px;height:12px;margin:0;cursor:pointer;accent-color:var(--color-status-track)}
 
@@ -1941,17 +1905,14 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
   <div class="ms-schedule">
     <div class="ms-field" id="ms-start-field" style="display:none"><span class="ms-lbl">Start</span><span id="ms-start-date" class="ms-date ms-start-date"></span></div>
     <div class="ms-field"><span class="ms-lbl">Finish</span><span id="ms-date" class="ms-date"></span></div>
-    <div class="ms-field ms-prog-field"><span class="ms-lbl">Progress</span><span class="ms-prog-edit" id="ms-prog-edit"><input type="text" id="ms-progress-input" class="ms-prog-input" inputmode="decimal" maxlength="5" autocomplete="off" title="Progress override. Clear the field to restore the schedule's own value." oninput="onMsProgressInput()" onkeydown="onMsProgressKey(event)" onblur="saveMsProgress()"><span class="ms-prog-pct">%</span></span></div>
+  </div>
+  <div class="ms-metrics">
+    <div class="ms-field"><span class="ms-lbl">MS weight</span><span id="ms-weight" class="ms-val"></span></div>
+    <div class="ms-field"><span class="ms-lbl">Progress</span><span id="ms-progress" class="ms-val"></span></div>
+    <div class="ms-field"><span class="ms-lbl">MS hours</span><span id="ms-hours" class="ms-val"></span></div>
+    <div class="ms-field"><span class="ms-lbl">Earned hours</span><span id="ms-earned" class="ms-val"></span></div>
   </div>
   <div class="ms-progress-track"><div id="ms-progress-fill" class="ms-progress-fill"></div></div>
-  <details class="ms-metrics-fold" id="ms-metrics-fold">
-    <summary>Weighting and hours</summary>
-    <div class="ms-metrics">
-      <div class="ms-field"><span class="ms-lbl">MS weight</span><span id="ms-weight" class="ms-val"></span></div>
-      <div class="ms-field"><span class="ms-lbl">MS hours</span><span id="ms-hours" class="ms-val"></span></div>
-      <div class="ms-field"><span class="ms-lbl">Earned hours</span><span id="ms-earned" class="ms-val"></span></div>
-    </div>
-  </details>
   <div class="ms-comment-block">
     <div class="ms-comment-head">
       <span class="ms-lbl" style="margin-bottom:0"><span id="ms-comment-dot" class="ms-comment-dot empty"></span>Comment</span>
@@ -2005,7 +1966,7 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 <thead>
 <!-- The search sits on its own row rather than sharing the month band's line.
      It stays inside the table so it keeps the sticky behaviour the corner cell
-     gave it; the week band below is offset by --hdr-phase-h so the two header
+     gave it; the rows below it are offset by --hdr-search-h so the three header
      rows still stack correctly when the board is scrolled. The colspan is
      deliberately larger than the column count, which browsers clamp, because
      the week columns are built at render time. -->
@@ -2086,7 +2047,7 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 // label, and embedded in exported JSON — bump this one place, everything else
 // reads from it, so the three copies can't silently drift apart the way the
 // title/label/export payload just had for a long stretch of unversioned work.
-const APP_VERSION='3.1.0-P35';
+const APP_VERSION='3.1.0-P33';
 // ============================================================
 // TIMELINE
 // ============================================================
@@ -3821,10 +3782,7 @@ function computeProgress(task){
   if(!ms.length) return null;
   const totalW=ms.reduce((s,m)=>s+m.weight,0);
   if(totalW===0) return null;
-  // effectiveProgress, not m.progress: an override typed into a milestone card
-  // has to move the row's rollup too, or the card and the row it sits on
-  // disagree about the same milestone. "The code exists" is not "wired up".
-  const weighted=ms.reduce((s,m)=>s+m.weight*(effectiveProgress(m)||0),0);
+  const weighted=ms.reduce((s,m)=>s+m.weight*(m.progress||0),0);
   return Math.round(weighted/totalW);
 }
 function renderIcon(marker,state,sizePx){
@@ -3877,11 +3835,10 @@ function buildMsTip(m,total,isLoE){
   }
   if(isLoE) return tip;
   tip+='\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500';
-  const prog=effectiveProgress(m)||0;
-  tip+='\n'+padRight('MS Weight: '+m.weight+'%',26)+'|   Progress: '+prog+'%';
+  tip+='\n'+padRight('MS Weight: '+m.weight+'%',26)+'|   Progress: '+(m.progress||0)+'%';
   if(total>0){
     const msHrs=total*(m.weight/100);
-    const earned=msHrs*prog/100;
+    const earned=msHrs*(m.progress||0)/100;
     tip+='\n'+padRight('MS Hrs: '+fmtHrs(msHrs)+'h',26)+'|   Earned Hrs: '+fmtHrs(earned)+'h';
   }else{
     tip+='\n'+padRight('MS Hrs: - hrs',26)+'|   Earned Hrs: - hrs';
@@ -4012,26 +3969,6 @@ function effectiveState(m){
   if(ov===4) return 'CRIT';
   return m.state;
 }
-// Per-milestone progress override, typed into the milestone card. Annotation
-// layer, exactly like the three stores above: keyed through msKeyFor(), carried
-// by publish and the model export, and it NEVER writes back into the milestone
-// record. m.progress stays whatever P6 said, which is what makes the schedule's
-// own value recoverable at all.
-//
-// Unlike MS_HEALTH_OVERRIDE, an override equal to the schedule's own value is
-// NOT kept as a distinct state. Selecting the white health dot is a real choice
-// ("explicitly N/A") that differs from never having touched the control, but a
-// progress of 40 entered against a schedule that already says 40 means nothing
-// the schedule does not already say. saveMsProgress deletes the key in that
-// case, so the override count stays honest and .changed means exactly "this
-// differs from the schedule".
-const MS_PROGRESS_OVERRIDE={};
-function effectiveProgress(m){
-  if(!m) return null;
-  const key=msKeyFor(m);
-  if(!(key in MS_PROGRESS_OVERRIDE)) return m.progress; // never set — the schedule's own
-  return MS_PROGRESS_OVERRIDE[key];
-}
 function shortenTitle(name,maxLen){
   maxLen=maxLen||22;
   const s=String(name||'').trim();
@@ -4104,45 +4041,25 @@ function msCellOffset(i,n,ico,colW,rowH){
 // folding that in would trade three small duplications for one large function.
 // Click and drag wiring also stays with the caller: it is live-only and needs
 // closure state the factory has no business holding.
-// A row's markers are walked in column order and cut into RUNS. A run continues
-// while consecutive markers are separated by at most TWO BLANK COLUMNS, so the
-// threshold is a gap of three columns. A marker further out than that starts a
-// new run and, if it ends up alone, sits dead centre.
-//
-// The boundary is a fixed count of schedule columns and is DELIBERATELY NOT
-// derived from the rendered label width, which is what it used to be. A label
-// width moves with the label scale controls, so deriving the boundary from it
-// would mean changing the text size re-anchored every marker on the board. The
-// user's words, choosing this rule: "if you change the size of the text, this
-// would change the layout, which we don't want."
-const MS_PROXIMITY_COLS=3;
-// Levels are 0 top, 1 middle, 2 bottom, and within a run the sequence REPEATS:
-// top, middle, bottom, top, middle, bottom.
-//
-// P33 shipped a triangle wave here instead ([0,1,2,1], so the fourth marker sat
-// on the middle band) on the argument that a plain repeat puts the first and
-// fourth marker on the same line a few columns apart. That argument still holds
-// and the collision is real. It was reversed at P34 against a rendered case:
-// row 69 of the Aug-29 board carries four markers in directly adjacent columns
-// and the user asked for the fourth, SNIP-212, to reset to the top. Capping the
-// run length cannot do that (a run of one is dead centre by definition), so the
-// cycle itself is what changed. Do not restore the wave from the old reasoning
-// without a rendered case of its own.
-//
-// One array, so the sequence is one edit and p34_check asserts it explicitly
-// rather than inferring it.
-const MS_LEVEL_CYCLE=[0,1,2];
+// A row's markers are walked in column order and cut into RUNS. A marker more
+// than MS_PROXIMITY_COLS from the previous one starts a new run and, if it ends
+// up alone, sits dead centre. Four columns because that is roughly how wide a
+// rendered label is, so a run is exactly the set of markers whose labels can
+// collide. Most of the board is runs of one, so most of the board stays a flat
+// line, which is what makes a stagger read as meaningful where it appears.
+const MS_PROXIMITY_COLS=4;
+// Levels are 0 top, 1 middle, 2 bottom. Within a run of three or more the
+// sequence is a TRIANGLE WAVE, not a repeat: top, middle, bottom, middle, top.
+// A plain [0,1,2] repeat would put the first and fourth marker on the same line
+// three or four columns apart, which is the two-state trap this project has hit
+// twice already (the label bands at P25, the icon spread at P32).
+// One array, so changing the sequence is one edit and p33_check asserts it
+// explicitly rather than inferring it.
+const MS_LEVEL_CYCLE=[0,1,2,1];
 function msRunLevels(cols,levels){
   const L=Math.max(3,levels||3), n=cols.length, mid=Math.floor((L-1)/2);
   if(n<=1) return [mid];                     // alone: dead centre
-  // A pair is symmetric about the midpoint, leftmost up, whatever cells its two
-  // members occupy. The same-cell case used to be excluded here and fell into
-  // the wave loop below, which gave it top and MIDDLE: measured directly,
-  // msRunLevels([0,1],3) was [0,2] but msRunLevels([5,5],3) was [0,1]. No row
-  // on the reference board reaches it, so this corrects an inconsistency rather
-  // than a visible defect. One band step either side, so a row grown for a
-  // dense cell keeps the pair tight instead of flinging it to the extremes.
-  if(n===2) return [Math.max(0,mid-1),Math.min(L-1,mid+1)];
+  if(n===2 && cols[0]!==cols[1]) return [0,L-1];  // first from the left goes up; middle skipped
   const out=[], usedInCell={};
   for(let k=0;k<n;k++){
     const c=cols[k];
@@ -4407,7 +4324,7 @@ function moveMilestoneToRow(ms,toRef){
   invalidateMsIndexes();
   const newKey=msKeyFor(ms);
   if(newKey!==oldKey){
-    [MS_HEALTH_OVERRIDE,MS_COMMENTS,MS_SHORT_TITLES,MS_PROGRESS_OVERRIDE].forEach(function(store){
+    [MS_HEALTH_OVERRIDE,MS_COMMENTS,MS_SHORT_TITLES].forEach(function(store){
       if(oldKey in store){ store[newKey]=store[oldKey]; delete store[oldKey]; }
     });
   }
@@ -4447,7 +4364,7 @@ function applyMilestoneMoves(list){
     hit.ref=mv.to;
     const newKey=msKeyFor(hit);
     if(newKey!==oldKey){
-      [MS_HEALTH_OVERRIDE,MS_COMMENTS,MS_SHORT_TITLES,MS_PROGRESS_OVERRIDE].forEach(function(store){
+      [MS_HEALTH_OVERRIDE,MS_COMMENTS,MS_SHORT_TITLES].forEach(function(store){
         if(oldKey in store){ store[newKey]=store[oldKey]; delete store[oldKey]; }
       });
     }
@@ -7122,9 +7039,6 @@ const ANNOT_CATEGORIES=[
   {key:'msHealth',    label:'Milestone health overrides',
    count:function(p){ return Object.keys(p.milestoneHealthOverrides||{}).length; },
    apply:function(p){ Object.assign(MS_HEALTH_OVERRIDE,p.milestoneHealthOverrides||{}); }},
-  {key:'msProgress',  label:'Milestone progress overrides',
-   count:function(p){ return Object.keys(p.milestoneProgressOverrides||{}).length; },
-   apply:function(p){ Object.assign(MS_PROGRESS_OVERRIDE,p.milestoneProgressOverrides||{}); }},
   {key:'shortTitles', label:'Custom short titles',
    count:function(p){ return Object.keys(p.milestoneShortTitles||{}).length; },
    apply:function(p){ Object.assign(MS_SHORT_TITLES,p.milestoneShortTitles||{}); }},
@@ -7543,7 +7457,6 @@ function publishStatePayload(){
     overrides:snapshotOverrides(),
     milestoneComments:MS_COMMENTS,
     milestoneHealthOverrides:MS_HEALTH_OVERRIDE,
-    milestoneProgressOverrides:MS_PROGRESS_OVERRIDE,
     milestoneShortTitles:MS_SHORT_TITLES,
     // Comments left on dependency lines were reaching neither payload, so they
     // were the one kind of comment a published file silently dropped.
@@ -7613,7 +7526,6 @@ function applyPublishedState(){
 
     Object.assign(MS_COMMENTS,p.milestoneComments||{});
     Object.assign(MS_HEALTH_OVERRIDE,p.milestoneHealthOverrides||{});
-    Object.assign(MS_PROGRESS_OVERRIDE,p.milestoneProgressOverrides||{});
     Object.assign(MS_SHORT_TITLES,p.milestoneShortTitles||{});
     Object.assign(DEP_COMMENTS,p.dependencyComments||{});
     Object.assign(DEP_VIS,p.dependencyVisibility||{});
@@ -7752,7 +7664,6 @@ function exportModel(){
                  dependencyVisibility:DEP_VIS,
                  dependencyComments:DEP_COMMENTS,
                  milestoneHealthOverrides:MS_HEALTH_OVERRIDE,
-                 milestoneProgressOverrides:MS_PROGRESS_OVERRIDE,
                  milestoneComments:MS_COMMENTS,
                  milestoneShortTitles:MS_SHORT_TITLES,
                  // Layout work the user did on the board. Unlike the stores
@@ -8291,52 +8202,6 @@ document.getElementById('dep-tooltip').addEventListener('click',()=>{
   }
 });
 
-// Two heights that CSS needs and cannot compute for itself: the month header
-// row's height, which is where the week header row has to stick, and the filter
-// bar's wrapped content height, which is what its open max-height has to clear.
-//
-// Both are ResizeObservers rather than hooks in rerender(), applyRowHeight(),
-// togglePrintMode(), fitToScreen() and a window resize listener. That would be
-// five entry points, and a missed entry point has cost this project a cycle
-// four times (dependency lines absent from rerender(), tooltips bound only to
-// ghosts, the week filter dropped on every rebuild, three probes driving the
-// setters instead of the sliders). An observer cannot be forgotten at a call
-// site because it has no call sites. #phase-hdr and #top-filter-bar are both
-// long-lived elements, kept across rerenders, so one observer each is enough:
-// renderPhaseHdr() appends cells to the same <tr> rather than replacing it.
-function watchStickyHeights(){
-  const root=document.documentElement;
-  // Compared before writing, so an unchanged height is a no-op and an observer
-  // cannot drive itself round again off its own write.
-  function put(name,px){
-    const v=px.toFixed(2)+'px';
-    if(root.style.getPropertyValue(name)!==v) root.style.setProperty(name,v);
-  }
-  const phase=document.getElementById('phase-hdr');
-  if(phase){
-    // The ROW, not one of its cells. The metadata cells on the left carry
-    // padding:0 while the month cells carry 3px, so a single th is shorter than
-    // the row and the week band would stick too high.
-    const measure=function(){
-      const h=phase.getBoundingClientRect().height;
-      if(h>0) put('--hdr-phase-h',h);
-    };
-    measure();
-    if(window.ResizeObserver) new ResizeObserver(measure).observe(phase);
-  }
-  const bar=document.getElementById('top-filter-bar');
-  if(bar){
-    // Deliberately an OVER-estimate. scrollHeight is read from whichever state
-    // the bar happens to be in, and while it is closed its vertical padding has
-    // transitioned away, so an exact figure taken then would be short by that
-    // padding and clip on the way back open. Overshooting a max-height costs
-    // nothing visible: it is a cap, not a height.
-    const measure=function(){ put('--tfb-h',bar.scrollHeight+40); };
-    measure();
-    if(window.ResizeObserver) new ResizeObserver(measure).observe(bar);
-  }
-}
-
 // ============================================================
 // INIT
 // ============================================================
@@ -8355,7 +8220,6 @@ function watchStickyHeights(){
   if(titleField) titleField.value='Eskay | Snip PFS & Technical Report 2026 \u2014 Deliverables Dashboard';
   renderPhaseHdr();
   renderRows();
-  watchStickyHeights();
   setupMsVisibilityObserver();
   renderSummary();
   rebuildWeekFilter();
@@ -8391,25 +8255,11 @@ function watchStickyHeights(){
 // MS_COMMENTS itself is declared with its two siblings further up, because this
 // point in the file is AFTER the init block that now reads it. =====
 let msDialogFor=null;
-// The milestone and its row's hours, held while the card is open. Both are
-// needed to repaint the Progress field and the earned-hours figure after an
-// edit, and findMilestoneBySnip() cannot supply the milestone: it indexes on
-// msId(), so a milestone with no ID at all resolves to null there.
-let msDialogMs=null;
-let msDialogHd=null;
 
 function statusClassOf(state){ return (state||'FUTURE').toLowerCase(); }
 
 function openMsDialog(m, snipId, anchorEl, hd, task){
-  // msKeyFor() is THE definition of a milestone's annotation key, and every
-  // reader uses it: the board's short titles, effectiveState, effectiveProgress.
-  // This used to compose its own key from snipId, which is extractSnipId(notes)
-  // while msKeyFor prefers m.id — equal on this dataset, but nothing enforced
-  // it, so any milestone whose id and notes disagreed would have had the card
-  // write annotations under a key the board never read back.
-  msDialogFor=msKeyFor(m);
-  msDialogMs=m;
-  msDialogHd=hd;
+  msDialogFor=snipId||('noid-'+m.ref+m.type+m.date);
   const dlg=document.getElementById('ms-dialog');
   const msEffState=effectiveState(m);
   dlg.className='ms-dialog status-'+statusClassOf(msEffState);
@@ -8465,13 +8315,18 @@ function openMsDialog(m, snipId, anchorEl, hd, task){
     startField.style.display='none';
   }
 
+  const total=hd&&hd.total>0?hd.total:0;
+  const msHrs=total*(m.weight/100);
+  const earned=msHrs*(m.progress||0)/100;
   document.getElementById('ms-weight').textContent=(m.weight!=null)?m.weight+'%':'\u2014';
-  // Collapsed on every open, not left wherever the last card was put. The row
-  // exists because these are reference values; reopening it silently would make
-  // "collapsed by default" a claim about the first card only.
-  const fold=document.getElementById('ms-metrics-fold');
-  if(fold) fold.open=false;
-  renderMsProgress();
+  const progEl=document.getElementById('ms-progress');
+  progEl.textContent=(m.progress!=null)?m.progress+'%':'\u2014';
+  progEl.className='ms-val'+((!m.progress)?' is-zero':'');
+  document.getElementById('ms-hours').textContent=total>0?fmtHrs(msHrs)+'h':'\u2014';
+  const earnEl=document.getElementById('ms-earned');
+  earnEl.textContent=total>0?fmtHrs(earned)+'h':'\u2014';
+  earnEl.className='ms-val'+((!earned)?' is-zero':'');
+  document.getElementById('ms-progress-fill').style.width=Math.min(100,Math.max(0,m.progress||0))+'%';
 
   const existing=MS_COMMENTS[msDialogFor]||'';
   document.getElementById('ms-comment-text').value=existing;
@@ -8522,75 +8377,6 @@ function fillMsDepLists(snipId){
 function closeMsDialog(){
   document.getElementById('ms-dialog').hidden=true;
   msDialogFor=null;
-  msDialogMs=null;
-  msDialogHd=null;
-}
-// One writer for every part of the card that depends on progress: the field,
-// its edited indicator, the bar, and earned hours. Four places read m.progress
-// independently before this, which is the shape that lets a card show one
-// figure while the thing beside it shows another.
-function renderMsProgress(){
-  const m=msDialogMs;
-  if(!m) return;
-  const eff=effectiveProgress(m);
-  const input=document.getElementById('ms-progress-input');
-  const wrap=document.getElementById('ms-prog-edit');
-  if(input) input.value=(eff==null)?'':String(eff);
-  if(wrap){
-    wrap.classList.toggle('changed',msDialogFor in MS_PROGRESS_OVERRIDE);
-    wrap.classList.toggle('is-zero',!eff);
-  }
-  document.getElementById('ms-progress-fill').style.width=Math.min(100,Math.max(0,eff||0))+'%';
-  const total=(msDialogHd&&msDialogHd.total>0)?msDialogHd.total:0;
-  const msHrs=total*(m.weight/100);
-  const earned=msHrs*(eff||0)/100;
-  document.getElementById('ms-hours').textContent=total>0?fmtHrs(msHrs)+'h':'—';
-  const earnEl=document.getElementById('ms-earned');
-  earnEl.textContent=total>0?fmtHrs(earned)+'h':'—';
-  earnEl.className='ms-val'+((!earned)?' is-zero':'');
-}
-// The indicator tracks the field as it is typed. The STORE is written on commit
-// (blur, or Enter which blurs), because saving every keystroke would write 1,
-// then 10, then 100 on the way to typing 100, and each of those is a rebuild of
-// the whole board. The comment field autosaves per keystroke precisely because
-// it costs no rerender; this one does.
-function onMsProgressInput(){
-  const input=document.getElementById('ms-progress-input');
-  const wrap=document.getElementById('ms-prog-edit');
-  if(!input||!wrap||!msDialogMs) return;
-  const base=(msDialogMs.progress==null)?'':String(msDialogMs.progress);
-  wrap.classList.toggle('changed',input.value.trim()!==base);
-}
-function onMsProgressKey(e){
-  if(e.key==='Enter'){ e.preventDefault(); e.target.blur(); }
-  else if(e.key==='Escape'){ renderMsProgress(); e.target.blur(); } // back to the stored state, committing nothing
-}
-function saveMsProgress(){
-  if(!msDialogFor||!msDialogMs) return;
-  const input=document.getElementById('ms-progress-input');
-  const raw=String(input.value).replace('%','').trim();
-  const base=msDialogMs.progress;
-  const had=(msDialogFor in MS_PROGRESS_OVERRIDE);
-  const before=had?MS_PROGRESS_OVERRIDE[msDialogFor]:null;
-  const n=(raw==='')?NaN:parseFloat(raw);
-  if(isNaN(n)){
-    // Blank and unparseable both restore the schedule's own value rather than
-    // saving nothing-shaped-like-a-number into the one field whose whole job is
-    // to carry a number.
-    delete MS_PROGRESS_OVERRIDE[msDialogFor];
-  } else {
-    const v=Math.min(100,Math.max(0,Math.round(n)));
-    if(base!=null&&v===base) delete MS_PROGRESS_OVERRIDE[msDialogFor];
-    else MS_PROGRESS_OVERRIDE[msDialogFor]=v;
-  }
-  renderMsProgress();
-  const has=(msDialogFor in MS_PROGRESS_OVERRIDE);
-  if(has!==had||(has&&MS_PROGRESS_OVERRIDE[msDialogFor]!==before)){
-    noteMarkup();
-    // The row's rollup and every milestone tooltip read progress as well, so a
-    // committed override is a board change, not just a card change.
-    scheduleRerender(true);
-  }
 }
 function saveMsComment(){
   if(!msDialogFor) return;
@@ -8611,19 +8397,6 @@ function onMsHealthClick(dotEl){
   } else {
     MS_HEALTH_OVERRIDE[msDialogFor]=val;
     nowSelected=dotEl;
-    // Marking a milestone complete sets its progress to 100%. Only where the
-    // schedule does not already say 100: an override that matches the schedule
-    // changes nothing on screen but does add an entry to the count a reader is
-    // shown when they choose which annotations to restore.
-    //
-    // One direction only. Clearing the Complete dot does NOT drop the progress
-    // back: by then the user may have typed over it, and silently discarding a
-    // number they entered is worse than leaving one they can clear themselves.
-    if(val===2&&msDialogMs&&msDialogMs.progress!==100&&MS_PROGRESS_OVERRIDE[msDialogFor]!==100){
-      MS_PROGRESS_OVERRIDE[msDialogFor]=100;
-      renderMsProgress();
-      noteMarkup();
-    }
   }
   document.querySelectorAll('#ms-health-dots .health-dot').forEach(function(dot){
     dot.classList.toggle('selected', dot===nowSelected);
@@ -8632,7 +8405,7 @@ function onMsHealthClick(dotEl){
   // too, not just the board marker — re-derive it the same way openMsDialog does,
   // including correctly reverting to the real computed state when cleared.
   const dlg=document.getElementById('ms-dialog');
-  const m=msDialogMs||findMilestoneBySnip(msDialogFor);
+  const m=findMilestoneBySnip(msDialogFor);
   const effState=m?effectiveState(m):'FUTURE';
   dlg.className='ms-dialog status-'+statusClassOf(effState);
   document.getElementById('ms-status').textContent=STATE_LABELS[effState]||effState;

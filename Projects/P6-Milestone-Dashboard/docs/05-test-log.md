@@ -25,6 +25,16 @@
 | TEST-19 | 2026-09-10 | Publish round trip: does a published file open cold with the schedule, timeline and annotations already in place, and does it carry nothing it should not | Publish captured at the Blob boundary, written to disk, then loaded as a separate page | **Pass after two fixes** | TD-41, TD-42 (both closed same pass), TD-43, TD-44 |
 | TEST-20 | 2026-09-11 | Does a published file describe itself correctly: mount slots, baseline counts, and the header provenance line | Publish probe extended to capture all three mount slots and the header meta | **Pass after fix** — reproduced the user's report first | TD-47, TD-48 (both closed same pass) |
 | TEST-21 | 2026-09-11 | Six requested changes: published schedule as the update, Source cell after a drag, empty-row delete, gutter alignment, column master toggle scope, header chrome colour | Publish round trip plus a combined DOM probe driving each interaction | **5 pass, 1 delivered failing** — the requested `#f4f5f8` is 1.79:1 on the light header | TD-50 (open), TD-51 to TD-55 (closed) |
+| TEST-37 | 2026-09-18 | Milestone card rework: the 10% shrink, Start / Finish / Progress on one row behind a divider at one text size, the collapsible weight/hours row, and Progress as an editable annotation-layer override | `tools/p35_check.py` at three viewport widths, plus `tools/persist_check.py` extended to round-trip an override. The shrink is measured against the **P34 release rendered in the same browser at the same viewport on the same milestone**, because a card that got narrower while getting taller is not a smaller card. The three-layer rule is asserted by snapshotting every milestone record before the edit and comparing all 146 after. The three-field row is measured on a milestone chosen for carrying a real start date, because the first suitable target hides its Start field | **Pass 117/117**, after three probe defects and one vacuous comparison were found and fixed | TD-130 to TD-133 |
+| TEST-33 | 2026-09-16 | Does every row and milestone record its source; does the Source Schedule column and filter narrow in both directions; does appending a schedule to itself keep the two separable; does a multi-source board survive publish and a view switch | `tools/p30_check.py`. Appends the SAME workbook to itself, so every Activity ID collides: the worst case rather than a convenient one. The suffix is checked across `m.id`, `m.notes`, `m.ref`, `t.ref`, `t.src` and the row's `data-ids` together, and an annotation keyed on a suffixed ID must not land on its twin. Band order is measured as contiguous RUNS, not distinct names, because appending a file to itself repeats every band name. Performance is asserted by COUNTING (one index build reused across 300 lookups, one filter pass per typing burst, zero per-cell style writes), never by wall clock: `performance.now()` does not advance under virtual time and the first draft reported 0ms against every budget | **Pass 55/55** | TD-99 to TD-103 (closed) |
+| TEST-32 | 2026-09-16 | Does the rebuilt settings panel actually hold one spacing contract; does every control still reach a function that exists; did anything on the board move | `tools/p29_check.py`. The inline padding/margin count must be **zero**, not smaller. Gutter, row step, separator and radius each asserted as a single computed value across the real panel. Every inline `onclick`/`onchange`/`oninput` in the drawer is parsed and checked against `window`, because a handler naming a function that no longer exists throws only when clicked and looks perfect until then. Baseline and imported board figures captured separately, the baseline taken before a single control is touched | **Pass 46/46** | TD-94, TD-95, TD-96 (closed), TD-97, TD-98 (open) |
+| TEST-31 | 2026-09-15 | Does an import span the schedule's own dates rather than a fixed window; does a typed range override it; does a user-typed range narrow the board, survive a rebuild and intersect the week dropdown | `tools/p28_check.py`. The expected span is derived from the WORKBOOK here, independently of the app, so the assertion is against the source. The decisive setup check is that no milestone fails to plot, not that a timeline was built | **Pass 34/34**, after a probe counting every row's cells and a real dead-fitter bug were found | TD-89 to TD-93 (all closed) |
+| TEST-30 | 2026-09-15 | Are the dependency counts legible rather than merely present; does the baseline overlay place each ghost on its pair's Y, in its own baseline date's column, behind everything; does the A3 preview hold the board at page width and put it back on the way out | `tools/p27_check.py`. Chips measured for position, size, backing and overlap against their own icon and label stack, not for existence. Ghosts paired through the `data-ghost-for` link rather than guessed from position. Page frame measured against a live `100mm` probe, not an assumed 96dpi | **Pass 32/32**, after a board-duplication bug, a ghost hidden under its pair, and two vacuous assertions were found | TD-82, TD-83, TD-84, TD-85, TD-86, TD-87 (all closed), TD-88 (open) |
+| TEST-29 | 2026-09-14 | Week filter highlights the heading only; month highlight is white; milestone card reordered with a float column | Filter driven through `setFilterWeek`, computed backgrounds compared against an unfiltered cell; card measured on an **imported** milestone that actually has a discipline and a float | **Pass**, after two assertions were found passing vacuously | TD-79, TD-80, TD-81 (all closed) |
+| TEST-28 | 2026-09-14 | Marker placement is a property of the cell; title in the top row; activity title wrap toggle | Every marker's centre measured as a percentage of its cell's **padding box**, the frame it is positioned in; N=3, 4 and 5 forced into a real cell | **Pass** | TD-74, TD-75, TD-76, TD-77 (closed), TD-78 (open) |
+| TEST-27 | 2026-09-14 | Dependency tooltip and notes dialog show one row per activity as `#ID: Title`, truncated | Real builders driven with a real ID pair; text-range alignment; a 400 character title forced to prove the box does not grow | **Pass** | TD-72 (closed), TD-73 (open) |
+| TEST-26 | 2026-09-14 | Ten presentation and default changes, each measured in the running app | Computed style, bounding rects and text ranges on a real render; controls driven both ways; milestone card opened by a real marker click | **Pass**, two defects found and fixed first | TD-68, TD-69, TD-70, TD-71 (all closed) |
+| TEST-25 | 2026-09-14 | An imported board presents its bands in the schedule's own order | `tools/order_check.py` — derives the schedule's section sequence from the workbook itself, runs a real import, then places each board band back onto the sheet by the row of its first activity and asserts those rows strictly increase | **Pass** on P22, **fails on P21** with 7 bands out of order | TD-65, TD-66 (closed), TD-67 (open) |
 | TEST-24 | 2026-09-11 | Header darkened and its text tokens split out; data date rule on a Friday; republish provenance chain | Contrast measured on every text colour landing on `--color-bg-header` in both themes; the date rule driven through the real function on all seven weekdays plus month and year boundaries; the chain built by the real payload function | **Pass**, contrast gate green | TD-50, TD-46, TD-44, TD-63, TD-64 (all closed) |
 | TEST-23 | 2026-09-11 | Every kind of board markup survives a publish, and the two layout changes replay onto a schedule that has never seen them | `tools/persist_check.py` — three stages against real headless renders: edit and capture both real downloads, read the published file back, replay the exported model onto a clean board | **Pass** (20 checks) | TD-27, TD-58, TD-59, TD-60, TD-61 (all closed) |
 | TEST-22 | 2026-09-11 | Heading bar split into two containers with responsive stacking, subtitle relocated, and the search moved to its own sticky row | Bounding-rect measurement at two viewport widths, and again after 900px of real scroll inside `#scroll-wrap` | **Pass** | TD-56, TD-57 (both closed) |
@@ -518,6 +528,360 @@ sticky here.
 **Subtitle text** reads "Exported milestone view of P6 schedule shown by activity
 end dates". Taken from a partly garbled dictation and flagged as an assumption.
 
+### TEST-31 detail
+
+`tools/p28_check.py`, 34 assertions over the two halves of one request.
+
+**Setup: the base range comes from the data.** The expected span is derived
+from the workbook inside the Python half, by walking its date columns, so the
+app is checked against the source rather than against itself.
+
+| Assertion | Result |
+|---|---|
+| The range section is hidden until a file loads, shown once it does | passes |
+| The note names the schedule's own span before Import is pressed | 01-May-26 to 26-Nov-26 |
+| Both fields start blank, meaning the full span | passes |
+| The section is put away once the import is built | passes |
+| **Every imported milestone lands in a column** | **0 outside the board** |
+| The board starts within a week of the earliest date it must show | 4 days of lead |
+| The board ends within a week of the latest date it must show | 3 days of tail |
+| The import summary states the range used, and the data's own span | passes |
+| A typed range is narrower, covers what was typed, and is recorded as typed | 14 weeks vs 31 |
+| Clearing the fields restores the full derived range | 31 weeks |
+| The app's earliest and latest dates match the workbook's | 01-May-26 / 26-Nov-26, exact |
+
+Measured against v3.1.0-P27 on the same export, the fixed window was wrong in
+both directions at once: **3 milestones unplotted and 3 horizon warnings**, on
+a **39 column** board. P28 gives **0**, **0**, and **31 columns** — it lost
+three real milestones off the end while padding eight empty weeks onto the
+front.
+
+**Filter: a user-typed range narrows the board.**
+
+| Assertion | Result |
+|---|---|
+| Every week column is shown before filtering | 31 of 31 |
+| A date range narrows the visible columns | 9 of 31 |
+| No column outside the range is still shown, and none inside it was hidden | 0 and 0 |
+| The month bands span exactly the columns still shown | 9 colspan vs 9 columns |
+| Rows with nothing in the range are hidden | 67 of 105 |
+| A week selection outside the range cannot reach back outside it | 0 leaked |
+| The range survives a full rebuild | 9 vs 9 |
+| Clearing, and Remove all filters, both release the columns | 31 of 31 |
+| A from-date alone clamps one end and leaves the other open | hi = last column |
+| A backwards range is read as the range the user meant | same 9 columns |
+| The A3 preview fits only the columns the range left | 9 columns at 72px |
+
+Both directions of the column assertion are checked deliberately: a filter that
+hid *everything* would satisfy "nothing outside the range is shown" on its own.
+
+**Two findings.**
+
+The first two runs compared column counts of 3255 against 31. The probe counted
+week cells across every row rather than the header row, so every count was
+multiplied by the row count. A probe bug, but it hid the month-colspan
+assertion behind a meaningless comparison until it was fixed.
+
+The second is a real defect in shipped code, and it is why the print-plus-range
+assertion is in this check at all (TD-92). `fitToScreen()` and `fitPrintPage()`
+both measured `document.querySelector('tr.data')`, the first data row in the
+document, to learn how wide the non-week columns are. A hidden row has no
+layout, so every cell in it reports `offsetParent === null`: with any filter
+active that hid the first row, both functions found zero measurable week cells
+and returned having done nothing. The A3 preview simply refused to refit. Both
+now take the first row that is actually laid out.
+
+### TEST-30 detail
+
+`tools/p27_check.py`. One run, four subjects, 32 assertions. Three real defects
+and one probe defect surfaced during the run and are recorded because each one
+passed a reading of the code.
+
+**The dependency counts.** The reported symptom was "the button isn't working,
+the numbers aren't displayed". Both halves were true, for two unrelated reasons.
+
+| Assertion | Result |
+|---|---|
+| Chips render when the toggle is on | 262 chips |
+| The measurements had a sample to measure | 262 sampled |
+| The toggle did not duplicate the board | 159 rows before, 159 after |
+| Every chip sits level with its own icon (within 2px) | 0 off |
+| Every chip is at least 10 x 9 (the old ones measured 4.5 x 8) | 0 too small |
+| Every chip has a backing | 0 unbacked |
+| No chip is under its own label stack | 0 covered |
+| Chip value matches `DEP_DATA` | 262 checked, 0 wrong |
+| Toggling off clears the chips and the class | 0 left |
+
+The first cause (TD-82) is that `onCountsToggle()` called `renderRows()`
+directly. `renderRows()` **appends**; `teardown()` is what empties the tbody,
+and it only runs inside `rerender()`. So each toggle left the whole previous
+board in place and built a second copy under it. Turning counts off then looked
+like a no-op, because the 262 chips still on screen belonged to the copy that
+same click had just added. The second cause (TD-83) is that the chips, even on
+the fresh copy, were 8px unbacked digits placed fully outside the icon on the
+boundary between two rows, with the label stack over the right-hand one.
+
+**The baseline overlay**, driven through a real import of the Aug-29 export,
+switched to the Update view and toggled on:
+
+| Assertion | Result |
+|---|---|
+| Ghosts are drawn | 143 |
+| Every ghost matched back to a live marker by Activity ID | 143 paired, 0 unpaired |
+| Ghost column is its own baseline date's column | 0 in the wrong week |
+| Ghost Y equals its pair's Y (within 1.5px) | 0 off |
+| Ghost paints behind its live marker | 0 not behind |
+| Ghost uses the greyed baseline icon | 0 not greyed |
+| An unmoved ghost is offset clear of its own live icon | 91 same-column, 0 hidden |
+| Tooltip names the live baseline label | passes |
+| Ghosts carry no count chips | 0 |
+| Row count unchanged across every toggle | 105 throughout |
+
+Two findings here. Offsetting an unmoved ghost from the **cell centre** left
+three of them under a marker, because a cell holding several markers spreads
+them off centre; the offset is now taken from the ghost's own pair. And the
+first pairing attempt inferred the pair from position, which reported three
+false failures: two markers in one row can share a baseline column and the
+guess picked the wrong one. The ghost now names its pair in `data-ghost-for`,
+which is both a better probe and inspectable in devtools.
+
+**The A3 print preview.** Page geometry is measured against a live `100mm`
+probe element rather than an assumed 96dpi, since the browser's CSS pixel ratio
+is not guaranteed.
+
+| Assertion | Result |
+|---|---|
+| Body enters print-mode | passes |
+| The View Controls panel was closed | passes |
+| An `@page` rule is injected for A3 portrait | `@page{size:297mm 420mm;margin:8mm}` |
+| The page frame is one A3 sheet wide | 1123px vs 1122px expected |
+| The preview banner is shown | passes |
+| Week columns were refitted | 36px to 20px |
+| The board fits the page, or the banner says it cannot | banner states it |
+| Leaving clears print-mode, the `@page` rule and the week width | passes |
+| Leaving reopens the View Controls panel it closed | passes |
+| The page frame is `display:contents` again | passes |
+
+**Known and stated, not hidden:** at the full 39-week horizon the board does not
+fit an A3 portrait sheet even at the 20px minimum column width. The preview says
+so in its banner and names the remedy (hide columns, or filter the week range)
+rather than clipping silently.
+
+**Vacuous passes (TD-87).** The first run of this probe read the chips
+synchronously after the toggle, before the debounced rerender had rebuilt the
+board. Every chip assertion passed against an empty set. This is the third
+occurrence in this project (TD-66, and the P26 float column), so each probe that
+measures a set now asserts its sample size as its own check.
+
+### TEST-29 detail
+
+**The week filter**, driven through the app's own `setFilterWeek`:
+
+| Assertion | Result |
+|---|---|
+| Body cells no longer painted | filtered cell background equals a plain cell's; border width 0 |
+| Cells still tagged for fit-to-screen | `.filter-col` still applied, and fit-to-screen still finds its columns |
+| Week heading highlighted | white on the accent |
+| Month heading highlighted | "Sep 2026", **white** on the accent |
+| Clearing the filter clears all three marks | week 0, month 0, column 0 |
+
+**The milestone card.** Measured by bounding rect: the parent heading sits above
+the title, the short title below it, and the float column beside both, spanning
+their full height with the value above the label. The label measures 11px, the
+same as the short title field, which is what was asked. The title no longer
+carries the float tag.
+
+**Two assertions passed vacuously on the first run.** The card was opened on the
+first marker on the board, which is a baseline seed: every seed carries the
+discipline "Unassigned", so the parent heading was `display:none`, and seeds
+carry no float, so the float column was hidden too. "Parent above title" was
+comparing against a zero rect, and the float column was never rendered at all.
+Re-run against an **imported** milestone with a real discipline (Key Milestones)
+and a real float (26 day), both assertions became meaningful and both hold.
+Recorded because the first run reported a clean pass on two things it had not
+tested.
+
+One correction during the work: the float column initially took only its own
+content height, so its divider stopped short of the short title. `align-items`
+on the row was `flex-start`; set to `stretch` with the content centred, the
+column runs beside both rows as a column should.
+
+Contrast gate 63 probes, 0 frozen, 0 below 3.0:1, with new probes for the float
+value, the float label and the highlighted month band. Board order, persistence
+20/20, ingest and the baseline render all re-run clean.
+
+### TEST-28 detail
+
+**Marker placement**, measured across the whole rendered board:
+
+| Assertion | Result |
+|---|---|
+| A lone marker is centred in its cell | **186 of 186** cells |
+| Cells sharing markers offset along x | 5 of 5, distinct x for every marker |
+| and alternate above and below | 5 of 5 |
+| No centre inside the 10% clearance | **0 violations**; tightest actual clearance 28% |
+| Row heights preserved by the strut | unchanged |
+
+**The first reading said 0 of 186 were centred, and the probe was wrong.** Every
+marker measured 1.4% off on both axes, a consistent 0.5px. An absolutely
+positioned element resolves its percentages against its containing block's
+**padding box**, while `getBoundingClientRect()` on the cell returns the
+**border box**, and this table's cells carry a 1px bottom and 0.5px right
+border. Measured in the frame the marker is actually positioned in, all 186 are
+exact. Same family as the standing "measure the element, not its parent" trap,
+and recorded because the first number looked like a total failure of the change.
+
+**N=3 was tested, not just the N=2 the board happens to contain.** The reference
+schedule never puts more than two markers in one cell, so three, four and five
+were cloned into a real cell and measured:
+
+| Markers in one cell | Centres (x,y as % of cell) | Clearance violations |
+|---|---|---|
+| 3 | 24,28 · 50,72 · 76,28 | 0 |
+| 4 | 11,28 · 37,72 · 63,28 · 89,72 | 0 |
+| 5 | 10,28 · 30,72 · 50,28 · 70,72 · 90,28 | 0 |
+
+**A limit found rather than assumed (TD-78).** At three or more, the icons
+overlap slightly at the default 36px week column: three 15px icons do not fit a
+36px cell however they are arranged. Re-measured at a 60px column, the overlap
+is **0** for both three and four. Widening the vertical alternation instead
+would push icons past the row boundary and reintroduce the defect this change
+fixes, so the column width is the right remedy.
+
+**Title and wrap toggle.** The report title now sits in the icon bar at 13px,
+`white-space:nowrap` with an ellipsis, expanding while focused for editing. The
+wrap toggle defaults off, `.dname` computes `nowrap` and clips; switching it on
+gives `normal` and switching back returns `nowrap`, so the control shows and
+sets state in both directions.
+
+Contrast gate 60 probes, 0 frozen, 0 below 3.0:1. Board order, persistence
+20/20 and ingest all re-run clean.
+
+### TEST-27 detail
+
+Driven through the real `depIdRowsHtml`, `showTooltip` and `openCommentPanel`
+with an ID pair taken off the board, not a hand-built fixture.
+
+| Assertion | Result |
+|---|---|
+| One row per activity | 2 rows, second below the first |
+| Font a step smaller | 10px to **9px**, tooltip and notes dialog both |
+| IDs left aligned with each other | yes, by text range |
+| Titles left aligned with each other | yes, by text range |
+| Title truncated, not wrapped | `white-space:nowrap`, `text-overflow:ellipsis` |
+| Notes dialog uses the same rows | same builder, same 9px, same ellipsis |
+| Click-to-copy unchanged | still `#SNIP-127 | #SNIP-166` |
+
+**The truncation is proved, not assumed.** A 400 character title was forced into
+the first row and the tooltip's height stayed at 33px, with the title element's
+`scrollWidth` exceeding its `clientWidth`. Asserting the CSS properties alone
+would have passed even if a flex child had refused to shrink, which is the
+standing trap here: `min-width:0` on `.dep-id-title` is load-bearing, because a
+flex child defaults to `min-width:auto` and will not shrink below its content.
+
+Two probes added for the new colours, since the ID and the title are now
+separate colours on the dialog background rather than one inherited colour.
+Contrast gate 60 probes, 0 frozen, 0 below 3.0:1.
+
+Baseline render unchanged at 163 rows / 196 markers / 159 tasks / 198
+milestones; board order, persistence 20/20 and ingest all re-run clean.
+
+### TEST-26 detail
+
+Every item measured against a real render rather than read off the diff.
+
+| Requested | Measured |
+|---|---|
+| No derived-weights remark on generated rows | rows carrying that note: **0** (ingest path and the baked seeds) |
+| Columns collapsed by default | `colState` all false; a `col-ref` cell and its `colgroup` entry both `display:none` at first paint |
+| Milestone labels off by default | `.m-lbl` `display:none`; the toggle unchecked |
+| View Controls on the right | open state flush to the viewport's right edge; closed 300px clear of it |
+| Its launcher beside Settings | `btn-style-icon` immediately precedes `btn-settings-icon` in the icon group |
+| App name and version top right | label right-aligned, icon group still hard against the right edge |
+| Report details under the subtitle | details left edge matches the title's text left edge; details sit below the subtitle |
+| Comments icon fits its button | 26x26 button, 24x24 content, no overflow |
+| Gutter spacing, remarks aligned to the title | gutter gap 9px, fixed 42px; **title text and remark text both start at x=52** |
+| Subtitle wording | exact string asserted |
+| Predecessor / dependency lists | two columns side by side, comma-space joined, collapsed by default, hidden for a milestone with no id |
+| Search inline with the filters | search inside `#top-filter-bar`, the separate header row gone, bar open by default on its grey panel |
+
+Controls were then driven in both directions: Show All Columns makes the ref
+cell `table-cell`, Hide All returns it to `none`, and the label toggle brings
+`.m-lbl` back to `block`. A control that changes a default has to still work in
+both directions, which is the standing rule here.
+
+**Two defects found by measuring, both invisible in the diff.**
+
+TD-70: `.remarks` set `margin-left` twice in the same rule. The new gutter
+indent was written first and the original `-3px` second, so the later
+declaration won and the indent did nothing. The remark text measured at x=49
+against a title at x=52 and only a text-range measurement showed it, because
+the element's box edge and its text differ by the 3px padding.
+
+TD-69: `body.cv-open` still applied `margin-left:300px`, correct only while the
+panel opened from the left. With the panel on the right the board was pushed
+away from it.
+
+**A third finding was the harness, not the app.** After the TD-69 fix the panel
+still measured 300px off-screen with the open class demonstrably matching.
+Chromium's `--virtual-time-budget` fast-forwards timers but does not advance the
+CSS transition clock, so `getComputedStyle` reported the transition's start
+value however long the probe waited. Disabling the transition and forcing a
+reflow gave `translateX(0)` and a right edge flush with the viewport. Recorded
+rather than quietly worked around, because on the first reading it looked like a
+real layout defect and a less careful pass would have "fixed" working CSS.
+
+Baseline render unchanged at 163 rows / 196 markers / 159 tasks / 198
+milestones. TEST-25 board order, TEST-23 persistence 20/20, ingest and the
+contrast gate all re-run clean.
+
+### TEST-25 detail
+
+The expected order is **derived from the workbook**, not typed into the test: in
+this export a heading row carries indented text in the Activity ID column and an
+empty Activity Name, so walking the sheet with an indent stack gives the section
+in force over every activity. Band names cannot be compared one to one, because
+the tag strategy rolls inner sections up into a discipline. Positions can, and
+that is the assertion: place each board band back onto the sheet by the row of
+its first activity, and require those rows to strictly increase.
+
+**On v3.1.0-P22** the board walks the schedule top to bottom:
+
+| Board band | First activity | Sheet row |
+|---|---|---|
+| Key Milestones | SNIP-101 | 2 |
+| Inputs From Others | SNIP-136 | 28 |
+| Project Management | SNIP-105 | 36 |
+| Engineering: Process | SNIP-118 | 49 |
+| Engineering: Mechanical & Piping | SNIP-128 | 69 |
+| Engineering: Layout | SNIP-300 | 86 |
+| Engineering: Civil | SNIP-146 | 97 |
+| Engineering: Structural & Concrete | SNIP-215 | 118 |
+| Engineering: Electrical & Instrumentation | SNIP-124 | 131 |
+| Engineering: Site Services | SNIP-202 | 160 |
+| Project Execution Plan / Schedule | SNIP-214 | 162 |
+| Capital and Operating Cost Estimate | SNIP-232 | 173 |
+| Financial Model | SNIP-242 | 182 |
+| Technical Report | SNIP-255 | 189 |
+
+Strictly increasing, and the board opens with the section the schedule opens
+with.
+
+**Run against the shipped v3.1.0-P21 the same check fails**, which is what makes
+it worth having: seven bands out of order, the board opening on Capital and
+Operating Cost Estimate at sheet row 167 while Key Milestones at row 2 came
+fourth. That reproduces the user's report exactly.
+
+**The first version of this check passed for the wrong reason (TD-66).** It
+looked for heading rows with an empty Activity ID column, which is the inverse of
+this export's shape, so it derived nothing, printed an empty expected list, and
+fell through to a weaker id-monotonicity heuristic that happened to pass. An
+empty derivation now exits with an error instead.
+
+Baseline render unchanged at 163 rows / 196 markers / 159 tasks / 198
+milestones. The seeds carry no WBS and form a single ungrouped band, which is
+why the shipped board never showed this defect and only a real import exposed it.
+
 ### TEST-24 detail
 
 **The header.** `--color-bg-header` moved from `#a6bbdc` to `#2e4f82`, which is
@@ -971,5 +1335,230 @@ Source file shape confirmed by static inspection of the workbook: 192 data rows,
 | 2026-09-11 | TEST-22 heading layout and sticky search row; full suite re-run; baseline render unchanged | **Contrast gate still failing by design pending TD-50** (two probes at 1.79:1, delivered as requested). Subtitle wording is an assumption from garbled dictation. | File distribution | v3.1.0-P19 |
 | 2026-09-11 | TEST-23 persistence round trip, 20/20; full suite re-run; baseline render unchanged at 163 rows / 196 markers / 159 tasks / 198 milestones | **Contrast gate still failing by design pending TD-50** (two probes at 1.79:1, delivered as requested). Replayed import categories do not yet report how many entries actually landed (TD-62). | File distribution | v3.1.0-P20 |
 | 2026-09-11 | TEST-24 header darkening and token split, data date on a Friday, republish chain; full suite re-run; baseline render unchanged | **Contrast gate green, 0 below 3.0:1** for the first time since v3.1.0-P15. The `.xlsx` CDN dependency (TD-36) is still open and is now the only outstanding High. | File distribution | v3.1.0-P21 |
+| 2026-09-14 | TEST-25 board order follows the schedule; full suite re-run; baseline render unchanged; contrast gate green | The schedule's inner headings within a band are still collapsed into the discipline and not shown (TD-67, with TD-23). `.xlsx` CDN dependency (TD-36) still open. | File distribution | v3.1.0-P22 |
+| 2026-09-14 | TEST-26 ten presentation and default changes; full suite re-run; baseline render unchanged; contrast gate green | The schedule's inner headings within a band are still not shown (TD-67, awaiting the user's choice). `.xlsx` CDN dependency (TD-36) still open. | File distribution | v3.1.0-P23 |
+| 2026-09-14 | TEST-27 dependency tooltip and notes dialog format; full suite re-run; baseline unchanged; contrast gate green | ID navigation is not built (TD-73, open). Inner band headings still not shown (TD-67). `.xlsx` CDN dependency (TD-36) open. | File distribution | v3.1.0-P24 |
+| 2026-09-14 | TEST-28 marker placement, title row, activity title wrap; full suite re-run; contrast gate green | Crowded cells still overlap slightly at the default column width (TD-78). ID navigation (TD-73), inner band headings (TD-67) and the `.xlsx` CDN dependency (TD-36) all open. | File distribution | v3.1.0-P25 |
+| 2026-09-14 | TEST-29 filter highlight and milestone card layout; full suite re-run; contrast gate green | ID navigation (TD-73), inner band headings (TD-67), crowded cells (TD-78) and the `.xlsx` CDN dependency (TD-36) all open. | File distribution | v3.1.0-P26 |
+| 2026-09-15 | TEST-30 dependency-count chips, baseline overlay placement and the A3 print preview, 32/32; full suite re-run; baseline render unchanged; contrast gate green | The board overflows an A3 portrait sheet at the full week horizon even at the minimum column width; the preview states this rather than clipping silently. A duplicate dark-theme declaration of `--color-bg-subtle` is open (TD-88). ID navigation (TD-73), inner band headings (TD-67), crowded cells (TD-78) and the `.xlsx` CDN dependency (TD-36) all open. | File distribution | v3.1.0-P27 |
+| 2026-09-16 | TEST-33 multi-source ingest Half 1, 55/55; full suite re-run (TEST-32 49/49, TEST-30 32/32, TEST-31 34/34, persistence 20/20, ingest and order exit 0); contrast gate 90 probes, 0 frozen, 0 below 3.0:1 | A single-source import still produces the P29 board exactly. Appending the reference workbook to itself gives 210 deliverables / 292 milestones with 146 suffixed Activity IDs, no duplicated id and no duplicated row ref. Compare mode, the 10% new-scope rule, generated IDs and Add Task are Half 2 and are not in this partial. TD-97 and TD-98 still open. | File distribution | v3.1.0-P30 |
+| 2026-09-16 | TEST-32 settings panel design system, 46/46; full suite re-run (TEST-30 32/32, TEST-31 34/34, persistence 20/20, ingest and order exit 0); contrast gate 90 probes, 0 frozen, 0 below 3.0:1; baseline render unchanged at 159 rows / 196 markers / 159 tasks / 198 milestones and the imported board unchanged at 105 rows / 146 milestones | No behaviour or data change. Two latent contrast defects were surfaced and fixed (TD-96). Two remain open and are recorded rather than quietly patched: the four View Controls occurrences of `--color-purple-deep` on a dark panel (TD-97), and the `--color-bg-subtle` duplicate, whose consumer sweep now shows it is load-bearing for the week header (TD-98, TD-88). ID navigation (TD-73), inner band headings (TD-67), crowded cells (TD-78) and the `.xlsx` CDN dependency (TD-36) all still open. | File distribution | v3.1.0-P29 |
+| 2026-09-15 | TEST-31 date range at setup and as a filter, 34/34; full suite re-run; baseline render unchanged; contrast gate green | The board no longer refills the screen width after a range narrows it; fit-to-screen and the A3 preview both do, and both now work with a filter active (TD-92). `--color-bg-subtle` duplicate open (TD-88). ID navigation (TD-73), inner band headings (TD-67), crowded cells (TD-78) and the `.xlsx` CDN dependency (TD-36) all open. | File distribution | v3.1.0-P28 |
 | Pre-migration | TEST-01 full feature regression | Banding (FEAT-10), sorting/icon customisation (FEAT-11), JSON round-trip (FEAT-13) all knowingly not built. Tokenization (FEAT-14) knowingly incomplete. Label collision same-row only. Header aliases exact-match only. | File distribution | v3.1.0-P1 |
 | 2026-09-09 | Migration to git repository, project kit established | TD-01 version discrepancy open; companion tokenization docs (TD-03) not yet located | Branch `p6-milestone-dashboard` | Migration commit |
+
+---
+
+## TEST-34 — Marker placement, and three filter-row defects (v3.1.0-P32)
+
+`tools/p32_check.py`, **36/36**. Headless Chromium, the reference workbook through the real ingest pipeline.
+
+**Measured first, on P31, before any edit.** Two of the three diagnoses written from reading the source did not survive it and were corrected rather than built on:
+
+| Claim from source reading | Measured verdict |
+|---|---|
+| A frame mismatch pushes markers out of their row | **Refuted.** `markersOut: 0` and `labelsOut: 0` at every setting, including row 65 / ID + Title, which is the user's own configuration. The belief gap is a constant 1px (the bottom border), and at the low end of the slider the code under-estimates the row, which is the safe direction. |
+| The `i%2` spread only ever produces two bands | **Confirmed exactly.** `distinctY = 2` for every N from 2 to 6. N=3 is `[28, 72, 28]`. From N=5 the same-y pair overlaps: 0.6px at N=5, 3.5px at N=6. |
+| Toggling labels resizes rows without a rebuild | **Confirmed, worse than written.** 105 of 105 rows change 34.34 to 48px; 0 of 146 markers reposition. |
+
+Two findings the probe was not looking for: the spread is a fraction of the row, so scatter grows with row height (±7.5px at 34px, ±14px at 65px), and the Row height slider's bottom of range is dead (TD-117).
+
+### After
+
+| Group | Assertions |
+|---|---|
+| Offsets | a lone marker is dead centre; **no two markers in a cell share a y, for every N from 2 to 6**; the cascade is monotonic across and down; symmetric about the cell centre; no offset can put an icon past the row it was budgeted for, checked at four icon/column/row combinations |
+| Labels do not move layout | 105 rows compared; turning labels on changes **no** row height; nor does switching to ID + Title; **0 rerenders** behind the toggle |
+| Containment | 8 settings, 146 markers and 146 labels each; **no marker outside its row at any setting**; a label never spills more than one line (worst 8.9px); spill never increases as the row grows; and reaches zero, so the row height control is a real remedy rather than advice |
+| Ghosts | 146 of 146 paired, 0 off their pair's Y under the new transform |
+| Defect A | the toggle is outside the bar it hides; hiding really collapses the bar (1px); the toggle is still laid out and clickable (`offsetParent` non-null, 26px tall); it shows the state it sets; clicking restores the bar; the bar's own hide control sits 8px from the right edge |
+| Defect B | exactly one title field; it is the id `applyFilter` already reads; typing narrows the board (2 of 105); clearing restores it |
+| Defect C | the week filter narrows first; the health change actually happened; **the filter survives it**; survives any other rebuild, which is where the fault really was; and the restore is bounded at the top of the range |
+
+Marker containment by setting, labels on, ID + Title:
+
+| Setting | Markers out | Labels out | Worst label |
+|---|---|---|---|
+| row 34 / ico 15 / wk 36 | 0 | 28 | 8.9px |
+| row 34 / ico 24 / wk 36 | 0 | 28 | 8.9px |
+| row 48 / ico 15 / wk 36 | 0 | 28 | 2.1px |
+| row 65 / ico 15 / wk 36 | 0 | **0** | inside |
+| row 72 / ico 24 / wk 72 | 0 | **0** | inside |
+
+**Two assertions in the first run were wrong about the app rather than the app being wrong** (TD-118): the right-alignment check read `getComputedStyle().marginLeft` expecting the literal `auto`, which is never observable, and the ghost block measured an empty set because the baseline overlay is off by default. The sample-size rule caught the second, as designed.
+
+`tools/p30_check.py` moves to **67/67**: its two row-height assertions encoded the coupling the user asked to be removed and are inverted, and its label-containment assertion becomes a bounded-spill assertion, with the row-height sweep that proves the remedy living in `p32_check.py`.
+
+### Full suite at v3.1.0-P32
+
+| Suite | Result |
+|---|---|
+| TEST-34 placement and filter-row defects | **36/36** |
+| TEST-33 multi-source ingest | **67/67** |
+| TEST-32 settings panel design system | **49/49** |
+| TEST-31 date range | **34/34** |
+| TEST-30 counts, baseline overlay, print | **32/32** |
+| TEST-23 persistence round trip | **20/20** |
+| Ingest, board order | exit 0 |
+| Contrast gate | 0 frozen, 0 below 3.0:1 |
+| Baseline render | unchanged, 105 rows / 146 milestones imported |
+
+**Published:** `releases/v3.1.0-P32_marker-placement-and-filter-row-fixes.html`
+
+---
+
+## TEST-37 — The milestone card rework and the editable Progress field (v3.1.0-P35)
+
+`tools/p35_check.py`, **117/117**. Headless Chromium, the reference workbook through the real ingest pipeline, run at three viewport widths (390x844, 768x1024, 1440x900). Seven of the assertions are source-level greps, for the standing reason: a literal that happens to be correct measures as correct.
+
+The card is driven the way a user drives it. Cards are opened by dispatching a click on the marker, the field is changed by setting its value and firing `input`, and it is committed by blurring it, so the path under test is the one the markup wires up rather than a direct call to `saveMsProgress()`.
+
+| Group | Assertions |
+|---|---|
+| Shrink | the card renders at 306px, which is 340 x 0.9 exactly; **and is 10.0% narrower and 22.6% shorter than the P34 release** measured in the same browser, at the same viewport, on the same milestone |
+| The row | Start, Finish and Progress all overlap vertically (every pair, not just against the first); Progress is the right-hand field; a 1px left border on the Progress field falls between Finish's right edge and Progress's left edge; every value in the row is one computed text size. Re-measured on a milestone carrying a real start date so **three** boxes are compared, and separately confirmed that P34's two date sizes really did differ (18px against 14px) |
+| The fold | weight, MS hours and earned hours are in a `<details>` that is closed on open, `checkVisibility()` false on all three while shut and true on all three when open, the fold's own height 16px to 66px; **and closed again on the next card**, not left where the last one was put |
+| The key | every one of the 146 milestones examined for a divergence between `msKeyFor()` and the notes id (**0 found**, so the alignment is hygiene on this dataset rather than a live fix), and the key the card writes equals `msKeyFor(m)` |
+| The override | the committed value reaches the store; the field keeps it and stays marked as edited; the progress bar tracks it; **the row rollup moves 0% to 45%**; the milestone tooltip reports 45%, not the schedule's 0%; it counts as markup; committing an unchanged field adds none |
+| The three layers | every milestone record snapshotted before the edit and compared after: **all 146 unchanged** |
+| Restoring | clearing the field deletes the override rather than saving a blank, the field shows the schedule's value again unmarked, and the rollup goes back with it; entering the schedule's own value leaves no override behind; text that is not a number restores; over 100 shows 100 and under 0 shows 0 |
+| Complete | marking the icon complete sets Progress to 100% and the row follows; a milestone the schedule already has at 100% gains **no** redundant override |
+| Payload | progress overrides are their own selectable annotation category |
+
+### Round trip (TEST-23 extended), `tools/persist_check.py`, **22/22**
+
+A progress override is now one of the edits stage 1 makes. It survives publish, and stage 3 replays it onto a clean board that has never seen it: the override restores at 37% **with the milestone record still reading its schedule value of 100%**. The check refuses to pass if the override it chose happens to equal the schedule's own value, which would make restoring it prove nothing.
+
+### Four findings from the run
+
+- **A rect inside a closed `<details>` measures nothing.** The fold assertion required zero height on the three fields and got non-zero at every width. Verified against a three-line page in the same build: a child of a closed `<details>` reports a non-zero rect here, for a plain div and for a grid. `checkVisibility()` distinguishes the two states and is what the check uses, with the fold's own height as a second read. Sixth headless measurement artefact in this project.
+- **The tooltip assertion read a detached node.** It used the wrap handle captured before the edit; a commit rerenders the board, so that handle still carried its pre-edit tooltip. Re-queried after the rebuild, the tooltip is correct.
+- **The clamp assertion was measuring the wrong rule.** It read the store after typing `-5`. The target's schedule value is 0 and `-5` clamps to 0, so the store correctly held nothing and the check was testing deduplication rather than clamping. It now asserts the effective value the user sees.
+- **The three-field row assertion was comparing two fields.** The first suitable target carries no separate start date, so its Start field is `display:none`. Second time a milestone-card assertion has compared against a field that was not rendering (TEST-29). A milestone with a real start date is now opened on purpose for that case.
+
+### Full suite at v3.1.0-P35
+
+| Suite | Result |
+|---|---|
+| TEST-37 milestone card rework | **117/117**, across three viewport widths |
+| TEST-36 marker anchoring and header heights | **73/73** |
+| TEST-35 marker staggering | **38/38** |
+| TEST-34 placement and filter-row defects | **35/35** |
+| TEST-33 multi-source ingest | **67/67** |
+| TEST-32 settings panel design system | **49/49** |
+| TEST-31 date range | **34/34** |
+| TEST-30 counts, baseline overlay, print | **32/32** |
+| TEST-23 persistence round trip | **22/22**, extended with a progress override |
+| Ingest, board order | exit 0 |
+| Contrast gate | 0 frozen, 0 below 3.0:1 |
+
+**Published:** `releases/v3.1.0-P35_milestone-card-and-progress-override.html`
+
+---
+
+## TEST-36 — Marker anchoring and the measured header heights (v3.1.0-P34)
+
+`tools/p34_check.py`, **73/73**. Headless Chromium, the reference workbook through the real ingest pipeline, **run at three viewport widths** (390x844, 768x1024, 1440x900) because one width cannot tell a measured height from a constant that happens to be right.
+
+Six of the assertions are source-level greps rather than measurements, for the same reason: a literal that happens to be correct measures as correct.
+
+| Group | Assertions |
+|---|---|
+| Sequence | against the generator for n = 1 to 8: run of one is the middle band; run of two is top then bottom, leftmost up; run of three cascades top, middle, bottom; **the fourth resets to the top**, reversing TEST-35; the fifth is middle and the sixth bottom; no two adjacent markers in a run share a band |
+| Run boundary, both bounds | the threshold is a gap of three columns, i.e. two blank ones. Outer bound: 95 markers further than that from both neighbours, **0 off centre**. Inner bound: 3 markers at exactly the threshold, **0 runs wrongly broken** |
+| Pair rule | four cases (same cell and different cells, at three bands and at five), all symmetric about the midpoint with the leftmost up; the same-cell case now matches the different-cell case exactly |
+| SNIP-212 | its row still carries four markers in adjacent columns 18 to 21, and **it sits on the top band**, measured at all three widths |
+| Header seam | six display states (after import, two slider combinations, print mode, fit to screen, and back to default): the week band sticks exactly at the month row's measured height, **seam 0.00px in every one**, at every width; the offset is not 19.5px; `--hdr-phase-h` is written rather than left on its fallback |
+| Filter bar | open, closed and reopened at each width: **nothing clipped while open**, collapses to 0 when closed, and the cap is not the old 160px |
+| Board effect | run lengths and band distribution reported, not predicted, so the cost of the plain repeat stays visible |
+| Containment | 146 markers, **0 outside their row**, at every width |
+
+### What the three reported cases measured before anything was changed
+
+| Case | P33 build |
+|---|---|
+| Row 69, SNIP-212 | four markers at columns 18, 19, 20, 21 on the triangle wave, SNIP-212 on the middle band |
+| SNIP-218 / SNIP-219 | **different rows**, each the only marker in its row, both dead centre, at 1600 and at 390 wide |
+| Month header row | renders 16.00px against a hardcoded 19.5px sticky offset |
+| Filter bar at 390 wide | content 202px in a 159px box |
+| Filter bar at 1600 wide | 63px in 63px, nothing clipped |
+
+### Two findings from measuring first
+
+- **A diagnosis written from the source was refuted for the third time in three partials** (TD-129). The plan named a same-cell pair rule as the cause of the SNIP-218/219 markup. The two markers are in different rows and both already centred, so the rule it blamed was not what rendered. The pair rule was still wrong and is fixed, but as an inconsistency with no visible effect, which is what the check reports.
+- **The obvious fix for SNIP-212 does not work, and arithmetic caught it rather than a build.** Capping a run at three members splits row 69 into a run of three and a run of one, and a run of one is the middle band by definition, so SNIP-212 would have landed back where it started. The cycle itself had to change.
+
+### Full suite at v3.1.0-P34
+
+| Suite | Result |
+|---|---|
+| TEST-36 marker anchoring and header heights | **73/73** |
+| TEST-35 marker staggering | **38/38**, two sequence assertions moved with the reversal |
+| TEST-34 placement and filter-row defects | **35/35** |
+| TEST-33 multi-source ingest | **67/67** |
+| TEST-32 settings panel design system | **49/49** |
+| TEST-31 date range | **34/34** |
+| TEST-30 counts, baseline overlay, print | **32/32** |
+| TEST-23 persistence round trip | **20/20** |
+| Ingest, board order | exit 0 |
+| Contrast gate | 0 frozen, 0 below 3.0:1 |
+
+**Published:** `releases/v3.1.0-P34_marker-anchoring-and-compact-header.html`
+
+---
+
+## TEST-35 — Proximity-scoped marker staggering (v3.1.0-P33)
+
+`tools/p33_check.py`, **38/38**. Headless Chromium, the reference workbook through the real ingest pipeline.
+
+The rule: a marker's vertical position is a property of the marker, and the label is a child of its wrap, so it rides whatever the wrap does.
+
+| Group | Assertions |
+|---|---|
+| Sequence | asserted against the generator for n = 1 to 8, because the board's densest cell holds two markers and cannot reach the case: run of one is the middle band; run of two is top then bottom, leftmost up; run of three cascades top, middle, bottom; **the fourth is the middle band, not a repeat back to top**; the fifth returns to top; no two adjacent markers in a run share a band; every level is one of the three |
+| Budget | no band offset can put an icon past the row it was budgeted for, across five icon/row combinations and three to six bands; three bands never grow the row; four or more do, monotonically; band count follows the densest cell |
+| Label rides its icon | 146 of 146 label stacks centred on their own wrap, asserted **per marker**; no element carries an independent offset or a band class |
+| Factory | 146 positioned wraps, all carrying both offsets; the flow-layout LoE variant carrying neither |
+| Ghosts | 146 paired, **0 off their pair**, so the ghost inherited the band through the shared writer |
+| Labels do not move layout | 105 rows identical with labels off, on and in ID + Title; 0 rerenders behind the toggle |
+| Containment | 7 settings, 146 markers each, **0 outside their row at any setting** |
+| Hidden markers | the derived test and the zero-rect measurement agree on all 146 markers under no filter, a week filter, a date range, all three combined, and after clearing; 641 dependency paths still drawn |
+| Same-cell overflow | four clones forced into one cell (densest cell 5): that row grew to 64px, every marker in it got its own line, and **1 of 105 rows changed height** |
+
+### Spill, measured against the P32 release with the same corrected sweep
+
+| Setting | P33 out | P33 worst | P32 out | P32 worst |
+|---|---|---|---|---|
+| row 28 / ico 15 / wk 36 | **0** | 0.4px | 28 | 8.9px |
+| row 34 / ico 15 / wk 36 | 31 | 3.4px | 28 | 8.9px |
+| row 34 / ico 24 / wk 36 | **0** | inside | 28 | 8.9px |
+| row 34 / ico 10 / wk 20 | 31 | 7.3px | 28 | 10.3px |
+| row 48 / ico 15 / wk 36 | **0** | 0.1px | 28 | 2.1px |
+| row 65 / ico 15 / wk 36 | 0 | inside | 0 | inside |
+| row 72 / ico 24 / wk 72 | 0 | inside | 0 | inside |
+
+Total labels outside their row across the sweep: **62, down from 140.** No setting spills deeper than it did. The count rises at 34px because a proximity run is wider than P32's per-cluster reset, so more markers are banded, which is the feature; the depth, which is what decides whether a label lands on a neighbouring row, falls everywhere.
+
+### Four defects found by verification
+
+- **Three probes were measuring nothing** (TD-123). `p30_check`, `p32_check` and the screenshot probe drove placement through `setIcoSize()` / `setWkWidth()` alone, but `rerender()` reapplies display settings by reading the slider elements back, so every call was undone by the rebuild it triggered. Found by a diagnostic that asked for a 10px icon and measured 15, while investigating an apparent 17 markers leaving their row. With the settings actually applied, that failure did not exist. The P32 spill baseline had to be re-measured before the comparison above meant anything.
+- **The unfurl put the label stack under the count chip** (TD-124), reviving TD-83. Caught by `p27_check`.
+- **The first same-cell implementation put two pairs on one line inside one cell**, because the level generator knew the run length but not the columns, so it could not tell reuse across cells from reuse within one.
+- **The agreement assertion passed against zero markers on its first run**, because the rebuild before it left the board empty. The sample-size assertion beside it caught that, as designed.
+
+### Full suite at v3.1.0-P33
+
+| Suite | Result |
+|---|---|
+| TEST-35 marker staggering | **38/38** |
+| TEST-34 placement and filter-row defects | **35/35**, two assertions inverted to the new contract |
+| TEST-33 multi-source ingest | **67/67** |
+| TEST-32 settings panel design system | **49/49** |
+| TEST-31 date range | **34/34** |
+| TEST-30 counts, baseline overlay, print | **32/32** |
+| TEST-23 persistence round trip | **20/20** |
+| Ingest, board order | exit 0 |
+| Contrast gate | 0 frozen, 0 below 3.0:1 |
+| Baseline render | unchanged, 105 rows / 146 milestones imported |
+
+**Published:** `releases/v3.1.0-P33_proximity-marker-staggering.html`

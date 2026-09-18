@@ -98,6 +98,11 @@ STAGE1 = r"""
     MS_COMMENTS[k]='PERSIST comment on a moved milestone';
     MS_HEALTH_OVERRIDE[k]=2;
     MS_SHORT_TITLES[k]='PERSIST-SHORT';
+    // A progress override, and the schedule value it overrides, so stage 2 can
+    // tell a restored override from a milestone that simply already read 37.
+    R.msScheduleProgress=ms.progress;
+    MS_PROGRESS_OVERRIDE[k]=(ms.progress===37)?73:37;
+    R.msProgressWanted=MS_PROGRESS_OVERRIDE[k];
 
     // --- 5. a dependency-line comment, the kind neither payload carried
     const depKey='pred:'+R.msId+'->PERSIST-DEST';
@@ -169,6 +174,7 @@ STAGE2 = r"""
         R.depComment   = DEP_COMMENTS[E.depKey]||null;
         R.msComment    = MS_COMMENTS[E.msKey]||null;
         R.msHealth     = (E.msKey in MS_HEALTH_OVERRIDE)?MS_HEALTH_OVERRIDE[E.msKey]:null;
+        R.msProgress   = (E.msKey in MS_PROGRESS_OVERRIDE)?MS_PROGRESS_OVERRIDE[E.msKey]:null;
         R.msShortTitle = MS_SHORT_TITLES[E.msKey]||null;
         R.moves        = MS_MOVES.length;
         R.deleted      = DELETED_ROWS.length;
@@ -225,6 +231,10 @@ STAGE3 = r"""
             R.rowPresentAfter = E.delRef? TASKS.some(function(t){return t.ref===E.delRef;}) : null;
             R.depComment= DEP_COMMENTS[E.depKey]||null;
             R.msComment = MS_COMMENTS[E.msKey]||null;
+            R.msProgress= (E.msKey in MS_PROGRESS_OVERRIDE)?MS_PROGRESS_OVERRIDE[E.msKey]:null;
+            // The record itself must be untouched by the replay, not just the store.
+            const rec=MILESTONES.filter(function(x){ return msKeyFor(x)===E.msKey; })[0];
+            R.recordProgress = rec?rec.progress:null;
             // Replaying twice must not double-move or re-delete.
             const n1=MS_MOVES.length;
             ANNOT_CATEGORIES.forEach(function(c){ c.apply(P); });
@@ -310,13 +320,15 @@ def main() -> int:
     published = s1.pop("publishedText")
     model_text = s1.pop("modelText")
     expect = {k: s1.get(k) for k in
-              ("msId", "msKey", "depKey", "fromRef", "toRef", "ovRef", "delRef")}
+              ("msId", "msKey", "depKey", "fromRef", "toRef", "ovRef", "delRef",
+               "msProgressWanted", "msScheduleProgress")}
     if keep:
         (keep / "published.html").write_text(published, encoding="utf-8")
         (keep / "model.json").write_text(model_text, encoding="utf-8")
 
     model = json.loads(model_text)
-    for field in ("dependencyComments", "milestoneMoves", "deletedRows"):
+    for field in ("dependencyComments", "milestoneMoves", "deletedRows",
+                  "milestoneProgressOverrides"):
         if field not in model:
             fails.append(f"stage1  export payload is missing {field}")
     if not model.get("dependencyComments", {}).get(expect["depKey"]):
@@ -333,6 +345,7 @@ def main() -> int:
             ("dependency comment", s2["depComment"], "PERSIST dependency note"),
             ("milestone comment", s2["msComment"], "PERSIST comment on a moved milestone"),
             ("milestone health", s2["msHealth"], 2),
+            ("milestone progress override", s2["msProgress"], expect["msProgressWanted"]),
             ("short title", s2["msShortTitle"], "PERSIST-SHORT"),
             ("milestone row", s2["msRef"], expect["toRef"]),
             ("row remark", s2["rowRemark"], "PERSIST remark"),
@@ -383,6 +396,19 @@ def main() -> int:
                 fails.append("stage3  row removal was not replayed")
             else:
                 notes.append("stage3  row removal replayed")
+        if expect["msProgressWanted"] == expect["msScheduleProgress"]:
+            fails.append("stage3  the override equals the schedule's own value, so "
+                         "restoring it would prove nothing")
+        elif s3["msProgress"] != expect["msProgressWanted"]:
+            fails.append(f"stage3  progress override not imported: got "
+                         f"{s3['msProgress']!r}, expected {expect['msProgressWanted']!r}")
+        elif s3["recordProgress"] != expect["msScheduleProgress"]:
+            fails.append(f"stage3  the replay wrote the milestone record: progress is "
+                         f"{s3['recordProgress']!r}, schedule says "
+                         f"{expect['msScheduleProgress']!r}")
+        else:
+            notes.append(f"stage3  progress override imported ({s3['msProgress']}%) "
+                         f"with the record still at {s3['recordProgress']}%")
         if s3["depComment"] != "PERSIST dependency note":
             fails.append("stage3  dependency comment not imported")
         else:

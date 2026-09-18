@@ -353,8 +353,7 @@ html[data-theme="dark"]{
      So the band is derived from the row height instead of fixed, and cannot
      exceed the room actually available. 13px is half the stack, rounded up. */
   --row-min-h:34px;
-  /* Half the icon, so the label's text can clear it. Written by setIcoSize. */
-  --ico-half:7.5px;
+  --lbl-band-dy:clamp(0px, calc(var(--row-min-h) / 2 - 13px), 15px);
 }
 
 *{box-sizing:border-box;margin:0;padding:0}
@@ -647,12 +646,7 @@ input[type=range]{width:110px;cursor:pointer}
 #filter-bar.open{transform:translateX(0)}
 #filter-bar .fb-hd{padding:0 12px 10px;font-size:11px;font-weight:700;color:var(--color-purple-deep);display:flex;align-items:center;gap:6px}
 #top-filter-bar{background:var(--color-filter-bg);border-bottom:1px solid var(--color-filter-border);padding:0 var(--space-4);display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-4) var(--space-5);font-size:var(--text-sm);position:relative;z-index:30;max-height:0;overflow:hidden;transition:max-height .16s ease,padding .16s ease}
-/* The cap was the literal 160px. The bar is flex-wrap, so at phone width its
-   controls wrap onto more rows than that: measured at 390px the content came
-   to 202px against a 159px box, and the part cut off read as the panel
-   hiding under the header below it. --tfb-h is the bar's own measured
-   content height, written by watchStickyHeights(). */
-#top-filter-bar.open{padding:var(--space-3) var(--space-4);max-height:var(--tfb-h,160px)}
+#top-filter-bar.open{padding:var(--space-3) var(--space-4);max-height:160px}
 #top-filter-bar .tfb-group{display:flex;align-items:center;gap:var(--space-2);flex-wrap:wrap}
 .fb-sect-title{font-size:9.5px;font-weight:700;color:var(--color-purple-deep);text-transform:uppercase;letter-spacing:.04em;margin:10px 0 4px;padding-top:8px;border-top:1px solid var(--color-filter-border)}
 .fb-sect-title:first-child{margin-top:0;padding-top:0;border-top:none}
@@ -691,9 +685,6 @@ input[type=range]{width:110px;cursor:pointer}
 #top-filter-bar .filter-btn{font-size:var(--text-sm);padding:var(--space-1) var(--space-4);border-radius:4px;border:1px solid var(--color-btn-secondary-outline);background:var(--color-btn-secondary-bg);cursor:pointer;color:var(--color-btn-secondary-text);font-weight:500}
 #top-filter-bar .filter-btn:hover{background:var(--color-btn-secondary-hover-bg)}
 #top-filter-bar .filter-btn:active{background:var(--color-btn-secondary-pressed-bg)}
-#top-filter-bar .tfb-hide{margin-left:auto;border:1px solid var(--color-btn-secondary-outline);background:var(--color-btn-secondary-bg);
-  color:var(--color-btn-secondary-text);border-radius:4px;cursor:pointer;font-size:var(--text-sm);line-height:1;padding:var(--space-1) var(--space-3)}
-#top-filter-bar .tfb-hide:hover{background:var(--color-btn-secondary-hover-bg)}
 #top-filter-bar .filter-info{font-size:var(--text-xs);color:var(--color-text-muted);font-style:italic}
 /* Date range filter. Matched to the selects beside it rather than left as the
    browser's native control, which sizes itself from the platform font and sat
@@ -819,19 +810,17 @@ table{border-collapse:separate;border-spacing:0;table-layout:fixed;width:max-con
 td.sticky,th.sticky{position:sticky;left:0;z-index:10;background:inherit}
 thead tr th.sticky{z-index:20}
 
-/* The two header rows stack: the month band sticks at the top of the scroller
-   and the week band sticks directly below it. The week band's offset used to be
-   the literal 19.5px, a stand-in for the month row's height. It renders 16px,
-   so a 3.5px band sat between them that data rows scrolled through. It is
-   measured now and written to --hdr-phase-h by watchStickyHeights(). The
-   fallback keeps the old literal, so a browser without ResizeObserver is no
-   worse off than it was.
-   The search row that once sat above these is gone (it moved into the filter
-   bar) and its --hdr-search-h token went with it: declared 0px and never
-   written by anything, it was two variables with no writer where one variable
-   with one writer was wanted. */
-tr.hdr-phase th{font-size:9px;font-weight:500;color:var(--color-text-on-accent);padding:3px 4px;text-align:center;border-right:0.5px solid rgba(255,255,255,.15);white-space:nowrap;position:sticky;top:0;z-index:25}
-tr.hdr-wk th{font-size:8px;color:var(--color-text-small);padding:2px 2px;text-align:center;border-right:0.5px solid var(--color-line-default);border-bottom:1.5px solid #99a;white-space:nowrap;line-height:1.2;background:var(--color-bg-subtle);cursor:pointer;user-select:none;position:sticky;top:var(--hdr-phase-h,19.5px);z-index:24}
+/* Height of the search row, and therefore the offset every header row below it
+   sticks at. Kept as one variable so the three rows cannot drift apart. */
+/* The search moved into the filter bar, so there is no search row above the
+   month band and the stack starts at 0. Kept as a token rather than removed,
+   because the three sticky offsets are still derived from it. */
+:root{--hdr-search-h:0px}
+tr.hdr-search th{position:sticky;top:0;z-index:27;background:var(--color-bg-header);
+  height:var(--hdr-search-h);padding:0;border-bottom:0.5px solid var(--color-line-default)}
+tr.hdr-search th.sticky{z-index:28}
+tr.hdr-phase th{font-size:9px;font-weight:500;color:var(--color-text-on-accent);padding:3px 4px;text-align:center;border-right:0.5px solid rgba(255,255,255,.15);white-space:nowrap;position:sticky;top:var(--hdr-search-h);z-index:25}
+tr.hdr-wk th{font-size:8px;color:var(--color-text-small);padding:2px 2px;text-align:center;border-right:0.5px solid var(--color-line-default);border-bottom:1.5px solid #99a;white-space:nowrap;line-height:1.2;background:var(--color-bg-subtle);cursor:pointer;user-select:none;position:sticky;top:calc(var(--hdr-search-h) + 19.5px);z-index:24}
 tr.hdr-wk th.sticky{z-index:26}
 tr.hdr-wk th:hover{background:var(--color-accent-tint-bg)}
 tr.hdr-wk th.past-wk{background:#e8e8e8;color:var(--color-text-small)}
@@ -857,12 +846,7 @@ tr.phase-band.pb4 td{background:var(--color-band-5)}
 
 tr.disc td{background:var(--color-label-neutral-bg);font-size:9px;font-weight:600;color:var(--color-text-small);padding:2px 8px;letter-spacing:.04em;text-transform:uppercase;border-bottom:0.5px solid var(--color-line-default);position:relative;z-index:5}
 
-/* --row-h-eff is set per ROW by renderRows, and only on a row holding a cell
-   with more than three markers: those share an x, so they cannot reuse a band
-   the way markers in different cells can, and the row is grown to give each its
-   own. Data-driven, never display-driven, so importing a denser schedule can
-   change row heights but no toggle ever does. */
-tr.data td{border-bottom:0.5px solid var(--color-line-default);border-right:0.5px solid var(--color-line-default);vertical-align:middle;background:var(--color-row-default-bg);height:var(--row-h-eff,var(--row-min-h))}
+tr.data td{border-bottom:0.5px solid var(--color-line-default);border-right:0.5px solid var(--color-line-default);vertical-align:middle;background:var(--color-row-default-bg);height:var(--row-min-h)}
 tr.data.alt td{background:var(--color-row-alt-bg)}
 tr.data.gate-row td{background:var(--color-row-gate-bg)}
 tr.data:hover td{background:var(--color-row-hover-bg)!important}
@@ -1007,13 +991,7 @@ td.c-task{padding:2px 4px;vertical-align:top;font-size:8px;color:var(--color-tex
 td.c-src{padding:2px 4px;vertical-align:top;font-size:8px;color:var(--color-text-muted);white-space:normal;word-break:break-word;line-height:1.4}
 td.c-srcsch{padding:2px 4px;vertical-align:top;font-size:8px;color:var(--color-text-muted);white-space:normal;word-break:break-word;line-height:1.4}
 
-/* No min-height here. It read as a 38px floor but Chromium does not honour
-   min-height on a table cell, so it was dead: measured, a cell asked for 28px
-   comes back 34.34px, below the supposed floor. What actually sets the floor
-   is the text in the fixed columns. Leaving it in would have meant a second,
-   invisible authority fighting the Row height control in any engine that does
-   honour it. */
-td.c-wk{text-align:center;padding:1px 0;position:relative;overflow:visible;vertical-align:middle}
+td.c-wk{text-align:center;padding:1px 0;position:relative;overflow:visible;vertical-align:middle;min-height:38px}
 td.c-wk.past-col{background:var(--color-col-past-bg) !important}
 tr.data.alt td.c-wk.past-col{background:var(--color-col-past-bg) !important}
 td.c-wk.now-col{background:var(--color-accent-tint-bg) !important;border-left:1.5px solid var(--color-accent-purple);border-right:1.5px solid var(--color-accent-purple)}
@@ -1030,20 +1008,12 @@ td.c-wk.loe-span{background-image:linear-gradient(90deg,var(--color-accent-wash)
    markers side by side as a centred pair, which pushed both off the cell's
    midline and, with the label band on top, close enough to the row boundary
    that it was hard to tell which row a marker belonged to.
-   The anchor is the cell's own centre, always: left:50% and top:50% resolve
-   against the cell's real padding box, so they land on the true middle of
-   whatever height the row turns out to be. --mdx/--mdy are then PIXEL offsets
-   from that centre, written per marker by the render.
-   This replaced a percentage offset (--mx/--my). A percentage is a fraction of
-   a height the render cannot know, so it had to be corrected afterwards
-   against an assumed row height, and it also meant the spread grew with the
-   row: at 22% of the cell it was 7.5px on a 34px row and 14px on a 65px row,
-   which is why a tall row stopped reading as one line. A pixel offset budgeted
-   from the row height the user ASKED for is bounded by a minimum the row can
-   only exceed, so a taller row has more room than was used, never less. */
-.m-wrap{position:absolute;left:50%;top:50%;
-  transform:translate(calc(-50% + var(--mdx,0px)),calc(-50% + var(--mdy,0px)));
-  display:inline-block;line-height:1;z-index:2;isolation:isolate}
+   --mx/--my are the centre point as a percentage of the cell, set per marker
+   by the render. A lone marker is dead centre; a shared cell spreads along x
+   and alternates above/below. Both stay inside a 10% clearance from every
+   boundary, which is what keeps a marker unambiguously inside its own row. */
+.m-wrap{position:absolute;left:var(--mx,50%);top:var(--my,50%);
+  transform:translate(-50%,-50%);display:inline-block;line-height:1;z-index:2;isolation:isolate}
 /* Keeps the cell's height now that the markers no longer sit in its flow. */
 .m-strut{display:inline-block;width:0;vertical-align:middle}
 /* Baseline ghost. z-index 0 puts it under every live marker (z-index 2) and
@@ -1057,7 +1027,7 @@ td.c-wk.loe-span{background-image:linear-gradient(90deg,var(--color-accent-wash)
 /* Only when the baseline date has not moved, so the ghost is not hidden
    exactly underneath the live icon. A moved baseline needs no nudge — it is
    already in a different column. */
-.m-ghost-same-col.m-wrap{transform:translate(calc(-50% - 7px + var(--mdx,0px)),calc(-50% + var(--mdy,0px)))}
+.m-ghost-same-col.m-wrap{transform:translate(calc(-50% - 7px),-50%)}
 .m-wrap:hover{z-index:99999}
 .m-wrap-loe{display:block;text-align:center}
 /* An LOE row draws a bar rather than placed markers, so it keeps flow layout. */
@@ -1085,28 +1055,24 @@ td.c-wk.loe-span{background-image:linear-gradient(90deg,var(--color-accent-wash)
    the icon overlaps it, the label's background is covered but any
    text peeking out past the icon stays legible. Font size scales with
    column width via --colw so it grows/shrinks with the zoom slider. */
-/* left:50% puts the chip's own left edge under the MIDDLE of the icon, and the
-   icon paints above it (z-index 2 against the stack's 1, inside an isolated
-   wrap), so the label reads as unfurling out from behind its marker rather than
-   sitting beside it. The chip's TEXT is indented past the icon's edge below, or
-   the icon would cover the first characters. */
-.m-lbl-stack{position:absolute;top:50%;transform:translateY(-50%);left:50%;max-width:calc(var(--colw) * 6);
+.m-lbl-stack{position:absolute;top:50%;transform:translateY(-50%);left:100%;margin-left:2px;max-width:calc(var(--colw) * 6);
   display:flex;flex-direction:column;align-items:flex-start;z-index:1;pointer-events:none;min-width:0}
-/* Background starts at the icon centre, text clears the icon. */
-.m-lbl-stack>.m-lbl,.m-lbl-stack>.m-short-title,.m-lbl-stack>.m-hrs,
-.m-lbl-stack>.m-title-label-row{padding-left:calc(4px + var(--ico-half,7.5px))}
-.m-title-label-row>.m-lbl,.m-title-label-row>.m-short-title{padding-left:3px}
-/* The label has NO vertical offset of its own. It is centred on its wrap, and
-   the wrap carries the band, so a label always sits at its own icon's height
-   and can be traced back to the marker that owns it.
-   This deliberately reverses the P25 note that used to sit here: "it used to
-   move .m-wrap, so the icon travelled with its label and could end up 15px
-   from its own row's midline." That ban was right then and is obsolete now.
-   It failed because the band was a FIXED 15px applied to a percentage
-   positioned element with no knowledge of the row. The offset is now a pixel
-   value budgeted from the row height (msBandOffset), so an icon leaving its
-   row is not a bug to guard against, it is arithmetically impossible. Do not
-   re-ban it without re-reading that function. */
+/* Deterministic label-collision handling — when this render pass finds same-
+   row markers within LABEL_COLLISION_COLS of each other, the LABEL shifts to
+   one of three vertical bands: top-quarter, mid-row (default, no class), or
+   base. Three bands rather than a 2-state toggle, because a toggle re-collides
+   on the third marker in a tight cluster.
+   It used to move .m-wrap, so the icon travelled with its label and could end
+   up 15px from its own row's midline. The icon now stays where the cell put
+   it and only the text moves; the stack is still a genuine child of .m-wrap,
+   so it remains anchored to its own icon. */
+/* --lbl-band-dy is the WHOLE vertical offset, set per marker in renderRows():
+   the amount needed to undo the icon spread's own displacement, plus the band.
+   Two separate rules that each added their own fixed offset is what let the
+   icon spread and the label band compound into a stack sitting outside the
+   row. There is one number now, and it is computed where both inputs are
+   known. */
+.m-wrap .m-lbl-stack{transform:translateY(calc(-50% + var(--lbl-band-dy,0px)))}
 .m-lbl,.m-hrs{display:block;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
   text-align:left;padding:2px 3px;border-radius:2px;box-sizing:border-box;letter-spacing:.02em;min-width:0}
 .m-title-label-row{display:flex;align-items:baseline;gap:3px;min-width:0}
@@ -1250,27 +1216,13 @@ tr.hist-row td.c-wk.now-col{background:var(--color-col-filtered-alt-bg) !importa
   font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 .ms-count.pred{left:0;transform:translate(-100%,-50%);margin-left:-3px;color:var(--color-status-track)}
 .ms-count.succ{right:0;transform:translate(100%,-50%);margin-right:-3px;color:var(--color-accent-purple)}
-/* The stack anchors at left:50% (the icon's centre) so it can unfurl from
-   behind the icon. That means clearing the right-hand count chip costs half an
-   icon MORE than it did when the anchor was left:100%; without the --ico-half
-   term the stack lands under the chip, which is the P27 defect returning.
-   With counts on there is no unfurl to preserve, so the text indent that keeps
-   glyphs clear of the icon is dropped too, or the chip would be double padded. */
-body.counts-on .m-lbl-stack{margin-left:calc(var(--ico-half,7.5px) + var(--count-chip-w) + 5px)}
-body.counts-on .m-lbl-stack>.m-lbl,
-body.counts-on .m-lbl-stack>.m-short-title,
-body.counts-on .m-lbl-stack>.m-hrs,
-body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
+body.counts-on .m-lbl-stack{margin-left:calc(var(--count-chip-w) + 5px)}
 
 /* Filter row: dependency controls — 2/3 : 1/3 split, right third stacked vertically */
 
 
 /* ===== Milestone dialog — light minimalist card, per approved redesign ===== */
-/* Width and padding are 90% of what they were (340px / 16px 18px 15px), with
-   the card's vertical rhythm and its two largest type steps taken down with
-   them, so the shrink is the whole card rather than a narrower column of the
-   same content. The width is the assertable half: 306 is 340 x 0.9 exactly. */
-.ms-dialog{position:fixed;z-index:2147483647;box-sizing:border-box;width:min(306px,calc(100vw - 24px));padding:14px 16px 13px;background:var(--color-dialog-bg);color:var(--color-text-ink);border:1px solid var(--color-line-default);border-radius:12px;box-shadow:0 1px 2px var(--color-shadow-dialog-near),0 8px 24px var(--color-shadow-dialog-far);font-family:var(--font-sans)}
+.ms-dialog{position:fixed;z-index:2147483647;box-sizing:border-box;width:min(340px,calc(100vw - 24px));padding:16px 18px 15px;background:var(--color-dialog-bg);color:var(--color-text-ink);border:1px solid var(--color-line-default);border-radius:12px;box-shadow:0 1px 2px var(--color-shadow-dialog-near),0 8px 24px var(--color-shadow-dialog-far);font-family:var(--font-sans)}
 .ms-dialog[hidden]{display:none}
 .ms-dialog *,.ms-dialog *::before,.ms-dialog *::after{box-sizing:border-box}
 .ms-dialog-head{display:flex;align-items:center;justify-content:space-between;gap:var(--space-4)}
@@ -1283,7 +1235,7 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 .ms-dialog.status-crit .ms-status{color:var(--color-status-crit)}
 .ms-dialog.status-done .ms-status{color:var(--color-status-done)}
 .ms-dialog.status-future .ms-status{color:var(--color-status-future)}
-.ms-title{margin:0;font-weight:600;font-size:14.5px;line-height:1.28;letter-spacing:-.01em}
+.ms-title{margin:0;font-weight:600;font-size:16px;line-height:1.28;letter-spacing:-.01em}
 /* The parent heading now sits ABOVE the title, so it reads as the band the
    milestone belongs to before the milestone itself is named. */
 .ms-sub{margin:var(--space-2) 0 2px;font:450 11px var(--font-sans);color:var(--color-text-muted)}
@@ -1307,49 +1259,24 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 .ms-shorttitle-row input:hover{background:var(--color-accent-wash-weak)}
 .ms-shorttitle-row input:focus{background:var(--color-accent-wash);color:var(--color-purple-dark);outline:none;font-style:normal}
 .ms-shorttitle-row button{font-size:9px;font-weight:650;padding:0 9px;border-radius:5px;border:1px solid var(--color-accent-purple);background:var(--color-accent-purple);color:var(--color-text-on-accent);cursor:pointer}
-/* Start, Finish and Progress are one row. stretch rather than flex-end so the
-   divider beside Progress runs the row's full height, the same device the
-   float column already uses. */
-.ms-schedule{margin-top:12px;padding-top:10px;border-top:1px solid var(--color-line-hairline);display:flex;align-items:stretch;gap:10px}
-.ms-schedule .ms-field{display:flex;flex-direction:column;justify-content:flex-end;min-width:0}
-/* margin-left:auto rather than justify-content:space-between on the row, so the
-   divider stays hard against Progress whether or not Start is being shown. */
-.ms-prog-field{margin-left:auto;align-items:flex-end;padding-left:10px;
-  border-left:1px solid var(--color-line-hairline)}
-.ms-lbl{display:block;margin-bottom:4px;font:500 10px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--color-text-label)}
-/* One declaration for all three values in that row. Start was 14px against
-   Finish at 18px, which read as two different kinds of fact rather than one
-   row, and Progress has to match both or the row reads as two again. */
-.ms-date,.ms-prog-input{font-weight:600;font-size:14px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.ms-schedule{margin-top:14px;padding-top:12px;border-top:1px solid var(--color-line-hairline);display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.ms-lbl{display:block;margin-bottom:5px;font:500 10px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--color-text-label)}
+.ms-date{font-weight:600;font-size:18px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.ms-start-date{font-weight:500;font-size:14px}
 .ms-date.is-actualised,.ms-start-date.is-actualised{background:var(--color-ready-tint-bg);color:var(--color-status-done);border-radius:5px;padding:1px 6px;display:inline-block}
 .ms-type-inline{font-size:11px;color:var(--color-text-muted)}
 .ms-type-inline::before{content:'\00B7';margin:0 5px;color:var(--color-text-faint)}
-/* The editable Progress field. The wrapper carries the state, not the input:
-   ::before cannot be given to an <input>, and the edited indicator is the same
-   filled dot and accent wash the row remarks field uses for the same meaning. */
-.ms-prog-edit{display:inline-flex;align-items:baseline;gap:1px;padding:1px 3px;margin-right:-3px;border-radius:3px;transition:background .12s}
-.ms-prog-edit:hover{background:var(--color-accent-wash-weak)}
-.ms-prog-edit:focus-within{background:var(--color-accent-wash)}
-.ms-prog-input{width:2.9em;text-align:right;padding:0;border:none;outline:none;background:transparent;color:inherit;font-family:inherit}
-.ms-prog-pct{font-size:11px;color:var(--color-text-muted)}
-.ms-prog-edit.is-zero .ms-prog-input{color:var(--color-text-label)}
-.ms-prog-edit.changed{background:var(--color-accent-wash)}
-.ms-prog-edit.changed .ms-prog-input,.ms-prog-edit.changed .ms-prog-pct{color:var(--color-purple-dark)}
-.ms-prog-edit.changed::before{content:'\25CF';color:var(--color-accent-purple);font-size:7px;line-height:1;align-self:center;letter-spacing:1px}
-/* Weight and the two hours figures are reference values, not things read at a
-   glance, so they fold away. Collapsed by default, same as the ID lists. */
-.ms-metrics-fold{margin-top:10px;border-top:1px solid var(--color-line-hairline);padding-top:5px}
-.ms-metrics-fold summary{font-size:9px;color:var(--color-text-on-panel-muted);cursor:pointer;user-select:none;list-style:revert}
-.ms-metrics{display:grid;grid-template-columns:1fr 1fr 1fr;column-gap:12px}
-.ms-field{padding:9px 0 0}
-.ms-val{font-weight:600;font-size:13px;font-variant-numeric:tabular-nums}
+.ms-metrics{margin-top:12px;display:grid;grid-template-columns:1fr 1fr;column-gap:16px;border-top:1px solid var(--color-line-hairline)}
+.ms-field{padding:10px 0 0}
+.ms-metrics .ms-field:nth-child(1),.ms-metrics .ms-field:nth-child(2){padding-bottom:9px;border-bottom:1px solid var(--color-line-hairline)}
+.ms-val{font-weight:600;font-size:14px;font-variant-numeric:tabular-nums}
 .ms-val.is-zero{color:var(--color-text-label)}
-.ms-progress-track{margin-top:11px;height:3px;border-radius:99px;background:var(--color-status-track-bg);overflow:hidden}
+.ms-progress-track{margin-top:14px;height:3px;border-radius:99px;background:var(--color-status-track-bg);overflow:hidden}
 .ms-progress-fill{height:100%;border-radius:inherit;background:var(--color-status-track)}
 .ms-dialog.status-risk .ms-progress-fill{background:var(--color-status-risk-fill)}
 .ms-dialog.status-crit .ms-progress-fill{background:var(--color-status-crit)}
 .ms-dialog.status-done .ms-progress-fill{background:var(--color-status-done)}
-.ms-comment-block{margin-top:11px;padding-top:10px;border-top:1px solid var(--color-line-hairline)}
+.ms-comment-block{margin-top:13px;padding-top:11px;border-top:1px solid var(--color-line-hairline)}
 .ms-comment-head{display:flex;align-items:center;gap:var(--space-3);margin-bottom:5px}
 .ms-comment-dot{width:6px;height:6px;border-radius:50%;background:var(--color-comment-indicator);display:inline-block;margin-right:5px;flex-shrink:0}
 .ms-comment-dot.empty{background:transparent;border:1px solid var(--color-line-default)}
@@ -1374,7 +1301,7 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 .health-dot.mh-2{background:var(--color-health-good);border-color:var(--color-health-good-border)}
 .health-dot.mh-3{background:var(--color-health-watch);border-color:var(--color-health-watch-border)}
 .health-dot.mh-4{background:var(--color-crit);border-color:var(--color-crit-border)}
-.ms-toggles{margin-top:11px;padding-top:10px;border-top:1px solid var(--color-line-hairline);display:flex;flex-wrap:wrap;gap:6px 16px}
+.ms-toggles{margin-top:13px;padding-top:11px;border-top:1px solid var(--color-line-hairline);display:flex;flex-wrap:wrap;gap:6px 16px}
 .ms-toggle{display:flex;align-items:center;gap:6px;cursor:pointer;font:450 11px var(--font-sans);color:var(--color-text-small)}
 .ms-toggle input{width:12px;height:12px;margin:0;cursor:pointer;accent-color:var(--color-status-track)}
 
@@ -1418,7 +1345,6 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
          draw as a box. -->
     <button class="icon-btn" id="btn-print-mode" onclick="togglePrintMode()" title="Print preview &mdash; hold the board at A3 portrait page width" aria-pressed="false">&#128424;&#65039;</button>
     <button class="icon-btn" id="btn-export-comments" onclick="exportComments()" title="Export comments only (milestones, dependencies, remarks) as a workbook"><span class="ib-ico-stack">&#128172;<i>&#8595;</i></span></button>
-    <button class="icon-btn" id="btn-filter-toggle" onclick="toggleTopFilterBar()" title="Show or hide the filter row" aria-pressed="true">&#128269;<span class="dot" id="filter-dot"></span></button>
     <button class="icon-btn" id="btn-style-icon" onclick="toggleFilterBar()" title="View controls">&#127912;</button>
     <button class="icon-btn" id="btn-settings-icon" onclick="toggleSettingsDrawer()" title="Settings">&#9881;<span class="dot" id="settings-dot"></span></button>
   </span>
@@ -1715,9 +1641,16 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
   <div class="tfb-group">
     <label>Activity name:</label>
     <div class="sticky-search-box">
-      <span class="sticky-search-icon" aria-hidden="true">&#128269;</span>
-      <input type="text" id="filter-title" placeholder="Search activity name" oninput="onTitleFilterInput(this)">
+      <button class="sticky-search-icon" id="btn-filter-icon" onclick="toggleTopFilterBar()" title="Show/hide the full filter panel">&#128269;<span class="dot" id="filter-dot"></span></button>
+      <input type="text" id="sticky-title-search" placeholder="Search activity name" oninput="onTitleFilterInput(this)">
       <button class="sticky-search-clear" id="sticky-title-clear" onclick="clearOneFilter('filter-title')" title="Clear this filter" aria-label="Clear title search" style="display:none">&#10005;</button>
+    </div>
+  </div>
+  <div class="tfb-group">
+    <label>Title contains:</label>
+    <div class="fb-input-clear-row">
+      <input type="text" id="filter-title" placeholder="Search deliverable names&#8230;" oninput="onTitleFilterInput(this)">
+      <button class="fb-field-clear" onclick="clearOneFilter('filter-title')" title="Clear this filter" aria-label="Clear title filter">&#10005;</button>
     </div>
   </div>
   <div class="tfb-group">
@@ -1764,7 +1697,6 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
     <button class="filter-btn" onclick="setDateRangeToFullSpan()" title="Set the range back to the whole board">Full span</button>
   </div>
   <span class="filter-info" id="filter-info">Click a health dot or remarks field to edit &middot; Click week header to filter</span>
-  <button class="tfb-hide" id="btn-filter-hide" onclick="toggleTopFilterBar(false)" title="Hide the filter row. The magnifier in the header brings it back." aria-label="Hide the filter row">&#10005;</button>
 </div>
 
 <div id="filter-bar">
@@ -1788,6 +1720,7 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
     <div class="cv-field-row">
       <label>Row height: <span id="row-height-val">34px</span></label>
       <input type="range" id="row-height" min="28" max="72" value="34" oninput="setRowHeight(this.value)" onchange="onSizeSliderRelease()">
+      <span class="sd-note" id="row-height-note"></span>
     </div>
     <div class="toggle-switch-row">
       <span class="tsw-label">Allow activity title to wrap</span>
@@ -1941,17 +1874,14 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
   <div class="ms-schedule">
     <div class="ms-field" id="ms-start-field" style="display:none"><span class="ms-lbl">Start</span><span id="ms-start-date" class="ms-date ms-start-date"></span></div>
     <div class="ms-field"><span class="ms-lbl">Finish</span><span id="ms-date" class="ms-date"></span></div>
-    <div class="ms-field ms-prog-field"><span class="ms-lbl">Progress</span><span class="ms-prog-edit" id="ms-prog-edit"><input type="text" id="ms-progress-input" class="ms-prog-input" inputmode="decimal" maxlength="5" autocomplete="off" title="Progress override. Clear the field to restore the schedule's own value." oninput="onMsProgressInput()" onkeydown="onMsProgressKey(event)" onblur="saveMsProgress()"><span class="ms-prog-pct">%</span></span></div>
+  </div>
+  <div class="ms-metrics">
+    <div class="ms-field"><span class="ms-lbl">MS weight</span><span id="ms-weight" class="ms-val"></span></div>
+    <div class="ms-field"><span class="ms-lbl">Progress</span><span id="ms-progress" class="ms-val"></span></div>
+    <div class="ms-field"><span class="ms-lbl">MS hours</span><span id="ms-hours" class="ms-val"></span></div>
+    <div class="ms-field"><span class="ms-lbl">Earned hours</span><span id="ms-earned" class="ms-val"></span></div>
   </div>
   <div class="ms-progress-track"><div id="ms-progress-fill" class="ms-progress-fill"></div></div>
-  <details class="ms-metrics-fold" id="ms-metrics-fold">
-    <summary>Weighting and hours</summary>
-    <div class="ms-metrics">
-      <div class="ms-field"><span class="ms-lbl">MS weight</span><span id="ms-weight" class="ms-val"></span></div>
-      <div class="ms-field"><span class="ms-lbl">MS hours</span><span id="ms-hours" class="ms-val"></span></div>
-      <div class="ms-field"><span class="ms-lbl">Earned hours</span><span id="ms-earned" class="ms-val"></span></div>
-    </div>
-  </details>
   <div class="ms-comment-block">
     <div class="ms-comment-head">
       <span class="ms-lbl" style="margin-bottom:0"><span id="ms-comment-dot" class="ms-comment-dot empty"></span>Comment</span>
@@ -2005,7 +1935,7 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 <thead>
 <!-- The search sits on its own row rather than sharing the month band's line.
      It stays inside the table so it keeps the sticky behaviour the corner cell
-     gave it; the week band below is offset by --hdr-phase-h so the two header
+     gave it; the rows below it are offset by --hdr-search-h so the three header
      rows still stack correctly when the board is scrolled. The colspan is
      deliberately larger than the column count, which browsers clamp, because
      the week columns are built at render time. -->
@@ -2086,7 +2016,7 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 // label, and embedded in exported JSON — bump this one place, everything else
 // reads from it, so the three copies can't silently drift apart the way the
 // title/label/export payload just had for a long stretch of unversioned work.
-const APP_VERSION='3.1.0-P35';
+const APP_VERSION='3.1.0-P31';
 // ============================================================
 // TIMELINE
 // ============================================================
@@ -3821,10 +3751,7 @@ function computeProgress(task){
   if(!ms.length) return null;
   const totalW=ms.reduce((s,m)=>s+m.weight,0);
   if(totalW===0) return null;
-  // effectiveProgress, not m.progress: an override typed into a milestone card
-  // has to move the row's rollup too, or the card and the row it sits on
-  // disagree about the same milestone. "The code exists" is not "wired up".
-  const weighted=ms.reduce((s,m)=>s+m.weight*(effectiveProgress(m)||0),0);
+  const weighted=ms.reduce((s,m)=>s+m.weight*(m.progress||0),0);
   return Math.round(weighted/totalW);
 }
 function renderIcon(marker,state,sizePx){
@@ -3877,11 +3804,10 @@ function buildMsTip(m,total,isLoE){
   }
   if(isLoE) return tip;
   tip+='\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500';
-  const prog=effectiveProgress(m)||0;
-  tip+='\n'+padRight('MS Weight: '+m.weight+'%',26)+'|   Progress: '+prog+'%';
+  tip+='\n'+padRight('MS Weight: '+m.weight+'%',26)+'|   Progress: '+(m.progress||0)+'%';
   if(total>0){
     const msHrs=total*(m.weight/100);
-    const earned=msHrs*prog/100;
+    const earned=msHrs*(m.progress||0)/100;
     tip+='\n'+padRight('MS Hrs: '+fmtHrs(msHrs)+'h',26)+'|   Earned Hrs: '+fmtHrs(earned)+'h';
   }else{
     tip+='\n'+padRight('MS Hrs: - hrs',26)+'|   Earned Hrs: - hrs';
@@ -3971,6 +3897,7 @@ function setShortTitleMode(mode){
     const btn=document.getElementById('btn-title-mode-'+m);
     if(btn) btn.classList.toggle('active', mode==='off'?m==='off':(m===mode));
   });
+  applyRowHeight();
   scheduleRerender(true);
 }
 function formatShortTitleDisplay(id,titleText){
@@ -4012,26 +3939,6 @@ function effectiveState(m){
   if(ov===4) return 'CRIT';
   return m.state;
 }
-// Per-milestone progress override, typed into the milestone card. Annotation
-// layer, exactly like the three stores above: keyed through msKeyFor(), carried
-// by publish and the model export, and it NEVER writes back into the milestone
-// record. m.progress stays whatever P6 said, which is what makes the schedule's
-// own value recoverable at all.
-//
-// Unlike MS_HEALTH_OVERRIDE, an override equal to the schedule's own value is
-// NOT kept as a distinct state. Selecting the white health dot is a real choice
-// ("explicitly N/A") that differs from never having touched the control, but a
-// progress of 40 entered against a schedule that already says 40 means nothing
-// the schedule does not already say. saveMsProgress deletes the key in that
-// case, so the override count stays honest and .changed means exactly "this
-// differs from the schedule".
-const MS_PROGRESS_OVERRIDE={};
-function effectiveProgress(m){
-  if(!m) return null;
-  const key=msKeyFor(m);
-  if(!(key in MS_PROGRESS_OVERRIDE)) return m.progress; // never set — the schedule's own
-  return MS_PROGRESS_OVERRIDE[key];
-}
 function shortenTitle(name,maxLen){
   maxLen=maxLen||22;
   const s=String(name||'').trim();
@@ -4053,177 +3960,18 @@ let remarksVisible=true;
 // rather than one smudge. Every centre stays at least MS_CLEARANCE from each
 // boundary, which is the rule that keeps a marker visually inside its own row
 // and its own week.
-// Markers sharing a cell cascade DIAGONALLY about its centre: upper left,
-// through the middle, to lower right. One rule for every N, and the offsets are
-// monotonic in both axes, so no two markers in a cell can land on the same
-// spot. The rule this replaced alternated y on i%2, which measured as exactly
-// two bands for every N from 2 to 6 (N=3 came out [28, 72, 28]) and put the
-// first and third markers on top of each other; from N=5 their icons genuinely
-// overlapped, by 0.6px at N=5 and 3.5px at N=6.
-//
-// Everything here is PIXELS, offset from the cell's true centre, for the reason
-// given on .m-wrap: the cell's real height is not knowable at render time, and
-// a percentage of it both needs correcting afterwards and grows the spread as
-// the row gets taller.
-//
-// The budgets come from ROW_HEIGHT and the column width, which are the values
-// the user asked for and are minimums the rendered cell can only exceed. Using
-// a minimum means the error direction is "used less room than was available",
-// which is invisible, rather than "used more", which is the reported bug.
-const MS_GUTTER=2;       // px kept clear inside each cell edge
-function msCellOffset(i,n,ico,colW,rowH){
-  if(n<=1) return {dx:0,dy:0};
-  const slot=i-(n-1)/2;                       // symmetric about the centre
-  const spanX=Math.max(0,(colW||36)-ico-2*MS_GUTTER);
-  // Preferred steps scale with the icon, because how far apart two markers have
-  // to be to read as two markers is a property of the icon, not of the cell.
-  // Capped by the budget, and because the extreme slot is (n-1)/2, a step of
-  // span/(n-1) puts the outermost centre exactly span/2 from the middle, which
-  // leaves the icon's own half plus the gutter inside the boundary. The clamp
-  // is the construction, not a correction bolted on after it.
-  const stepX=Math.min(ico+2,spanX/(n-1));
-  // dy is 0 from P33. Markers sharing a cell are consecutive within their
-  // proximity run, so the band has already put them on different lines; adding
-  // a second vertical offset here would compound with it, which is the exact
-  // failure P32 removed between the spread and the label band. This function
-  // now does one thing: keep same-cell markers from overlapping horizontally.
-  return {dx:slot*stepX,dy:0};
-}
-// Every .m-wrap on the board comes from here. There were three hand-written
-// builders before: the live marker, the baseline ghost and the LoE pill, kept
-// in step by memory, and the ghost was only a partial copy of the live one.
-// That is not a tidiness point. The ghost's rule is "X from its own column, Y
-// from its pair", so it has to carry the SAME vertical offset as the marker it
-// belongs to; with two writers, a change to how that offset is computed
-// silently desyncs them and the pair stops sitting level. One writer makes
-// that a call signature rather than a convention.
-//
-// Scope is the WRAP only: classes, data-* identity, geometry and the icon.
-// Callers append their own children, because the three kinds genuinely differ
-// there (live has a label stack, ghost has nothing, LoE has an hours pill) and
-// folding that in would trade three small duplications for one large function.
-// Click and drag wiring also stays with the caller: it is live-only and needs
-// closure state the factory has no business holding.
-// A row's markers are walked in column order and cut into RUNS. A run continues
-// while consecutive markers are separated by at most TWO BLANK COLUMNS, so the
-// threshold is a gap of three columns. A marker further out than that starts a
-// new run and, if it ends up alone, sits dead centre.
-//
-// The boundary is a fixed count of schedule columns and is DELIBERATELY NOT
-// derived from the rendered label width, which is what it used to be. A label
-// width moves with the label scale controls, so deriving the boundary from it
-// would mean changing the text size re-anchored every marker on the board. The
-// user's words, choosing this rule: "if you change the size of the text, this
-// would change the layout, which we don't want."
-const MS_PROXIMITY_COLS=3;
-// Levels are 0 top, 1 middle, 2 bottom, and within a run the sequence REPEATS:
-// top, middle, bottom, top, middle, bottom.
-//
-// P33 shipped a triangle wave here instead ([0,1,2,1], so the fourth marker sat
-// on the middle band) on the argument that a plain repeat puts the first and
-// fourth marker on the same line a few columns apart. That argument still holds
-// and the collision is real. It was reversed at P34 against a rendered case:
-// row 69 of the Aug-29 board carries four markers in directly adjacent columns
-// and the user asked for the fourth, SNIP-212, to reset to the top. Capping the
-// run length cannot do that (a run of one is dead centre by definition), so the
-// cycle itself is what changed. Do not restore the wave from the old reasoning
-// without a rendered case of its own.
-//
-// One array, so the sequence is one edit and p34_check asserts it explicitly
-// rather than inferring it.
-const MS_LEVEL_CYCLE=[0,1,2];
-function msRunLevels(cols,levels){
-  const L=Math.max(3,levels||3), n=cols.length, mid=Math.floor((L-1)/2);
-  if(n<=1) return [mid];                     // alone: dead centre
-  // A pair is symmetric about the midpoint, leftmost up, whatever cells its two
-  // members occupy. The same-cell case used to be excluded here and fell into
-  // the wave loop below, which gave it top and MIDDLE: measured directly,
-  // msRunLevels([0,1],3) was [0,2] but msRunLevels([5,5],3) was [0,1]. No row
-  // on the reference board reaches it, so this corrects an inconsistency rather
-  // than a visible defect. One band step either side, so a row grown for a
-  // dense cell keeps the pair tight instead of flinging it to the extremes.
-  if(n===2) return [Math.max(0,mid-1),Math.min(L-1,mid+1)];
-  const out=[], usedInCell={};
-  for(let k=0;k<n;k++){
-    const c=cols[k];
-    if(!usedInCell[c]) usedInCell[c]=[];
-    // The wave is defined over three bands. When a dense cell has forced the
-    // row to carry more, stretch it to the outer bands so the shape survives
-    // rather than bunching in the middle.
-    let lv=MS_LEVEL_CYCLE[k%MS_LEVEL_CYCLE.length];
-    if(L>3) lv=(lv===0)?0:(lv===2?L-1:mid);
-    // A level already taken IN THIS CELL is not available. Markers sharing an x
-    // have nothing but the band to separate them, so this is the constraint the
-    // extra bands were bought for.
-    let guard=0;
-    while(usedInCell[c].indexOf(lv)>=0 && guard++<L) lv=(lv+1)%L;
-    usedInCell[c].push(lv);
-    out.push(lv);
-  }
-  return out;
-}
-// Level to pixels. levels is how many distinct lines this row needs, which is 3
-// unless a single cell holds more (see msRowBands). Budgeted from the row
-// height the same way msCellOffset budgets its spread, so an icon cannot leave
-// its row and the P32 containment assertions keep their meaning.
-//
-// Budgeted on the ICON, never on the label stack. Budgeting on the stack would
-// make the amplitude depend on whether labels are shown, which would move icons
-// when a display toggle is flipped. That is the coupling removed at P32
-// (TD-113) and it must not come back through this door.
-const MS_BAND_PREFERRED=11;   // about one label line
-function msBandStep(levels,ico,rowH){
-  // Past three bands the row has been grown to fit them (msRowHeightFor), and
-  // it was grown using this same preferred step, so the two must agree or the
-  // offsets would not use the room that was made for them.
-  const want=(levels<=3)?MS_BAND_PREFERRED:Math.max(MS_BAND_PREFERRED,ico*0.75);
-  const span=Math.max(0,(rowH||34)-ico-2*MS_GUTTER);
-  return Math.min(want,span/Math.max(1,levels-1));
-}
-function msBandOffset(level,levels,ico,rowH){
-  return (level-((levels||3)-1)/2)*msBandStep(levels||3,ico,rowH);
-}
-// Markers sharing ONE cell share an x, so band reuse is illegitimate there:
-// each needs its own line. Reuse across cells is fine, because those markers
-// are horizontally separated. So a cell holding more than three markers is what
-// forces a row taller, and by the minimum that gives every marker in that cell
-// its own band.
-function msRowBands(maxInCell){
-  return Math.max(3,maxInCell||1);
-}
-function msRowHeightFor(levels,ico){
-  // The outermost band centre sits (levels-1)/2 steps from the middle, so the
-  // row has to hold that plus half an icon plus the gutter, both sides.
-  if(levels<=3) return 0;                    // three bands fit the chosen height by budget
-  const step=Math.max(MS_BAND_PREFERRED,ico*0.75);   // must match msBandStep
-  return Math.ceil((levels-1)*step+ico+2*MS_GUTTER);
-}
-function renderMarker(spec){
-  const wrap=document.createElement('span');
-  let cls='m-wrap';
-  if(spec.kind==='ghost') cls+=' m-ghost'+(spec.sameCol?' m-ghost-same-col':'');
-  else if(spec.kind==='loe') cls+=' m-wrap-loe';
-  wrap.className=cls;
-  if(spec.tip) wrap.setAttribute('data-tip',spec.tip);
-  const ids=spec.ids||{};
-  if(ids.ms)  wrap.setAttribute('data-ms',ids.ms);
-  if(ids.ref!==undefined&&ids.ref!==null) wrap.setAttribute('data-ms-ref',ids.ref);
-  if(ids.key) wrap.setAttribute('data-ms-key',ids.key);
-  if(spec.ghostFor) wrap.setAttribute('data-ghost-for',spec.ghostFor);
-  // An LoE pill keeps flow layout (.m-wrap-loe sets position:static), so an
-  // offset would be meaningless rather than merely zero. Writing it anyway
-  // would make the "only renderMarker writes --mdx/--mdy" rule read as though
-  // every marker is positioned, which is not true.
-  if(spec.kind!=='loe'){
-    wrap.style.setProperty('--mdx',(+(spec.dx||0)).toFixed(2)+'px');
-    wrap.style.setProperty('--mdy',(+(spec.dy||0)).toFixed(2)+'px');
-  }
-  if(spec.marker!==undefined) wrap.innerHTML=renderIcon(spec.marker,spec.state,spec.iconSize);
-  if(spec.counts){
-    if(spec.counts.pred){const c=document.createElement('span');c.className='ms-count pred';c.textContent=spec.counts.pred;wrap.appendChild(c);}
-    if(spec.counts.succ){const c=document.createElement('span');c.className='ms-count succ';c.textContent=spec.counts.succ;wrap.appendChild(c);}
-  }
-  return wrap;
+const MS_CLEARANCE=10;   // percent of the cell that must stay clear of centres
+const MS_X_STEP=26;      // preferred horizontal gap between centres, percent
+const MS_Y_OFFSET=22;    // alternating vertical offset from the midline
+function msCellPos(i,n){
+  if(n<=1) return {x:50,y:50};
+  // Spread symmetrically about the midline, but never wider than the clearance
+  // band allows however many share the cell.
+  const span=Math.min(100-2*MS_CLEARANCE,(n-1)*MS_X_STEP);
+  let x=50-span/2+span*(i/(n-1));
+  x=Math.max(MS_CLEARANCE,Math.min(100-MS_CLEARANCE,x));
+  const y=50+((i%2===0)?-MS_Y_OFFSET:MS_Y_OFFSET);
+  return {x:x,y:y};
 }
 function renderPhaseHdr(){
   const phaseHdr=document.getElementById('phase-hdr');
@@ -4407,7 +4155,7 @@ function moveMilestoneToRow(ms,toRef){
   invalidateMsIndexes();
   const newKey=msKeyFor(ms);
   if(newKey!==oldKey){
-    [MS_HEALTH_OVERRIDE,MS_COMMENTS,MS_SHORT_TITLES,MS_PROGRESS_OVERRIDE].forEach(function(store){
+    [MS_HEALTH_OVERRIDE,MS_COMMENTS,MS_SHORT_TITLES].forEach(function(store){
       if(oldKey in store){ store[newKey]=store[oldKey]; delete store[oldKey]; }
     });
   }
@@ -4447,7 +4195,7 @@ function applyMilestoneMoves(list){
     hit.ref=mv.to;
     const newKey=msKeyFor(hit);
     if(newKey!==oldKey){
-      [MS_HEALTH_OVERRIDE,MS_COMMENTS,MS_SHORT_TITLES,MS_PROGRESS_OVERRIDE].forEach(function(store){
+      [MS_HEALTH_OVERRIDE,MS_COMMENTS,MS_SHORT_TITLES].forEach(function(store){
         if(oldKey in store){ store[newKey]=store[oldKey]; delete store[oldKey]; }
       });
     }
@@ -4641,70 +4389,49 @@ function renderRows(){
     }
 
     // Insert milestone shapes. Sorted by column (not raw array order, which
-    // isn't guaranteed to be date-ordered) so the proximity runs below are
-    // spatially meaningful: a run is a set of markers close enough that their
-    // labels can collide, and that can only be read off a column-ordered list.
+    // isn't guaranteed to be date-ordered) so the "how close is this marker to
+    // the previous one I placed" check below is spatially meaningful — that's
+    // what the label-collision offset is based on.
     const msByCol=ms.map(m=>({m:m,col:dateToCol(m.date)})).filter(x=>x.col>=0).sort((a,b)=>a.col-b.col);
+    let lastLabelCol=-999, clusterBandIdx=0;
+    // Same-row markers within this many columns of each other are likely to
+    // have overlapping labels — a label can extend ~3.5 columns wide at
+    // default settings, so the threshold is set just past that (not an
+    // arbitrary smaller number) to actually cover the real rendered width.
+    // Cycles through 3 vertical bands (mid-row / top-quarter / base) rather
+    // than a simple 2-state alternation — a 2-state toggle re-collides on the
+    // 3rd marker in a tight cluster (1st=up, 2nd=down, 3rd=up again, right
+    // back where the 1st one is), which is exactly the multi-marker overlap
+    // this is meant to fix.
+    const LABEL_COLLISION_COLS=4;
+    // Half a label stack in ID + Title mode, which is the tallest it gets.
+    // Conservative on purpose: a one-line stack simply gets a smaller band
+    // than it strictly needed, which is the harmless direction to be wrong in.
+    const LABEL_STACK_HALF=16;
+    const BAND_CLASSES=['','lbl-band-top','lbl-band-bottom'];
     // How many markers share each cell, known before any are placed, because
     // the rule for one is different from the rule for several.
     const perCol={},seenInCol={};
     msByCol.forEach(function(e){ perCol[e.col]=(perCol[e.col]||0)+1; });
-    // Cut the row's markers into proximity runs, then hand each run its level
-    // sequence. Done up front because a marker's level depends on how MANY
-    // share its run, which is not known until the run is closed.
-    let _maxInCell=0;
-    Object.keys(perCol).forEach(function(k){ if(perCol[k]>_maxInCell) _maxInCell=perCol[k]; });
-    // Known before the runs are cut, because it decides the range of bands a
-    // run may use.
-    const MS_LEVELS_PRE=msRowBands(_maxInCell);
-    const MS_LEVEL=[];
-    (function(){
-      let i=0;
-      while(i<msByCol.length){
-        let j=i+1;
-        while(j<msByCol.length && (msByCol[j].col-msByCol[j-1].col)<=MS_PROXIMITY_COLS) j++;
-        const lv=msRunLevels(msByCol.slice(i,j).map(function(e){return e.col;}),MS_LEVELS_PRE);
-        for(let k=i;k<j;k++) MS_LEVEL.push(lv[k-i]);
-        i=j;
-      }
-    })();
-    // Three lines unless one cell holds more than three markers. Those share an
-    // x, so they cannot reuse a line the way markers in different cells can,
-    // and the row is grown to give each of them its own.
-    const MS_LEVELS=MS_LEVELS_PRE;
-    const _grownH=msRowHeightFor(MS_LEVELS,iconSize);
-    if(_grownH>ROW_HEIGHT) tr.style.setProperty('--row-h-eff',_grownH+'px');
-    const MS_ROW_H=Math.max(ROW_HEIGHT,_grownH);
-    let _msIdx=-1;
     msByCol.forEach(function(entry){
-      _msIdx++;
       const m=entry.m, col=entry.col;
       const wkTd=tr.querySelectorAll('td.c-wk')[col];
       if(!wkTd) return;
       const nInCell=perCol[col]||1;
       const iInCell=(seenInCol[col]=(seenInCol[col]===undefined?0:seenInCol[col]+1));
-      const pos=msCellOffset(iInCell,nInCell,iconSize,COL_WIDTH,MS_ROW_H);
-      // The band is the marker's vertical position, and the label rides it
-      // because the label is a child of this wrap. One offset, one writer.
-      pos.dy=msBandOffset(MS_LEVEL[_msIdx],MS_LEVELS,iconSize,MS_ROW_H);
+      const pos=msCellPos(iInCell,nInCell);
       const effState=effectiveState(m);
       const stInfo=STATES[effState]||STATES.FUTURE;
+      const wrap=document.createElement('span');
+      wrap.className='m-wrap';
+      wrap.setAttribute('data-tip',buildMsTip(m,hd.total,false));
       const snipId=extractSnipId(m.notes);
-      // Counts are resolved before the wrap is built, because the factory takes
-      // them as data rather than being handed the DOM to append to.
-      let counts=null;
-      if(snipId && typeof SHOW_COUNTS!=='undefined' && SHOW_COUNTS){
-        const dd=DEP_DATA[snipId];
-        if(dd) counts={pred:parseIds(dd.pred).length,succ:parseIds(dd.succ).length};
-      }
-      const wrap=renderMarker({
-        kind:'live', marker:m.marker, state:effState, iconSize:iconSize,
-        dx:pos.dx, dy:pos.dy,
-        tip:buildMsTip(m,hd.total,false),
-        ids:{ms:snipId,ref:m.ref,key:(snipId||'')+'|'+m.ref+'|'+m.type+'|'+m.date},
-        counts:counts
-      });
+      if(snipId) wrap.setAttribute('data-ms',snipId);
+      wrap.setAttribute('data-ms-ref',m.ref);
+      wrap.setAttribute('data-ms-key',(snipId||'')+'|'+m.ref+'|'+m.type+'|'+m.date);
       attachMilestoneDrag(wrap,m);
+      // Icon centred
+      wrap.innerHTML=renderIcon(m.marker,effState,iconSize);
       wrap.style.cursor='pointer';
       wrap.addEventListener('click',function(e){
         e.stopPropagation();
@@ -4717,6 +4444,28 @@ function renderRows(){
           openMsDialog(m,snipId,wrap,hd,task);
         }
       });
+      if(snipId && typeof SHOW_COUNTS!=='undefined' && SHOW_COUNTS){
+        const dd=DEP_DATA[snipId];
+        if(dd){
+          const predN=parseIds(dd.pred).length, succN=parseIds(dd.succ).length;
+          if(predN){const c=document.createElement('span');c.className='ms-count pred';c.textContent=predN;wrap.appendChild(c);}
+          if(succN){const c=document.createElement('span');c.className='ms-count succ';c.textContent=succN;wrap.appendChild(c);}
+        }
+      }
+      wrap.style.setProperty('--mx',pos.x+'%');
+      // msCellPos() spreads shared icons by a fixed PERCENTAGE of the cell and
+      // knows nothing about how big the icon is, so a large icon on a short row
+      // hangs out of it: measured 10 markers up to 2.7px outside the row at 24px
+      // icons on a 34px row. Clamp the centre so the icon fits, then put it back
+      // into percentage terms. This sits with the placement, NOT in the label
+      // branch below: a first attempt there only ran when a label was rendered,
+      // so the icons stayed outside the row whenever labels were off.
+      const _ih=iconSize/2, _rh=effectiveRowHeight();
+      if(_rh>iconSize){
+        const _want=(pos.y/100)*_rh;
+        pos.y=(Math.max(_ih,Math.min(_rh-_ih,_want))/_rh)*100;
+      }
+      wrap.style.setProperty('--my',pos.y+'%');
       wkTd.appendChild(wrap);
       // The markers are positioned, so they no longer give the cell height.
       // One zero-width strut per cell puts it back at the icon's height.
@@ -4757,10 +4506,26 @@ function renderRows(){
         hp.textContent=(hd.total>0)?('('+fmtHrs(hd.total*(m.weight/100))+'h)'):'- hrs';
         stack.appendChild(hp);
       }
-      // No label band. The label has no offset of its own any more: it is
-      // centred on its wrap, and the wrap carries the band. That is what makes
-      // a label traceable to its own marker, and it removes the second offset
-      // that had to be kept from compounding with the first.
+      if((col-lastLabelCol)<LABEL_COLLISION_COLS){
+        clusterBandIdx=(clusterBandIdx+1)%3;
+      } else {
+        clusterBandIdx=0; // far enough from the last one — a fresh cluster starts back at mid-row
+      }
+      if(BAND_CLASSES[clusterBandIdx]) wrap.classList.add(BAND_CLASSES[clusterBandIdx]);
+      // The label stack is pinned to the CELL's midline, not the wrap's.
+      // msCellPos() moves the wrap off the midline to spread shared icons, and
+      // the band then moved the stack again from there, so the two offsets
+      // compounded and the stack ended up outside the row. Undoing the wrap's
+      // own displacement first means the band starts from the middle of the
+      // cell every time, and a band that fits the cell fits for every marker
+      // in it regardless of how the icons were spread.
+      const rowH=effectiveRowHeight();
+      const band=Math.max(0,Math.min(15,rowH/2-LABEL_STACK_HALF));
+      const undoSpread=((50-pos.y)/100)*rowH;
+      const bandSign=(BAND_CLASSES[clusterBandIdx]==='lbl-band-top')?-1
+                    :(BAND_CLASSES[clusterBandIdx]==='lbl-band-bottom')?1:0;
+      wrap.style.setProperty('--lbl-band-dy',(undoSpread+bandSign*band).toFixed(2)+'px');
+      lastLabelCol=col;
       wrap.appendChild(stack);
 
       // Baseline overlay: the embedded baseline's version of this same
@@ -4786,6 +4551,7 @@ function renderRows(){
             if(bcol<0) return;
             const bTd=tr.querySelectorAll('td.c-wk')[bcol];
             if(!bTd) return;
+            const ghost=document.createElement('span');
             // X comes from the ghost's own baseline date, so it is centred in
             // that date's week column. The exception is a baseline that has not
             // moved: there the ghost shares the live marker's cell, so it takes
@@ -4793,26 +4559,20 @@ function renderRows(){
             // Centring it in the cell instead was not enough — a cell holding
             // two or more markers spreads them off centre, and the ghost then
             // landed under one of them.
-            //
-            // Y is the live marker's own dy, passed through the SAME writer the
-            // live marker used. That is the whole point of the factory: the
-            // pair sits level because one function wrote both offsets, not
-            // because two call sites were remembered to agree.
             const sameCol=(bcol===col);
-            const ghost=renderMarker({
-              kind:'ghost', sameCol:sameCol,
-              marker:bm.marker||'MS - Diamond', state:'BASELINE', iconSize:iconSize,
-              dx:(sameCol?pos.dx:0), dy:pos.dy,
-              // Names the live marker this ghost is the baseline for. Two
-              // markers in one row can share a baseline column, so which one a
-              // ghost belongs to cannot be worked back out from position alone.
-              ghostFor:wrap.getAttribute('data-ms-key')
-            });
+            ghost.className='m-wrap m-ghost'+(sameCol?' m-ghost-same-col':'');
+            ghost.style.setProperty('--mx',(sameCol?pos.x:50)+'%');
+            ghost.style.setProperty('--my',pos.y+'%');
+            // Names the live marker this ghost is the baseline for. Two
+            // markers in one row can share a baseline column, so which one a
+            // ghost belongs to cannot be worked back out from position alone.
+            ghost.setAttribute('data-ghost-for',wrap.getAttribute('data-ms-key'));
             const bmm=String(bm.notes||'').match(/^\[[^\]]+\]\s*-\s*(.*)$/);
             const bActName=bmm?bmm[1]:(bm.notes||'');
             const slipD=Math.round((msDateMs(m.date)-msDateMs(bm.date))/86400000);
             const slipTxt=isNaN(slipD)?'':('\nMovement: '+(slipD===0?'none':(slipD>0?('+'+slipD):String(slipD))+' day'+(Math.abs(slipD)===1?'':'s')));
             ghost.setAttribute('data-tip',(BASELINE_LABEL_TEXT||BASELINE_SOURCE.label)+'\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n['+m.id+'] - '+bActName+'\nBaseline date: '+fmtTipDate(bm.date)+'\nCurrent date: '+fmtTipDate(m.date)+slipTxt);
+            ghost.innerHTML=renderIcon(bm.marker||'MS - Diamond','BASELINE',iconSize);
             wireMsTip(ghost);
             bTd.appendChild(ghost);
           });
@@ -4825,7 +4585,8 @@ function renderRows(){
       hd.cols.forEach(c=>{
         const wkTd=tr.querySelectorAll('td.c-wk')[c];
         if(!wkTd||wkTd.querySelector('.m-wrap')) return;
-        const wrap=renderMarker({kind:'loe'});
+        const wrap=document.createElement('span');
+        wrap.className='m-wrap m-wrap-loe';
         wrap.setAttribute('data-tip','LoE span: '+fmtTipDate(task.startDate)+' \u2192 '+fmtTipDate(task.endDate)+'  \u00B7  W/E '+WE_LABELS[c]+'\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n'+hd.total+'h \u00F7 '+hd.span+' wks = '+hd.perWeek.toFixed(1)+'h/wk (this cell)');
         const hp=document.createElement('span');hp.className='m-hrs-loe';hp.textContent=fmtHrs(hd.perWeek)+'h';
         wrap.appendChild(hp);
@@ -5125,15 +4886,10 @@ function toggleFilterBar(force){
 }
 function toggleTopFilterBar(force){
   const bar=document.getElementById('top-filter-bar');
-  // In the header, NOT in the bar. The old button lived inside #top-filter-bar,
-  // which collapses to max-height:0 with overflow:hidden, so hiding the bar
-  // hid the only control that could bring it back and the filter row was gone
-  // for the rest of the session. A control that hides something has to outlive
-  // what it hides.
-  const btn=document.getElementById('btn-filter-toggle');
+  const btn=document.getElementById('btn-filter-icon');
   const open=typeof force==='boolean'?force:!bar.classList.contains('open');
   bar.classList.toggle('open',open);
-  if(btn){ btn.classList.toggle('on',open); btn.setAttribute('aria-pressed',String(open)); }
+  if(btn) btn.classList.toggle('on',open);
 }
 // ---- Report meta (title / data date / report date) ----
 let REPORT_META={title:'Eskay | Snip PFS &amp; Technical Report 2026 &mdash; Deliverables Dashboard',reportDate:new Date()};
@@ -5321,56 +5077,44 @@ function fitPrintPage(){
     ? (wkCells.length+' week columns at the '+res.perCol+'px minimum still exceed the page width — hide columns or filter weeks to fit.')
     : (wkCells.length+' week columns fitted at '+res.perCol+'px.');
 }
-// Mirrors --colw as a number, because msCellOffset() budgets the horizontal
-// spread in pixels and cannot read a CSS custom property at render time.
-let COL_WIDTH=36;
-// One flag for every input msCellOffset() reads: icon size, column width and
-// row height. All three change where a marker belongs, and --mdx/--mdy are
-// written once at render time, so resizing anything in place leaves the board
-// positioned for the previous settings. Three separate flags was the shape
-// that let the column width slider slip through without one. Declared here
-// because setWkWidth below is the first writer, and a `let` read before its
-// own declaration has executed is a ReferenceError, not undefined.
-let _placementNeedsRebuild=false;
 function setWkWidth(v){
-  const next=parseInt(v,10)||36;
-  // Column width decides how many markers fit side by side, so it changes where
-  // a shared cell's markers belong. Same contract as the icon size slider:
-  // preview live and cheaply, re-lay once on release.
-  if(next!==COL_WIDTH) _placementNeedsRebuild=true;
-  COL_WIDTH=next;
   document.getElementById('wk-width-val').textContent=v+'px';
   document.querySelectorAll('col.col-wk').forEach(c=>c.style.width=v+'px');
   document.querySelectorAll('td.col-wk,th.col-wk').forEach(c=>{c.style.width=v+'px';c.style.minWidth=v+'px';c.style.maxWidth=v+'px';});
   document.documentElement.style.setProperty('--colw',v+'px');
   onSizeSliderDrag();
 }
-// The row height the user asked for, and the only authority on it. There used
-// to be a second one: labels held the row at a 48px floor, because the label
-// band was derived from the row and at 34px the three bands were too close to
-// separate anything. That made a display toggle change the layout, which is
-// not what the control is for, and it did so without rebuilding: measured,
-// turning labels on moved 105 of 105 rows from 34.34px to 48px while 0 of 146
-// markers were repositioned, so the whole board sat placed for the old height.
-// The label has no offset of its own now (the wrap carries the band), so
-// labels cost nothing and this is a plain setter again.
-//
-// Known limit, not a defect introduced here: the slider's bottom of range is
-// dead. Asking for 28 produces a 34.34px row, because the text in the fixed
-// columns sets the floor, not this value. Placement is unaffected, since the
-// offsets are budgeted from the asked-for height and anchored at the cell's
-// real centre, so under-asking only under-uses room that is there.
+// The row height the user asked for. Milestone labels need more than the
+// default: a banded stack is 25px and the band is derived from the row, so at
+// 34px the three bands are only 4px apart and collided labels sit on top of
+// each other instead of overlapping the next row. 48px gives an 11px band,
+// which separates them and still fits. The slider is the floor, not the
+// ceiling, so asking for more than the floor is always honoured.
+const LABEL_ROW_MIN=48;
 let ROW_HEIGHT=34;
+function labelsNeedTallRows(){
+  return !!(typeof labelsVisible!=='undefined'&&labelsVisible)
+      || !!(typeof shortTitlesVisible!=='undefined'&&shortTitlesVisible);
+}
+function effectiveRowHeight(){
+  return labelsNeedTallRows()?Math.max(ROW_HEIGHT,LABEL_ROW_MIN):ROW_HEIGHT;
+}
 function applyRowHeight(){
-  document.documentElement.style.setProperty('--row-min-h',ROW_HEIGHT+'px');
+  const eff=effectiveRowHeight();
+  document.documentElement.style.setProperty('--row-min-h',eff+'px');
   const val=document.getElementById('row-height-val');
-  if(val) val.textContent=ROW_HEIGHT+'px';
+  if(val) val.textContent=ROW_HEIGHT+'px'+((eff!==ROW_HEIGHT)?' (using '+eff+'px)':'');
+  const note=document.getElementById('row-height-note');
+  if(note) note.textContent=(eff!==ROW_HEIGHT)
+    ? 'Milestone labels are on, so rows are held at '+LABEL_ROW_MIN+'px. Below that, labels that collide cannot be separated without leaving the row.'
+    : '';
   const sl=document.getElementById('row-height');
   if(sl&&String(sl.value)!==String(ROW_HEIGHT)) sl.value=ROW_HEIGHT;
 }
+let _rowHNeedsRebuild=false;
 function setRowHeight(v){
   const next=parseInt(v,10)||34;
-  if(next!==ROW_HEIGHT) _placementNeedsRebuild=true;
+  if(next!==ROW_HEIGHT) _rowHNeedsRebuild=true;
   ROW_HEIGHT=next;
   applyRowHeight();
   onSizeSliderDrag();
@@ -5394,12 +5138,18 @@ function toggleDnameWrap(cb){
   // Row heights change, so anything measured off them has to be redrawn.
   if(typeof drawDepLines==='function') drawDepLines();
 }
+// Marker placement depends on the icon size (the clamp in renderRows keeps the
+// icon inside the row), and --my is written once at render time. Resizing the
+// SVGs in place therefore left every marker positioned for the PREVIOUS icon
+// size: at 24px on a 34px row that put 10 of them outside the row, and no
+// amount of clamping at render time could help because render never re-ran.
+// Flagged here and acted on at release, not on every drag tick.
+let _icoNeedsRebuild=false;
 function setIcoSize(v){
   const next=parseInt(v,10);
-  if(next!==iconSize) _placementNeedsRebuild=true;
+  if(next!==iconSize) _icoNeedsRebuild=true;
   iconSize=next;
   document.getElementById('ico-size-val').textContent=v+'px';
-  document.documentElement.style.setProperty('--ico-half',(next/2)+'px');
   document.querySelectorAll('.ms-icon').forEach(s=>{s.style.width=v+'px';s.style.height=v+'px';});
   onSizeSliderDrag();
 }
@@ -5425,8 +5175,8 @@ function onSizeSliderRelease(){
   // that is decided in renderRows(). Rebuild once, on release, so the drag
   // itself stays cheap. scheduleRerender() per the project rule; it redraws
   // the dependency lines itself at the end.
-  if(_placementNeedsRebuild){
-    _placementNeedsRebuild=false;
+  if(_icoNeedsRebuild||_rowHNeedsRebuild){
+    _icoNeedsRebuild=false; _rowHNeedsRebuild=false;
     scheduleRerender(true);
     return;
   }
@@ -5502,12 +5252,7 @@ function toggleCol(col,btn){
   const cgCol=document.getElementById('col-'+col);
   if(cgCol) cgCol.style.display=vis;
 }
-// No applyRowHeight() here. Showing a label must not resize the board: that
-// was the coupling the user asked to be removed, and it also changed
-// --row-min-h without rebuilding, so every marker stayed placed for the
-// previous height. Nothing about placement depends on this toggle now, so a
-// display flip is all it is.
-function toggleLabels(cb){labelsVisible=cb.checked;document.querySelectorAll('.m-lbl').forEach(el=>el.style.display=labelsVisible?'':'none');}
+function toggleLabels(cb){labelsVisible=cb.checked;document.querySelectorAll('.m-lbl').forEach(el=>el.style.display=labelsVisible?'':'none');applyRowHeight();onSizeSliderRelease();}
 function toggleShortTitles(cb){shortTitlesVisible=cb.checked;document.querySelectorAll('.m-short-title').forEach(el=>el.style.display=shortTitlesVisible?'':'none');}
 function toggleMHours(cb){mHrsVisible=cb.checked;document.querySelectorAll('.m-hrs,.m-hrs-loe').forEach(el=>el.style.display=mHrsVisible?'':'none');}
 function toggleRemarks(cb){remarksVisible=cb.checked;document.querySelectorAll('.remarks').forEach(el=>el.style.display=remarksVisible?'':'none');}
@@ -5581,8 +5326,9 @@ document.addEventListener('click',function(e){
   if(wrap && dd && !wrap.contains(e.target)) dd.hidden=true;
 });
 function syncTitleFilterInputs(val){
-  const a=document.getElementById('filter-title');
+  const a=document.getElementById('filter-title'), b=document.getElementById('sticky-title-search');
   if(a) a.value=val;
+  if(b) b.value=val;
   const clr=document.getElementById('sticky-title-clear');
   if(clr) clr.style.display=val?'':'none';
 }
@@ -6104,23 +5850,12 @@ function applyOverrides(o){
 // previous literal was invisible from anywhere a column is actually declared.
 const FIXED_COL_COUNT=10;               // c-name + ref,hrs,alloc,prog,type,doc,task,src,srcsch
 const PHASE_HDR_WK_SELECTOR='#phase-hdr th:nth-child(n+'+(FIXED_COL_COUNT+1)+')';
-let _weekFilterWas='';
 function teardown(){
   tbody.innerHTML='';
   document.querySelectorAll(PHASE_HDR_WK_SELECTOR).forEach(function(e){e.remove();});
   document.querySelectorAll('#week-hdr th.col-wk').forEach(function(e){e.remove();});
   document.querySelectorAll('colgroup col.col-wk').forEach(function(e){e.remove();});
   const wf=document.getElementById('week-filter');
-  // Removing the options drops the selection with them, so it is remembered
-  // here and put back by rebuildWeekFilter(). Without this, EVERY
-  // scheduleRerender(true) silently cleared the week filter: changing a
-  // milestone's health, saving a short title, toggling dependency counts,
-  // releasing a slider. It read as "the board unfiltered itself" because the
-  // action that lost the filter had nothing to do with filtering.
-  // The banding and source filters both already did this. This one did not,
-  // which is the same "audit every entry point" trap the project has hit
-  // before: a rule applied in two of the three places that need it.
-  _weekFilterWas=wf.value;
   while(wf.options.length>1) wf.remove(1);
 }
 
@@ -6131,13 +5866,6 @@ function rebuildWeekFilter(){
     opt.value=i;opt.textContent='W/E '+lbl+(i===NOW_COL?' (data date)':'');
     wf.appendChild(opt);
   });
-  // Both bounds tested. A rebuild can shorten the timeline (a narrower import,
-  // or a date range applied at setup), so the remembered index can now be past
-  // the end, and restoring it blindly would select nothing or throw the board
-  // onto a week that no longer exists.
-  const want=parseInt(_weekFilterWas,10);
-  if(!isNaN(want)&&want>=0&&want<WE_LABELS.length) wf.value=String(want);
-  _weekFilterWas='';
 }
 function rebuildBandingFilter(){
   const sel=document.getElementById('filter-band');
@@ -7122,9 +6850,6 @@ const ANNOT_CATEGORIES=[
   {key:'msHealth',    label:'Milestone health overrides',
    count:function(p){ return Object.keys(p.milestoneHealthOverrides||{}).length; },
    apply:function(p){ Object.assign(MS_HEALTH_OVERRIDE,p.milestoneHealthOverrides||{}); }},
-  {key:'msProgress',  label:'Milestone progress overrides',
-   count:function(p){ return Object.keys(p.milestoneProgressOverrides||{}).length; },
-   apply:function(p){ Object.assign(MS_PROGRESS_OVERRIDE,p.milestoneProgressOverrides||{}); }},
   {key:'shortTitles', label:'Custom short titles',
    count:function(p){ return Object.keys(p.milestoneShortTitles||{}).length; },
    apply:function(p){ Object.assign(MS_SHORT_TITLES,p.milestoneShortTitles||{}); }},
@@ -7543,7 +7268,6 @@ function publishStatePayload(){
     overrides:snapshotOverrides(),
     milestoneComments:MS_COMMENTS,
     milestoneHealthOverrides:MS_HEALTH_OVERRIDE,
-    milestoneProgressOverrides:MS_PROGRESS_OVERRIDE,
     milestoneShortTitles:MS_SHORT_TITLES,
     // Comments left on dependency lines were reaching neither payload, so they
     // were the one kind of comment a published file silently dropped.
@@ -7613,7 +7337,6 @@ function applyPublishedState(){
 
     Object.assign(MS_COMMENTS,p.milestoneComments||{});
     Object.assign(MS_HEALTH_OVERRIDE,p.milestoneHealthOverrides||{});
-    Object.assign(MS_PROGRESS_OVERRIDE,p.milestoneProgressOverrides||{});
     Object.assign(MS_SHORT_TITLES,p.milestoneShortTitles||{});
     Object.assign(DEP_COMMENTS,p.dependencyComments||{});
     Object.assign(DEP_VIS,p.dependencyVisibility||{});
@@ -7752,7 +7475,6 @@ function exportModel(){
                  dependencyVisibility:DEP_VIS,
                  dependencyComments:DEP_COMMENTS,
                  milestoneHealthOverrides:MS_HEALTH_OVERRIDE,
-                 milestoneProgressOverrides:MS_PROGRESS_OVERRIDE,
                  milestoneComments:MS_COMMENTS,
                  milestoneShortTitles:MS_SHORT_TITLES,
                  // Layout work the user did on the board. Unlike the stores
@@ -7986,37 +7708,9 @@ function contentOrigin(){
   const r=wrap.getBoundingClientRect();
   return { left:r.left-wrap.scrollLeft, top:r.top-wrap.scrollTop };
 }
-// Answers "is this marker hidden" WITHOUT forcing layout, by reading the state
-// the filter already wrote. Deliberately derived rather than stored: a flag
-// would need writing at applyFilter(), clearFilter(), applyDateRangeColumns()
-// and the rebuild, and this project has three separate defects from a rule
-// applied at some entry points and not others. A stale flag here would make
-// dependency lines vanish exactly as in TD-105, but harder to find, because
-// measurement would no longer be the truth.
-//
-// Not to be confused with VISIBLE_MS_IDS and msVisibilityObserver, which mean
-// scroll-viewport intersection, not filter state.
-function markerHidden(el){
-  const tr=el.closest('tr');
-  if(tr&&tr.classList.contains('hidden-row')) return true;
-  if(DATE_RANGE_COLS){
-    const td=el.closest('td.c-wk');
-    if(td){
-      const c=parseInt(td.getAttribute('data-col'),10);
-      // Both bounds. A one-sided test would treat every column before the range
-      // as visible, which is the dateToCol() defect this project already fixed.
-      if(!isNaN(c)&&(c<DATE_RANGE_COLS.lo||c>DATE_RANGE_COLS.hi)) return true;
-    }
-  }
-  return false;
-}
 function markerCenter(id){
   const el=document.querySelector('.m-wrap[data-ms="'+id+'"]');
   if(!el) return null;
-  // Cheap first: a class read and an attribute read, no layout. This is the
-  // common case under any active filter, and drawDepLines() calls this once per
-  // dependency endpoint in a loop.
-  if(markerHidden(el)) return null;
   const r=el.getBoundingClientRect();
   // A marker whose ROW is filtered out, or whose WEEK COLUMN is hidden by the
   // date range, stays in the DOM and still answers querySelector. It just has
@@ -8028,10 +7722,6 @@ function markerCenter(id){
   // filter. Returning null instead routes the target into the existing
   // "not on board" stub, which is what that path is for.
   // Same family as TD-92: an element that exists but has no layout.
-  // Kept as a BACKSTOP behind markerHidden(), not replaced by it: this catches
-  // any other way an element can lose layout that the derived test does not
-  // know about. p33_check asserts the two agree on every marker, so this can
-  // never quietly become a second source of truth.
   if(r.width===0&&r.height===0) return null;
   const o=contentOrigin();
   return { x:r.left-o.left+r.width/2, y:r.top-o.top+r.height/2 };
@@ -8291,52 +7981,6 @@ document.getElementById('dep-tooltip').addEventListener('click',()=>{
   }
 });
 
-// Two heights that CSS needs and cannot compute for itself: the month header
-// row's height, which is where the week header row has to stick, and the filter
-// bar's wrapped content height, which is what its open max-height has to clear.
-//
-// Both are ResizeObservers rather than hooks in rerender(), applyRowHeight(),
-// togglePrintMode(), fitToScreen() and a window resize listener. That would be
-// five entry points, and a missed entry point has cost this project a cycle
-// four times (dependency lines absent from rerender(), tooltips bound only to
-// ghosts, the week filter dropped on every rebuild, three probes driving the
-// setters instead of the sliders). An observer cannot be forgotten at a call
-// site because it has no call sites. #phase-hdr and #top-filter-bar are both
-// long-lived elements, kept across rerenders, so one observer each is enough:
-// renderPhaseHdr() appends cells to the same <tr> rather than replacing it.
-function watchStickyHeights(){
-  const root=document.documentElement;
-  // Compared before writing, so an unchanged height is a no-op and an observer
-  // cannot drive itself round again off its own write.
-  function put(name,px){
-    const v=px.toFixed(2)+'px';
-    if(root.style.getPropertyValue(name)!==v) root.style.setProperty(name,v);
-  }
-  const phase=document.getElementById('phase-hdr');
-  if(phase){
-    // The ROW, not one of its cells. The metadata cells on the left carry
-    // padding:0 while the month cells carry 3px, so a single th is shorter than
-    // the row and the week band would stick too high.
-    const measure=function(){
-      const h=phase.getBoundingClientRect().height;
-      if(h>0) put('--hdr-phase-h',h);
-    };
-    measure();
-    if(window.ResizeObserver) new ResizeObserver(measure).observe(phase);
-  }
-  const bar=document.getElementById('top-filter-bar');
-  if(bar){
-    // Deliberately an OVER-estimate. scrollHeight is read from whichever state
-    // the bar happens to be in, and while it is closed its vertical padding has
-    // transitioned away, so an exact figure taken then would be short by that
-    // padding and clip on the way back open. Overshooting a max-height costs
-    // nothing visible: it is a cap, not a height.
-    const measure=function(){ put('--tfb-h',bar.scrollHeight+40); };
-    measure();
-    if(window.ResizeObserver) new ResizeObserver(measure).observe(bar);
-  }
-}
-
 // ============================================================
 // INIT
 // ============================================================
@@ -8355,7 +7999,6 @@ function watchStickyHeights(){
   if(titleField) titleField.value='Eskay | Snip PFS & Technical Report 2026 \u2014 Deliverables Dashboard';
   renderPhaseHdr();
   renderRows();
-  watchStickyHeights();
   setupMsVisibilityObserver();
   renderSummary();
   rebuildWeekFilter();
@@ -8391,25 +8034,11 @@ function watchStickyHeights(){
 // MS_COMMENTS itself is declared with its two siblings further up, because this
 // point in the file is AFTER the init block that now reads it. =====
 let msDialogFor=null;
-// The milestone and its row's hours, held while the card is open. Both are
-// needed to repaint the Progress field and the earned-hours figure after an
-// edit, and findMilestoneBySnip() cannot supply the milestone: it indexes on
-// msId(), so a milestone with no ID at all resolves to null there.
-let msDialogMs=null;
-let msDialogHd=null;
 
 function statusClassOf(state){ return (state||'FUTURE').toLowerCase(); }
 
 function openMsDialog(m, snipId, anchorEl, hd, task){
-  // msKeyFor() is THE definition of a milestone's annotation key, and every
-  // reader uses it: the board's short titles, effectiveState, effectiveProgress.
-  // This used to compose its own key from snipId, which is extractSnipId(notes)
-  // while msKeyFor prefers m.id — equal on this dataset, but nothing enforced
-  // it, so any milestone whose id and notes disagreed would have had the card
-  // write annotations under a key the board never read back.
-  msDialogFor=msKeyFor(m);
-  msDialogMs=m;
-  msDialogHd=hd;
+  msDialogFor=snipId||('noid-'+m.ref+m.type+m.date);
   const dlg=document.getElementById('ms-dialog');
   const msEffState=effectiveState(m);
   dlg.className='ms-dialog status-'+statusClassOf(msEffState);
@@ -8465,13 +8094,18 @@ function openMsDialog(m, snipId, anchorEl, hd, task){
     startField.style.display='none';
   }
 
+  const total=hd&&hd.total>0?hd.total:0;
+  const msHrs=total*(m.weight/100);
+  const earned=msHrs*(m.progress||0)/100;
   document.getElementById('ms-weight').textContent=(m.weight!=null)?m.weight+'%':'\u2014';
-  // Collapsed on every open, not left wherever the last card was put. The row
-  // exists because these are reference values; reopening it silently would make
-  // "collapsed by default" a claim about the first card only.
-  const fold=document.getElementById('ms-metrics-fold');
-  if(fold) fold.open=false;
-  renderMsProgress();
+  const progEl=document.getElementById('ms-progress');
+  progEl.textContent=(m.progress!=null)?m.progress+'%':'\u2014';
+  progEl.className='ms-val'+((!m.progress)?' is-zero':'');
+  document.getElementById('ms-hours').textContent=total>0?fmtHrs(msHrs)+'h':'\u2014';
+  const earnEl=document.getElementById('ms-earned');
+  earnEl.textContent=total>0?fmtHrs(earned)+'h':'\u2014';
+  earnEl.className='ms-val'+((!earned)?' is-zero':'');
+  document.getElementById('ms-progress-fill').style.width=Math.min(100,Math.max(0,m.progress||0))+'%';
 
   const existing=MS_COMMENTS[msDialogFor]||'';
   document.getElementById('ms-comment-text').value=existing;
@@ -8522,75 +8156,6 @@ function fillMsDepLists(snipId){
 function closeMsDialog(){
   document.getElementById('ms-dialog').hidden=true;
   msDialogFor=null;
-  msDialogMs=null;
-  msDialogHd=null;
-}
-// One writer for every part of the card that depends on progress: the field,
-// its edited indicator, the bar, and earned hours. Four places read m.progress
-// independently before this, which is the shape that lets a card show one
-// figure while the thing beside it shows another.
-function renderMsProgress(){
-  const m=msDialogMs;
-  if(!m) return;
-  const eff=effectiveProgress(m);
-  const input=document.getElementById('ms-progress-input');
-  const wrap=document.getElementById('ms-prog-edit');
-  if(input) input.value=(eff==null)?'':String(eff);
-  if(wrap){
-    wrap.classList.toggle('changed',msDialogFor in MS_PROGRESS_OVERRIDE);
-    wrap.classList.toggle('is-zero',!eff);
-  }
-  document.getElementById('ms-progress-fill').style.width=Math.min(100,Math.max(0,eff||0))+'%';
-  const total=(msDialogHd&&msDialogHd.total>0)?msDialogHd.total:0;
-  const msHrs=total*(m.weight/100);
-  const earned=msHrs*(eff||0)/100;
-  document.getElementById('ms-hours').textContent=total>0?fmtHrs(msHrs)+'h':'—';
-  const earnEl=document.getElementById('ms-earned');
-  earnEl.textContent=total>0?fmtHrs(earned)+'h':'—';
-  earnEl.className='ms-val'+((!earned)?' is-zero':'');
-}
-// The indicator tracks the field as it is typed. The STORE is written on commit
-// (blur, or Enter which blurs), because saving every keystroke would write 1,
-// then 10, then 100 on the way to typing 100, and each of those is a rebuild of
-// the whole board. The comment field autosaves per keystroke precisely because
-// it costs no rerender; this one does.
-function onMsProgressInput(){
-  const input=document.getElementById('ms-progress-input');
-  const wrap=document.getElementById('ms-prog-edit');
-  if(!input||!wrap||!msDialogMs) return;
-  const base=(msDialogMs.progress==null)?'':String(msDialogMs.progress);
-  wrap.classList.toggle('changed',input.value.trim()!==base);
-}
-function onMsProgressKey(e){
-  if(e.key==='Enter'){ e.preventDefault(); e.target.blur(); }
-  else if(e.key==='Escape'){ renderMsProgress(); e.target.blur(); } // back to the stored state, committing nothing
-}
-function saveMsProgress(){
-  if(!msDialogFor||!msDialogMs) return;
-  const input=document.getElementById('ms-progress-input');
-  const raw=String(input.value).replace('%','').trim();
-  const base=msDialogMs.progress;
-  const had=(msDialogFor in MS_PROGRESS_OVERRIDE);
-  const before=had?MS_PROGRESS_OVERRIDE[msDialogFor]:null;
-  const n=(raw==='')?NaN:parseFloat(raw);
-  if(isNaN(n)){
-    // Blank and unparseable both restore the schedule's own value rather than
-    // saving nothing-shaped-like-a-number into the one field whose whole job is
-    // to carry a number.
-    delete MS_PROGRESS_OVERRIDE[msDialogFor];
-  } else {
-    const v=Math.min(100,Math.max(0,Math.round(n)));
-    if(base!=null&&v===base) delete MS_PROGRESS_OVERRIDE[msDialogFor];
-    else MS_PROGRESS_OVERRIDE[msDialogFor]=v;
-  }
-  renderMsProgress();
-  const has=(msDialogFor in MS_PROGRESS_OVERRIDE);
-  if(has!==had||(has&&MS_PROGRESS_OVERRIDE[msDialogFor]!==before)){
-    noteMarkup();
-    // The row's rollup and every milestone tooltip read progress as well, so a
-    // committed override is a board change, not just a card change.
-    scheduleRerender(true);
-  }
 }
 function saveMsComment(){
   if(!msDialogFor) return;
@@ -8611,19 +8176,6 @@ function onMsHealthClick(dotEl){
   } else {
     MS_HEALTH_OVERRIDE[msDialogFor]=val;
     nowSelected=dotEl;
-    // Marking a milestone complete sets its progress to 100%. Only where the
-    // schedule does not already say 100: an override that matches the schedule
-    // changes nothing on screen but does add an entry to the count a reader is
-    // shown when they choose which annotations to restore.
-    //
-    // One direction only. Clearing the Complete dot does NOT drop the progress
-    // back: by then the user may have typed over it, and silently discarding a
-    // number they entered is worse than leaving one they can clear themselves.
-    if(val===2&&msDialogMs&&msDialogMs.progress!==100&&MS_PROGRESS_OVERRIDE[msDialogFor]!==100){
-      MS_PROGRESS_OVERRIDE[msDialogFor]=100;
-      renderMsProgress();
-      noteMarkup();
-    }
   }
   document.querySelectorAll('#ms-health-dots .health-dot').forEach(function(dot){
     dot.classList.toggle('selected', dot===nowSelected);
@@ -8632,7 +8184,7 @@ function onMsHealthClick(dotEl){
   // too, not just the board marker — re-derive it the same way openMsDialog does,
   // including correctly reverting to the real computed state when cleared.
   const dlg=document.getElementById('ms-dialog');
-  const m=msDialogMs||findMilestoneBySnip(msDialogFor);
+  const m=findMilestoneBySnip(msDialogFor);
   const effState=m?effectiveState(m):'FUTURE';
   dlg.className='ms-dialog status-'+statusClassOf(effState);
   document.getElementById('ms-status').textContent=STATE_LABELS[effState]||effState;

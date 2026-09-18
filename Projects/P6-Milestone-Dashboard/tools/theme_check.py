@@ -55,13 +55,27 @@ const mk = (html, mount) => {
 const table = mk('<table style="position:absolute;left:-9999px"><tbody></tbody></table>');
 const tbody = table.querySelector('tbody');
 
+// Settings-drawer probes mount INSIDE #settings-drawer. The panel declares its
+// own spacing custom properties and sits on its own background token, so a
+// .sd-card built on document.body would resolve against the page instead and
+// report a pairing that never occurs in the product.
+const sdHost = (() => {
+  const dr = document.getElementById('settings-drawer');
+  if (!dr) throw new Error('#settings-drawer not found: drawer probes would be measuring nothing');
+  const h = document.createElement('div');
+  h.id = 'sd-probe-host';
+  dr.appendChild(h);
+  return h;
+})();
+const sd = (html) => mk(html, sdHost);
+
 const PROBES = [
-  // These two moved from --color-text-on-panel-muted (themed) to
-  // --color-text-on-header-muted (constant) when the light header darkened, so
-  // they are no longer expected to toggle: both headers are now dark and take
-  // the same light text. Reclassified deliberately, not to silence a failure.
-  ['.sticky-search-icon (constant)',  'constant', () => document.querySelector('.sticky-search-icon')],
-  ['.sticky-search-clear (constant)', 'constant', () => document.querySelector('.sticky-search-clear')],
+  // These moved onto the header when it darkened (constant text), and have now
+  // moved again into the filter bar, which is a themed panel. So they are back
+  // to toggling. The label carries no "(constant)" precisely because the
+  // classification has changed twice and the file should state which it is.
+  ['.sticky-search-icon',  'toggle', () => document.querySelector('.sticky-search-icon')],
+  ['.sticky-search-clear', 'toggle', () => document.querySelector('.sticky-search-clear')],
   ['.view-toggle',               'toggle',   () => document.querySelector('.view-toggle')],
   ['th.c-name (column header)',  'toggle',   () => document.querySelector('th.c-name:not(.sticky)')
                                               || document.querySelectorAll('th.c-name')[1]],
@@ -79,6 +93,60 @@ const PROBES = [
   ['.dep-comment-panel',         'toggle',   () => mk('<div class="dep-comment-panel">x</div>')],
   ['.dep-comment-close',         'toggle',   () => mk('<button class="dep-comment-close">x</button>')],
   ['.dep-comment-ids',           'toggle',   () => mk('<span class="dep-comment-ids">x</span>')],
+  // New in P26: total float is its own column in the milestone card, so its
+  // value and its label are two more text colours on the dialog background.
+  ['.ms-float-val',              'toggle',   () => {
+      const d = mk('<div class="ms-dialog"><div class="ms-float-col">'
+                 + '<span class="ms-float-val">26 day</span>'
+                 + '<span class="ms-float-lbl">float</span></div></div>');
+      return d.querySelector('.ms-float-val');
+  }],
+  ['.ms-float-lbl',              'toggle',   () => {
+      const d = mk('<div class="ms-dialog"><div class="ms-float-col">'
+                 + '<span class="ms-float-val">26 day</span>'
+                 + '<span class="ms-float-lbl">float</span></div></div>');
+      return d.querySelector('.ms-float-lbl');
+  }],
+  // New in P27: the dependency-count chips. Each carries the colour of the
+  // dependency LINE it counts, backed by the constant label sticker. The
+  // predecessor blue is themed and the dependency purple is not, which is why
+  // the two are typed differently; theme-scoping the sticker itself is the
+  // TD-28 trap, so it stays constant and the ink is chosen against it.
+  ['.ms-count.pred',             'toggle',   () => {
+      const w = mk('<span class="m-wrap"><span class="ms-count pred">4</span></span>');
+      return w.querySelector('.ms-count');
+  }],
+  ['.ms-count.succ',             'constant', () => {
+      const w = mk('<span class="m-wrap"><span class="ms-count succ">7</span></span>');
+      return w.querySelector('.ms-count');
+  }],
+  // The A3 print-preview banner. Constant on purpose, like every other
+  // attention chip: the saturated fill carries the meaning and the ink is
+  // chosen against the fill, not against the page.
+  ['.pm-banner',                 'constant', () => mk('<div class="pm-banner" style="display:block">Print preview</div>')],
+  // The month band highlight when the week filter is on: white on the accent,
+  // overriding the month's own inline background.
+  ['tr.hdr-phase th.filter-mo', 'constant', () => {
+      const t = mk('<table><thead><tr class="hdr-phase">'
+                 + '<th class="mo-band filter-mo" style="background:#2e6f4e">Sep 2026</th>'
+                 + '</tr></thead></table>');
+      return t.querySelector('th');
+  }],
+  // New in P24: the id and the title are separate colours inside the tooltip,
+  // so each gets its own probe against the dialog background rather than
+  // letting the .dep-tooltip probe stand for both.
+  ['.dep-id (tooltip)',          'toggle',   () => {
+      const d = mk('<div class="dep-tooltip"><span class="dep-id-row">'
+                 + '<span class="dep-id">#SNIP-127:</span>'
+                 + '<span class="dep-id-title">Mine Operations Data</span></span></div>');
+      return d.querySelector('.dep-id');
+  }],
+  ['.dep-id-title (tooltip)',    'toggle',   () => {
+      const d = mk('<div class="dep-tooltip"><span class="dep-id-row">'
+                 + '<span class="dep-id">#SNIP-127:</span>'
+                 + '<span class="dep-id-title">Mine Operations Data</span></span></div>');
+      return d.querySelector('.dep-id-title');
+  }],
   ['dep-panel textarea',         'toggle',   () => {
       const p = mk('<div class="dep-comment-panel"><textarea></textarea></div>');
       return p.querySelector('textarea');
@@ -126,20 +194,132 @@ const PROBES = [
   // Mount panel and the selective-import dialog. Small text on a card and on
   // tinted message strips: exactly the shape that slipped past the contrast
   // check before it resolved transparent elements to a painting ancestor.
-  ['.mnt-slot',                  'toggle',   () => mk('<div class="mnt-slot">x</div>')],
-  ['.mnt-name',                  'toggle',   () => {
-      const d = mk('<div class="mnt-slot"><div class="mnt-hd"><span class="mnt-name">Schedule</span></div></div>');
-      return d.querySelector('.mnt-name');
+  // P29 rebuilt this panel onto a shared component set, so these probe the
+  // real classes. The four they replace (.mnt-slot/.mnt-name/.mnt-lines/
+  // .mnt-badge) no longer exist; left in place they would have gone on passing
+  // against nothing but the body's own colours, which is the vacuous-pass
+  // shape this project has now hit four times.
+  ['.sd-card',                   'toggle',   () => sd('<div class="sd-card">x</div>')],
+  ['.sd-card-eyebrow',           'toggle',   () => {
+      const d = sd('<div class="sd-card"><div class="sd-card-hd"><span class="sd-card-eyebrow">Schedule</span></div></div>');
+      return d.querySelector('.sd-card-eyebrow');
   }],
-  ['.mnt-lines',                 'toggle',   () => {
-      const d = mk('<div class="mnt-slot"><div class="mnt-lines">Data date</div></div>');
-      return d.querySelector('.mnt-lines');
+  ['.sd-card-title',             'toggle',   () => {
+      const d = sd('<div class="sd-card"><div class="sd-card-title">export.xlsx</div></div>');
+      return d.querySelector('.sd-card-title');
   }],
-  // Saturated chip: the fill carries the meaning and the text is chosen
-  // against the fill, not the page, so frozen is correct.
-  ['.mnt-badge (constant)',      'constant', () => {
-      const d = mk('<div class="mnt-slot"><span class="mnt-badge">override</span></div>');
-      return d.querySelector('.mnt-badge');
+  ['.sd-card-sub',               'toggle',   () => {
+      const d = sd('<div class="sd-card"><div class="sd-card-sub">Data date</div></div>');
+      return d.querySelector('.sd-card-sub');
+  }],
+  ['.sd-card--pick.is-selected', 'toggle',   () => {
+      const d = sd('<div class="sd-card sd-card--pick is-selected"><div class="sd-card-title">Selected</div></div>');
+      return d.querySelector('.sd-card-title');
+  }],
+  // Saturated chips: the fill carries the meaning and the ink is chosen
+  // against the fill, not the page, so frozen is correct for all three.
+  ['.sd-badge--role (constant)', 'constant', () => {
+      const d = sd('<div class="sd-card"><span class="sd-badge sd-badge--role">override</span></div>');
+      return d.querySelector('.sd-badge');
+  }],
+  ['.sd-badge--req (constant)',  'constant', () => {
+      const d = sd('<div class="sd-card"><span class="sd-badge sd-badge--req">required</span></div>');
+      return d.querySelector('.sd-badge');
+  }],
+  ['.sd-badge--cond (constant)', 'constant', () => {
+      const d = sd('<div class="sd-card"><span class="sd-badge sd-badge--cond">once a file loads</span></div>');
+      return d.querySelector('.sd-badge');
+  }],
+  // Tabs, groups and rows: the structural text of the rebuilt panel. Each one
+  // is a different ink on the drawer background, so each gets its own probe
+  // rather than letting one stand for the rest.
+  ['.sd-tab',                    'toggle',   () => {
+      const d = sd('<div class="sd-tabs"><button class="sd-tab">Sources</button></div>');
+      return d.querySelector('.sd-tab');
+  }],
+  // Solid accent chip, ink chosen against the fill: constant by design, the
+  // same call as every other chip in this file.
+  ['.sd-tab.is-active (constant)','constant', () => {
+      const d = sd('<div class="sd-tabs"><button class="sd-tab is-active">Sources</button></div>');
+      return d.querySelector('.sd-tab');
+  }],
+  ['.sd-group-title',            'toggle',   () => {
+      const d = sd('<div class="sd-group"><div class="sd-group-title">Mounted sources</div></div>');
+      return d.querySelector('.sd-group-title');
+  }],
+  ['.sd-group-desc',             'toggle',   () => {
+      const d = sd('<div class="sd-group"><div class="sd-group-desc">What this board is built from.</div></div>');
+      return d.querySelector('.sd-group-desc');
+  }],
+  ['.sd-row-label',              'toggle',   () => {
+      const d = sd('<div class="sd-group"><div class="sd-row"><div class="sd-row-main"><div class="sd-row-label">Data date</div></div></div></div>');
+      return d.querySelector('.sd-row-label');
+  }],
+  ['.sd-row-help',               'toggle',   () => {
+      const d = sd('<div class="sd-group"><div class="sd-row"><div class="sd-row-main"><div class="sd-row-help">Defaults to the previous Friday.</div></div></div></div>');
+      return d.querySelector('.sd-row-help');
+  }],
+  ['.sd-step-name',              'toggle',   () => {
+      const d = sd('<div class="sd-group"><div class="sd-step is-current"><div class="sd-step-hd"><span class="sd-step-name">Import a schedule</span></div></div></div>');
+      return d.querySelector('.sd-step-name');
+  }],
+  ['.sd-step-num (waiting)',     'toggle',   () => {
+      const d = sd('<div class="sd-group"><div class="sd-step is-waiting"><div class="sd-step-hd"><span class="sd-step-num">2</span></div></div></div>');
+      return d.querySelector('.sd-step-num');
+  }],
+  // Done step: accent fill with ink chosen against the fill.
+  ['.sd-step.is-done num (const)','constant', () => {
+      const d = sd('<div class="sd-group"><div class="sd-step is-done"><div class="sd-step-hd"><span class="sd-step-num">1</span></div></div></div>');
+      return d.querySelector('.sd-step-num');
+  }],
+  ['.sd-choice-label',           'toggle',   () => {
+      const d = sd('<div class="sd-group"><label class="sd-choice"><span class="sd-choice-label">Append to the board</span></label></div>');
+      return d.querySelector('.sd-choice-label');
+  }],
+  ['.sd-choice-help',            'toggle',   () => {
+      const d = sd('<div class="sd-group"><label class="sd-choice"><span class="sd-choice-help">Adds these rows under their own headings.</span></label></div>');
+      return d.querySelector('.sd-choice-help');
+  }],
+  ['.sd-stat-k',                 'toggle',   () => {
+      const d = sd('<div class="sd-card"><div class="sd-stats"><div class="sd-stat"><span class="sd-stat-k">rows</span></div></div></div>');
+      return d.querySelector('.sd-stat-k');
+  }],
+  ['.sd-stat-v',                 'toggle',   () => {
+      const d = sd('<div class="sd-card"><div class="sd-stats"><div class="sd-stat"><span class="sd-stat-v">159</span></div></div></div>');
+      return d.querySelector('.sd-stat-v');
+  }],
+  ['.sd-unit',                   'toggle',   () => {
+      const d = sd('<div class="sd-group"><div class="sd-row"><span class="sd-unit">before</span></div></div>');
+      return d.querySelector('.sd-unit');
+  }],
+  ['.mnt-note',                  'toggle',   () => {
+      const d = sd('<div class="sd-card"><span class="mnt-note">Built in. Cannot be unmounted.</span></div>');
+      return d.querySelector('.mnt-note');
+  }],
+  // The drawer subtitle is the only text on --color-bg-header inside the
+  // panel, and the header token has moved twice before.
+  ['.sd-hd-sub (constant)',      'constant', () => {
+      const d = sd('<div class="sd-hd"><span class="sd-hd-sub">What is mounted on this board</span></div>');
+      return d.querySelector('.sd-hd-sub');
+  }],
+  // Import status line, all three states. Its ink was hardcoded (#456/#1a6b3a/
+  // #b00020) until P29 and had no probe, so a one-theme colour could not have
+  // been caught by reading the CSS.
+  ['.ingest-status',             'toggle',   () => {
+      const d = sd('<div class="sd-group"><div class="ingest-status">Phase 1</div></div>');
+      return d.querySelector('.ingest-status');
+  }],
+  ['.ingest-status.ok',          'toggle',   () => {
+      const d = sd('<div class="sd-group"><div class="ingest-status ok">Imported</div></div>');
+      return d.querySelector('.ingest-status');
+  }],
+  ['.ingest-status.err',         'toggle',   () => {
+      const d = sd('<div class="sd-group"><div class="ingest-status err">Failed</div></div>');
+      return d.querySelector('.ingest-status');
+  }],
+  ['#paste-box',                 'toggle',   () => {
+      const d = sd('<div class="sd-group"><textarea class="sd-probe-paste"></textarea></div>');
+      const t = d.querySelector('textarea'); t.id = 'paste-box'; return t;
   }],
   // EVERY text surface painted on --color-bg-header is probed here. The header
   // moved twice (white -> #a6bbdc -> #2e4f82) and each move silently broke a
@@ -173,10 +353,10 @@ const PROBES = [
       const d = mk('<div class="rpt-hd"><div class="rpt-sub"><span class="rpt-sub-divider">|</span></div></div>');
       return d.querySelector('.rpt-sub-divider');
   }],
-  // The sticky search sits on the header in both the icon bar and its own
-  // header row. Its input text was --color-text-on-panel, which is near-black.
-  ['.sticky-search-box input (constant)', 'constant', () => {
-      const d = mk('<div id="icon-bar-probe" style="background:var(--color-bg-header)">'
+  // The search now lives inline with the other filters, on the filter bar's
+  // panel, so it is probed against that surface rather than the board header.
+  ['.sticky-search-box input', 'toggle', () => {
+      const d = mk('<div id="top-filter-bar" class="open">'
                  + '<div class="sticky-search-box"><input value="search text"></div></div>');
       return d.querySelector('input');
   }],

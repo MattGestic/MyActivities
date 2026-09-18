@@ -58,7 +58,7 @@ Well-Architected trade-offs behind that:
 Three layers, kept strictly separate. Display state must never mutate schedule data.
 
 1. **Schedule data** — the baked-in baseline, or an import overlaying it. An import does not touch the baseline.
-2. **Annotation layer** — health overrides, comments, short titles, row remarks. Exported.
+2. **Annotation layer** — health overrides, progress overrides, comments, short titles, row remarks. Exported.
 3. **Display state** — column visibility, text scale multipliers, dependency line visibility and thickness, filters, theme. Session-scoped. Not exported except dependency visibility.
 
 Export is currently one-directional. There is no import path that reads the JSON payload back in. Round-trip is FEAT-13, new work, not a bug fix.
@@ -70,12 +70,36 @@ Three distinct systems. Do not conflate them.
 | Panel | Element | Toggle | Scope |
 |---|---|---|---|
 | Style / Customize View | `#filter-bar`, left docked sidebar | Palette icon | Layout, field visibility, label text sizing, dependency line visibility/thickness |
-| Top filter bar | `#top-filter-bar`, collapsible horizontal bar | Magnifying glass | Row filtering: Title contains, Banding, Activity ID(s), Week range |
-| Settings / Data Settings | `#settings-drawer`, right docked overlay | Gear | Actions, imported-schedule status, Import, Diagnostics |
+| Top filter bar | `#top-filter-bar`, collapsible horizontal bar | Magnifying glass | Row filtering: Title contains, Banding, Source, Activity ID(s), Week range, Date range. The Source group hides itself while only one schedule is mounted, since a filter that can only mean "all" is noise. |
+| Settings / Data Settings | `#settings-drawer`, right docked overlay | Gear | Four tabs: Sources (what is mounted), Import (the setup stepper), Defaults (settings that outlive an import), Diagnostics. Publish and the exports live in a sticky action footer reachable from every tab. |
 
 Plus the sticky-corner quick search in the top-left sticky table cell, two-way synced with the Top Filter Bar Title field.
 
 The Customize sidebar docks via a `body.cv-open{margin-left:300px}` class toggle rather than a DOM restructure, because `position:fixed` overlays (the sidebar included) are unaffected by an ancestor's margin. That is what lets it dock without disturbing the rest of the page.
+
+### The `sd-` component set and the drawer's spacing contract
+
+The Settings drawer is built from twelve `sd-` primitives rather than per-section markup. The rule, and the reason it is written down here rather than left to be inferred:
+
+**Nothing inside `#settings-drawer` may set `padding` or `margin` inline.** Every edge resolves to one of six tokens declared once on the drawer itself:
+
+| Token | Value | Role |
+|---|---|---|
+| `--sd-gutter` | `--space-6` | every left and right edge in the panel |
+| `--sd-group-pad` | `--space-6` | group top and bottom |
+| `--sd-row-y` | `--space-5` | row top and bottom |
+| `--sd-stack` | `--space-4` | label to helper to control |
+| `--sd-inline` | `--space-3` | between controls on one line |
+| `--sd-card-pad` | `--space-5` | inside a card |
+
+This is recorded because the previous arrangement was not a decision anyone made: it accumulated as 31 inline declarations across 18 values, each individually reasonable. An unwritten convention is one nobody can follow, which is the same failure mode as the board-order rule above. `tools/p29_check.py` asserts the contract rather than trusting it: the inline count must be zero, every group must report the same computed gutter, every interior row the same vertical step, every separator the same hairline, and every bordered surface a radius drawn from `--radius-sm/md/pill`.
+
+The primitives: `.sd-group` (titled block), `.sd-row` (label, helper, control; `--split` puts the control on a 160px label column), `.sd-card` (`--pick` selectable, `--empty` dashed), `.sd-badge` (five modifiers), `.sd-step` (`is-done`/`is-current`/`is-waiting`), `.sd-choice` (radio revealing its own body), `.sd-icon-pick`, `.sd-stat`, `.sd-actions` (sticky footer), plus `.sd-tabs`/`.sd-tab`/`.sd-tabpanel`. Nine of them replaced something that already existed in duplicate.
+
+Two colour rules fell out of building it, both worth stating because both were walked into:
+
+- **A fill token is not an ink token.** `--color-health-good` and `--color-purple-deep` are both used as fills elsewhere, so neither can be retuned for a dark panel without breaking the fill. Accent-coloured text on a themed panel is `--color-accent-ink`; success text is `--color-ok-text`. Merge on role, not on hex.
+- **The drawer takes `--color-bg-panel`, not `--color-bg-subtle`.** The latter is declared twice in the dark block (TD-88) and the light value wins, which is load-bearing for the week header (TD-98) and would have left the panel white in dark theme.
 
 ## Repository Architecture
 
@@ -107,9 +131,82 @@ The version lives only in `APP_VERSION`. The working file keeps a stable filenam
 | Label collision: 3-band cycling, same-row only | General N-marker collision solver | Covers the common case. A 4+ marker cluster in a very tight span can still partially overlap — an explicit, acknowledged scope boundary. | Pre-migration |
 | Exact-match header aliases, not fuzzy | Fuzzy/levenshtein matching | Primary `Start`/`Finish` already cover the core need. Fuzzy risks silent mis-mapping, which is worse than a visible failure. | Pre-migration |
 | Orphan branch per app | Monorepo on one `main`; separate repos | Apps are independent; a shared `main` makes every diff noisy. A separate repo per app fragments a personal workspace. | 2026-09-09 |
+| Board order follows the schedule's own order | Alphabetical by WBS path; by phase; by date | The board presents the client's schedule, so it presents it in the client's sequence. Anything else makes the reader reconcile two orderings, and the schedule's order carries meaning the dashboard does not know. **This rule was assumed rather than recorded, and the code did the opposite for as long as import existed (TD-65).** | 2026-09-14 |
+| Baseline overlay is matched by Activity ID, placed at the baseline's own date on the live marker's row line, and painted behind everything | Match by row; match by title; overlay as a separate row; overlay as a date label | The Activity ID is the only key both datasets share and the only one that survives a row being regrouped. Taking Y from the live marker and X from the baseline date makes the horizontal gap between the pair the slip itself, readable without a legend. Behind, because the current schedule is what the board is about and the baseline is context for it. | 2026-09-15 |
+| The board is built from a registry of sources, not from one update dataset | Keep one UPDATE_* pair and merge on import; a separate array per source read directly by the renderer | `setViewMode()` re-slices `TASKS`/`MILESTONES` from `UPDATE_*` on every view switch, so a second dataset written anywhere else vanishes the first time someone toggles to baseline and back. One registry with one concatenation point means the view switch keeps working and there is a single place that defines what the board holds. | 2026-09-16 |
+| A duplicated Activity ID on append gets a numbered suffix, rewritten across every field that carries it | Namespace the ID by source; keep duplicates and disambiguate at lookup; refuse the append | The ID is a key in more places than it looks: `msKeyFor()` for three annotation stores, `task.ref` for row-to-milestone lookup, `data-ids` for the ID filter, and first-match lookups in `markerCenter()` and `findMilestoneBySnip()`. Disambiguating at lookup would mean changing all of them and hoping none was missed. One suffix, applied once, keeps every existing key correct. Rewriting `id` without `notes` and `ref` is what silently decouples a milestone from its own annotations. | 2026-09-16 |
+| Performance claims are asserted by counting, not by wall clock | Timing budgets in the check; no assertion at all | Every probe in this project runs under Chromium's `--virtual-time-budget`, where `performance.now()` does not advance with real work. The first draft of `p30_check.py` reported 0ms against every budget and would have gone on reporting 0ms however slow the code became: a vacuous pass with a number attached, which is worse than no number. Counting what the optimisation promises (one index build reused, one filter pass per burst, zero per-cell writes) is deterministic and fails when the optimisation is removed. | 2026-09-16 |
+| The settings panel is a component set with one spacing contract, not per-section markup | Restyle the existing sections; a CSS framework; leave it and add the new controls in the same style | Two halves of multi-source work both add markup to this panel. Building them on 31 inline declarations across 18 values means writing the mess twice and then rewriting it. The contract is asserted by probe rather than claimed, because a convention nobody measures drifts back on the next change. | 2026-09-16 |
+| The drawer is tabbed, with a sticky action footer | One long scroll (as before); an accordion; a separate settings page | Six stacked sections put the terminal actions above the thing they act on and buried settings that outlive an import two disclosures deep inside Import. Tabs also give the setup flow somewhere to keep its shape: the steps show state instead of appearing and disappearing. | 2026-09-16 |
+| Print preview is a reversible mode, not a print action | A Print button calling `window.print()`; a permanent A3 `@page` rule; a separate print stylesheet only | Page fit is something to check and adjust before printing, not to discover in the print dialog. The `@page` rule is injected only while the mode is on, so a plain Ctrl+P is unaffected for anyone who did not ask for A3. The mode never travels into a published file. | 2026-09-15 |
+| | The board's date range is derived from the imported data, not from a fixed window around the data date | Keep the 12-before / 26-after window; make the window bigger; ask at import | The board exists to show a schedule, so its span is a property of that schedule. The fixed window was wrong in both directions on the same file: three milestones past its end plotted nowhere while eight empty weeks sat before its start. The window survives only as the fallback for an import carrying no usable dates, which is the one case where there is nothing to derive from. | 2026-09-15 |
+| The week filter marks; the date range filter narrows | Make both narrow; make both mark; one control with a mode | They answer different questions. "What is in week 12" wants the week marked in context, which is why painting its cells was reverted (TD-79). "Show me September to October" wants a September-to-October board. Both resolve to one [lo,hi] column pair, so there is a single definition of in-range and the two intersect rather than fight. | 2026-09-15 |
+| A progress override that matches the schedule is discarded; a health override that matches is kept | Store every committed value; store nothing and diff at read time; a separate "cleared" sentinel | The two stores answer different questions. Health has a value ("explicitly N/A") that is genuinely distinct from having no opinion, so key presence is the state. A progress figure has no such value: entering 40 against a schedule that says 40 adds nothing a reader could act on, but it does add a row to the annotation count they are shown when choosing what to restore, and it makes the edited indicator lie. Discarding it keeps the count honest and gives the indicator one meaning: this differs from the schedule. | 2026-09-18 |
 | Stable filename + git tags for versioning | Keep versioned filenames | Versioned filenames make every change a whole-file add, defeating the point of migrating to git. | 2026-09-09 |
 
 ---
 **Rules:**
 - Amend on architecture-impacting changes only.
 - If a backlog item conflicts with a decision here, flag it before building.
+
+### Marker placement (v3.1.0-P34)
+
+Three rules, in order of how much they constrain everything else.
+
+**1. A marker's vertical position is a property of the marker.** Every label is a child of `.m-wrap`, so it rides whatever the wrap does and always sits at its own icon's height. That is what makes a label traceable to the marker that owns it. There is exactly one vertical offset per marker and exactly one writer for it, `renderMarker()`.
+
+**2. The anchor is the cell's true centre; every offset is pixels.** `.m-wrap` sits at `left:50%; top:50%`, which resolves against the cell's real padding box whatever height the row turns out to be. `--mdx`/`--mdy` are pixel offsets budgeted from `ROW_HEIGHT` and `COL_WIDTH`, which are minimums the rendered cell can only exceed. So an offset that fits the budget fits the cell, and the error direction is "used less room than was available", which is invisible. A percentage had the opposite direction, needed correcting against a height the render could not know, and grew the spread as the row got taller.
+
+**3. Staggering is proximity-scoped.** A row's markers are walked in column order and cut into runs. A run continues while consecutive markers are at most **two blank columns** apart, a gap of three (`MS_PROXIMITY_COLS`); anything further out starts a new run, and a run of one is dead centre.
+
+The threshold is a fixed count of schedule columns and is deliberately **not** derived from the rendered label width, which is what it was until P34. A label width moves with the label scale controls, so deriving the boundary from it meant changing the text size re-anchored every marker on the board. Marker anchoring answers to the data; only the data may move it.
+
+Within a run the levels **repeat**: top, middle, bottom, top, middle, bottom, with top and bottom for a run of two and the pair symmetric about the midpoint whatever cells its members occupy.
+
+P33 used a triangle wave here instead, so the fourth marker sat on the middle band, on the argument that a plain repeat puts markers one and four on the same line a few columns apart. **That argument is correct and the collision is real.** It was reversed at P34 against a rendered case: row 69 of the reference board carries four markers in directly adjacent columns and the fourth was wanted at the top. Capping the run length cannot deliver that, because a run of one is the middle band by definition. The collision is now an accepted cost, measured rather than avoided. Do not restore the wave from the old reasoning alone; it needs a rendered case of its own.
+
+**Band reuse is legitimate across cells and illegitimate within one.** Markers sharing a cell share an x, so the band is all that separates them. A cell holding more than three grows *its* row via `--row-h-eff`, by the minimum that gives each of them a line. Data-driven, never display-driven: a denser import can change row heights, no toggle ever does.
+
+**Labels never affect layout.** The band is budgeted on the icon, not on the label stack, so it cannot depend on whether labels are shown. The accepted consequence is that a label on a short row can overlap the gutter; it is bounded and clears once the row has room.
+
+`msCellOffset()` is horizontal-only. Two vertical offsets would compound, which is the failure removed at P32 between the icon spread and the label band.
+
+Anything `msCellOffset()` or the band reads (icon size, column width, row height) must flag `_placementNeedsRebuild`, because the offsets are written once at render time.
+
+**Hidden markers are derived, never stored.** `markerHidden()` reads the row's `hidden-row` class and the cell's `data-col` against `DATE_RANGE_COLS`, so it costs no layout and cannot go stale. A stored flag would need writing at four entry points, and this file has three separate defects from a rule applied at some and not others.
+
+### The milestone Progress override (v3.1.0-P35)
+
+Progress is the first **editable number** in the annotation layer. Everything before it was a colour, a comment or a piece of text, none of which anything else computed from.
+
+`MS_PROGRESS_OVERRIDE` keys through `msKeyFor()` alongside `MS_COMMENTS`, `MS_HEALTH_OVERRIDE` and `MS_SHORT_TITLES`, carries through publish, the model export and selective import as its own `ANNOT_CATEGORIES` entry, and moves with a milestone whose key changes when it is dragged to another row.
+
+Four rules hold it to the three-layer split:
+
+- **`effectiveProgress(m)` is the only reader.** The milestone record is never written, so the schedule's own value is always recoverable, which is the whole mechanism behind "clear the field to restore it". Every consumer of progress goes through the accessor: the card, the progress bar, earned hours, the milestone tooltip, and `computeProgress()`, which is the row's rollup. A card that moved while the row beside it did not would be the same defect class as a marker that reads as belonging to the wrong row.
+- **An override equal to the schedule's own value is deleted, not stored.** This is the opposite of `MS_HEALTH_OVERRIDE`, deliberately. Selecting the white health dot is a real choice ("explicitly N/A") distinct from never having touched the control, so that store tests key *presence*. A progress of 40 against a schedule that already says 40 asserts nothing the schedule does not, so storing it would inflate the annotation count a reader is shown when choosing what to restore. It also makes the edited indicator mean exactly one thing: this differs from the schedule.
+- **Blank and unparseable both restore.** Neither is saved. The one field whose job is to carry a number does not get to hold something that is not one.
+- **The card writes under `msKeyFor(m)`.** It used to compose its own key from `extractSnipId(m.notes)` while every reader used `msKeyFor()`, which prefers `m.id`. Equal on the reference dataset (measured: 146 milestones, 0 divergent) and nothing enforced it, so a milestone whose id and notes disagreed would have had its annotations written where the board never looked.
+
+Marking a milestone complete sets progress to 100%, **one direction only**. Clearing the Complete dot does not drop it back: by then the user may have typed over it, and discarding a number they entered is worse than leaving one they can clear themselves.
+
+The field commits on blur or Enter, not per keystroke, because a commit rerenders the board. The comment field autosaves per keystroke precisely because it costs no rerender.
+
+### Sticky header offsets (v3.1.0-P34)
+
+The two header rows stack: the month band sticks at the top of the scroller, the week band directly below it. The week band's offset is **measured, never a literal**.
+
+`watchStickyHeights()` is the single writer. It puts two custom properties on `:root` from `ResizeObserver`s:
+
+| Property | Source | Read by |
+|---|---|---|
+| `--hdr-phase-h` | `#phase-hdr`'s row height | `tr.hdr-wk th { top }` |
+| `--tfb-h` | `#top-filter-bar`'s content height | `#top-filter-bar.open { max-height }` |
+
+Three rules that are load-bearing here:
+
+- **Observers, not hooks.** The alternative was hooks in `rerender()`, `applyRowHeight()`, `togglePrintMode()`, `fitToScreen()` and a window resize listener. Five entry points, and a missed entry point has cost this project a cycle four times. An observer has no call sites to forget. Both observed elements survive rerenders: `renderPhaseHdr()` appends cells to the same `<tr>` rather than replacing it.
+- **Measure the row, not a cell.** The month row's metadata cells carry `padding:0` and its month cells 3px, so a single `<th>` is shorter than the row and the week band would stick too high.
+- **The filter bar's cap over-estimates on purpose.** `scrollHeight` is read from whichever state the bar is in, and while it is closed its vertical padding has transitioned away, so an exact figure taken then would be short by that padding and clip on the way back open. A `max-height` that overshoots costs nothing visible; it is a cap, not a height.
+
+Both literals these replaced were wrong and had been for some time: the week band sat 3.5px below a 16px row, and the filter bar's 160px cap cut 43px off its own content at phone width.
