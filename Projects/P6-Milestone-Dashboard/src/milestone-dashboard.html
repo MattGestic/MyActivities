@@ -647,7 +647,12 @@ input[type=range]{width:110px;cursor:pointer}
 #filter-bar.open{transform:translateX(0)}
 #filter-bar .fb-hd{padding:0 12px 10px;font-size:11px;font-weight:700;color:var(--color-purple-deep);display:flex;align-items:center;gap:6px}
 #top-filter-bar{background:var(--color-filter-bg);border-bottom:1px solid var(--color-filter-border);padding:0 var(--space-4);display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-4) var(--space-5);font-size:var(--text-sm);position:relative;z-index:30;max-height:0;overflow:hidden;transition:max-height .16s ease,padding .16s ease}
-#top-filter-bar.open{padding:var(--space-3) var(--space-4);max-height:160px}
+/* The cap was the literal 160px. The bar is flex-wrap, so at phone width its
+   controls wrap onto more rows than that: measured at 390px the content came
+   to 202px against a 159px box, and the part cut off read as the panel
+   hiding under the header below it. --tfb-h is the bar's own measured
+   content height, written by watchStickyHeights(). */
+#top-filter-bar.open{padding:var(--space-3) var(--space-4);max-height:var(--tfb-h,160px)}
 #top-filter-bar .tfb-group{display:flex;align-items:center;gap:var(--space-2);flex-wrap:wrap}
 .fb-sect-title{font-size:9.5px;font-weight:700;color:var(--color-purple-deep);text-transform:uppercase;letter-spacing:.04em;margin:10px 0 4px;padding-top:8px;border-top:1px solid var(--color-filter-border)}
 .fb-sect-title:first-child{margin-top:0;padding-top:0;border-top:none}
@@ -814,17 +819,19 @@ table{border-collapse:separate;border-spacing:0;table-layout:fixed;width:max-con
 td.sticky,th.sticky{position:sticky;left:0;z-index:10;background:inherit}
 thead tr th.sticky{z-index:20}
 
-/* Height of the search row, and therefore the offset every header row below it
-   sticks at. Kept as one variable so the three rows cannot drift apart. */
-/* The search moved into the filter bar, so there is no search row above the
-   month band and the stack starts at 0. Kept as a token rather than removed,
-   because the three sticky offsets are still derived from it. */
-:root{--hdr-search-h:0px}
-tr.hdr-search th{position:sticky;top:0;z-index:27;background:var(--color-bg-header);
-  height:var(--hdr-search-h);padding:0;border-bottom:0.5px solid var(--color-line-default)}
-tr.hdr-search th.sticky{z-index:28}
-tr.hdr-phase th{font-size:9px;font-weight:500;color:var(--color-text-on-accent);padding:3px 4px;text-align:center;border-right:0.5px solid rgba(255,255,255,.15);white-space:nowrap;position:sticky;top:var(--hdr-search-h);z-index:25}
-tr.hdr-wk th{font-size:8px;color:var(--color-text-small);padding:2px 2px;text-align:center;border-right:0.5px solid var(--color-line-default);border-bottom:1.5px solid #99a;white-space:nowrap;line-height:1.2;background:var(--color-bg-subtle);cursor:pointer;user-select:none;position:sticky;top:calc(var(--hdr-search-h) + 19.5px);z-index:24}
+/* The two header rows stack: the month band sticks at the top of the scroller
+   and the week band sticks directly below it. The week band's offset used to be
+   the literal 19.5px, a stand-in for the month row's height. It renders 16px,
+   so a 3.5px band sat between them that data rows scrolled through. It is
+   measured now and written to --hdr-phase-h by watchStickyHeights(). The
+   fallback keeps the old literal, so a browser without ResizeObserver is no
+   worse off than it was.
+   The search row that once sat above these is gone (it moved into the filter
+   bar) and its --hdr-search-h token went with it: declared 0px and never
+   written by anything, it was two variables with no writer where one variable
+   with one writer was wanted. */
+tr.hdr-phase th{font-size:9px;font-weight:500;color:var(--color-text-on-accent);padding:3px 4px;text-align:center;border-right:0.5px solid rgba(255,255,255,.15);white-space:nowrap;position:sticky;top:0;z-index:25}
+tr.hdr-wk th{font-size:8px;color:var(--color-text-small);padding:2px 2px;text-align:center;border-right:0.5px solid var(--color-line-default);border-bottom:1.5px solid #99a;white-space:nowrap;line-height:1.2;background:var(--color-bg-subtle);cursor:pointer;user-select:none;position:sticky;top:var(--hdr-phase-h,19.5px);z-index:24}
 tr.hdr-wk th.sticky{z-index:26}
 tr.hdr-wk th:hover{background:var(--color-accent-tint-bg)}
 tr.hdr-wk th.past-wk{background:#e8e8e8;color:var(--color-text-small)}
@@ -1966,7 +1973,7 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 <thead>
 <!-- The search sits on its own row rather than sharing the month band's line.
      It stays inside the table so it keeps the sticky behaviour the corner cell
-     gave it; the rows below it are offset by --hdr-search-h so the three header
+     gave it; the week band below is offset by --hdr-phase-h so the two header
      rows still stack correctly when the board is scrolled. The colspan is
      deliberately larger than the column count, which browsers clamp, because
      the week columns are built at render time. -->
@@ -8222,6 +8229,52 @@ document.getElementById('dep-tooltip').addEventListener('click',()=>{
   }
 });
 
+// Two heights that CSS needs and cannot compute for itself: the month header
+// row's height, which is where the week header row has to stick, and the filter
+// bar's wrapped content height, which is what its open max-height has to clear.
+//
+// Both are ResizeObservers rather than hooks in rerender(), applyRowHeight(),
+// togglePrintMode(), fitToScreen() and a window resize listener. That would be
+// five entry points, and a missed entry point has cost this project a cycle
+// four times (dependency lines absent from rerender(), tooltips bound only to
+// ghosts, the week filter dropped on every rebuild, three probes driving the
+// setters instead of the sliders). An observer cannot be forgotten at a call
+// site because it has no call sites. #phase-hdr and #top-filter-bar are both
+// long-lived elements, kept across rerenders, so one observer each is enough:
+// renderPhaseHdr() appends cells to the same <tr> rather than replacing it.
+function watchStickyHeights(){
+  const root=document.documentElement;
+  // Compared before writing, so an unchanged height is a no-op and an observer
+  // cannot drive itself round again off its own write.
+  function put(name,px){
+    const v=px.toFixed(2)+'px';
+    if(root.style.getPropertyValue(name)!==v) root.style.setProperty(name,v);
+  }
+  const phase=document.getElementById('phase-hdr');
+  if(phase){
+    // The ROW, not one of its cells. The metadata cells on the left carry
+    // padding:0 while the month cells carry 3px, so a single th is shorter than
+    // the row and the week band would stick too high.
+    const measure=function(){
+      const h=phase.getBoundingClientRect().height;
+      if(h>0) put('--hdr-phase-h',h);
+    };
+    measure();
+    if(window.ResizeObserver) new ResizeObserver(measure).observe(phase);
+  }
+  const bar=document.getElementById('top-filter-bar');
+  if(bar){
+    // Deliberately an OVER-estimate. scrollHeight is read from whichever state
+    // the bar happens to be in, and while it is closed its vertical padding has
+    // transitioned away, so an exact figure taken then would be short by that
+    // padding and clip on the way back open. Overshooting a max-height costs
+    // nothing visible: it is a cap, not a height.
+    const measure=function(){ put('--tfb-h',bar.scrollHeight+40); };
+    measure();
+    if(window.ResizeObserver) new ResizeObserver(measure).observe(bar);
+  }
+}
+
 // ============================================================
 // INIT
 // ============================================================
@@ -8240,6 +8293,7 @@ document.getElementById('dep-tooltip').addEventListener('click',()=>{
   if(titleField) titleField.value='Eskay | Snip PFS & Technical Report 2026 \u2014 Deliverables Dashboard';
   renderPhaseHdr();
   renderRows();
+  watchStickyHeights();
   setupMsVisibilityObserver();
   renderSummary();
   rebuildWeekFilter();
