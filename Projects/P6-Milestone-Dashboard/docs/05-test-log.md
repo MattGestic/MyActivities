@@ -1403,3 +1403,61 @@ Marker containment by setting, labels on, ID + Title:
 | Baseline render | unchanged, 105 rows / 146 milestones imported |
 
 **Published:** `releases/v3.1.0-P32_marker-placement-and-filter-row-fixes.html`
+
+---
+
+## TEST-35 — Proximity-scoped marker staggering (v3.1.0-P33)
+
+`tools/p33_check.py`, **38/38**. Headless Chromium, the reference workbook through the real ingest pipeline.
+
+The rule: a marker's vertical position is a property of the marker, and the label is a child of its wrap, so it rides whatever the wrap does.
+
+| Group | Assertions |
+|---|---|
+| Sequence | asserted against the generator for n = 1 to 8, because the board's densest cell holds two markers and cannot reach the case: run of one is the middle band; run of two is top then bottom, leftmost up; run of three cascades top, middle, bottom; **the fourth is the middle band, not a repeat back to top**; the fifth returns to top; no two adjacent markers in a run share a band; every level is one of the three |
+| Budget | no band offset can put an icon past the row it was budgeted for, across five icon/row combinations and three to six bands; three bands never grow the row; four or more do, monotonically; band count follows the densest cell |
+| Label rides its icon | 146 of 146 label stacks centred on their own wrap, asserted **per marker**; no element carries an independent offset or a band class |
+| Factory | 146 positioned wraps, all carrying both offsets; the flow-layout LoE variant carrying neither |
+| Ghosts | 146 paired, **0 off their pair**, so the ghost inherited the band through the shared writer |
+| Labels do not move layout | 105 rows identical with labels off, on and in ID + Title; 0 rerenders behind the toggle |
+| Containment | 7 settings, 146 markers each, **0 outside their row at any setting** |
+| Hidden markers | the derived test and the zero-rect measurement agree on all 146 markers under no filter, a week filter, a date range, all three combined, and after clearing; 641 dependency paths still drawn |
+| Same-cell overflow | four clones forced into one cell (densest cell 5): that row grew to 64px, every marker in it got its own line, and **1 of 105 rows changed height** |
+
+### Spill, measured against the P32 release with the same corrected sweep
+
+| Setting | P33 out | P33 worst | P32 out | P32 worst |
+|---|---|---|---|---|
+| row 28 / ico 15 / wk 36 | **0** | 0.4px | 28 | 8.9px |
+| row 34 / ico 15 / wk 36 | 31 | 3.4px | 28 | 8.9px |
+| row 34 / ico 24 / wk 36 | **0** | inside | 28 | 8.9px |
+| row 34 / ico 10 / wk 20 | 31 | 7.3px | 28 | 10.3px |
+| row 48 / ico 15 / wk 36 | **0** | 0.1px | 28 | 2.1px |
+| row 65 / ico 15 / wk 36 | 0 | inside | 0 | inside |
+| row 72 / ico 24 / wk 72 | 0 | inside | 0 | inside |
+
+Total labels outside their row across the sweep: **62, down from 140.** No setting spills deeper than it did. The count rises at 34px because a proximity run is wider than P32's per-cluster reset, so more markers are banded, which is the feature; the depth, which is what decides whether a label lands on a neighbouring row, falls everywhere.
+
+### Four defects found by verification
+
+- **Three probes were measuring nothing** (TD-123). `p30_check`, `p32_check` and the screenshot probe drove placement through `setIcoSize()` / `setWkWidth()` alone, but `rerender()` reapplies display settings by reading the slider elements back, so every call was undone by the rebuild it triggered. Found by a diagnostic that asked for a 10px icon and measured 15, while investigating an apparent 17 markers leaving their row. With the settings actually applied, that failure did not exist. The P32 spill baseline had to be re-measured before the comparison above meant anything.
+- **The unfurl put the label stack under the count chip** (TD-124), reviving TD-83. Caught by `p27_check`.
+- **The first same-cell implementation put two pairs on one line inside one cell**, because the level generator knew the run length but not the columns, so it could not tell reuse across cells from reuse within one.
+- **The agreement assertion passed against zero markers on its first run**, because the rebuild before it left the board empty. The sample-size assertion beside it caught that, as designed.
+
+### Full suite at v3.1.0-P33
+
+| Suite | Result |
+|---|---|
+| TEST-35 marker staggering | **38/38** |
+| TEST-34 placement and filter-row defects | **35/35**, two assertions inverted to the new contract |
+| TEST-33 multi-source ingest | **67/67** |
+| TEST-32 settings panel design system | **49/49** |
+| TEST-31 date range | **34/34** |
+| TEST-30 counts, baseline overlay, print | **32/32** |
+| TEST-23 persistence round trip | **20/20** |
+| Ingest, board order | exit 0 |
+| Contrast gate | 0 frozen, 0 below 3.0:1 |
+| Baseline render | unchanged, 105 rows / 146 milestones imported |
+
+**Published:** `releases/v3.1.0-P33_proximity-marker-staggering.html`

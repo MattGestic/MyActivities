@@ -354,14 +354,66 @@ PROBE = r"""
        tall.every(function(c){ return c.labelsOut===0; }),
        tall.map(function(c){return c.at+'='+c.labelsOut;}).join(', '));
 
-    // ================= 8. Same-cell overflow grows only its own row =================
+    // ================= 8. Hidden markers: derived == measured =================
+    // markerCenter() now answers "is this filtered out" from the state the
+    // filter wrote, instead of measuring a zero rect per dependency endpoint.
+    // The two must agree on EVERY marker under every filter, or the derived
+    // path has become a second source of truth, which is the failure mode a
+    // stored flag would have had.
+    // Runs BEFORE the clone experiment below, on the clean imported board.
+    // The first attempt ran after it and tried to rebuild by emptying
+    // MILESTONES and calling runIngest() again, which left the board empty and
+    // the agreement assertion passing against zero markers. The sample-size
+    // assertion beside it caught that, which is what it is for.
+    setDisplay(34,15,36); await settle(); await settle();
+
+    function agreement(){
+      let n=0, disagree=0;
+      document.querySelectorAll('.m-wrap:not(.m-ghost)[data-ms]').forEach(function(el){
+        n++;
+        const derived=markerHidden(el);
+        const r=el.getBoundingClientRect();
+        const measured=(r.width===0&&r.height===0);
+        // A marker the derived test calls hidden must measure as having no
+        // layout, and vice versa.
+        if(derived!==measured) disagree++;
+      });
+      return {n:n,disagree:disagree};
+    }
+    const agree={};
+    agree.none=agreement();
+    document.getElementById('week-filter').value='6'; applyFilter();
+    await settle(); agree.week=agreement();
+    document.getElementById('week-filter').value=''; applyFilter(); await settle();
+    document.getElementById('filter-date-from').value='2026-08-01';
+    document.getElementById('filter-date-to').value='2026-09-30'; applyFilter();
+    await settle(); agree.range=agreement();
+    const bandSel=document.getElementById('filter-band');
+    if(bandSel&&bandSel.options.length>1){ bandSel.value=bandSel.options[1].value; applyFilter(); }
+    await settle(); agree.all=agreement();
+    clearFilter(); await settle(); agree.cleared=agreement();
+    R.notes.hiddenAgreement=agree;
+    const sampled=['none','week','range','all','cleared'].every(function(k){ return agree[k].n>100; });
+    ck('hidden: every filter state had markers to compare', sampled,
+       JSON.stringify(Object.keys(agree).map(function(k){return k+':'+agree[k].n;})));
+    const bad=['none','week','range','all','cleared'].filter(function(k){ return agree[k].disagree>0; });
+    ck('hidden: the derived test agrees with the measurement on every marker, under every filter',
+       bad.length===0, bad.map(function(k){return k+'='+agree[k].disagree;}).join(', '));
+    // And the lines it feeds still come out the same.
+    ck('hidden: dependency lines still draw with no filter active',
+       (function(){ if(typeof drawDepLines!=='function') return true;
+         setAllDep('succ',true); drawDepLines();
+         const n=document.querySelectorAll('#dep-line-layer path').length;
+         R.notes.depLines=n; return n>100; })(), R.notes.depLines+' paths');
+
+    // ================= 9. Same-cell overflow grows only its own row =================
     setDisplay(34,15,36);
     await settle(); await settle();
     const baseHeights=rowHeights();
     // Clone four extra milestones onto one row, all on the SAME date, which is
     // the case the reference board cannot produce: its densest cell holds two.
     const seed=MILESTONES.filter(function(m){ return m.date; })[0];
-    const clones=[];
+    var clones=[];
     for(let k=0;k<4;k++){
       const c=JSON.parse(JSON.stringify(seed));
       c.id=(seed.id||'X')+'_c'+k; c.notes='['+c.id+'] - clone '+k;
@@ -447,7 +499,7 @@ def main():
 
     n = R.get("notes", {})
     for k in ("board", "labelRide", "factory", "ghosts", "overflow",
-              "overflowSpread", "spillTotals"):
+              "overflowSpread", "spillTotals", "hiddenAgreement", "depLines"):
         if k in n:
             print(f"   {k}: {json.dumps(n[k])}")
     for line in n.get("spillVsP32", []):

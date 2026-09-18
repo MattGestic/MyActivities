@@ -181,3 +181,38 @@ It surfaced as "changing a health icon unfilters the dashboard", which is a true
 A check read `getComputedStyle(el).marginLeft` expecting `"auto"` and got `"911.188px"`. `getComputedStyle` reports used values; `auto` is an input, never an output. Right-alignment is a position, so it has to be measured as one.
 
 Sibling of the padding-box/border-box finding at P25: both are cases of asserting in a frame the browser does not report in.
+
+---
+
+## A probe that drove the model instead of the control (v3.1.0-P33)
+
+Three separate probes set placement by calling `setIcoSize(24)` and `setWkWidth(20)` directly. `rerender()` reapplies display settings by reading the slider **elements** back:
+
+```js
+setWkWidth(document.getElementById('wk-width').value);
+setIcoSize(document.getElementById('ico-size').value);
+```
+
+So every call was undone by the rebuild it triggered, and each sweep measured the default over and over while printing seven different setting labels. Two shipped checks had been reporting that way for a full partial.
+
+It surfaced sideways: a P33 assertion said 17 markers had left their row, the arithmetic said they could not, and a diagnostic printed `iconSize: 15` after being asked for 10. The failure was in the probe, and so was the earlier P32 baseline the comparison depended on.
+
+**Drive the control, not the model.** A probe that sets a variable the app treats as derived is testing a state the app will not hold. And when a check and the arithmetic disagree, suspect the check: it is the thing with no tests.
+
+Note the asymmetry that made this easy to miss. `applyRowHeight()` pushes `ROW_HEIGHT` onto its slider, so row height is variable-is-truth; `wk-width` and `ico-size` are slider-is-truth. Two conventions in one cascade.
+
+## Reviving a defect by moving its neighbour
+
+Anchoring the label stack at `left:50%` so it unfurls from behind its icon was a visual change with no obvious relation to dependency counts. But `body.counts-on` cleared the right-hand count chip with a margin measured from `left:100%`, so moving the anchor half an icon left put the stack back under the chip: TD-83, returning by a route nobody would think to check.
+
+`p27_check` caught it. A check written for one partial earned its keep three partials later, against a change that had nothing to do with it.
+
+**A positioned element's offsets are a contract with everything else positioned against it.** Before moving an anchor, grep for what else is measured from it.
+
+## A generator that knew the count but not the context
+
+The first same-cell implementation asked `msRunLevels(n)` for a sequence and got the triangle wave, which is right for markers in different cells and wrong inside one: five markers in a single cell came out `[0,1,2,1,0]`, putting two pairs on the same line in the one place where band reuse is illegitimate, because those markers share an x.
+
+The row had already been grown to carry five bands. The generator simply had no way to use them, because its only input was how many markers there were, not where they sat.
+
+**When a rule has an exception that depends on context, the function applying it needs that context as an argument.** Passing `n` where the rule needs the columns is how the exception ends up unrepresentable.

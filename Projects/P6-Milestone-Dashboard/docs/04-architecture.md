@@ -148,21 +148,22 @@ The version lives only in `APP_VERSION`. The working file keeps a stable filenam
 - Amend on architecture-impacting changes only.
 - If a backlog item conflicts with a decision here, flag it before building.
 
-### Marker placement (v3.1.0-P32)
+### Marker placement (v3.1.0-P33)
 
-A marker's position inside its cell is **an anchor plus a pixel offset**, never a percentage.
+Three rules, in order of how much they constrain everything else.
 
-`.m-wrap` anchors at `left:50%; top:50%`, which resolves against the cell's real padding box and therefore lands on the true centre of whatever height the row turns out to be. `msCellOffset()` then returns `--mdx`/`--mdy` in pixels, budgeted from `ROW_HEIGHT` and `COL_WIDTH`.
+**1. A marker's vertical position is a property of the marker.** Every label is a child of `.m-wrap`, so it rides whatever the wrap does and always sits at its own icon's height. That is what makes a label traceable to the marker that owns it. There is exactly one vertical offset per marker and exactly one writer for it, `renderMarker()`.
 
-Two properties make this safe, and both are the point:
+**2. The anchor is the cell's true centre; every offset is pixels.** `.m-wrap` sits at `left:50%; top:50%`, which resolves against the cell's real padding box whatever height the row turns out to be. `--mdx`/`--mdy` are pixel offsets budgeted from `ROW_HEIGHT` and `COL_WIDTH`, which are minimums the rendered cell can only exceed. So an offset that fits the budget fits the cell, and the error direction is "used less room than was available", which is invisible. A percentage had the opposite direction, needed correcting against a height the render could not know, and grew the spread as the row got taller.
 
-- **The budget is a minimum.** `ROW_HEIGHT` is what the user asked for; the rendered cell can only be taller, because content sets a floor. So an offset that fits the budget fits the cell. The error direction is "used less room than was available", which is invisible. A percentage had the opposite direction, and any correction applied to it had to be computed against an assumed height the render could not know.
-- **The offset does not scale with the row.** A percentage spread grew as row height rose, so raising the row scattered the markers. A pixel offset separates them by what an icon needs and no more.
+**3. Staggering is proximity-scoped.** A row's markers are walked in column order and cut into runs; a marker more than `MS_PROXIMITY_COLS` from the previous one starts a new run, and a run of one is dead centre. Four columns because that is about how wide a rendered label is, so a run is exactly the set whose labels can collide. Within a run: top/bottom for two, top/middle/bottom for three, and a triangle wave beyond, so the fourth is the middle band. A plain repeat would put markers one and four on the same line a few columns apart, which is the two-state trap this file has hit three times.
 
-Markers sharing a cell cascade **diagonally**, `slot = i - (n-1)/2` on both axes: monotonic across and down, symmetric about the centre, and therefore incapable of putting two markers in one cell at the same position for any N. The rule it replaced alternated on `i%2` and produced two positions for every N.
+**Band reuse is legitimate across cells and illegitimate within one.** Markers sharing a cell share an x, so the band is all that separates them. A cell holding more than three grows *its* row via `--row-h-eff`, by the minimum that gives each of them a line. Data-driven, never display-driven: a denser import can change row heights, no toggle ever does.
 
-The label stack is pinned to the **cell's** midline by `--lbl-dy = -mdy + band`. Both terms are pixels in one frame, so the undo is exact and no row height appears in the sum.
+**Labels never affect layout.** The band is budgeted on the icon, not on the label stack, so it cannot depend on whether labels are shown. The accepted consequence is that a label on a short row can overlap the gutter; it is bounded and clears once the row has room.
 
-**Labels never affect layout.** The band is a fixed constant. A display toggle that resizes the board is not a display toggle, and the row height control is the user's lever for a condensed board. The accepted consequence is that a banded label on a short row overlaps the gutter rather than the row growing beneath it; it is bounded at one label line and clears entirely once the row has room.
+`msCellOffset()` is horizontal-only. Two vertical offsets would compound, which is the failure removed at P32 between the icon spread and the label band.
 
-Anything `msCellOffset()` reads (icon size, column width, row height) must flag `_placementNeedsRebuild`, because `--mdx`/`--mdy` are written once at render time.
+Anything `msCellOffset()` or the band reads (icon size, column width, row height) must flag `_placementNeedsRebuild`, because the offsets are written once at render time.
+
+**Hidden markers are derived, never stored.** `markerHidden()` reads the row's `hidden-row` class and the cell's `data-col` against `DATE_RANGE_COLS`, so it costs no layout and cannot go stale. A stored flag would need writing at four entry points, and this file has three separate defects from a rule applied at some and not others.
