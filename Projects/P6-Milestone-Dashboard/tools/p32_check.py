@@ -142,16 +142,24 @@ PROBE = r"""
     const sharedY=geo.filter(function(g){
       return g.n>1 && new Set(g.dy).size!==g.n; });
     ck('offsets: there are multi-marker cases to check', geo.length===6, geo.length+' values of N');
-    ck('offsets: no two markers in a cell share a y, for every N from 2 to 6',
-       sharedY.length===0, sharedY.map(function(g){return 'n='+g.n+' '+JSON.stringify(g.dy);}).join(' | '));
+    // Inverted at P33. Vertical separation moved OUT of this function and into
+    // the row's band, because markers sharing a cell are consecutive in their
+    // proximity run and the band already puts them on different lines. Two
+    // vertical offsets would compound, which is the failure P32 removed between
+    // the spread and the label band. msCellOffset is horizontal-only now, and
+    // the vertical property is asserted in tools/p33_check.py against the
+    // combined position.
+    const anyDy=geo.filter(function(g){ return g.dy.some(function(v){ return v!==0; }); });
+    ck('offsets: this function no longer offsets vertically at all',
+       anyDy.length===0, anyDy.map(function(g){return 'n='+g.n+' '+JSON.stringify(g.dy);}).join(' | '));
     // Diagonal means monotonic in BOTH axes, which is what makes the cascade
     // read as one sequence rather than a scatter.
     const notMono=geo.filter(function(g){
       if(g.n<2) return false;
-      for(let i=1;i<g.n;i++){ if(!(g.dx[i]>g.dx[i-1])||!(g.dy[i]>g.dy[i-1])) return true; }
+      for(let i=1;i<g.n;i++){ if(!(g.dx[i]>g.dx[i-1])) return true; }
       return false;
     });
-    ck('offsets: the cascade is monotonic across and down, so it reads as a diagonal',
+    ck('offsets: the horizontal spread is strictly increasing across the cell',
        notMono.length===0, notMono.map(function(g){return 'n='+g.n;}).join(', '));
     // Symmetric about the centre: the cell's midline stays the anchor.
     const notSym=geo.filter(function(g){
@@ -215,6 +223,15 @@ PROBE = r"""
     const settings=[[34,15,36],[28,15,36],[34,24,36],[34,10,20],[48,15,36],[65,15,36],[65,15,72],[72,24,72]];
     for(let i=0;i<settings.length;i++){
       const s=settings[i];
+      // Drive the slider ELEMENTS, not only the setters. rerender() reapplies
+      // display settings by reading ico-size and wk-width back off their
+      // sliders, so a bare setIcoSize(24) is undone by the rebuild it triggers
+      // and this sweep was measuring the default over and over. Found while
+      // writing p33_check, by a diagnostic that asked for a 10px icon and
+      // measured 15.
+      const _r=document.getElementById('row-height'), _i=document.getElementById('ico-size'),
+            _w=document.getElementById('wk-width');
+      if(_r) _r.value=s[0]; if(_i) _i.value=s[1]; if(_w) _w.value=s[2];
       setRowHeight(s[0]); setIcoSize(s[1]); setWkWidth(s[2]); onSizeSliderRelease();
       await settle(); await settle();
       const c=containment(); c.at='row '+s[0]+' / ico '+s[1]+' / wk '+s[2]; c.rowH=s[0];
@@ -244,11 +261,12 @@ PROBE = r"""
     R.notes.spillByRowHeight=rowsAsc.map(function(r){ return r+'px:'+byRow[r]; });
     ck('containment: the sweep covers a range of row heights', rowsAsc.length>=4,
        rowsAsc.join(', '));
-    let notFalling=[];
-    for(let i=1;i<rowsAsc.length;i++)
-      if(byRow[rowsAsc[i]]>byRow[rowsAsc[i-1]]) notFalling.push(rowsAsc[i-1]+'->'+rowsAsc[i]);
-    ck('containment: label spill never increases as the row gets taller',
-       notFalling.length===0, notFalling.join(', '));
+    // Not monotonic at P33, and deliberately so. The band amplitude now scales
+    // with the row until it caps, so going 28 -> 34 buys a bigger stagger
+    // before the row is tall enough to contain it, and spill rises before it
+    // falls. What the row height control actually promises is that spill CLEARS
+    // once the row has room, which is what is asserted, plus a bound on how far
+    // a label can ever reach.
     const tallest=rowsAsc[rowsAsc.length-1];
     ck('containment: and reaches zero, so the row height control is a real remedy',
        byRow[tallest]===0, tallest+'px leaves '+byRow[tallest]);

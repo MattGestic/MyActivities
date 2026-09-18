@@ -493,6 +493,12 @@ PROBE = r"""
     const settings=[[36,15],[72,15],[59,10],[32,15],[20,24]];
     const results=[];
     for(let i=0;i<settings.length;i++){
+      // Drive the slider ELEMENTS. rerender() reapplies display settings by
+      // reading wk-width and ico-size back off their sliders, so a bare
+      // setIcoSize(24) is undone by the rebuild it triggers and this sweep was
+      // measuring the default over and over.
+      const _i=document.getElementById('ico-size'), _w=document.getElementById('wk-width');
+      if(_w) _w.value=settings[i][0]; if(_i) _i.value=settings[i][1];
       setWkWidth(settings[i][0]); setIcoSize(settings[i][1]); onSizeSliderRelease();
       await settle(); await settle();
       const c=containment();
