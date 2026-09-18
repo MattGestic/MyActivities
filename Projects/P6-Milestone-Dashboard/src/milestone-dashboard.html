@@ -4010,6 +4010,48 @@ function msCellOffset(i,n,ico,colW,rowH){
   if(stepX>=ico+2) stepY=Math.min(stepY,Math.round(ico*0.35));
   return {dx:slot*stepX,dy:slot*stepY};
 }
+// Every .m-wrap on the board comes from here. There were three hand-written
+// builders before: the live marker, the baseline ghost and the LoE pill, kept
+// in step by memory, and the ghost was only a partial copy of the live one.
+// That is not a tidiness point. The ghost's rule is "X from its own column, Y
+// from its pair", so it has to carry the SAME vertical offset as the marker it
+// belongs to; with two writers, a change to how that offset is computed
+// silently desyncs them and the pair stops sitting level. One writer makes
+// that a call signature rather than a convention.
+//
+// Scope is the WRAP only: classes, data-* identity, geometry and the icon.
+// Callers append their own children, because the three kinds genuinely differ
+// there (live has a label stack, ghost has nothing, LoE has an hours pill) and
+// folding that in would trade three small duplications for one large function.
+// Click and drag wiring also stays with the caller: it is live-only and needs
+// closure state the factory has no business holding.
+function renderMarker(spec){
+  const wrap=document.createElement('span');
+  let cls='m-wrap';
+  if(spec.kind==='ghost') cls+=' m-ghost'+(spec.sameCol?' m-ghost-same-col':'');
+  else if(spec.kind==='loe') cls+=' m-wrap-loe';
+  wrap.className=cls;
+  if(spec.tip) wrap.setAttribute('data-tip',spec.tip);
+  const ids=spec.ids||{};
+  if(ids.ms)  wrap.setAttribute('data-ms',ids.ms);
+  if(ids.ref!==undefined&&ids.ref!==null) wrap.setAttribute('data-ms-ref',ids.ref);
+  if(ids.key) wrap.setAttribute('data-ms-key',ids.key);
+  if(spec.ghostFor) wrap.setAttribute('data-ghost-for',spec.ghostFor);
+  // An LoE pill keeps flow layout (.m-wrap-loe sets position:static), so an
+  // offset would be meaningless rather than merely zero. Writing it anyway
+  // would make the "only renderMarker writes --mdx/--mdy" rule read as though
+  // every marker is positioned, which is not true.
+  if(spec.kind!=='loe'){
+    wrap.style.setProperty('--mdx',(+(spec.dx||0)).toFixed(2)+'px');
+    wrap.style.setProperty('--mdy',(+(spec.dy||0)).toFixed(2)+'px');
+  }
+  if(spec.marker!==undefined) wrap.innerHTML=renderIcon(spec.marker,spec.state,spec.iconSize);
+  if(spec.counts){
+    if(spec.counts.pred){const c=document.createElement('span');c.className='ms-count pred';c.textContent=spec.counts.pred;wrap.appendChild(c);}
+    if(spec.counts.succ){const c=document.createElement('span');c.className='ms-count succ';c.textContent=spec.counts.succ;wrap.appendChild(c);}
+  }
+  return wrap;
+}
 function renderPhaseHdr(){
   const phaseHdr=document.getElementById('phase-hdr');
   MONTHS.forEach(mo=>{
@@ -4466,16 +4508,22 @@ function renderRows(){
       const pos=msCellOffset(iInCell,nInCell,iconSize,COL_WIDTH,ROW_HEIGHT);
       const effState=effectiveState(m);
       const stInfo=STATES[effState]||STATES.FUTURE;
-      const wrap=document.createElement('span');
-      wrap.className='m-wrap';
-      wrap.setAttribute('data-tip',buildMsTip(m,hd.total,false));
       const snipId=extractSnipId(m.notes);
-      if(snipId) wrap.setAttribute('data-ms',snipId);
-      wrap.setAttribute('data-ms-ref',m.ref);
-      wrap.setAttribute('data-ms-key',(snipId||'')+'|'+m.ref+'|'+m.type+'|'+m.date);
+      // Counts are resolved before the wrap is built, because the factory takes
+      // them as data rather than being handed the DOM to append to.
+      let counts=null;
+      if(snipId && typeof SHOW_COUNTS!=='undefined' && SHOW_COUNTS){
+        const dd=DEP_DATA[snipId];
+        if(dd) counts={pred:parseIds(dd.pred).length,succ:parseIds(dd.succ).length};
+      }
+      const wrap=renderMarker({
+        kind:'live', marker:m.marker, state:effState, iconSize:iconSize,
+        dx:pos.dx, dy:pos.dy,
+        tip:buildMsTip(m,hd.total,false),
+        ids:{ms:snipId,ref:m.ref,key:(snipId||'')+'|'+m.ref+'|'+m.type+'|'+m.date},
+        counts:counts
+      });
       attachMilestoneDrag(wrap,m);
-      // Icon centred
-      wrap.innerHTML=renderIcon(m.marker,effState,iconSize);
       wrap.style.cursor='pointer';
       wrap.addEventListener('click',function(e){
         e.stopPropagation();
@@ -4488,21 +4536,6 @@ function renderRows(){
           openMsDialog(m,snipId,wrap,hd,task);
         }
       });
-      if(snipId && typeof SHOW_COUNTS!=='undefined' && SHOW_COUNTS){
-        const dd=DEP_DATA[snipId];
-        if(dd){
-          const predN=parseIds(dd.pred).length, succN=parseIds(dd.succ).length;
-          if(predN){const c=document.createElement('span');c.className='ms-count pred';c.textContent=predN;wrap.appendChild(c);}
-          if(succN){const c=document.createElement('span');c.className='ms-count succ';c.textContent=succN;wrap.appendChild(c);}
-        }
-      }
-      // Pixels from the cell's own centre. No clamp afterwards: msCellOffset()
-      // budgets from the icon and the asked-for row and column, so the offset
-      // it returns already fits by construction. The clamp it replaced ran the
-      // offset back through an assumed row height, which is the thing this
-      // model exists to stop doing.
-      wrap.style.setProperty('--mdx',pos.dx.toFixed(2)+'px');
-      wrap.style.setProperty('--mdy',pos.dy.toFixed(2)+'px');
       wkTd.appendChild(wrap);
       // The markers are positioned, so they no longer give the cell height.
       // One zero-width strut per cell puts it back at the icon's height.
@@ -4585,7 +4618,6 @@ function renderRows(){
             if(bcol<0) return;
             const bTd=tr.querySelectorAll('td.c-wk')[bcol];
             if(!bTd) return;
-            const ghost=document.createElement('span');
             // X comes from the ghost's own baseline date, so it is centred in
             // that date's week column. The exception is a baseline that has not
             // moved: there the ghost shares the live marker's cell, so it takes
@@ -4593,20 +4625,26 @@ function renderRows(){
             // Centring it in the cell instead was not enough — a cell holding
             // two or more markers spreads them off centre, and the ghost then
             // landed under one of them.
+            //
+            // Y is the live marker's own dy, passed through the SAME writer the
+            // live marker used. That is the whole point of the factory: the
+            // pair sits level because one function wrote both offsets, not
+            // because two call sites were remembered to agree.
             const sameCol=(bcol===col);
-            ghost.className='m-wrap m-ghost'+(sameCol?' m-ghost-same-col':'');
-            ghost.style.setProperty('--mdx',(sameCol?pos.dx:0).toFixed(2)+'px');
-            ghost.style.setProperty('--mdy',pos.dy.toFixed(2)+'px');
-            // Names the live marker this ghost is the baseline for. Two
-            // markers in one row can share a baseline column, so which one a
-            // ghost belongs to cannot be worked back out from position alone.
-            ghost.setAttribute('data-ghost-for',wrap.getAttribute('data-ms-key'));
+            const ghost=renderMarker({
+              kind:'ghost', sameCol:sameCol,
+              marker:bm.marker||'MS - Diamond', state:'BASELINE', iconSize:iconSize,
+              dx:(sameCol?pos.dx:0), dy:pos.dy,
+              // Names the live marker this ghost is the baseline for. Two
+              // markers in one row can share a baseline column, so which one a
+              // ghost belongs to cannot be worked back out from position alone.
+              ghostFor:wrap.getAttribute('data-ms-key')
+            });
             const bmm=String(bm.notes||'').match(/^\[[^\]]+\]\s*-\s*(.*)$/);
             const bActName=bmm?bmm[1]:(bm.notes||'');
             const slipD=Math.round((msDateMs(m.date)-msDateMs(bm.date))/86400000);
             const slipTxt=isNaN(slipD)?'':('\nMovement: '+(slipD===0?'none':(slipD>0?('+'+slipD):String(slipD))+' day'+(Math.abs(slipD)===1?'':'s')));
             ghost.setAttribute('data-tip',(BASELINE_LABEL_TEXT||BASELINE_SOURCE.label)+'\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n['+m.id+'] - '+bActName+'\nBaseline date: '+fmtTipDate(bm.date)+'\nCurrent date: '+fmtTipDate(m.date)+slipTxt);
-            ghost.innerHTML=renderIcon(bm.marker||'MS - Diamond','BASELINE',iconSize);
             wireMsTip(ghost);
             bTd.appendChild(ghost);
           });
@@ -4619,8 +4657,7 @@ function renderRows(){
       hd.cols.forEach(c=>{
         const wkTd=tr.querySelectorAll('td.c-wk')[c];
         if(!wkTd||wkTd.querySelector('.m-wrap')) return;
-        const wrap=document.createElement('span');
-        wrap.className='m-wrap m-wrap-loe';
+        const wrap=renderMarker({kind:'loe'});
         wrap.setAttribute('data-tip','LoE span: '+fmtTipDate(task.startDate)+' \u2192 '+fmtTipDate(task.endDate)+'  \u00B7  W/E '+WE_LABELS[c]+'\n\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n'+hd.total+'h \u00F7 '+hd.span+' wks = '+hd.perWeek.toFixed(1)+'h/wk (this cell)');
         const hp=document.createElement('span');hp.className='m-hrs-loe';hp.textContent=fmtHrs(hd.perWeek)+'h';
         wrap.appendChild(hp);
