@@ -58,7 +58,7 @@ Well-Architected trade-offs behind that:
 Three layers, kept strictly separate. Display state must never mutate schedule data.
 
 1. **Schedule data** — the baked-in baseline, or an import overlaying it. An import does not touch the baseline.
-2. **Annotation layer** — health overrides, comments, short titles, row remarks. Exported.
+2. **Annotation layer** — health overrides, progress overrides, comments, short titles, row remarks. Exported.
 3. **Display state** — column visibility, text scale multipliers, dependency line visibility and thickness, filters, theme. Session-scoped. Not exported except dependency visibility.
 
 Export is currently one-directional. There is no import path that reads the JSON payload back in. Round-trip is FEAT-13, new work, not a bug fix.
@@ -141,6 +141,7 @@ The version lives only in `APP_VERSION`. The working file keeps a stable filenam
 | Print preview is a reversible mode, not a print action | A Print button calling `window.print()`; a permanent A3 `@page` rule; a separate print stylesheet only | Page fit is something to check and adjust before printing, not to discover in the print dialog. The `@page` rule is injected only while the mode is on, so a plain Ctrl+P is unaffected for anyone who did not ask for A3. The mode never travels into a published file. | 2026-09-15 |
 | | The board's date range is derived from the imported data, not from a fixed window around the data date | Keep the 12-before / 26-after window; make the window bigger; ask at import | The board exists to show a schedule, so its span is a property of that schedule. The fixed window was wrong in both directions on the same file: three milestones past its end plotted nowhere while eight empty weeks sat before its start. The window survives only as the fallback for an import carrying no usable dates, which is the one case where there is nothing to derive from. | 2026-09-15 |
 | The week filter marks; the date range filter narrows | Make both narrow; make both mark; one control with a mode | They answer different questions. "What is in week 12" wants the week marked in context, which is why painting its cells was reverted (TD-79). "Show me September to October" wants a September-to-October board. Both resolve to one [lo,hi] column pair, so there is a single definition of in-range and the two intersect rather than fight. | 2026-09-15 |
+| A progress override that matches the schedule is discarded; a health override that matches is kept | Store every committed value; store nothing and diff at read time; a separate "cleared" sentinel | The two stores answer different questions. Health has a value ("explicitly N/A") that is genuinely distinct from having no opinion, so key presence is the state. A progress figure has no such value: entering 40 against a schedule that says 40 adds nothing a reader could act on, but it does add a row to the annotation count they are shown when choosing what to restore, and it makes the edited indicator lie. Discarding it keeps the count honest and gives the indicator one meaning: this differs from the schedule. | 2026-09-18 |
 | Stable filename + git tags for versioning | Keep versioned filenames | Versioned filenames make every change a whole-file add, defeating the point of migrating to git. | 2026-09-09 |
 
 ---
@@ -173,6 +174,23 @@ P33 used a triangle wave here instead, so the fourth marker sat on the middle ba
 Anything `msCellOffset()` or the band reads (icon size, column width, row height) must flag `_placementNeedsRebuild`, because the offsets are written once at render time.
 
 **Hidden markers are derived, never stored.** `markerHidden()` reads the row's `hidden-row` class and the cell's `data-col` against `DATE_RANGE_COLS`, so it costs no layout and cannot go stale. A stored flag would need writing at four entry points, and this file has three separate defects from a rule applied at some and not others.
+
+### The milestone Progress override (v3.1.0-P35)
+
+Progress is the first **editable number** in the annotation layer. Everything before it was a colour, a comment or a piece of text, none of which anything else computed from.
+
+`MS_PROGRESS_OVERRIDE` keys through `msKeyFor()` alongside `MS_COMMENTS`, `MS_HEALTH_OVERRIDE` and `MS_SHORT_TITLES`, carries through publish, the model export and selective import as its own `ANNOT_CATEGORIES` entry, and moves with a milestone whose key changes when it is dragged to another row.
+
+Four rules hold it to the three-layer split:
+
+- **`effectiveProgress(m)` is the only reader.** The milestone record is never written, so the schedule's own value is always recoverable, which is the whole mechanism behind "clear the field to restore it". Every consumer of progress goes through the accessor: the card, the progress bar, earned hours, the milestone tooltip, and `computeProgress()`, which is the row's rollup. A card that moved while the row beside it did not would be the same defect class as a marker that reads as belonging to the wrong row.
+- **An override equal to the schedule's own value is deleted, not stored.** This is the opposite of `MS_HEALTH_OVERRIDE`, deliberately. Selecting the white health dot is a real choice ("explicitly N/A") distinct from never having touched the control, so that store tests key *presence*. A progress of 40 against a schedule that already says 40 asserts nothing the schedule does not, so storing it would inflate the annotation count a reader is shown when choosing what to restore. It also makes the edited indicator mean exactly one thing: this differs from the schedule.
+- **Blank and unparseable both restore.** Neither is saved. The one field whose job is to carry a number does not get to hold something that is not one.
+- **The card writes under `msKeyFor(m)`.** It used to compose its own key from `extractSnipId(m.notes)` while every reader used `msKeyFor()`, which prefers `m.id`. Equal on the reference dataset (measured: 146 milestones, 0 divergent) and nothing enforced it, so a milestone whose id and notes disagreed would have had its annotations written where the board never looked.
+
+Marking a milestone complete sets progress to 100%, **one direction only**. Clearing the Complete dot does not drop it back: by then the user may have typed over it, and discarding a number they entered is worse than leaving one they can clear themselves.
+
+The field commits on blur or Enter, not per keystroke, because a commit rerenders the board. The comment field autosaves per keystroke precisely because it costs no rerender.
 
 ### Sticky header offsets (v3.1.0-P34)
 

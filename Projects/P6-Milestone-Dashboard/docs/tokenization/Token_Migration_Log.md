@@ -10,6 +10,8 @@
 
 Append new rows here as measurements are taken. Never edit or delete a prior row — the log itself is the history; the last row per metric is the current figure.
 
+The log is a record of readings, not of changes, so a gap between two rows belongs to every partial in that gap. No audit was run between v3.1.0-P30 and v3.1.0-P35, so the movement between those two sets of rows covers P31 through P35 together and none of it can be attributed to any one of them.
+
 | Date/Time (UTC) | Source | Metric | Value |
 |---|---|---|---|
 | 2026-09-09 21:15 | Audit script v1, regex vs. live file, excludes `:root`/theme-block token definitions | Hardcoded colour occurrences | 99 |
@@ -92,6 +94,15 @@ Append new rows here as measurements are taken. Never edit or delete a prior row
 | 2026-09-16 | Audit script v3, after the v3.1.0-P30 multi-source pass | Hardcoded font-size declarations (px) | 110 |
 | 2026-09-16 | `tools/theme_check.py`, after the v3.1.0-P30 pass | Probes expected to toggle, frozen | 0 |
 | 2026-09-16 | `tools/theme_check.py`, after the v3.1.0-P30 pass | Probes below 3.0:1 | 0 |
+| 2026-09-18 | Audit script v3, after the v3.1.0-P35 milestone card rework | Hardcoded colour occurrences | 38 |
+| 2026-09-18 | Audit script v3, after the v3.1.0-P35 milestone card rework | Distinct hardcoded colour values | 34 |
+| 2026-09-18 | Audit script v3, after the v3.1.0-P35 milestone card rework | Colour occurrences matching an existing token exactly | 7 |
+| 2026-09-18 | Audit script v3, after the v3.1.0-P35 milestone card rework | `--space-*` token references in file | 70 |
+| 2026-09-18 | Audit script v3, after the v3.1.0-P35 milestone card rework | Hardcoded padding/margin/gap declarations (px) | 201 |
+| 2026-09-18 | Audit script v3, after the v3.1.0-P35 milestone card rework | `var(--text-*)` font-size references in file | 30 |
+| 2026-09-18 | Audit script v3, after the v3.1.0-P35 milestone card rework | Hardcoded font-size declarations (px) | 112 |
+| 2026-09-18 | `tools/theme_check.py`, after the v3.1.0-P35 pass | Probes expected to toggle, frozen | 0 |
+| 2026-09-18 | `tools/theme_check.py`, after the v3.1.0-P35 pass | Probes below 3.0:1 | 0 |
 
 **Re-running the audit:** run `python3 tools/colour_audit.py` from the project root. It regenerates `Hardcoded_Colour_Audit.csv` and prints every metric above.
 
@@ -182,7 +193,7 @@ A defect found in v2 during this same run is recorded here rather than quietly f
 | App header / icon bar | Tokenized | 2026-09-09 |
 | Filter bars (top + sticky search) | Tokenized — sticky search muted text was frozen at the dark value and now follows the theme | 2026-09-09 |
 | Button states (primary/secondary/icon, incl. hover/pressed) | Tokenized | 2026-09-09 |
-| Milestone dialog | Tokenized | 2026-09-09 |
+| Milestone dialog | Tokenized. Reworked at v3.1.0-P35 (10% smaller, one schedule row, editable Progress) adding no hardcoded colour: every new declaration uses an existing token | 2026-09-18 |
 | Dependency lines | Tokenized | 2026-09-09 |
 | Dependency tooltip + comment panel | Tokenized — was frozen at dark values, near-white text over a background that toggled to near-white | 2026-09-09 |
 | Settings drawer | Tokenized and rebuilt on the `sd-` component set at v3.1.0-P29. One gutter, one row step, one radius family, no inline spacing. Two hardcoded label inks, three import-status inks and two import-control borders replaced; three new tokens, `--color-ok-text`, `--color-accent-ink` and `--radius-sm/md/pill` | 2026-09-16 |

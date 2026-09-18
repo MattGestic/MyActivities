@@ -242,3 +242,25 @@ Three cases came in with red markup. The plan named a cause for each, read off t
 
 This is now a standing habit rather than a lesson: **measure the current build against the reported case before writing the fix, and say what the measurement contradicted.** It has changed the plan in each of the last three partials.
 
+
+## A rect that measures nothing inside a closed `<details>` (v3.1.0-P35)
+
+The new collapsible weight/hours row was asserted collapsed by reading `getBoundingClientRect().height` on the three fields inside it and requiring zero. All three came back non-zero at all three viewport widths, and the check failed.
+
+The code was right and the probe was wrong. Checked against a three-line page in the same headless build, a child of a **closed** `<details>` still reports a non-zero rect, for a plain `<div>` and for the `display:grid` this uses. `checkVisibility()` answers correctly (`false` shut, `true` open), and the `<details>` element's own height is a second, independent read: 16px shut, 66px open.
+
+Two things worth keeping from it:
+
+- **This is the sixth virtual-time/headless measurement artefact in this project**, after transitions never completing, `performance.now()` never advancing, timers needing the probe to yield, a probe driving the model instead of the control, and a probe outliving the element it measured. The pattern is always the same: a browser API that is correct in a real browser and misleading under `--dump-dom`. Treat any *new* measurement technique as unproven until it has been shown to distinguish the two states it is meant to distinguish.
+- **It failed loudly, which is the good outcome.** The same mistake in the other direction, requiring non-zero and getting it, would have been a vacuous pass. The reason it failed loudly is that the assertion was written against the state that is harder to produce accidentally.
+
+Two other probe defects in the same run, both of the standing families:
+
+- The tooltip assertion read `data-tip` off the wrap handle captured **before** the edit. A commit rerenders the board, so that handle is a detached node still carrying its pre-edit tooltip: the probe was measuring the old board. Same family as the probe that outlived the thing it probed; the fix is to re-query after anything that rebuilds.
+- The clamp assertion read the **store** after typing `-5`. The target's schedule value is 0 and `-5` clamps to 0, so the store correctly held nothing, and the assertion was measuring the deduplication rule rather than the clamp it was aimed at. **Assert the value the user sees**, not the intermediate the implementation happens to keep.
+
+## A card assertion that compared three fields while two were rendering (v3.1.0-P35)
+
+The Start / Finish / Progress row was asserted on the first suitable milestone the board offered. That milestone carries no separate start date, so its Start field is `display:none` and the "all three sit on one row" and "all three are the same text size" checks were comparing two boxes, passing, and saying three.
+
+**Second time a milestone-card assertion has compared against a field that was not being rendered** (TEST-29, where the card was opened on a baseline seed and the parent heading and float column were both `display:none`, so two position assertions ran against zero rects). The card hides fields that do not apply, so *any* assertion about its layout has to state which fields were actually showing, and a claim about a field only appears when a milestone that renders it has been opened on purpose.

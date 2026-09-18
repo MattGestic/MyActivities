@@ -25,6 +25,7 @@
 | TEST-19 | 2026-09-10 | Publish round trip: does a published file open cold with the schedule, timeline and annotations already in place, and does it carry nothing it should not | Publish captured at the Blob boundary, written to disk, then loaded as a separate page | **Pass after two fixes** | TD-41, TD-42 (both closed same pass), TD-43, TD-44 |
 | TEST-20 | 2026-09-11 | Does a published file describe itself correctly: mount slots, baseline counts, and the header provenance line | Publish probe extended to capture all three mount slots and the header meta | **Pass after fix** — reproduced the user's report first | TD-47, TD-48 (both closed same pass) |
 | TEST-21 | 2026-09-11 | Six requested changes: published schedule as the update, Source cell after a drag, empty-row delete, gutter alignment, column master toggle scope, header chrome colour | Publish round trip plus a combined DOM probe driving each interaction | **5 pass, 1 delivered failing** — the requested `#f4f5f8` is 1.79:1 on the light header | TD-50 (open), TD-51 to TD-55 (closed) |
+| TEST-37 | 2026-09-18 | Milestone card rework: the 10% shrink, Start / Finish / Progress on one row behind a divider at one text size, the collapsible weight/hours row, and Progress as an editable annotation-layer override | `tools/p35_check.py` at three viewport widths, plus `tools/persist_check.py` extended to round-trip an override. The shrink is measured against the **P34 release rendered in the same browser at the same viewport on the same milestone**, because a card that got narrower while getting taller is not a smaller card. The three-layer rule is asserted by snapshotting every milestone record before the edit and comparing all 146 after. The three-field row is measured on a milestone chosen for carrying a real start date, because the first suitable target hides its Start field | **Pass 117/117**, after three probe defects and one vacuous comparison were found and fixed | TD-130 to TD-133 |
 | TEST-33 | 2026-09-16 | Does every row and milestone record its source; does the Source Schedule column and filter narrow in both directions; does appending a schedule to itself keep the two separable; does a multi-source board survive publish and a view switch | `tools/p30_check.py`. Appends the SAME workbook to itself, so every Activity ID collides: the worst case rather than a convenient one. The suffix is checked across `m.id`, `m.notes`, `m.ref`, `t.ref`, `t.src` and the row's `data-ids` together, and an annotation keyed on a suffixed ID must not land on its twin. Band order is measured as contiguous RUNS, not distinct names, because appending a file to itself repeats every band name. Performance is asserted by COUNTING (one index build reused across 300 lookups, one filter pass per typing burst, zero per-cell style writes), never by wall clock: `performance.now()` does not advance under virtual time and the first draft reported 0ms against every budget | **Pass 55/55** | TD-99 to TD-103 (closed) |
 | TEST-32 | 2026-09-16 | Does the rebuilt settings panel actually hold one spacing contract; does every control still reach a function that exists; did anything on the board move | `tools/p29_check.py`. The inline padding/margin count must be **zero**, not smaller. Gutter, row step, separator and radius each asserted as a single computed value across the real panel. Every inline `onclick`/`onchange`/`oninput` in the drawer is parsed and checked against `window`, because a handler naming a function that no longer exists throws only when clicked and looks perfect until then. Baseline and imported board figures captured separately, the baseline taken before a single control is touched | **Pass 46/46** | TD-94, TD-95, TD-96 (closed), TD-97, TD-98 (open) |
 | TEST-31 | 2026-09-15 | Does an import span the schedule's own dates rather than a fixed window; does a typed range override it; does a user-typed range narrow the board, survive a rebuild and intersect the week dropdown | `tools/p28_check.py`. The expected span is derived from the WORKBOOK here, independently of the app, so the assertion is against the source. The decisive setup check is that no milestone fails to plot, not that a timeline was built | **Pass 34/34**, after a probe counting every row's cells and a real dead-fitter bug were found | TD-89 to TD-93 (all closed) |
@@ -1403,6 +1404,55 @@ Marker containment by setting, labels on, ID + Title:
 | Baseline render | unchanged, 105 rows / 146 milestones imported |
 
 **Published:** `releases/v3.1.0-P32_marker-placement-and-filter-row-fixes.html`
+
+---
+
+## TEST-37 — The milestone card rework and the editable Progress field (v3.1.0-P35)
+
+`tools/p35_check.py`, **117/117**. Headless Chromium, the reference workbook through the real ingest pipeline, run at three viewport widths (390x844, 768x1024, 1440x900). Seven of the assertions are source-level greps, for the standing reason: a literal that happens to be correct measures as correct.
+
+The card is driven the way a user drives it. Cards are opened by dispatching a click on the marker, the field is changed by setting its value and firing `input`, and it is committed by blurring it, so the path under test is the one the markup wires up rather than a direct call to `saveMsProgress()`.
+
+| Group | Assertions |
+|---|---|
+| Shrink | the card renders at 306px, which is 340 x 0.9 exactly; **and is 10.0% narrower and 22.6% shorter than the P34 release** measured in the same browser, at the same viewport, on the same milestone |
+| The row | Start, Finish and Progress all overlap vertically (every pair, not just against the first); Progress is the right-hand field; a 1px left border on the Progress field falls between Finish's right edge and Progress's left edge; every value in the row is one computed text size. Re-measured on a milestone carrying a real start date so **three** boxes are compared, and separately confirmed that P34's two date sizes really did differ (18px against 14px) |
+| The fold | weight, MS hours and earned hours are in a `<details>` that is closed on open, `checkVisibility()` false on all three while shut and true on all three when open, the fold's own height 16px to 66px; **and closed again on the next card**, not left where the last one was put |
+| The key | every one of the 146 milestones examined for a divergence between `msKeyFor()` and the notes id (**0 found**, so the alignment is hygiene on this dataset rather than a live fix), and the key the card writes equals `msKeyFor(m)` |
+| The override | the committed value reaches the store; the field keeps it and stays marked as edited; the progress bar tracks it; **the row rollup moves 0% to 45%**; the milestone tooltip reports 45%, not the schedule's 0%; it counts as markup; committing an unchanged field adds none |
+| The three layers | every milestone record snapshotted before the edit and compared after: **all 146 unchanged** |
+| Restoring | clearing the field deletes the override rather than saving a blank, the field shows the schedule's value again unmarked, and the rollup goes back with it; entering the schedule's own value leaves no override behind; text that is not a number restores; over 100 shows 100 and under 0 shows 0 |
+| Complete | marking the icon complete sets Progress to 100% and the row follows; a milestone the schedule already has at 100% gains **no** redundant override |
+| Payload | progress overrides are their own selectable annotation category |
+
+### Round trip (TEST-23 extended), `tools/persist_check.py`, **22/22**
+
+A progress override is now one of the edits stage 1 makes. It survives publish, and stage 3 replays it onto a clean board that has never seen it: the override restores at 37% **with the milestone record still reading its schedule value of 100%**. The check refuses to pass if the override it chose happens to equal the schedule's own value, which would make restoring it prove nothing.
+
+### Four findings from the run
+
+- **A rect inside a closed `<details>` measures nothing.** The fold assertion required zero height on the three fields and got non-zero at every width. Verified against a three-line page in the same build: a child of a closed `<details>` reports a non-zero rect here, for a plain div and for a grid. `checkVisibility()` distinguishes the two states and is what the check uses, with the fold's own height as a second read. Sixth headless measurement artefact in this project.
+- **The tooltip assertion read a detached node.** It used the wrap handle captured before the edit; a commit rerenders the board, so that handle still carried its pre-edit tooltip. Re-queried after the rebuild, the tooltip is correct.
+- **The clamp assertion was measuring the wrong rule.** It read the store after typing `-5`. The target's schedule value is 0 and `-5` clamps to 0, so the store correctly held nothing and the check was testing deduplication rather than clamping. It now asserts the effective value the user sees.
+- **The three-field row assertion was comparing two fields.** The first suitable target carries no separate start date, so its Start field is `display:none`. Second time a milestone-card assertion has compared against a field that was not rendering (TEST-29). A milestone with a real start date is now opened on purpose for that case.
+
+### Full suite at v3.1.0-P35
+
+| Suite | Result |
+|---|---|
+| TEST-37 milestone card rework | **117/117**, across three viewport widths |
+| TEST-36 marker anchoring and header heights | **73/73** |
+| TEST-35 marker staggering | **38/38** |
+| TEST-34 placement and filter-row defects | **35/35** |
+| TEST-33 multi-source ingest | **67/67** |
+| TEST-32 settings panel design system | **49/49** |
+| TEST-31 date range | **34/34** |
+| TEST-30 counts, baseline overlay, print | **32/32** |
+| TEST-23 persistence round trip | **22/22**, extended with a progress override |
+| Ingest, board order | exit 0 |
+| Contrast gate | 0 frozen, 0 below 3.0:1 |
+
+**Published:** `releases/v3.1.0-P35_milestone-card-and-progress-override.html`
 
 ---
 
