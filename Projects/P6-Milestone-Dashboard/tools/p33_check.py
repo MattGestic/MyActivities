@@ -11,10 +11,17 @@ markers are cut into proximity RUNS and each run's members are put on bands.
 The three things that would make this a regression:
 
   THE SEQUENCE. A run of 2 is top then bottom, leftmost up. A run of 3 is top,
-  middle, bottom. From 4 it is a triangle wave, so the fourth is middle and the
-  fifth returns to top, NOT a [0,1,2] repeat which would put markers 1 and 4 on
-  one line three or four columns apart. The reference board's densest cell holds
-  two markers, so this is asserted against the generator, not against the data.
+  middle, bottom. From 4 the cycle REPEATS, so the fourth is top again.
+
+  P33 shipped a triangle wave here instead (fourth on the middle band) to keep
+  markers 1 and 4 off one line. P34 reversed it against a rendered case: row 69
+  of the Aug-29 board carries four markers in directly adjacent columns and the
+  user asked for the fourth to reset to the top. These two assertions and their
+  names move with that reversal; the collision they guarded against is real and
+  is now an accepted trade, measured in tools/p34_check.py rather than avoided.
+
+  The reference board's densest cell holds two markers, so this is asserted
+  against the generator, not against the data.
 
   THE BUDGET. Every offset is pixels budgeted from the row height, so an icon
   cannot leave its row at any combination of row height, icon size and column
@@ -171,10 +178,10 @@ PROBE = r"""
     ck('sequence: a run of three cascades top, middle, bottom',
        seq[3].join(',')==='0,1,2', JSON.stringify(seq[3]));
     // The discriminating case, taken from the user's own worked example.
-    ck('sequence: the fourth marker is the MIDDLE band, not a repeat back to top',
-       seq[4][3]===1, 'got level '+seq[4][3]+' in '+JSON.stringify(seq[4]));
-    ck('sequence: and the fifth returns to top, so the run traces an arrow',
-       seq[5][4]===0, JSON.stringify(seq[5]));
+    ck('sequence: the fourth marker RESETS to the top band (P34 reversal)',
+       seq[4][3]===0, 'got level '+seq[4][3]+' in '+JSON.stringify(seq[4]));
+    ck('sequence: and the fifth is the middle band, so the cycle repeats cleanly',
+       seq[5][4]===1, JSON.stringify(seq[5]));
     // The property that makes a triangle wave worth having over a repeat.
     let adjacentSame=[];
     for(let n=2;n<=8;n++) for(let k=1;k<seq[n].length;k++)

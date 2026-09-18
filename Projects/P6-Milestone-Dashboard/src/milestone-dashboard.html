@@ -2047,7 +2047,7 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 // label, and embedded in exported JSON — bump this one place, everything else
 // reads from it, so the three copies can't silently drift apart the way the
 // title/label/export payload just had for a long stretch of unversioned work.
-const APP_VERSION='3.1.0-P33';
+const APP_VERSION='3.1.0-P34';
 // ============================================================
 // TIMELINE
 // ============================================================
@@ -4041,25 +4041,45 @@ function msCellOffset(i,n,ico,colW,rowH){
 // folding that in would trade three small duplications for one large function.
 // Click and drag wiring also stays with the caller: it is live-only and needs
 // closure state the factory has no business holding.
-// A row's markers are walked in column order and cut into RUNS. A marker more
-// than MS_PROXIMITY_COLS from the previous one starts a new run and, if it ends
-// up alone, sits dead centre. Four columns because that is roughly how wide a
-// rendered label is, so a run is exactly the set of markers whose labels can
-// collide. Most of the board is runs of one, so most of the board stays a flat
-// line, which is what makes a stagger read as meaningful where it appears.
-const MS_PROXIMITY_COLS=4;
-// Levels are 0 top, 1 middle, 2 bottom. Within a run of three or more the
-// sequence is a TRIANGLE WAVE, not a repeat: top, middle, bottom, middle, top.
-// A plain [0,1,2] repeat would put the first and fourth marker on the same line
-// three or four columns apart, which is the two-state trap this project has hit
-// twice already (the label bands at P25, the icon spread at P32).
-// One array, so changing the sequence is one edit and p33_check asserts it
-// explicitly rather than inferring it.
-const MS_LEVEL_CYCLE=[0,1,2,1];
+// A row's markers are walked in column order and cut into RUNS. A run continues
+// while consecutive markers are separated by at most TWO BLANK COLUMNS, so the
+// threshold is a gap of three columns. A marker further out than that starts a
+// new run and, if it ends up alone, sits dead centre.
+//
+// The boundary is a fixed count of schedule columns and is DELIBERATELY NOT
+// derived from the rendered label width, which is what it used to be. A label
+// width moves with the label scale controls, so deriving the boundary from it
+// would mean changing the text size re-anchored every marker on the board. The
+// user's words, choosing this rule: "if you change the size of the text, this
+// would change the layout, which we don't want."
+const MS_PROXIMITY_COLS=3;
+// Levels are 0 top, 1 middle, 2 bottom, and within a run the sequence REPEATS:
+// top, middle, bottom, top, middle, bottom.
+//
+// P33 shipped a triangle wave here instead ([0,1,2,1], so the fourth marker sat
+// on the middle band) on the argument that a plain repeat puts the first and
+// fourth marker on the same line a few columns apart. That argument still holds
+// and the collision is real. It was reversed at P34 against a rendered case:
+// row 69 of the Aug-29 board carries four markers in directly adjacent columns
+// and the user asked for the fourth, SNIP-212, to reset to the top. Capping the
+// run length cannot do that (a run of one is dead centre by definition), so the
+// cycle itself is what changed. Do not restore the wave from the old reasoning
+// without a rendered case of its own.
+//
+// One array, so the sequence is one edit and p34_check asserts it explicitly
+// rather than inferring it.
+const MS_LEVEL_CYCLE=[0,1,2];
 function msRunLevels(cols,levels){
   const L=Math.max(3,levels||3), n=cols.length, mid=Math.floor((L-1)/2);
   if(n<=1) return [mid];                     // alone: dead centre
-  if(n===2 && cols[0]!==cols[1]) return [0,L-1];  // first from the left goes up; middle skipped
+  // A pair is symmetric about the midpoint, leftmost up, whatever cells its two
+  // members occupy. The same-cell case used to be excluded here and fell into
+  // the wave loop below, which gave it top and MIDDLE: measured directly,
+  // msRunLevels([0,1],3) was [0,2] but msRunLevels([5,5],3) was [0,1]. No row
+  // on the reference board reaches it, so this corrects an inconsistency rather
+  // than a visible defect. One band step either side, so a row grown for a
+  // dense cell keeps the pair tight instead of flinging it to the extremes.
+  if(n===2) return [Math.max(0,mid-1),Math.min(L-1,mid+1)];
   const out=[], usedInCell={};
   for(let k=0;k<n;k++){
     const c=cols[k];
