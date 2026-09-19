@@ -52,6 +52,10 @@ Any proposal that breaks one of these conflicts with `docs/04-architecture.md`. 
 - Bumping the **major** version **does** need explicit confirmation.
 - Bump `APP_VERSION` in `src/milestone-dashboard.html`, tag the commit, and drop a snapshot into `releases/` for anything shipped to a user.
 - Versioned filenames are retired — the working file keeps a stable path so diffs are readable.
+- **Always give the user a link in chat to any new version, in the same reply that reports it.** A version that only exists as a filename in a commit message is one the user cannot open. Link the `releases/` snapshot on the branch it was pushed to, and give the raw link beside it, since the GitHub blob view shows an HTML file as source rather than rendering it:
+  - browse: `https://github.com/MattGestic/MyActivities/blob/<branch>/Projects/P6-Milestone-Dashboard/releases/<file>`
+  - raw: `https://raw.githubusercontent.com/MattGestic/MyActivities/<branch>/Projects/P6-Milestone-Dashboard/releases/<file>`
+  Push the snapshot before giving the link, and name the branch it is on, since a link to an unpushed file or to the wrong branch is a dead link.
 
 ## Verification standard
 
