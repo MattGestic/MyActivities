@@ -142,6 +142,7 @@ The version lives only in `APP_VERSION`. The working file keeps a stable filenam
 | | The board's date range is derived from the imported data, not from a fixed window around the data date | Keep the 12-before / 26-after window; make the window bigger; ask at import | The board exists to show a schedule, so its span is a property of that schedule. The fixed window was wrong in both directions on the same file: three milestones past its end plotted nowhere while eight empty weeks sat before its start. The window survives only as the fallback for an import carrying no usable dates, which is the one case where there is nothing to derive from. | 2026-09-15 |
 | The week filter marks; the date range filter narrows | Make both narrow; make both mark; one control with a mode | They answer different questions. "What is in week 12" wants the week marked in context, which is why painting its cells was reverted (TD-79). "Show me September to October" wants a September-to-October board. Both resolve to one [lo,hi] column pair, so there is a single definition of in-range and the two intersect rather than fight. | 2026-09-15 |
 | A progress override that matches the schedule is discarded; a health override that matches is kept | Store every committed value; store nothing and diff at read time; a separate "cleared" sentinel | The two stores answer different questions. Health has a value ("explicitly N/A") that is genuinely distinct from having no opinion, so key presence is the state. A progress figure has no such value: entering 40 against a schedule that says 40 adds nothing a reader could act on, but it does add a row to the annotation count they are shown when choosing what to restore, and it makes the edited indicator lie. Discarding it keeps the count honest and gives the indicator one meaning: this differs from the schedule. | 2026-09-18 |
+| Seven header buttons collapse into one menu, and the rows keep their ids | Rebuild the controls as menu items with new ids and rewire the five functions; a toolbar that wraps; keep the buttons and shrink them | The buttons were a fixed 254px against a label that needed 215.8px and was getting 35.2px at phone width, so something had to give and the buttons are the part with somewhere to go. Keeping the ids is what makes it a layout change rather than a rewrite of five working state machines: the diff against the previous release shows those functions byte-identical. The cost is that six of seven controls no longer show their state at rest, which is paid for by letting the two notification dots escape to the trigger and leaving the rest to be evident from the screen. | 2026-09-19 |
 | Stable filename + git tags for versioning | Keep versioned filenames | Versioned filenames make every change a whole-file add, defeating the point of migrating to git. | 2026-09-09 |
 
 ---
@@ -174,6 +175,21 @@ P33 used a triangle wave here instead, so the fourth marker sat on the middle ba
 Anything `msCellOffset()` or the band reads (icon size, column width, row height) must flag `_placementNeedsRebuild`, because the offsets are written once at render time.
 
 **Hidden markers are derived, never stored.** `markerHidden()` reads the row's `hidden-row` class and the cell's `data-col` against `DATE_RANGE_COLS`, so it costs no layout and cannot go stale. A stored flag would need writing at four entry points, and this file has three separate defects from a rule applied at some and not others.
+
+### The More Actions menu (v3.1.0-P36)
+
+Seven header icon buttons became one trigger and a seven-row menu. Two rules hold it together.
+
+**The rows keep their ids.** Each row carries the id its button carried, so `toggleSettingsDrawer`, `toggleFilterBar`, `toggleTopFilterBar`, `togglePrintMode` and the two dot writers address exactly what they addressed before and none of them was touched. That is asserted by diffing those function bodies against the previous release, not claimed. A consolidation that rewrites the five functions it consolidates is a much larger change wearing a layout change's clothes.
+
+**State that is a notification escapes the menu; state that is evident does not.** This project's standing rule is that a control which sets state must also show state, and a shut menu shows none of it. The two dots are notifications, meant to be seen without opening anything, so the trigger carries a dot when either row does. It is a CSS `:has()` derivation over the rows themselves, so there is no new state and the four existing dot writers keep their call sites. Everything else the buttons showed is evident from the screen without the menu: a panel is on it, the board is at page width, the page is dark.
+
+Two collisions the move had to survive, both recorded because neither is visible in a code read:
+
+- `.icon-btn.on` and `.icon-btn.ib-mi` have **equal specificity**, so the active state loses on source order alone. The rule is restated for the row, and the check compares computed background against an inactive row rather than testing for the class.
+- `toggleTheme` wrote the button's whole `innerHTML`, which on a row with a label would have eaten the label. One `setThemeGlyph()` writer targets the icon span and both call sites use it.
+
+The filter-row toggle now lives in the menu, which touches TD-72 directly: that control was moved into the header so that hiding the filter row could not hide the only way back. The rule is unchanged and still holds, because the trigger outlives the bar and exposes the toggle. What changed is how it is asserted, and that turned out to matter more than the move (TD-136).
 
 ### The milestone Progress override (v3.1.0-P35)
 

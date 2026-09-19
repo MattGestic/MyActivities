@@ -25,6 +25,7 @@
 | TEST-19 | 2026-09-10 | Publish round trip: does a published file open cold with the schedule, timeline and annotations already in place, and does it carry nothing it should not | Publish captured at the Blob boundary, written to disk, then loaded as a separate page | **Pass after two fixes** | TD-41, TD-42 (both closed same pass), TD-43, TD-44 |
 | TEST-20 | 2026-09-11 | Does a published file describe itself correctly: mount slots, baseline counts, and the header provenance line | Publish probe extended to capture all three mount slots and the header meta | **Pass after fix** — reproduced the user's report first | TD-47, TD-48 (both closed same pass) |
 | TEST-21 | 2026-09-11 | Six requested changes: published schedule as the update, Source cell after a drag, empty-row delete, gutter alignment, column master toggle scope, header chrome colour | Publish round trip plus a combined DOM probe driving each interaction | **5 pass, 1 delivered failing** — the requested `#f4f5f8` is 1.79:1 on the light header | TD-50 (open), TD-51 to TD-55 (closed) |
+| TEST-38 | 2026-09-19 | More Actions: seven header icon buttons collapsed into one menu, with the app name and version text beside it | `tools/p36_check.py` at three viewport widths, plus the previous release rendered in the same browser at the same viewports for the before/after. The claim that no state-writing function had to change is asserted by **diffing those function bodies against the previous release**, not by reading them. The active-row state is asserted on computed background against an inactive row, because `.icon-btn.on` and `.icon-btn.ib-mi` have equal specificity and class presence proves nothing. `p32_check`'s TD-72 guard was rewritten to the new contract and given a negative control | **Pass 95/95**, after one wrong assumption about the phone-width label and one wrong measurement in the rewritten TD-72 guard | TD-134, TD-135, TD-136 |
 | TEST-37 | 2026-09-18 | Milestone card rework: the 10% shrink, Start / Finish / Progress on one row behind a divider at one text size, the collapsible weight/hours row, and Progress as an editable annotation-layer override | `tools/p35_check.py` at three viewport widths, plus `tools/persist_check.py` extended to round-trip an override. The shrink is measured against the **P34 release rendered in the same browser at the same viewport on the same milestone**, because a card that got narrower while getting taller is not a smaller card. The three-layer rule is asserted by snapshotting every milestone record before the edit and comparing all 146 after. The three-field row is measured on a milestone chosen for carrying a real start date, because the first suitable target hides its Start field | **Pass 117/117**, after three probe defects and one vacuous comparison were found and fixed | TD-130 to TD-133 |
 | TEST-33 | 2026-09-16 | Does every row and milestone record its source; does the Source Schedule column and filter narrow in both directions; does appending a schedule to itself keep the two separable; does a multi-source board survive publish and a view switch | `tools/p30_check.py`. Appends the SAME workbook to itself, so every Activity ID collides: the worst case rather than a convenient one. The suffix is checked across `m.id`, `m.notes`, `m.ref`, `t.ref`, `t.src` and the row's `data-ids` together, and an annotation keyed on a suffixed ID must not land on its twin. Band order is measured as contiguous RUNS, not distinct names, because appending a file to itself repeats every band name. Performance is asserted by COUNTING (one index build reused across 300 lookups, one filter pass per typing burst, zero per-cell style writes), never by wall clock: `performance.now()` does not advance under virtual time and the first draft reported 0ms against every budget | **Pass 55/55** | TD-99 to TD-103 (closed) |
 | TEST-32 | 2026-09-16 | Does the rebuilt settings panel actually hold one spacing contract; does every control still reach a function that exists; did anything on the board move | `tools/p29_check.py`. The inline padding/margin count must be **zero**, not smaller. Gutter, row step, separator and radius each asserted as a single computed value across the real panel. Every inline `onclick`/`onchange`/`oninput` in the drawer is parsed and checked against `window`, because a handler naming a function that no longer exists throws only when clicked and looks perfect until then. Baseline and imported board figures captured separately, the baseline taken before a single control is touched | **Pass 46/46** | TD-94, TD-95, TD-96 (closed), TD-97, TD-98 (open) |
@@ -1404,6 +1405,78 @@ Marker containment by setting, labels on, ID + Title:
 | Baseline render | unchanged, 105 rows / 146 milestones imported |
 
 **Published:** `releases/v3.1.0-P32_marker-placement-and-filter-row-fixes.html`
+
+---
+
+## TEST-38 — The More Actions consolidation (v3.1.0-P36)
+
+`tools/p36_check.py`, **95/95**, at 390x844, 768x1024 and 1440x900. Five assertions are source-level, including the one that carries the most weight.
+
+### The before/after, measured in the same browser at the same viewports
+
+| Width | Buttons | Icon group | Label got | Label needs | Clipped |
+|---|---|---|---|---|---|
+| 390 before | 7 | 254px | 35.2px | 216px | yes |
+| 390 after | 1 | 26px | **167px** | 216px | **still yes (TD-135)** |
+| 768 before | 7 | 254px | 162px | 216px | yes |
+| 768 after | 1 | 26px | **215.8px** | 216px | no |
+| 1440 before | 7 | 254px | 215.8px | 216px | no |
+| 1440 after | 1 | 26px | 215.8px | 216px | no |
+
+228px of header width returned at every viewport.
+
+### Groups
+
+| Group | Assertions |
+|---|---|
+| Header | one button in the bar, not seven; the previous release really did carry seven; 228px reclaimed; the label gets its full width where the bar has room, and where it does not the residual clip is stated with its figures rather than passed over; the bar still does not scroll; the label still names the app and its version |
+| Rows | all seven ids survive; every row still calls the live function its button called, parsed from the `onclick` and checked against `window`, because a handler naming a dead function throws only when clicked |
+| Menu | starts closed with 0 of 7 rows visible; the trigger opens it and **it stays open**; 7 of 7 rows visible; `aria-expanded` follows; Escape closes; a click outside closes; choosing a row closes it behind them |
+| State | Settings, View controls, the filter row and print preview each toggle **through the menu row**, not by a direct call; `aria-pressed` still tracks; and the active row **actually paints** differently from an inactive one |
+| Theme | the theme flips and the glyph changes with it, and rewriting the glyph does not eat the row's label |
+| Dots | none on the trigger when neither row carries one; a filter dot reaches it; a settings dot reaches it; clearing them clears it, both directions |
+| Source | one version literal; the state-writing functions byte-identical to the previous release; the active-row rule restated rather than left to source order; the trigger's dot derived rather than written; one theme-glyph writer |
+
+### The assumption the run refuted
+
+**The label is still clipped at 390.** The check was written expecting the consolidation to clear it everywhere. It does not: the bar at phone width also carries the editable report title, so 216px of label plus that title plus the trigger does not fit in 390px. The gain is real (35.2px to 167px, 4.7x) and the residual clip is now asserted as a stated limit with its figures printed, conditional on **measured room** rather than on a viewport width typed into the check. A hardcoded "768 and above" would have been a constant standing in for a measurement, which is the recurring defect family here. Logged as TD-135, open, because resolving it is a design call on what gives way at phone width.
+
+### The regression, and the measurement that was wrong about it
+
+`p32_check`'s TD-72 assertion, that the filter-row toggle stays on screen when the filter row is hidden, failed. The rule TD-72 records is that the control **outlives what it hides**, and it still does: the trigger outlives the bar and exposes the toggle. So the assertion was rewritten to follow the path rather than to test for a visible header button.
+
+**A negative control was then added, and the first rewrite passed it**, which is how the rewrite was found to be measuring the wrong thing. Putting the toggle back inside the collapsed bar, which is the TD-72 state exactly, it reports:
+
+| | trapped in the collapsed bar |
+|---|---|
+| `offsetParent !== null` | **true** |
+| height | **24px** |
+| `getClientRects().length` | **1** |
+| `checkVisibility()` | **true** |
+| box intersected with clipping ancestors | **0px** |
+
+`max-height:0; overflow:hidden` does not zero its children's boxes, so every obvious API says the trapped control is fine. `elementFromPoint` did not discriminate either. The guard now intersects the element's box with every clipping ancestor and **demonstrably fails when the defect is reintroduced**, which is asserted as its own check rather than assumed.
+
+Worth holding onto: `checkVisibility()` answered the closed-`<details>` case at TEST-37 and is wrong here. It is container-specific, not a general answer to "is this hidden".
+
+### Full suite at v3.1.0-P36
+
+| Suite | Result |
+|---|---|
+| TEST-38 More Actions consolidation | **95/95**, across three viewport widths |
+| TEST-37 milestone card rework | **117/117** |
+| TEST-36 marker anchoring and header heights | **73/73** |
+| TEST-35 marker staggering | **38/38** |
+| TEST-34 placement and filter-row defects | **36/36**, TD-72 guard rewritten and given a negative control |
+| TEST-33 multi-source ingest | **67/67** |
+| TEST-32 settings panel design system | **49/49** |
+| TEST-31 date range | **34/34** |
+| TEST-30 counts, baseline overlay, print | **32/32** |
+| TEST-23 persistence round trip | **22/22** |
+| Ingest, board order | exit 0 |
+| Contrast gate | 0 frozen, 0 below 3.0:1 |
+
+**Published:** `releases/v3.1.0-P36_more-actions-menu.html`
 
 ---
 
