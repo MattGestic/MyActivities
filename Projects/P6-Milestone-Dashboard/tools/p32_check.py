@@ -302,13 +302,74 @@ PROBE = r"""
     toggleTopFilterBar(false);
     await settle();
     const barHidden=bar.getBoundingClientRect().height<2;
-    // offsetParent is the test that actually failed before: the old button was
-    // in the DOM and answered querySelector while having no layout at all.
-    const stillReachable=hdrBtn&&hdrBtn.offsetParent!==null&&hdrBtn.getBoundingClientRect().height>0;
     ck('defect A: hiding the row really collapses it', barHidden,
        bar.getBoundingClientRect().height+'px');
-    ck('defect A: and the toggle is still on screen and clickable',
-       stillReachable, hdrBtn?('offsetParent '+(hdrBtn.offsetParent!==null)+', h '+hdrBtn.getBoundingClientRect().height):'missing');
+    // The rule TD-72 records is that the control OUTLIVES what it hides, not
+    // that it is a visible header button. P36 moved it into the More Actions
+    // menu, so the assertion follows the PATH: something laid out on screen,
+    // not inside the bar it would restore, that exposes the toggle when used.
+    //
+    // HOW "on screen" is measured matters more than it looks. Measured against
+    // this build, a control trapped inside the collapsed bar reports
+    // offsetParent non-null, height 24px, one client rect AND checkVisibility()
+    // true, because the bar clips with max-height:0/overflow:hidden and that
+    // does not zero its children's boxes. Every obvious API says the trapped
+    // control is fine. (checkVisibility DOES answer the closed-<details> case,
+    // so it is not a general answer to "is this hidden".) What discriminates is
+    // intersecting the element's box with every clipping ancestor: the bar's
+    // clip is 1px tall, so the 24px child survives as ~1px of visible height.
+    const visibleH=function(el){
+      if(!el) return 0;
+      let r=el.getBoundingClientRect();
+      let top=r.top, bot=r.bottom;
+      let n=el.parentElement;
+      while(n&&n!==document.body){
+        const cs=getComputedStyle(n);
+        if(cs.overflowY==='hidden'||cs.overflowY==='clip'||cs.overflow==='hidden'){
+          const nr=n.getBoundingClientRect();
+          top=Math.max(top,nr.top); bot=Math.min(bot,nr.bottom);
+        }
+        n=n.parentElement;
+      }
+      top=Math.max(top,0); bot=Math.min(bot,window.innerHeight);
+      return Math.max(0,Math.round((bot-top)*10)/10);
+    };
+    const reacher=document.getElementById('btn-more-actions')||hdrBtn;
+    const reacherLive=visibleH(reacher)>8;
+    const reacherOutside=!!reacher&&!bar.contains(reacher);
+    if(typeof toggleMoreActions==='function') toggleMoreActions(true);
+    await settle();
+    const exposed=visibleH(hdrBtn)>8;
+    if(typeof toggleMoreActions==='function') toggleMoreActions(false);
+    await settle();
+    const stillReachable=reacherLive&&reacherOutside&&exposed;
+    R.notes.defectA={reacher:reacher?reacher.id:null,
+                     reacherVisibleH:visibleH(reacher),
+                     reacherOutsideBar:reacherOutside,
+                     toggleVisibleHWhenMenuOpen:exposed};
+    ck('defect A: with the row hidden, the toggle is still reachable from screen',
+       stillReachable, JSON.stringify(R.notes.defectA));
+    // Does the rewritten assertion still catch the defect it exists for? Put
+    // the toggle back inside the collapsed bar, which is the TD-72 state, and
+    // require the same expression to go false. The first version of this
+    // rewrite passed here, which is how the measurement above was found to be
+    // the wrong one.
+    const homeParent=hdrBtn?hdrBtn.parentNode:null;
+    const homeNext=hdrBtn?hdrBtn.nextSibling:null;
+    let trappedVerdict=null, trappedVisibleH=null;
+    if(hdrBtn&&homeParent){
+      bar.appendChild(hdrBtn);
+      await settle();
+      trappedVisibleH=visibleH(hdrBtn);
+      trappedVerdict=(reacherLive&&reacherOutside&&trappedVisibleH>8);
+      homeParent.insertBefore(hdrBtn,homeNext);
+      await settle();
+    }
+    R.notes.defectA.visibleHWhenTrapped=trappedVisibleH;
+    R.notes.defectA.verdictWhenTrapped=trappedVerdict;
+    ck('defect A: and that check still FAILS when the toggle is trapped in the bar',
+       trappedVerdict===false, 'trapped visible height '+trappedVisibleH+
+       'px, verdict '+trappedVerdict);
     ck('defect A: the toggle shows the state it sets',
        hdrBtn && hdrBtn.getAttribute('aria-pressed')==='false' && !hdrBtn.classList.contains('on'),
        hdrBtn?(hdrBtn.getAttribute('aria-pressed')+' / on='+hdrBtn.classList.contains('on')):'');

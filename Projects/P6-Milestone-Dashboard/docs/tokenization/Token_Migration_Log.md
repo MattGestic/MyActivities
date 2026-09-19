@@ -103,6 +103,15 @@ The log is a record of readings, not of changes, so a gap between two rows belon
 | 2026-09-18 | Audit script v3, after the v3.1.0-P35 milestone card rework | Hardcoded font-size declarations (px) | 112 |
 | 2026-09-18 | `tools/theme_check.py`, after the v3.1.0-P35 pass | Probes expected to toggle, frozen | 0 |
 | 2026-09-18 | `tools/theme_check.py`, after the v3.1.0-P35 pass | Probes below 3.0:1 | 0 |
+| 2026-09-19 | Audit script v3, after the v3.1.0-P36 More Actions consolidation | Hardcoded colour occurrences | 38 |
+| 2026-09-19 | Audit script v3, after the v3.1.0-P36 More Actions consolidation | Distinct hardcoded colour values | 34 |
+| 2026-09-19 | Audit script v3, after the v3.1.0-P36 More Actions consolidation | Colour occurrences matching an existing token exactly | 7 |
+| 2026-09-19 | Audit script v3, after the v3.1.0-P36 More Actions consolidation | `--space-*` token references in file | 71 |
+| 2026-09-19 | Audit script v3, after the v3.1.0-P36 More Actions consolidation | Hardcoded padding/margin/gap declarations (px) | 204 |
+| 2026-09-19 | Audit script v3, after the v3.1.0-P36 More Actions consolidation | `var(--text-*)` font-size references in file | 30 |
+| 2026-09-19 | Audit script v3, after the v3.1.0-P36 More Actions consolidation | Hardcoded font-size declarations (px) | 115 |
+| 2026-09-19 | `tools/theme_check.py`, after the v3.1.0-P36 pass | Probes expected to toggle, frozen | 0 |
+| 2026-09-19 | `tools/theme_check.py`, after the v3.1.0-P36 pass | Probes below 3.0:1 | 0 |
 
 **Re-running the audit:** run `python3 tools/colour_audit.py` from the project root. It regenerates `Hardcoded_Colour_Audit.csv` and prints every metric above.
 
@@ -193,6 +202,7 @@ A defect found in v2 during this same run is recorded here rather than quietly f
 | App header / icon bar | Tokenized | 2026-09-09 |
 | Filter bars (top + sticky search) | Tokenized — sticky search muted text was frozen at the dark value and now follows the theme | 2026-09-09 |
 | Button states (primary/secondary/icon, incl. hover/pressed) | Tokenized | 2026-09-09 |
+| Icon bar and More Actions menu | Tokenized. Built at v3.1.0-P36 on existing tokens only; the audit's colour counts are unchanged across the change | 2026-09-19 |
 | Milestone dialog | Tokenized. Reworked at v3.1.0-P35 (10% smaller, one schedule row, editable Progress) adding no hardcoded colour: every new declaration uses an existing token | 2026-09-18 |
 | Dependency lines | Tokenized | 2026-09-09 |
 | Dependency tooltip + comment panel | Tokenized — was frozen at dark values, near-white text over a background that toggled to near-white | 2026-09-09 |

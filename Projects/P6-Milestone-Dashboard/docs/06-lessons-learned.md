@@ -264,3 +264,34 @@ Two other probe defects in the same run, both of the standing families:
 The Start / Finish / Progress row was asserted on the first suitable milestone the board offered. That milestone carries no separate start date, so its Start field is `display:none` and the "all three sit on one row" and "all three are the same text size" checks were comparing two boxes, passing, and saying three.
 
 **Second time a milestone-card assertion has compared against a field that was not being rendered** (TEST-29, where the card was opened on a baseline seed and the parent heading and float column were both `display:none`, so two position assertions ran against zero rects). The card hides fields that do not apply, so *any* assertion about its layout has to state which fields were actually showing, and a claim about a field only appears when a milestone that renders it has been opened on purpose.
+
+## The API that answered one hiding mechanism and not the next (v3.1.0-P36)
+
+TEST-37 established that `getBoundingClientRect()` lies about content inside a closed `<details>` and that `checkVisibility()` tells the truth there. One partial later, the filter-row toggle moved into a menu and the TD-72 guard had to be rewritten to follow the path to a control rather than test for a visible button. A negative control was added to the rewrite, putting the toggle back inside the collapsed filter bar and requiring the assertion to go false.
+
+**The first rewrite passed the negative control.** Measured against a control trapped inside a `max-height:0; overflow:hidden` bar:
+
+| | trapped in the collapsed bar |
+|---|---|
+| `offsetParent !== null` | true |
+| height | 24px |
+| `getClientRects().length` | 1 |
+| `checkVisibility()` | **true** |
+| `elementFromPoint` at its centre | did not discriminate |
+| box intersected with clipping ancestors | **0px** |
+
+A clip does not zero its children's boxes. Every obvious API reports the trapped control as present and laid out, which is exactly what it reports for a control sitting in an open menu.
+
+Three things worth keeping:
+
+- **`checkVisibility()` is container-specific.** It is correct for `display:none` and for a closed `<details>`, and wrong for an `overflow:hidden` clip. "Is this hidden" has no single API answer; the answer depends on the mechanism doing the hiding. Before using a visibility API in a new context, show it distinguishing the two states in *that* context.
+- **The general measurement is geometric.** Intersect the element's box with the box of every clipping ancestor and with the viewport. That is what the user's eye does, and it is mechanism-independent.
+- **A rewritten guard needs a negative control, always.** The rewrite was reasoned about carefully and was still wrong. What caught it was six lines that reintroduced the original defect and demanded a failure. **Any assertion rewritten to accommodate a change has stopped being the assertion that was passing before, and is unproven until it has been shown to fail on the thing it guards.** This is the seventh measurement artefact in this project and the first found by deliberately breaking the code rather than by a surprising result.
+
+## An assumption about a layout change, refuted at one viewport out of three (v3.1.0-P36)
+
+The More Actions consolidation was expected to unclip the version label, and the check was written asserting exactly that. It holds at 768 and 1440 and fails at 390, where the bar also carries the editable report title and 216px of label plus that title plus the trigger does not fit.
+
+The fix was not to widen the change until the assertion passed. It was to assert what actually holds: the full width where the bar has room, and where it does not, the residual clip stated with its figures and the gain required to be real (35.2px to 167px). The condition is read from the **measurement** — does the label reach the width it needs — rather than from a viewport width typed into the check, because a hardcoded breakpoint is a constant standing in for a measured value, which is the defect family with the most occurrences in this file.
+
+The general form: **when a change delivers at some sizes and not others, the check says where, in numbers.** An assertion quietly scoped to the widths where it passes is the same defect as the hardcoded constant, one level up.
