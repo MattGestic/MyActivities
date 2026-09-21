@@ -25,6 +25,7 @@
 | TEST-19 | 2026-09-10 | Publish round trip: does a published file open cold with the schedule, timeline and annotations already in place, and does it carry nothing it should not | Publish captured at the Blob boundary, written to disk, then loaded as a separate page | **Pass after two fixes** | TD-41, TD-42 (both closed same pass), TD-43, TD-44 |
 | TEST-20 | 2026-09-11 | Does a published file describe itself correctly: mount slots, baseline counts, and the header provenance line | Publish probe extended to capture all three mount slots and the header meta | **Pass after fix** — reproduced the user's report first | TD-47, TD-48 (both closed same pass) |
 | TEST-21 | 2026-09-11 | Six requested changes: published schedule as the update, Source cell after a drag, empty-row delete, gutter alignment, column master toggle scope, header chrome colour | Publish round trip plus a combined DOM probe driving each interaction | **5 pass, 1 delivered failing** — the requested `#f4f5f8` is 1.79:1 on the light header | TD-50 (open), TD-51 to TD-55 (closed) |
+| TEST-39 | 2026-09-21 | Four defects reported against the P36 build: the More Actions menu clipped to the header row, the Title col slider appearing to do nothing, the zero-dependency filter doing nothing, and the ID suggestions painting behind the board | `tools/p37_check.py` at 390x844, 1440x900 and 2000x900, plus five source-level assertions. Both popups are asserted by **hit-test profile** and by counting individually reachable children, because the clipping-aware ancestor walk written at P36 cannot answer the question for a `position:fixed` element. The zero filter is asserted from the DEFAULT state with dependencies off, which is the state the report came from | **Pass 65/65**, after the first measurement refuted one report and the P36 measurement technique wrongly reported a working fix as broken | TD-137 to TD-140, TD-141 raised |
 | TEST-38 | 2026-09-19 | More Actions: seven header icon buttons collapsed into one menu, with the app name and version text beside it | `tools/p36_check.py` at three viewport widths, plus the previous release rendered in the same browser at the same viewports for the before/after. The claim that no state-writing function had to change is asserted by **diffing those function bodies against the previous release**, not by reading them. The active-row state is asserted on computed background against an inactive row, because `.icon-btn.on` and `.icon-btn.ib-mi` have equal specificity and class presence proves nothing. `p32_check`'s TD-72 guard was rewritten to the new contract and given a negative control | **Pass 95/95**, after one wrong assumption about the phone-width label and one wrong measurement in the rewritten TD-72 guard | TD-134, TD-135, TD-136 |
 | TEST-37 | 2026-09-18 | Milestone card rework: the 10% shrink, Start / Finish / Progress on one row behind a divider at one text size, the collapsible weight/hours row, and Progress as an editable annotation-layer override | `tools/p35_check.py` at three viewport widths, plus `tools/persist_check.py` extended to round-trip an override. The shrink is measured against the **P34 release rendered in the same browser at the same viewport on the same milestone**, because a card that got narrower while getting taller is not a smaller card. The three-layer rule is asserted by snapshotting every milestone record before the edit and comparing all 146 after. The three-field row is measured on a milestone chosen for carrying a real start date, because the first suitable target hides its Start field | **Pass 117/117**, after three probe defects and one vacuous comparison were found and fixed | TD-130 to TD-133 |
 | TEST-33 | 2026-09-16 | Does every row and milestone record its source; does the Source Schedule column and filter narrow in both directions; does appending a schedule to itself keep the two separable; does a multi-source board survive publish and a view switch | `tools/p30_check.py`. Appends the SAME workbook to itself, so every Activity ID collides: the worst case rather than a convenient one. The suffix is checked across `m.id`, `m.notes`, `m.ref`, `t.ref`, `t.src` and the row's `data-ids` together, and an annotation keyed on a suffixed ID must not land on its twin. Band order is measured as contiguous RUNS, not distinct names, because appending a file to itself repeats every band name. Performance is asserted by COUNTING (one index build reused across 300 lookups, one filter pass per typing burst, zero per-cell style writes), never by wall clock: `performance.now()` does not advance under virtual time and the first draft reported 0ms against every budget | **Pass 55/55** | TD-99 to TD-103 (closed) |
@@ -1405,6 +1406,81 @@ Marker containment by setting, labels on, ID + Title:
 | Baseline render | unchanged, 105 rows / 146 milestones imported |
 
 **Published:** `releases/v3.1.0-P32_marker-placement-and-filter-row-fixes.html`
+
+---
+
+## TEST-39 — Four defects reported against the P36 build (v3.1.0-P37)
+
+`tools/p37_check.py`, **65/65**, at 390x844, 1440x900 and 2000x900. Five assertions are source-level.
+
+**Two of the four were not what they looked like**, which is what the checks are shaped around.
+
+### What each report measured before anything was changed
+
+| Report | Measured on the P36 build |
+|---|---|
+| More Actions menu clipped to the header row | panel **184px tall, 0px visible**, clipped by `#icon-bar{overflow-x:auto}` (which computes `overflow-y` to auto with it) |
+| ID suggestions behind the timeline | list **200px tall, 36px visible**, clipped by `#top-filter-bar{max-height:0;overflow:hidden}`, with a `TD` painting over what was left |
+| Title col slider does nothing | **refuted at first**: at 1600 wide after an import it moved the column 295.3 to 380 and survived a rerender |
+| Zero-dependency filter does nothing | **105 rows before, 105 after, 0 lines drawn** |
+
+### The two popups, and the half of the fix that measurement caught
+
+Neither ancestor overflow can be removed: `#icon-bar`'s lets the bar scroll at phone width, and `#top-filter-bar`'s **is** the collapse mechanism. Both popups became `position:fixed`, placed by one `positionFixedPopup()`.
+
+**That was only half of it.** Freed of the clip, the menu was painted over by `#rpt-hd` and `#top-filter-bar`: `#icon-bar` is `position:relative` with a z-index and therefore a **stacking context**, so no z-index inside it, however large, lifts a descendant above a later sibling of the bar. Measured **0 of 7 rows hit-testable at 390 wide**. The bar went z-index 30 to 40, clearing those two and the table headers (max 26) while staying below the drawers (700/850/900), which still cover it.
+
+After: **7 of 7** menu rows and **30 of 30** suggestions individually reachable, at every width.
+
+### The Title col slider: the report was right and the first measurement was too narrow
+
+On the board as it actually opens, the seeded baseline with the fixed columns collapsed, the column rendered **380.1px while the slider read 220px**. `#col-name` carries no width until `setNameWidth()` runs, and `setNameWidth` was in **neither** build path, so `table-layout:fixed` handed the column whatever the collapsed fixed columns left over. Dragging up from the default therefore **shrank** it to ~240 before it grew.
+
+Fixed by `reapplyDisplaySettings()`, one function holding all five slider-owned settings, called from `rerender()` and from init's first paint. The init block already carried a comment about exactly that trap while omitting three of the five.
+
+Measured after: column equals slider at first paint (220/220), tracks exactly across 140/200/260/320/400, moves monotonically, and survives a rebuild.
+
+### The zero-dependency filter: a control whose label and behaviour disagreed
+
+Its tooltip promised *"Show only milestones with zero predecessors/dependencies"* and it gated dependency-**line** drawing, which is invisible until dependencies are switched on. It narrows the board now, from inside `applyFilter()` so it composes with the other filters and is reapplied on rebuild.
+
+| Mode | Rows (baseline board, dependencies off) |
+|---|---|
+| All | 159 |
+| Only zero | **46** |
+| Hide zero | **113** |
+
+The two are complements (46 + 113 = 159), 50 of 193 milestones carry no dependencies, and the filter line states what it narrowed to. Asserted with **0 dependency lines drawn**, so nothing else could have produced the change.
+
+### The measurement that was wrong about a working fix
+
+The clipping-aware ancestor walk written at P36 reported the fixed panel as 0px visible, exactly as it had reported the absolute one: it walks the DOM chain intersecting overflow boxes, and **a fixed element is not clipped by ancestor overflow at all**. `elementFromPoint` at a single centre point was no better, returning false for a panel that was genuinely on top.
+
+What answers it is a hit-test **profile**: what paints at several points down the popup, plus how many of its children are individually reachable. **Third consecutive partial in which the measurement technique, not the code, was the thing that was wrong** (TD-133, TD-136, TD-140).
+
+### Found and deliberately not fixed
+
+`drawUnresolvedStub()` emits the same `zero-stub` class as a true zero stub while meaning "N not on board". Any CSS rule or probe targeting zero stubs catches both. **TD-141, open** — nothing reported it, and changing a class the dependency layer keys on is its own change with its own verification.
+
+### Full suite at v3.1.0-P37
+
+| Suite | Result |
+|---|---|
+| TEST-39 four P36 defect reports | **65/65**, across three viewport widths |
+| TEST-38 More Actions consolidation | **95/95** |
+| TEST-37 milestone card rework | **117/117** |
+| TEST-36 marker anchoring and header heights | **73/73** |
+| TEST-35 marker staggering | **38/38** |
+| TEST-34 placement and filter-row defects | **36/36** |
+| TEST-33 multi-source ingest | **67/67** |
+| TEST-32 settings panel design system | **49/49** |
+| TEST-31 date range | **34/34** |
+| TEST-30 counts, baseline overlay, print | **32/32** |
+| TEST-23 persistence round trip | **22/22** |
+| Ingest, board order | exit 0 |
+| Contrast gate | 0 frozen, 0 below 3.0:1 |
+
+**Published:** `releases/v3.1.0-P37_popup-layering-and-filter-fixes.html`
 
 ---
 

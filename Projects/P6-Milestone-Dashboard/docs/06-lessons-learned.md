@@ -295,3 +295,39 @@ The More Actions consolidation was expected to unclip the version label, and the
 The fix was not to widen the change until the assertion passed. It was to assert what actually holds: the full width where the bar has room, and where it does not, the residual clip stated with its figures and the gain required to be real (35.2px to 167px). The condition is read from the **measurement** — does the label reach the width it needs — rather than from a viewport width typed into the check, because a hardcoded breakpoint is a constant standing in for a measured value, which is the defect family with the most occurrences in this file.
 
 The general form: **when a change delivers at some sizes and not others, the check says where, in numbers.** An assertion quietly scoped to the widths where it passes is the same defect as the hardcoded constant, one level up.
+
+## A measurement that was right once and wrong for the next positioning mode (v3.1.0-P37)
+
+P36 established that a control trapped in a `max-height:0; overflow:hidden` bar reports `offsetParent` non-null, height 24px, one client rect and `checkVisibility()` true, and that intersecting the element's box with every clipping ancestor is what discriminates it. That measurement was written, proven with a negative control, and correct.
+
+One partial later it reported a working fix as broken. Two popups were moved to `position:fixed` to escape exactly that kind of clip, and the ancestor walk said the fixed panel was 0px visible **exactly as it had said of the absolute one** — because a fixed element is not clipped by ancestor overflow at all, so walking the DOM chain intersecting overflow boxes answers a question that no longer applies.
+
+`elementFromPoint` at a single centre point was no better: it returned false for a panel that was genuinely on top, because one point can land on a child, a gap, or a shadow.
+
+What answers it is a hit-test **profile**: ask the document what paints at several points down the popup, and count how many of its children are individually reachable. That is mechanism-independent, and it is the same question the user is asking ("can I click this?").
+
+Two things worth keeping:
+
+- **A measurement is only valid for the mechanism it was derived against.** The clipping walk is correct for statically positioned content in a scroll container and meaningless for fixed content. `checkVisibility()` is correct for `display:none` and for a closed `<details>` and wrong for an `overflow:hidden` clip. There is no general "is this hidden" primitive, and each new positioning mode needs the technique re-proved, not reused.
+- **Third consecutive partial where the technique, not the code, was the thing that was wrong** (TD-133, TD-136, TD-140). The pattern is now strong enough to state as a rule: **when a check fails on a change you have reason to believe is correct, suspect the measurement first and prove it can still tell the two states apart.** In all three cases that took under ten minutes and in all three the code was fine.
+
+## Escaping a clip is half the job; the other half is the stacking context (v3.1.0-P37)
+
+Making the More Actions panel `position:fixed` removed the clip and the panel still could not be clicked: `#rpt-hd` and `#top-filter-bar` painted over it, and 0 of 7 rows were hit-testable at 390 wide.
+
+`#icon-bar` is `position:relative` with a `z-index`, which makes it a **stacking context**. Every descendant is stacked *within* it, so the panel's `z-index: 2147483000` competes with nothing outside the bar: what decides the outcome is the bar's own `z-index: 30` against later siblings at the same level, which also sat at 30 and won on document order.
+
+The generalisation, and it is easy to get wrong because the symptom looks like a z-index that is not big enough: **a huge z-index on a descendant is inert if an ancestor established a stacking context.** The number that matters is the ancestor's. Raising the popup is the instinct and it cannot work; raising the context is the fix.
+
+Two things to check together whenever a popup is not visible, because fixing either alone leaves it broken:
+
+1. Is anything clipping it (an ancestor's `overflow`, and for a fixed element, an ancestor with `transform`/`filter`/`contain` that makes it a containing block)?
+2. Is anything painting over it (which ancestor establishes its stacking context, and what does *that* compete with)?
+
+## A control whose label promised one thing and whose code did another (v3.1.0-P37)
+
+The zero-dependency filter's tooltip read *"Show only milestones with zero predecessors/dependencies"*. It gated dependency-**line** drawing, and lines only exist once dependencies are switched on, so from the default state it did nothing at all: 105 rows before, 105 rows after, 0 lines drawn.
+
+Nothing was broken in the sense of throwing or rendering wrongly. The code did exactly what it said in its own comment. The defect lived in the gap between the comment and the tooltip, and only a user reading the tooltip could find it.
+
+**A control's label is part of its contract, and it is the part nothing tests.** Worth asking of any filter or toggle: what does the label promise, in what state will a user first try it, and does it do that *there* rather than only in the state the author had set up. This one worked perfectly in the state its author was in and was inert in the state it ships in.
