@@ -25,6 +25,7 @@
 | TEST-19 | 2026-09-10 | Publish round trip: does a published file open cold with the schedule, timeline and annotations already in place, and does it carry nothing it should not | Publish captured at the Blob boundary, written to disk, then loaded as a separate page | **Pass after two fixes** | TD-41, TD-42 (both closed same pass), TD-43, TD-44 |
 | TEST-20 | 2026-09-11 | Does a published file describe itself correctly: mount slots, baseline counts, and the header provenance line | Publish probe extended to capture all three mount slots and the header meta | **Pass after fix** — reproduced the user's report first | TD-47, TD-48 (both closed same pass) |
 | TEST-21 | 2026-09-11 | Six requested changes: published schedule as the update, Source cell after a drag, empty-row delete, gutter alignment, column master toggle scope, header chrome colour | Publish round trip plus a combined DOM probe driving each interaction | **5 pass, 1 delivered failing** — the requested `#f4f5f8` is 1.79:1 on the light header | TD-50 (open), TD-51 to TD-55 (closed) |
+| TEST-42 | 2026-09-22 | Six items in one batch: rows grown when their milestones crowd each other; a critical-path filter set with multi-select status and a float threshold; the drawer's action bar back to one row; the exported CSV split into a schedule block and an entered block; and adding a milestone from a header button or a double click on a cell | `tools/p40_check.py` at 390x844 and 1440x900, plus seven source-level assertions, and four earlier checks moved to their new contracts. The growth rule is REBUILT from the run cut inside the probe rather than read back off the class the code wrote. The CSV is asserted on CONTENT: an override is set and the two blocks must then disagree, because a header check alone passes on the very file this change exists to fix. The user milestones are asserted as annotation-layer state: the seed arrays byte-identical before and after, weight 0, the `[ID]` notes form intact, survival across a rebuild, and re-applying the same payload a no-op. `exportCSV()` was split from `buildCsvRows()` so the rows can be read without a download | **Pass 77/77**, after one of the four reported rows turned out to disagree with the rule for a reason the measurement could name, and one new degenerate dependency line was isolated to the row growth | TD-153 to TD-157, TD-158 raised |
 | TEST-41 | 2026-09-22 | Eight items in one batch: the Layout section reordered, renamed and extended to 144px; label size sliders moved under their controls and disabled when their text is off; Remarks became a Show / Hide pair; the baseline overlay toggle moved to the heading; the drawer's action bar moved above the tabs; the filter row split into two wrapping columns; and a report that dependency lines do not display | `tools/p39_check.py` at 390x844, 1024x800 and 1440x900, plus nine source-level assertions, and `tools/p29_check.py`'s sticky-footer contract rewritten. The disabled sliders are asserted by **hit test at the slider's own centre**, because `disabled` is not observable through synthetic events in either direction. The one-writer claim is driven through three DIFFERENT entry points (the handler, `setColButtonState`, and a rebuild) and requires control and board to agree after each. The filter row is asserted as "side by side XOR cleanly stacked", with which one decided by measured room. The dependency report is asserted, not fixed | **Pass 108/108**, after the dependency report was refuted by measurement, one assertion was written against a panel that was parked off screen, and one asserted a layer visibility that carries no user-visible difference | TD-146 to TD-150, TD-151 and TD-152 raised |
 | TEST-40 | 2026-09-22 | Print preview heading aligned to the sheet and given its own controls; the date range activating on set with one end open; the default view opening on Activity ID labels with hours off | `tools/p38_check.py` at 390x844, 1024x800 and 1440x900, plus seven source-level assertions. Three viewports chosen for **opposite failures**: at 390 and 1024 the A3 sheet is WIDER than the viewport so the bars fell short of it, at 1440 it is narrower so they overhung it. Alignment asserted on the content boxes as well as the outer edges, since matching outer edges alone leaves the bar's text offset by the frame's 8mm padding. The date range assertions dispatch `input` **only**, never `change`, because a probe that fires `change` cannot see the reported defect at all. Each default carries a negative control: the hours toggle is flipped and must go the other way, and the title mode is switched to `both` and must gain the ` _ ` joiner the `id` assertion requires be absent | **Pass 91/91**, after the first measurement refuted the date-range report as written, one probe assertion was wrong about a correct ID fallback, and the change surfaced TD-145 | TD-142 to TD-145 |
 | TEST-39 | 2026-09-21 | Four defects reported against the P36 build: the More Actions menu clipped to the header row, the Title col slider appearing to do nothing, the zero-dependency filter doing nothing, and the ID suggestions painting behind the board | `tools/p37_check.py` at 390x844, 1440x900 and 2000x900, plus five source-level assertions. Both popups are asserted by **hit-test profile** and by counting individually reachable children, because the clipping-aware ancestor walk written at P36 cannot answer the question for a `position:fixed` element. The zero filter is asserted from the DEFAULT state with dependencies off, which is the state the report came from | **Pass 65/65**, after the first measurement refuted one report and the P36 measurement technique wrongly reported a working fix as broken | TD-137 to TD-140, TD-141 raised |
@@ -1408,6 +1409,91 @@ Marker containment by setting, labels on, ID + Title:
 | Baseline render | unchanged, 105 rows / 146 milestones imported |
 
 **Published:** `releases/v3.1.0-P32_marker-placement-and-filter-row-fixes.html`
+
+---
+
+## TEST-42 — Row growth, critical filters, split CSV, added milestones (v3.1.0-P40)
+
+`tools/p40_check.py`, **77/77**, at 390x844 and 1440x900. Seven assertions are source-level. Four earlier checks moved to new contracts: `p29_check` 52 to 53, `p30_check` 67 to 68, `p36_check` 95 to 96, `p39_check` 108 to 117.
+
+### One of the four reported rows disagrees with the rule, and the measurement says why
+
+A row grows by half again when its densest proximity run reaches `MS_LEVEL_CYCLE.length` markers. Three is where every band is in use, so it is the band count rather than a number chosen.
+
+| Report | Row | Milestones and columns | Longest run | Grown |
+|---|---|---|---|---|
+| "18 is OK" | SNIP-126 | one, col 16 | 1 | no |
+| "37 would be increased" | SNIP-165 | four, cols 15, 16, 17, 19 | 4 | yes |
+| "46 would be increased" | SNIP-180 | four, cols 18, 19, 19, 20 | 4 | yes |
+| "51 is OK" | SNIP-188 | four, cols 13, 14, 15, 17 | 4 | **yes** |
+
+Row 51 is identically dense to rows 37 and 46 on the unfiltered board, so **no rule reading the data can separate them**. It read as fine in the report's screenshot because that board carried a date range opening at the week ending 06-Sep, which is column 15: SNIP-188 and SNIP-197 sit at 13 and 14 and were off the visible board, leaving two markers where the data has four. That claim is asserted, not just written down here.
+
+Making the growth follow the VISIBLE columns would match what the report saw, at the cost of row heights changing on every filter pass and a recomputation inside `applyFilter()`. Left as the data-based rule with the choice open. **TD-153.**
+
+Across the board: 12 of 159 rows grow, 34.3px to 51px, and every one of the 159 is grown exactly when the rule says it should be. The rule is rebuilt from the run cut inside the probe rather than read back off the class the code wrote.
+
+### The critical set, and what "multi-select" had to mean
+
+| Filter | Result on the seeded board |
+|---|---|
+| none | 159 rows |
+| Critical | 26 |
+| Critical + At risk | 76 |
+| all five statuses | **159, the same as none** |
+| total float at or below 13 days | 85 |
+| total float at or above 8 weeks | 5 |
+| at or below 2 weeks vs at or below 14 days | 86 and 86, so the unit converts |
+
+An empty selection means no constraint, which is deliberately not the same as all five selected; that equivalence is asserted directly, because it is the property that makes the empty default coherent. 155 of 198 milestones carry a float figure, and one with none satisfies neither direction: an unknown reported as critical is the kind of wrong that reaches a client. Remove all filters reaches this set too, which a field-clearing loop would have missed.
+
+### The CSV is asserted on content, not on headers
+
+Progress % and Status used to carry the EFFECTIVE value, the schedule's own unless an override existed, with nothing in the file saying which. With an override of 55% set on SNIP-101:
+
+| Column | Reads |
+|---|---|
+| `Progress %` (base block, index 11) | **100%**, the schedule's own |
+| `Progress % (entered)` (index 13) | **55%**, the override |
+| `Comments (entered)` | the comment |
+
+A header check alone would pass on a file where both columns carried the same effective value, which is exactly the defect being fixed. `exportCSV()` was split from `buildCsvRows()` so the rows can be read without triggering a download, since a check that has to click a download can only assert headers.
+
+### Added milestones are annotation-layer state
+
+Asserted as such rather than claimed: `SEED_MILESTONES` and `SEED_TASKS` are byte-identical before and after an add, the milestone carries weight 0 so no percentage on the board moves, its `notes` carries the `[ID]` form that `data-ids`, `msKeyFor` and `extractSnipId` all re-derive from, it survives a rebuild, and re-applying the same payload is a no-op rather than a duplicate.
+
+Both routes in are driven: the header button (a new row under `User Defined Milestones`, board rows 159 to 160) and a real `dblclick` on a week cell (lands on that row at that week, creates no new row). A blank name and a colliding Activity ID are both refused, and the store still holds nothing after both refusals.
+
+**No recorded convention for user-added Activity IDs was found in the docs**, so `USR-NNN` was chosen to match the `PREFIX-NNN` shape every other ID uses, numbered from the highest already present so a re-import cannot reuse a key. Open to change. **TD-157.**
+
+### Found by verification
+
+- **One degenerate dependency line** (TD-158), about a quarter of a pixel long at a legitimate board position, introduced by the row growth. Isolated by rendering the same board with the growth factor at 1.0, which gives zero. `p30_check` section 8 exists for lines PILED AT THE BOARD ORIGIN, the failure that makes the feature look broken; it now asserts zero at the origin and bounds the degenerate count, rather than asserting zero everywhere and forcing a choice between reverting a requested change and deleting the check.
+- **Four earlier checks were asserting contracts this batch deliberately changed**, and each was moved rather than relaxed. `p36_check`'s byte-identical set gained a `CHANGED_SINCE` entry that requires `toggleTopFilterBar` to have changed *for the reason the check names*, so a different change to it still fails. `p35_check`'s width assertion was scoped to the `.ms-dialog` rule after a new dialog elsewhere in the stylesheet tripped a bare substring test.
+
+### Full suite at v3.1.0-P40
+
+| Suite | Result |
+|---|---|
+| TEST-42 growth, critical filters, CSV, added milestones | **77/77** |
+| TEST-41 View Controls, heading, action bar, filter row | **117/117** |
+| TEST-40 print heading, date range, defaults | **91/91** |
+| TEST-39 P36 defect pass | **65/65** |
+| TEST-38 More Actions consolidation | **96/96** |
+| TEST-37 milestone card and progress override | **117/117** |
+| TEST-36 marker anchoring | **73/73** |
+| TEST-35 marker staggering | **38/38** |
+| TEST-34 placement and filter-row defects | **36/36** |
+| TEST-33 multi-source ingest | **68/68** |
+| TEST-32 settings panel design system | **53/53** |
+| TEST-31 date range | **34/34** |
+| TEST-30 counts, baseline overlay, print | **32/32** |
+| TEST-23 persistence round trip | **22/22** |
+| Ingest, board order | exit 0 |
+| Contrast gate | 0 frozen, 0 below 3.0:1 |
+
+**Published:** `releases/v3.1.0-P40_row-growth-critical-filters-csv-and-add-milestone.html`
 
 ---
 

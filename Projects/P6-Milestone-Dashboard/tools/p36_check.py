@@ -67,7 +67,18 @@ ROWS = [
 # Function bodies that must be byte-identical to the previous release. If the
 # consolidation needed any of them changed, the "nothing had to be touched"
 # claim is false and this says so rather than the commit message.
-UNTOUCHED = ["toggleSettingsDrawer", "toggleFilterBar", "toggleTopFilterBar"]
+#
+# toggleTopFilterBar left this set at v3.1.0-P40, when the heading gained a
+# one-click expand control and the bar's own toggle became the single writer of
+# its hidden state. That is a change for its own reason, made four partials
+# later, not the consolidation reaching into it: the P36 claim is about what the
+# menu needed, and dropping the name silently would let a future consolidation
+# change hide behind this note. So it moves to CHANGED_SINCE, which asserts that
+# it changed for a REASON THIS CHECK CAN NAME rather than merely allowing it.
+UNTOUCHED = ["toggleSettingsDrawer", "toggleFilterBar"]
+# name -> the marker that must be present in the new body for the change to be
+# the one expected. A different change fails the check.
+CHANGED_SINCE = {"toggleTopFilterBar": "btn-filter-expand"}
 
 BASELINE = r"""
 (function(){
@@ -389,6 +400,12 @@ def main():
             "source: the state-writing functions are byte-identical to the previous release",
             not changed,
             f"{len(UNTOUCHED)} compared, changed: " + (", ".join(changed) or "none")))
+        for name, marker in CHANGED_SINCE.items():
+            now, was = fn_body(src, name), fn_body(base_src, name)
+            checks.append((
+                f"source: {name} changed only for the reason this check names",
+                now is not None and was is not None and now != was and marker in now,
+                f"expected {marker!r} in the new body"))
     else:
         checks.append(("source: the previous release was available to diff against",
                        False, f"missing {baseline}"))

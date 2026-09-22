@@ -396,3 +396,37 @@ The Remarks row was one button labelled with what it would do next: it read "Hid
 It is now a `Show` / `Hide` pair where the active half is the current state, driven by `setRemarksVisible(on)` which takes the value rather than flipping, so clicking the half that is already active is a no-op instead of turning the field off.
 
 **Within one panel, pick one idiom and keep it.** A relabelling button is defensible on its own; beside four segmented state controls it is a trap. The check asserts the no-op case explicitly, because a flip-on-click implementation passes every other assertion in the set.
+
+## The reported example that contradicts itself once you look at the whole board (v3.1.0-P40)
+
+A request named four rows: "18 is OK, 37 would be increased, 46 would be increased, 51 is OK." The rule built from that reading, grow a row whose densest proximity run reaches the band count, matched three of them and not row 51.
+
+The measurement explained it rather than the rule being bent to fit. Row 51 carries four milestones at columns 13, 14, 15 and 17: one run of four, identically dense to rows 37 and 46. It read as fine in the screenshot because that board had a date range opening at column 15, so two of its four markers were off the visible board.
+
+**No rule reading the data could have separated row 51 from 37 and 46.** The distinguishing property was not in the data at all; it was in the filter the reporter had applied.
+
+Three things to carry:
+
+- **When one example out of a set disagrees, measure that example before adjusting the rule.** The instinct is to add a condition until all four fit. Here any such condition would have been fitted to an artefact of someone's date range.
+- **A screenshot shows a filtered board, and the filter is part of what it shows.** The same trap as the previous batch, where a report arrived against a build three versions old. Read what state the picture is in before reading what it says.
+- **Assert the disagreement, do not hide it.** The check asserts row 51 grown, asserts that two of its four markers fall before the reported window, and names the alternative rule (grow on VISIBLE markers) that would match the report at the cost of row heights moving on every filter pass. The gap between the rule and the report is on the record and the choice is the user's.
+
+## A change that is correct and still costs something, measured in the same run (v3.1.0-P40)
+
+Growing the dense rows introduced exactly one degenerate dependency line: a quarter of a pixel long, at a legitimate board position, drawn as its own arrowhead. It was isolated by rendering the same board with the growth factor at 1.0, which gives zero.
+
+The check it failed exists for a real catastrophe: markerCenter() measuring hidden elements, which have a zero rect, so 308 of 331 lines once resolved to the same point at the board's top-left corner. One tiny line elsewhere is not that.
+
+The temptation was to delete the check or to loosen it until it passed. Neither is right: the first throws away the guard for the catastrophic case, the second leaves an assertion that no longer means anything. What the check now asserts is the failure it was written for, lines **at the board origin**, at zero, and it bounds the degenerate count separately with the current figure recorded.
+
+**When a correct change breaks an assertion, the question is what that assertion was protecting.** Re-aim it at that, keep its teeth for the case it was written for, and record the residue as its own item rather than absorbing it into a relaxed threshold.
+
+## A check that can only see the headers cannot see the defect (v3.1.0-P40)
+
+The exported CSV mixed the schedule's own Progress % and Status with a person's overrides, both under the same headers. Splitting them into a schedule block and an entered block is easy; proving it is not, because `exportCSV()` triggered a download and a probe cannot read a download.
+
+A header-only assertion would have passed on the exact file the change exists to fix: two blocks with the right names, both carrying the same effective value.
+
+`exportCSV()` was split into `buildCsvRows()` plus a thin writer, so the check sets an override and then requires the two blocks to **disagree**: base reads 100%, entered reads 55%.
+
+**If the observable thing is the content, make the content observable.** Splitting the builder from the writer took two minutes and turned a check that could only confirm the shape into one that confirms the substance. The same move paid off earlier in this file when `positionFixedPopup` was extracted, and for the same reason: a function that does one thing can be asked what it did.

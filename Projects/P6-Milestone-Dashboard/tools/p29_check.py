@@ -193,25 +193,45 @@ PROBE = r"""
     ck('layout: it sits above the tabs and is on screen with the drawer opened',
        ar.bottom<=sr.top+1 && ar.top>=dr.top-1 && ar.bottom<=dr.bottom,
        R.notes.actionsBox);
-    // Three exports on one row, the destructive action alone on the next.
+    // One row at v3.1.0-P40, changed from the two-row shape P39 shipped: the
+    // two exports spread across the left, the two right-hand actions anchored
+    // together against the edge. The P39 arrangement put the destructive
+    // action on its own line; the user asked for it back in line with Save as
+    // new dashboard, so the assertion follows the requested contract rather
+    // than the one this check preferred. What it still asserts with teeth: the
+    // order, the right anchor, and that the destructive button is LAST, so it
+    // is never the one next to the button you meant to press.
     const main=act.querySelector('.sd-actions-main');
-    const danger=act.querySelector('.sd-actions-danger .sd-btn-danger');
-    const mainBtns=main?main.querySelectorAll('button'):[];
-    const labels=Array.prototype.map.call(mainBtns,function(b){
-      return b.textContent.replace(/[^A-Za-z ]/g,'').trim(); });
-    R.notes.actionOrder=labels;
-    ck('layout: CSV, JSON then Save as new dashboard, in that order',
-       labels.length===3 && /CSV/.test(labels[0]) && /JSON/.test(labels[1]) &&
-       /Save as new dashboard/.test(labels[2]), labels.join(' | '));
-    const mb=mainBtns.length?mainBtns[mainBtns.length-1].getBoundingClientRect():null;
+    const exports=act.querySelector('.sd-actions-exports');
+    const right=act.querySelector('.sd-actions-right');
+    const danger=act.querySelector('.sd-actions-right .sd-btn-danger');
+    const lbl=function(b){ return b.textContent.replace(/[^A-Za-z ]/g,'').trim(); };
+    const expLabels=exports?Array.prototype.map.call(exports.querySelectorAll('button'),lbl):[];
+    const rightLabels=right?Array.prototype.map.call(right.querySelectorAll('button'),lbl):[];
+    R.notes.actionOrder={exports:expLabels,right:rightLabels};
+    ck('layout: CSV and JSON on the left, Save then Clear on the right',
+       expLabels.length===2 && /CSV/.test(expLabels[0]) && /JSON/.test(expLabels[1]) &&
+       rightLabels.length===2 && /Save as new dashboard/.test(rightLabels[0]) &&
+       /Clear all comments/.test(rightLabels[1]),
+       expLabels.join(' | ')+'  ///  '+rightLabels.join(' | '));
+    const rr=right?right.getBoundingClientRect():null;
     const mr=main?main.getBoundingClientRect():null;
-    ck('layout: that row is anchored to the right edge of the drawer',
-       !!mb && !!mr && Math.abs(mb.right-mr.right)<=1,
-       mb?Math.round(mb.right)+' against row right '+Math.round(mr.right):'missing');
+    ck('layout: the right-hand pair is anchored to the right edge of the row',
+       !!rr && !!mr && Math.abs(rr.right-mr.right)<=1,
+       rr?Math.round(rr.right)+' against row right '+Math.round(mr.right):'missing');
+    // Spread, not bunched: the two exports must not simply sit side by side at
+    // the left, which is what removing the justify-content would give.
+    const eb=exports?exports.querySelectorAll('button'):[];
+    const gap=(eb.length===2)
+      ? Math.round(eb[1].getBoundingClientRect().left-eb[0].getBoundingClientRect().right)
+      : -1;
+    R.notes.exportGap=gap;
+    ck('layout: the two exports are distributed across their share of the width',
+       gap>12, gap+'px between them');
     const db=danger?danger.getBoundingClientRect():null;
-    R.notes.dangerBox=db?Math.round(db.top)+' vs exports bottom '+Math.round(mr.bottom):'missing';
-    ck('layout: Clear all comments is on its own line underneath, not beside them',
-       !!db && db.top>=mr.bottom-1, R.notes.dangerBox);
+    R.notes.dangerBox=db?Math.round(db.left)+' vs row right '+Math.round(mr.right):'missing';
+    ck('layout: the destructive action is the last control in the row',
+       !!db && !!rr && Math.abs(db.right-rr.right)<=1, R.notes.dangerBox);
 
     // ================= 3. Tabs =================
     const panels=Array.from(DR.querySelectorAll('.sd-tabpanel'));

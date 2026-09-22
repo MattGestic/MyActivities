@@ -380,10 +380,14 @@ def main():
         "source: the banner and its controls are one element, hidden on paper",
         src.count('class="pm-banner pm-hide-in-print"') == 1,
         "the banner does not carry pm-hide-in-print"))
+    # Three since v3.1.0-P40: the two date fields, and the float threshold,
+    # which is a typed number with exactly the same problem (change does not
+    # fire until the field is left). The count is asserted rather than left
+    # open-ended so a field losing its oninput still fails this.
     n_input = src.count('oninput="scheduleFilter()" onchange="applyFilter()"')
     checks.append((
-        "source: both date fields fire on input as well as on change",
-        n_input == 2, f"{n_input} of 2 fields carry both handlers"))
+        "source: both date fields and the float threshold fire on input as well as on change",
+        n_input == 3, f"{n_input} of 3 fields carry both handlers"))
     checks.append((
         "source: one panel, one anchor resolver, no duplicated menu rows",
         src.count('id="more-actions-panel"') == 1

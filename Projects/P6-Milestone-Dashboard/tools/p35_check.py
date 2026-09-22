@@ -531,9 +531,17 @@ def main():
     checks = []
     vers = len(re.findall(r"3\.[0-9]+\.[0-9]+-P", src))
     checks.append(("source: exactly one version literal", vers == 1, f"{vers} found"))
+    # Scoped to the .ms-dialog rule. The bare substring test failed at
+    # v3.1.0-P40 on an unrelated dialog added elsewhere in the stylesheet, which
+    # is a false positive: this assertion is about the milestone card's own cap,
+    # not about the string 340px appearing anywhere in a 10,000 line file.
+    ms_rule = ""
+    m = re.search(r"\.ms-dialog\{([^}]*)\}", src)
+    if m:
+        ms_rule = m.group(1)
     checks.append(("source: the card's width cap is 90% of the old 340px",
-                   "width:min(306px," in src and "width:min(340px," not in src,
-                   "306px cap not found, or 340px still present"))
+                   "width:min(306px," in ms_rule and "width:min(340px," not in ms_rule,
+                   f"the .ms-dialog rule reads: {ms_rule[:80]!r}"))
     checks.append(("source: the rollup reads effectiveProgress, not the record",
                    "m.weight*(effectiveProgress(m)||0)" in src
                    and "m.weight*(m.progress||0)" not in src,

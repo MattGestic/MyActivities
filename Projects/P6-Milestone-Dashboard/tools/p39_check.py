@@ -270,70 +270,107 @@ PROBE = r"""
        JSON.stringify(R.notes.baseline));
 
     // ============ 6. The drawer's action bar ============
+    // One row at v3.1.0-P40: the two exports spread across the left, Save and
+    // Clear anchored together against the right edge. P39 put Clear on its own
+    // line; the user asked for it back in line with Save, so this follows the
+    // requested contract. p29_check carries the detailed version of this,
+    // including that the exports are genuinely spread and not just left
+    // aligned; what is asserted here is the placement relative to the tabs.
     toggleSettingsDrawer(true); await settle(); await settle();
     const DR=$('settings-drawer'), act=DR.querySelector('.sd-actions');
     const tabs=DR.querySelector('.sd-tabs');
-    const mainBtns=act.querySelectorAll('.sd-actions-main button');
-    const danger=act.querySelector('.sd-actions-danger .sd-btn-danger');
-    const labels=Array.prototype.map.call(mainBtns,function(b){
-      return b.textContent.replace(/[^A-Za-z ]/g,'').trim(); });
-    R.notes.actions={order:labels,actBox:box(act),tabsBox:box(tabs),
-                     dangerBox:box(danger),position:getComputedStyle(act).position};
+    const exportsBox=act.querySelector('.sd-actions-exports');
+    const rightBox=act.querySelector('.sd-actions-right');
+    const lbl=function(b){ return b.textContent.replace(/[^A-Za-z ]/g,'').trim(); };
+    const actOrder=Array.prototype.map.call(act.querySelectorAll('button'),lbl);
+    R.notes.actions={order:actOrder,actBox:box(act),tabsBox:box(tabs),
+                     exports:box(exportsBox),right:box(rightBox),
+                     position:getComputedStyle(act).position};
     ck('actions: the bar is above the tab strip, not a footer under the panels',
        box(act).b<=box(tabs).t+1, 'bar bottom '+box(act).b+', tabs top '+box(tabs).t);
-    ck('actions: CSV, JSON, Save as new dashboard, right anchored',
-       labels.length===3&&/CSV/.test(labels[0])&&/JSON/.test(labels[1])&&
-       /Save as new dashboard/.test(labels[2])&&
-       Math.abs(box(mainBtns[2]).r-box(act.querySelector('.sd-actions-main')).r)<=1,
-       labels.join(' | '));
-    ck('actions: Clear all comments is on its own line underneath',
-       !!danger&&box(danger).t>=box(act.querySelector('.sd-actions-main')).b-1,
-       'danger top '+box(danger).t+', exports bottom '+
-       box(act.querySelector('.sd-actions-main')).b);
+    ck('actions: CSV, JSON, Save as new dashboard, Clear all comments, in that order',
+       actOrder.length===4&&/CSV/.test(actOrder[0])&&/JSON/.test(actOrder[1])&&
+       /Save as new dashboard/.test(actOrder[2])&&/Clear all comments/.test(actOrder[3]),
+       actOrder.join(' | '));
+    ck('actions: the right-hand pair reaches the row\u2019s right edge',
+       !!rightBox&&Math.abs(box(rightBox).r-box(act.querySelector('.sd-actions-main')).r)<=1,
+       box(rightBox).r+' against row right '+box(act.querySelector('.sd-actions-main')).r);
     toggleSettingsDrawer(false); await settle();
 
     // ============ 7. The filter row ============
+    // Three full-width rows at v3.1.0-P40, changed from the two columns P39
+    // shipped. The two-column shape put WHAT on the left and WHEN on the right,
+    // which left nowhere for a third question; the critical-path set is that
+    // third question, so the bar became one row per question. The assertions
+    // move with the contract: what they still have teeth on is that every group
+    // lives in exactly one row, that the rows are genuinely stacked rather than
+    // half-wrapped, and that the date range is anchored right while there is
+    // room for it to be.
     toggleTopFilterBar(true); await settle(); await settle();
     const bar=$('top-filter-bar');
-    const cols=bar.querySelectorAll(':scope > .tfb-col');
-    const rule=bar.querySelector('.tfb-rule');
+    const rows=bar.querySelectorAll(':scope > .tfb-row');
     const foot=bar.querySelector('.tfb-foot');
     const groups=bar.querySelectorAll('.tfb-group');
-    const sideBySide=cols.length===2&&Math.abs(box(cols[0]).t-box(cols[1]).t)<4
-                     &&box(cols[0]).r<=box(cols[1]).l+1;
-    const stacked=cols.length===2&&box(cols[1]).t>=box(cols[0]).b-1;
-    R.notes.filterRow={cols:cols.length,groups:groups.length,
-                       col0:box(cols[0]),col1:box(cols[1]),
-                       sideBySide:sideBySide,stacked:stacked,
-                       rule:box(rule),foot:box(foot),
-                       titleContains:document.querySelectorAll('#top-filter-bar input[type=text]').length};
-    ck('filter row: two containers hold every group between them',
-       cols.length===2&&groups.length===6&&
-       cols[0].querySelectorAll('.tfb-group').length===4&&
-       cols[1].querySelectorAll('.tfb-group').length===2,
-       cols.length+' columns, '+groups.length+' groups');
-    // Either shape is correct; what is asserted is that it is ONE of them and
-    // not a half-wrapped mess, and which one is decided by measured room.
-    ck('filter row: the columns are side by side or cleanly stacked, never both',
-       sideBySide!==stacked,
-       'side by side '+sideBySide+', stacked '+stacked+
-       ' at '+window.innerWidth+' wide');
-    ck('filter row: a rule separates the date range from the week filter',
-       !!rule&&box(rule).w>50&&
-       box(rule).t>=box(cols[1].querySelector('.tfb-group')).b-1,
-       rule?'rule '+box(rule).w+'px wide at y '+box(rule).t:'missing');
-    ck('filter row: the summary line runs full width under both columns',
-       !!foot&&box(foot).t>=Math.max(box(cols[0]).b,box(cols[1]).b)-1,
-       foot?'foot top '+box(foot).t:'missing');
+    const inRows=Array.prototype.reduce.call(rows,function(s,r){
+      return s+r.querySelectorAll('.tfb-group').length; },0);
+    const tops=Array.prototype.map.call(rows,function(r){ return box(r).t; });
+    let stacked=true;
+    for(let i=1;i<tops.length;i++) if(tops[i]<=tops[i-1]) stacked=false;
+    R.notes.filterRow={rows:rows.length,groups:groups.length,inRows:inRows,
+                       tops:tops,stacked:stacked,
+                       crit:box($('tfb-crit')),foot:box(foot),
+                       textInputs:document.querySelectorAll('#top-filter-bar input[type=text]').length};
+    ck('filter row: three rows hold every group between them, none loose',
+       rows.length===3&&groups.length===8&&inRows===8,
+       rows.length+' rows, '+inRows+' of '+groups.length+' groups inside them');
+    ck('filter row: the rows are genuinely stacked, each below the last',
+       stacked&&tops.length===3, tops.join(' / '));
+    // Row 1 holds the four identity filters, row 2 the critical set, row 3 the
+    // two time filters. Asserted by count per row, so moving one between rows
+    // fails rather than passing on a total that still adds up.
+    const perRow=Array.prototype.map.call(rows,function(r){
+      return r.querySelectorAll('.tfb-group').length; });
+    R.notes.filterRow.perRow=perRow;
+    ck('filter row: name/band/source/IDs, then the critical set, then week and dates',
+       perRow.join(',')==='4,2,2', perRow.join(', '));
+    // The critical container is ruled off from the rows around it, because it
+    // filters on a different property of the data.
+    const critCs=getComputedStyle($('tfb-crit'));
+    ck('filter row: the critical set is ruled off above and below',
+       parseFloat(critCs.borderTopWidth)>0&&parseFloat(critCs.borderBottomWidth)>0,
+       critCs.borderTopWidth+' / '+critCs.borderBottomWidth);
+    // The date range is anchored right, when the row has not wrapped. Measured,
+    // not assumed from the viewport: at 390 the week filter alone overflows and
+    // the auto margin correctly does nothing.
+    const when=rows[2];
+    const wg=when.querySelectorAll('.tfb-group');
+    const wrapped=box(wg[1]).t>box(wg[0]).t+2;
+    R.notes.filterRow.dateAnchor={wrapped:wrapped,
+      dateRight:box(wg[1]).r,rowRight:box(when).r};
+    ck('filter row: the date range is anchored right'+(wrapped?', or would be if the row had room':''),
+       wrapped||Math.abs(box(wg[1]).r-box(when).r)<=1,
+       'date right '+box(wg[1]).r+' against row right '+box(when).r+
+       (wrapped?' (wrapped at this width)':''));
+    ck('filter row: the summary line runs full width under every row',
+       !!foot&&box(foot).t>=tops[tops.length-1], foot?'foot top '+box(foot).t:'missing');
     ck('filter row: only one free-text name field, so no duplicate of it',
-       R.notes.filterRow.titleContains===2,
-       R.notes.filterRow.titleContains+' text inputs (name + Activity IDs)');
+       R.notes.filterRow.textInputs===2,
+       R.notes.filterRow.textInputs+' text inputs (name + Activity IDs)');
     // The bar collapses by max-height, so a taller bar must not be cut off.
     const inner=Array.prototype.reduce.call(bar.children,function(m,c){
       return Math.max(m,c.getBoundingClientRect().bottom); },0)-box(bar).t;
     R.notes.filterRow.contentH=r1(inner); R.notes.filterRow.boxH=box(bar).h;
     ck('filter row: the open bar is tall enough for its own content',
        box(bar).h>=inner-2, 'box '+box(bar).h+' against content '+r1(inner));
+    // Collapsed, the heading offers a one-click way back. Open, it does not.
+    toggleTopFilterBar(false); await settle();
+    const expClosed=$('btn-filter-expand').hidden;
+    toggleTopFilterBar(true); await settle();
+    const expOpen=$('btn-filter-expand').hidden;
+    R.notes.filterRow.expandIcon={hiddenWhenClosed:expClosed,hiddenWhenOpen:expOpen};
+    ck('filter row: the expand control shows only while the bar is collapsed',
+       expClosed===false&&expOpen===true,
+       'hidden when collapsed '+expClosed+', hidden when open '+expOpen);
 
     // ============ 8. Dependency lines, the refuted report ============
     const depLines=()=>document.querySelectorAll('#dep-lines-g path.dep-line').length;
@@ -361,11 +398,16 @@ PROBE = r"""
     // TD-152.
     ck('deps: nothing is drawn until they are switched on, which is the default',
        depOpen.lines===0, JSON.stringify(depOpen));
+    // onScreen is a function of how much board is below the header, so the
+    // threshold is what a phone can show, not what a desktop can: the P40
+    // filter row is three rows rather than two columns, which pushes the board
+    // down and took the 390 figure from 38 to 20. The point of the assertion is
+    // that lines REACH THE SCREEN, not how many.
     ck('deps: switching both kinds on draws lines, and puts them on screen',
-       depOn.lines>400&&depOn.onScreen>20&&depOn.vis==='visible',
+       depOn.lines>400&&depOn.onScreen>10&&depOn.vis==='visible',
        JSON.stringify(depOn)+' from '+R.notes.deps.data+' milestones with data');
     ck('deps: and they survive a rebuild, which is where they have been lost before',
-       depAfter.lines===depOn.lines&&depAfter.onScreen>20&&depAfter.vis==='visible',
+       depAfter.lines===depOn.lines&&depAfter.onScreen>10&&depAfter.vis==='visible',
        JSON.stringify(depAfter));
     setAllDep('pred',false); setAllDep('succ',false); await settle();
     ck('deps NEGATIVE CONTROL: switching them off takes every line away again',
@@ -434,9 +476,10 @@ def main():
         src.count("Matches the embedded baseline") == 1,
         f"{src.count('Matches the embedded baseline')} copies"))
     checks.append((
-        "source: no inline padding or margin was added inside the drawer",
-        "sd-actions-main" in src and "sd-actions-danger" in src,
-        "the two action rows are not there"))
+        "source: the action bar is one row with the exports and the right-hand pair split",
+        "sd-actions-main" in src and "sd-actions-exports" in src
+        and "sd-actions-right" in src and "sd-actions-danger" not in src,
+        "the action row containers are not as expected"))
 
     fails = 0
     for (w, h) in VIEWPORTS:
