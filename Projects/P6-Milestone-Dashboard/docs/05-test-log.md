@@ -25,6 +25,7 @@
 | TEST-19 | 2026-09-10 | Publish round trip: does a published file open cold with the schedule, timeline and annotations already in place, and does it carry nothing it should not | Publish captured at the Blob boundary, written to disk, then loaded as a separate page | **Pass after two fixes** | TD-41, TD-42 (both closed same pass), TD-43, TD-44 |
 | TEST-20 | 2026-09-11 | Does a published file describe itself correctly: mount slots, baseline counts, and the header provenance line | Publish probe extended to capture all three mount slots and the header meta | **Pass after fix** — reproduced the user's report first | TD-47, TD-48 (both closed same pass) |
 | TEST-21 | 2026-09-11 | Six requested changes: published schedule as the update, Source cell after a drag, empty-row delete, gutter alignment, column master toggle scope, header chrome colour | Publish round trip plus a combined DOM probe driving each interaction | **5 pass, 1 delivered failing** — the requested `#f4f5f8` is 1.79:1 on the light header | TD-50 (open), TD-51 to TD-55 (closed) |
+| TEST-40 | 2026-09-22 | Print preview heading aligned to the sheet and given its own controls; the date range activating on set with one end open; the default view opening on Activity ID labels with hours off | `tools/p38_check.py` at 390x844, 1024x800 and 1440x900, plus seven source-level assertions. Three viewports chosen for **opposite failures**: at 390 and 1024 the A3 sheet is WIDER than the viewport so the bars fell short of it, at 1440 it is narrower so they overhung it. Alignment asserted on the content boxes as well as the outer edges, since matching outer edges alone leaves the bar's text offset by the frame's 8mm padding. The date range assertions dispatch `input` **only**, never `change`, because a probe that fires `change` cannot see the reported defect at all. Each default carries a negative control: the hours toggle is flipped and must go the other way, and the title mode is switched to `both` and must gain the ` _ ` joiner the `id` assertion requires be absent | **Pass 91/91**, after the first measurement refuted the date-range report as written, one probe assertion was wrong about a correct ID fallback, and the change surfaced TD-145 | TD-142 to TD-145 |
 | TEST-39 | 2026-09-21 | Four defects reported against the P36 build: the More Actions menu clipped to the header row, the Title col slider appearing to do nothing, the zero-dependency filter doing nothing, and the ID suggestions painting behind the board | `tools/p37_check.py` at 390x844, 1440x900 and 2000x900, plus five source-level assertions. Both popups are asserted by **hit-test profile** and by counting individually reachable children, because the clipping-aware ancestor walk written at P36 cannot answer the question for a `position:fixed` element. The zero filter is asserted from the DEFAULT state with dependencies off, which is the state the report came from | **Pass 65/65**, after the first measurement refuted one report and the P36 measurement technique wrongly reported a working fix as broken | TD-137 to TD-140, TD-141 raised |
 | TEST-38 | 2026-09-19 | More Actions: seven header icon buttons collapsed into one menu, with the app name and version text beside it | `tools/p36_check.py` at three viewport widths, plus the previous release rendered in the same browser at the same viewports for the before/after. The claim that no state-writing function had to change is asserted by **diffing those function bodies against the previous release**, not by reading them. The active-row state is asserted on computed background against an inactive row, because `.icon-btn.on` and `.icon-btn.ib-mi` have equal specificity and class presence proves nothing. `p32_check`'s TD-72 guard was rewritten to the new contract and given a negative control | **Pass 95/95**, after one wrong assumption about the phone-width label and one wrong measurement in the rewritten TD-72 guard | TD-134, TD-135, TD-136 |
 | TEST-37 | 2026-09-18 | Milestone card rework: the 10% shrink, Start / Finish / Progress on one row behind a divider at one text size, the collapsible weight/hours row, and Progress as an editable annotation-layer override | `tools/p35_check.py` at three viewport widths, plus `tools/persist_check.py` extended to round-trip an override. The shrink is measured against the **P34 release rendered in the same browser at the same viewport on the same milestone**, because a card that got narrower while getting taller is not a smaller card. The three-layer rule is asserted by snapshotting every milestone record before the edit and comparing all 146 after. The three-field row is measured on a milestone chosen for carrying a real start date, because the first suitable target hides its Start field | **Pass 117/117**, after three probe defects and one vacuous comparison were found and fixed | TD-130 to TD-133 |
@@ -1406,6 +1407,62 @@ Marker containment by setting, labels on, ID + Title:
 | Baseline render | unchanged, 105 rows / 146 milestones imported |
 
 **Published:** `releases/v3.1.0-P32_marker-placement-and-filter-row-fixes.html`
+
+---
+
+## TEST-40 — Print preview heading, date-range activation, view defaults (v3.1.0-P38)
+
+`tools/p38_check.py`, **91/91**, at 390x844, 1024x800 and 1440x900. Seven assertions are source-level.
+
+The three viewports were chosen because the same defect fails in **opposite directions** across them. An A3 portrait sheet renders 1122.5px wide, so at 390 and 1024 the sheet is wider than the viewport and the heading bars fell short of it, while at 1440 the sheet is narrower and they overhung it. One width would have proved half of it.
+
+### What each request measured before anything was changed
+
+| Request | Measured on the P37 build |
+|---|---|
+| Heading and frame misaligned in print preview | `#icon-bar` and `.pm-banner` **390px** wide at 390, **1440px** at 1440, against a **1122.5px** sheet at `l=0..1122.5` and `l=158.7..1281.3` respectively. Both bars sit outside `#page-frame`, so they took the body's width, which is the viewport's |
+| Preview should carry fit / preview-toggle / more-actions | none of the three existed in the banner |
+| Date range should activate on set, one end at a time | **refuted as written.** With a `change` event dispatched, an end date alone gave `{lo:0,hi:19}`, 20 of 39 week columns and 115 of 159 rows; a start date alone gave `{lo:15,hi:38}`, 24 of 39 columns and 104 rows. Identical at 390 and 1440 |
+| Default view: hours off, Activity ID on | hours on (`mHrsVisible=true`, checkbox checked), short titles off (`btn-title-mode-off` active) |
+
+### The date range was never the logic
+
+`dateRangeToCols()` has always left the other end open, and the measurement above says so. What did not work was the **delivery**: `change` on `<input type="date">` does not fire until the field is committed and left, so a date set with the picker or the spinner sat there until focus moved elsewhere. Both fields now also fire `oninput`, debounced through the same `scheduleFilter()` the title field uses.
+
+Every date-range assertion in the probe dispatches **`input` only**. That is deliberate and it is the whole point: a probe that fires `change` cannot see this defect at all, which is exactly why no earlier probe caught it.
+
+### Aligning the bars moved the controls off screen, and the measurement said so
+
+With the three controls at the right of a sheet-width strip, the hit-test profile counted **0 of 3 reachable at 390** and **2 of 3 at 1024**. Nothing was broken: an A3 sheet is wider than either viewport, the page scrolls sideways, and the right-hand end of the strip is simply not on screen. The controls sit at the sheet's **left** edge instead, which is on screen at every width, and read 3 of 3 at all three viewports.
+
+The same reasoning applies to the header bar's own More Actions trigger, which now scrolls with the sheet. That assertion is **conditional on measured room**, not on a typed viewport width: where the trigger is on screen the panel must anchor to it, and where it is not the panel must be clamped into the viewport. Both branches require all 7 rows individually reachable, and both were met.
+
+### One panel, two triggers
+
+The menu was not duplicated. Duplicating it would have duplicated seven row ids and the five functions that write them. The panel stays single and `moreActionsAnchor()` resolves which trigger it hangs off, preferring the one that was clicked and falling back to whichever is laid out. Asserted in both directions, in the preview and after leaving it, including that the banner trigger reports zero client rects out of the preview so the anchor cannot go stale.
+
+### Three defects found by verification
+
+- **`let mHrsVisible=false` rendered 196 visible hours labels at first paint** (TD-145). The rebuild path hid all three board labels and init's first-paint path hid only one, so the new default did not take effect until something triggered a rebuild. Third occurrence of this family, so the three lines were folded into `applyMarkerLabelState()` inside the single `reapplyDisplaySettings()` writer and deleted from both call sites, rather than a fourth line being added to one.
+- **One probe assertion was wrong about correct behaviour.** "Every short-title label is an Activity ID" read 158 of 196, because 38 milestones carry no Activity ID and `formatShortTitleDisplay()` correctly falls back to their title. Replaced with what actually distinguishes `id` from `both`: no label carries the ` _ ` joiner, plus a negative control switching to `both` that requires the same 158 to gain it.
+- **A source assertion counted its own call sites wrong**, expecting three references to `moreActionsAnchor()` where there are four. Corrected to four plus a count of the panel placements, so a fourth placer added without going through the resolver fails the check.
+
+### Full suite at v3.1.0-P38
+
+| Suite | Result |
+|---|---|
+| TEST-40 print heading, date range, defaults | **91/91** |
+| TEST-39 P36 defect pass | **65/65** |
+| TEST-38 More Actions consolidation | **95/95** |
+| TEST-37 milestone card and progress override | **117/117** |
+| TEST-36 marker anchoring | **73/73** |
+| TEST-35 marker staggering | **38/38** |
+| TEST-34 placement and filter-row defects | **36/36** |
+| TEST-23 persistence round trip | **22/22** |
+| Ingest, board order | exit 0 |
+| Contrast gate | 0 frozen, 0 below 3.0:1 |
+
+**Published:** `releases/v3.1.0-P38_print-heading-date-range-and-view-defaults.html`
 
 ---
 

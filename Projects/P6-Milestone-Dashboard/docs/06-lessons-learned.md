@@ -331,3 +331,36 @@ The zero-dependency filter's tooltip read *"Show only milestones with zero prede
 Nothing was broken in the sense of throwing or rendering wrongly. The code did exactly what it said in its own comment. The defect lived in the gap between the comment and the tooltip, and only a user reading the tooltip could find it.
 
 **A control's label is part of its contract, and it is the part nothing tests.** Worth asking of any filter or toggle: what does the label promise, in what state will a user first try it, and does it do that *there* rather than only in the state the author had set up. This one worked perfectly in the state its author was in and was inert in the state it ships in.
+
+## A probe that could not fire the event the defect lived in (v3.1.0-P38)
+
+The report was that setting one end of the date range did nothing. The first measurement refuted it: an end date alone narrowed the board to 20 of 39 week columns, a start date alone to 24 of 39, identical at 390 and 1440. `dateRangeToCols()` had always left the other end open.
+
+The report was right and the measurement was answering a different question. The probe dispatched a `change` event. `change` on `<input type="date">` does not fire until the field is committed and left, so a date set with the picker or the spinner sat there doing nothing until focus moved elsewhere. The logic was never the defect; **the event was.**
+
+Two things to carry:
+
+- **A synthetic event is a claim about how the control is used.** Dispatching `change` asserts "the user finished and left the field". Every earlier probe in this project fired `change` on these inputs and every one of them passed, because none of them could express the case the user was in. The fix's assertion dispatches `input` **only**, and would fail if `oninput` were removed.
+- **When a measurement refutes a user's report, the next question is what the measurement did differently from the user**, not whether the user was wrong. Both of the last two reports refuted at first measurement (TD-138, TD-143) turned out to be real, in a state or an interaction the probe had not reproduced.
+
+## The fourth occurrence of the same two-paths family, surfaced by a one-word default change (v3.1.0-P38)
+
+Changing `let mHrsVisible=true` to `false` should have been the whole change. It rendered **196 visible hours labels at first paint**, with the checkbox correctly reporting false.
+
+`rerender()` hid all three things a fresh render creates visible (type-code label, milestone hours, remarks); init's first-paint path hid only the label. So the declared default took effect the first time anything triggered a rebuild and not before. TD-59, TD-71 and TD-138 are the same shape: a line added to one build path and not the other.
+
+The fix was not a fourth line at the second call site. The three lines were folded into `applyMarkerLabelState()` inside `reapplyDisplaySettings()`, the function both paths already call, and deleted from both.
+
+**A default is a claim about first paint, so it has to be measured at first paint.** Reading the variable proves nothing: the variable was correct in every one of these four cases. And when the same family reaches its third occurrence, stop fixing the instance: move the thing being forgotten somewhere it cannot be, and let the call sites shrink.
+
+The companion rule, now recorded in the architecture: **anything that must be reapplied after a rebuild goes inside that one function, never beside a call to it.** Written both directions too (`display = on ? '' : 'none'`), so it states the state rather than depending on what a fresh render leaves behind.
+
+## A fix that moved a control off screen, and the measurement that caught it in the same run (v3.1.0-P38)
+
+Aligning the print preview's heading bars to the A3 sheet was correct and made three brand-new controls unreachable: the hit-test profile counted **0 of 3 on screen at 390** and 2 of 3 at 1024. Nothing had broken. A sheet is 1122.5px, the viewport was 390, the page scrolls sideways, and the right-hand end of a sheet-width strip is simply not on screen.
+
+The controls moved to the sheet's left edge, which is on screen at every width, and read 3 of 3 everywhere.
+
+**Widening an element to match a wider thing moves everything at its far end out of reach.** This is a general consequence of aligning chrome to a page rather than to a viewport, and it applies to any control that was safe at the right edge of a viewport-width bar.
+
+The related habit worth keeping: the assertion about the header bar's own trigger, which now scrolls with the sheet, is **conditional on measured room** rather than on a typed viewport width. Where the trigger is on screen the panel must anchor to it; where it is not, the panel must be clamped into the viewport. Both branches still require every row individually reachable. A hardcoded width in that assertion would have been a fifth instance of the constant-standing-in-for-a-measurement family.

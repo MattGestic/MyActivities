@@ -121,6 +121,15 @@ The log is a record of readings, not of changes, so a gap between two rows belon
 | 2026-09-21 | Audit script v3, after the v3.1.0-P37 defect pass | Hardcoded font-size declarations (px) | 115 |
 | 2026-09-21 | `tools/theme_check.py`, after the v3.1.0-P37 pass | Probes expected to toggle, frozen | 0 |
 | 2026-09-21 | `tools/theme_check.py`, after the v3.1.0-P37 pass | Probes below 3.0:1 | 0 |
+| 2026-09-22 | Audit script v3, after the v3.1.0-P38 pass | Hardcoded colour occurrences | 38 |
+| 2026-09-22 | Audit script v3, after the v3.1.0-P38 pass | Distinct hardcoded colour values | 34 |
+| 2026-09-22 | Audit script v3, after the v3.1.0-P38 pass | Colour occurrences matching an existing token exactly | 7 |
+| 2026-09-22 | Audit script v3, after the v3.1.0-P38 pass | `--space-*` token references in file | 71 |
+| 2026-09-22 | Audit script v3, after the v3.1.0-P38 pass | Hardcoded padding/margin/gap declarations (px) | 209 |
+| 2026-09-22 | Audit script v3, after the v3.1.0-P38 pass | `var(--text-*)` font-size references in file | 30 |
+| 2026-09-22 | Audit script v3, after the v3.1.0-P38 pass | Hardcoded font-size declarations (px) | 117 |
+| 2026-09-22 | `tools/theme_check.py`, after the v3.1.0-P38 pass | Probes expected to toggle, frozen | 0 |
+| 2026-09-22 | `tools/theme_check.py`, after the v3.1.0-P38 pass | Probes below 3.0:1 | 0 |
 
 **Re-running the audit:** run `python3 tools/colour_audit.py` from the project root. It regenerates `Hardcoded_Colour_Audit.csv` and prints every metric above.
 
@@ -211,7 +220,8 @@ A defect found in v2 during this same run is recorded here rather than quietly f
 | App header / icon bar | Tokenized | 2026-09-09 |
 | Filter bars (top + sticky search) | Tokenized — sticky search muted text was frozen at the dark value and now follows the theme | 2026-09-09 |
 | Button states (primary/secondary/icon, incl. hover/pressed) | Tokenized | 2026-09-09 |
-| Icon bar and More Actions menu | Tokenized. Built at v3.1.0-P36 on existing tokens only; the audit's colour counts are unchanged across the change | 2026-09-19 |
+| Icon bar and More Actions menu | Tokenized. Built at v3.1.0-P36 on existing tokens only; the audit's colour counts are unchanged across the change. Re-checked at v3.1.0-P38 when the bar gained print-preview sizing and the menu a second trigger; no colour touched | 2026-09-22 |
+| Print preview banner and its controls | Tokenized. The three controls added at v3.1.0-P38 take `--color-chip-attention-bg` / `--color-chip-attention-ink`, the pair the strip already carries, inverted on hover, and `--color-crit` for the notification dot. No new values; the audit's colour counts are unchanged across the change | 2026-09-22 |
 | Milestone dialog | Tokenized. Reworked at v3.1.0-P35 (10% smaller, one schedule row, editable Progress) adding no hardcoded colour: every new declaration uses an existing token | 2026-09-18 |
 | Dependency lines | Tokenized | 2026-09-09 |
 | Dependency tooltip + comment panel | Tokenized — was frozen at dark values, near-white text over a background that toggled to near-white | 2026-09-09 |
