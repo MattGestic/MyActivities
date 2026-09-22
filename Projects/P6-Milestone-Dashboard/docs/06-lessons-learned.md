@@ -364,3 +364,35 @@ The controls moved to the sheet's left edge, which is on screen at every width, 
 **Widening an element to match a wider thing moves everything at its far end out of reach.** This is a general consequence of aligning chrome to a page rather than to a viewport, and it applies to any control that was safe at the right edge of a viewport-width bar.
 
 The related habit worth keeping: the assertion about the header bar's own trigger, which now scrolls with the sheet, is **conditional on measured room** rather than on a typed viewport width. Where the trigger is on screen the panel must anchor to it; where it is not, the panel must be clamped into the viewport. Both branches still require every row individually reachable. A hardcoded width in that assertion would have been a fifth instance of the constant-standing-in-for-a-measurement family.
+
+## A property the browser enforces that no test can see (v3.1.0-P39)
+
+Three size sliders were disabled while the text they scale is switched off. The check set `.value` and dispatched `input`, watched the CSS custom property move, and reported working code as broken.
+
+The experiment could not answer the question in either direction. `dispatchEvent` delivers to an `oninput` listener whether or not the input is disabled, and an untrusted pointer event never drives a range thumb, so an **enabled** slider would have failed the same test. `disabled` is real, the browser enforces it, and nothing writable from a probe can observe it.
+
+The fix was not a cleverer event. It was a **second barrier that is observable**: `pointer-events:none` on the disabled input, measured by asking the document what is at the slider's own centre. Off, the point belongs to the row; on, it belongs to the slider. The negative control runs on the same point.
+
+Two things to carry:
+
+- **When a property cannot be measured, add a mechanism that can, rather than asserting the property and hoping.** `disabled` plus `pointer-events` is also better behaviour, not just a more testable one.
+- **Fourth consecutive occasion where the measurement technique, not the code, was the thing that was wrong** (TD-133, TD-136, TD-140, TD-146). The rule stated at TD-140 held again: when a check fails on a change you have reason to believe is correct, suspect the measurement first and prove it can still tell the two states apart. Here the proof took one line, the enabled case, and it failed too.
+
+## A report against a build that no longer exists (v3.1.0-P39)
+
+"The predecessors and dependencies are not displaying on the page" measured, on the current build, as 675 lines in the DOM and 132 on screen the moment both kinds were switched on, unchanged through a date range, a rerender and a clear, and 0 again when switched off. Nothing was broken.
+
+The screenshot attached to the report was the answer: a **pre-P36 build**, identifiable from the separate header icon buttons, a "Title contains" filter that no longer exists, and a `Title col:` reading the panel no longer produces. In it, the Dependencies row's **All off** button is the active one.
+
+Two things worth keeping:
+
+- **Read the screenshot for which build it is before reading it for the defect.** Three of the eight items in that batch turned on this: one asked to remove a field that had already been removed, one reported a control that works, and the third named labels the current build no longer uses. None of that is the reporter's fault; a user reports against what they have open.
+- **A refuted report gets an assertion, not a shrug.** The measured behaviour is now part of the standing check, so if it ever does break, the failure names itself instead of landing in a thread that already concluded "that was already broken".
+
+## A control that reads as an action among controls that read as state (v3.1.0-P39)
+
+The Remarks row was one button labelled with what it would do next: it read "Hide" while the field was showing. Every other segmented control in the same panel labels the state it selects. Two idioms side by side, one of them inverted, and the only way to know which was which was to try it.
+
+It is now a `Show` / `Hide` pair where the active half is the current state, driven by `setRemarksVisible(on)` which takes the value rather than flipping, so clicking the half that is already active is a no-op instead of turning the field off.
+
+**Within one panel, pick one idiom and keep it.** A relabelling button is defensible on its own; beside four segmented state controls it is a trap. The check asserts the no-op case explicitly, because a flip-on-click implementation passes every other assertion in the set.

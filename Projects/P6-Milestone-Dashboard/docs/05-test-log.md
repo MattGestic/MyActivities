@@ -25,6 +25,7 @@
 | TEST-19 | 2026-09-10 | Publish round trip: does a published file open cold with the schedule, timeline and annotations already in place, and does it carry nothing it should not | Publish captured at the Blob boundary, written to disk, then loaded as a separate page | **Pass after two fixes** | TD-41, TD-42 (both closed same pass), TD-43, TD-44 |
 | TEST-20 | 2026-09-11 | Does a published file describe itself correctly: mount slots, baseline counts, and the header provenance line | Publish probe extended to capture all three mount slots and the header meta | **Pass after fix** — reproduced the user's report first | TD-47, TD-48 (both closed same pass) |
 | TEST-21 | 2026-09-11 | Six requested changes: published schedule as the update, Source cell after a drag, empty-row delete, gutter alignment, column master toggle scope, header chrome colour | Publish round trip plus a combined DOM probe driving each interaction | **5 pass, 1 delivered failing** — the requested `#f4f5f8` is 1.79:1 on the light header | TD-50 (open), TD-51 to TD-55 (closed) |
+| TEST-41 | 2026-09-22 | Eight items in one batch: the Layout section reordered, renamed and extended to 144px; label size sliders moved under their controls and disabled when their text is off; Remarks became a Show / Hide pair; the baseline overlay toggle moved to the heading; the drawer's action bar moved above the tabs; the filter row split into two wrapping columns; and a report that dependency lines do not display | `tools/p39_check.py` at 390x844, 1024x800 and 1440x900, plus nine source-level assertions, and `tools/p29_check.py`'s sticky-footer contract rewritten. The disabled sliders are asserted by **hit test at the slider's own centre**, because `disabled` is not observable through synthetic events in either direction. The one-writer claim is driven through three DIFFERENT entry points (the handler, `setColButtonState`, and a rebuild) and requires control and board to agree after each. The filter row is asserted as "side by side XOR cleanly stacked", with which one decided by measured room. The dependency report is asserted, not fixed | **Pass 108/108**, after the dependency report was refuted by measurement, one assertion was written against a panel that was parked off screen, and one asserted a layer visibility that carries no user-visible difference | TD-146 to TD-150, TD-151 and TD-152 raised |
 | TEST-40 | 2026-09-22 | Print preview heading aligned to the sheet and given its own controls; the date range activating on set with one end open; the default view opening on Activity ID labels with hours off | `tools/p38_check.py` at 390x844, 1024x800 and 1440x900, plus seven source-level assertions. Three viewports chosen for **opposite failures**: at 390 and 1024 the A3 sheet is WIDER than the viewport so the bars fell short of it, at 1440 it is narrower so they overhung it. Alignment asserted on the content boxes as well as the outer edges, since matching outer edges alone leaves the bar's text offset by the frame's 8mm padding. The date range assertions dispatch `input` **only**, never `change`, because a probe that fires `change` cannot see the reported defect at all. Each default carries a negative control: the hours toggle is flipped and must go the other way, and the title mode is switched to `both` and must gain the ` _ ` joiner the `id` assertion requires be absent | **Pass 91/91**, after the first measurement refuted the date-range report as written, one probe assertion was wrong about a correct ID fallback, and the change surfaced TD-145 | TD-142 to TD-145 |
 | TEST-39 | 2026-09-21 | Four defects reported against the P36 build: the More Actions menu clipped to the header row, the Title col slider appearing to do nothing, the zero-dependency filter doing nothing, and the ID suggestions painting behind the board | `tools/p37_check.py` at 390x844, 1440x900 and 2000x900, plus five source-level assertions. Both popups are asserted by **hit-test profile** and by counting individually reachable children, because the clipping-aware ancestor walk written at P36 cannot answer the question for a `position:fixed` element. The zero filter is asserted from the DEFAULT state with dependencies off, which is the state the report came from | **Pass 65/65**, after the first measurement refuted one report and the P36 measurement technique wrongly reported a working fix as broken | TD-137 to TD-140, TD-141 raised |
 | TEST-38 | 2026-09-19 | More Actions: seven header icon buttons collapsed into one menu, with the app name and version text beside it | `tools/p36_check.py` at three viewport widths, plus the previous release rendered in the same browser at the same viewports for the before/after. The claim that no state-writing function had to change is asserted by **diffing those function bodies against the previous release**, not by reading them. The active-row state is asserted on computed background against an inactive row, because `.icon-btn.on` and `.icon-btn.ib-mi` have equal specificity and class presence proves nothing. `p32_check`'s TD-72 guard was rewritten to the new contract and given a negative control | **Pass 95/95**, after one wrong assumption about the phone-width label and one wrong measurement in the rewritten TD-72 guard | TD-134, TD-135, TD-136 |
@@ -1407,6 +1408,89 @@ Marker containment by setting, labels on, ID + Title:
 | Baseline render | unchanged, 105 rows / 146 milestones imported |
 
 **Published:** `releases/v3.1.0-P32_marker-placement-and-filter-row-fixes.html`
+
+---
+
+## TEST-41 — View Controls rework, heading toggle, action bar, filter row (v3.1.0-P39)
+
+`tools/p39_check.py`, **108/108**, at 390x844, 1024x800 and 1440x900. Nine assertions are source-level. `tools/p29_check.py` went 49 to 52 checks with its action-bar contract rewritten.
+
+### The dependency report, refuted and then asserted
+
+Measured from the state the board opens in, driving only the real controls:
+
+| State | Lines in the DOM | On screen | Layer visibility |
+|---|---|---|---|
+| board as it opens | 0 | 0 | hidden |
+| both kinds switched on | **675** | 132 | visible |
+| the reported date range applied | 478 | 132 | visible |
+| after a rerender | 478 | 132 | visible |
+| range cleared | 675 | 132 | visible |
+| both kinds switched off | **0** | 0 | visible |
+
+143 of the milestones carry dependency data. Identical at 390 and 1440.
+
+The screenshot the report came with is a **pre-P36 build**: separate header icon buttons rather than the More Actions trigger, a "Title contains" field that no longer exists, `Title col: 286px`. In it, the Dependencies row's **All off** button is the active one, which is the state that draws nothing.
+
+This is asserted permanently as part of this check rather than fixed, so a real regression here cannot hide behind "that was already broken". **TD-151, open** pending the user's own look at a P39 build with the state they see it in.
+
+### `disabled` cannot be measured with a synthetic event
+
+The first draft of the disabled-slider check set `.value` and dispatched `input`, saw the scale move, and reported working code as broken. That experiment cannot answer the question in either direction: `dispatchEvent` reaches an `oninput` listener whether or not the input is disabled, and an untrusted pointer event never drives a range thumb, so an enabled slider would have failed the same test.
+
+What does answer it is asking the document what is at the slider's own centre, with `pointer-events:none` on the disabled input as a second, observable barrier:
+
+| Label state | Element at the slider's centre |
+|---|---|
+| off | `row-label-scale` (the row, which still carries the tooltip explaining why) |
+| on | `label-scale` (the slider itself) |
+
+Plus the negative control on the same point: enabled, the drag moves `--label-scale` 1 to 1.5.
+
+**Fourth time a measurement technique, not the code, has been the thing that was wrong** (TD-133, TD-136, TD-140, TD-146).
+
+### One writer, three entry points
+
+`applyMarkerLabelState()` now writes the board, the two checkboxes, the two remarks buttons and the three disabled states. The check drives each through a different entry point and requires the control and the board to agree after each: the handler, `setColButtonState` (the path a published file and an imported settings block take), and a rebuild. That disagreement is the family this consolidation closes (TD-59, TD-71, TD-138, TD-145). `toggleShortTitles()`, `toggleRemarks()` and `toggleRemarksBtn()` were removed: all three were second writers of a variable this function owns, and two of them were already dead.
+
+### Measured after
+
+| Thing | Result |
+|---|---|
+| Column Width at maximum | `--colw` 144px, cell renders **144.0px**, fit clamp raised to match so fitting cannot beat dragging |
+| Labels section order | title, `row-label-scale`, hrs, `row-hrs-scale`, title mode, `row-title-scale` |
+| Row Comments field | Show active, 159 fields shown; Hide active, 0 shown; clicking the active half again is a no-op |
+| Baseline shadow | in `.rpt-sub-view`, within 1px of the View toggle's top line, disabled in the Baseline view with the reason as its tooltip, gone from the panel and its note gone with it |
+| Action bar | bottom 103.2 against tabs top 103.2; CSV, JSON, Save as new dashboard right anchored; Clear all comments on the line below |
+| Filter row | 2 columns holding 4 and 2 groups; side by side at 1024 and 1440, stacked at 390; rule 496 to 704px wide above the date range; summary full width beneath; open bar 108px against 101px of content |
+
+### Three probe defects found by verification
+
+- **An assertion written against a panel parked off screen.** The hit test answered `(nothing)` in both states, because `#filter-bar` sits at `translateX(100%)` until opened. It now opens the panel first and closes it before anything else is measured, since the open panel reserves a 300px right margin on `<body>`.
+- **An assertion on a visibility that carries no user-visible difference** (TD-152). `#dep-line-layer` computes hidden on a board nothing has touched and visible on one that has drawn and cleared, because `setWkWidth` reaches the drag-hide at first paint and only `drawDepLines` clears it. An empty `pointer-events:none` SVG paints nothing either way, so the check records it and asserts on the line count.
+- **The synthetic-drag check**, above.
+
+### Full suite at v3.1.0-P39
+
+| Suite | Result |
+|---|---|
+| TEST-41 View Controls, heading, action bar, filter row | **108/108** |
+| TEST-40 print heading, date range, defaults | **91/91** |
+| TEST-39 P36 defect pass | **65/65** |
+| TEST-38 More Actions consolidation | **95/95** |
+| TEST-37 milestone card and progress override | **117/117** |
+| TEST-36 marker anchoring | **73/73** |
+| TEST-35 marker staggering | **38/38** |
+| TEST-34 placement and filter-row defects | **36/36** |
+| TEST-33 multi-source ingest | **67/67** |
+| TEST-32 settings panel design system | **52/52** |
+| TEST-31 date range | **34/34** |
+| TEST-30 counts, baseline overlay, print | **32/32** |
+| TEST-23 persistence round trip | **22/22** |
+| Ingest, board order | exit 0 |
+| Contrast gate | 0 frozen, 0 below 3.0:1 |
+
+**Published:** `releases/v3.1.0-P39_view-controls-rework-and-filter-row.html`
 
 ---
 

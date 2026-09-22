@@ -170,20 +170,48 @@ PROBE = r"""
     ck('layout: the tab strip scrolls rather than wrapping',
        !!strip && getComputedStyle(strip).overflowX==='auto' && getComputedStyle(strip).flexWrap!=='wrap',
        strip?getComputedStyle(strip).overflowX+'/'+getComputedStyle(strip).flexWrap:'missing');
+    // The action bar moved above the tabs at v3.1.0-P39 (TD-149), so it is no
+    // longer a sticky footer. The contract it replaces: it is the first thing
+    // in the drawer under the heading, above the tab strip, and on screen
+    // without scrolling when the drawer opens. Asserted in BOTH document order
+    // and geometry, because either alone can be satisfied while the other is
+    // wrong. The old sticky assertion's companion check ("still on screen when
+    // scrolled to the foot") could pass vacuously whenever the open tab was
+    // short enough not to scroll, so it is not carried over in that form.
     const act=DR.querySelector('.sd-actions');
-    ck('layout: the action bar is a sticky footer',
-       !!act && getComputedStyle(act).position==='sticky' && getComputedStyle(act).bottom==='0px',
-       act?getComputedStyle(act).position+'@'+getComputedStyle(act).bottom:'missing');
-    // It has to still be on screen with the panel scrolled to the bottom of
-    // its longest tab, which is the only thing "sticky" actually promises.
-    setSettingsTab('import'); await settle();
-    DR.scrollTop=DR.scrollHeight;
-    await settle();
+    R.notes.actionsPos=act?getComputedStyle(act).position:'missing';
+    ck('layout: the action bar comes before the tab strip in document order',
+       !!act && !!strip &&
+       (act.compareDocumentPosition(strip)&Node.DOCUMENT_POSITION_FOLLOWING)!==0,
+       act?'position '+R.notes.actionsPos:'missing');
+    DR.scrollTop=0; await settle();
     const ar=act.getBoundingClientRect(), dr=DR.getBoundingClientRect();
-    R.notes.footerBottom=Math.round(ar.bottom)+' vs drawer '+Math.round(dr.bottom);
-    ck('layout: the action bar is still on screen when scrolled to the foot',
-       ar.bottom<=dr.bottom+1 && ar.top>=dr.top, R.notes.footerBottom);
-    DR.scrollTop=0;
+    const sr=strip.getBoundingClientRect();
+    R.notes.actionsBox=Math.round(ar.top)+'..'+Math.round(ar.bottom)+
+                       ' drawer '+Math.round(dr.top)+'..'+Math.round(dr.bottom)+
+                       ' tabs at '+Math.round(sr.top);
+    ck('layout: it sits above the tabs and is on screen with the drawer opened',
+       ar.bottom<=sr.top+1 && ar.top>=dr.top-1 && ar.bottom<=dr.bottom,
+       R.notes.actionsBox);
+    // Three exports on one row, the destructive action alone on the next.
+    const main=act.querySelector('.sd-actions-main');
+    const danger=act.querySelector('.sd-actions-danger .sd-btn-danger');
+    const mainBtns=main?main.querySelectorAll('button'):[];
+    const labels=Array.prototype.map.call(mainBtns,function(b){
+      return b.textContent.replace(/[^A-Za-z ]/g,'').trim(); });
+    R.notes.actionOrder=labels;
+    ck('layout: CSV, JSON then Save as new dashboard, in that order',
+       labels.length===3 && /CSV/.test(labels[0]) && /JSON/.test(labels[1]) &&
+       /Save as new dashboard/.test(labels[2]), labels.join(' | '));
+    const mb=mainBtns.length?mainBtns[mainBtns.length-1].getBoundingClientRect():null;
+    const mr=main?main.getBoundingClientRect():null;
+    ck('layout: that row is anchored to the right edge of the drawer',
+       !!mb && !!mr && Math.abs(mb.right-mr.right)<=1,
+       mb?Math.round(mb.right)+' against row right '+Math.round(mr.right):'missing');
+    const db=danger?danger.getBoundingClientRect():null;
+    R.notes.dangerBox=db?Math.round(db.top)+' vs exports bottom '+Math.round(mr.bottom):'missing';
+    ck('layout: Clear all comments is on its own line underneath, not beside them',
+       !!db && db.top>=mr.bottom-1, R.notes.dangerBox);
 
     // ================= 3. Tabs =================
     const panels=Array.from(DR.querySelectorAll('.sd-tabpanel'));
