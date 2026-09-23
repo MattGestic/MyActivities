@@ -1477,6 +1477,25 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 .add-ms-err{margin:0;font-size:10.5px;font-weight:600;color:var(--color-status-crit)}
 .add-ms-err[hidden]{display:none}
 .add-ms-foot{display:flex;gap:6px;justify-content:flex-end;margin-top:2px}
+/* The PDF picker. Same shape as the add-milestone dialog: fixed, centred,
+   above the drawer that opens it. */
+.pdf-dialog{position:fixed;z-index:2147483647;box-sizing:border-box;
+  left:50%;top:50%;transform:translate(-50%,-50%);
+  width:min(320px,calc(100vw - 24px));padding:14px 16px;
+  background:var(--color-dialog-bg);color:var(--color-text-ink);
+  border:1px solid var(--color-line-default);border-radius:12px;
+  box-shadow:0 1px 2px var(--color-shadow-dialog-near),0 8px 24px var(--color-shadow-dialog-far);
+  font-family:var(--font-sans)}
+.pdf-dialog[hidden]{display:none}
+.pdf-dialog *,.pdf-dialog *::before,.pdf-dialog *::after{box-sizing:border-box}
+.pdf-dlg-head{display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-5);font-size:13px}
+.pdf-row{display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-4)}
+.pdf-row .ms-lbl{flex:0 0 78px;margin-bottom:0}
+.pdf-seg{display:flex;gap:var(--space-2);flex:1 1 auto}
+.pdf-seg .toggle-btn{flex:1 1 0}
+.pdf-note{margin:var(--space-4) 0 0;font-size:10.5px;line-height:1.45;color:var(--color-text-muted)}
+.pdf-note-quiet{color:var(--color-text-label)}
+.pdf-actions{display:flex;justify-content:flex-end;gap:var(--space-3);margin-top:var(--space-5)}
 .ms-dialog{position:fixed;z-index:2147483647;box-sizing:border-box;width:min(306px,calc(100vw - 24px));padding:14px 16px 13px;background:var(--color-dialog-bg);color:var(--color-text-ink);border:1px solid var(--color-line-default);border-radius:12px;box-shadow:0 1px 2px var(--color-shadow-dialog-near),0 8px 24px var(--color-shadow-dialog-far);font-family:var(--font-sans)}
 .ms-dialog[hidden]{display:none}
 .ms-dialog *,.ms-dialog *::before,.ms-dialog *::after{box-sizing:border-box}
@@ -1765,6 +1784,7 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
       <div class="sd-actions-exports">
         <button class="toggle-btn" onclick="exportCSV()" title="Export the schedule fields and everything entered on the board as CSV">&#11015; CSV</button>
         <button class="toggle-btn" onclick="exportModel()" title="Export the model as JSON">&#11015; JSON</button>
+        <button class="toggle-btn" onclick="openPdfDialog()" title="Export the board as a PDF. The page size is set here, not in the print dialog.">&#11015; PDF</button>
       </div>
       <div class="sd-actions-right">
         <button class="toggle-btn active" onclick="publishDashboard()" title="Write a new standalone HTML file with the current schedule and annotations built in. Upload that to SharePoint and anyone who opens it sees this data, with nothing to import.">&#128190; Save as new dashboard</button>
@@ -2409,6 +2429,35 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
   <div class="add-ms-foot">
     <button class="toggle-btn" onclick="closeAddMilestone()">Cancel</button>
     <button class="toggle-btn active" id="add-ms-save" onclick="saveAddMilestone()">Add milestone</button>
+  </div>
+</div>
+
+<div id="pdf-dialog" class="pdf-dialog" role="dialog" aria-label="Export as PDF" aria-modal="true" hidden>
+  <div class="pdf-dlg-head">
+    <b>Export as PDF</b>
+    <button class="ms-close" onclick="closePdfDialog()" aria-label="Close" style="margin-left:auto">&#10005;</button>
+  </div>
+  <!-- The page size is chosen HERE, not in the print dialog. That is the
+       point of the whole exporter: CSS cannot pick the physical sheet, so an
+       A3 layout printed through a dialog set to A4 was shrunk to 64% and
+       clipped. Writing the page box ourselves removes the dialog entirely. -->
+  <div class="pdf-row"><span class="ms-lbl">Paper</span>
+    <div class="pdf-seg">
+      <button type="button" class="toggle-btn" data-paper="A4" onclick="setPdfPaper('A4')">A4</button>
+      <button type="button" class="toggle-btn" data-paper="A3" onclick="setPdfPaper('A3')">A3</button>
+    </div>
+  </div>
+  <div class="pdf-row"><span class="ms-lbl">Orientation</span>
+    <div class="pdf-seg">
+      <button type="button" class="toggle-btn" data-orient="portrait" onclick="setPdfOrient('portrait')">Portrait</button>
+      <button type="button" class="toggle-btn" data-orient="landscape" onclick="setPdfOrient('landscape')">Landscape</button>
+    </div>
+  </div>
+  <p class="pdf-note" id="pdf-fit-note"></p>
+  <p class="pdf-note pdf-note-quiet">Vector output, selectable text, no external references. Text is set in the PDF base fonts and scaled to the widths on screen, so the layout matches the board.</p>
+  <div class="pdf-actions">
+    <button class="toggle-btn" onclick="closePdfDialog()">Cancel</button>
+    <button class="toggle-btn active" onclick="doPdfExport()">&#11015; Export PDF</button>
   </div>
 </div>
 
@@ -8888,6 +8937,714 @@ function buildCsvRows(){
   });
   return rows;
 }
+// ===== Self-contained PDF export ==========================================
+//
+// A PDF written by hand, in this file, with no library and no external
+// reference in the output. The reason it exists is the print path: the browser
+// print dialog owns the paper size and the margins, CSS @page does not, so a
+// board laid out for A3 was rendered onto A4, shrink-to-fit to 64% and clipped
+// at the right edge. This writes the page box itself, so the dialog is out of
+// the loop entirely.
+//
+// FONTS. The output uses the PDF standard-14 base fonts (Helvetica, its bold,
+// and Courier for the mono runs). Every reader has them built in, so nothing is
+// embedded and nothing is referenced. The app's own stack is "IBM Plex Sans",
+// "Segoe UI", system-ui, and it ships NO font file, so there is no binary here
+// to embed even if the file were allowed to carry one.
+//
+// What is preserved instead is the METRICS. Every string is measured in the
+// browser in the font it is actually rendered in, and the PDF text is given a
+// horizontal scale (Tz) that makes it occupy exactly that width. So the layout
+// is identical to the screen, column for column, rather than reflowing to
+// Helvetica's own widths, and no width table is needed.
+//
+// Coordinates. PDF has its origin bottom-left with y up; the DOM has it
+// top-left with y down. Each page installs one CTM that flips y and applies the
+// page scale, so everything below can be emitted in screen pixels.
+const PDF_PAPERS={A4:{w:210,h:297},A3:{w:297,h:420}};
+const PDF_MARGIN_MM=8;
+const PDF_MM_PT=72/25.4;          // 1mm in PDF points
+// The two page setups a person picks between, and the orientations of each.
+let PDF_PAPER='A3', PDF_ORIENT='landscape';
+// Below this, scaling to fit the width stops being a smaller board and starts
+// being an unreadable one: a 1624px board on A4 portrait fits at 34%, which is
+// roughly 3px text. Past the floor the board is split into vertical BANDS
+// instead, left to right, each carrying the title column so a continuation
+// sheet still says which row is which.
+const PDF_MIN_SCALE=0.62;
+
+// ---- byte-level helpers --------------------------------------------------
+// The xref table stores BYTE offsets, so the document has to be assembled as
+// bytes rather than as a JS string: a multi-byte character anywhere would push
+// every later offset out and the file would not open.
+function pdfBytes(str){
+  const out=new Uint8Array(str.length);
+  for(let i=0;i<str.length;i++) out[i]=str.charCodeAt(i)&0xFF;
+  return out;
+}
+// Characters the app draws that WinAnsi cannot carry. Replaced rather than
+// dropped, so a legend or a filter line still reads as a sentence.
+const PDF_TRANSLIT={'≤':'<=','≥':'>=','≠':'!=','✓':'v',
+  '⚠':'!','●':'o','○':'o','★':'*','☆':'*',
+  '←':'<-','→':'->','↳':'>','…':'...','•':'-',
+  ' ':' ',' ':' ','​':''};
+function pdfText(s){
+  let out='';
+  const str=String(s==null?'':s);
+  for(let i=0;i<str.length;i++){
+    const ch=str[i];
+    if(PDF_TRANSLIT[ch]!==undefined){ out+=PDF_TRANSLIT[ch]; continue; }
+    const c=ch.charCodeAt(0);
+    if(c<256) out+=ch;
+    else if(c===0x2013) out+='-';          // en dash
+    else if(c===0x2014) out+='-';          // em dash
+    else if(c===0x2018||c===0x2019) out+="'";
+    else if(c===0x201C||c===0x201D) out+='"';
+    else out+='?';
+  }
+  return out.replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)');
+}
+function pdfNum(n){
+  if(!isFinite(n)) return '0';
+  const r=Math.round(n*1000)/1000;
+  return String(r);
+}
+
+// ---- colour --------------------------------------------------------------
+// Returns [r,g,b] in 0..1, or null for anything fully transparent, which is
+// the signal not to paint at all rather than to paint white over something.
+function pdfColour(css){
+  if(!css) return null;
+  const m=/rgba?\(([^)]+)\)/.exec(css);
+  if(!m) return null;
+  const p=m[1].split(',').map(function(v){ return parseFloat(v); });
+  if(p.length>3&&!(p[3]>0.02)) return null;
+  const a=(p.length>3)?p[3]:1;
+  // Composited onto white rather than carried as real transparency: an alpha
+  // channel needs an ExtGState per distinct value, and every wash in this file
+  // sits on a light panel anyway.
+  return [(p[0]*a+255*(1-a))/255,(p[1]*a+255*(1-a))/255,(p[2]*a+255*(1-a))/255];
+}
+
+// ---- the content-stream accumulator --------------------------------------
+function pdfStream(){
+  const ops=[];
+  return {
+    ops:ops,
+    op:function(s){ ops.push(s); return this; },
+    save:function(){ ops.push('q'); return this; },
+    restore:function(){ ops.push('Q'); return this; },
+    fill:function(c){ ops.push(pdfNum(c[0])+' '+pdfNum(c[1])+' '+pdfNum(c[2])+' rg'); return this; },
+    strokeCol:function(c){ ops.push(pdfNum(c[0])+' '+pdfNum(c[1])+' '+pdfNum(c[2])+' RG'); return this; },
+    width:function(w){ ops.push(pdfNum(w)+' w'); return this; },
+    rect:function(x,y,w,h){ ops.push(pdfNum(x)+' '+pdfNum(y)+' '+pdfNum(w)+' '+pdfNum(h)+' re'); return this; },
+    text:function(){ return ops.join('\n'); }
+  };
+}
+
+// ---- SVG geometry --------------------------------------------------------
+// An ellipse from four beziers. kappa is the standard circle approximation
+// constant; nothing in this file is a big enough circle for the error to show.
+function pdfEllipse(s,cx,cy,rx,ry){
+  const k=0.5522847498;
+  s.op(pdfNum(cx+rx)+' '+pdfNum(cy)+' m');
+  s.op(pdfNum(cx+rx)+' '+pdfNum(cy+ry*k)+' '+pdfNum(cx+rx*k)+' '+pdfNum(cy+ry)+' '+pdfNum(cx)+' '+pdfNum(cy+ry)+' c');
+  s.op(pdfNum(cx-rx*k)+' '+pdfNum(cy+ry)+' '+pdfNum(cx-rx)+' '+pdfNum(cy+ry*k)+' '+pdfNum(cx-rx)+' '+pdfNum(cy)+' c');
+  s.op(pdfNum(cx-rx)+' '+pdfNum(cy-ry*k)+' '+pdfNum(cx-rx*k)+' '+pdfNum(cy-ry)+' '+pdfNum(cx)+' '+pdfNum(cy-ry)+' c');
+  s.op(pdfNum(cx+rx*k)+' '+pdfNum(cy-ry)+' '+pdfNum(cx+rx)+' '+pdfNum(cy-ry*k)+' '+pdfNum(cx+rx)+' '+pdfNum(cy)+' c');
+}
+// An SVG elliptical arc, as beziers. Only the lock sprite uses one, but a
+// converter that silently skipped A would draw that sprite open.
+function pdfArc(s,x1,y1,rx,ry,rot,laf,sf,x2,y2){
+  if(rx===0||ry===0){ s.op(pdfNum(x2)+' '+pdfNum(y2)+' l'); return; }
+  const phi=rot*Math.PI/180, cosP=Math.cos(phi), sinP=Math.sin(phi);
+  const dx=(x1-x2)/2, dy=(y1-y2)/2;
+  const x1p=cosP*dx+sinP*dy, y1p=-sinP*dx+cosP*dy;
+  let rX=Math.abs(rx), rY=Math.abs(ry);
+  const lam=(x1p*x1p)/(rX*rX)+(y1p*y1p)/(rY*rY);
+  if(lam>1){ const sq=Math.sqrt(lam); rX*=sq; rY*=sq; }
+  const sign=(laf===sf)?-1:1;
+  let num=rX*rX*rY*rY-rX*rX*y1p*y1p-rY*rY*x1p*x1p;
+  const den=rX*rX*y1p*y1p+rY*rY*x1p*x1p;
+  if(num<0) num=0;
+  const co=sign*Math.sqrt(num/den);
+  const cxp=co*rX*y1p/rY, cyp=-co*rY*x1p/rX;
+  const cx=cosP*cxp-sinP*cyp+(x1+x2)/2, cy=sinP*cxp+cosP*cyp+(y1+y2)/2;
+  const ang=function(ux,uy,vx,vy){
+    const d=Math.sqrt((ux*ux+uy*uy)*(vx*vx+vy*vy));
+    let c=(ux*vx+uy*vy)/d; c=Math.max(-1,Math.min(1,c));
+    const a=Math.acos(c);
+    return (ux*vy-uy*vx<0)?-a:a;
+  };
+  const t1=ang(1,0,(x1p-cxp)/rX,(y1p-cyp)/rY);
+  let dt=ang((x1p-cxp)/rX,(y1p-cyp)/rY,(-x1p-cxp)/rX,(-y1p-cyp)/rY);
+  if(!sf&&dt>0) dt-=2*Math.PI;
+  if(sf&&dt<0) dt+=2*Math.PI;
+  const segs=Math.ceil(Math.abs(dt)/(Math.PI/2));
+  const step=dt/segs;
+  const k=4/3*Math.tan(step/4);
+  let th=t1;
+  for(let i=0;i<segs;i++){
+    const c1=Math.cos(th), s1=Math.sin(th);
+    const th2=th+step, c2=Math.cos(th2), s2=Math.sin(th2);
+    const p=function(c,sn){ return [cosP*rX*c-sinP*rY*sn+cx, sinP*rX*c+cosP*rY*sn+cy]; };
+    const pt1=p(c1-k*s1, s1+k*c1);
+    const pt2=p(c2+k*s2, s2-k*c2);
+    const pt3=p(c2,s2);
+    s.op(pdfNum(pt1[0])+' '+pdfNum(pt1[1])+' '+pdfNum(pt2[0])+' '+pdfNum(pt2[1])+' '+pdfNum(pt3[0])+' '+pdfNum(pt3[1])+' c');
+    th=th2;
+  }
+}
+// SVG path data to PDF path operators. tf maps a point in the path's own user
+// space to board space, so the same converter serves the marker sprites (a
+// viewBox scale) and the dependency lines (a translate).
+function pdfSvgPath(s,d,tf){
+  const toks=String(d||'').match(/[a-zA-Z]|-?[\d.]+(?:e-?\d+)?/g);
+  if(!toks) return;
+  let i=0, cmd='', cx=0, cy=0, sx=0, sy=0;
+  const num=function(){ return parseFloat(toks[i++]); };
+  const P=function(x,y){ const p=tf(x,y); return pdfNum(p[0])+' '+pdfNum(p[1]); };
+  while(i<toks.length){
+    if(/[a-zA-Z]/.test(toks[i])) cmd=toks[i++];
+    else if(cmd==='M') cmd='L';
+    else if(cmd==='m') cmd='l';
+    const rel=(cmd===cmd.toLowerCase());
+    const C=cmd.toUpperCase();
+    if(C==='M'){
+      let x=num(), y=num(); if(rel){ x+=cx; y+=cy; }
+      s.op(P(x,y)+' m'); cx=x; cy=y; sx=x; sy=y;
+    } else if(C==='L'){
+      let x=num(), y=num(); if(rel){ x+=cx; y+=cy; }
+      s.op(P(x,y)+' l'); cx=x; cy=y;
+    } else if(C==='H'){
+      let x=num(); if(rel) x+=cx;
+      s.op(P(x,cy)+' l'); cx=x;
+    } else if(C==='V'){
+      let y=num(); if(rel) y+=cy;
+      s.op(P(cx,y)+' l'); cy=y;
+    } else if(C==='C'){
+      let a=num(),b=num(),c=num(),d2=num(),e=num(),f=num();
+      if(rel){ a+=cx;b+=cy;c+=cx;d2+=cy;e+=cx;f+=cy; }
+      s.op(P(a,b)+' '+P(c,d2)+' '+P(e,f)+' c'); cx=e; cy=f;
+    } else if(C==='Q'){
+      // Quadratic raised to cubic: PDF has no quadratic operator, and the
+      // dependency curves are all Q.
+      let qx=num(),qy=num(),x=num(),y=num();
+      if(rel){ qx+=cx;qy+=cy;x+=cx;y+=cy; }
+      const c1x=cx+2/3*(qx-cx), c1y=cy+2/3*(qy-cy);
+      const c2x=x+2/3*(qx-x),  c2y=y+2/3*(qy-y);
+      s.op(P(c1x,c1y)+' '+P(c2x,c2y)+' '+P(x,y)+' c'); cx=x; cy=y;
+    } else if(C==='A'){
+      const rx=num(),ry=num(),rot=num(),laf=num(),sf=num();
+      let x=num(),y=num(); if(rel){ x+=cx; y+=cy; }
+      // Converted in board space, since the transform may scale the radii.
+      const p0=tf(cx,cy), p1=tf(x,y);
+      const scale=Math.abs(tf(1,0)[0]-tf(0,0)[0])||1;
+      pdfArc(s,p0[0],p0[1],rx*scale,ry*scale,rot,laf,sf,p1[0],p1[1]);
+      cx=x; cy=y;
+    } else if(C==='Z'){
+      s.op('h'); cx=sx; cy=sy;
+    } else { i++; }
+  }
+}
+
+// ---- text measurement ----------------------------------------------------
+// One canvas, reused. Two widths per string: the width the browser gives it in
+// the font it is really drawn in, and the width Helvetica would give it. The
+// ratio is the horizontal scale that makes the PDF text occupy the on-screen
+// box exactly.
+let PDF_MEASURE_CTX=null;
+function pdfMeasure(str,cssFont){
+  if(!PDF_MEASURE_CTX) PDF_MEASURE_CTX=document.createElement('canvas').getContext('2d');
+  PDF_MEASURE_CTX.font=cssFont;
+  return PDF_MEASURE_CTX.measureText(str).width;
+}
+function pdfBaseFont(family,weight){
+  const mono=/mono|courier|consolas/i.test(family||'');
+  const bold=(parseInt(weight,10)||400)>=600;
+  if(mono) return bold?'Courier-Bold':'Courier';
+  return bold?'Helvetica-Bold':'Helvetica';
+}
+function pdfBaseCss(base,sizePx){
+  const bold=/Bold/.test(base)?'bold ':'';
+  const fam=/Courier/.test(base)?'Courier, monospace':'Helvetica, Arial, sans-serif';
+  return bold+sizePx+'px '+fam;
+}
+
+// ---- DOM to display list -------------------------------------------------
+// One generic walk rather than a routine per component. The board, the report
+// heading, the legend and the dependency layer all reduce to the same four
+// things: a filled box, four borders, a run of text, and an SVG shape. A
+// per-component exporter would have to be revisited every time the board gains
+// a part, which is the drift this file keeps paying for.
+//
+// Everything is emitted in BOARD SPACE: pixels, origin at the top-left of the
+// captured root, y downwards. The page transform deals with the rest.
+function pdfVisible(el,cs){
+  if(cs.display==='none'||cs.visibility==='hidden') return false;
+  if(parseFloat(cs.opacity)===0) return false;
+  const r=el.getBoundingClientRect();
+  return r.width>0.4&&r.height>0.4;
+}
+function pdfCollect(root,origin,out){
+  const walk=function(el){
+    const cs=getComputedStyle(el);
+    if(!pdfVisible(el,cs)) return;
+    const r=el.getBoundingClientRect();
+    const x=r.left-origin.left, y=r.top-origin.top;
+
+    // Background. border-radius at or past half the short side is drawn as an
+    // ellipse, which is what every health dot and count chip on this board is;
+    // as a rectangle they would read as a different kind of mark entirely.
+    const bg=pdfColour(cs.backgroundColor);
+    if(bg){
+      const rad=parseFloat(cs.borderTopLeftRadius)||0;
+      if(rad>=Math.min(r.width,r.height)/2-0.6&&Math.abs(r.width-r.height)<2)
+        out.push({k:'ellipse',x:x+r.width/2,y:y+r.height/2,rx:r.width/2,ry:r.height/2,fill:bg});
+      else out.push({k:'rect',x:x,y:y,w:r.width,h:r.height,fill:bg});
+    }
+    // Borders, as four thin filled bars. Stroking the box instead would centre
+    // the line on the edge and bleed a half pixel into the neighbouring cell,
+    // which on a 39-column grid is a visible thickening of every rule.
+    const sides=[['Top',x,y,r.width,0],['Bottom',x,y+r.height,r.width,1],
+                 ['Left',x,y,0,r.height],['Right',x+r.width,y,1,r.height]];
+    sides.forEach(function(sd){
+      const w=parseFloat(cs['border'+sd[0]+'Width'])||0;
+      if(w<=0||cs['border'+sd[0]+'Style']==='none') return;
+      const c=pdfColour(cs['border'+sd[0]+'Color']);
+      if(!c) return;
+      if(sd[0]==='Top')    out.push({k:'rect',x:sd[1],y:sd[2],w:sd[3],h:w,fill:c});
+      if(sd[0]==='Bottom') out.push({k:'rect',x:sd[1],y:sd[2]-w,w:sd[3],h:w,fill:c});
+      if(sd[0]==='Left')   out.push({k:'rect',x:sd[1],y:sd[2],w:w,h:sd[4],fill:c});
+      if(sd[0]==='Right')  out.push({k:'rect',x:sd[1]-w,y:sd[2],w:w,h:sd[4],fill:c});
+    });
+
+    // SVG. The marker sprites are <use> into a <symbol>, so the symbol's own
+    // children are drawn with the viewBox scale folded in; the dependency
+    // layer's paths are direct children and carry their own screen CTM.
+    if(el.tagName==='svg'){ pdfCollectSvg(el,origin,out); return; }
+
+    // Form controls hold their value in .value, which is not a text node. The
+    // card's fields are all inputs since P43, so without this the exported
+    // board would show empty boxes where every edited figure is.
+    if(el.tagName==='INPUT'||el.tagName==='TEXTAREA'){
+      const v=String(el.value||'');
+      if(v) pdfPushText(out,v,x,y,r,cs,el);
+      return;
+    }
+    Array.prototype.forEach.call(el.childNodes,function(n){
+      if(n.nodeType===1) walk(n);
+      else if(n.nodeType===3&&n.nodeValue&&n.nodeValue.trim()){
+        // Per-LINE boxes from a Range, not the element box: a wrapped label
+        // drawn at its element box would print as one long line running out of
+        // its cell.
+        const rng=document.createRange();
+        rng.selectNodeContents(n);
+        const rects=rng.getClientRects();
+        const txt=n.nodeValue.replace(/\s+/g,' ');
+        if(!rects.length) return;
+        if(rects.length===1){
+          pdfPushText(out,txt.trim(),rects[0].left-origin.left,rects[0].top-origin.top,rects[0],cs,el);
+        } else {
+          // Multi-line: the text is split proportionally by line width, which
+          // is approximate at the word boundaries but keeps every line inside
+          // its own box.
+          const total=Array.prototype.reduce.call(rects,function(s,q){ return s+q.width; },0);
+          let at=0;
+          Array.prototype.forEach.call(rects,function(q){
+            const take=Math.round(txt.length*(q.width/total));
+            const part=txt.substr(at,take); at+=take;
+            if(part.trim()) pdfPushText(out,part.trim(),q.left-origin.left,q.top-origin.top,q,cs,el);
+          });
+        }
+      }
+    });
+  };
+  walk(root);
+}
+function pdfPushText(out,str,x,y,rect,cs,el){
+  const col=pdfColour(cs.color);
+  if(!col||!str) return;
+  const size=parseFloat(cs.fontSize)||10;
+  const base=pdfBaseFont(cs.fontFamily,cs.fontWeight);
+  const cssFont=(cs.fontStyle==='italic'?'italic ':'')+cs.fontWeight+' '+size+'px '+cs.fontFamily;
+  let shown=str, wantW=pdfMeasure(shown,cssFont);
+  // Truncate to the element's content box the way the screen does, so a title
+  // that is ellipsised on the board is ellipsised in the file rather than
+  // running across the columns beside it.
+  const holder=el.getBoundingClientRect();
+  const maxW=Math.max(holder.width-2,8);
+  if(wantW>maxW+1&&shown.length>1){
+    while(shown.length>1&&pdfMeasure(shown+'...',cssFont)>maxW) shown=shown.slice(0,-1);
+    shown=shown+'...';
+    wantW=pdfMeasure(shown,cssFont);
+  }
+  const helvW=pdfMeasure(shown,pdfBaseCss(base,size))||wantW;
+  out.push({k:'text',s:shown,x:x,
+            // PDF places text on its baseline; the DOM rect is the line box.
+            // 0.79 of the size is where a baseline sits for these faces, and
+            // it is applied from the line box's own top rather than from the
+            // element's, so a wrapped run is not drawn on one line.
+            y:y+(rect.height>0?Math.min(rect.height*0.79,size*0.95+(rect.height-size)/2):size*0.79),
+            size:size,font:base,fill:col,
+            tz:helvW>0?(wantW/helvW*100):100});
+}
+function pdfCollectSvg(svg,origin,out){
+  const r=svg.getBoundingClientRect();
+  const cs=getComputedStyle(svg);
+  const cur=pdfColour(cs.color)||[0,0,0];
+  const use=svg.querySelector('use');
+  if(use){
+    const href=use.getAttribute('href')||use.getAttribute('xlink:href')||'';
+    const sym=href?document.querySelector(href):null;
+    if(!sym) return;
+    const vb=(sym.getAttribute('viewBox')||'0 0 20 20').split(/\s+/).map(Number);
+    const sx=r.width/(vb[2]||20), sy=r.height/(vb[3]||20);
+    const ox=r.left-origin.left, oy=r.top-origin.top;
+    const tf=function(px,py){ return [ox+(px-vb[0])*sx, oy+(py-vb[1])*sy]; };
+    // fill:none on the SVG means an outline marker, which is the whole
+    // finished / not finished convention; it has to survive the export or
+    // every marker in the file reads as finished.
+    const filled=(cs.fill!=='none'&&pdfColour(cs.fill)!==null);
+    const swRaw=parseFloat(cs.strokeWidth);
+    const sw=(isFinite(swRaw)?swRaw:1)*sx;
+    Array.prototype.forEach.call(sym.children,function(ch){
+      pdfSvgShape(ch,out,tf,filled?cur:null,cur,sw,sx);
+    });
+    return;
+  }
+  // A plain SVG layer, the dependency lines among them. getScreenCTM is the
+  // general answer for user space to screen; it also covers a viewBox if one
+  // is ever added to the layer.
+  const shapes=svg.querySelectorAll('path,line,circle,rect,polyline,polygon');
+  Array.prototype.forEach.call(shapes,function(sh){
+    const ctm=sh.getScreenCTM?sh.getScreenCTM():null;
+    if(!ctm) return;
+    const tf=function(px,py){
+      return [ctm.a*px+ctm.c*py+ctm.e-origin.left, ctm.b*px+ctm.d*py+ctm.f-origin.top];
+    };
+    const scs=getComputedStyle(sh);
+    if(!pdfVisible(sh,scs)&&sh.tagName!=='path'&&sh.tagName!=='line') return;
+    if(scs.display==='none'||scs.visibility==='hidden') return;
+    const stroke=pdfColour(scs.stroke);
+    const fill=(scs.fill&&scs.fill!=='none')?pdfColour(scs.fill):null;
+    const sw=(parseFloat(scs.strokeWidth)||1)*Math.abs(ctm.a||1);
+    const dash=scs.strokeDasharray&&scs.strokeDasharray!=='none'?scs.strokeDasharray:null;
+    pdfSvgShape(sh,out,tf,fill,stroke,sw,Math.abs(ctm.a||1),dash);
+  });
+}
+function pdfSvgShape(el,out,tf,fill,stroke,sw,scale,dash){
+  const tag=el.tagName;
+  const ownFill=el.getAttribute('fill');
+  const f=(ownFill==='none')?null:fill;
+  if(tag==='path'){
+    out.push({k:'svgpath',d:el.getAttribute('d')||'',tf:tf,fill:f,stroke:stroke,sw:sw,dash:dash});
+  } else if(tag==='line'){
+    const d='M '+el.getAttribute('x1')+' '+el.getAttribute('y1')+' L '+el.getAttribute('x2')+' '+el.getAttribute('y2');
+    out.push({k:'svgpath',d:d,tf:tf,fill:null,stroke:stroke,sw:sw,dash:dash});
+  } else if(tag==='circle'){
+    const c=tf(parseFloat(el.getAttribute('cx'))||0,parseFloat(el.getAttribute('cy'))||0);
+    const rr=(parseFloat(el.getAttribute('r'))||0)*scale;
+    out.push({k:'ellipse',x:c[0],y:c[1],rx:rr,ry:rr,fill:f,stroke:stroke,sw:sw});
+  } else if(tag==='rect'){
+    const p=tf(parseFloat(el.getAttribute('x'))||0,parseFloat(el.getAttribute('y'))||0);
+    const p2=tf((parseFloat(el.getAttribute('x'))||0)+(parseFloat(el.getAttribute('width'))||0),
+                (parseFloat(el.getAttribute('y'))||0)+(parseFloat(el.getAttribute('height'))||0));
+    out.push({k:'rect',x:p[0],y:p[1],w:p2[0]-p[0],h:p2[1]-p[1],fill:f,stroke:stroke,sw:sw});
+  } else if(tag==='polyline'||tag==='polygon'){
+    const pts=(el.getAttribute('points')||'').trim().split(/[\s,]+/).map(Number);
+    let d='';
+    for(let i=0;i+1<pts.length;i+=2) d+=(i?' L ':'M ')+pts[i]+' '+pts[i+1];
+    if(tag==='polygon') d+=' Z';
+    out.push({k:'svgpath',d:d,tf:tf,fill:f,stroke:stroke,sw:sw,dash:dash});
+  }
+}
+
+// ---- emit one display list into a content stream --------------------------
+function pdfEmit(s,list,fontMap){
+  list.forEach(function(it){
+    if(it.k==='rect'){
+      if(it.fill){ s.fill(it.fill); s.rect(it.x,it.y,it.w,it.h); s.op('f'); }
+      if(it.stroke){ s.strokeCol(it.stroke); s.width(it.sw||1); s.rect(it.x,it.y,it.w,it.h); s.op('S'); }
+    } else if(it.k==='ellipse'){
+      if(it.fill){ s.fill(it.fill); pdfEllipse(s,it.x,it.y,it.rx,it.ry); s.op('f'); }
+      if(it.stroke){ s.strokeCol(it.stroke); s.width(it.sw||1); pdfEllipse(s,it.x,it.y,it.rx,it.ry); s.op('S'); }
+    } else if(it.k==='svgpath'){
+      s.save();
+      if(it.dash){
+        const parts=String(it.dash).split(/[\s,]+/).map(parseFloat).filter(function(v){return isFinite(v);});
+        if(parts.length) s.op('['+parts.map(pdfNum).join(' ')+'] 0 d');
+      }
+      s.op('1 J 1 j');
+      pdfSvgPath(s,it.d,it.tf);
+      if(it.fill&&it.stroke){ s.fill(it.fill); s.strokeCol(it.stroke); s.width(it.sw||1); s.op('B'); }
+      else if(it.fill){ s.fill(it.fill); s.op('f'); }
+      else if(it.stroke){ s.strokeCol(it.stroke); s.width(it.sw||1); s.op('S'); }
+      else s.op('n');
+      s.restore();
+    } else if(it.k==='text'){
+      s.fill(it.fill);
+      s.op('BT');
+      s.op('/'+fontMap[it.font]+' '+pdfNum(it.size)+' Tf');
+      if(Math.abs(it.tz-100)>0.5) s.op(pdfNum(it.tz)+' Tz');
+      // The text matrix carries the y flip back, so glyphs are upright inside
+      // a page CTM that is itself flipped.
+      s.op('1 0 0 -1 '+pdfNum(it.x)+' '+pdfNum(it.y)+' Tm');
+      s.op('('+pdfText(it.s)+') Tj');
+      s.op('ET');
+      if(Math.abs(it.tz-100)>0.5) s.op('100 Tz');
+    }
+  });
+}
+
+// ---- the file itself ------------------------------------------------------
+// Objects, an xref table and a trailer. The xref stores byte offsets, so the
+// body is assembled once as a string of single-byte characters and every
+// offset is that string's length at the moment the object starts.
+async function pdfDeflate(str){
+  if(typeof CompressionStream==='undefined') return null;
+  try{
+    const src=pdfBytes(str);
+    const cs=new CompressionStream('deflate');
+    const w=cs.writable.getWriter(); w.write(src); w.close();
+    const buf=await new Response(cs.readable).arrayBuffer();
+    const u8=new Uint8Array(buf);
+    let out=''; for(let i=0;i<u8.length;i++) out+=String.fromCharCode(u8[i]);
+    return out;
+  }catch(e){ return null; }
+}
+async function pdfBuild(pages,pageWpt,pageHpt){
+  const FONTS=['Helvetica','Helvetica-Bold','Courier','Courier-Bold'];
+  const objs=[];                       // 1-based; objs[0] is object 1
+  const add=function(body){ objs.push(body); return objs.length; };
+  const kidIds=[];
+  const pagesId=1;                     // reserved, written last
+  objs.push('');                       // placeholder for the Pages object
+  const fontIds={};
+  FONTS.forEach(function(f){
+    fontIds[f]=add('<< /Type /Font /Subtype /Type1 /BaseFont /'+f+' /Encoding /WinAnsiEncoding >>');
+  });
+  for(let pi=0;pi<pages.length;pi++){
+    let content=pages[pi], filter='';
+    const z=await pdfDeflate(content);
+    if(z!==null){ content=z; filter=' /Filter /FlateDecode'; }
+    const sid=add('<< /Length '+content.length+filter+' >>\nstream\n'+content+'\nendstream');
+    const res='<< /Font << '+FONTS.map(function(f,i){
+      return '/F'+(i+1)+' '+fontIds[f]+' 0 R';
+    }).join(' ')+' >> >>';
+    kidIds.push(add('<< /Type /Page /Parent '+pagesId+' 0 R /MediaBox [0 0 '+
+      pdfNum(pageWpt)+' '+pdfNum(pageHpt)+'] /Resources '+res+
+      ' /Contents '+sid+' 0 R >>'));
+  }
+  objs[0]='<< /Type /Pages /Count '+kidIds.length+' /Kids ['+
+    kidIds.map(function(i){ return i+' 0 R'; }).join(' ')+'] >>';
+  const catId=add('<< /Type /Catalog /Pages '+pagesId+' 0 R >>');
+
+  let out='%PDF-1.4\n%\xE2\xE3\xCF\xD3\n';
+  const offsets=[];
+  objs.forEach(function(body,i){
+    offsets.push(out.length);
+    out+=(i+1)+' 0 obj\n'+body+'\nendobj\n';
+  });
+  const xref=out.length;
+  out+='xref\n0 '+(objs.length+1)+'\n0000000000 65535 f \n';
+  offsets.forEach(function(o){
+    out+=('0000000000'+o).slice(-10)+' 00000 n \n';
+  });
+  out+='trailer\n<< /Size '+(objs.length+1)+' /Root '+catId+' 0 R >>\nstartxref\n'+xref+'\n%%EOF\n';
+  return pdfBytes(out);
+}
+
+// ---- the export -----------------------------------------------------------
+// Captured from the board as it stands on screen, so what is exported is what
+// the person is looking at, filters and all. The heading block is drawn at the
+// top of EVERY page, with the table's own header rows under it, because a
+// continuation sheet with no week columns on it cannot be read.
+async function exportPDF(paper,orient){
+  const spec=PDF_PAPERS[paper||PDF_PAPER]||PDF_PAPERS.A3;
+  const land=(orient||PDF_ORIENT)==='landscape';
+  const pageWmm=land?spec.h:spec.w, pageHmm=land?spec.w:spec.h;
+  const pageWpt=pageWmm*PDF_MM_PT, pageHpt=pageHmm*PDF_MM_PT;
+  const mpt=PDF_MARGIN_MM*PDF_MM_PT;
+  const availW=pageWpt-2*mpt, availH=pageHpt-2*mpt;
+
+  const table=document.getElementById('main-table');
+  const hd=document.getElementById('rpt-hd');
+  if(!table) return;
+
+  // Board space origin: the leftmost of the heading and the table, so both
+  // sit in one coordinate system and the scale is decided once.
+  const tRect=table.getBoundingClientRect();
+  const hRect=hd?hd.getBoundingClientRect():tRect;
+  const origin={left:Math.min(tRect.left,hRect.left),top:Math.min(tRect.top,hRect.top)};
+  const boardW=Math.max(tRect.right,hRect.right)-origin.left;
+
+  // The title column, which every band repeats. Without it a second band is a
+  // grid of markers with nothing naming the rows.
+  const nameCell=table.querySelector('tbody tr .c-name, thead .c-name');
+  const nameW=nameCell?nameCell.getBoundingClientRect().width:0;
+
+  // One scale, from the width. Never above 1, because a small board blown up
+  // to fill an A3 sheet would render every hairline as a bar; and never below
+  // the legibility floor, because past that the answer is more pages, not
+  // smaller type.
+  const kFit=Math.min(availW/boardW,1);
+  const k=Math.max(kFit,PDF_MIN_SCALE);
+  // How much BOARD width one page can carry once the repeated title column has
+  // taken its share, and therefore how many bands the board needs.
+  const bandPxW=Math.max(availW/k-nameW,40);
+  const bandCount=(kFit>=PDF_MIN_SCALE)?1:Math.ceil((boardW-nameW)/bandPxW);
+
+  // The repeating block: the report heading plus the table's own <thead>.
+  const headList=[];
+  if(hd){
+    const n0=headList.length;
+    pdfCollect(hd,origin,headList);
+    for(let i=n0;i<headList.length;i++) headList[i].fromHead=true;
+  }
+  const thead=table.querySelector('thead');
+  if(thead) pdfCollect(thead,origin,headList);
+  const theadTopPx=thead?(thead.getBoundingClientRect().top-origin.top):0;
+  const theadHpt=thead?(thead.getBoundingClientRect().height*1):0;
+  const headTopPx=(hd?hRect.top:tRect.top)-origin.top;
+  const theadRect=thead?thead.getBoundingClientRect():null;
+  const headBottomPx=theadRect?(theadRect.bottom-origin.top):((hd?hRect.bottom:tRect.top)-origin.top);
+  const headHpt=(headBottomPx-headTopPx)*Math.min(availW/boardW,1);
+
+  // Body rows, each captured once and placed on whichever page it lands on. A
+  // row is never split across a page boundary: half a row of markers is worse
+  // than a short page.
+  const rows=Array.prototype.filter.call(table.querySelectorAll('tbody tr'),function(tr){
+    const cs=getComputedStyle(tr);
+    return cs.display!=='none'&&tr.getBoundingClientRect().height>0.5;
+  });
+  const bodyH=availH-headHpt;
+  const pagesOfRows=[]; let cur=[], curH=0;
+  rows.forEach(function(tr){
+    const h=tr.getBoundingClientRect().height*k;
+    if(cur.length&&curH+h>bodyH){ pagesOfRows.push(cur); cur=[]; curH=0; }
+    cur.push(tr); curH+=h;
+  });
+  if(cur.length) pagesOfRows.push(cur);
+  if(!pagesOfRows.length) pagesOfRows.push([]);
+
+  // The dependency layer spans the whole board rather than any one row, so it
+  // is captured once and clipped per page to the rows that page carries.
+  const depLayer=document.getElementById('dep-line-layer');
+  const depList=[];
+  if(depLayer&&getComputedStyle(depLayer).visibility!=='hidden') pdfCollectSvg(depLayer,origin,depList);
+
+  const fontMap={'Helvetica':'F1','Helvetica-Bold':'F2','Courier':'F3','Courier-Bold':'F4'};
+  const streams=[];
+  // Row groups are the outer loop and bands the inner one, so a reader gets
+  // the whole width of a set of rows before the rows move on. The other order
+  // would have them reading the left of the board for six sheets and then
+  // going back to the start for the right of it.
+  pagesOfRows.forEach(function(group){
+    for(let band=0;band<bandCount;band++){
+      const s=pdfStream();
+      // White sheet, so a reader is not looking at whatever their viewer uses.
+      s.fill([1,1,1]); s.rect(0,0,pageWpt,pageHpt); s.op('f');
+      // Where this band starts in board space, and the shift that brings it
+      // to just right of the repeated title column.
+      const x0=(bandCount===1)?0:(nameW+band*bandPxW);
+      const shift=(bandCount===1)?0:k*(nameW-x0);
+      const splitPt=mpt+((bandCount===1)?0:nameW*k);
+
+      // The heading is a text block, not part of the grid, so it is fitted to
+      // the page on its own rather than banded: a continuation sheet whose
+      // heading was cut in half would be worse than one that repeats it.
+      const kHead=Math.min(availW/boardW,1);
+      s.save();
+      s.rect(mpt,mpt,availW,availH); s.op('W n');
+      s.op(pdfNum(kHead)+' 0 0 '+pdfNum(-kHead)+' '+pdfNum(mpt)+' '+pdfNum(pageHpt-mpt+kHead*headTopPx)+' cm');
+      pdfEmit(s,headList.filter(function(it){ return it.fromHead; }),fontMap);
+      s.restore();
+
+      // The two clipped groups that make a band. The display list is emitted
+      // in BOTH and the clip does the selecting, rather than the list being
+      // filtered by x: an item's x is easy to read off a rect and not off a
+      // path's transform, and a filter that got that wrong would drop
+      // dependency lines silently.
+      const drawStrip=function(list,clipX,clipW,clipY,clipH,tx,ty){
+        if(clipW<=0.5) return;
+        s.save();
+        s.rect(clipX,clipY,clipW,clipH); s.op('W n');
+        s.op(pdfNum(k)+' 0 0 '+pdfNum(-k)+' '+pdfNum(tx)+' '+pdfNum(ty)+' cm');
+        pdfEmit(s,list,fontMap);
+        s.restore();
+      };
+      // Column headers, under the heading block.
+      const theadList=headList.filter(function(it){ return !it.fromHead; });
+      const thY=pageHpt-mpt-(headHpt-theadHpt);
+      if(bandCount>1) drawStrip(theadList,mpt,nameW*k,mpt,availH,mpt,thY+k*theadTopPx);
+      drawStrip(theadList,splitPt,mpt+availW-splitPt,mpt,availH,mpt+shift,thY+k*theadTopPx);
+
+      if(group.length){
+        const top=group[0].getBoundingClientRect().top-origin.top;
+        const bodyList=[];
+        group.forEach(function(tr){ pdfCollect(tr,origin,bodyList); });
+        const bodyY=pageHpt-mpt-headHpt+k*top;
+        const bodyClipY=mpt, bodyClipH=availH-headHpt;
+        if(bandCount>1) drawStrip(bodyList,mpt,nameW*k,bodyClipY,bodyClipH,mpt,bodyY);
+        // The dependency lines go with the week strip, not the title column:
+        // they live over the grid.
+        s.save();
+        s.rect(splitPt,bodyClipY,mpt+availW-splitPt,bodyClipH); s.op('W n');
+        s.op(pdfNum(k)+' 0 0 '+pdfNum(-k)+' '+pdfNum(mpt+shift)+' '+pdfNum(bodyY)+' cm');
+        pdfEmit(s,bodyList,fontMap);
+        if(depList.length) pdfEmit(s,depList,fontMap);
+        s.restore();
+      }
+      streams.push(s.text());
+    }
+  });
+
+  const bytes=await pdfBuild(streams,pageWpt,pageHpt);
+  const blob=new Blob([bytes],{type:'application/pdf'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='eskay_dashboard_'+(paper||PDF_PAPER)+'_'+((orient||PDF_ORIENT)==='landscape'?'L':'P')+'.pdf';
+  a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); },4000);
+  return {pages:streams.length,scale:k,boardW:boardW,pageWpt:pageWpt,pageHpt:pageHpt};
+}
+function openPdfDialog(){
+  const d=document.getElementById('pdf-dialog');
+  if(!d) return;
+  d.hidden=false;
+  syncPdfDialog();
+}
+function closePdfDialog(){
+  const d=document.getElementById('pdf-dialog');
+  if(d) d.hidden=true;
+}
+function setPdfPaper(v){ PDF_PAPER=v; syncPdfDialog(); }
+function setPdfOrient(v){ PDF_ORIENT=v; syncPdfDialog(); }
+// One writer for the picker's state and for the fit line under it, so the
+// figure a person reads is computed from the same numbers the export uses
+// rather than from a second copy of the arithmetic.
+function syncPdfDialog(){
+  document.querySelectorAll('#pdf-dialog [data-paper]').forEach(function(b){
+    b.classList.toggle('active',b.getAttribute('data-paper')===PDF_PAPER); });
+  document.querySelectorAll('#pdf-dialog [data-orient]').forEach(function(b){
+    b.classList.toggle('active',b.getAttribute('data-orient')===PDF_ORIENT); });
+  const note=document.getElementById('pdf-fit-note');
+  if(!note) return;
+  const spec=PDF_PAPERS[PDF_PAPER], land=PDF_ORIENT==='landscape';
+  const wmm=(land?spec.h:spec.w)-2*PDF_MARGIN_MM;
+  const table=document.getElementById('main-table');
+  const boardW=table?table.getBoundingClientRect().width:0;
+  const k=boardW?Math.min((wmm*PDF_MM_PT)/boardW,1):1;
+  note.textContent=Math.round(wmm)+'mm printable. The board is '+Math.round(boardW)+
+    'px wide, so it is drawn at '+Math.round(k*100)+'% of screen size'+
+    (k>=0.999?' (full size).':'.');
+}
+function doPdfExport(){
+  closePdfDialog();
+  exportPDF(PDF_PAPER,PDF_ORIENT);   // async; nothing waits on it, the download fires when it lands
+}
+
 function exportCSV(){
   const rows=buildCsvRows();
   const csv=rows.map(function(r){return r.map(csvEscape).join(',');}).join('\r\n');
