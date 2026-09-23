@@ -121,7 +121,7 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
 <section class="pg-sect">
   <h2>Top filter bar, desktop 1440px (four rows)</h2>
   <p>Rows 1 and 2: <b>Find</b> and <b>When</b> as two containers side by side. Find has Activity name and Banding on one line, Activity IDs full width beneath. When has Week on one line and Show dates beneath. Row 3: <b>Critical path</b> on one line. Row 4: the hint and the hide control.</p>
-  <p><b>Total float</b> becomes one choice set: Any, the three presets, and Custom. Custom opens a small panel (at or below / at or above, a number, days or weeks) and then shows as its own chip, e.g. "&#8804; 5d". It replaces the three separate controls plus preset buttons, with the same range of filters.</p>
+  <p><b>Total float</b> becomes one choice set: <b>Any, 0d, &lt; 10d, &lt; 3 wk, &lt; 5 wk, Custom</b>. 0d keeps activities with zero or negative float (the critical path). Custom opens a small panel (at or below / at or above, a number, days or weeks) and then shows as its own chip, e.g. "&#8804; 7d". It replaces the three separate controls plus preset buttons, with the same range of filters.</p>
   <p><b>Week</b> becomes a week picker (defaulting to this week) plus one span choice: Only, +2, +4, Up to, From. This replaces the mode dropdown and the Current week / Next 4 weeks buttons: Next 4 weeks is this week with +4. Show dates still narrows the board to a range and Full span resets it; Week still highlights, as now.</p>
   <div class="pg-scroll"><div style="min-width:1100px"><div class="ds t-light fb" id="fb-desk"></div></div></div>
 </section>
@@ -190,7 +190,7 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
     <p class="fb-title">Critical path</p>
     <span class="fb-inline"><label>Status</label><span class="ds-seg chips pills" role="group" aria-label="Status"><button aria-pressed="true">Critical</button><button aria-pressed="false">At risk</button><button aria-pressed="false">On track</button><button aria-pressed="false">Done</button><button aria-pressed="false">Complete</button><button aria-pressed="false">Future</button></span></span>
     <span class="fb-sep" aria-hidden="true"></span>
-    <span class="fb-inline"><label>Total float</label><span class="ds-seg chips" role="group" aria-label="Total float"><button aria-pressed="false">Any</button><button aria-pressed="true">&#8804; 13d</button><button aria-pressed="false">&#8804; 2 wk</button><button aria-pressed="false">&#8805; 8 wk</button><button aria-pressed="false">Custom&#8230;</button></span></span>
+    <span class="fb-inline"><label>Total float</label><span class="ds-seg chips" role="group" aria-label="Total float"><button aria-pressed="false">Any</button><button aria-pressed="true">0d</button><button aria-pressed="false">&lt; 10d</button><button aria-pressed="false">&lt; 3 wk</button><button aria-pressed="false">&lt; 5 wk</button><button aria-pressed="false">Custom&#8230;</button></span></span>
     <button class="ds-ico crit-clear" aria-label="Clear the critical path filters" title="Clear the critical path filters">&#10005;</button>
   </div>
   <div class="fb-foot"><span>Click a health dot or remarks field to edit &#183; Click a week header to filter</span><button class="ds-ico" aria-label="Hide filters" title="Hide filters">&#10005;</button></div>
@@ -200,10 +200,10 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
   <div class="fb-box crit" style="padding-bottom:150px">
     <p class="fb-title">Critical path</p>
     <span class="fb-inline"><label>Total float</label>
-      <span class="pop"><span class="ds-seg chips" role="group" aria-label="Total float"><button aria-pressed="false">Any</button><button aria-pressed="false">&#8804; 13d</button><button aria-pressed="false">&#8804; 2 wk</button><button aria-pressed="false">&#8805; 8 wk</button><button aria-pressed="true">&#8804; 5d</button></span>
+      <span class="pop"><span class="ds-seg chips" role="group" aria-label="Total float"><button aria-pressed="false">Any</button><button aria-pressed="false">0d</button><button aria-pressed="false">&lt; 10d</button><button aria-pressed="false">&lt; 3 wk</button><button aria-pressed="false">&lt; 5 wk</button><button aria-pressed="true">&#8804; 7d</button></span>
         <span class="pop-card" role="dialog" aria-label="Custom float">
           <span class="fb-line"><span class="ds-seg" role="group" aria-label="Comparison"><button aria-pressed="true">At or below</button><button aria-pressed="false">At or above</button></span></span>
-          <span class="fb-line"><input class="ds-field" type="number" value="5" style="min-width:64px;width:64px"><span class="ds-seg" role="group" aria-label="Unit"><button aria-pressed="true">days</button><button aria-pressed="false">weeks</button></span></span>
+          <span class="fb-line"><input class="ds-field" type="number" value="7" style="min-width:64px;width:64px"><span class="ds-seg" role="group" aria-label="Unit"><button aria-pressed="true">days</button><button aria-pressed="false">weeks</button></span></span>
           <span class="fb-line"><button class="ds-btn primary">Apply</button><button class="ds-btn">Cancel</button></span>
         </span></span></span>
   </div>
