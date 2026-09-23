@@ -467,3 +467,25 @@ The first draft of `p42_check` picked `SNIP-101` and reported three failures abo
 
 **Filter a sample to what is actually rendered, and make sure a count you are comparing cannot be zero.** Both failures pointed at the app; both were in the check.
 
+## A field that autosaves cannot be discarded (v3.1.0-P43)
+
+The request was for save controls and a close that discards. The blocker was not the controls, it was that the card had no draft: every field wrote to its store on keystroke, blur or click, so by the time anything could be discarded it was already stored. The one field that did have a Save button had it *in addition* to writing on click, which is why that button never went away.
+
+**Before adding a save control, check whether the thing it would save has already been saved.** A Save button over autosaving fields is decoration, and a Discard over them is a lie. The work was building the draft, not the buttons.
+
+The same shape appeared one level down: health was the only field still committing on click after the rest became pending, which made it the only field discard had to special-case and the only one that reached the board early. Moving it onto the form deleted that special case entirely.
+
+## A probe pinned to the line after the one it meant (v3.1.0-P43)
+
+`p40_check` asserted that the user-milestone merge is the first thing `renderRows()` does, by requiring the literal text `mergeUserMilestones();\n  // Fresh per rebuild`. Inserting a statement *after* the merge failed it, although the merge had not moved. `p35_check` failed 27 checks because it committed a progress edit by blurring the field, which is the path this version deliberately replaced.
+
+**Anchor an assertion to the claim, not to the neighbouring text.** The claim was "nothing runs before the merge", which is now asserted by taking the slice between the function opening and the call and requiring it to hold nothing but comments. A check that breaks whenever a nearby line changes trains you to relax it, and a relaxed check is the one that misses the real regression.
+
+## A constant probe is worthless for toggling and still useful for contrast (v3.1.0-P43)
+
+TD-161 established that `theme_check.py` cannot fail a `constant` probe that starts toggling. That made the two probes added at P42 assert nothing. It does not make constant probes pointless: the contrast pass runs over every probe that carries **text**, and it can fail.
+
+Giving the new type picker a probe with a label in it immediately measured **1.13:1** in the dark theme. `--color-purple-dark` gets darker in dark mode, because it is ink for a light tint, not for a themed panel. Two pre-existing rules beside it had the same fault and had never been probed, so it had been invisible.
+
+**A probe with no content measures half of what a probe can measure.** Give it text when the real element has text.
+

@@ -89,6 +89,12 @@ const PROBES = [
   // green in both themes, because "done in this update" has to read as the same
   // signal either way. s-done is the one that toggles, since it paints from ink.
   ['.s-doneuser (const)',        'constant', () => mk('<span class="s-doneuser"></span>')],
+  // The milestone card's save pair and type picker. Both carry TEXT on a
+  // filled or washed background, so they are here for the CONTRAST pass rather
+  // than the toggle one: a constant probe cannot fail on toggling (TD-161),
+  // but it is still measured against the 3.0:1 gate, which can.
+  ['.ms-act (constant)',         'constant', () => mk('<button class="ms-act">Save</button>')],
+  ['.ms-type-opt.active (const)','constant', () => mk('<button class="ms-type-opt active">Milestone (MS)</button>')],
   ['hist now-col',               'toggle',   () => {
       const tr = mk('<tr class="hist-row"><td class="c-wk now-col"></td></tr>', tbody);
       return tr.querySelector('td');

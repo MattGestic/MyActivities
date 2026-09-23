@@ -494,12 +494,25 @@ def main():
         "source: all three entry points check whether the growth is stale",
         src.count("denseRunGrowthStale()) scheduleRerender(true)") == 3,
         f"{src.count('denseRunGrowthStale()) scheduleRerender(true)')} of 3 entry points"))
+    # The claim is that the merge is the FIRST thing renderRows does, so every
+    # build path gets it before any row is built. Anchoring on whatever line
+    # happened to follow it asserted the NEXT statement instead, and broke at
+    # P43 when one was inserted between them although the merge had not moved.
+    # What it means is asserted directly: nothing but comments and whitespace
+    # stands between the function opening and the merge.
+    _pre = ""
+    if "function renderRows(){" in src and "mergeUserMilestones();" in src:
+        _a = src.index("function renderRows(){") + len("function renderRows(){")
+        _b = src.index("mergeUserMilestones();")
+        _pre = "\n".join(
+            ln for ln in src[_a:_b].split("\n")
+            if ln.strip() and not ln.strip().startswith("//"))
     checks.append((
         "source: user milestones are merged at the one function that builds rows",
         src.count("function mergeUserMilestones(") == 1
         and src.count("mergeUserMilestones();") == 1
-        and "mergeUserMilestones();\n  // Fresh per rebuild" in src,
-        "the merge is not at the top of renderRows"))
+        and _b > _a and _pre.strip() == "",
+        f"code runs before the merge: {_pre.strip()[:80]!r}"))
     checks.append((
         "source: user milestones round-trip through publish AND the model export",
         src.count("userMilestones:USER_MILESTONES") == 2

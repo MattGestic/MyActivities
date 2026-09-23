@@ -133,7 +133,17 @@ PROBE = r"""
     input.value=txt;
     input.dispatchEvent(new Event('input',{bubbles:true}));
   }
-  function commit(){ document.getElementById('ms-progress-input').blur(); }
+  // Committing moved from blur to the card's own Save control at P43: the card
+  // is a form now, so leaving a field is no longer a decision to store what is
+  // in it (close DISCARDS, which blur-to-commit would have made impossible).
+  // Still driven as a user gesture, through the control the markup wires up,
+  // rather than by calling saveMsDialog() directly.
+  function commit(){
+    const acts=document.getElementById('ms-save-actions');
+    const btn=acts?acts.querySelector('.ms-act'):null;
+    if(!btn) throw new Error('no save control on the card to commit with');
+    btn.click();
+  }
   function openCardFor(id){
     const wrap=Array.from(document.querySelectorAll('.m-wrap:not(.m-ghost)'))
       .filter(function(w){ return (w.getAttribute('data-tip')||'').indexOf('['+id+']')>=0; })[0];
@@ -423,8 +433,20 @@ PROBE = r"""
     openCardFor(target.id); await settle();
     const completeDot=document.querySelector('#ms-health-dots .health-dot[data-val="2"]');
     completeDot.dispatchEvent(new MouseEvent('click',{bubbles:true}));
-    await settle(); await settle();
-    R.notes.complete={stored:MS_PROGRESS_OVERRIDE[msDialogFor],
+    await settle();
+    // The dot fills the Progress FIELD and marks the form dirty; it does not
+    // reach the board until the card is saved. That changed at P43, when
+    // health stopped being the one field that committed on click while
+    // everything else waited, which was also the one field a discard could
+    // not throw away. Asserted in both halves: pending first, then committed.
+    const pending={field:document.getElementById('ms-progress-input').value,
+                   rollup:rowProg(target.ref),
+                   stored:MS_PROGRESS_OVERRIDE[msDialogFor]};
+    ck('complete: the dot fills the field and waits for Save, storing nothing yet',
+       pending.field==='100'&&pending.stored===undefined,
+       JSON.stringify(pending));
+    commit(); await settle(); await settle();
+    R.notes.complete={pending:pending,stored:MS_PROGRESS_OVERRIDE[msDialogFor],
                       field:document.getElementById('ms-progress-input').value,
                       rollup:rowProg(target.ref)};
     ck('complete: marking the icon complete sets Progress to 100%',

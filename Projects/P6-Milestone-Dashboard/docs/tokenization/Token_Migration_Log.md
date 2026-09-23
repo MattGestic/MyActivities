@@ -166,6 +166,15 @@ The log is a record of readings, not of changes, so a gap between two rows belon
 | 2026-09-23 | Audit script v3, after the v3.1.0-P42 pass | Hardcoded font-size declarations (px) | 124 |
 | 2026-09-23 | `tools/theme_check.py`, after the v3.1.0-P42 pass | Probes expected to toggle, frozen | 0 |
 | 2026-09-23 | `tools/theme_check.py`, after the v3.1.0-P42 pass | Probes below 3.0:1 | 0 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P43 pass | Hardcoded colour occurrences | 38 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P43 pass | Distinct hardcoded colour values | 34 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P43 pass | Colour occurrences matching an existing token exactly | 7 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P43 pass | `--space-*` token references in file | 92 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P43 pass | Hardcoded padding/margin/gap declarations (px) | 227 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P43 pass | `var(--text-*)` font-size references in file | 31 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P43 pass | Hardcoded font-size declarations (px) | 123 |
+| 2026-09-23 | `tools/theme_check.py`, after the v3.1.0-P43 pass | Probes expected to toggle, frozen | 0 |
+| 2026-09-23 | `tools/theme_check.py`, after the v3.1.0-P43 pass | Probes below 3.0:1 | 0 |
 
 **Re-running the audit:** run `python3 tools/colour_audit.py` from the project root. It regenerates `Hardcoded_Colour_Audit.csv` and prints every metric above.
 
@@ -271,6 +280,7 @@ A defect found in v2 during this same run is recorded here rather than quietly f
 | Milestone status text (`.s-done`/`.s-track`/`.s-future`) | Tokenized — all three were frozen at dark values | 2026-09-09 |
 | Milestone marker icon states (DONE/TRACK/RISK/CRIT/FUTURE) | Tokenized — one `--color-icon-*` default state per icon | 2026-09-10 |
 | Subtotal row | Tokenized — week-column bands now use `--color-col-past-bg` / `--color-col-filtered-alt-bg`; a malformed colour declaration was also repaired | 2026-09-09 |
+| Milestone card | Tokenized — the card's editable fields, type picker and save pair use the spacing scale; three accent-text rules moved off `--color-purple-dark`, which is ink for a light tint and measured 1.13:1 on a themed panel in dark, onto `--color-accent-ink` | 2026-09-23 |
 | Remarks field states | Tokenized — accent washes plus `--color-text-faint` placeholder | 2026-09-10 |
 
 Update the status cell **and** the date together whenever a row is re-checked, whether or not the status changed — an unchanged status with a fresh date is still useful information (confirms it wasn't silently missed).

@@ -25,6 +25,7 @@
 | TEST-19 | 2026-09-10 | Publish round trip: does a published file open cold with the schedule, timeline and annotations already in place, and does it carry nothing it should not | Publish captured at the Blob boundary, written to disk, then loaded as a separate page | **Pass after two fixes** | TD-41, TD-42 (both closed same pass), TD-43, TD-44 |
 | TEST-20 | 2026-09-11 | Does a published file describe itself correctly: mount slots, baseline counts, and the header provenance line | Publish probe extended to capture all three mount slots and the header meta | **Pass after fix** — reproduced the user's report first | TD-47, TD-48 (both closed same pass) |
 | TEST-21 | 2026-09-11 | Six requested changes: published schedule as the update, Source cell after a drag, empty-row delete, gutter alignment, column master toggle scope, header chrome colour | Publish round trip plus a combined DOM probe driving each interaction | **5 pass, 1 delivered failing** — the requested `#f4f5f8` is 1.79:1 on the light header | TD-50 (open), TD-51 to TD-55 (closed) |
+| TEST-45 | 2026-09-23 | The milestone card becomes a form: dirty state, save and discard, an editable schedule layer, a type picker on the icon, and three fixed equal schedule columns | `tools/p43_check.py`, new, at 1440x900, plus eight source-level assertions. Geometry measured on the rendered card and, for the fixed-position claim, RELATIVE to the card's own left edge. Both directions asserted for save, discard and click-away. The round trip drives an edited finish date all the way to the board and back | **Pass 36/36.** The head reads close(315) < icon(338) < ID(362); the save pair appears only when dirty and sits right of the ID; an edited date moves the marker from column 6 to 9 and clearing the override returns it to 6; the three schedule columns are 84px each at offsets 17/111/205 on BOTH a card with a start date and one without | TD-162 to TD-170 closed |
 | TEST-44 | 2026-09-23 | One status vocabulary across icons, chips, picker and card, and a milestone a person marks off made visually distinct from one the upload recorded as complete | `tools/p42_check.py`, new, at 1440x900. Colours read off the RENDERED markers rather than out of the CSS, on two milestones on the same board. A negative control clears the mark and requires the milestone back at its schedule state. Both kinds asserted to carry rollup credit. The theme dimension asserted in the same file, because `theme_check.py`'s constant probes cannot fail (TD-161) | **Pass 25/25.** Complete `rgb(23,25,28)` against Done `rgb(31,157,85)` in light; in dark the green is byte-identical and the ink moves to `rgb(232,238,248)`, still distinct. Chips `CRIT,RISK,TRACK,DONEUSER,DONE,FUTURE`, base 159 rows narrowing to 32 Complete and 1 Done | TD-160 closed, TD-161 raised |
 | TEST-43 | 2026-09-23 | Row growth changed to follow the markers ON SCREEN rather than the row's total, which is the alternative TD-153 left open and the user chose | `tools/p40_check.py` section 1 rewritten, at 390x844 and 1440x900, plus three source-level assertions. The reported case is driven through the real date-range control rather than by calling the recompute directly, and asserted in BOTH directions: the range makes row 51 plain, clearing it grows row 51 back. A one-way check passes on code that can grow a row and never shrink it again. The whole board is re-audited against the rule after the round trip | **Pass 91/91**, up from 77, after a third entry point was found missing | TD-153 closed, TD-159 raised and closed, TD-158 re-checked |
 | TEST-42 | 2026-09-22 | Six items in one batch: rows grown when their milestones crowd each other; a critical-path filter set with multi-select status and a float threshold; the drawer's action bar back to one row; the exported CSV split into a schedule block and an entered block; and adding a milestone from a header button or a double click on a cell | `tools/p40_check.py` at 390x844 and 1440x900, plus seven source-level assertions, and four earlier checks moved to their new contracts. The growth rule is REBUILT from the run cut inside the probe rather than read back off the class the code wrote. The CSV is asserted on CONTENT: an override is set and the two blocks must then disagree, because a header check alone passes on the very file this change exists to fix. The user milestones are asserted as annotation-layer state: the seed arrays byte-identical before and after, weight 0, the `[ID]` notes form intact, survival across a rebuild, and re-applying the same payload a no-op. `exportCSV()` was split from `buildCsvRows()` so the rows can be read without a download | **Pass 77/77**, after one of the four reported rows turned out to disagree with the rule for a reason the measurement could name, and one new degenerate dependency line was isolated to the row growth | TD-153 to TD-157, TD-158 raised |
@@ -1413,6 +1414,42 @@ Marker containment by setting, labels on, ID + Title:
 **Published:** `releases/v3.1.0-P32_marker-placement-and-filter-row-fixes.html`
 
 ---
+
+## TEST-45 — The milestone card becomes a form (v3.1.0-P43)
+
+`tools/p43_check.py`, 1440x900, 36 checks.
+
+**What changed.** The card had no state of its own: every field wrote straight to its annotation store, so there was nothing to save and nothing to discard, and the short title's Save button wrote without hiding itself. It now holds pending values and commits once.
+
+**Measurements.**
+
+| | Result |
+|---|---|
+| Head order | close 315 < icon 338 < ID 362, measured, not read from source order |
+| Icon | carries the milestone's type as its shape (`ms-icon-glyph t-ms`) |
+| Clean card | no save controls present at all (the negative control for everything below) |
+| Dirty card | exactly two controls appear, `Save` and `Save and close`, at x=549 against the ID at x=357 |
+| Save, staying open | card stays open, controls go away, value reaches its store |
+| Close | discards the pending edit and keeps the previously saved one; reopening confirms |
+| Click away | saves and closes, the opposite of close, as asked |
+| Escape | discards like the close control, storing nothing |
+| Schedule columns | 84px each on both cards; offsets 17 / 111 / 205 identical with and without a start date |
+| No start date | shows a dash placeholder, field present and typeable |
+| Type picker | one option per `TYPE_LABELS` entry (5 of 5); picking marks dirty and stores nothing until save |
+| **Round trip** | an edited finish date moves the marker from column **6 to 9**, and the override reaches `MS_FIELD_OVERRIDE` as `2026-07-24` |
+| **NEGATIVE CONTROL** | clearing the override returns the marker to column 6 and the date to `2026-07-03` |
+| Editable | all 8 named fields are live, writable controls |
+| Not editable | both dependency lists are `readOnly`; the ID is a `SPAN`, not a control |
+
+**Three defects found in the app by probe, not by reading.** A title override was stored for a field nobody touched, because `put('title',...)` compared against an `m.title` that does not exist. `noteMarkup()` fired on a no-op save, raising the unsaved-changes count for nothing. Clearing an override left the field showing the empty box that cleared it. See TD-167.
+
+**Two probe assertions were wrong, not the code.** `p35_check` drove the progress commit by blurring the field, the path P43 deliberately removed, and reported 27 failures against working code. `p40_check` anchored on the literal line following `mergeUserMilestones();`, so inserting a statement after it read as the merge having moved. Both rewritten to the new contract; `p35_check` gained an assertion it lacked, that the health dot stores nothing until Save. See TD-170.
+
+**A contrast defect the gate could only see once probed.** `--color-purple-dark` as text on `--color-accent-wash` measured **1.13:1** in the dark theme. Three rules now use `--color-accent-ink`. See TD-169.
+
+**Regression suite:** p27 32/32, p28 34/34, p29 53/53, p30 68/68, p32 36/36, p33 38/38, p34 73/73, p35 120/120, p36 96/96, p37 65/65, p38 91/91, p39 117/117, p40 91/91, p42 25/25, p43 36/36, persist 22/0, ingest and board order exit 0, contrast gate 0 frozen and 0 below 3.0:1.
+
+**Published:** `releases/v3.1.0-P43_milestone-card-as-a-form.html`
 
 ## TEST-44 — Status colour convention, two kinds of finished (v3.1.0-P42)
 
