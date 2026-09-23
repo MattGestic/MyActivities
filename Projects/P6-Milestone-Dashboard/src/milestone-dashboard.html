@@ -840,14 +840,15 @@ input[type=range]{width:110px;cursor:pointer}
    label column from 768px up, so every field's controls start at the same
    x regardless of label length ("Activity name:" vs "Week:"). */
 #top-filter-bar .tfb-group{display:flex;flex-direction:column;gap:var(--space-1)}
-#top-filter-bar .tfb-group>label{flex:0 0 auto;font-weight:600;color:var(--color-text-small)}
+/* --color-text-primary, not --color-text-small: small is #334 in dark (TD-28). */
+#top-filter-bar .tfb-group>label{flex:0 0 auto;font-weight:600;color:var(--color-text-primary)}
 #top-filter-bar .tfb-fld-ctrl{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2) var(--space-3);min-width:0}
 @media (min-width:768px){
   #top-filter-bar .tfb-group{flex-direction:row;align-items:center;gap:var(--space-3)}
   #top-filter-bar .tfb-group>label{flex:0 0 var(--tfb-label-w,92px)}
   #top-filter-bar .tfb-fld-ctrl{flex:1 1 auto}
 }
-#top-filter-bar .tfb-status-group{flex-wrap:wrap}
+#top-filter-bar .tfb-status-group{flex-wrap:wrap;margin-left:0;padding-left:0;border-left:none}
 /* Each chip carries its state's own colour when selected, so the filter reads
    in the same vocabulary as the board it filters. Unselected they are plain,
    because an unselected chip is not a state the board is showing. */
@@ -938,7 +939,7 @@ input[type=range]{width:110px;cursor:pointer}
 #top-filter-bar input[type="number"],#top-filter-bar input[type="date"]{
   box-sizing:border-box;font-size:var(--text-sm);padding:var(--space-2) var(--space-3);
   border-radius:4px;border:1px solid var(--color-btn-secondary-outline);
-  background:var(--color-bg-elevated);color:var(--color-text-small);
+  background:var(--color-bg-elevated);color:var(--color-text-primary);
   font-family:inherit;line-height:1.2}
 #top-filter-bar select{cursor:pointer;min-width:110px}
 /* Chromium gives a date input's own internal layout a floor the padding
@@ -1025,6 +1026,9 @@ input[type=range]{width:110px;cursor:pointer}
   #top-filter-bar #tfb-when .tfb-fld-grid>input{flex:1 1 45%}
   #top-filter-bar .tfb-fld-grid>.fb-inline-group{margin-left:0;padding-left:0;
     border-left:none;flex:0 0 auto}
+  /* Below 768px every chip or quick-button group starts its own line, so the
+     desktop divider in front of it would draw a stray rule down the left edge. */
+  #top-filter-bar .fb-inline-group{margin-left:0;padding-left:0;border-left:none}
   #top-filter-bar .tfb-fld-grid>.fb-field-clear,
   #top-filter-bar .tfb-fld-grid>.filter-btn,
   #top-filter-bar .tfb-fld-grid>.tfb-range-sep{flex:0 0 auto}

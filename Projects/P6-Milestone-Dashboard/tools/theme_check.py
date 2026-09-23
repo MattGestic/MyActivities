@@ -76,6 +76,10 @@ const PROBES = [
   // classification has changed twice and the file should state which it is.
   ['.sticky-search-icon',  'toggle', () => document.querySelector('.sticky-search-icon')],
   ['.sticky-search-clear', 'toggle', () => document.querySelector('.sticky-search-clear')],
+  // Top filter bar labels and fields. Both read --color-text-small until
+  // D-15a, which is #334 in dark: unreadable, and nothing here probed it.
+  ['#top-filter-bar label',      'toggle',   () => document.querySelector('#top-filter-bar .tfb-group>label')],
+  ['#top-filter-bar select',     'toggle',   () => document.querySelector('#filter-band')],
   ['.view-toggle',               'toggle',   () => document.querySelector('.view-toggle')],
   ['th.c-name (column header)',  'toggle',   () => document.querySelector('th.c-name:not(.sticky)')
                                               || document.querySelectorAll('th.c-name')[1]],

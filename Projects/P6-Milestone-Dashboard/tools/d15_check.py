@@ -49,7 +49,7 @@ PROBE = r"""
     const dlg=document.getElementById('ms-dialog');
     const wasHidden=dlg.hidden;
     dlg.hidden=false; // force layout/paint of the dialog so computed style is real
-    await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+    await new Promise(r=>setTimeout(r,120));
     const bs=getComputedStyle(dlg).boxShadow;
     R.notes.boxShadow={theme:THEME,value:bs};
     ck('box-shadow: #ms-dialog resolves to a real shadow in '+THEME,
@@ -83,7 +83,7 @@ PROBE = r"""
       outlineBefore=getComputedStyle(probeBtn).outlineStyle;
       try{ probeBtn.focus({focusVisible:true}); forced=true; }
       catch(e){ try{ probeBtn.focus(); forced=true; }catch(e2){} }
-      await new Promise(r=>requestAnimationFrame(r));
+      await new Promise(r=>setTimeout(r,60));
       outlineAfter=getComputedStyle(probeBtn).outlineStyle;
     }
     R.notes.focusVisible={forced:forced,before:outlineBefore,after:outlineAfter,
