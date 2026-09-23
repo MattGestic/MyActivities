@@ -406,10 +406,13 @@ const PROBES = [
   // Icon default states. Each paints from its own --color-icon-* token.
   ['icon s-done',                'toggle',   () => mk('<svg class="ms-icon filled s-done"></svg>')],
   ['icon s-doneuser (const)',    'constant', () => mk('<svg class="ms-icon filled s-doneuser"></svg>')],
-  ['icon s-track',               'toggle',   () => mk('<svg class="ms-icon filled s-track"></svg>')],
-  ['icon s-risk',                'toggle',   () => mk('<svg class="ms-icon filled s-risk"></svg>')],
-  ['icon s-crit',                'toggle',   () => mk('<svg class="ms-icon filled s-crit"></svg>')],
-  ['icon s-future',              'toggle',   () => mk('<svg class="ms-icon filled s-future"></svg>')],
+  // The unfinished states render OUTLINE from P44, which is what the CSS and
+  // the legend always documented; these probes built `filled` markup, so they
+  // were measuring a class combination the board no longer produces for them.
+  ['icon s-track',               'toggle',   () => mk('<svg class="ms-icon outline s-track"></svg>')],
+  ['icon s-risk',                'toggle',   () => mk('<svg class="ms-icon outline s-risk"></svg>')],
+  ['icon s-crit',                'toggle',   () => mk('<svg class="ms-icon outline s-crit"></svg>')],
+  ['icon s-future',              'toggle',   () => mk('<svg class="ms-icon outline s-future"></svg>')],
   ['icon s-baseline',            'toggle',   () => mk('<svg class="ms-icon baseline s-baseline"></svg>')],
 
   // Controls. These already read from tokens, so they prove the harness can

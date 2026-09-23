@@ -489,3 +489,23 @@ Giving the new type picker a probe with a label in it immediately measured **1.1
 
 **A probe with no content measures half of what a probe can measure.** Give it text when the real element has text.
 
+## The convention was written down in two places and implemented in neither (v3.1.0-P44)
+
+`.ms-icon.outline` was in the CSS. The legend rendered outline swatches beside the words explaining what outline meant. And every entry in `STATES` said `render:'filled'`, so the single function that draws a marker drew everything solid. The only element the outline rule had ever styled was the legend swatch sitting next to the claim.
+
+Nobody caught it for the life of the file, including several passes that read the legend and the STATES table in the same session. The user caught it from memory of what the convention was supposed to be.
+
+**A check that asserts the table is not checking the thing the table exists to produce.** The new assertion reads computed `fill` and `stroke-width` off the real SVGs on the board, and requires both populations to be non-empty, because "every marker is outline" would satisfy the outline half on its own. Asserting `STATES` would have passed throughout the entire period the board was wrong.
+
+## A probe that throws reports a smaller total, not a failure (v3.1.0-P44)
+
+`p43_check` read `.className` on an element that had become a real `<svg>`, where `className` is an `SVGAnimatedString` with no `indexOf`. The probe threw, and the suite line read **10/12 checks passed** rather than 36/36. Two failures look survivable; twenty-four assertions silently not running is not.
+
+**Read the total before the ratio.** A suite line whose denominator has moved is reporting that checks disappeared, which is a different and worse thing than checks failing. Worth saying plainly because the ratio is the part the eye goes to.
+
+## The assertion aimed elsewhere is the one that found the bug (v3.1.0-P44)
+
+Two real P43 defects turned up in this pass, neither from a check written to look for them. The float column had blown out to nearly four times its width, found by a geometry assertion measuring its way towards the heading. And every save was writing a "custom" short title for milestones nobody had retitled, found by "only the field that was edited is marked" reporting `weight,shortTitle`.
+
+**Assert the whole shape, not just the part the change touched.** Both of these were invisible to any check scoped to the feature being built, and both had shipped.
+

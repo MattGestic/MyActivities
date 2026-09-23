@@ -25,6 +25,7 @@
 | TEST-19 | 2026-09-10 | Publish round trip: does a published file open cold with the schedule, timeline and annotations already in place, and does it carry nothing it should not | Publish captured at the Blob boundary, written to disk, then loaded as a separate page | **Pass after two fixes** | TD-41, TD-42 (both closed same pass), TD-43, TD-44 |
 | TEST-20 | 2026-09-11 | Does a published file describe itself correctly: mount slots, baseline counts, and the header provenance line | Publish probe extended to capture all three mount slots and the header meta | **Pass after fix** — reproduced the user's report first | TD-47, TD-48 (both closed same pass) |
 | TEST-21 | 2026-09-11 | Six requested changes: published schedule as the update, Source cell after a drag, empty-row delete, gutter alignment, column master toggle scope, header chrome colour | Publish round trip plus a combined DOM probe driving each interaction | **5 pass, 1 delivered failing** — the requested `#f4f5f8` is 1.79:1 on the light header | TD-50 (open), TD-51 to TD-55 (closed) |
+| TEST-46 | 2026-09-23 | The marker fill convention, the card's controls row and full-width heading, the type name moved to the icon tooltip, and a saved-edit mark per field | `tools/p44_check.py`, new, at 1440x900, plus eight source-level assertions. The fill convention is measured on the RENDERED markers (computed `fill` and `stroke-width`), not on the STATES table, since the table reading correctly is exactly what was true while the board was wrong. Geometry measured against the card's own content box. The saved mark is asserted APART from the unsaved tint in both directions | **Pass 31/31.** 41 finished markers all filled, 155 unfinished all outline, both populations non-empty; heading runs 17 to 223 against a float column starting at 233 with a 10px row gap; typing shows the tint and no mark, saving shows the mark and no tint; an edited mark changes the board's `<use href>` from `#ico-diamond` to `#ico-lock` and clearing the override restores it | TD-171 to TD-176 closed |
 | TEST-45 | 2026-09-23 | The milestone card becomes a form: dirty state, save and discard, an editable schedule layer, a type picker on the icon, and three fixed equal schedule columns | `tools/p43_check.py`, new, at 1440x900, plus eight source-level assertions. Geometry measured on the rendered card and, for the fixed-position claim, RELATIVE to the card's own left edge. Both directions asserted for save, discard and click-away. The round trip drives an edited finish date all the way to the board and back | **Pass 36/36.** The head reads close(315) < icon(338) < ID(362); the save pair appears only when dirty and sits right of the ID; an edited date moves the marker from column 6 to 9 and clearing the override returns it to 6; the three schedule columns are 84px each at offsets 17/111/205 on BOTH a card with a start date and one without | TD-162 to TD-170 closed |
 | TEST-44 | 2026-09-23 | One status vocabulary across icons, chips, picker and card, and a milestone a person marks off made visually distinct from one the upload recorded as complete | `tools/p42_check.py`, new, at 1440x900. Colours read off the RENDERED markers rather than out of the CSS, on two milestones on the same board. A negative control clears the mark and requires the milestone back at its schedule state. Both kinds asserted to carry rollup credit. The theme dimension asserted in the same file, because `theme_check.py`'s constant probes cannot fail (TD-161) | **Pass 25/25.** Complete `rgb(23,25,28)` against Done `rgb(31,157,85)` in light; in dark the green is byte-identical and the ink moves to `rgb(232,238,248)`, still distinct. Chips `CRIT,RISK,TRACK,DONEUSER,DONE,FUTURE`, base 159 rows narrowing to 32 Complete and 1 Done | TD-160 closed, TD-161 raised |
 | TEST-43 | 2026-09-23 | Row growth changed to follow the markers ON SCREEN rather than the row's total, which is the alternative TD-153 left open and the user chose | `tools/p40_check.py` section 1 rewritten, at 390x844 and 1440x900, plus three source-level assertions. The reported case is driven through the real date-range control rather than by calling the recompute directly, and asserted in BOTH directions: the range makes row 51 plain, clearing it grows row 51 back. A one-way check passes on code that can grow a row and never shrink it again. The whole board is re-audited against the rule after the round trip | **Pass 91/91**, up from 77, after a third entry point was found missing | TD-153 closed, TD-159 raised and closed, TD-158 re-checked |
@@ -1414,6 +1415,42 @@ Marker containment by setting, labels on, ID + Title:
 **Published:** `releases/v3.1.0-P32_marker-placement-and-filter-row-fixes.html`
 
 ---
+
+## TEST-46 — The fill convention, the card heading, and the saved-edit mark (v3.1.0-P44)
+
+`tools/p44_check.py`, 1440x900, 31 checks.
+
+**The convention that existed everywhere except where it mattered.** `.ms-icon.outline` has been in the CSS from the start and the legend has always shown DONE filled against outline swatches for the rest, but every entry in `STATES` carried `render:'filled'` and `renderIcon()` is that field's only consumer. The outline rule styled nothing but the legend swatch beside the text claiming the convention.
+
+**Measurements.**
+
+| | Result |
+|---|---|
+| Finished markers | **41 of 41 filled**, sample `ms-icon filled s-done`, `fill: rgb(23,25,28)` |
+| Unfinished markers | **155 of 155 outline**, sample `ms-icon outline s-risk`, `fill: none`, `stroke-width: 2` |
+| Both populations | non-empty, so neither half of the claim passes vacuously |
+| Legend | still documents both halves (5 filled swatches, 4 outline) |
+| Controls row | holds close; the ID and the icon are not on it |
+| Heading | starts at the card's 16px padding edge, right edge 223 against a float column at 233, with a 10px row gap: it runs the full width up to the float |
+| Heading width | 206px, against the 65px ID it used to share a line with |
+| Type name | absent from the heading (`#SNIP-102 Complete`), present on the icon tooltip |
+| Card mark | `ms-icon filled s-done`, identical to the board's mark for the same milestone |
+| Unedited card | none of 9 possible marks shown |
+| Typed, not saved | dirty tint **true**, saved mark **false** |
+| Saved | saved mark **true**, dirty tint **false**, tooltip `Changed from the schedule. It had: 100` |
+| Reopened | the mark survives, since it reads the stores rather than the form |
+| **NEGATIVE CONTROL** | typing the schedule's own value back clears the mark and empties the override |
+| Picker | 2 groups, 5 marks and 5 types |
+| **Round trip** | picking a mark and saving changes the board's `<use href>` from `#ico-diamond` to `#ico-lock` |
+| **NEGATIVE CONTROL** | clearing the override restores `#ico-diamond` |
+
+**Two P43 defects this check surfaced on its way to something else.** The float column had blown out to 198px (the shared editable-field rule gives every card input `width:100%`, and the column is `flex:0 0 auto`), which is what truncated the title in the user's screenshot; it is 56px now. And every save wrote a "custom" short title, because the field is pre-filled with the auto-shortened default and the save stored it whenever it was non-empty. Caught by the geometry check and by "only the field that was edited is marked" reading `weight,shortTitle`. See TD-175.
+
+**A probe that throws reports a smaller total, not a failure.** `p43_check` read `.className` on what became a real `<svg>`, where it is an `SVGAnimatedString`; the probe threw and took 24 assertions with it, reporting **10/12** rather than 36/36. The total is the thing to read first. See TD-176.
+
+**Regression suite:** p27 32/32, p28 34/34, p29 53/53, p30 68/68, p32 36/36, p33 38/38, p34 73/73, p35 120/120, p36 96/96, p37 65/65, p38 91/91, p39 117/117, p40 91/91, p42 25/25, p43 36/36, p44 31/31, persist 22/0, ingest and board order exit 0, contrast gate 0 frozen and 0 below 3.0:1.
+
+**Published:** `releases/v3.1.0-P44_fill-convention-and-card-heading.html`
 
 ## TEST-45 — The milestone card becomes a form (v3.1.0-P43)
 

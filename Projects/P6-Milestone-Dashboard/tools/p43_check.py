@@ -134,9 +134,16 @@ PROBE = r"""
        JSON.stringify(R.notes.head));
     ck('head: the ID is the milestone’s own',
        (code.textContent||'').indexOf(A)>=0, code.textContent);
-    ck('head: the icon carries the milestone’s type as its shape',
-       (($('ms-icon-glyph')||{}).className||'').indexOf('t-'+String(withStart.type).toLowerCase())>=0,
-       ($('ms-icon-glyph')||{}).className);
+    // className on an SVGElement is an SVGAnimatedString, not a string. The
+    // card's mark became a real <svg> at P44 so it could carry the board's own
+    // outline / filled convention through renderIcon(), and reading .className
+    // threw rather than failing.
+    const glyphCls=function(){
+      const b=$('ms-icon-btn'); const g=b?b.querySelector('.ms-icon'):null;
+      return g?(g.getAttribute('class')||''):''; };
+    ck('head: the icon is the board\u2019s own mark for this milestone',
+       /ms-icon/.test(glyphCls())&&!!$('ms-icon-btn').querySelector('use'),
+       glyphCls());
 
     // ============ 2. A fresh card is CLEAN ============
     // The negative control for everything below: if the save pair showed on an
@@ -230,7 +237,9 @@ PROBE = r"""
     const beforeType=withStart.type;
     $('ms-icon-btn').click(); await settle();
     const menu=$('ms-type-menu');
-    const opts=menu?menu.querySelectorAll('.ms-type-opt'):[];
+    // The picker offers the MARK and the type since P44, so the type options
+    // are the ones carrying data-type.
+    const opts=menu?menu.querySelectorAll('.ms-type-opt[data-type]'):[];
     R.notes.typeMenu={open:menu&&!menu.hidden,options:opts.length,
                       vocab:Object.keys(TYPE_LABELS).length,
                       before:beforeType};
@@ -395,7 +404,7 @@ def main():
         "msKeyFor still composes from the live values"))
     checks.append((
         "source: the ID and the relationships are absent from the editable list",
-        "const MS_EDITABLE_FIELDS=['actName','start','date','weight','floatD','type']" in src,
+        "const MS_EDITABLE_FIELDS=['actName','start','date','weight','floatD','type','marker']" in src,
         "the editable field list changed"))
     # The short title's own Save button is what was reported. It should be gone
     # rather than fixed in place beside a second save control.
