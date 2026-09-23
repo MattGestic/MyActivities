@@ -247,16 +247,22 @@ PROBE = r"""
     ck('print: body enters print-mode', document.body.classList.contains('print-mode'));
     ck('print: the view-controls panel was closed', !document.body.classList.contains('cv-open'));
     const ps=document.getElementById('print-page-style');
-    ck('print: an @page rule is injected for A3 portrait',
-       !!ps&&/size:297mm 420mm/.test(ps.textContent)&&/margin:8mm/.test(ps.textContent),
-       ps?ps.textContent:'(no style element)');
+    // The sheet is chosen by the user from P45, so this asserts that the
+    // injected rule matches WHATEVER is currently chosen rather than a literal
+    // A3 portrait. Pinning the default here meant the check had to be edited
+    // to change a default, which is a check measuring the wrong thing.
+    const pg=printPageMM();
+    ck('print: an @page rule is injected for the chosen sheet',
+       !!ps&&ps.textContent.indexOf('size:'+pg.w+'mm '+pg.h+'mm')>=0
+       &&/margin:8mm/.test(ps.textContent),
+       (ps?ps.textContent:'(no style element)')+' against '+printPaperLabel());
     const frame=document.getElementById('page-frame');
     const fw=frame.getBoundingClientRect().width;
     // The frame is one A3 sheet across, border-box, so its outer width is 297mm.
     const mm=(function(){ const p=document.createElement('div');
       p.style.cssText='position:absolute;visibility:hidden;width:100mm;height:0';
       document.body.appendChild(p); const v=p.getBoundingClientRect().width/100; p.remove(); return v; })();
-    R.frameW=Math.round(fw); R.mmPx=Math.round(mm*1000)/1000; R.expectFrameW=Math.round(297*mm);
+    R.frameW=Math.round(fw); R.mmPx=Math.round(mm*1000)/1000; R.expectFrameW=Math.round(pg.w*mm);
     R.printNonWk=(function(){ const row=document.querySelector('tr.data'); if(!row) return -1;
       return Math.round(Array.from(row.cells).filter(function(td){
         return !td.classList.contains('col-wk')&&td.offsetParent!==null&&getComputedStyle(td).display!=='none';
@@ -264,8 +270,9 @@ PROBE = r"""
     R.printWkCols=(function(){ const row=document.querySelector('tr.data'); if(!row) return -1;
       return Array.from(row.querySelectorAll('td.col-wk')).filter(function(td){
         return td.offsetParent!==null&&getComputedStyle(td).display!=='none'; }).length; })();
-    ck('print: the page frame is one A3 sheet wide',
-       Math.abs(fw-297*mm)<2, Math.round(fw)+'px vs '+Math.round(297*mm)+'px');
+    ck('print: the page frame is one sheet wide, at the chosen paper',
+       Math.abs(fw-pg.w*mm)<2,
+       Math.round(fw)+'px vs '+Math.round(pg.w*mm)+'px for '+printPaperLabel());
     ck('print: the preview banner is shown',
        getComputedStyle(document.getElementById('pm-banner')).display!=='none');
     const wkIn=parseInt(document.getElementById('wk-width').value,10);
@@ -274,7 +281,7 @@ PROBE = r"""
     // The board must not be wider than the printable area unless the fit hit
     // its 20px floor, in which case the banner has to say so.
     const tbl=document.getElementById('main-table').getBoundingClientRect().width;
-    const printable=281*mm;
+    const printable=(pg.w-2*pg.margin)*mm;   // the chosen sheet, not a fixed A3
     const detail=document.getElementById('pm-banner-detail').textContent;
     R.tableW=Math.round(tbl); R.printableW=Math.round(printable); R.banner=detail;
     ck('print: the board fits the page, or the banner says it cannot',

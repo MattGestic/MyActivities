@@ -241,12 +241,19 @@ PROBE = r"""
        near(ban.cl,hd.l)&&near(ban.cr,hd.r),
        'banner content '+ban.cl+'..'+ban.cr+' against heading '+hd.l+'..'+hd.r);
 
-    // ============ 3. the three banner controls ============
+    // ============ 3. the banner controls ============
+    // The count is no longer fixed at three: P45 added a print control and the
+    // paper/orientation option set. What has to hold is that EVERY one of them
+    // is reachable, which is the TD-142 rule, and the number is asserted
+    // against what is actually in the bar rather than against a literal that
+    // has to be edited every time the bar gains a control.
     const ctrls=document.querySelectorAll('#pm-banner .pm-btn');
+    const label=function(b){ return b.id||b.getAttribute('data-paper')||
+                                    b.getAttribute('data-orient')||'?'; };
     R.notes.controls={total:ctrls.length,reachable:reachable(ctrls),
-                      ids:Array.prototype.map.call(ctrls,function(b){return b.id;})};
-    ck('print: all three preview controls are on screen and individually clickable',
-       R.notes.controls.total===3&&R.notes.controls.reachable===3,
+                      ids:Array.prototype.map.call(ctrls,label)};
+    ck('print: every preview control is on screen and individually clickable',
+       R.notes.controls.total>=3&&R.notes.controls.reachable===R.notes.controls.total,
        R.notes.controls.reachable+' of '+R.notes.controls.total+' reachable: '+
        R.notes.controls.ids.join(', '));
 

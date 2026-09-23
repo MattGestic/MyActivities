@@ -25,6 +25,7 @@
 | TEST-19 | 2026-09-10 | Publish round trip: does a published file open cold with the schedule, timeline and annotations already in place, and does it carry nothing it should not | Publish captured at the Blob boundary, written to disk, then loaded as a separate page | **Pass after two fixes** | TD-41, TD-42 (both closed same pass), TD-43, TD-44 |
 | TEST-20 | 2026-09-11 | Does a published file describe itself correctly: mount slots, baseline counts, and the header provenance line | Publish probe extended to capture all three mount slots and the header meta | **Pass after fix** — reproduced the user's report first | TD-47, TD-48 (both closed same pass) |
 | TEST-21 | 2026-09-11 | Six requested changes: published schedule as the update, Source cell after a drag, empty-row delete, gutter alignment, column master toggle scope, header chrome colour | Publish round trip plus a combined DOM probe driving each interaction | **5 pass, 1 delivered failing** — the requested `#f4f5f8` is 1.79:1 on the light header | TD-50 (open), TD-51 to TD-55 (closed) |
+| TEST-47/48 | 2026-09-23 | The print preview lays out for a sheet the user picks, with a print control on the page; and the hand-written PDF writer that preceded it | `tools/p46_check.py` (new) drives all four paper/orientation pairs through the real controls and measures the injected `@page`, the sheet width and the column fit together. `tools/p45_check.py` (new) generates real PDF bytes in the browser and PARSES them here, because a check that only asserted "exportPDF returned" would pass on a file no reader can open | **p46 37/37 in the suite; p45 38/38 run directly, and held out of the suite as flaky, see TD-180.** `@page`, sheet and fit move together on every setup; A3 landscape fits 39 columns at 33px, A3 portrait and A4 landscape both at 21px (same 297mm width, used as the control), A4 portrait reports the clamp rather than shrinking below the floor; 8 of 8 header controls reachable at 390/1024/1440 | TD-177 to TD-181 |
 | TEST-46 | 2026-09-23 | The marker fill convention, the card's controls row and full-width heading, the type name moved to the icon tooltip, and a saved-edit mark per field | `tools/p44_check.py`, new, at 1440x900, plus eight source-level assertions. The fill convention is measured on the RENDERED markers (computed `fill` and `stroke-width`), not on the STATES table, since the table reading correctly is exactly what was true while the board was wrong. Geometry measured against the card's own content box. The saved mark is asserted APART from the unsaved tint in both directions | **Pass 31/31.** 41 finished markers all filled, 155 unfinished all outline, both populations non-empty; heading runs 17 to 223 against a float column starting at 233 with a 10px row gap; typing shows the tint and no mark, saving shows the mark and no tint; an edited mark changes the board's `<use href>` from `#ico-diamond` to `#ico-lock` and clearing the override restores it | TD-171 to TD-176 closed |
 | TEST-45 | 2026-09-23 | The milestone card becomes a form: dirty state, save and discard, an editable schedule layer, a type picker on the icon, and three fixed equal schedule columns | `tools/p43_check.py`, new, at 1440x900, plus eight source-level assertions. Geometry measured on the rendered card and, for the fixed-position claim, RELATIVE to the card's own left edge. Both directions asserted for save, discard and click-away. The round trip drives an edited finish date all the way to the board and back | **Pass 36/36.** The head reads close(315) < icon(338) < ID(362); the save pair appears only when dirty and sits right of the ID; an edited date moves the marker from column 6 to 9 and clearing the override returns it to 6; the three schedule columns are 84px each at offsets 17/111/205 on BOTH a card with a start date and one without | TD-162 to TD-170 closed |
 | TEST-44 | 2026-09-23 | One status vocabulary across icons, chips, picker and card, and a milestone a person marks off made visually distinct from one the upload recorded as complete | `tools/p42_check.py`, new, at 1440x900. Colours read off the RENDERED markers rather than out of the CSS, on two milestones on the same board. A negative control clears the mark and requires the milestone back at its schedule state. Both kinds asserted to carry rollup credit. The theme dimension asserted in the same file, because `theme_check.py`'s constant probes cannot fail (TD-161) | **Pass 25/25.** Complete `rgb(23,25,28)` against Done `rgb(31,157,85)` in light; in dark the green is byte-identical and the ink moves to `rgb(232,238,248)`, still distinct. Chips `CRIT,RISK,TRACK,DONEUSER,DONE,FUTURE`, base 159 rows narrowing to 32 Complete and 1 Done | TD-160 closed, TD-161 raised |
@@ -1415,6 +1416,41 @@ Marker containment by setting, labels on, ID + Title:
 **Published:** `releases/v3.1.0-P32_marker-placement-and-filter-row-fixes.html`
 
 ---
+
+## TEST-47/48 — The print page a person can choose (v3.1.0-P45)
+
+`tools/p46_check.py`, 1440x900, 37 checks. `tools/p45_check.py`, 38 checks.
+
+**The defect, measured off the PDF that was delivered.** CSS `@page` is advisory in this path; the print dialog owns the paper.
+
+| | Measured |
+|---|---|
+| PDF MediaBox | **595 x 841 pt = A4 portrait** |
+| Sheet the app drew | **1122 px = 297mm = A3** |
+| Net content scale | **0.4807 pt per CSS px** against a nominal 0.75, a **64% shrink** |
+| Margins in the file | ~16.5pt (**5.8mm**), against the 8mm the CSS asked for |
+| Content right edge | **591.9pt** on a 595pt page, past the 579.6pt printable edge |
+
+**After: every setup, driven through the real controls.**
+
+| Setup | `@page` | Sheet | Header bar | Column fit |
+|---|---|---|---|---|
+| A4 portrait | `210mm 297mm` | 210mm | 794px | clamped, says so |
+| A4 landscape | `297mm 210mm` | 297mm | 1123px | 39 at **21px** |
+| A3 portrait | `297mm 420mm` | 297mm | 1123px | 39 at **21px** |
+| A3 landscape | `420mm 297mm` | 420mm | 1587px | 39 at **33px** |
+
+A3 portrait and A4 landscape share a 297mm width and are used as the control: they must fit identically, or the fit is keyed on the paper's NAME rather than on its width. A4 portrait genuinely cannot carry 39 weeks (194mm printable is 733px against a 780px floor), and reports the clamp rather than shrinking below it.
+
+**A real defect found by an existing check.** `p38_check` read **5 of 8 header controls reachable at 390px**. The banner is sheet width by the TD-142 contract, so its flex wrapping was computed against 1587px and never wrapped. An inner wrapper capped at the viewport, pinned with `position:sticky;left:0`, put it back to 8 of 8 at every width. The check itself was counting a literal three controls and now asserts that every control in the bar is reachable.
+
+**Two checks were asserting an old default.** `p27_check` pinned A3 portrait in three places; it now asserts the rule matches whatever is chosen, which is what it meant.
+
+**The PDF writer that preceded this** is asserted at 38/38 and is deliberately unreachable: the writer half works, the DOM walker does not. See TD-180.
+
+**Regression suite:** p27 32/32, p28 34/34, p29 53/53, p30 68/68, p32 36/36, p33 38/38, p34 73/73, p35 120/120, p36 96/96, p37 65/65, p38 91/91, p39 117/117, p40 91/91, p42 25/25, p43 36/36, p44 31/31, p46 37/37, persist 22/0, ingest and board order exit 0, contrast gate 0 frozen and 0 below 3.0:1.
+
+**Published:** `releases/v3.1.0-P45_print-page-picker.html`
 
 ## TEST-46 — The fill convention, the card heading, and the saved-edit mark (v3.1.0-P44)
 

@@ -509,3 +509,27 @@ Two real P43 defects turned up in this pass, neither from a check written to loo
 
 **Assert the whole shape, not just the part the change touched.** Both of these were invisible to any check scoped to the feature being built, and both had shipped.
 
+## The cheap fix was in the presenting problem all along (v3.1.0-P45)
+
+The report was "the print output is misaligned to the page". The cause turned out to be one sentence long: the layout was A3 and the paper was A4. Instead of fixing that, a hand-written PDF engine was built to take the print dialog out of the loop, and then a search was made for a library to replace it.
+
+The engine's writer half works and passes 38/38. Its DOM walker does not, and finishing it is more work than the fix that was needed. The print path, once it lays out for the sheet the person will actually select, produces **better** output than any of it: the browser renders it, so the text is vector and selectable and the fidelity is exact.
+
+**Fix the reported defect before building the thing that would make the defect impossible.** The second is sometimes right, but it has to be chosen against the first rather than instead of it.
+
+## A bar that grew stopped wrapping (v3.1.0-P45)
+
+The print banner is sheet width by design, so its edges line up with the page frame. At A3 landscape that is 1587px, wider than any phone. Its contents were `flex-wrap:wrap`, which wrapped against **1587px** and therefore never wrapped at all: the new option set simply ran off the right, **5 of 8 controls reachable at 390px**.
+
+`max-width` on an inner wrapper gives the content something real to wrap against, and `position:sticky;left:0` keeps it at the viewport's left edge while the page scrolls sideways.
+
+**A percentage or a wrap resolves against its container, not against the screen.** When the container is deliberately wider than the screen, every layout rule inside it is answering a different question from the one being asked.
+
+## Two checks were asserting a default, not a rule (v3.1.0-P45)
+
+`p27_check` pinned "A3 portrait" in three assertions and `p38_check` pinned a literal count of three controls. Both failed on changes that were correct, and both would have had to be edited every time a default moved or the bar gained a button.
+
+They now assert the rule: the injected page rule matches **whatever** is currently chosen, and **every** control in the bar is reachable.
+
+**A check that has to be edited to change a default is measuring the default, not the behaviour.** That is the shape that trains you to relax checks, and a relaxed check is the one that misses the real regression.
+

@@ -246,7 +246,7 @@ def main():
         "the exporter introduced a class"))
     checks.append((
         "source: the four page setups come from one table",
-        src.count("const PDF_PAPERS=") == 1 and "A4:{w:210,h:297}" in src.replace(" ", "")
+        src.count("const PAGE_PAPERS=") == 1 and "A4:{w:210,h:297}" in src.replace(" ", "")
         and "A3:{w:297,h:420}" in src.replace(" ", ""),
         "the paper table changed"))
 
