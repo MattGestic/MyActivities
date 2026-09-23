@@ -62,30 +62,43 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
 .ds-focus{outline:2px solid var(--color-accent-purple);outline-offset:1px}
 .ds :focus-visible{outline:2px solid var(--color-accent-purple);outline-offset:1px}
 
-/* Filter bar mock */
-.fb{display:flex;flex-direction:column;gap:0}
-.fb-grp{padding-block:var(--ctl-gap) var(--group-gap)}
-.fb-grp+.fb-grp{border-top:1px solid var(--color-filter-border);padding-top:var(--group-gap)}
-.fb-title{margin:0 0 var(--ctl-gap);font-size:var(--fs-caption);font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--color-accent-ink)}
-.fb-fields{display:flex;flex-wrap:wrap;gap:var(--ctl-gap) var(--group-gap);align-items:center}
-.fb-fld{display:flex;align-items:center;gap:var(--field-label-gap);min-width:0}
-.fb-fld>label{font-weight:600;white-space:nowrap}
-.fb-grp.stack .fb-fields{flex-direction:column;align-items:flex-start}
-.fb-grp.stack .fb-fld>label{width:88px}
-.fb-ctls{display:flex;flex-wrap:wrap;gap:var(--ctl-gap);align-items:center}
-.fb-foot{display:flex;align-items:center;justify-content:space-between;gap:var(--ctl-gap);border-top:1px solid var(--color-filter-border);padding-top:var(--ctl-gap);color:var(--color-text-muted);font-size:11px}
-/* Phone */
-.phone .fb-fields,.phone .fb-grp.stack .fb-fields{flex-direction:column;align-items:stretch}
-.phone .fb-fld{flex-direction:column;align-items:stretch;gap:var(--ctl-gap-tight)}
-.phone .fb-fld>label{width:auto}
-.phone .ds-fwrap,.phone .ds-field,.phone .ds-select{width:100%}
-.phone .fb-ctls{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:var(--ctl-gap)}
-.phone .fb-ctls .ds-select,.phone .fb-ctls .ds-field{min-width:0;width:100%!important}
-.phone .fb-ctls.chips{display:flex;flex-wrap:wrap}
-.phone .fb-ctls.float{grid-template-columns:minmax(0,1.6fr) minmax(0,.8fr) minmax(0,1fr)}
-.ds-chip{white-space:nowrap}
-.phone .fb-quick{display:flex;flex-wrap:wrap;gap:var(--ctl-gap);margin-top:var(--ctl-gap)}
-.fb-quick{display:inline-flex;flex-wrap:wrap;gap:var(--ctl-gap)}
+/* Filter bar mock (D-16a rev 2): max four rows on desktop */
+.fb{display:flex;flex-direction:column;gap:var(--ctl-gap)}
+.fb-top{display:flex;flex-wrap:wrap;gap:var(--ctl-gap)}
+.fb-box{border:1px solid var(--color-filter-border);border-radius:var(--radius-overlay);background:color-mix(in srgb,var(--color-bg-elevated) 45%,transparent);padding:var(--ctl-gap) 12px;display:grid;grid-template-columns:auto 1fr;gap:var(--ctl-gap) var(--field-label-gap);align-items:center;min-width:0}
+.fb-box.find{flex:1 1 520px}
+.fb-box.when{flex:1 1 520px}
+.fb-box.crit{display:flex;flex-wrap:wrap;align-items:center;gap:var(--ctl-gap) var(--group-gap)}
+.fb-title{grid-column:1/-1;margin:0;font-size:var(--fs-caption);font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--color-accent-ink)}
+.fb-box.crit .fb-title{margin-right:var(--ctl-gap)}
+.fb-box label{font-weight:600;white-space:nowrap}
+.fb-line{display:flex;flex-wrap:wrap;gap:var(--ctl-gap);align-items:center;min-width:0}
+.fb-line .grow{flex:1 1 160px;min-width:0}
+.fb-line .grow .ds-field,.fb-line .grow.ds-field,.fb-line .grow.ds-select{width:100%}
+.fb-inline{display:flex;align-items:center;gap:var(--field-label-gap)}
+.fb-sep{width:1px;align-self:stretch;background:var(--color-filter-border)}
+.ds-seg.chips button{border-right:1px solid var(--color-btn-secondary-outline)}
+.ds-seg.chips button:last-child{border-right:0}
+.fb-note{font-size:11px;color:var(--color-text-muted)}
+.fb-foot{display:flex;align-items:center;justify-content:space-between;gap:var(--ctl-gap);color:var(--color-text-muted);font-size:11px}
+.pop{position:relative;display:inline-block}
+.pop-card{position:absolute;left:0;top:calc(100% + 6px);z-index:2;border:1px solid var(--color-filter-border);border-radius:var(--radius-overlay);background:var(--color-bg-elevated);padding:12px;display:flex;flex-direction:column;gap:var(--ctl-gap);box-shadow:0 8px 24px rgba(0,0,0,.18);width:max-content}
+/* Phone: containers stack, labels above, fields full width */
+.phone .fb-box{display:flex;flex-direction:column;align-items:stretch}
+.phone .fb-box.crit{display:flex;flex-direction:column;align-items:stretch}
+.phone .fb-inline{flex-direction:column;align-items:stretch;gap:var(--ctl-gap-tight)}
+.phone .fb-sep{display:none}
+.phone .ds-fwrap,.phone .ds-field,.phone .ds-select{width:100%;min-width:0}
+.phone .ds-seg{display:flex;flex-wrap:wrap}
+.phone .ds-seg button{flex:1 1 auto}
+.phone .fb-line{flex-direction:column;align-items:stretch}
+.phone .fb-line .grow{flex:0 0 auto}
+.phone .fb-line.dates{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center}
+.phone .fb-line.dates .ds-btn{grid-column:1/-1;justify-self:start}
+.phone .ds-seg.chips.pills{border:0;gap:var(--ctl-gap);background:transparent}
+.phone .ds-seg.chips.pills button{flex:0 0 auto;border:1px solid var(--color-btn-secondary-outline);border-radius:999px;padding:0 12px}
+.phone .fb-box.crit .crit-clear{position:absolute;top:6px;right:8px}
+.fb-box.crit{position:relative}
 </style>
 
 <div class="wrap">
@@ -106,14 +119,22 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
 </section>
 
 <section class="pg-sect">
-  <h2>Top filter bar, desktop 1440px</h2>
-  <p>Three groups: Find, Critical path, When. Labels sit beside their controls; the Critical path and When groups share a fixed label column so their controls line up.</p>
+  <h2>Top filter bar, desktop 1440px (four rows)</h2>
+  <p>Rows 1 and 2: <b>Find</b> and <b>When</b> as two containers side by side. Find has Activity name and Banding on one line, Activity IDs full width beneath. When has Week on one line and Show dates beneath. Row 3: <b>Critical path</b> on one line. Row 4: the hint and the hide control.</p>
+  <p><b>Total float</b> becomes one choice set: Any, the three presets, and Custom. Custom opens a small panel (at or below / at or above, a number, days or weeks) and then shows as its own chip, e.g. "&#8804; 5d". It replaces the three separate controls plus preset buttons, with the same range of filters.</p>
+  <p><b>Week</b> becomes a week picker (defaulting to this week) plus one span choice: Only, +2, +4, Up to, From. This replaces the mode dropdown and the Current week / Next 4 weeks buttons: Next 4 weeks is this week with +4. Show dates still narrows the board to a range and Full span resets it; Week still highlights, as now.</p>
   <div class="pg-scroll"><div style="min-width:1100px"><div class="ds t-light fb" id="fb-desk"></div></div></div>
 </section>
 
 <section class="pg-sect">
+  <h2>Total float: Custom</h2>
+  <p>Custom opens a small panel under the chip. Apply sets the filter and relabels the chip with the value; choosing any other chip replaces it.</p>
+  <div class="pg-scroll"><div style="min-width:760px"><div class="ds t-light fb" id="fb-custom"></div></div></div>
+</section>
+
+<section class="pg-sect">
   <h2>Top filter bar, phone 390px, touch sizing</h2>
-  <p>Labels above full-width fields. Multi-part fields share one row evenly; quick buttons wrap together underneath. Compare with P47's 44px fields in <code>docs/mockups/D-15a/after-390x900-light-coarse.png</code>.</p>
+  <p>The same containers stacked: Find, When, Critical path. Labels above full-width fields; choice sets wrap as one group. Compare with P47's 44px fields in <code>docs/mockups/D-15a/after-390x900-light-coarse.png</code>.</p>
   <div class="pg-grid">
     <div><p class="pg-cap">Phone · light</p><div class="pg-scroll"><div style="width:390px"><div class="ds touch t-light fb phone" id="fb-phone-light"></div></div></div></div>
     <div><p class="pg-cap">Phone · dark</p><div class="pg-scroll"><div style="width:390px"><div class="ds touch t-dark fb phone" id="fb-phone-dark"></div></div></div></div>
@@ -147,29 +168,45 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
 </template>
 
 <template id="tpl-fb">
-  <div class="fb-grp">
-    <p class="fb-title">Find</p>
-    <div class="fb-fields">
-      <div class="fb-fld"><label>Activity name</label><span class="ds-fwrap has-lead"><span class="lead" aria-hidden="true">&#128269;</span><input class="ds-field" placeholder="Search activity name" style="min-width:200px"></span></div>
-      <div class="fb-fld"><label>Activity ID(s)</label><span class="ds-fwrap has-clr"><input class="ds-field" placeholder="e.g. SNIP-101, SNIP-115" style="min-width:180px"><button class="clr" aria-label="Clear">&#10005;</button></span></div>
-      <div class="fb-fld"><label>Banding</label><select class="ds-select" style="min-width:160px"><option>All bands</option></select></div>
+  <div class="fb-top">
+    <div class="fb-box find">
+      <p class="fb-title">Find</p>
+      <label>Activity name</label>
+      <div class="fb-line"><span class="ds-fwrap has-lead grow"><span class="lead" aria-hidden="true">&#128269;</span><input class="ds-field" placeholder="Search activity name"></span>
+        <span class="fb-inline"><label>Banding</label><select class="ds-select" style="min-width:150px"><option>All bands</option></select></span></div>
+      <label>Activity IDs</label>
+      <div class="fb-line"><span class="ds-fwrap has-clr grow"><input class="ds-field" placeholder="e.g. SNIP-101, SNIP-115"><button class="clr" aria-label="Clear">&#10005;</button></span></div>
+    </div>
+    <div class="fb-box when">
+      <p class="fb-title">When</p>
+      <label>Week</label>
+      <div class="fb-line"><select class="ds-select" style="min-width:150px"><option>This week (21 Sep)</option><option>All weeks</option></select>
+        <span class="ds-seg chips" role="group" aria-label="Week span"><button aria-pressed="true">Only</button><button aria-pressed="false">+2</button><button aria-pressed="false">+4</button><button aria-pressed="false">Up to</button><button aria-pressed="false">From</button></span></div>
+      <label>Show dates</label>
+      <div class="fb-line dates"><input class="ds-field" type="date" aria-label="From"><span class="fb-note">to</span><input class="ds-field" type="date" aria-label="To"><button class="ds-btn">Full span</button></div>
     </div>
   </div>
-  <div class="fb-grp stack">
+  <div class="fb-box crit">
     <p class="fb-title">Critical path</p>
-    <div class="fb-fields">
-      <div class="fb-fld"><label>Status</label><div class="fb-ctls chips"><button class="ds-chip" aria-pressed="false">Critical</button><button class="ds-chip" aria-pressed="false">At risk</button><button class="ds-chip" aria-pressed="false">On track</button><button class="ds-chip" aria-pressed="false">Done</button><button class="ds-chip" aria-pressed="false">Complete</button><button class="ds-chip" aria-pressed="false">Future</button></div></div>
-      <div class="fb-fld"><label>Total float</label><div class="fb-ctls float"><select class="ds-select"><option>No float filter</option></select><input class="ds-field" type="number" value="0" style="min-width:64px;width:64px"><select class="ds-select" style="min-width:80px"><option>days</option></select></div><div class="fb-quick"><button class="ds-btn">&#8804; 13d</button><button class="ds-btn">&#8804; 2wk</button><button class="ds-btn">&#8805; 8wk</button><button class="ds-ico" aria-label="Clear the critical path filters" title="Clear the critical path filters">&#10005;</button></div></div>
-    </div>
+    <span class="fb-inline"><label>Status</label><span class="ds-seg chips pills" role="group" aria-label="Status"><button aria-pressed="true">Critical</button><button aria-pressed="false">At risk</button><button aria-pressed="false">On track</button><button aria-pressed="false">Done</button><button aria-pressed="false">Complete</button><button aria-pressed="false">Future</button></span></span>
+    <span class="fb-sep" aria-hidden="true"></span>
+    <span class="fb-inline"><label>Total float</label><span class="ds-seg chips" role="group" aria-label="Total float"><button aria-pressed="false">Any</button><button aria-pressed="true">&#8804; 13d</button><button aria-pressed="false">&#8804; 2 wk</button><button aria-pressed="false">&#8805; 8 wk</button><button aria-pressed="false">Custom&#8230;</button></span></span>
+    <button class="ds-ico crit-clear" aria-label="Clear the critical path filters" title="Clear the critical path filters">&#10005;</button>
   </div>
-  <div class="fb-grp stack">
-    <p class="fb-title">When</p>
-    <div class="fb-fields">
-      <div class="fb-fld"><label>Week</label><div class="fb-ctls"><select class="ds-select" style="min-width:160px"><option>All weeks</option></select><select class="ds-select" style="min-width:150px"><option>This week only</option></select></div><div class="fb-quick"><button class="ds-btn">Current week</button><button class="ds-btn">Next 4 weeks</button></div></div>
-      <div class="fb-fld"><label>Date range</label><div class="fb-ctls"><input class="ds-field" type="date"><input class="ds-field" type="date"></div><div class="fb-quick"><button class="ds-btn">Full span</button></div></div>
-    </div>
+  <div class="fb-foot"><span>Click a health dot or remarks field to edit &#183; Click a week header to filter</span><button class="ds-ico" aria-label="Hide filters" title="Hide filters">&#10005;</button></div>
+</template>
+
+<template id="tpl-custom">
+  <div class="fb-box crit" style="padding-bottom:150px">
+    <p class="fb-title">Critical path</p>
+    <span class="fb-inline"><label>Total float</label>
+      <span class="pop"><span class="ds-seg chips" role="group" aria-label="Total float"><button aria-pressed="false">Any</button><button aria-pressed="false">&#8804; 13d</button><button aria-pressed="false">&#8804; 2 wk</button><button aria-pressed="false">&#8805; 8 wk</button><button aria-pressed="true">&#8804; 5d</button></span>
+        <span class="pop-card" role="dialog" aria-label="Custom float">
+          <span class="fb-line"><span class="ds-seg" role="group" aria-label="Comparison"><button aria-pressed="true">At or below</button><button aria-pressed="false">At or above</button></span></span>
+          <span class="fb-line"><input class="ds-field" type="number" value="5" style="min-width:64px;width:64px"><span class="ds-seg" role="group" aria-label="Unit"><button aria-pressed="true">days</button><button aria-pressed="false">weeks</button></span></span>
+          <span class="fb-line"><button class="ds-btn primary">Apply</button><button class="ds-btn">Cancel</button></span>
+        </span></span></span>
   </div>
-  <div class="fb-foot"><span>Click a health dot or remarks field to edit · Click a week header to filter</span><button class="ds-ico" aria-label="Hide filters" title="Hide filters">&#10005;</button></div>
 </template>
 
 <script>
@@ -177,5 +214,6 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
   function fill(id,tpl){var el=document.getElementById(id);if(el)el.appendChild(document.getElementById(tpl).content.cloneNode(true));}
   ['ctl-desk-light','ctl-desk-dark','ctl-touch-light','ctl-touch-dark'].forEach(function(id){fill(id,'tpl-ctl');});
   ['fb-desk','fb-phone-light','fb-phone-dark'].forEach(function(id){fill(id,'tpl-fb');});
+  fill('fb-custom','tpl-custom');
 })();
 </script>
