@@ -1,0 +1,181 @@
+<title>Design Standard Sheet</title>
+<style>
+/* Page chrome */
+:root{--pg-bg:#f3f4f7;--pg-surface:#ffffff;--pg-ink:#17191c;--pg-muted:#575c67;--pg-line:#e1e3e8}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){color-scheme:dark;--pg-bg:#14171c;--pg-surface:#1c2027;--pg-ink:#e6e8ec;--pg-muted:#a6adba;--pg-line:#2c323c}}
+:root[data-theme="dark"]{color-scheme:dark;--pg-bg:#14171c;--pg-surface:#1c2027;--pg-ink:#e6e8ec;--pg-muted:#a6adba;--pg-line:#2c323c}
+body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable Text','Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;padding-inline:16px}
+.wrap{max-width:1500px;margin:0 auto;padding-block:20px 32px;display:flex;flex-direction:column;gap:20px}
+.pg-head h1{margin:0 0 6px;font-size:20px;line-height:28px}
+.pg-head p{margin:0;font-size:13px;line-height:1.5;color:var(--pg-muted);max-width:80ch}
+.pg-sect{background:var(--pg-surface);border:1px solid var(--pg-line);border-radius:8px;padding:16px;min-width:0}
+.pg-sect>h2{margin:0 0 4px;font-size:14px;line-height:20px}
+.pg-sect>p{margin:0 0 12px;font-size:12px;line-height:1.5;color:var(--pg-muted)}
+.pg-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:12px}
+.pg-scroll{overflow-x:auto}
+.pg-cap{font-size:11px;color:var(--pg-muted);margin:0 0 6px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+
+/* App tokens, copied from src/milestone-dashboard.html */
+.t-light{--color-bg-panel:#f4f5f8;--color-bg-elevated:#ffffff;--color-filter-bg:#e4e9ed;--color-filter-border:#c9d2d8;
+  --color-text-primary:#17191c;--color-text-muted:#6f7480;--color-accent-purple:#8b64c7;--color-accent-ink:#6f46ad;
+  --color-btn-primary-bg:#1c3a63;--color-btn-primary-text:#ffffff;--color-btn-primary-hover-bg:#2a4a7a;
+  --color-btn-secondary-bg:#ffffff;--color-btn-secondary-text:#1c3a63;--color-btn-secondary-outline:#9fb0bd;--color-btn-secondary-hover-bg:#eef1f7;
+  --color-btn-icon-hover-bg:#dde1ea;--color-status-crit:#c0392b;--color-line-default:#e3e2de}
+.t-dark{--color-bg-panel:#1e2240;--color-bg-elevated:#232f4a;--color-filter-bg:#1e2240;--color-filter-border:#3a3e60;
+  --color-text-primary:#e8eef8;--color-text-muted:#8b9bb8;--color-accent-purple:#8b64c7;--color-accent-ink:#a98ad8;
+  --color-btn-primary-bg:#3a6ea8;--color-btn-primary-text:#ffffff;--color-btn-primary-hover-bg:#4a80ba;
+  --color-btn-secondary-bg:#1e2240;--color-btn-secondary-text:#9cbcff;--color-btn-secondary-outline:#3a3e60;--color-btn-secondary-hover-bg:#2a2e50;
+  --color-btn-icon-hover-bg:#2a2e50;--color-status-crit:#c00000;--color-line-default:rgba(160,184,230,.2)}
+
+/* D-16 standard tokens */
+.ds{--ctl-h:24px;--icon-btn:24px;--ctl-pad-x:8px;--ctl-gap:8px;--ctl-gap-tight:4px;--field-label-gap:12px;--group-gap:16px;
+  --radius-ctl:4px;--radius-overlay:8px;--fs-caption:12px;--lh-caption:16px;--fs-field:12px;
+  font-family:'Segoe UI Variable Text','Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;
+  background:var(--color-filter-bg);color:var(--color-text-primary);border-radius:var(--radius-overlay);padding:var(--group-gap);
+  font-size:var(--fs-caption);line-height:var(--lh-caption)}
+.ds.touch{--ctl-h:32px;--icon-btn:32px;--fs-field:14px}
+
+.ds-btn,.ds-field,.ds-select,.ds-chip,.ds-seg button{box-sizing:border-box;height:var(--ctl-h);font:inherit;font-size:var(--fs-caption);border-radius:var(--radius-ctl)}
+.ds-btn{padding:0 var(--ctl-pad-x);border:1px solid var(--color-btn-secondary-outline);background:var(--color-btn-secondary-bg);color:var(--color-btn-secondary-text);cursor:pointer;white-space:nowrap}
+.ds-btn:hover{background:var(--color-btn-secondary-hover-bg)}
+.ds-btn.primary{background:var(--color-btn-primary-bg);border-color:var(--color-btn-primary-bg);color:var(--color-btn-primary-text);font-weight:600}
+.ds-btn.primary:hover{background:var(--color-btn-primary-hover-bg)}
+.ds-ico{box-sizing:border-box;width:var(--icon-btn);height:var(--icon-btn);border:0;background:transparent;color:var(--color-text-primary);border-radius:var(--radius-ctl);font-size:14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.ds-ico:hover{background:var(--color-btn-icon-hover-bg)}
+.ds-field,.ds-select{padding:0 var(--ctl-pad-x);border:1px solid var(--color-btn-secondary-outline);background:var(--color-bg-elevated);color:var(--color-text-primary);font-size:var(--fs-field);min-width:120px}
+.ds-field::placeholder{color:var(--color-text-muted)}
+.ds-fwrap{position:relative;display:inline-flex}
+.ds-fwrap .lead{position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--color-text-muted);font-size:12px;pointer-events:none}
+.ds-fwrap.has-lead .ds-field{padding-left:26px}
+.ds-fwrap .clr{position:absolute;right:2px;top:50%;transform:translateY(-50%);width:20px;height:20px;border:0;background:transparent;color:var(--color-text-muted);border-radius:var(--radius-ctl);cursor:pointer;font-size:11px}
+.ds-fwrap .clr:hover{background:var(--color-btn-icon-hover-bg)}
+.ds-fwrap.has-clr .ds-field{padding-right:24px}
+.ds-chip{padding:0 10px;border:1px solid var(--color-btn-secondary-outline);background:var(--color-bg-elevated);color:var(--color-text-primary);border-radius:999px;cursor:pointer}
+.ds-chip[aria-pressed="true"]{background:var(--color-accent-purple);border-color:var(--color-accent-purple);color:#fff}
+.ds-seg{display:inline-flex;border:1px solid var(--color-btn-secondary-outline);border-radius:var(--radius-ctl);overflow:hidden}
+.ds-seg button{border:0;border-radius:0;padding:0 var(--ctl-pad-x);background:var(--color-bg-elevated);color:var(--color-text-primary);cursor:pointer}
+.ds-seg button[aria-pressed="true"]{background:var(--color-accent-purple);color:#fff;font-weight:600}
+.ds-check{display:inline-flex;align-items:center;gap:6px;min-height:var(--ctl-h)}
+.ds-check input{width:16px;height:16px;margin:0;accent-color:var(--color-accent-purple)}
+.ds-row{display:flex;flex-wrap:wrap;gap:var(--ctl-gap);align-items:center}
+.ds-row+.ds-row{margin-top:var(--ctl-gap)}
+.ds-focus{outline:2px solid var(--color-accent-purple);outline-offset:1px}
+.ds :focus-visible{outline:2px solid var(--color-accent-purple);outline-offset:1px}
+
+/* Filter bar mock */
+.fb{display:flex;flex-direction:column;gap:0}
+.fb-grp{padding-block:var(--ctl-gap) var(--group-gap)}
+.fb-grp+.fb-grp{border-top:1px solid var(--color-filter-border);padding-top:var(--group-gap)}
+.fb-title{margin:0 0 var(--ctl-gap);font-size:var(--fs-caption);font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--color-accent-ink)}
+.fb-fields{display:flex;flex-wrap:wrap;gap:var(--ctl-gap) var(--group-gap);align-items:center}
+.fb-fld{display:flex;align-items:center;gap:var(--field-label-gap);min-width:0}
+.fb-fld>label{font-weight:600;white-space:nowrap}
+.fb-grp.stack .fb-fields{flex-direction:column;align-items:flex-start}
+.fb-grp.stack .fb-fld>label{width:88px}
+.fb-ctls{display:flex;flex-wrap:wrap;gap:var(--ctl-gap);align-items:center}
+.fb-foot{display:flex;align-items:center;justify-content:space-between;gap:var(--ctl-gap);border-top:1px solid var(--color-filter-border);padding-top:var(--ctl-gap);color:var(--color-text-muted);font-size:11px}
+/* Phone */
+.phone .fb-fields,.phone .fb-grp.stack .fb-fields{flex-direction:column;align-items:stretch}
+.phone .fb-fld{flex-direction:column;align-items:stretch;gap:var(--ctl-gap-tight)}
+.phone .fb-fld>label{width:auto}
+.phone .ds-fwrap,.phone .ds-field,.phone .ds-select{width:100%}
+.phone .fb-ctls{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:var(--ctl-gap)}
+.phone .fb-ctls .ds-select,.phone .fb-ctls .ds-field{min-width:0;width:100%!important}
+.phone .fb-ctls.chips{display:flex;flex-wrap:wrap}
+.phone .fb-ctls.float{grid-template-columns:minmax(0,1.6fr) minmax(0,.8fr) minmax(0,1fr)}
+.ds-chip{white-space:nowrap}
+.phone .fb-quick{display:flex;flex-wrap:wrap;gap:var(--ctl-gap);margin-top:var(--ctl-gap)}
+.fb-quick{display:inline-flex;flex-wrap:wrap;gap:var(--ctl-gap)}
+</style>
+
+<div class="wrap">
+<header class="pg-head">
+  <h1>D-16 design standard: component sheet</h1>
+  <p>Every control in the dashboard, drawn to one standard based on the Windows UI kit (Fluent 2): 24px controls on desktop and 32px on touch screens, 12px control text, 4px corners, and spacing on a 4px grid. Colours are the app's own tokens. The written spec is <code>docs/ux/design-standard.md</code>. Sign-off on this sheet is the gate before any app code changes.</p>
+</header>
+
+<section class="pg-sect">
+  <h2>Controls: desktop (24px) and touch (32px), light and dark</h2>
+  <p>Same markup in all four frames; only the density class and the theme change. The focused field shows the keyboard focus ring.</p>
+  <div class="pg-grid">
+    <div><p class="pg-cap">Desktop · light</p><div class="ds t-light" id="ctl-desk-light"></div></div>
+    <div><p class="pg-cap">Desktop · dark</p><div class="ds t-dark" id="ctl-desk-dark"></div></div>
+    <div><p class="pg-cap">Touch · light</p><div class="ds touch t-light" id="ctl-touch-light"></div></div>
+    <div><p class="pg-cap">Touch · dark</p><div class="ds touch t-dark" id="ctl-touch-dark"></div></div>
+  </div>
+</section>
+
+<section class="pg-sect">
+  <h2>Top filter bar, desktop 1440px</h2>
+  <p>Three groups: Find, Critical path, When. Labels sit beside their controls; the Critical path and When groups share a fixed label column so their controls line up.</p>
+  <div class="pg-scroll"><div style="min-width:1100px"><div class="ds t-light fb" id="fb-desk"></div></div></div>
+</section>
+
+<section class="pg-sect">
+  <h2>Top filter bar, phone 390px, touch sizing</h2>
+  <p>Labels above full-width fields. Multi-part fields share one row evenly; quick buttons wrap together underneath. Compare with P47's 44px fields in <code>docs/mockups/D-15a/after-390x900-light-coarse.png</code>.</p>
+  <div class="pg-grid">
+    <div><p class="pg-cap">Phone · light</p><div class="pg-scroll"><div style="width:390px"><div class="ds touch t-light fb phone" id="fb-phone-light"></div></div></div></div>
+    <div><p class="pg-cap">Phone · dark</p><div class="pg-scroll"><div style="width:390px"><div class="ds touch t-dark fb phone" id="fb-phone-dark"></div></div></div></div>
+  </div>
+</section>
+</div>
+
+<template id="tpl-ctl">
+  <div class="ds-row">
+    <button class="ds-btn primary">Save &amp; close</button>
+    <button class="ds-btn">Save</button>
+    <button class="ds-btn">Cancel</button>
+    <button class="ds-ico" aria-label="More actions" title="More actions">&#8942;</button>
+    <button class="ds-ico" aria-label="Close" title="Close">&#10005;</button>
+  </div>
+  <div class="ds-row">
+    <span class="ds-fwrap has-lead has-clr"><span class="lead" aria-hidden="true">&#128269;</span><input class="ds-field ds-focus" placeholder="Search activity name"><button class="clr" aria-label="Clear">&#10005;</button></span>
+    <select class="ds-select"><option>All bands</option></select>
+  </div>
+  <div class="ds-row">
+    <input class="ds-field" type="number" value="13" style="min-width:64px;width:64px">
+    <input class="ds-field" type="date" value="2026-09-23">
+    <span class="ds-seg"><button aria-pressed="true">Baseline</button><button aria-pressed="false">Update</button></span>
+  </div>
+  <div class="ds-row">
+    <button class="ds-chip" aria-pressed="true">Critical</button>
+    <button class="ds-chip" aria-pressed="false">At risk</button>
+    <button class="ds-chip" aria-pressed="false">On track</button>
+    <label class="ds-check"><input type="checkbox" checked> Show predecessors</label>
+  </div>
+</template>
+
+<template id="tpl-fb">
+  <div class="fb-grp">
+    <p class="fb-title">Find</p>
+    <div class="fb-fields">
+      <div class="fb-fld"><label>Activity name</label><span class="ds-fwrap has-lead"><span class="lead" aria-hidden="true">&#128269;</span><input class="ds-field" placeholder="Search activity name" style="min-width:200px"></span></div>
+      <div class="fb-fld"><label>Activity ID(s)</label><span class="ds-fwrap has-clr"><input class="ds-field" placeholder="e.g. SNIP-101, SNIP-115" style="min-width:180px"><button class="clr" aria-label="Clear">&#10005;</button></span></div>
+      <div class="fb-fld"><label>Banding</label><select class="ds-select" style="min-width:160px"><option>All bands</option></select></div>
+    </div>
+  </div>
+  <div class="fb-grp stack">
+    <p class="fb-title">Critical path</p>
+    <div class="fb-fields">
+      <div class="fb-fld"><label>Status</label><div class="fb-ctls chips"><button class="ds-chip" aria-pressed="false">Critical</button><button class="ds-chip" aria-pressed="false">At risk</button><button class="ds-chip" aria-pressed="false">On track</button><button class="ds-chip" aria-pressed="false">Done</button><button class="ds-chip" aria-pressed="false">Complete</button><button class="ds-chip" aria-pressed="false">Future</button></div></div>
+      <div class="fb-fld"><label>Total float</label><div class="fb-ctls float"><select class="ds-select"><option>No float filter</option></select><input class="ds-field" type="number" value="0" style="min-width:64px;width:64px"><select class="ds-select" style="min-width:80px"><option>days</option></select></div><div class="fb-quick"><button class="ds-btn">&#8804; 13d</button><button class="ds-btn">&#8804; 2wk</button><button class="ds-btn">&#8805; 8wk</button><button class="ds-ico" aria-label="Clear the critical path filters" title="Clear the critical path filters">&#10005;</button></div></div>
+    </div>
+  </div>
+  <div class="fb-grp stack">
+    <p class="fb-title">When</p>
+    <div class="fb-fields">
+      <div class="fb-fld"><label>Week</label><div class="fb-ctls"><select class="ds-select" style="min-width:160px"><option>All weeks</option></select><select class="ds-select" style="min-width:150px"><option>This week only</option></select></div><div class="fb-quick"><button class="ds-btn">Current week</button><button class="ds-btn">Next 4 weeks</button></div></div>
+      <div class="fb-fld"><label>Date range</label><div class="fb-ctls"><input class="ds-field" type="date"><input class="ds-field" type="date"></div><div class="fb-quick"><button class="ds-btn">Full span</button></div></div>
+    </div>
+  </div>
+  <div class="fb-foot"><span>Click a health dot or remarks field to edit · Click a week header to filter</span><button class="ds-ico" aria-label="Hide filters" title="Hide filters">&#10005;</button></div>
+</template>
+
+<script>
+(function(){
+  function fill(id,tpl){var el=document.getElementById(id);if(el)el.appendChild(document.getElementById(tpl).content.cloneNode(true));}
+  ['ctl-desk-light','ctl-desk-dark','ctl-touch-light','ctl-touch-dark'].forEach(function(id){fill(id,'tpl-ctl');});
+  ['fb-desk','fb-phone-light','fb-phone-dark'].forEach(function(id){fill(id,'tpl-fb');});
+})();
+</script>
