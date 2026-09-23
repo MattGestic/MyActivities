@@ -430,3 +430,21 @@ A header-only assertion would have passed on the exact file the change exists to
 `exportCSV()` was split into `buildCsvRows()` plus a thin writer, so the check sets an override and then requires the two blocks to **disagree**: base reads 100%, entered reads 55%.
 
 **If the observable thing is the content, make the content observable.** Splitting the builder from the writer took two minutes and turned a check that could only confirm the shape into one that confirms the substance. The same move paid off earlier in this file when `positionFixedPopup` was extracted, and for the same reason: a function that does one thing can be asked what it did.
+
+## The comment three lines above the bug was already describing it (v3.1.0-P41)
+
+Row growth became dependent on which columns are visible, so `applyFilter()` gained a check for whether the rendered heights still matched. Both of its exits got it, including the early return, which felt like the careful version.
+
+`clearFilter()` did not. It un-hides every row and column **itself** rather than routing through `applyFilter()`, so Remove all filters put the columns back and left rows that should have grown sitting at the short height.
+
+The code directly above the line that was missing reads:
+
+> *clearFilter() un-hides every row and column itself rather than routing through applyFilter(), so it is a SECOND entry point into "what is on the board just changed" and needs the same redraw.*
+
+That comment was written for TD-106, when the dependency lines hit the identical gap. Reading it did not stop the same mistake being made in the same function one change later.
+
+Three things:
+
+- **Fourth instance of this family** (TD-59, TD-71, TD-106, TD-159), and the first where the warning was already written at the site. A comment records a trap; it does not check for it. What actually caught this was `p33_check`, a probe written two partials earlier for a different purpose.
+- **Count the entry points at source.** The check now asserts that exactly three call sites carry the staleness check, so a fourth added without it fails immediately rather than three partials later. A prose warning cannot do that.
+- **A failure message that says "4 of 105 rows changed height" says a regression happened and nothing about where to look.** Naming the rows turned a twenty-minute hunt into a one-line read: the clone row plus three that went 34.3 to 51, which is the growth ratio, which is the answer. Assertions over sets should name the members that broke them.

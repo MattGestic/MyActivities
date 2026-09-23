@@ -3,12 +3,21 @@
 P40 check (TEST-42): dense-run row growth, the critical-path filter set, the
 split CSV, and user-added milestones.
 
-DENSE-RUN GROWTH. A row whose densest proximity run reaches three markers grows
-by half again. Three is the band count, not a number picked: MS_LEVEL_CYCLE has
-three entries, so a run reaches "every line in use" at exactly three. The
-reported cases are asserted BY NAME (rows 18 and 51 unchanged, 37 and 46 grown)
-rather than only in aggregate, because an aggregate that happens to come out
-right is not evidence about the rows that were reported.
+DENSE-RUN GROWTH, ON THE VISIBLE COLUMNS. A row grows by half again when its
+densest proximity run of ON-SCREEN markers reaches three. Three is the band
+count, not a number picked: MS_LEVEL_CYCLE has three entries, so a run reaches
+"every line in use" at exactly three.
+
+Growth followed the row's TOTAL markers at v3.1.0-P40 and follows the visible
+ones from P41, which is what makes row 51 behave as reported. Its four markers
+sit at columns 13, 14, 15 and 17, so a board opening at column 15 leaves it two.
+That case is driven here through the real date-range control, not by calling the
+recompute directly, and it is asserted in BOTH directions: the range makes row
+51 plain, clearing the range grows it back. A one-way check passes on code that
+can grow a row and never shrink it again.
+
+The reported cases are asserted BY NAME, because an aggregate that happens to
+come out right is not evidence about the rows that were reported.
 
 THE CRITICAL SET. Status is multi-select with EMPTY MEANING NO CONSTRAINT,
 which is deliberately not the same as all five selected; that distinction is
@@ -72,96 +81,138 @@ PROBE = r"""
     await settle(); await settle();
     R.notes.viewport=window.innerWidth+'x'+window.innerHeight;
 
-    // ============ 1. Dense-run row growth ============
-    // Rebuilt from the run cut, independently of the code under test, so this
-    // measures the RULE rather than reading back the class the code wrote.
-    const runsFor=function(tr){
-      const cols=Array.prototype.map.call(tr.querySelectorAll('.m-wrap:not(.m-ghost)'),function(w){
+    // ============ 1. Dense-run row growth, on the VISIBLE columns ========
+    // Growth follows what is ON SCREEN, not what the row carries. Rebuilt from
+    // the run cut inside this probe rather than read back off the class the
+    // code wrote, and driven through the real date-range control so the
+    // recompute path is exercised rather than the render path alone.
+    const colsOf=function(tr){
+      return Array.prototype.map.call(tr.querySelectorAll('.m-wrap:not(.m-ghost)'),function(w){
         const td=w.closest('td[data-col]');
         return td?parseInt(td.getAttribute('data-col'),10):-1;
       }).filter(function(c){return c>=0;}).sort(function(a,b){return a-b;});
-      let best=0,i=0;
-      while(i<cols.length){
-        let j=i+1;
-        while(j<cols.length&&(cols[j]-cols[j-1])<=MS_PROXIMITY_COLS) j++;
-        if(j-i>best) best=j-i;
-        i=j;
-      }
-      return {maxRun:best,n:cols.length};
     };
-    const plainH=[],denseH=[];
-    let agree=0,disagree=[];
-    document.querySelectorAll('#tbody tr.data').forEach(function(tr){
-      const rr=runsFor(tr);
-      const grown=tr.classList.contains('dense-run');
-      const should=rr.maxRun>=MS_LEVEL_CYCLE.length;
-      if(grown===should) agree++;
-      else disagree.push((tr.getAttribute('data-ref')||'?')+' run '+rr.maxRun+' grown '+grown);
-      (grown?denseH:plainH).push(r1(tr.getBoundingClientRect().height));
-    });
+    const onBoard=function(c){
+      return !DATE_RANGE_COLS||(c>=DATE_RANGE_COLS.lo&&c<=DATE_RANGE_COLS.hi); };
+    const denseBy=function(cols){
+      let best=0,i=0;
+      while(i<cols.length){ let j=i+1;
+        while(j<cols.length&&(cols[j]-cols[j-1])<=MS_PROXIMITY_COLS) j++;
+        if(j-i>best) best=j-i; i=j; }
+      return best>=MS_LEVEL_CYCLE.length;
+    };
+    const auditGrowth=function(){
+      const plainH=[],denseH=[],disagree=[];
+      let agree=0;
+      document.querySelectorAll('#tbody tr.data').forEach(function(tr){
+        const want=denseBy(colsOf(tr).filter(onBoard));
+        const grown=tr.classList.contains('dense-run');
+        if(want===grown) agree++;
+        else disagree.push((tr.getAttribute('data-ref')||'?')+' want '+want+' got '+grown);
+        (grown?denseH:plainH).push(r1(tr.getBoundingClientRect().height));
+      });
+      return {agree:agree,disagree:disagree,plainH:plainH,denseH:denseH};
+    };
     const mode=function(a){ const c={}; let best=null,bn=0;
       a.forEach(function(v){ c[v]=(c[v]||0)+1; if(c[v]>bn){bn=c[v];best=v;} }); return best; };
-    R.notes.growth={rows:plainH.length+denseH.length,dense:denseH.length,
-                    plainH:mode(plainH),denseH:mode(denseH),
-                    agree:agree,disagree:disagree.slice(0,6),
-                    growth:MS_DENSE_RUN_GROWTH,bands:MS_LEVEL_CYCLE.length};
-    ck('growth: there are rows of both kinds to compare',
-       denseH.length>3&&plainH.length>50,
-       denseH.length+' grown of '+(plainH.length+denseH.length));
-    ck('growth: every row is grown exactly when its densest run reaches the band count',
-       disagree.length===0,
-       agree+' agree, mismatches: '+(disagree.join('; ')||'none'));
-    ck('growth: a grown row is half again the height of a plain one',
-       Math.abs(mode(denseH)-Math.round(mode(plainH)*MS_DENSE_RUN_GROWTH))<=1.5,
-       mode(plainH)+'px plain against '+mode(denseH)+'px grown');
-    // The reported cases, by name. Row numbers in the report are the board's
-    // own left-hand numbers, so they are looked up that way.
     const byNum=function(n){
       const cell=Array.prototype.filter.call(
         document.querySelectorAll('#tbody tr.data .row-num'),function(e){
           return e.textContent.trim()===String(n); })[0];
       return cell?cell.closest('tr'):null; };
-    const reported={};
-    [18,37,46,51].forEach(function(n){
-      const tr=byNum(n);
-      reported[n]=tr?{run:runsFor(tr).maxRun,grown:tr.classList.contains('dense-run'),
-                      h:r1(tr.getBoundingClientRect().height)}:null;
-    });
+    const grownByNum=function(n){ const tr=byNum(n);
+      return tr?{cols:colsOf(tr),visible:colsOf(tr).filter(onBoard),
+                 grown:tr.classList.contains('dense-run'),
+                 h:r1(tr.getBoundingClientRect().height)}:null; };
+
+    // --- unfiltered ---
+    const a0=auditGrowth();
+    R.notes.growth={rows:a0.plainH.length+a0.denseH.length,dense:a0.denseH.length,
+                    plainH:mode(a0.plainH),denseH:mode(a0.denseH),
+                    agree:a0.agree,disagree:a0.disagree.slice(0,6),
+                    growth:MS_DENSE_RUN_GROWTH,bands:MS_LEVEL_CYCLE.length};
+    ck('growth: there are rows of both kinds to compare',
+       a0.denseH.length>3&&a0.plainH.length>50,
+       a0.denseH.length+' grown of '+(a0.plainH.length+a0.denseH.length));
+    ck('growth: unfiltered, every row is grown exactly when its visible run reaches the band count',
+       a0.disagree.length===0,
+       a0.agree+' agree, mismatches: '+(a0.disagree.join('; ')||'none'));
+    ck('growth: a grown row is half again the height of a plain one',
+       Math.abs(mode(a0.denseH)-Math.round(mode(a0.plainH)*MS_DENSE_RUN_GROWTH))<=1.5,
+       mode(a0.plainH)+'px plain against '+mode(a0.denseH)+'px grown');
+    // Unfiltered, all four reported rows carry every marker they have, so 37,
+    // 46 and 51 are equally dense and all three grow. That is not the reported
+    // case; it is the control for it.
+    const unfiltered={18:grownByNum(18),37:grownByNum(37),46:grownByNum(46),51:grownByNum(51)};
+    R.notes.unfiltered=unfiltered;
+    ck('growth: unfiltered, 18 stays and 37, 46 and 51 all grow, since all four are on screen',
+       unfiltered[18].grown===false&&unfiltered[37].grown===true&&
+       unfiltered[46].grown===true&&unfiltered[51].grown===true,
+       JSON.stringify(unfiltered));
+
+    // --- the state the report came from ---
+    // The reporting screenshot's board opened at the week ending 06-Sep, which
+    // is column 15. Driven through the real control, and through the real
+    // recompute path: applyFilter() owes the rebuild, nothing here forces one.
+    const open15=isoDay(WE_DATES[15]);
+    $('filter-date-from').value=open15;
+    $('filter-date-from').dispatchEvent(new Event('input',{bubbles:true}));
+    await settle(); await settle(); await settle(); await settle();
+    const aR=auditGrowth();
+    const reported={18:grownByNum(18),37:grownByNum(37),46:grownByNum(46),51:grownByNum(51)};
     R.notes.reported=reported;
-    // Three of the four reported rows behave as the report says. Row 51 does
-    // not, and the measurement says why rather than the rule being bent to fit:
-    //
-    //   row 18  SNIP-126  ONE milestone, col 16                  not grown
-    //   row 37  SNIP-165  four, cols 15,16,17,19, one run of 4    grown
-    //   row 46  SNIP-180  four, cols 18,19,19,20, one run of 4    grown
-    //   row 51  SNIP-188  four, cols 13,14,15,17, one run of 4    grown
-    //
-    // Row 51 is identically dense to 37 and 46 on the unfiltered board, so no
-    // rule reading the data can separate them. It read as fine in the report's
-    // screenshot because that board carried a date range starting at the week
-    // ending 06-Sep, which is column 15: SNIP-188 and SNIP-197 sit at 13 and 14
-    // and were off the visible board, leaving two markers where the data has
-    // four. Asserted as measured, with row 51's disagreement named, so the gap
-    // between the rule and the report is on the record rather than papered
-    // over. TD-153.
-    ck('growth: the reported rows behave as measured, row 51 included',
-       reported[18]&&reported[37]&&reported[46]&&reported[51]&&
-       reported[18].run===1&&reported[18].grown===false&&
-       reported[37].run===4&&reported[37].grown===true&&
-       reported[46].run===4&&reported[46].grown===true&&
-       reported[51].run===4&&reported[51].grown===true,
+    R.notes.reportedAudit={agree:aR.agree,disagree:aR.disagree.slice(0,6),
+                           rangeLo:DATE_RANGE_COLS?DATE_RANGE_COLS.lo:null};
+    ck('growth: under the report\u2019s range, every row still agrees with the rule',
+       aR.disagree.length===0,
+       aR.agree+' agree, mismatches: '+(aR.disagree.join('; ')||'none'));
+    // THE REPORTED CASE. Row 51's markers sit at 13, 14, 15 and 17, so opening
+    // the board at 15 leaves it two visible markers and it must NOT grow, while
+    // 37 and 46 keep four each and must.
+    ck('growth: THE REPORTED CASE. 18 and 51 are plain, 37 and 46 are grown',
+       reported[18].grown===false&&reported[51].grown===false&&
+       reported[37].grown===true&&reported[46].grown===true,
        JSON.stringify(reported));
-    // The claim about row 51 is itself asserted, not just written in a comment:
-    // two of its four markers fall before the column the report's date range
-    // opened on.
-    const r51=byNum(51);
-    const cols51=r51?Array.prototype.map.call(r51.querySelectorAll('.m-wrap:not(.m-ghost)'),
-      function(w){ const td=w.closest('td[data-col]');
-        return td?parseInt(td.getAttribute('data-col'),10):-1; }).sort(function(a,b){return a-b;}):[];
-    R.notes.row51={cols:cols51,beforeCol15:cols51.filter(function(c){return c<15;}).length};
-    ck('growth: row 51 has four markers, two of them before the reported window',
-       cols51.length===4&&R.notes.row51.beforeCol15===2,
-       JSON.stringify(R.notes.row51));
+    ck('growth: row 51 is plain because two of its four markers are off the board',
+       reported[51].cols.length===4&&reported[51].visible.length===2&&
+       reported[51].h===mode(a0.plainH),
+       JSON.stringify(R.notes.reported[51]));
+    ck('growth: and 37 and 46 still carry four visible markers each',
+       reported[37].visible.length===4&&reported[46].visible.length===4,
+       '37 '+reported[37].visible.join(',')+'  46 '+reported[46].visible.join(','));
+
+    // --- and back, by BOTH routes out ---
+    // The recompute has to work in both directions. A one-way check passes on
+    // code that grows a row and can never shrink it again.
+    clearDateRangeFilter();
+    await settle(); await settle(); await settle(); await settle();
+    const back=grownByNum(51);
+    R.notes.growthBack=back;
+    ck('growth NEGATIVE CONTROL: clearing the range grows row 51 back',
+       back.grown===true&&back.visible.length===4&&back.h===mode(a0.denseH),
+       JSON.stringify(back));
+    ck('growth: and the whole board agrees again after the round trip',
+       auditGrowth().disagree.length===0,
+       auditGrowth().agree+' agree');
+    // Remove all filters is a SEPARATE route out: clearFilter() puts every
+    // column back itself rather than routing through applyFilter(), so it is
+    // its own entry point and was the one missed on the first pass. Asserted
+    // through the real control, not through applyFilter.
+    $('filter-date-from').value=open15;
+    $('filter-date-from').dispatchEvent(new Event('input',{bubbles:true}));
+    await settle(); await settle(); await settle();
+    const midway=grownByNum(51);
+    clearFilter();
+    await settle(); await settle(); await settle(); await settle();
+    const viaClearAll=grownByNum(51);
+    const auditAfterClearAll=auditGrowth();
+    R.notes.growthViaClearAll={narrowed:midway,restored:viaClearAll,
+                               agree:auditAfterClearAll.agree,
+                               disagree:auditAfterClearAll.disagree.slice(0,6)};
+    ck('growth: Remove all filters restores the growth too, not just the range control',
+       midway.grown===false&&viaClearAll.grown===true&&
+       viaClearAll.h===mode(a0.denseH)&&auditAfterClearAll.disagree.length===0,
+       JSON.stringify(R.notes.growthViaClearAll));
 
     // ============ 2. The critical path filter set ============
     const base=visRows();
@@ -426,9 +477,23 @@ def main():
     checks.append(("source: exactly one version literal", vers == 1, f"{vers} found"))
     checks.append((
         "source: the growth threshold is the band count, not a typed number",
-        "_maxRun>=MS_LEVEL_CYCLE.length" in nospace
+        "best>=MS_LEVEL_CYCLE.length" in nospace
         and "constMS_DENSE_RUN_GROWTH=1.5" in nospace,
         "the threshold or the ratio is hardcoded elsewhere"))
+    checks.append((
+        "source: one run cut, used by the renderer and by the filter pass",
+        src.count("function isDenseRunCols(") == 1
+        and src.count("isDenseRunCols(") == 3,
+        f"{src.count('isDenseRunCols(')} references, expected 3"))
+    # THREE entry points into "what is on the board just changed": both exits of
+    # applyFilter, and clearFilter, which un-hides every column itself rather
+    # than routing through applyFilter. The third was missed on the first pass
+    # and caught by p33_check; the count is asserted so a fourth entry point
+    # added without the check fails here rather than three partials later.
+    checks.append((
+        "source: all three entry points check whether the growth is stale",
+        src.count("denseRunGrowthStale()) scheduleRerender(true)") == 3,
+        f"{src.count('denseRunGrowthStale()) scheduleRerender(true)')} of 3 entry points"))
     checks.append((
         "source: user milestones are merged at the one function that builds rows",
         src.count("function mergeUserMilestones(") == 1

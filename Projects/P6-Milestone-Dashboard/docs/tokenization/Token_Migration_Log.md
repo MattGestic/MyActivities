@@ -148,6 +148,15 @@ The log is a record of readings, not of changes, so a gap between two rows belon
 | 2026-09-22 | Audit script v3, after the v3.1.0-P40 pass | Hardcoded font-size declarations (px) | 124 |
 | 2026-09-22 | `tools/theme_check.py`, after the v3.1.0-P40 pass | Probes expected to toggle, frozen | 0 |
 | 2026-09-22 | `tools/theme_check.py`, after the v3.1.0-P40 pass | Probes below 3.0:1 | 0 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P41 pass | Hardcoded colour occurrences | 38 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P41 pass | Distinct hardcoded colour values | 34 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P41 pass | Colour occurrences matching an existing token exactly | 7 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P41 pass | `--space-*` token references in file | 79 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P41 pass | Hardcoded padding/margin/gap declarations (px) | 224 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P41 pass | `var(--text-*)` font-size references in file | 31 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P41 pass | Hardcoded font-size declarations (px) | 124 |
+| 2026-09-23 | `tools/theme_check.py`, after the v3.1.0-P41 pass | Probes expected to toggle, frozen | 0 |
+| 2026-09-23 | `tools/theme_check.py`, after the v3.1.0-P41 pass | Probes below 3.0:1 | 0 |
 
 **Re-running the audit:** run `python3 tools/colour_audit.py` from the project root. It regenerates `Hardcoded_Colour_Audit.csv` and prints every metric above.
 

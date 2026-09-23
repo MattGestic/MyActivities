@@ -25,6 +25,7 @@
 | TEST-19 | 2026-09-10 | Publish round trip: does a published file open cold with the schedule, timeline and annotations already in place, and does it carry nothing it should not | Publish captured at the Blob boundary, written to disk, then loaded as a separate page | **Pass after two fixes** | TD-41, TD-42 (both closed same pass), TD-43, TD-44 |
 | TEST-20 | 2026-09-11 | Does a published file describe itself correctly: mount slots, baseline counts, and the header provenance line | Publish probe extended to capture all three mount slots and the header meta | **Pass after fix** — reproduced the user's report first | TD-47, TD-48 (both closed same pass) |
 | TEST-21 | 2026-09-11 | Six requested changes: published schedule as the update, Source cell after a drag, empty-row delete, gutter alignment, column master toggle scope, header chrome colour | Publish round trip plus a combined DOM probe driving each interaction | **5 pass, 1 delivered failing** — the requested `#f4f5f8` is 1.79:1 on the light header | TD-50 (open), TD-51 to TD-55 (closed) |
+| TEST-43 | 2026-09-23 | Row growth changed to follow the markers ON SCREEN rather than the row's total, which is the alternative TD-153 left open and the user chose | `tools/p40_check.py` section 1 rewritten, at 390x844 and 1440x900, plus three source-level assertions. The reported case is driven through the real date-range control rather than by calling the recompute directly, and asserted in BOTH directions: the range makes row 51 plain, clearing it grows row 51 back. A one-way check passes on code that can grow a row and never shrink it again. The whole board is re-audited against the rule after the round trip | **Pass 91/91**, up from 77, after a third entry point was found missing | TD-153 closed, TD-159 raised and closed, TD-158 re-checked |
 | TEST-42 | 2026-09-22 | Six items in one batch: rows grown when their milestones crowd each other; a critical-path filter set with multi-select status and a float threshold; the drawer's action bar back to one row; the exported CSV split into a schedule block and an entered block; and adding a milestone from a header button or a double click on a cell | `tools/p40_check.py` at 390x844 and 1440x900, plus seven source-level assertions, and four earlier checks moved to their new contracts. The growth rule is REBUILT from the run cut inside the probe rather than read back off the class the code wrote. The CSV is asserted on CONTENT: an override is set and the two blocks must then disagree, because a header check alone passes on the very file this change exists to fix. The user milestones are asserted as annotation-layer state: the seed arrays byte-identical before and after, weight 0, the `[ID]` notes form intact, survival across a rebuild, and re-applying the same payload a no-op. `exportCSV()` was split from `buildCsvRows()` so the rows can be read without a download | **Pass 77/77**, after one of the four reported rows turned out to disagree with the rule for a reason the measurement could name, and one new degenerate dependency line was isolated to the row growth | TD-153 to TD-157, TD-158 raised |
 | TEST-41 | 2026-09-22 | Eight items in one batch: the Layout section reordered, renamed and extended to 144px; label size sliders moved under their controls and disabled when their text is off; Remarks became a Show / Hide pair; the baseline overlay toggle moved to the heading; the drawer's action bar moved above the tabs; the filter row split into two wrapping columns; and a report that dependency lines do not display | `tools/p39_check.py` at 390x844, 1024x800 and 1440x900, plus nine source-level assertions, and `tools/p29_check.py`'s sticky-footer contract rewritten. The disabled sliders are asserted by **hit test at the slider's own centre**, because `disabled` is not observable through synthetic events in either direction. The one-writer claim is driven through three DIFFERENT entry points (the handler, `setColButtonState`, and a rebuild) and requires control and board to agree after each. The filter row is asserted as "side by side XOR cleanly stacked", with which one decided by measured room. The dependency report is asserted, not fixed | **Pass 108/108**, after the dependency report was refuted by measurement, one assertion was written against a panel that was parked off screen, and one asserted a layer visibility that carries no user-visible difference | TD-146 to TD-150, TD-151 and TD-152 raised |
 | TEST-40 | 2026-09-22 | Print preview heading aligned to the sheet and given its own controls; the date range activating on set with one end open; the default view opening on Activity ID labels with hours off | `tools/p38_check.py` at 390x844, 1024x800 and 1440x900, plus seven source-level assertions. Three viewports chosen for **opposite failures**: at 390 and 1024 the A3 sheet is WIDER than the viewport so the bars fell short of it, at 1440 it is narrower so they overhung it. Alignment asserted on the content boxes as well as the outer edges, since matching outer edges alone leaves the bar's text offset by the frame's 8mm padding. The date range assertions dispatch `input` **only**, never `change`, because a probe that fires `change` cannot see the reported defect at all. Each default carries a negative control: the hours toggle is flipped and must go the other way, and the title mode is switched to `both` and must gain the ` _ ` joiner the `id` assertion requires be absent | **Pass 91/91**, after the first measurement refuted the date-range report as written, one probe assertion was wrong about a correct ID fallback, and the change surfaced TD-145 | TD-142 to TD-145 |
@@ -1409,6 +1410,49 @@ Marker containment by setting, labels on, ID + Title:
 | Baseline render | unchanged, 105 rows / 146 milestones imported |
 
 **Published:** `releases/v3.1.0-P32_marker-placement-and-filter-row-fixes.html`
+
+---
+
+## TEST-43 — Growth follows the visible columns (v3.1.0-P41)
+
+`tools/p40_check.py`, **89/89**, at 390x844 and 1440x900. Section 1 rewritten; the rest of TEST-42 is unchanged and still passing.
+
+TEST-42 recorded that row 51 disagreed with the report and why. The user chose the alternative it named: growth driven by the markers on screen. This is that change, and the same four rows now behave exactly as reported.
+
+### The reported case, driven through the real control
+
+The reporting screenshot's board opened at the week ending 06-Sep, column 15. The check sets that date through `#filter-date-from` and an `input` event, so the recompute path in `applyFilter()` is what is exercised, not a direct call to it.
+
+| Row | Columns it carries | Visible at col 15+ | Grown | Height |
+|---|---|---|---|---|
+| 18 SNIP-126 | 16 | 16 | no | 34.3px |
+| 37 SNIP-165 | 15, 16, 17, 19 | 15, 16, 17, 19 | **yes** | 51px |
+| 46 SNIP-180 | 18, 19, 19, 20 | 18, 19, 19, 20 | **yes** | 51px |
+| 51 SNIP-188 | 13, 14, 15, 17 | **15, 17** | no | 34.3px |
+
+Unfiltered, all four markers of row 51 are on the board and it grows like 37 and 46, which is the control for the case rather than the case itself. Both states are asserted.
+
+### Asserted in both directions
+
+Clearing the range must grow row 51 back to 51px with four visible markers. **A one-way check passes on code that can grow a row and never shrink it again**, which is exactly the failure mode a render-time height invites. The whole board is then re-audited against the rule after the round trip: 159 of 159 agree.
+
+### Three entry points, and the one that was missed
+
+The height is not resized in place, because `--mdx`/`--mdy` are computed from it at render time. The rebuild is owed instead, from every place that changes which columns are on the board:
+
+| Entry point | Carries the check |
+|---|---|
+| `applyFilter()`, main exit | yes |
+| `applyFilter()`, early return when no filter is active | yes |
+| `clearFilter()` | **missed on the first pass** |
+
+`clearFilter()` un-hides every row and column itself rather than routing through `applyFilter()`, so Remove all filters put the columns back and left rows that should have grown at the short height. Caught by `p33_check`'s "only the clone row grew" assertion, which read 4 of 105: the clone row correctly, plus SNIP-115, SNIP-159 and SNIP-242 going 34.3px to 51px. **TD-159.**
+
+The count of entry points is now asserted at source, so a fourth added without the check fails here rather than three partials later, and the Remove all filters route is driven at runtime through the real control. `p33_check`'s failure message was also made to name the rows that moved rather than only count them.
+
+`isDenseRunCols()` is the only run cut, called by the renderer and by the filter pass; two copies would drift. The cascade terminates because `rerender()` ends by calling `applyFilter()`, which by then agrees with what it just built.
+
+**Published:** `releases/v3.1.0-P41_growth-follows-visible-columns.html`
 
 ---
 
