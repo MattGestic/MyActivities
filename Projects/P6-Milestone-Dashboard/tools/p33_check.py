@@ -453,9 +453,20 @@ PROBE = r"""
     // And no other row moved.
     const afterHeights=rowHeights();
     let othersMoved=0;
+    // Naming the rows that moved, not just counting them: "4 of 105" says a
+    // regression happened and nothing about where to look.
+    const movedRows=[];
+    const trs=Array.from(document.querySelectorAll('tr[data-type="row"]'));
     const n=Math.min(baseHeights.length,afterHeights.length);
-    for(let i=0;i<n;i++) if(Math.abs(baseHeights[i]-afterHeights[i])>0.5) othersMoved++;
-    R.notes.overflowSpread={rowsMoved:othersMoved,of:n};
+    for(let i=0;i<n;i++) if(Math.abs(baseHeights[i]-afterHeights[i])>0.5){
+      othersMoved++;
+      if(movedRows.length<8) movedRows.push({
+        ref:trs[i]?trs[i].getAttribute('data-ref'):'?',
+        from:baseHeights[i],to:afterHeights[i],
+        dense:trs[i]?trs[i].classList.contains('dense-run'):null,
+        isTheCloneRow:trs[i]===denseTr});
+    }
+    R.notes.overflowSpread={rowsMoved:othersMoved,of:n,which:movedRows};
     ck('overflow: and it is the ONLY row that grew',
        othersMoved<=1, othersMoved+' of '+n+' rows changed height');
 

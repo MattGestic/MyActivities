@@ -25,6 +25,16 @@
 | TEST-19 | 2026-09-10 | Publish round trip: does a published file open cold with the schedule, timeline and annotations already in place, and does it carry nothing it should not | Publish captured at the Blob boundary, written to disk, then loaded as a separate page | **Pass after two fixes** | TD-41, TD-42 (both closed same pass), TD-43, TD-44 |
 | TEST-20 | 2026-09-11 | Does a published file describe itself correctly: mount slots, baseline counts, and the header provenance line | Publish probe extended to capture all three mount slots and the header meta | **Pass after fix** — reproduced the user's report first | TD-47, TD-48 (both closed same pass) |
 | TEST-21 | 2026-09-11 | Six requested changes: published schedule as the update, Source cell after a drag, empty-row delete, gutter alignment, column master toggle scope, header chrome colour | Publish round trip plus a combined DOM probe driving each interaction | **5 pass, 1 delivered failing** — the requested `#f4f5f8` is 1.79:1 on the light header | TD-50 (open), TD-51 to TD-55 (closed) |
+| TEST-47/48 | 2026-09-23 | The print preview lays out for a sheet the user picks, with a print control on the page; and the hand-written PDF writer that preceded it | `tools/p46_check.py` (new) drives all four paper/orientation pairs through the real controls and measures the injected `@page`, the sheet width and the column fit together. `tools/p45_check.py` (new) generates real PDF bytes in the browser and PARSES them here, because a check that only asserted "exportPDF returned" would pass on a file no reader can open | **p46 37/37 in the suite; p45 38/38 run directly, and held out of the suite as flaky, see TD-180.** `@page`, sheet and fit move together on every setup; A3 landscape fits 39 columns at 33px, A3 portrait and A4 landscape both at 21px (same 297mm width, used as the control), A4 portrait reports the clamp rather than shrinking below the floor; 8 of 8 header controls reachable at 390/1024/1440 | TD-177 to TD-181 |
+| TEST-46 | 2026-09-23 | The marker fill convention, the card's controls row and full-width heading, the type name moved to the icon tooltip, and a saved-edit mark per field | `tools/p44_check.py`, new, at 1440x900, plus eight source-level assertions. The fill convention is measured on the RENDERED markers (computed `fill` and `stroke-width`), not on the STATES table, since the table reading correctly is exactly what was true while the board was wrong. Geometry measured against the card's own content box. The saved mark is asserted APART from the unsaved tint in both directions | **Pass 31/31.** 41 finished markers all filled, 155 unfinished all outline, both populations non-empty; heading runs 17 to 223 against a float column starting at 233 with a 10px row gap; typing shows the tint and no mark, saving shows the mark and no tint; an edited mark changes the board's `<use href>` from `#ico-diamond` to `#ico-lock` and clearing the override restores it | TD-171 to TD-176 closed |
+| TEST-45 | 2026-09-23 | The milestone card becomes a form: dirty state, save and discard, an editable schedule layer, a type picker on the icon, and three fixed equal schedule columns | `tools/p43_check.py`, new, at 1440x900, plus eight source-level assertions. Geometry measured on the rendered card and, for the fixed-position claim, RELATIVE to the card's own left edge. Both directions asserted for save, discard and click-away. The round trip drives an edited finish date all the way to the board and back | **Pass 36/36.** The head reads close(315) < icon(338) < ID(362); the save pair appears only when dirty and sits right of the ID; an edited date moves the marker from column 6 to 9 and clearing the override returns it to 6; the three schedule columns are 84px each at offsets 17/111/205 on BOTH a card with a start date and one without | TD-162 to TD-170 closed |
+| TEST-44 | 2026-09-23 | One status vocabulary across icons, chips, picker and card, and a milestone a person marks off made visually distinct from one the upload recorded as complete | `tools/p42_check.py`, new, at 1440x900. Colours read off the RENDERED markers rather than out of the CSS, on two milestones on the same board. A negative control clears the mark and requires the milestone back at its schedule state. Both kinds asserted to carry rollup credit. The theme dimension asserted in the same file, because `theme_check.py`'s constant probes cannot fail (TD-161) | **Pass 25/25.** Complete `rgb(23,25,28)` against Done `rgb(31,157,85)` in light; in dark the green is byte-identical and the ink moves to `rgb(232,238,248)`, still distinct. Chips `CRIT,RISK,TRACK,DONEUSER,DONE,FUTURE`, base 159 rows narrowing to 32 Complete and 1 Done | TD-160 closed, TD-161 raised |
+| TEST-43 | 2026-09-23 | Row growth changed to follow the markers ON SCREEN rather than the row's total, which is the alternative TD-153 left open and the user chose | `tools/p40_check.py` section 1 rewritten, at 390x844 and 1440x900, plus three source-level assertions. The reported case is driven through the real date-range control rather than by calling the recompute directly, and asserted in BOTH directions: the range makes row 51 plain, clearing it grows row 51 back. A one-way check passes on code that can grow a row and never shrink it again. The whole board is re-audited against the rule after the round trip | **Pass 91/91**, up from 77, after a third entry point was found missing | TD-153 closed, TD-159 raised and closed, TD-158 re-checked |
+| TEST-42 | 2026-09-22 | Six items in one batch: rows grown when their milestones crowd each other; a critical-path filter set with multi-select status and a float threshold; the drawer's action bar back to one row; the exported CSV split into a schedule block and an entered block; and adding a milestone from a header button or a double click on a cell | `tools/p40_check.py` at 390x844 and 1440x900, plus seven source-level assertions, and four earlier checks moved to their new contracts. The growth rule is REBUILT from the run cut inside the probe rather than read back off the class the code wrote. The CSV is asserted on CONTENT: an override is set and the two blocks must then disagree, because a header check alone passes on the very file this change exists to fix. The user milestones are asserted as annotation-layer state: the seed arrays byte-identical before and after, weight 0, the `[ID]` notes form intact, survival across a rebuild, and re-applying the same payload a no-op. `exportCSV()` was split from `buildCsvRows()` so the rows can be read without a download | **Pass 77/77**, after one of the four reported rows turned out to disagree with the rule for a reason the measurement could name, and one new degenerate dependency line was isolated to the row growth | TD-153 to TD-157, TD-158 raised |
+| TEST-41 | 2026-09-22 | Eight items in one batch: the Layout section reordered, renamed and extended to 144px; label size sliders moved under their controls and disabled when their text is off; Remarks became a Show / Hide pair; the baseline overlay toggle moved to the heading; the drawer's action bar moved above the tabs; the filter row split into two wrapping columns; and a report that dependency lines do not display | `tools/p39_check.py` at 390x844, 1024x800 and 1440x900, plus nine source-level assertions, and `tools/p29_check.py`'s sticky-footer contract rewritten. The disabled sliders are asserted by **hit test at the slider's own centre**, because `disabled` is not observable through synthetic events in either direction. The one-writer claim is driven through three DIFFERENT entry points (the handler, `setColButtonState`, and a rebuild) and requires control and board to agree after each. The filter row is asserted as "side by side XOR cleanly stacked", with which one decided by measured room. The dependency report is asserted, not fixed | **Pass 108/108**, after the dependency report was refuted by measurement, one assertion was written against a panel that was parked off screen, and one asserted a layer visibility that carries no user-visible difference | TD-146 to TD-150, TD-151 and TD-152 raised |
+| TEST-40 | 2026-09-22 | Print preview heading aligned to the sheet and given its own controls; the date range activating on set with one end open; the default view opening on Activity ID labels with hours off | `tools/p38_check.py` at 390x844, 1024x800 and 1440x900, plus seven source-level assertions. Three viewports chosen for **opposite failures**: at 390 and 1024 the A3 sheet is WIDER than the viewport so the bars fell short of it, at 1440 it is narrower so they overhung it. Alignment asserted on the content boxes as well as the outer edges, since matching outer edges alone leaves the bar's text offset by the frame's 8mm padding. The date range assertions dispatch `input` **only**, never `change`, because a probe that fires `change` cannot see the reported defect at all. Each default carries a negative control: the hours toggle is flipped and must go the other way, and the title mode is switched to `both` and must gain the ` _ ` joiner the `id` assertion requires be absent | **Pass 91/91**, after the first measurement refuted the date-range report as written, one probe assertion was wrong about a correct ID fallback, and the change surfaced TD-145 | TD-142 to TD-145 |
+| TEST-39 | 2026-09-21 | Four defects reported against the P36 build: the More Actions menu clipped to the header row, the Title col slider appearing to do nothing, the zero-dependency filter doing nothing, and the ID suggestions painting behind the board | `tools/p37_check.py` at 390x844, 1440x900 and 2000x900, plus five source-level assertions. Both popups are asserted by **hit-test profile** and by counting individually reachable children, because the clipping-aware ancestor walk written at P36 cannot answer the question for a `position:fixed` element. The zero filter is asserted from the DEFAULT state with dependencies off, which is the state the report came from | **Pass 65/65**, after the first measurement refuted one report and the P36 measurement technique wrongly reported a working fix as broken | TD-137 to TD-140, TD-141 raised |
+| TEST-38 | 2026-09-19 | More Actions: seven header icon buttons collapsed into one menu, with the app name and version text beside it | `tools/p36_check.py` at three viewport widths, plus the previous release rendered in the same browser at the same viewports for the before/after. The claim that no state-writing function had to change is asserted by **diffing those function bodies against the previous release**, not by reading them. The active-row state is asserted on computed background against an inactive row, because `.icon-btn.on` and `.icon-btn.ib-mi` have equal specificity and class presence proves nothing. `p32_check`'s TD-72 guard was rewritten to the new contract and given a negative control | **Pass 95/95**, after one wrong assumption about the phone-width label and one wrong measurement in the rewritten TD-72 guard | TD-134, TD-135, TD-136 |
 | TEST-37 | 2026-09-18 | Milestone card rework: the 10% shrink, Start / Finish / Progress on one row behind a divider at one text size, the collapsible weight/hours row, and Progress as an editable annotation-layer override | `tools/p35_check.py` at three viewport widths, plus `tools/persist_check.py` extended to round-trip an override. The shrink is measured against the **P34 release rendered in the same browser at the same viewport on the same milestone**, because a card that got narrower while getting taller is not a smaller card. The three-layer rule is asserted by snapshotting every milestone record before the edit and comparing all 146 after. The three-field row is measured on a milestone chosen for carrying a real start date, because the first suitable target hides its Start field | **Pass 117/117**, after three probe defects and one vacuous comparison were found and fixed | TD-130 to TD-133 |
 | TEST-33 | 2026-09-16 | Does every row and milestone record its source; does the Source Schedule column and filter narrow in both directions; does appending a schedule to itself keep the two separable; does a multi-source board survive publish and a view switch | `tools/p30_check.py`. Appends the SAME workbook to itself, so every Activity ID collides: the worst case rather than a convenient one. The suffix is checked across `m.id`, `m.notes`, `m.ref`, `t.ref`, `t.src` and the row's `data-ids` together, and an annotation keyed on a suffixed ID must not land on its twin. Band order is measured as contiguous RUNS, not distinct names, because appending a file to itself repeats every band name. Performance is asserted by COUNTING (one index build reused across 300 lookups, one filter pass per typing burst, zero per-cell style writes), never by wall clock: `performance.now()` does not advance under virtual time and the first draft reported 0ms against every budget | **Pass 55/55** | TD-99 to TD-103 (closed) |
 | TEST-32 | 2026-09-16 | Does the rebuilt settings panel actually hold one spacing contract; does every control still reach a function that exists; did anything on the board move | `tools/p29_check.py`. The inline padding/margin count must be **zero**, not smaller. Gutter, row step, separator and radius each asserted as a single computed value across the real panel. Every inline `onclick`/`onchange`/`oninput` in the drawer is parsed and checked against `window`, because a handler naming a function that no longer exists throws only when clicked and looks perfect until then. Baseline and imported board figures captured separately, the baseline taken before a single control is touched | **Pass 46/46** | TD-94, TD-95, TD-96 (closed), TD-97, TD-98 (open) |
@@ -1404,6 +1414,560 @@ Marker containment by setting, labels on, ID + Title:
 | Baseline render | unchanged, 105 rows / 146 milestones imported |
 
 **Published:** `releases/v3.1.0-P32_marker-placement-and-filter-row-fixes.html`
+
+---
+
+## TEST-47/48 — The print page a person can choose (v3.1.0-P45)
+
+`tools/p46_check.py`, 1440x900, 37 checks. `tools/p45_check.py`, 38 checks.
+
+**The defect, measured off the PDF that was delivered.** CSS `@page` is advisory in this path; the print dialog owns the paper.
+
+| | Measured |
+|---|---|
+| PDF MediaBox | **595 x 841 pt = A4 portrait** |
+| Sheet the app drew | **1122 px = 297mm = A3** |
+| Net content scale | **0.4807 pt per CSS px** against a nominal 0.75, a **64% shrink** |
+| Margins in the file | ~16.5pt (**5.8mm**), against the 8mm the CSS asked for |
+| Content right edge | **591.9pt** on a 595pt page, past the 579.6pt printable edge |
+
+**After: every setup, driven through the real controls.**
+
+| Setup | `@page` | Sheet | Header bar | Column fit |
+|---|---|---|---|---|
+| A4 portrait | `210mm 297mm` | 210mm | 794px | clamped, says so |
+| A4 landscape | `297mm 210mm` | 297mm | 1123px | 39 at **21px** |
+| A3 portrait | `297mm 420mm` | 297mm | 1123px | 39 at **21px** |
+| A3 landscape | `420mm 297mm` | 420mm | 1587px | 39 at **33px** |
+
+A3 portrait and A4 landscape share a 297mm width and are used as the control: they must fit identically, or the fit is keyed on the paper's NAME rather than on its width. A4 portrait genuinely cannot carry 39 weeks (194mm printable is 733px against a 780px floor), and reports the clamp rather than shrinking below it.
+
+**A real defect found by an existing check.** `p38_check` read **5 of 8 header controls reachable at 390px**. The banner is sheet width by the TD-142 contract, so its flex wrapping was computed against 1587px and never wrapped. An inner wrapper capped at the viewport, pinned with `position:sticky;left:0`, put it back to 8 of 8 at every width. The check itself was counting a literal three controls and now asserts that every control in the bar is reachable.
+
+**Two checks were asserting an old default.** `p27_check` pinned A3 portrait in three places; it now asserts the rule matches whatever is chosen, which is what it meant.
+
+**The PDF writer that preceded this** is asserted at 38/38 and is deliberately unreachable: the writer half works, the DOM walker does not. See TD-180.
+
+**Regression suite:** p27 32/32, p28 34/34, p29 53/53, p30 68/68, p32 36/36, p33 38/38, p34 73/73, p35 120/120, p36 96/96, p37 65/65, p38 91/91, p39 117/117, p40 91/91, p42 25/25, p43 36/36, p44 31/31, p46 37/37, persist 22/0, ingest and board order exit 0, contrast gate 0 frozen and 0 below 3.0:1.
+
+**Published:** `releases/v3.1.0-P45_print-page-picker.html`
+
+## TEST-46 — The fill convention, the card heading, and the saved-edit mark (v3.1.0-P44)
+
+`tools/p44_check.py`, 1440x900, 31 checks.
+
+**The convention that existed everywhere except where it mattered.** `.ms-icon.outline` has been in the CSS from the start and the legend has always shown DONE filled against outline swatches for the rest, but every entry in `STATES` carried `render:'filled'` and `renderIcon()` is that field's only consumer. The outline rule styled nothing but the legend swatch beside the text claiming the convention.
+
+**Measurements.**
+
+| | Result |
+|---|---|
+| Finished markers | **41 of 41 filled**, sample `ms-icon filled s-done`, `fill: rgb(23,25,28)` |
+| Unfinished markers | **155 of 155 outline**, sample `ms-icon outline s-risk`, `fill: none`, `stroke-width: 2` |
+| Both populations | non-empty, so neither half of the claim passes vacuously |
+| Legend | still documents both halves (5 filled swatches, 4 outline) |
+| Controls row | holds close; the ID and the icon are not on it |
+| Heading | starts at the card's 16px padding edge, right edge 223 against a float column at 233, with a 10px row gap: it runs the full width up to the float |
+| Heading width | 206px, against the 65px ID it used to share a line with |
+| Type name | absent from the heading (`#SNIP-102 Complete`), present on the icon tooltip |
+| Card mark | `ms-icon filled s-done`, identical to the board's mark for the same milestone |
+| Unedited card | none of 9 possible marks shown |
+| Typed, not saved | dirty tint **true**, saved mark **false** |
+| Saved | saved mark **true**, dirty tint **false**, tooltip `Changed from the schedule. It had: 100` |
+| Reopened | the mark survives, since it reads the stores rather than the form |
+| **NEGATIVE CONTROL** | typing the schedule's own value back clears the mark and empties the override |
+| Picker | 2 groups, 5 marks and 5 types |
+| **Round trip** | picking a mark and saving changes the board's `<use href>` from `#ico-diamond` to `#ico-lock` |
+| **NEGATIVE CONTROL** | clearing the override restores `#ico-diamond` |
+
+**Two P43 defects this check surfaced on its way to something else.** The float column had blown out to 198px (the shared editable-field rule gives every card input `width:100%`, and the column is `flex:0 0 auto`), which is what truncated the title in the user's screenshot; it is 56px now. And every save wrote a "custom" short title, because the field is pre-filled with the auto-shortened default and the save stored it whenever it was non-empty. Caught by the geometry check and by "only the field that was edited is marked" reading `weight,shortTitle`. See TD-175.
+
+**A probe that throws reports a smaller total, not a failure.** `p43_check` read `.className` on what became a real `<svg>`, where it is an `SVGAnimatedString`; the probe threw and took 24 assertions with it, reporting **10/12** rather than 36/36. The total is the thing to read first. See TD-176.
+
+**Regression suite:** p27 32/32, p28 34/34, p29 53/53, p30 68/68, p32 36/36, p33 38/38, p34 73/73, p35 120/120, p36 96/96, p37 65/65, p38 91/91, p39 117/117, p40 91/91, p42 25/25, p43 36/36, p44 31/31, persist 22/0, ingest and board order exit 0, contrast gate 0 frozen and 0 below 3.0:1.
+
+**Published:** `releases/v3.1.0-P44_fill-convention-and-card-heading.html`
+
+## TEST-45 — The milestone card becomes a form (v3.1.0-P43)
+
+`tools/p43_check.py`, 1440x900, 36 checks.
+
+**What changed.** The card had no state of its own: every field wrote straight to its annotation store, so there was nothing to save and nothing to discard, and the short title's Save button wrote without hiding itself. It now holds pending values and commits once.
+
+**Measurements.**
+
+| | Result |
+|---|---|
+| Head order | close 315 < icon 338 < ID 362, measured, not read from source order |
+| Icon | carries the milestone's type as its shape (`ms-icon-glyph t-ms`) |
+| Clean card | no save controls present at all (the negative control for everything below) |
+| Dirty card | exactly two controls appear, `Save` and `Save and close`, at x=549 against the ID at x=357 |
+| Save, staying open | card stays open, controls go away, value reaches its store |
+| Close | discards the pending edit and keeps the previously saved one; reopening confirms |
+| Click away | saves and closes, the opposite of close, as asked |
+| Escape | discards like the close control, storing nothing |
+| Schedule columns | 84px each on both cards; offsets 17 / 111 / 205 identical with and without a start date |
+| No start date | shows a dash placeholder, field present and typeable |
+| Type picker | one option per `TYPE_LABELS` entry (5 of 5); picking marks dirty and stores nothing until save |
+| **Round trip** | an edited finish date moves the marker from column **6 to 9**, and the override reaches `MS_FIELD_OVERRIDE` as `2026-07-24` |
+| **NEGATIVE CONTROL** | clearing the override returns the marker to column 6 and the date to `2026-07-03` |
+| Editable | all 8 named fields are live, writable controls |
+| Not editable | both dependency lists are `readOnly`; the ID is a `SPAN`, not a control |
+
+**Three defects found in the app by probe, not by reading.** A title override was stored for a field nobody touched, because `put('title',...)` compared against an `m.title` that does not exist. `noteMarkup()` fired on a no-op save, raising the unsaved-changes count for nothing. Clearing an override left the field showing the empty box that cleared it. See TD-167.
+
+**Two probe assertions were wrong, not the code.** `p35_check` drove the progress commit by blurring the field, the path P43 deliberately removed, and reported 27 failures against working code. `p40_check` anchored on the literal line following `mergeUserMilestones();`, so inserting a statement after it read as the merge having moved. Both rewritten to the new contract; `p35_check` gained an assertion it lacked, that the health dot stores nothing until Save. See TD-170.
+
+**A contrast defect the gate could only see once probed.** `--color-purple-dark` as text on `--color-accent-wash` measured **1.13:1** in the dark theme. Three rules now use `--color-accent-ink`. See TD-169.
+
+**Regression suite:** p27 32/32, p28 34/34, p29 53/53, p30 68/68, p32 36/36, p33 38/38, p34 73/73, p35 120/120, p36 96/96, p37 65/65, p38 91/91, p39 117/117, p40 91/91, p42 25/25, p43 36/36, persist 22/0, ingest and board order exit 0, contrast gate 0 frozen and 0 below 3.0:1.
+
+**Published:** `releases/v3.1.0-P43_milestone-card-as-a-form.html`
+
+## TEST-44 — Status colour convention, two kinds of finished (v3.1.0-P42)
+
+`tools/p42_check.py`, 1440x900, 25 checks.
+
+**What the request was.** One status list (Critical, At risk, On track, Done, Complete, N/A) shared by the status icons and the health indicators, with black kept for what the upload records as complete and green for what a person marks off in the current update, so the two read as different things.
+
+**Where the defect actually was.** Not in the colours. `--color-icon-done` already resolved to ink and the milestone card's `mh-2` dot was already green. `effectiveState()` mapped a person's override of 2 onto the schedule's own `DONE`, so the two collapsed onto one state before any CSS ran. A new `DONEUSER` state takes the override.
+
+**Measurements.**
+
+| | Result |
+|---|---|
+| Vocabulary, one source | `STATE_LABELS` and `HEALTH_LABELS` name every icon, chip, picker option and card label; no second spelling found |
+| Health numbering | 0 to 3 unchanged, 4 added as Done, so published files and exported models do not re-colour |
+| Complete, on the board | `ms-icon filled s-done`, `rgb(23, 25, 28)`, `effectiveState` = `DONE` |
+| Done, on the board | `ms-icon filled s-doneuser`, `rgb(31, 157, 85)`, `effectiveState` = `DONEUSER` |
+| The two together | different colours on the same rendered board |
+| NEGATIVE CONTROL | clearing the mark returns the milestone to `s-risk` / `RISK`, its own schedule state, not to green |
+| Rollup credit | `DONE` and `DONEUSER` both `credit:1`, so marking off cannot drop a milestone out of the completed total |
+| Dark theme, green | `rgb(31, 157, 85)`, identical to light: the same signal in either theme |
+| Dark theme, ink | `rgb(232, 238, 248)`, follows the theme, still distinct from the green |
+| Chips | `CRIT,RISK,TRACK,DONEUSER,DONE,FUTURE`, each labelled from the vocabulary |
+| Chip filtering | base 159 rows, 32 with Complete alone, 1 with Done alone after one milestone is marked |
+| Picker | `Critical \| At risk \| On track \| Done \| N/A / clear` |
+
+**Two probe defects found and fixed in the check itself, not in the app.** `iconOf('SNIP-101')` returned null and reported three failures about working code: SNIP-101 is dated 01-May, outside the visible week window, so no marker is drawn and there was nothing to measure a colour on. Both samples are now filtered to milestones actually rendered. Separately, the chip assertion passed vacuously while `onlyDone` was 0, since 0 differs from the base count trivially; it now sets an override first and requires `onlyDone > 0`.
+
+**Why the theme assertion lives here.** Two probes were added to `theme_check.py` for the new class, then measured as worthless: a `constant` probe that starts toggling is reported as toggling and the script still exits 0. Pointed at a class that does not exist, the probe inherited the ink colour and passed. TD-161 carries the fix; the assertion that green holds across both themes is made in this file, where the colours are already read for what they are.
+
+**Regression suite:** p27 32/32, p28 34/34, p29 53/53, p30 68/68, p32 36/36, p33 38/38, p34 73/73, p35 117/117, p36 96/96, p37 65/65, p38 91/91, p39 117/117, p40 91/91, persist 22/0, ingest and board order exit 0, contrast gate 0 frozen and 0 below 3.0:1.
+
+**Published:** `releases/v3.1.0-P42_status-colour-convention.html`
+
+## TEST-43 — Growth follows the visible columns (v3.1.0-P41)
+
+`tools/p40_check.py`, **89/89**, at 390x844 and 1440x900. Section 1 rewritten; the rest of TEST-42 is unchanged and still passing.
+
+TEST-42 recorded that row 51 disagreed with the report and why. The user chose the alternative it named: growth driven by the markers on screen. This is that change, and the same four rows now behave exactly as reported.
+
+### The reported case, driven through the real control
+
+The reporting screenshot's board opened at the week ending 06-Sep, column 15. The check sets that date through `#filter-date-from` and an `input` event, so the recompute path in `applyFilter()` is what is exercised, not a direct call to it.
+
+| Row | Columns it carries | Visible at col 15+ | Grown | Height |
+|---|---|---|---|---|
+| 18 SNIP-126 | 16 | 16 | no | 34.3px |
+| 37 SNIP-165 | 15, 16, 17, 19 | 15, 16, 17, 19 | **yes** | 51px |
+| 46 SNIP-180 | 18, 19, 19, 20 | 18, 19, 19, 20 | **yes** | 51px |
+| 51 SNIP-188 | 13, 14, 15, 17 | **15, 17** | no | 34.3px |
+
+Unfiltered, all four markers of row 51 are on the board and it grows like 37 and 46, which is the control for the case rather than the case itself. Both states are asserted.
+
+### Asserted in both directions
+
+Clearing the range must grow row 51 back to 51px with four visible markers. **A one-way check passes on code that can grow a row and never shrink it again**, which is exactly the failure mode a render-time height invites. The whole board is then re-audited against the rule after the round trip: 159 of 159 agree.
+
+### Three entry points, and the one that was missed
+
+The height is not resized in place, because `--mdx`/`--mdy` are computed from it at render time. The rebuild is owed instead, from every place that changes which columns are on the board:
+
+| Entry point | Carries the check |
+|---|---|
+| `applyFilter()`, main exit | yes |
+| `applyFilter()`, early return when no filter is active | yes |
+| `clearFilter()` | **missed on the first pass** |
+
+`clearFilter()` un-hides every row and column itself rather than routing through `applyFilter()`, so Remove all filters put the columns back and left rows that should have grown at the short height. Caught by `p33_check`'s "only the clone row grew" assertion, which read 4 of 105: the clone row correctly, plus SNIP-115, SNIP-159 and SNIP-242 going 34.3px to 51px. **TD-159.**
+
+The count of entry points is now asserted at source, so a fourth added without the check fails here rather than three partials later, and the Remove all filters route is driven at runtime through the real control. `p33_check`'s failure message was also made to name the rows that moved rather than only count them.
+
+`isDenseRunCols()` is the only run cut, called by the renderer and by the filter pass; two copies would drift. The cascade terminates because `rerender()` ends by calling `applyFilter()`, which by then agrees with what it just built.
+
+**Published:** `releases/v3.1.0-P41_growth-follows-visible-columns.html`
+
+---
+
+## TEST-42 — Row growth, critical filters, split CSV, added milestones (v3.1.0-P40)
+
+`tools/p40_check.py`, **77/77**, at 390x844 and 1440x900. Seven assertions are source-level. Four earlier checks moved to new contracts: `p29_check` 52 to 53, `p30_check` 67 to 68, `p36_check` 95 to 96, `p39_check` 108 to 117.
+
+### One of the four reported rows disagrees with the rule, and the measurement says why
+
+A row grows by half again when its densest proximity run reaches `MS_LEVEL_CYCLE.length` markers. Three is where every band is in use, so it is the band count rather than a number chosen.
+
+| Report | Row | Milestones and columns | Longest run | Grown |
+|---|---|---|---|---|
+| "18 is OK" | SNIP-126 | one, col 16 | 1 | no |
+| "37 would be increased" | SNIP-165 | four, cols 15, 16, 17, 19 | 4 | yes |
+| "46 would be increased" | SNIP-180 | four, cols 18, 19, 19, 20 | 4 | yes |
+| "51 is OK" | SNIP-188 | four, cols 13, 14, 15, 17 | 4 | **yes** |
+
+Row 51 is identically dense to rows 37 and 46 on the unfiltered board, so **no rule reading the data can separate them**. It read as fine in the report's screenshot because that board carried a date range opening at the week ending 06-Sep, which is column 15: SNIP-188 and SNIP-197 sit at 13 and 14 and were off the visible board, leaving two markers where the data has four. That claim is asserted, not just written down here.
+
+Making the growth follow the VISIBLE columns would match what the report saw, at the cost of row heights changing on every filter pass and a recomputation inside `applyFilter()`. Left as the data-based rule with the choice open. **TD-153.**
+
+Across the board: 12 of 159 rows grow, 34.3px to 51px, and every one of the 159 is grown exactly when the rule says it should be. The rule is rebuilt from the run cut inside the probe rather than read back off the class the code wrote.
+
+### The critical set, and what "multi-select" had to mean
+
+| Filter | Result on the seeded board |
+|---|---|
+| none | 159 rows |
+| Critical | 26 |
+| Critical + At risk | 76 |
+| all five statuses | **159, the same as none** |
+| total float at or below 13 days | 85 |
+| total float at or above 8 weeks | 5 |
+| at or below 2 weeks vs at or below 14 days | 86 and 86, so the unit converts |
+
+An empty selection means no constraint, which is deliberately not the same as all five selected; that equivalence is asserted directly, because it is the property that makes the empty default coherent. 155 of 198 milestones carry a float figure, and one with none satisfies neither direction: an unknown reported as critical is the kind of wrong that reaches a client. Remove all filters reaches this set too, which a field-clearing loop would have missed.
+
+### The CSV is asserted on content, not on headers
+
+Progress % and Status used to carry the EFFECTIVE value, the schedule's own unless an override existed, with nothing in the file saying which. With an override of 55% set on SNIP-101:
+
+| Column | Reads |
+|---|---|
+| `Progress %` (base block, index 11) | **100%**, the schedule's own |
+| `Progress % (entered)` (index 13) | **55%**, the override |
+| `Comments (entered)` | the comment |
+
+A header check alone would pass on a file where both columns carried the same effective value, which is exactly the defect being fixed. `exportCSV()` was split from `buildCsvRows()` so the rows can be read without triggering a download, since a check that has to click a download can only assert headers.
+
+### Added milestones are annotation-layer state
+
+Asserted as such rather than claimed: `SEED_MILESTONES` and `SEED_TASKS` are byte-identical before and after an add, the milestone carries weight 0 so no percentage on the board moves, its `notes` carries the `[ID]` form that `data-ids`, `msKeyFor` and `extractSnipId` all re-derive from, it survives a rebuild, and re-applying the same payload is a no-op rather than a duplicate.
+
+Both routes in are driven: the header button (a new row under `User Defined Milestones`, board rows 159 to 160) and a real `dblclick` on a week cell (lands on that row at that week, creates no new row). A blank name and a colliding Activity ID are both refused, and the store still holds nothing after both refusals.
+
+**No recorded convention for user-added Activity IDs was found in the docs**, so `USR-NNN` was chosen to match the `PREFIX-NNN` shape every other ID uses, numbered from the highest already present so a re-import cannot reuse a key. Open to change. **TD-157.**
+
+### Found by verification
+
+- **One degenerate dependency line** (TD-158), about a quarter of a pixel long at a legitimate board position, introduced by the row growth. Isolated by rendering the same board with the growth factor at 1.0, which gives zero. `p30_check` section 8 exists for lines PILED AT THE BOARD ORIGIN, the failure that makes the feature look broken; it now asserts zero at the origin and bounds the degenerate count, rather than asserting zero everywhere and forcing a choice between reverting a requested change and deleting the check.
+- **Four earlier checks were asserting contracts this batch deliberately changed**, and each was moved rather than relaxed. `p36_check`'s byte-identical set gained a `CHANGED_SINCE` entry that requires `toggleTopFilterBar` to have changed *for the reason the check names*, so a different change to it still fails. `p35_check`'s width assertion was scoped to the `.ms-dialog` rule after a new dialog elsewhere in the stylesheet tripped a bare substring test.
+
+### Full suite at v3.1.0-P40
+
+| Suite | Result |
+|---|---|
+| TEST-42 growth, critical filters, CSV, added milestones | **77/77** |
+| TEST-41 View Controls, heading, action bar, filter row | **117/117** |
+| TEST-40 print heading, date range, defaults | **91/91** |
+| TEST-39 P36 defect pass | **65/65** |
+| TEST-38 More Actions consolidation | **96/96** |
+| TEST-37 milestone card and progress override | **117/117** |
+| TEST-36 marker anchoring | **73/73** |
+| TEST-35 marker staggering | **38/38** |
+| TEST-34 placement and filter-row defects | **36/36** |
+| TEST-33 multi-source ingest | **68/68** |
+| TEST-32 settings panel design system | **53/53** |
+| TEST-31 date range | **34/34** |
+| TEST-30 counts, baseline overlay, print | **32/32** |
+| TEST-23 persistence round trip | **22/22** |
+| Ingest, board order | exit 0 |
+| Contrast gate | 0 frozen, 0 below 3.0:1 |
+
+**Published:** `releases/v3.1.0-P40_row-growth-critical-filters-csv-and-add-milestone.html`
+
+---
+
+## TEST-41 — View Controls rework, heading toggle, action bar, filter row (v3.1.0-P39)
+
+`tools/p39_check.py`, **108/108**, at 390x844, 1024x800 and 1440x900. Nine assertions are source-level. `tools/p29_check.py` went 49 to 52 checks with its action-bar contract rewritten.
+
+### The dependency report, refuted and then asserted
+
+Measured from the state the board opens in, driving only the real controls:
+
+| State | Lines in the DOM | On screen | Layer visibility |
+|---|---|---|---|
+| board as it opens | 0 | 0 | hidden |
+| both kinds switched on | **675** | 132 | visible |
+| the reported date range applied | 478 | 132 | visible |
+| after a rerender | 478 | 132 | visible |
+| range cleared | 675 | 132 | visible |
+| both kinds switched off | **0** | 0 | visible |
+
+143 of the milestones carry dependency data. Identical at 390 and 1440.
+
+The screenshot the report came with is a **pre-P36 build**: separate header icon buttons rather than the More Actions trigger, a "Title contains" field that no longer exists, `Title col: 286px`. In it, the Dependencies row's **All off** button is the active one, which is the state that draws nothing.
+
+This is asserted permanently as part of this check rather than fixed, so a real regression here cannot hide behind "that was already broken". **TD-151, open** pending the user's own look at a P39 build with the state they see it in.
+
+### `disabled` cannot be measured with a synthetic event
+
+The first draft of the disabled-slider check set `.value` and dispatched `input`, saw the scale move, and reported working code as broken. That experiment cannot answer the question in either direction: `dispatchEvent` reaches an `oninput` listener whether or not the input is disabled, and an untrusted pointer event never drives a range thumb, so an enabled slider would have failed the same test.
+
+What does answer it is asking the document what is at the slider's own centre, with `pointer-events:none` on the disabled input as a second, observable barrier:
+
+| Label state | Element at the slider's centre |
+|---|---|
+| off | `row-label-scale` (the row, which still carries the tooltip explaining why) |
+| on | `label-scale` (the slider itself) |
+
+Plus the negative control on the same point: enabled, the drag moves `--label-scale` 1 to 1.5.
+
+**Fourth time a measurement technique, not the code, has been the thing that was wrong** (TD-133, TD-136, TD-140, TD-146).
+
+### One writer, three entry points
+
+`applyMarkerLabelState()` now writes the board, the two checkboxes, the two remarks buttons and the three disabled states. The check drives each through a different entry point and requires the control and the board to agree after each: the handler, `setColButtonState` (the path a published file and an imported settings block take), and a rebuild. That disagreement is the family this consolidation closes (TD-59, TD-71, TD-138, TD-145). `toggleShortTitles()`, `toggleRemarks()` and `toggleRemarksBtn()` were removed: all three were second writers of a variable this function owns, and two of them were already dead.
+
+### Measured after
+
+| Thing | Result |
+|---|---|
+| Column Width at maximum | `--colw` 144px, cell renders **144.0px**, fit clamp raised to match so fitting cannot beat dragging |
+| Labels section order | title, `row-label-scale`, hrs, `row-hrs-scale`, title mode, `row-title-scale` |
+| Row Comments field | Show active, 159 fields shown; Hide active, 0 shown; clicking the active half again is a no-op |
+| Baseline shadow | in `.rpt-sub-view`, within 1px of the View toggle's top line, disabled in the Baseline view with the reason as its tooltip, gone from the panel and its note gone with it |
+| Action bar | bottom 103.2 against tabs top 103.2; CSV, JSON, Save as new dashboard right anchored; Clear all comments on the line below |
+| Filter row | 2 columns holding 4 and 2 groups; side by side at 1024 and 1440, stacked at 390; rule 496 to 704px wide above the date range; summary full width beneath; open bar 108px against 101px of content |
+
+### Three probe defects found by verification
+
+- **An assertion written against a panel parked off screen.** The hit test answered `(nothing)` in both states, because `#filter-bar` sits at `translateX(100%)` until opened. It now opens the panel first and closes it before anything else is measured, since the open panel reserves a 300px right margin on `<body>`.
+- **An assertion on a visibility that carries no user-visible difference** (TD-152). `#dep-line-layer` computes hidden on a board nothing has touched and visible on one that has drawn and cleared, because `setWkWidth` reaches the drag-hide at first paint and only `drawDepLines` clears it. An empty `pointer-events:none` SVG paints nothing either way, so the check records it and asserts on the line count.
+- **The synthetic-drag check**, above.
+
+### Full suite at v3.1.0-P39
+
+| Suite | Result |
+|---|---|
+| TEST-41 View Controls, heading, action bar, filter row | **108/108** |
+| TEST-40 print heading, date range, defaults | **91/91** |
+| TEST-39 P36 defect pass | **65/65** |
+| TEST-38 More Actions consolidation | **95/95** |
+| TEST-37 milestone card and progress override | **117/117** |
+| TEST-36 marker anchoring | **73/73** |
+| TEST-35 marker staggering | **38/38** |
+| TEST-34 placement and filter-row defects | **36/36** |
+| TEST-33 multi-source ingest | **67/67** |
+| TEST-32 settings panel design system | **52/52** |
+| TEST-31 date range | **34/34** |
+| TEST-30 counts, baseline overlay, print | **32/32** |
+| TEST-23 persistence round trip | **22/22** |
+| Ingest, board order | exit 0 |
+| Contrast gate | 0 frozen, 0 below 3.0:1 |
+
+**Published:** `releases/v3.1.0-P39_view-controls-rework-and-filter-row.html`
+
+---
+
+## TEST-40 — Print preview heading, date-range activation, view defaults (v3.1.0-P38)
+
+`tools/p38_check.py`, **91/91**, at 390x844, 1024x800 and 1440x900. Seven assertions are source-level.
+
+The three viewports were chosen because the same defect fails in **opposite directions** across them. An A3 portrait sheet renders 1122.5px wide, so at 390 and 1024 the sheet is wider than the viewport and the heading bars fell short of it, while at 1440 the sheet is narrower and they overhung it. One width would have proved half of it.
+
+### What each request measured before anything was changed
+
+| Request | Measured on the P37 build |
+|---|---|
+| Heading and frame misaligned in print preview | `#icon-bar` and `.pm-banner` **390px** wide at 390, **1440px** at 1440, against a **1122.5px** sheet at `l=0..1122.5` and `l=158.7..1281.3` respectively. Both bars sit outside `#page-frame`, so they took the body's width, which is the viewport's |
+| Preview should carry fit / preview-toggle / more-actions | none of the three existed in the banner |
+| Date range should activate on set, one end at a time | **refuted as written.** With a `change` event dispatched, an end date alone gave `{lo:0,hi:19}`, 20 of 39 week columns and 115 of 159 rows; a start date alone gave `{lo:15,hi:38}`, 24 of 39 columns and 104 rows. Identical at 390 and 1440 |
+| Default view: hours off, Activity ID on | hours on (`mHrsVisible=true`, checkbox checked), short titles off (`btn-title-mode-off` active) |
+
+### The date range was never the logic
+
+`dateRangeToCols()` has always left the other end open, and the measurement above says so. What did not work was the **delivery**: `change` on `<input type="date">` does not fire until the field is committed and left, so a date set with the picker or the spinner sat there until focus moved elsewhere. Both fields now also fire `oninput`, debounced through the same `scheduleFilter()` the title field uses.
+
+Every date-range assertion in the probe dispatches **`input` only**. That is deliberate and it is the whole point: a probe that fires `change` cannot see this defect at all, which is exactly why no earlier probe caught it.
+
+### Aligning the bars moved the controls off screen, and the measurement said so
+
+With the three controls at the right of a sheet-width strip, the hit-test profile counted **0 of 3 reachable at 390** and **2 of 3 at 1024**. Nothing was broken: an A3 sheet is wider than either viewport, the page scrolls sideways, and the right-hand end of the strip is simply not on screen. The controls sit at the sheet's **left** edge instead, which is on screen at every width, and read 3 of 3 at all three viewports.
+
+The same reasoning applies to the header bar's own More Actions trigger, which now scrolls with the sheet. That assertion is **conditional on measured room**, not on a typed viewport width: where the trigger is on screen the panel must anchor to it, and where it is not the panel must be clamped into the viewport. Both branches require all 7 rows individually reachable, and both were met.
+
+### One panel, two triggers
+
+The menu was not duplicated. Duplicating it would have duplicated seven row ids and the five functions that write them. The panel stays single and `moreActionsAnchor()` resolves which trigger it hangs off, preferring the one that was clicked and falling back to whichever is laid out. Asserted in both directions, in the preview and after leaving it, including that the banner trigger reports zero client rects out of the preview so the anchor cannot go stale.
+
+### Three defects found by verification
+
+- **`let mHrsVisible=false` rendered 196 visible hours labels at first paint** (TD-145). The rebuild path hid all three board labels and init's first-paint path hid only one, so the new default did not take effect until something triggered a rebuild. Third occurrence of this family, so the three lines were folded into `applyMarkerLabelState()` inside the single `reapplyDisplaySettings()` writer and deleted from both call sites, rather than a fourth line being added to one.
+- **One probe assertion was wrong about correct behaviour.** "Every short-title label is an Activity ID" read 158 of 196, because 38 milestones carry no Activity ID and `formatShortTitleDisplay()` correctly falls back to their title. Replaced with what actually distinguishes `id` from `both`: no label carries the ` _ ` joiner, plus a negative control switching to `both` that requires the same 158 to gain it.
+- **A source assertion counted its own call sites wrong**, expecting three references to `moreActionsAnchor()` where there are four. Corrected to four plus a count of the panel placements, so a fourth placer added without going through the resolver fails the check.
+
+### Full suite at v3.1.0-P38
+
+| Suite | Result |
+|---|---|
+| TEST-40 print heading, date range, defaults | **91/91** |
+| TEST-39 P36 defect pass | **65/65** |
+| TEST-38 More Actions consolidation | **95/95** |
+| TEST-37 milestone card and progress override | **117/117** |
+| TEST-36 marker anchoring | **73/73** |
+| TEST-35 marker staggering | **38/38** |
+| TEST-34 placement and filter-row defects | **36/36** |
+| TEST-23 persistence round trip | **22/22** |
+| Ingest, board order | exit 0 |
+| Contrast gate | 0 frozen, 0 below 3.0:1 |
+
+**Published:** `releases/v3.1.0-P38_print-heading-date-range-and-view-defaults.html`
+
+---
+
+## TEST-39 — Four defects reported against the P36 build (v3.1.0-P37)
+
+`tools/p37_check.py`, **65/65**, at 390x844, 1440x900 and 2000x900. Five assertions are source-level.
+
+**Two of the four were not what they looked like**, which is what the checks are shaped around.
+
+### What each report measured before anything was changed
+
+| Report | Measured on the P36 build |
+|---|---|
+| More Actions menu clipped to the header row | panel **184px tall, 0px visible**, clipped by `#icon-bar{overflow-x:auto}` (which computes `overflow-y` to auto with it) |
+| ID suggestions behind the timeline | list **200px tall, 36px visible**, clipped by `#top-filter-bar{max-height:0;overflow:hidden}`, with a `TD` painting over what was left |
+| Title col slider does nothing | **refuted at first**: at 1600 wide after an import it moved the column 295.3 to 380 and survived a rerender |
+| Zero-dependency filter does nothing | **105 rows before, 105 after, 0 lines drawn** |
+
+### The two popups, and the half of the fix that measurement caught
+
+Neither ancestor overflow can be removed: `#icon-bar`'s lets the bar scroll at phone width, and `#top-filter-bar`'s **is** the collapse mechanism. Both popups became `position:fixed`, placed by one `positionFixedPopup()`.
+
+**That was only half of it.** Freed of the clip, the menu was painted over by `#rpt-hd` and `#top-filter-bar`: `#icon-bar` is `position:relative` with a z-index and therefore a **stacking context**, so no z-index inside it, however large, lifts a descendant above a later sibling of the bar. Measured **0 of 7 rows hit-testable at 390 wide**. The bar went z-index 30 to 40, clearing those two and the table headers (max 26) while staying below the drawers (700/850/900), which still cover it.
+
+After: **7 of 7** menu rows and **30 of 30** suggestions individually reachable, at every width.
+
+### The Title col slider: the report was right and the first measurement was too narrow
+
+On the board as it actually opens, the seeded baseline with the fixed columns collapsed, the column rendered **380.1px while the slider read 220px**. `#col-name` carries no width until `setNameWidth()` runs, and `setNameWidth` was in **neither** build path, so `table-layout:fixed` handed the column whatever the collapsed fixed columns left over. Dragging up from the default therefore **shrank** it to ~240 before it grew.
+
+Fixed by `reapplyDisplaySettings()`, one function holding all five slider-owned settings, called from `rerender()` and from init's first paint. The init block already carried a comment about exactly that trap while omitting three of the five.
+
+Measured after: column equals slider at first paint (220/220), tracks exactly across 140/200/260/320/400, moves monotonically, and survives a rebuild.
+
+### The zero-dependency filter: a control whose label and behaviour disagreed
+
+Its tooltip promised *"Show only milestones with zero predecessors/dependencies"* and it gated dependency-**line** drawing, which is invisible until dependencies are switched on. It narrows the board now, from inside `applyFilter()` so it composes with the other filters and is reapplied on rebuild.
+
+| Mode | Rows (baseline board, dependencies off) |
+|---|---|
+| All | 159 |
+| Only zero | **46** |
+| Hide zero | **113** |
+
+The two are complements (46 + 113 = 159), 50 of 193 milestones carry no dependencies, and the filter line states what it narrowed to. Asserted with **0 dependency lines drawn**, so nothing else could have produced the change.
+
+### The measurement that was wrong about a working fix
+
+The clipping-aware ancestor walk written at P36 reported the fixed panel as 0px visible, exactly as it had reported the absolute one: it walks the DOM chain intersecting overflow boxes, and **a fixed element is not clipped by ancestor overflow at all**. `elementFromPoint` at a single centre point was no better, returning false for a panel that was genuinely on top.
+
+What answers it is a hit-test **profile**: what paints at several points down the popup, plus how many of its children are individually reachable. **Third consecutive partial in which the measurement technique, not the code, was the thing that was wrong** (TD-133, TD-136, TD-140).
+
+### Found and deliberately not fixed
+
+`drawUnresolvedStub()` emits the same `zero-stub` class as a true zero stub while meaning "N not on board". Any CSS rule or probe targeting zero stubs catches both. **TD-141, open** — nothing reported it, and changing a class the dependency layer keys on is its own change with its own verification.
+
+### Full suite at v3.1.0-P37
+
+| Suite | Result |
+|---|---|
+| TEST-39 four P36 defect reports | **65/65**, across three viewport widths |
+| TEST-38 More Actions consolidation | **95/95** |
+| TEST-37 milestone card rework | **117/117** |
+| TEST-36 marker anchoring and header heights | **73/73** |
+| TEST-35 marker staggering | **38/38** |
+| TEST-34 placement and filter-row defects | **36/36** |
+| TEST-33 multi-source ingest | **67/67** |
+| TEST-32 settings panel design system | **49/49** |
+| TEST-31 date range | **34/34** |
+| TEST-30 counts, baseline overlay, print | **32/32** |
+| TEST-23 persistence round trip | **22/22** |
+| Ingest, board order | exit 0 |
+| Contrast gate | 0 frozen, 0 below 3.0:1 |
+
+**Published:** `releases/v3.1.0-P37_popup-layering-and-filter-fixes.html`
+
+---
+
+## TEST-38 — The More Actions consolidation (v3.1.0-P36)
+
+`tools/p36_check.py`, **95/95**, at 390x844, 768x1024 and 1440x900. Five assertions are source-level, including the one that carries the most weight.
+
+### The before/after, measured in the same browser at the same viewports
+
+| Width | Buttons | Icon group | Label got | Label needs | Clipped |
+|---|---|---|---|---|---|
+| 390 before | 7 | 254px | 35.2px | 216px | yes |
+| 390 after | 1 | 26px | **167px** | 216px | **still yes (TD-135)** |
+| 768 before | 7 | 254px | 162px | 216px | yes |
+| 768 after | 1 | 26px | **215.8px** | 216px | no |
+| 1440 before | 7 | 254px | 215.8px | 216px | no |
+| 1440 after | 1 | 26px | 215.8px | 216px | no |
+
+228px of header width returned at every viewport.
+
+### Groups
+
+| Group | Assertions |
+|---|---|
+| Header | one button in the bar, not seven; the previous release really did carry seven; 228px reclaimed; the label gets its full width where the bar has room, and where it does not the residual clip is stated with its figures rather than passed over; the bar still does not scroll; the label still names the app and its version |
+| Rows | all seven ids survive; every row still calls the live function its button called, parsed from the `onclick` and checked against `window`, because a handler naming a dead function throws only when clicked |
+| Menu | starts closed with 0 of 7 rows visible; the trigger opens it and **it stays open**; 7 of 7 rows visible; `aria-expanded` follows; Escape closes; a click outside closes; choosing a row closes it behind them |
+| State | Settings, View controls, the filter row and print preview each toggle **through the menu row**, not by a direct call; `aria-pressed` still tracks; and the active row **actually paints** differently from an inactive one |
+| Theme | the theme flips and the glyph changes with it, and rewriting the glyph does not eat the row's label |
+| Dots | none on the trigger when neither row carries one; a filter dot reaches it; a settings dot reaches it; clearing them clears it, both directions |
+| Source | one version literal; the state-writing functions byte-identical to the previous release; the active-row rule restated rather than left to source order; the trigger's dot derived rather than written; one theme-glyph writer |
+
+### The assumption the run refuted
+
+**The label is still clipped at 390.** The check was written expecting the consolidation to clear it everywhere. It does not: the bar at phone width also carries the editable report title, so 216px of label plus that title plus the trigger does not fit in 390px. The gain is real (35.2px to 167px, 4.7x) and the residual clip is now asserted as a stated limit with its figures printed, conditional on **measured room** rather than on a viewport width typed into the check. A hardcoded "768 and above" would have been a constant standing in for a measurement, which is the recurring defect family here. Logged as TD-135, open, because resolving it is a design call on what gives way at phone width.
+
+### The regression, and the measurement that was wrong about it
+
+`p32_check`'s TD-72 assertion, that the filter-row toggle stays on screen when the filter row is hidden, failed. The rule TD-72 records is that the control **outlives what it hides**, and it still does: the trigger outlives the bar and exposes the toggle. So the assertion was rewritten to follow the path rather than to test for a visible header button.
+
+**A negative control was then added, and the first rewrite passed it**, which is how the rewrite was found to be measuring the wrong thing. Putting the toggle back inside the collapsed bar, which is the TD-72 state exactly, it reports:
+
+| | trapped in the collapsed bar |
+|---|---|
+| `offsetParent !== null` | **true** |
+| height | **24px** |
+| `getClientRects().length` | **1** |
+| `checkVisibility()` | **true** |
+| box intersected with clipping ancestors | **0px** |
+
+`max-height:0; overflow:hidden` does not zero its children's boxes, so every obvious API says the trapped control is fine. `elementFromPoint` did not discriminate either. The guard now intersects the element's box with every clipping ancestor and **demonstrably fails when the defect is reintroduced**, which is asserted as its own check rather than assumed.
+
+Worth holding onto: `checkVisibility()` answered the closed-`<details>` case at TEST-37 and is wrong here. It is container-specific, not a general answer to "is this hidden".
+
+### Full suite at v3.1.0-P36
+
+| Suite | Result |
+|---|---|
+| TEST-38 More Actions consolidation | **95/95**, across three viewport widths |
+| TEST-37 milestone card rework | **117/117** |
+| TEST-36 marker anchoring and header heights | **73/73** |
+| TEST-35 marker staggering | **38/38** |
+| TEST-34 placement and filter-row defects | **36/36**, TD-72 guard rewritten and given a negative control |
+| TEST-33 multi-source ingest | **67/67** |
+| TEST-32 settings panel design system | **49/49** |
+| TEST-31 date range | **34/34** |
+| TEST-30 counts, baseline overlay, print | **32/32** |
+| TEST-23 persistence round trip | **22/22** |
+| Ingest, board order | exit 0 |
+| Contrast gate | 0 frozen, 0 below 3.0:1 |
+
+**Published:** `releases/v3.1.0-P36_more-actions-menu.html`
 
 ---
 

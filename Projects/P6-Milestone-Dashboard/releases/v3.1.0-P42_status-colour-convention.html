@@ -906,16 +906,9 @@ body.print-mode .pm-banner{width:var(--page-sheet-w);box-sizing:border-box;
 /* Flex, not block: the message takes the room left over and the controls keep
    what they need. min-width:0 on the message because a flex child defaults to
    min-width:auto, which would refuse to let the text give way. */
-body.print-mode .pm-banner{display:block}
-.pm-banner-inner{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
-  max-width:calc(100vw - 2*var(--page-margin));position:sticky;left:0}
+body.print-mode .pm-banner{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .pm-banner-msg{flex:1 1 220px;min-width:0;text-align:left}
 .pm-banner-ctrls{flex:0 0 auto;display:inline-flex;align-items:center;gap:5px}
-.pm-seg-lbl{font-size:8.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.75}
-/* A chosen option fills, the same way .pm-btn already fills on hover, so the
-   set reads as state rather than as four actions. */
-.pm-btn.on{background:var(--color-chip-attention-ink);color:var(--color-chip-attention-bg)}
-.pm-btn-go{font-weight:800}
 /* Same idiom as #btn-remove-all-filters: an outline pill in the strip's own ink,
    filling on hover. No new tokens. */
 .pm-btn{font-family:inherit;font-size:9px;font-weight:600;line-height:1.1;
@@ -1484,88 +1477,18 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 .add-ms-err{margin:0;font-size:10.5px;font-weight:600;color:var(--color-status-crit)}
 .add-ms-err[hidden]{display:none}
 .add-ms-foot{display:flex;gap:6px;justify-content:flex-end;margin-top:2px}
-/* The PDF picker. Same shape as the add-milestone dialog: fixed, centred,
-   above the drawer that opens it. */
-.pdf-dialog{position:fixed;z-index:2147483647;box-sizing:border-box;
-  left:50%;top:50%;transform:translate(-50%,-50%);
-  width:min(320px,calc(100vw - 24px));padding:14px 16px;
-  background:var(--color-dialog-bg);color:var(--color-text-ink);
-  border:1px solid var(--color-line-default);border-radius:12px;
-  box-shadow:0 1px 2px var(--color-shadow-dialog-near),0 8px 24px var(--color-shadow-dialog-far);
-  font-family:var(--font-sans)}
-.pdf-dialog[hidden]{display:none}
-.pdf-dialog *,.pdf-dialog *::before,.pdf-dialog *::after{box-sizing:border-box}
-.pdf-dlg-head{display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-5);font-size:13px}
-.pdf-row{display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-4)}
-.pdf-row .ms-lbl{flex:0 0 78px;margin-bottom:0}
-.pdf-seg{display:flex;gap:var(--space-2);flex:1 1 auto}
-.pdf-seg .toggle-btn{flex:1 1 0}
-.pdf-note{margin:var(--space-4) 0 0;font-size:10.5px;line-height:1.45;color:var(--color-text-muted)}
-.pdf-note-quiet{color:var(--color-text-label)}
-.pdf-actions{display:flex;justify-content:flex-end;gap:var(--space-3);margin-top:var(--space-5)}
 .ms-dialog{position:fixed;z-index:2147483647;box-sizing:border-box;width:min(306px,calc(100vw - 24px));padding:14px 16px 13px;background:var(--color-dialog-bg);color:var(--color-text-ink);border:1px solid var(--color-line-default);border-radius:12px;box-shadow:0 1px 2px var(--color-shadow-dialog-near),0 8px 24px var(--color-shadow-dialog-far);font-family:var(--font-sans)}
 .ms-dialog[hidden]{display:none}
 .ms-dialog *,.ms-dialog *::before,.ms-dialog *::after{box-sizing:border-box}
-/* A controls-only row: close on the left, the save pair on the right. The
-   spacer is what pushes the pair right, rather than justify-content:
-   space-between, which would also move anything else on the line every time
-   the form went dirty. Nothing else lives here, which is what frees the
-   heading below to use the card's full width. */
-.ms-dialog-head{display:flex;align-items:center;gap:var(--space-3);min-height:19px}
-/* The heading. Sits inside the title column, so it ends where the float
-   column begins and runs the whole width up to it. */
-.ms-heading{display:flex;align-items:center;gap:var(--space-3);min-width:0}
-.ms-heading .ms-code{white-space:nowrap}
-.ms-heading .ms-status{white-space:nowrap;margin-left:auto}
-.ms-head-spacer{flex:1 1 auto;min-width:0}
-.ms-close{background:none;border:none;font-size:13px;line-height:1;color:var(--color-text-muted);cursor:pointer;padding:3px;border-radius:4px;margin:-3px 0 0 -3px}
+.ms-dialog-head{display:flex;align-items:center;justify-content:space-between;gap:var(--space-4)}
+.ms-close{background:none;border:none;font-size:13px;line-height:1;color:var(--color-text-muted);cursor:pointer;padding:3px;border-radius:4px;margin:-3px -3px 0 0}
 .ms-close:hover{color:var(--color-status-crit);background:var(--color-btn-hover-bg)}
-/* The milestone's own mark, as a button. It is drawn by renderIcon(), the same
-   helper the board uses, through the same sprite, so it carries the outline /
-   filled convention and the state colour without a second set of shapes here
-   that could drift from the board's. */
-.ms-icon-btn{display:inline-flex;align-items:center;justify-content:center;
-  width:19px;height:19px;padding:var(--space-0);border:1px solid transparent;border-radius:5px;
-  background:none;cursor:pointer;transition:background .12s,border-color .12s;flex:0 0 auto}
-.ms-icon-btn:hover{background:var(--color-accent-wash-weak);border-color:var(--color-accent-purple)}
-.ms-icon-btn[aria-expanded="true"]{background:var(--color-accent-wash);border-color:var(--color-accent-purple)}
-.ms-icon-btn .ms-icon{width:13px;height:13px}
-/* A field whose stored value differs from the schedule's own. Distinct from
-   .ms-dirty-field, which means "typed but not saved yet": this one survives the
-   save and is how a reader tells, later, which figures on the card are the
-   schedule's and which are somebody's. Its tooltip carries the original. */
-.ms-edited-mark{display:inline-block;width:5px;height:5px;margin-left:4px;border-radius:99px;
-  background:var(--color-accent-purple);vertical-align:middle;cursor:help;flex:0 0 auto}
-.ms-edited-mark[hidden]{display:none}
-.ms-shorttitle-row .ms-edited-mark,.ms-heading .ms-edited-mark{align-self:center}
-/* The type picker. Absolute inside the card rather than fixed: the card is
-   itself position:fixed, so it is not clipped by anything and an absolute
-   child rides with it when the card is repositioned. */
-.ms-type-menu{position:absolute;left:10px;top:30px;z-index:3;min-width:132px;padding:var(--space-2);
-  background:var(--color-dialog-bg);border:1px solid var(--color-line-default);border-radius:8px;
-  box-shadow:0 6px 18px var(--color-shadow-dialog-far)}
-.ms-type-menu[hidden]{display:none}
-.ms-type-opt{display:flex;align-items:center;gap:var(--space-3);width:100%;padding:var(--space-2) 7px;border:none;border-radius:5px;
-  background:none;color:var(--color-text-ink);font:500 11px var(--font-sans);text-align:left;cursor:pointer}
-.ms-type-opt:hover{background:var(--color-btn-hover-bg)}
-.ms-type-opt.active{background:var(--color-accent-wash);color:var(--color-accent-ink);font-weight:650}
-.ms-type-opt .ms-icon{width:11px;height:11px;flex:0 0 auto}
-.ms-type-grp{padding:5px 7px 2px;font:600 9px var(--font-sans);letter-spacing:.08em;
-  text-transform:uppercase;color:var(--color-text-label)}
-/* The two save controls. Present only while the form is dirty. */
-.ms-save-actions{display:inline-flex;align-items:center;gap:var(--space-2);flex:0 0 auto}
-.ms-save-actions[hidden]{display:none}
-.ms-act{font:650 10px var(--font-sans);padding:3px 7px;border-radius:5px;
-  border:1px solid var(--color-accent-purple);background:var(--color-accent-purple);
-  color:var(--color-text-on-accent);cursor:pointer;white-space:nowrap}
-.ms-act:hover{filter:brightness(1.08)}
 .ms-code{font:700 12px/1 var(--font-mono);color:var(--color-text-mono)}
 .ms-status{font:600 11px/1 var(--font-sans)}
 .ms-dialog.status-track .ms-status{color:var(--color-status-track)}
 .ms-dialog.status-risk .ms-status{color:var(--color-status-risk)}
 .ms-dialog.status-crit .ms-status{color:var(--color-status-crit)}
-.ms-dialog.status-done .ms-status{color:var(--color-icon-done)}
-.ms-dialog.status-doneuser .ms-status{color:var(--color-icon-doneuser)}
+.ms-dialog.status-done .ms-status{color:var(--color-status-done)}
 .ms-dialog.status-future .ms-status{color:var(--color-status-future)}
 .ms-title{margin:0;font-weight:600;font-size:14.5px;line-height:1.28;letter-spacing:-.01em}
 /* The parent heading now sits ABOVE the title, so it reads as the band the
@@ -1589,53 +1512,25 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 .ms-shorttitle-row{display:flex;gap:6px}
 .ms-shorttitle-row input{flex:1;font-size:11px;padding:2px 4px;margin-left:-4px;border:none;border-radius:3px;background:transparent;color:var(--color-text-muted);font-family:inherit;font-style:italic;transition:background .12s}
 .ms-shorttitle-row input:hover{background:var(--color-accent-wash-weak)}
-.ms-shorttitle-row input:focus{background:var(--color-accent-wash);color:var(--color-accent-ink);outline:none;font-style:normal}
-/* The short title's own Save button is gone. It saved on click without hiding
-   itself, so it sat there after a save looking like unsaved work, and a second
-   save control inside a form that now has its own is two writers for one
-   field. The head's save pair is the only way to commit the card. */
+.ms-shorttitle-row input:focus{background:var(--color-accent-wash);color:var(--color-purple-dark);outline:none;font-style:normal}
+.ms-shorttitle-row button{font-size:9px;font-weight:650;padding:0 9px;border-radius:5px;border:1px solid var(--color-accent-purple);background:var(--color-accent-purple);color:var(--color-text-on-accent);cursor:pointer}
 /* Start, Finish and Progress are one row. stretch rather than flex-end so the
    divider beside Progress runs the row's full height, the same device the
    float column already uses. */
-/* A three-column grid, not a flex row. Equal weight and fixed positions were
-   asked for directly, and flex could not give them: the columns sized to their
-   own content, so Start appearing or a longer date changed where Finish and
-   Progress sat. A grid of three equal tracks puts each label in the same place
-   on every card, whatever it holds. */
-.ms-schedule{margin-top:12px;padding-top:10px;border-top:1px solid var(--color-line-hairline);
-  display:grid;grid-template-columns:1fr 1fr 1fr;align-items:stretch;gap:10px}
+.ms-schedule{margin-top:12px;padding-top:10px;border-top:1px solid var(--color-line-hairline);display:flex;align-items:stretch;gap:10px}
 .ms-schedule .ms-field{display:flex;flex-direction:column;justify-content:flex-end;min-width:0}
-/* Progress keeps its divider and its right alignment, now as the third track
-   rather than by being pushed there with margin-left:auto. */
-.ms-prog-field{align-items:flex-end;padding-left:10px;
+/* margin-left:auto rather than justify-content:space-between on the row, so the
+   divider stays hard against Progress whether or not Start is being shown. */
+.ms-prog-field{margin-left:auto;align-items:flex-end;padding-left:10px;
   border-left:1px solid var(--color-line-hairline)}
 .ms-lbl{display:block;margin-bottom:4px;font:500 10px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--color-text-label)}
 /* One declaration for all three values in that row. Start was 14px against
    Finish at 18px, which read as two different kinds of fact rather than one
    row, and Progress has to match both or the row reads as two again. */
 .ms-date,.ms-prog-input{font-weight:600;font-size:14px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
-/* Every field in the card that is now typed into rather than read. They keep
-   the look of the value they replaced (no border, no box) and only show they
-   are editable on hover and focus, so the card still reads as a card. The one
-   shared rule exists because six fields with six copies of this is the shape
-   that drifts. */
-.ms-title,.ms-date,.ms-float-val,.ms-val-input,.ms-shorttitle-row input{
-  border:none;background:transparent;color:inherit;font-family:inherit;
-  border-radius:3px;transition:background .12s;width:100%;min-width:0}
-.ms-title:hover,.ms-date:hover,.ms-float-val:hover,.ms-val-input:hover{background:var(--color-accent-wash-weak)}
-.ms-title:focus,.ms-date:focus,.ms-float-val:focus,.ms-val-input:focus{
-  background:var(--color-accent-wash);color:var(--color-accent-ink);outline:none}
-/* A field holding an edit that has not been saved yet. Same filled dot and
-   accent wash the Progress field and the row remarks already use for exactly
-   this meaning, so "changed but not saved" looks the same everywhere. */
-.ms-dirty-field{background:var(--color-accent-wash);color:var(--color-accent-ink)}
-.ms-title{padding:var(--space-0);margin:var(--space-0);display:block}
-.ms-date{padding:var(--space-0) var(--space-1);margin-left:-2px}
-.ms-val-input{padding:var(--space-0) var(--space-1);margin-left:-2px;width:100%}
-.ms-float-val{padding:var(--space-0) var(--space-1);text-align:center;width:3.4em;min-width:0}
 .ms-date.is-actualised,.ms-start-date.is-actualised{background:var(--color-ready-tint-bg);color:var(--color-status-done);border-radius:5px;padding:1px 6px;display:inline-block}
-/* .ms-type-inline is gone: the type name moved off the heading and onto the
-   icon's tooltip, where it is now written in exactly one place. */
+.ms-type-inline{font-size:11px;color:var(--color-text-muted)}
+.ms-type-inline::before{content:'\00B7';margin:0 5px;color:var(--color-text-faint)}
 /* The editable Progress field. The wrapper carries the state, not the input:
    ::before cannot be given to an <input>, and the edited indicator is the same
    filled dot and accent wash the row remarks field uses for the same meaning. */
@@ -1646,7 +1541,7 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 .ms-prog-pct{font-size:11px;color:var(--color-text-muted)}
 .ms-prog-edit.is-zero .ms-prog-input{color:var(--color-text-label)}
 .ms-prog-edit.changed{background:var(--color-accent-wash)}
-.ms-prog-edit.changed .ms-prog-input,.ms-prog-edit.changed .ms-prog-pct{color:var(--color-accent-ink)}
+.ms-prog-edit.changed .ms-prog-input,.ms-prog-edit.changed .ms-prog-pct{color:var(--color-purple-dark)}
 .ms-prog-edit.changed::before{content:'\25CF';color:var(--color-accent-purple);font-size:7px;line-height:1;align-self:center;letter-spacing:1px}
 /* Weight and the two hours figures are reference values, not things read at a
    glance, so they fold away. Collapsed by default, same as the ID lists. */
@@ -1660,8 +1555,7 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 .ms-progress-fill{height:100%;border-radius:inherit;background:var(--color-status-track)}
 .ms-dialog.status-risk .ms-progress-fill{background:var(--color-status-risk-fill)}
 .ms-dialog.status-crit .ms-progress-fill{background:var(--color-status-crit)}
-.ms-dialog.status-done .ms-progress-fill{background:var(--color-icon-done)}
-.ms-dialog.status-doneuser .ms-progress-fill{background:var(--color-icon-doneuser)}
+.ms-dialog.status-done .ms-progress-fill{background:var(--color-status-done)}
 .ms-comment-block{margin-top:11px;padding-top:10px;border-top:1px solid var(--color-line-hairline)}
 .ms-comment-head{display:flex;align-items:center;gap:var(--space-3);margin-bottom:5px}
 .ms-comment-dot{width:6px;height:6px;border-radius:50%;background:var(--color-comment-indicator);display:inline-block;margin-right:5px;flex-shrink:0}
@@ -2034,33 +1928,21 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
      More Actions panel the header carries. The header bar is above this but it
      is not where the eye is once the sheet is on screen. .pm-hide-in-print
      keeps the whole strip, controls included, off the paper. -->
-<div class="pm-banner pm-hide-in-print" id="pm-banner"><div class="pm-banner-inner">
+<div class="pm-banner pm-hide-in-print" id="pm-banner">
   <!-- Controls FIRST, at the sheet's left edge. Measured: with them at the
        right of a sheet-width strip, 0 of 3 were on screen at 390 wide and 2 of
        3 at 1024, because an A3 sheet is 1122.5px and the page scrolls sideways
        under anything narrower. The left edge of the sheet is on screen at every
        viewport. TD-142. -->
   <span class="pm-banner-ctrls">
-    <button class="pm-btn pm-btn-go" id="btn-pm-print" onclick="doBrowserPrint()" title="Send this to the print dialog. Set the dialog to the same paper and orientation chosen here.">&#128424;&#65039; Print</button>
-    <button class="pm-btn" id="btn-pm-fit" onclick="fitPrintPage()" title="Re-fit the visible week columns to the chosen page width">&#8596; Fit columns to page</button>
-    <button class="pm-btn" id="btn-pm-leave" onclick="togglePrintMode(false)" title="Leave print preview and put the board back">&#10005; Leave preview</button>
+    <button class="pm-btn" id="btn-pm-fit" onclick="fitPrintPage()" title="Re-fit the visible week columns to the A3 page width">&#8596; Fit columns to page</button>
+    <button class="pm-btn" id="btn-pm-leave" onclick="togglePrintMode(false)" title="Leave print preview and put the board back">&#128424;&#65039; Leave preview</button>
     <button class="pm-btn pm-btn-ico" id="btn-pm-more" onclick="toggleMoreActions(undefined,event)"
             aria-haspopup="menu" aria-expanded="false" aria-controls="more-actions-panel"
             title="More actions">&#8942;<span class="dot" id="pm-more-dot"></span></button>
   </span>
-  <!-- The sheet the preview lays out for. It has to be set in the print dialog
-       as well, because CSS cannot choose the physical paper: that mismatch is
-       the whole original defect, so the banner states the pair outright rather
-       than leaving a reader to work it out. -->
-  <span class="pm-banner-ctrls" id="pm-paper">
-    <span class="pm-seg-lbl">Page</span>
-    <button class="pm-btn" data-paper="A4" onclick="setPrintPaper('A4')" title="Lay out for A4">A4</button>
-    <button class="pm-btn" data-paper="A3" onclick="setPrintPaper('A3')" title="Lay out for A3">A3</button>
-    <button class="pm-btn" data-orient="portrait" onclick="setPrintOrient('portrait')" title="Lay out portrait">Portrait</button>
-    <button class="pm-btn" data-orient="landscape" onclick="setPrintOrient('landscape')" title="Lay out landscape">Landscape</button>
-  </span>
-  <span class="pm-banner-msg">Set your print dialog to <b id="pm-paper-label">A3 landscape</b> to match. <span id="pm-banner-detail"></span></span>
-</div></div>
+  <span class="pm-banner-msg">Print preview: A3 portrait. <span id="pm-banner-detail"></span></span>
+</div>
 
 <!-- display:contents while the preview is off, so the normal layout is byte
      for byte what it was; a block at page width while it is on. -->
@@ -2450,95 +2332,39 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
   </div>
 </div>
 
-<div id="pdf-dialog" class="pdf-dialog" role="dialog" aria-label="Export as PDF" aria-modal="true" hidden>
-  <div class="pdf-dlg-head">
-    <b>Export as PDF</b>
-    <button class="ms-close" onclick="closePdfDialog()" aria-label="Close" style="margin-left:auto">&#10005;</button>
-  </div>
-  <!-- The page size is chosen HERE, not in the print dialog. That is the
-       point of the whole exporter: CSS cannot pick the physical sheet, so an
-       A3 layout printed through a dialog set to A4 was shrunk to 64% and
-       clipped. Writing the page box ourselves removes the dialog entirely. -->
-  <div class="pdf-row"><span class="ms-lbl">Paper</span>
-    <div class="pdf-seg">
-      <button type="button" class="toggle-btn" data-paper="A4" onclick="setPdfPaper('A4')">A4</button>
-      <button type="button" class="toggle-btn" data-paper="A3" onclick="setPdfPaper('A3')">A3</button>
-    </div>
-  </div>
-  <div class="pdf-row"><span class="ms-lbl">Orientation</span>
-    <div class="pdf-seg">
-      <button type="button" class="toggle-btn" data-orient="portrait" onclick="setPdfOrient('portrait')">Portrait</button>
-      <button type="button" class="toggle-btn" data-orient="landscape" onclick="setPdfOrient('landscape')">Landscape</button>
-    </div>
-  </div>
-  <p class="pdf-note" id="pdf-fit-note"></p>
-  <p class="pdf-note pdf-note-quiet">Vector output, selectable text, no external references. Text is set in the PDF base fonts and scaled to the widths on screen, so the layout matches the board.</p>
-  <div class="pdf-actions">
-    <button class="toggle-btn" onclick="closePdfDialog()">Cancel</button>
-    <button class="toggle-btn active" onclick="doPdfExport()">&#11015; Export PDF</button>
-  </div>
-</div>
-
 <div id="ms-dialog" class="ms-dialog" hidden>
-  <!-- A discrete controls row, holding nothing but the two ways out. Close
-       discards and sits LEFT; the save pair commits and sits RIGHT, so the two
-       directions of leaving the card cannot be hit for one another. Keeping
-       them on their own line is what lets the heading below run the full width
-       of the card instead of competing with them for it. -->
   <div class="ms-dialog-head">
-    <button class="ms-close" onclick="discardMsDialog()" aria-label="Discard changes and close" title="Discard changes and close">&#10005;</button>
-    <span class="ms-head-spacer"></span>
-    <!-- Shown only while the form is dirty, so a card nobody has edited carries
-         no save controls at all. -->
-    <span class="ms-save-actions" id="ms-save-actions" hidden>
-      <button type="button" class="ms-act" onclick="saveMsDialog(false)" title="Save">&#128190;</button>
-      <button type="button" class="ms-act" onclick="saveMsDialog(true)" title="Save and close">&#128190; &amp; Close</button>
-    </span>
+    <span id="ms-code" class="ms-code"></span>
+    <span id="ms-type-inline" class="ms-type-inline"></span>
+    <span id="ms-status" class="ms-status"></span>
+    <button class="ms-close" onclick="closeMsDialog()" aria-label="Close" style="margin-left:auto">&#10005;</button>
   </div>
-  <div class="ms-type-menu" id="ms-type-menu" hidden></div>
+  <p id="ms-sub" class="ms-sub"></p>
   <div class="ms-title-row">
     <div class="ms-title-col">
-      <!-- The heading runs the full width of the column, which ends at the
-           float. The type name is gone from here and lives on the icon's
-           tooltip: it was three words of vocabulary competing with the ID and
-           the status for a line that had none to spare. -->
-      <div class="ms-heading">
-        <button type="button" class="ms-icon-btn" id="ms-icon-btn" onclick="toggleMsTypeMenu(event)" aria-haspopup="true" aria-expanded="false"><svg class="ms-icon"><use href="#ico-diamond"/></svg></button>
-        <span id="ms-code" class="ms-code"></span>
-        <span id="ms-status" class="ms-status"></span>
-        <span class="ms-edited-mark" id="ms-mark-icon" data-field="marker" hidden></span>
-      </div>
-      <p id="ms-sub" class="ms-sub"></p>
-      <input type="text" id="ms-title" class="ms-title" maxlength="200" placeholder="Milestone name&#8230;" title="Milestone name" oninput="onMsFieldInput()">
-      <span class="ms-edited-mark" id="ms-mark-actName" data-field="actName" hidden></span>
+      <h2 id="ms-title" class="ms-title"></h2>
       <div class="ms-shorttitle-block">
         <div class="ms-shorttitle-row">
-          <input type="text" id="ms-shorttitle-input" maxlength="100" placeholder="Short title&#8230;" title="Short title shown on the board" oninput="onMsFieldInput()">
-          <span class="ms-edited-mark" id="ms-mark-shortTitle" data-field="shortTitle" hidden></span>
+          <input type="text" id="ms-shorttitle-input" maxlength="100" placeholder="Short title&#8230;" title="Short title shown on the board" oninput="onMsShortTitleInput()">
+          <button class="save" id="ms-shorttitle-save" onclick="saveMsShortTitle()" style="display:none">Save</button>
         </div>
       </div>
     </div>
     <div class="ms-float-col" id="ms-float-col">
-      <input type="text" id="ms-float-val" class="ms-float-val" inputmode="decimal" maxlength="6" autocomplete="off" title="Total float in days" oninput="onMsFieldInput()">
-      <span class="ms-float-lbl">float<span class="ms-edited-mark" id="ms-mark-floatD" data-field="floatD" hidden></span></span>
+      <span class="ms-float-val" id="ms-float-val"></span>
+      <span class="ms-float-lbl">float</span>
     </div>
   </div>
-  <!-- Start, Finish and Progress are three equal columns that never move. A
-       milestone with no start shows a dash in the same place a date would be,
-       rather than the column collapsing and the other two sliding across. -->
   <div class="ms-schedule">
-    <div class="ms-field" id="ms-start-field"><span class="ms-lbl">Start<span class="ms-edited-mark" id="ms-mark-start" data-field="start" hidden></span></span><input type="text" id="ms-start-date" class="ms-date ms-start-date" maxlength="12" autocomplete="off" title="Start date. Clear the field to restore the schedule's own value." oninput="onMsFieldInput()"></div>
-    <div class="ms-field"><span class="ms-lbl">Finish<span class="ms-edited-mark" id="ms-mark-date" data-field="date" hidden></span></span><input type="text" id="ms-date" class="ms-date" maxlength="12" autocomplete="off" title="Finish date. Clear the field to restore the schedule's own value." oninput="onMsFieldInput()"></div>
-    <div class="ms-field ms-prog-field"><span class="ms-lbl">Progress<span class="ms-edited-mark" id="ms-mark-progress" data-field="progress" hidden></span></span><span class="ms-prog-edit" id="ms-prog-edit"><input type="text" id="ms-progress-input" class="ms-prog-input" inputmode="decimal" maxlength="5" autocomplete="off" title="Progress override. Clear the field to restore the schedule's own value." oninput="onMsFieldInput()" onkeydown="onMsProgressKey(event)"><span class="ms-prog-pct">%</span></span></div>
+    <div class="ms-field" id="ms-start-field" style="display:none"><span class="ms-lbl">Start</span><span id="ms-start-date" class="ms-date ms-start-date"></span></div>
+    <div class="ms-field"><span class="ms-lbl">Finish</span><span id="ms-date" class="ms-date"></span></div>
+    <div class="ms-field ms-prog-field"><span class="ms-lbl">Progress</span><span class="ms-prog-edit" id="ms-prog-edit"><input type="text" id="ms-progress-input" class="ms-prog-input" inputmode="decimal" maxlength="5" autocomplete="off" title="Progress override. Clear the field to restore the schedule's own value." oninput="onMsProgressInput()" onkeydown="onMsProgressKey(event)" onblur="saveMsProgress()"><span class="ms-prog-pct">%</span></span></div>
   </div>
   <div class="ms-progress-track"><div id="ms-progress-fill" class="ms-progress-fill"></div></div>
   <details class="ms-metrics-fold" id="ms-metrics-fold">
     <summary>Weighting and hours</summary>
     <div class="ms-metrics">
-      <div class="ms-field"><span class="ms-lbl">MS weight<span class="ms-edited-mark" id="ms-mark-weight" data-field="weight" hidden></span></span><input type="text" id="ms-weight" class="ms-val ms-val-input" inputmode="decimal" maxlength="6" autocomplete="off" title="Milestone weight. Clear the field to restore the schedule's own value." oninput="onMsFieldInput()"></div>
-      <!-- Derived from weight and progress, so not editable: a field a person
-           can type into that the next keystroke elsewhere overwrites is a
-           control that lies about what it does. -->
+      <div class="ms-field"><span class="ms-lbl">MS weight</span><span id="ms-weight" class="ms-val"></span></div>
       <div class="ms-field"><span class="ms-lbl">MS hours</span><span id="ms-hours" class="ms-val"></span></div>
       <div class="ms-field"><span class="ms-lbl">Earned hours</span><span id="ms-earned" class="ms-val"></span></div>
     </div>
@@ -2547,7 +2373,7 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
     <div class="ms-comment-head">
       <span class="ms-lbl" style="margin-bottom:0"><span id="ms-comment-dot" class="ms-comment-dot empty"></span>Comment</span>
       <span class="ms-head-divider"></span>
-      <span class="ms-lbl" style="margin-bottom:0">Health<span class="ms-edited-mark" id="ms-mark-health" data-field="health" hidden></span></span>
+      <span class="ms-lbl" style="margin-bottom:0">Health</span>
       <div class="ms-health-dots" id="ms-health-dots">
         <span class="health-dot mh-0" data-val="0" title="N/A &mdash; no status, base colour" onclick="onMsHealthClick(this)"></span>
         <span class="health-dot mh-1" data-val="1" title="On track" onclick="onMsHealthClick(this)"></span>
@@ -2677,7 +2503,7 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 // label, and embedded in exported JSON — bump this one place, everything else
 // reads from it, so the three copies can't silently drift apart the way the
 // title/label/export payload just had for a long stretch of unversioned work.
-const APP_VERSION='3.1.0-P45';
+const APP_VERSION='3.1.0-P42';
 // ============================================================
 // TIMELINE
 // ============================================================
@@ -2715,18 +2541,12 @@ const SEED_TIMELINE={labels:WE_LABELS.slice(),dates:WE_DATES.slice(),months:MONT
 const STATES={
   DONE:{cls:'s-done',render:'filled',credit:1},
   DONEUSER:{cls:'s-doneuser',render:'filled',credit:1},
-  // UNFILLED means not finished, FILLED means finished. The legend has
-  // documented this from the start and `.ms-icon.outline` has always existed in
-  // the CSS; every state was nonetheless set to 'filled', so the only thing
-  // using the outline rule was the legend swatch itself and the board drew one
-  // solid mark for everything. The two finished states above keep `filled`,
-  // which is what makes them read as finished at a glance.
-  TRACK:{cls:'s-track',render:'outline',credit:0},
-  RISK:{cls:'s-risk',render:'outline',credit:0},
-  CRIT:{cls:'s-crit',render:'outline',credit:0},
-  FUTURE:{cls:'s-future',render:'outline',credit:0},
+  TRACK:{cls:'s-track',render:'filled',credit:0},
+  RISK:{cls:'s-risk',render:'filled',credit:0},
+  CRIT:{cls:'s-crit',render:'filled',credit:0},
+  FUTURE:{cls:'s-future',render:'filled',credit:0},
   BASELINE:{cls:'s-baseline',render:'baseline',credit:0,skipHours:true},
-  NA:{cls:'s-na',render:'outline',credit:0}
+  NA:{cls:'s-na',render:'filled',credit:0}
 };
 function normalizeMarker(str){
   if(!str) return 'ico-diamond';
@@ -3192,56 +3012,6 @@ function mergeUserMilestones(){
     added++;
   });
   if(added&&typeof invalidateMsIndexes==='function') invalidateMsIndexes();
-}
-// "DD-Mon-YY" (what the card shows) back to the bare "YYYY-MM-DD" the schedule
-// layer stores. Also accepts an ISO date and DD/MM/YYYY, since a person typing
-// a date types whatever they are used to. Returns null for anything it cannot
-// read, which the caller treats as "leave the field alone" rather than writing
-// a broken date onto the board.
-function parseMsDate(s){
-  const t=String(s||'').replace(/\s+[A*]+$/,'').trim();
-  if(!t) return null;
-  let m=/^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(t);
-  if(m) return m[1]+'-'+String(+m[2]).padStart(2,'0')+'-'+String(+m[3]).padStart(2,'0');
-  m=/^(\d{1,2})[-\/ ]([A-Za-z]{3,})[-\/ ](\d{2}|\d{4})$/.exec(t);
-  if(m){
-    const mi=MONTH_NAMES.findIndex(function(n){
-      return n.toLowerCase()===m[2].slice(0,3).toLowerCase(); });
-    if(mi<0) return null;
-    let y=+m[3]; if(y<100) y+=2000;
-    return y+'-'+String(mi+1).padStart(2,'0')+'-'+String(+m[1]).padStart(2,'0');
-  }
-  m=/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/.exec(t);
-  if(m){
-    let y=+m[3]; if(y<100) y+=2000;
-    return y+'-'+String(+m[2]).padStart(2,'0')+'-'+String(+m[1]).padStart(2,'0');
-  }
-  return null;
-}
-// Field edits applied to the board, NOT to the ingested schedule. Restore
-// first, then re-apply, for two reasons: clearing an override has to put the
-// schedule's own value back, and msKeyFor() falls back to composing a key from
-// m.type and m.date for a milestone with no Activity ID. Restoring before the
-// key is computed means that key is always derived from the schedule's own
-// values, so an edited type or date cannot move a milestone's annotations to a
-// different key than the one they were filed under.
-//
-// Called from the top of renderRows() beside mergeUserMilestones(), which is
-// the ONE function every build path goes through. Idempotent, so a rebuild
-// that runs it twice lands on the same board.
-function applyFieldOverrides(){
-  MILESTONES.forEach(function(m){
-    if(m._msBase){ Object.assign(m,m._msBase); delete m._msBase; }
-    const ov=MS_FIELD_OVERRIDE[msKeyFor(m)];
-    if(!ov) return;
-    const base={};
-    MS_EDITABLE_FIELDS.forEach(function(f){
-      if(!(f in ov)) return;
-      base[f]=m[f];
-      m[f]=ov[f];
-    });
-    if(Object.keys(base).length) m._msBase=base;
-  });
 }
 // ===== Real predecessor/successor data, parsed from the 22-Aug-26 P6 schedule export =====
 const DEP_DATA={"SNIP-101": {"pred": "", "succ": "SNIP-249,SNIP-258,SNIP-248,SNIP-255,SNIP-103,SNIP-115,SNIP-134,SNIP-105"}, "SNIP-104": {"pred": "", "succ": "SNIP-159"}, "SNIP-102": {"pred": "", "succ": "SNIP-115,SNIP-118"}, "SNIP-113": {"pred": "SNIP-111", "succ": ""}, "SNIP-103": {"pred": "SNIP-101", "succ": "SNIP-118"}, "SNIP-110": {"pred": "SNIP-111,SNIP-105", "succ": "SNIP-182"}, "SNIP-153": {"pred": "SNIP-154,SNIP-133", "succ": "SNIP-234"}, "SNIP-117": {"pred": "", "succ": "SNIP-242"}, "SNIP-182": {"pred": "SNIP-166,SNIP-110", "succ": "SNIP-234"}, "SNIP-207": {"pred": "SNIP-166", "succ": "SNIP-261"}, "SNIP-233": {"pred": "SNIP-231", "succ": "SNIP-261"}, "SNIP-219": {"pred": "SNIP-218", "succ": "SNIP-261"}, "SNIP-221": {"pred": "SNIP-220", "succ": "SNIP-234"}, "SNIP-234": {"pred": "SNIP-221,SNIP-182,SNIP-161,SNIP-215,SNIP-230,SNIP-223,SNIP-153,SNIP-237,SNIP-220,SNIP-105,SNIP-166,SNIP-133,SNIP-115,SNIP-229,A1070", "succ": "SNIP-255,SNIP-235"}, "SNIP-238": {"pred": "SNIP-239,SNIP-237,SNIP-220,SNIP-105,SNIP-166,SNIP-133,SNIP-115,SNIP-229,SNIP-230,A1070", "succ": "SNIP-261"}, "SNIP-235": {"pred": "SNIP-224,SNIP-234", "succ": "SNIP-241"}, "SNIP-226": {"pred": "SNIP-224", "succ": "SNIP-241"}, "SNIP-245": {"pred": "SNIP-255", "succ": "SNIP-256"}, "SNIP-246": {"pred": "SNIP-250,SNIP-244", "succ": "SNIP-261"}, "SNIP-247": {"pred": "SNIP-251,SNIP-244", "succ": "SNIP-261"}, "SNIP-248": {"pred": "SNIP-101,SNIP-111,SNIP-241,SNIP-250", "succ": "SNIP-261"}, "SNIP-249": {"pred": "SNIP-101,SNIP-111,SNIP-241,SNIP-250,SNIP-244", "succ": "SNIP-261"}, "SNIP-256": {"pred": "SNIP-245,SNIP-255", "succ": "SNIP-258"}, "SNIP-260": {"pred": "SNIP-259", "succ": "SNIP-261"}, "SNIP-261": {"pred": "SNIP-207,SNIP-238,SNIP-219,SNIP-233,SNIP-249,SNIP-248,SNIP-247,SNIP-246,SNIP-260", "succ": ""}, "SNIP-136": {"pred": "", "succ": "SNIP-159"}, "SNIP-127": {"pred": "", "succ": "SNIP-166,SNIP-138,SNIP-201"}, "SNIP-106": {"pred": "", "succ": "SNIP-166,SNIP-126,SNIP-201,SNIP-188"}, "SNIP-203": {"pred": "", "succ": "SNIP-270,SNIP-240,SNIP-310"}, "SNIP-204": {"pred": "", "succ": "SNIP-240"}, "SNIP-320": {"pred": "", "succ": "SNIP-240"}, "SNIP-105": {"pred": "SNIP-101", "succ": "SNIP-158,SNIP-183,SNIP-120,SNIP-116,SNIP-115,SNIP-124,SNIP-166,SNIP-111,SNIP-110,SNIP-142,SNIP-112,SNIP-128,SNIP-237,SNIP-240,SNIP-238,SNIP-234"}, "SNIP-111": {"pred": "SNIP-105,SNIP-112", "succ": "SNIP-249,SNIP-258,SNIP-248,SNIP-255,SNIP-115,SNIP-110,SNIP-113"}, "SNIP-148": {"pred": "SNIP-166", "succ": ""}, "SNIP-158": {"pred": "SNIP-105", "succ": ""}, "SNIP-191": {"pred": "SNIP-133,SNIP-166,SNIP-214", "succ": ""}, "SNIP-223": {"pred": "SNIP-220", "succ": "SNIP-234"}, "SNIP-112": {"pred": "SNIP-105", "succ": "SNIP-132,SNIP-111"}, "SNIP-132": {"pred": "SNIP-112", "succ": ""}, "SNIP-157": {"pred": "SNIP-156", "succ": "SNIP-242"}, "SNIP-215": {"pred": "SNIP-166,SNIP-120", "succ": "SNIP-125,SNIP-185,SNIP-240,SNIP-239,SNIP-234"}, "SNIP-202": {"pred": "SNIP-166", "succ": "SNIP-270,SNIP-240"}, "SNIP-118": {"pred": "SNIP-102,SNIP-103", "succ": "SNIP-129"}, "SNIP-115": {"pred": "SNIP-102,SNIP-101,SNIP-111,SNIP-105", "succ": "SNIP-123,SNIP-116,SNIP-124,SNIP-128,SNIP-133,SNIP-134,SNIP-259,SNIP-237,SNIP-240,SNIP-238,SNIP-234,SNIP-161"}, "SNIP-123": {"pred": "SNIP-115", "succ": "SNIP-133,SNIP-129,SNIP-128"}, "SNIP-129": {"pred": "SNIP-118,SNIP-123", "succ": "SNIP-134"}, "SNIP-134": {"pred": "SNIP-129,SNIP-101,SNIP-115", "succ": "SNIP-161,SNIP-255,SNIP-143"}, "SNIP-133": {"pred": "SNIP-123,SNIP-115", "succ": "SNIP-137,SNIP-155,SNIP-191,SNIP-153,SNIP-154,SNIP-138,SNIP-144,SNIP-259,SNIP-237,SNIP-240,SNIP-238,SNIP-234"}, "SNIP-137": {"pred": "SNIP-133", "succ": "SNIP-145,SNIP-271"}, "SNIP-145": {"pred": "SNIP-137", "succ": "SNIP-154"}, "SNIP-154": {"pred": "SNIP-145,SNIP-133", "succ": "SNIP-255,SNIP-153,SNIP-227"}, "SNIP-138": {"pred": "SNIP-127,SNIP-133", "succ": "SNIP-147,SNIP-156"}, "SNIP-147": {"pred": "SNIP-138", "succ": "SNIP-144,SNIP-155,SNIP-150"}, "SNIP-150": {"pred": "SNIP-147", "succ": "SNIP-156"}, "SNIP-156": {"pred": "SNIP-150,SNIP-138", "succ": "SNIP-157,SNIP-240"}, "SNIP-155": {"pred": "SNIP-147,SNIP-133", "succ": "SNIP-255,SNIP-161"}, "SNIP-128": {"pred": "SNIP-115,SNIP-105,SNIP-123", "succ": "SNIP-161"}, "SNIP-201": {"pred": "SNIP-106,SNIP-127", "succ": "SNIP-281,SNIP-190"}, "SNIP-271": {"pred": "SNIP-137", "succ": "SNIP-281,A1000,SNIP-200"}, "SNIP-281": {"pred": "SNIP-271,SNIP-201", "succ": "SNIP-161,A1000"}, "SNIP-161": {"pred": "SNIP-134,SNIP-128,SNIP-155,SNIP-115,SNIP-281", "succ": "SNIP-144,SNIP-143,SNIP-167,SNIP-186,SNIP-234,SNIP-165,SNIP-236,SNIP-259"}, "SNIP-143": {"pred": "SNIP-161,SNIP-134", "succ": "SNIP-180,SNIP-240,SNIP-228"}, "SNIP-167": {"pred": "SNIP-161", "succ": "SNIP-172"}, "SNIP-172": {"pred": "SNIP-167", "succ": "SNIP-231"}, "SNIP-231": {"pred": "SNIP-172", "succ": "SNIP-228,SNIP-240,SNIP-233"}, "SNIP-195": {"pred": "SNIP-166", "succ": "SNIP-240"}, "SNIP-144": {"pred": "SNIP-173,SNIP-147,SNIP-161,SNIP-133", "succ": "SNIP-200"}, "SNIP-176": {"pred": "", "succ": "SNIP-300"}, "SNIP-300": {"pred": "SNIP-176", "succ": "SNIP-189"}, "SNIP-166": {"pred": "SNIP-106,SNIP-127,SNIP-105", "succ": "SNIP-202,SNIP-178,SNIP-179,SNIP-148,SNIP-159,SNIP-168,SNIP-217,SNIP-173,SNIP-215,SNIP-207,SNIP-237,SNIP-191,SNIP-182,SNIP-220,SNIP-185,SNIP-195,SNIP-237,SNIP-240,SNIP-238,SNIP-234"}, "SNIP-173": {"pred": "SNIP-166", "succ": "SNIP-144,SNIP-189,SNIP-330"}, "SNIP-330": {"pred": "SNIP-173", "succ": ""}, "SNIP-189": {"pred": "SNIP-300,SNIP-173", "succ": "SNIP-220"}, "SNIP-220": {"pred": "SNIP-189,SNIP-166", "succ": "SNIP-239,SNIP-221,SNIP-223,SNIP-237,SNIP-240,SNIP-238,SNIP-234"}, "SNIP-168": {"pred": "SNIP-166", "succ": "SNIP-240"}, "SNIP-178": {"pred": "SNIP-166", "succ": "SNIP-240"}, "SNIP-179": {"pred": "SNIP-166", "succ": "SNIP-240"}, "SNIP-146": {"pred": "SNIP-217", "succ": "SNIP-162"}, "SNIP-162": {"pred": "SNIP-146", "succ": "SNIP-240"}, "SNIP-140": {"pred": "SNIP-217", "succ": "SNIP-160"}, "SNIP-160": {"pred": "SNIP-140", "succ": "SNIP-240"}, "SNIP-116": {"pred": "SNIP-115,SNIP-105", "succ": "SNIP-125,SNIP-120,SNIP-237"}, "SNIP-217": {"pred": "SNIP-166", "succ": "SNIP-237,SNIP-146,SNIP-140,SNIP-222"}, "SNIP-159": {"pred": "SNIP-136,SNIP-104,SNIP-166", "succ": "SNIP-164"}, "SNIP-164": {"pred": "SNIP-159", "succ": "SNIP-169"}, "SNIP-169": {"pred": "SNIP-164", "succ": "SNIP-174"}, "SNIP-174": {"pred": "SNIP-169", "succ": "SNIP-198"}, "SNIP-125": {"pred": "SNIP-215,SNIP-116", "succ": ""}, "SNIP-198": {"pred": "SNIP-174", "succ": "SNIP-240"}, "SNIP-222": {"pred": "SNIP-217", "succ": "SNIP-237"}, "SNIP-237": {"pred": "SNIP-217,SNIP-222,SNIP-116,SNIP-166,SNIP-220,SNIP-105,SNIP-166,SNIP-133,SNIP-115", "succ": "SNIP-240,SNIP-238,SNIP-234"}, "SNIP-120": {"pred": "SNIP-116,SNIP-105", "succ": "SNIP-215"}, "SNIP-188": {"pred": "SNIP-106", "succ": "SNIP-197"}, "SNIP-197": {"pred": "SNIP-188", "succ": "SNIP-208"}, "SNIP-208": {"pred": "SNIP-197", "succ": "SNIP-212"}, "SNIP-212": {"pred": "SNIP-208", "succ": ""}, "SNIP-185": {"pred": "SNIP-215,SNIP-166", "succ": "SNIP-239"}, "SNIP-239": {"pred": "SNIP-220,SNIP-215,SNIP-185", "succ": "SNIP-238,SNIP-240"}, "SNIP-124": {"pred": "SNIP-115,SNIP-105", "succ": "SNIP-165"}, "SNIP-165": {"pred": "SNIP-124,SNIP-161", "succ": "SNIP-126,SNIP-171,SNIP-186,SNIP-170"}, "SNIP-171": {"pred": "SNIP-165", "succ": "SNIP-186"}, "SNIP-186": {"pred": "SNIP-161,SNIP-171,SNIP-165", "succ": "SNIP-228"}, "SNIP-228": {"pred": "SNIP-231,SNIP-186,SNIP-143", "succ": "SNIP-227,SNIP-229"}, "SNIP-170": {"pred": "SNIP-165,SNIP-190", "succ": "SNIP-181,SNIP-180,SNIP-229"}, "SNIP-181": {"pred": "SNIP-170", "succ": "SNIP-192"}, "SNIP-192": {"pred": "SNIP-181", "succ": "SNIP-229"}, "SNIP-229": {"pred": "SNIP-192,SNIP-228,SNIP-170,A1030", "succ": "SNIP-230,SNIP-238,SNIP-234"}, "SNIP-190": {"pred": "SNIP-201", "succ": "SNIP-180,SNIP-170"}, "SNIP-200": {"pred": "SNIP-271,SNIP-144", "succ": "SNIP-180,A1040"}, "SNIP-180": {"pred": "SNIP-143,SNIP-170,SNIP-190,SNIP-200", "succ": "SNIP-193,SNIP-230,SNIP-194"}, "SNIP-193": {"pred": "SNIP-180", "succ": "SNIP-205"}, "SNIP-205": {"pred": "SNIP-193", "succ": "SNIP-230"}, "SNIP-194": {"pred": "SNIP-126,SNIP-180", "succ": "SNIP-206,SNIP-240"}, "SNIP-230": {"pred": "SNIP-205,SNIP-229,SNIP-180,A1070", "succ": "SNIP-234,SNIP-240,SNIP-238"}, "SNIP-126": {"pred": "SNIP-165,SNIP-106", "succ": "SNIP-206,SNIP-194"}, "SNIP-206": {"pred": "SNIP-126,SNIP-194", "succ": "SNIP-224"}, "SNIP-214": {"pred": "SNIP-236", "succ": "SNIP-191"}, "SNIP-218": {"pred": "SNIP-236", "succ": "SNIP-219,SNIP-255"}, "SNIP-236": {"pred": "SNIP-161", "succ": "SNIP-240,SNIP-214,SNIP-218"}, "SNIP-152": {"pred": "SNIP-142", "succ": "SNIP-240"}, "SNIP-142": {"pred": "SNIP-105", "succ": "SNIP-152"}, "SNIP-310": {"pred": "SNIP-203", "succ": "SNIP-227"}, "SNIP-211": {"pred": "SNIP-240", "succ": "SNIP-241,SNIP-244,SNIP-224"}, "SNIP-270": {"pred": "SNIP-203,SNIP-202", "succ": "SNIP-240"}, "SNIP-227": {"pred": "SNIP-228,SNIP-154,SNIP-310", "succ": "SNIP-224"}, "SNIP-224": {"pred": "SNIP-206,SNIP-227,SNIP-211", "succ": "SNIP-226,SNIP-235,SNIP-241,SNIP-232"}, "SNIP-232": {"pred": "SNIP-224", "succ": "SNIP-244,SNIP-241,SNIP-253"}, "SNIP-240": {"pred": "SNIP-270,SNIP-204,SNIP-203,SNIP-178,SNIP-168,SNIP-179,SNIP-202,SNIP-198,SNIP-156,SNIP-195,SNIP-162,SNIP-236,SNIP-194,SNIP-231,SNIP-215,SNIP-237,SNIP-239,SNIP-143,SNIP-152,SNIP-160,SNIP-220,SNIP-105,SNIP-166,SNIP-133,SNIP-115,SNIP-230,SNIP-320", "succ": "SNIP-242,SNIP-241,SNIP-244,SNIP-211"}, "SNIP-241": {"pred": "SNIP-211,SNIP-240,SNIP-224,SNIP-235,SNIP-226,SNIP-232", "succ": "SNIP-249,SNIP-258,SNIP-248,SNIP-255,SNIP-244"}, "SNIP-244": {"pred": "SNIP-211,SNIP-240,SNIP-241,SNIP-232", "succ": "SNIP-280,SNIP-252,SNIP-249,SNIP-255,SNIP-251,SNIP-250,SNIP-247,SNIP-246,SNIP-258"}, "SNIP-250": {"pred": "SNIP-244", "succ": "SNIP-249,SNIP-258,SNIP-248,SNIP-255,SNIP-253,SNIP-246"}, "SNIP-251": {"pred": "SNIP-244", "succ": "SNIP-253,SNIP-247"}, "SNIP-253": {"pred": "SNIP-251,SNIP-250,SNIP-232", "succ": "SNIP-255"}, "SNIP-290": {"pred": "SNIP-242", "succ": ""}, "SNIP-242": {"pred": "SNIP-117,SNIP-157,SNIP-240", "succ": "SNIP-290,SNIP-254,SNIP-252"}, "SNIP-254": {"pred": "SNIP-242", "succ": "SNIP-257"}, "SNIP-252": {"pred": "SNIP-244,SNIP-242", "succ": "SNIP-257,SNIP-255"}, "SNIP-257": {"pred": "SNIP-252,SNIP-254", "succ": "SNIP-280,SNIP-255"}, "SNIP-183": {"pred": "SNIP-105", "succ": "SNIP-255"}, "SNIP-280": {"pred": "SNIP-257,SNIP-244", "succ": "SNIP-259"}, "SNIP-255": {"pred": "SNIP-257,SNIP-252,SNIP-244,SNIP-101,SNIP-111,SNIP-250,SNIP-183,SNIP-155,SNIP-134,SNIP-154,SNIP-241,SNIP-234,SNIP-218,SNIP-253", "succ": "SNIP-245,SNIP-256,SNIP-258"}, "SNIP-258": {"pred": "SNIP-101,SNIP-111,SNIP-241,SNIP-250,SNIP-244,SNIP-255,SNIP-256", "succ": "SNIP-259"}, "SNIP-259": {"pred": "SNIP-258,SNIP-133,SNIP-115,SNIP-161,SNIP-280", "succ": "SNIP-260"}};
@@ -4749,23 +4519,6 @@ const MS_COMMENTS={};
 // truthiness, and why clicking an already-selected dot a second time is a
 // separate action (see onMsHealthClick) that actually deletes the key.
 const MS_HEALTH_OVERRIDE={};
-// Edits to the milestone's OWN schedule fields, made on the card. One store
-// holding a small object per milestone rather than one store per field: each
-// separate store would need its own publish key, export column, import
-// category and CSV column, and six of those is six chances for one to be
-// missed. Keyed by msKeyFor() like every other annotation.
-//
-// This never writes into MILESTONES. The overrides are applied to the render
-// -time board in applyFieldOverrides(), beside mergeUserMilestones(), so the
-// schedule layer the file ingested stays exactly as it was read. That is the
-// same three-layer separation every other annotation keeps.
-const MS_FIELD_OVERRIDE={};
-// The fields a person may change. Predecessors, dependencies and the Activity
-// ID are deliberately absent: the first two are relationships the schedule
-// owns, and the ID is the key every annotation store is filed under, so
-// editing it would orphan the comment, health, progress and short title
-// already attached to that milestone.
-const MS_EDITABLE_FIELDS=['actName','start','date','weight','floatD','type','marker'];
 function effectiveState(m){
   const key=msKeyFor(m);
   if(!(key in MS_HEALTH_OVERRIDE)) return m.state; // never set — fully automatic
@@ -4791,7 +4544,7 @@ function effectiveState(m){
 // NOT kept as a distinct state. Selecting the white health dot is a real choice
 // ("explicitly N/A") that differs from never having touched the control, but a
 // progress of 40 entered against a schedule that already says 40 means nothing
-// the schedule does not already say. saveMsDialog deletes the key in that
+// the schedule does not already say. saveMsProgress deletes the key in that
 // case, so the override count stays honest and .changed means exactly "this
 // differs from the schedule".
 const MS_PROGRESS_OVERRIDE={};
@@ -4810,12 +4563,7 @@ function shortenTitle(name,maxLen){
   const base=(lastSpace>maxLen*0.4)?cut.slice(0,lastSpace):s.slice(0,maxLen);
   return base.trim()+'\u2026';
 }
-function msKeyFor(m){
-  const b=m._msBase||{};
-  const type=('type' in b)?b.type:m.type;
-  const date=('date' in b)?b.date:m.date;
-  return msId(m)||('noid-'+m.ref+type+date);
-}
+function msKeyFor(m){ return msId(m)||('noid-'+m.ref+m.type+m.date); }
 let showBaselineGhosts=false;
 // Off by default. The hours sit next to the Activity ID label and the two
 // together crowd the marker; hours are a rollup question, and the MS hours /
@@ -5243,7 +4991,7 @@ function moveMilestoneToRow(ms,toRef){
   invalidateMsIndexes();
   const newKey=msKeyFor(ms);
   if(newKey!==oldKey){
-    [MS_HEALTH_OVERRIDE,MS_COMMENTS,MS_SHORT_TITLES,MS_PROGRESS_OVERRIDE,MS_FIELD_OVERRIDE].forEach(function(store){
+    [MS_HEALTH_OVERRIDE,MS_COMMENTS,MS_SHORT_TITLES,MS_PROGRESS_OVERRIDE].forEach(function(store){
       if(oldKey in store){ store[newKey]=store[oldKey]; delete store[oldKey]; }
     });
   }
@@ -5283,7 +5031,7 @@ function applyMilestoneMoves(list){
     hit.ref=mv.to;
     const newKey=msKeyFor(hit);
     if(newKey!==oldKey){
-      [MS_HEALTH_OVERRIDE,MS_COMMENTS,MS_SHORT_TITLES,MS_PROGRESS_OVERRIDE,MS_FIELD_OVERRIDE].forEach(function(store){
+      [MS_HEALTH_OVERRIDE,MS_COMMENTS,MS_SHORT_TITLES,MS_PROGRESS_OVERRIDE].forEach(function(store){
         if(oldKey in store){ store[newKey]=store[oldKey]; delete store[oldKey]; }
       });
     }
@@ -5367,11 +5115,6 @@ function renderRows(){
   // rows exist, so a merge there would land one rebuild late. Idempotent.
   // TD-157.
   mergeUserMilestones();
-  // Immediately after the merge, so a field edited on a user-added milestone is
-  // applied to the copy the merge just pushed, not to a milestone that is not
-  // on the board yet. Same reasoning as the merge itself: one function, every
-  // build path, idempotent.
-  applyFieldOverrides();
   // Fresh per rebuild: the board is built from MILESTONES and anything that
   // changed it since the last paint must not be served from a stale index.
   invalidateMsIndexes();
@@ -5570,8 +5313,8 @@ function renderRows(){
         // A drag ends with a click on most browsers. Without this the dialog
         // would open every time a milestone was dropped.
         if(MS_DRAG.suppressClick){MS_DRAG.suppressClick=false;return;}
-        if(msDialogFor===msKeyFor(m) && !document.getElementById('ms-dialog').hidden){
-          discardMsDialog();
+        if(msDialogFor===(snipId||('noid-'+m.ref+m.type+m.date)) && !document.getElementById('ms-dialog').hidden){
+          closeMsDialog();
         } else {
           openMsDialog(m,snipId,wrap,hd,task);
         }
@@ -6122,49 +5865,7 @@ let PRINT_MODE=false;
 let PRINT_MODE_PREV=null;
 // A3 portrait is 297mm x 420mm. The injected @page sets an 8mm margin, so the
 // printable width is 297 - 16 = 281mm, which is what --page-content-w holds.
-// The sheet the print preview lays out for. A person picks it in the preview
-// header and then sets the SAME one in their print dialog, which is what stops
-// the browser shrinking the board onto a page it was not built for. CSS cannot
-// choose the physical paper, so the two are matched by hand and the header
-// says plainly which one to set.
-let PRINT_PAPER='A3', PRINT_ORIENT='landscape';
-const PRINT_MARGIN_MM=8;
-function printPageMM(){
-  const s=PAGE_PAPERS[PRINT_PAPER]||PAGE_PAPERS.A3;
-  const land=(PRINT_ORIENT==='landscape');
-  return {w:land?s.h:s.w, h:land?s.w:s.h, margin:PRINT_MARGIN_MM};
-}
-function printPaperLabel(){ return PRINT_PAPER+' '+PRINT_ORIENT; }
-// ONE writer for everything the chosen sheet controls: the injected @page, the
-// CSS variable the sheet and both heading bars are sized from, the column fit,
-// and the header's own state. Three of these used to be set in three places,
-// which is how the preview came to show one sheet while @page asked for
-// another.
-function applyPrintPage(){
-  if(!PRINT_MODE) return;
-  const pg=printPageMM();
-  const style=document.getElementById('print-page-style');
-  if(style) style.textContent='@page{size:'+pg.w+'mm '+pg.h+'mm;margin:'+pg.margin+'mm}';
-  // The preview sheet and the two heading bars all read --page-sheet-w.
-  document.documentElement.style.setProperty('--page-sheet-w',pg.w+'mm');
-  document.documentElement.style.setProperty('--page-margin',pg.margin+'mm');
-  document.querySelectorAll('#pm-paper [data-paper]').forEach(function(b){
-    b.classList.toggle('on',b.getAttribute('data-paper')===PRINT_PAPER); });
-  document.querySelectorAll('#pm-paper [data-orient]').forEach(function(b){
-    b.classList.toggle('on',b.getAttribute('data-orient')===PRINT_ORIENT); });
-  const lbl=document.getElementById('pm-paper-label');
-  if(lbl) lbl.textContent=printPaperLabel();
-  fitPrintPage();
-}
-function setPrintPaper(v){ PRINT_PAPER=v; applyPrintPage(); }
-function setPrintOrient(v){ PRINT_ORIENT=v; applyPrintPage(); }
-function doBrowserPrint(){
-  // Re-applied immediately before handing over, so the sheet the dialog is
-  // told about is the one currently showing rather than whatever was set when
-  // the preview opened.
-  applyPrintPage();
-  window.print();
-}
+const PRINT_PAGE_MM={w:297,h:420,margin:8};
 function mmToPx(mm){
   // Measured rather than assumed: 1mm is only 3.7795px at exactly 96dpi, and
   // the browser's CSS pixel ratio is not guaranteed to be that.
@@ -6203,12 +5904,11 @@ function togglePrintMode(force){
     }
     // Only while the preview is on. Declared globally it would change the page
     // size for anyone who just hits Ctrl+P without asking for A3.
-    applyPrintPage();
+    style.textContent='@page{size:'+PRINT_PAGE_MM.w+'mm '+PRINT_PAGE_MM.h+'mm;margin:'+PRINT_PAGE_MM.margin+'mm}';
+    fitPrintPage();
   } else {
     document.body.classList.remove('print-mode');
     if(style) style.textContent='';
-    document.documentElement.style.removeProperty('--page-sheet-w');
-    document.documentElement.style.removeProperty('--page-margin');
     if(PRINT_MODE_PREV){
       document.getElementById('wk-width').value=PRINT_MODE_PREV.wkWidth;
       setWkWidth(PRINT_MODE_PREV.wkWidth);
@@ -6234,12 +5934,11 @@ function fitPrintPage(){
   const nonWkWidth=Array.from(row.cells).filter(function(td){
     return !td.classList.contains('col-wk')&&td.offsetParent!==null&&getComputedStyle(td).display!=='none';
   }).reduce(function(s,td){ return s+td.getBoundingClientRect().width; },0);
-  const pg=printPageMM();
-  const pageW=mmToPx(pg.w-2*pg.margin);
+  const pageW=mmToPx(PRINT_PAGE_MM.w-2*PRINT_PAGE_MM.margin);
   const res=fitColumnsToWidth(pageW,nonWkWidth,wkCells.length);
   const bd=document.getElementById('pm-banner-detail');
   if(bd&&res) bd.textContent=res.clamped
-    ? (wkCells.length+' week columns at the '+res.perCol+'px minimum still exceed the page width. Hide columns, filter weeks, or use a wider sheet.')
+    ? (wkCells.length+' week columns at the '+res.perCol+'px minimum still exceed the page width — hide columns or filter weeks to fit.')
     : (wkCells.length+' week columns fitted at '+res.perCol+'px.');
 }
 // Mirrors --colw as a number, because msCellOffset() budgets the horizontal
@@ -8191,9 +7890,6 @@ const ANNOT_CATEGORIES=[
   {key:'msProgress',  label:'Milestone progress overrides',
    count:function(p){ return Object.keys(p.milestoneProgressOverrides||{}).length; },
    apply:function(p){ Object.assign(MS_PROGRESS_OVERRIDE,p.milestoneProgressOverrides||{}); }},
-  {key:'msFields',    label:'Milestone field edits',
-   count:function(p){ return Object.keys(p.milestoneFieldOverrides||{}).length; },
-   apply:function(p){ Object.assign(MS_FIELD_OVERRIDE,p.milestoneFieldOverrides||{}); }},
   {key:'shortTitles', label:'Custom short titles',
    count:function(p){ return Object.keys(p.milestoneShortTitles||{}).length; },
    apply:function(p){ Object.assign(MS_SHORT_TITLES,p.milestoneShortTitles||{}); }},
@@ -8616,7 +8312,6 @@ function publishStatePayload(){
     milestoneComments:MS_COMMENTS,
     milestoneHealthOverrides:MS_HEALTH_OVERRIDE,
     milestoneProgressOverrides:MS_PROGRESS_OVERRIDE,
-    milestoneFieldOverrides:MS_FIELD_OVERRIDE,
     milestoneShortTitles:MS_SHORT_TITLES,
     // Milestones a person added on the board. Records, not a keyed store, so
     // they are REPLACED on apply rather than merged: two payloads carrying the
@@ -8693,7 +8388,6 @@ function applyPublishedState(){
     Object.assign(MS_COMMENTS,p.milestoneComments||{});
     Object.assign(MS_HEALTH_OVERRIDE,p.milestoneHealthOverrides||{});
     Object.assign(MS_PROGRESS_OVERRIDE,p.milestoneProgressOverrides||{});
-    Object.assign(MS_FIELD_OVERRIDE,p.milestoneFieldOverrides||{});
     Object.assign(MS_SHORT_TITLES,p.milestoneShortTitles||{});
     applyUserMilestones(p);
     Object.assign(DEP_COMMENTS,p.dependencyComments||{});
@@ -8834,7 +8528,6 @@ function exportModel(){
                  dependencyComments:DEP_COMMENTS,
                  milestoneHealthOverrides:MS_HEALTH_OVERRIDE,
                  milestoneProgressOverrides:MS_PROGRESS_OVERRIDE,
-                 milestoneFieldOverrides:MS_FIELD_OVERRIDE,
                  milestoneComments:MS_COMMENTS,
                  milestoneShortTitles:MS_SHORT_TITLES,
                  userMilestones:USER_MILESTONES,
@@ -8930,7 +8623,7 @@ function exportComments(){
 // "ID: value" pairs rather than picking one and hiding the rest. TD-156.
 const CSV_BASE_HEADER=['Phase','Discipline','Ref','Deliverable','Type','Doc No.','Task Code',
   'Source Activity IDs','Source Schedule','Hours','Alloc %','Progress %','Status'];
-const CSV_ENTERED_HEADER=['Progress % (entered)','Health (entered)','Comments (entered)','Remarks (entered)','Field edits (entered)'];
+const CSV_ENTERED_HEADER=['Progress % (entered)','Health (entered)','Comments (entered)','Remarks (entered)'];
 // "value" alone when one milestone in the row carries an entry, "ID: value" per
 // milestone when several do, so a multi-milestone row never silently reports
 // one of its entries as though it were the row's.
@@ -8988,729 +8681,10 @@ function buildCsvRows(){
       // the schedule produced.
       (curHealth!==baseHealth)?(HEALTH_LABELS[curHealth]||curHealth):'',
       csvEnteredCell(ms,MS_COMMENTS),
-      remarks,
-      // Schedule fields a person changed on the card. Reported as
-      // "field: value" pairs so the report says WHICH field was changed, not
-      // just that something was; the base columns still carry the schedule's
-      // own figures, which is the whole point of the split.
-      csvEnteredCell(ms,MS_FIELD_OVERRIDE,function(o){
-        return Object.keys(o).map(function(f){ return f+'='+o[f]; }).join(' ');
-      })]);
+      remarks]);
   });
   return rows;
 }
-// ===== Self-contained PDF export ==========================================
-//
-// A PDF written by hand, in this file, with no library and no external
-// reference in the output. The reason it exists is the print path: the browser
-// print dialog owns the paper size and the margins, CSS @page does not, so a
-// board laid out for A3 was rendered onto A4, shrink-to-fit to 64% and clipped
-// at the right edge. This writes the page box itself, so the dialog is out of
-// the loop entirely.
-//
-// FONTS. The output uses the PDF standard-14 base fonts (Helvetica, its bold,
-// and Courier for the mono runs). Every reader has them built in, so nothing is
-// embedded and nothing is referenced. The app's own stack is "IBM Plex Sans",
-// "Segoe UI", system-ui, and it ships NO font file, so there is no binary here
-// to embed even if the file were allowed to carry one.
-//
-// What is preserved instead is the METRICS. Every string is measured in the
-// browser in the font it is actually rendered in, and the PDF text is given a
-// horizontal scale (Tz) that makes it occupy exactly that width. So the layout
-// is identical to the screen, column for column, rather than reflowing to
-// Helvetica's own widths, and no width table is needed.
-//
-// Coordinates. PDF has its origin bottom-left with y up; the DOM has it
-// top-left with y down. Each page installs one CTM that flips y and applies the
-// page scale, so everything below can be emitted in screen pixels.
-// One paper table, read by BOTH the print preview and the PDF exporter. Two
-// copies of these numbers is precisely the drift that produced the original
-// defect: the print CSS laid out an A3 sheet while the page it landed on was
-// A4, so the board was shrunk to 64% and clipped at the right edge.
-const PAGE_PAPERS={A4:{w:210,h:297},A3:{w:297,h:420}};
-const PDF_MARGIN_MM=8;
-const PDF_MM_PT=72/25.4;          // 1mm in PDF points
-// The two page setups a person picks between, and the orientations of each.
-let PDF_PAPER='A3', PDF_ORIENT='landscape';
-// Below this, scaling to fit the width stops being a smaller board and starts
-// being an unreadable one: a 1624px board on A4 portrait fits at 34%, which is
-// roughly 3px text. Past the floor the board is split into vertical BANDS
-// instead, left to right, each carrying the title column so a continuation
-// sheet still says which row is which.
-const PDF_MIN_SCALE=0.62;
-
-// ---- byte-level helpers --------------------------------------------------
-// The xref table stores BYTE offsets, so the document has to be assembled as
-// bytes rather than as a JS string: a multi-byte character anywhere would push
-// every later offset out and the file would not open.
-function pdfBytes(str){
-  const out=new Uint8Array(str.length);
-  for(let i=0;i<str.length;i++) out[i]=str.charCodeAt(i)&0xFF;
-  return out;
-}
-// Characters the app draws that WinAnsi cannot carry. Replaced rather than
-// dropped, so a legend or a filter line still reads as a sentence.
-const PDF_TRANSLIT={'≤':'<=','≥':'>=','≠':'!=','✓':'v',
-  '⚠':'!','●':'o','○':'o','★':'*','☆':'*',
-  '←':'<-','→':'->','↳':'>','…':'...','•':'-',
-  ' ':' ',' ':' ','​':''};
-function pdfText(s){
-  let out='';
-  const str=String(s==null?'':s);
-  for(let i=0;i<str.length;i++){
-    const ch=str[i];
-    if(PDF_TRANSLIT[ch]!==undefined){ out+=PDF_TRANSLIT[ch]; continue; }
-    const c=ch.charCodeAt(0);
-    if(c<256) out+=ch;
-    else if(c===0x2013) out+='-';          // en dash
-    else if(c===0x2014) out+='-';          // em dash
-    else if(c===0x2018||c===0x2019) out+="'";
-    else if(c===0x201C||c===0x201D) out+='"';
-    else out+='?';
-  }
-  return out.replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)');
-}
-function pdfNum(n){
-  if(!isFinite(n)) return '0';
-  const r=Math.round(n*1000)/1000;
-  return String(r);
-}
-
-// ---- colour --------------------------------------------------------------
-// Returns [r,g,b] in 0..1, or null for anything fully transparent, which is
-// the signal not to paint at all rather than to paint white over something.
-function pdfColour(css){
-  if(!css) return null;
-  const m=/rgba?\(([^)]+)\)/.exec(css);
-  if(!m) return null;
-  const p=m[1].split(',').map(function(v){ return parseFloat(v); });
-  if(p.length>3&&!(p[3]>0.02)) return null;
-  const a=(p.length>3)?p[3]:1;
-  // Composited onto white rather than carried as real transparency: an alpha
-  // channel needs an ExtGState per distinct value, and every wash in this file
-  // sits on a light panel anyway.
-  return [(p[0]*a+255*(1-a))/255,(p[1]*a+255*(1-a))/255,(p[2]*a+255*(1-a))/255];
-}
-
-// ---- the content-stream accumulator --------------------------------------
-function pdfStream(){
-  const ops=[];
-  return {
-    ops:ops,
-    op:function(s){ ops.push(s); return this; },
-    save:function(){ ops.push('q'); return this; },
-    restore:function(){ ops.push('Q'); return this; },
-    fill:function(c){ ops.push(pdfNum(c[0])+' '+pdfNum(c[1])+' '+pdfNum(c[2])+' rg'); return this; },
-    strokeCol:function(c){ ops.push(pdfNum(c[0])+' '+pdfNum(c[1])+' '+pdfNum(c[2])+' RG'); return this; },
-    width:function(w){ ops.push(pdfNum(w)+' w'); return this; },
-    rect:function(x,y,w,h){ ops.push(pdfNum(x)+' '+pdfNum(y)+' '+pdfNum(w)+' '+pdfNum(h)+' re'); return this; },
-    text:function(){ return ops.join('\n'); }
-  };
-}
-
-// ---- SVG geometry --------------------------------------------------------
-// An ellipse from four beziers. kappa is the standard circle approximation
-// constant; nothing in this file is a big enough circle for the error to show.
-function pdfEllipse(s,cx,cy,rx,ry){
-  const k=0.5522847498;
-  s.op(pdfNum(cx+rx)+' '+pdfNum(cy)+' m');
-  s.op(pdfNum(cx+rx)+' '+pdfNum(cy+ry*k)+' '+pdfNum(cx+rx*k)+' '+pdfNum(cy+ry)+' '+pdfNum(cx)+' '+pdfNum(cy+ry)+' c');
-  s.op(pdfNum(cx-rx*k)+' '+pdfNum(cy+ry)+' '+pdfNum(cx-rx)+' '+pdfNum(cy+ry*k)+' '+pdfNum(cx-rx)+' '+pdfNum(cy)+' c');
-  s.op(pdfNum(cx-rx)+' '+pdfNum(cy-ry*k)+' '+pdfNum(cx-rx*k)+' '+pdfNum(cy-ry)+' '+pdfNum(cx)+' '+pdfNum(cy-ry)+' c');
-  s.op(pdfNum(cx+rx*k)+' '+pdfNum(cy-ry)+' '+pdfNum(cx+rx)+' '+pdfNum(cy-ry*k)+' '+pdfNum(cx+rx)+' '+pdfNum(cy)+' c');
-}
-// An SVG elliptical arc, as beziers. Only the lock sprite uses one, but a
-// converter that silently skipped A would draw that sprite open.
-function pdfArc(s,x1,y1,rx,ry,rot,laf,sf,x2,y2){
-  if(rx===0||ry===0){ s.op(pdfNum(x2)+' '+pdfNum(y2)+' l'); return; }
-  const phi=rot*Math.PI/180, cosP=Math.cos(phi), sinP=Math.sin(phi);
-  const dx=(x1-x2)/2, dy=(y1-y2)/2;
-  const x1p=cosP*dx+sinP*dy, y1p=-sinP*dx+cosP*dy;
-  let rX=Math.abs(rx), rY=Math.abs(ry);
-  const lam=(x1p*x1p)/(rX*rX)+(y1p*y1p)/(rY*rY);
-  if(lam>1){ const sq=Math.sqrt(lam); rX*=sq; rY*=sq; }
-  const sign=(laf===sf)?-1:1;
-  let num=rX*rX*rY*rY-rX*rX*y1p*y1p-rY*rY*x1p*x1p;
-  const den=rX*rX*y1p*y1p+rY*rY*x1p*x1p;
-  if(num<0) num=0;
-  const co=sign*Math.sqrt(num/den);
-  const cxp=co*rX*y1p/rY, cyp=-co*rY*x1p/rX;
-  const cx=cosP*cxp-sinP*cyp+(x1+x2)/2, cy=sinP*cxp+cosP*cyp+(y1+y2)/2;
-  const ang=function(ux,uy,vx,vy){
-    const d=Math.sqrt((ux*ux+uy*uy)*(vx*vx+vy*vy));
-    let c=(ux*vx+uy*vy)/d; c=Math.max(-1,Math.min(1,c));
-    const a=Math.acos(c);
-    return (ux*vy-uy*vx<0)?-a:a;
-  };
-  const t1=ang(1,0,(x1p-cxp)/rX,(y1p-cyp)/rY);
-  let dt=ang((x1p-cxp)/rX,(y1p-cyp)/rY,(-x1p-cxp)/rX,(-y1p-cyp)/rY);
-  if(!sf&&dt>0) dt-=2*Math.PI;
-  if(sf&&dt<0) dt+=2*Math.PI;
-  const segs=Math.ceil(Math.abs(dt)/(Math.PI/2));
-  const step=dt/segs;
-  const k=4/3*Math.tan(step/4);
-  let th=t1;
-  for(let i=0;i<segs;i++){
-    const c1=Math.cos(th), s1=Math.sin(th);
-    const th2=th+step, c2=Math.cos(th2), s2=Math.sin(th2);
-    const p=function(c,sn){ return [cosP*rX*c-sinP*rY*sn+cx, sinP*rX*c+cosP*rY*sn+cy]; };
-    const pt1=p(c1-k*s1, s1+k*c1);
-    const pt2=p(c2+k*s2, s2-k*c2);
-    const pt3=p(c2,s2);
-    s.op(pdfNum(pt1[0])+' '+pdfNum(pt1[1])+' '+pdfNum(pt2[0])+' '+pdfNum(pt2[1])+' '+pdfNum(pt3[0])+' '+pdfNum(pt3[1])+' c');
-    th=th2;
-  }
-}
-// SVG path data to PDF path operators. tf maps a point in the path's own user
-// space to board space, so the same converter serves the marker sprites (a
-// viewBox scale) and the dependency lines (a translate).
-function pdfSvgPath(s,d,tf){
-  const toks=String(d||'').match(/[a-zA-Z]|-?[\d.]+(?:e-?\d+)?/g);
-  if(!toks) return;
-  let i=0, cmd='', cx=0, cy=0, sx=0, sy=0;
-  const num=function(){ return parseFloat(toks[i++]); };
-  const P=function(x,y){ const p=tf(x,y); return pdfNum(p[0])+' '+pdfNum(p[1]); };
-  while(i<toks.length){
-    if(/[a-zA-Z]/.test(toks[i])) cmd=toks[i++];
-    else if(cmd==='M') cmd='L';
-    else if(cmd==='m') cmd='l';
-    const rel=(cmd===cmd.toLowerCase());
-    const C=cmd.toUpperCase();
-    if(C==='M'){
-      let x=num(), y=num(); if(rel){ x+=cx; y+=cy; }
-      s.op(P(x,y)+' m'); cx=x; cy=y; sx=x; sy=y;
-    } else if(C==='L'){
-      let x=num(), y=num(); if(rel){ x+=cx; y+=cy; }
-      s.op(P(x,y)+' l'); cx=x; cy=y;
-    } else if(C==='H'){
-      let x=num(); if(rel) x+=cx;
-      s.op(P(x,cy)+' l'); cx=x;
-    } else if(C==='V'){
-      let y=num(); if(rel) y+=cy;
-      s.op(P(cx,y)+' l'); cy=y;
-    } else if(C==='C'){
-      let a=num(),b=num(),c=num(),d2=num(),e=num(),f=num();
-      if(rel){ a+=cx;b+=cy;c+=cx;d2+=cy;e+=cx;f+=cy; }
-      s.op(P(a,b)+' '+P(c,d2)+' '+P(e,f)+' c'); cx=e; cy=f;
-    } else if(C==='Q'){
-      // Quadratic raised to cubic: PDF has no quadratic operator, and the
-      // dependency curves are all Q.
-      let qx=num(),qy=num(),x=num(),y=num();
-      if(rel){ qx+=cx;qy+=cy;x+=cx;y+=cy; }
-      const c1x=cx+2/3*(qx-cx), c1y=cy+2/3*(qy-cy);
-      const c2x=x+2/3*(qx-x),  c2y=y+2/3*(qy-y);
-      s.op(P(c1x,c1y)+' '+P(c2x,c2y)+' '+P(x,y)+' c'); cx=x; cy=y;
-    } else if(C==='A'){
-      const rx=num(),ry=num(),rot=num(),laf=num(),sf=num();
-      let x=num(),y=num(); if(rel){ x+=cx; y+=cy; }
-      // Converted in board space, since the transform may scale the radii.
-      const p0=tf(cx,cy), p1=tf(x,y);
-      const scale=Math.abs(tf(1,0)[0]-tf(0,0)[0])||1;
-      pdfArc(s,p0[0],p0[1],rx*scale,ry*scale,rot,laf,sf,p1[0],p1[1]);
-      cx=x; cy=y;
-    } else if(C==='Z'){
-      s.op('h'); cx=sx; cy=sy;
-    } else { i++; }
-  }
-}
-
-// ---- text measurement ----------------------------------------------------
-// One canvas, reused. Two widths per string: the width the browser gives it in
-// the font it is really drawn in, and the width Helvetica would give it. The
-// ratio is the horizontal scale that makes the PDF text occupy the on-screen
-// box exactly.
-let PDF_MEASURE_CTX=null;
-function pdfMeasure(str,cssFont){
-  if(!PDF_MEASURE_CTX) PDF_MEASURE_CTX=document.createElement('canvas').getContext('2d');
-  PDF_MEASURE_CTX.font=cssFont;
-  return PDF_MEASURE_CTX.measureText(str).width;
-}
-function pdfBaseFont(family,weight){
-  const mono=/mono|courier|consolas/i.test(family||'');
-  const bold=(parseInt(weight,10)||400)>=600;
-  if(mono) return bold?'Courier-Bold':'Courier';
-  return bold?'Helvetica-Bold':'Helvetica';
-}
-function pdfBaseCss(base,sizePx){
-  const bold=/Bold/.test(base)?'bold ':'';
-  const fam=/Courier/.test(base)?'Courier, monospace':'Helvetica, Arial, sans-serif';
-  return bold+sizePx+'px '+fam;
-}
-
-// ---- DOM to display list -------------------------------------------------
-// One generic walk rather than a routine per component. The board, the report
-// heading, the legend and the dependency layer all reduce to the same four
-// things: a filled box, four borders, a run of text, and an SVG shape. A
-// per-component exporter would have to be revisited every time the board gains
-// a part, which is the drift this file keeps paying for.
-//
-// Everything is emitted in BOARD SPACE: pixels, origin at the top-left of the
-// captured root, y downwards. The page transform deals with the rest.
-function pdfVisible(el,cs){
-  if(cs.display==='none'||cs.visibility==='hidden') return false;
-  if(parseFloat(cs.opacity)===0) return false;
-  const r=el.getBoundingClientRect();
-  return r.width>0.4&&r.height>0.4;
-}
-function pdfCollect(root,origin,out){
-  const walk=function(el){
-    const cs=getComputedStyle(el);
-    if(!pdfVisible(el,cs)) return;
-    const r=el.getBoundingClientRect();
-    const x=r.left-origin.left, y=r.top-origin.top;
-
-    // Background. border-radius at or past half the short side is drawn as an
-    // ellipse, which is what every health dot and count chip on this board is;
-    // as a rectangle they would read as a different kind of mark entirely.
-    const bg=pdfColour(cs.backgroundColor);
-    if(bg){
-      const rad=parseFloat(cs.borderTopLeftRadius)||0;
-      if(rad>=Math.min(r.width,r.height)/2-0.6&&Math.abs(r.width-r.height)<2)
-        out.push({k:'ellipse',x:x+r.width/2,y:y+r.height/2,rx:r.width/2,ry:r.height/2,fill:bg});
-      else out.push({k:'rect',x:x,y:y,w:r.width,h:r.height,fill:bg});
-    }
-    // Borders, as four thin filled bars. Stroking the box instead would centre
-    // the line on the edge and bleed a half pixel into the neighbouring cell,
-    // which on a 39-column grid is a visible thickening of every rule.
-    const sides=[['Top',x,y,r.width,0],['Bottom',x,y+r.height,r.width,1],
-                 ['Left',x,y,0,r.height],['Right',x+r.width,y,1,r.height]];
-    sides.forEach(function(sd){
-      const w=parseFloat(cs['border'+sd[0]+'Width'])||0;
-      if(w<=0||cs['border'+sd[0]+'Style']==='none') return;
-      const c=pdfColour(cs['border'+sd[0]+'Color']);
-      if(!c) return;
-      if(sd[0]==='Top')    out.push({k:'rect',x:sd[1],y:sd[2],w:sd[3],h:w,fill:c});
-      if(sd[0]==='Bottom') out.push({k:'rect',x:sd[1],y:sd[2]-w,w:sd[3],h:w,fill:c});
-      if(sd[0]==='Left')   out.push({k:'rect',x:sd[1],y:sd[2],w:w,h:sd[4],fill:c});
-      if(sd[0]==='Right')  out.push({k:'rect',x:sd[1]-w,y:sd[2],w:w,h:sd[4],fill:c});
-    });
-
-    // SVG. The marker sprites are <use> into a <symbol>, so the symbol's own
-    // children are drawn with the viewBox scale folded in; the dependency
-    // layer's paths are direct children and carry their own screen CTM.
-    if(el.tagName==='svg'){ pdfCollectSvg(el,origin,out); return; }
-
-    // Form controls hold their value in .value, which is not a text node. The
-    // card's fields are all inputs since P43, so without this the exported
-    // board would show empty boxes where every edited figure is.
-    if(el.tagName==='INPUT'||el.tagName==='TEXTAREA'){
-      const v=String(el.value||'');
-      if(v) pdfPushText(out,v,x,y,r,cs,el);
-      return;
-    }
-    Array.prototype.forEach.call(el.childNodes,function(n){
-      if(n.nodeType===1) walk(n);
-      else if(n.nodeType===3&&n.nodeValue&&n.nodeValue.trim()){
-        // Per-LINE boxes from a Range, not the element box: a wrapped label
-        // drawn at its element box would print as one long line running out of
-        // its cell.
-        const rng=document.createRange();
-        rng.selectNodeContents(n);
-        const rects=rng.getClientRects();
-        const txt=n.nodeValue.replace(/\s+/g,' ');
-        if(!rects.length) return;
-        if(rects.length===1){
-          pdfPushText(out,txt.trim(),rects[0].left-origin.left,rects[0].top-origin.top,rects[0],cs,el);
-        } else {
-          // Multi-line: the text is split proportionally by line width, which
-          // is approximate at the word boundaries but keeps every line inside
-          // its own box.
-          const total=Array.prototype.reduce.call(rects,function(s,q){ return s+q.width; },0);
-          let at=0;
-          Array.prototype.forEach.call(rects,function(q){
-            const take=Math.round(txt.length*(q.width/total));
-            const part=txt.substr(at,take); at+=take;
-            if(part.trim()) pdfPushText(out,part.trim(),q.left-origin.left,q.top-origin.top,q,cs,el);
-          });
-        }
-      }
-    });
-  };
-  walk(root);
-}
-function pdfPushText(out,str,x,y,rect,cs,el){
-  const col=pdfColour(cs.color);
-  if(!col||!str) return;
-  const size=parseFloat(cs.fontSize)||10;
-  const base=pdfBaseFont(cs.fontFamily,cs.fontWeight);
-  const cssFont=(cs.fontStyle==='italic'?'italic ':'')+cs.fontWeight+' '+size+'px '+cs.fontFamily;
-  let shown=str, wantW=pdfMeasure(shown,cssFont);
-  // Truncate to the element's content box the way the screen does, so a title
-  // that is ellipsised on the board is ellipsised in the file rather than
-  // running across the columns beside it.
-  const holder=el.getBoundingClientRect();
-  const maxW=Math.max(holder.width-2,8);
-  if(wantW>maxW+1&&shown.length>1){
-    while(shown.length>1&&pdfMeasure(shown+'...',cssFont)>maxW) shown=shown.slice(0,-1);
-    shown=shown+'...';
-    wantW=pdfMeasure(shown,cssFont);
-  }
-  const helvW=pdfMeasure(shown,pdfBaseCss(base,size))||wantW;
-  out.push({k:'text',s:shown,x:x,
-            // PDF places text on its baseline; the DOM rect is the line box.
-            // 0.79 of the size is where a baseline sits for these faces, and
-            // it is applied from the line box's own top rather than from the
-            // element's, so a wrapped run is not drawn on one line.
-            y:y+(rect.height>0?Math.min(rect.height*0.79,size*0.95+(rect.height-size)/2):size*0.79),
-            size:size,font:base,fill:col,
-            tz:helvW>0?(wantW/helvW*100):100});
-}
-function pdfCollectSvg(svg,origin,out){
-  const r=svg.getBoundingClientRect();
-  const cs=getComputedStyle(svg);
-  const cur=pdfColour(cs.color)||[0,0,0];
-  const use=svg.querySelector('use');
-  if(use){
-    const href=use.getAttribute('href')||use.getAttribute('xlink:href')||'';
-    const sym=href?document.querySelector(href):null;
-    if(!sym) return;
-    const vb=(sym.getAttribute('viewBox')||'0 0 20 20').split(/\s+/).map(Number);
-    const sx=r.width/(vb[2]||20), sy=r.height/(vb[3]||20);
-    const ox=r.left-origin.left, oy=r.top-origin.top;
-    const tf=function(px,py){ return [ox+(px-vb[0])*sx, oy+(py-vb[1])*sy]; };
-    // fill:none on the SVG means an outline marker, which is the whole
-    // finished / not finished convention; it has to survive the export or
-    // every marker in the file reads as finished.
-    const filled=(cs.fill!=='none'&&pdfColour(cs.fill)!==null);
-    const swRaw=parseFloat(cs.strokeWidth);
-    const sw=(isFinite(swRaw)?swRaw:1)*sx;
-    Array.prototype.forEach.call(sym.children,function(ch){
-      pdfSvgShape(ch,out,tf,filled?cur:null,cur,sw,sx);
-    });
-    return;
-  }
-  // A plain SVG layer, the dependency lines among them. getScreenCTM is the
-  // general answer for user space to screen; it also covers a viewBox if one
-  // is ever added to the layer.
-  const shapes=svg.querySelectorAll('path,line,circle,rect,polyline,polygon');
-  Array.prototype.forEach.call(shapes,function(sh){
-    const ctm=sh.getScreenCTM?sh.getScreenCTM():null;
-    if(!ctm) return;
-    const tf=function(px,py){
-      return [ctm.a*px+ctm.c*py+ctm.e-origin.left, ctm.b*px+ctm.d*py+ctm.f-origin.top];
-    };
-    const scs=getComputedStyle(sh);
-    if(!pdfVisible(sh,scs)&&sh.tagName!=='path'&&sh.tagName!=='line') return;
-    if(scs.display==='none'||scs.visibility==='hidden') return;
-    const stroke=pdfColour(scs.stroke);
-    const fill=(scs.fill&&scs.fill!=='none')?pdfColour(scs.fill):null;
-    const sw=(parseFloat(scs.strokeWidth)||1)*Math.abs(ctm.a||1);
-    const dash=scs.strokeDasharray&&scs.strokeDasharray!=='none'?scs.strokeDasharray:null;
-    pdfSvgShape(sh,out,tf,fill,stroke,sw,Math.abs(ctm.a||1),dash);
-  });
-}
-function pdfSvgShape(el,out,tf,fill,stroke,sw,scale,dash){
-  const tag=el.tagName;
-  const ownFill=el.getAttribute('fill');
-  const f=(ownFill==='none')?null:fill;
-  if(tag==='path'){
-    out.push({k:'svgpath',d:el.getAttribute('d')||'',tf:tf,fill:f,stroke:stroke,sw:sw,dash:dash});
-  } else if(tag==='line'){
-    const d='M '+el.getAttribute('x1')+' '+el.getAttribute('y1')+' L '+el.getAttribute('x2')+' '+el.getAttribute('y2');
-    out.push({k:'svgpath',d:d,tf:tf,fill:null,stroke:stroke,sw:sw,dash:dash});
-  } else if(tag==='circle'){
-    const c=tf(parseFloat(el.getAttribute('cx'))||0,parseFloat(el.getAttribute('cy'))||0);
-    const rr=(parseFloat(el.getAttribute('r'))||0)*scale;
-    out.push({k:'ellipse',x:c[0],y:c[1],rx:rr,ry:rr,fill:f,stroke:stroke,sw:sw});
-  } else if(tag==='rect'){
-    const p=tf(parseFloat(el.getAttribute('x'))||0,parseFloat(el.getAttribute('y'))||0);
-    const p2=tf((parseFloat(el.getAttribute('x'))||0)+(parseFloat(el.getAttribute('width'))||0),
-                (parseFloat(el.getAttribute('y'))||0)+(parseFloat(el.getAttribute('height'))||0));
-    out.push({k:'rect',x:p[0],y:p[1],w:p2[0]-p[0],h:p2[1]-p[1],fill:f,stroke:stroke,sw:sw});
-  } else if(tag==='polyline'||tag==='polygon'){
-    const pts=(el.getAttribute('points')||'').trim().split(/[\s,]+/).map(Number);
-    let d='';
-    for(let i=0;i+1<pts.length;i+=2) d+=(i?' L ':'M ')+pts[i]+' '+pts[i+1];
-    if(tag==='polygon') d+=' Z';
-    out.push({k:'svgpath',d:d,tf:tf,fill:f,stroke:stroke,sw:sw,dash:dash});
-  }
-}
-
-// ---- emit one display list into a content stream --------------------------
-function pdfEmit(s,list,fontMap){
-  list.forEach(function(it){
-    if(it.k==='rect'){
-      if(it.fill){ s.fill(it.fill); s.rect(it.x,it.y,it.w,it.h); s.op('f'); }
-      if(it.stroke){ s.strokeCol(it.stroke); s.width(it.sw||1); s.rect(it.x,it.y,it.w,it.h); s.op('S'); }
-    } else if(it.k==='ellipse'){
-      if(it.fill){ s.fill(it.fill); pdfEllipse(s,it.x,it.y,it.rx,it.ry); s.op('f'); }
-      if(it.stroke){ s.strokeCol(it.stroke); s.width(it.sw||1); pdfEllipse(s,it.x,it.y,it.rx,it.ry); s.op('S'); }
-    } else if(it.k==='svgpath'){
-      s.save();
-      if(it.dash){
-        const parts=String(it.dash).split(/[\s,]+/).map(parseFloat).filter(function(v){return isFinite(v);});
-        if(parts.length) s.op('['+parts.map(pdfNum).join(' ')+'] 0 d');
-      }
-      s.op('1 J 1 j');
-      pdfSvgPath(s,it.d,it.tf);
-      if(it.fill&&it.stroke){ s.fill(it.fill); s.strokeCol(it.stroke); s.width(it.sw||1); s.op('B'); }
-      else if(it.fill){ s.fill(it.fill); s.op('f'); }
-      else if(it.stroke){ s.strokeCol(it.stroke); s.width(it.sw||1); s.op('S'); }
-      else s.op('n');
-      s.restore();
-    } else if(it.k==='text'){
-      s.fill(it.fill);
-      s.op('BT');
-      s.op('/'+fontMap[it.font]+' '+pdfNum(it.size)+' Tf');
-      if(Math.abs(it.tz-100)>0.5) s.op(pdfNum(it.tz)+' Tz');
-      // The text matrix carries the y flip back, so glyphs are upright inside
-      // a page CTM that is itself flipped.
-      s.op('1 0 0 -1 '+pdfNum(it.x)+' '+pdfNum(it.y)+' Tm');
-      s.op('('+pdfText(it.s)+') Tj');
-      s.op('ET');
-      if(Math.abs(it.tz-100)>0.5) s.op('100 Tz');
-    }
-  });
-}
-
-// ---- the file itself ------------------------------------------------------
-// Objects, an xref table and a trailer. The xref stores byte offsets, so the
-// body is assembled once as a string of single-byte characters and every
-// offset is that string's length at the moment the object starts.
-async function pdfDeflate(str){
-  if(typeof CompressionStream==='undefined') return null;
-  try{
-    const src=pdfBytes(str);
-    const cs=new CompressionStream('deflate');
-    const w=cs.writable.getWriter(); w.write(src); w.close();
-    const buf=await new Response(cs.readable).arrayBuffer();
-    const u8=new Uint8Array(buf);
-    let out=''; for(let i=0;i<u8.length;i++) out+=String.fromCharCode(u8[i]);
-    return out;
-  }catch(e){ return null; }
-}
-async function pdfBuild(pages,pageWpt,pageHpt){
-  const FONTS=['Helvetica','Helvetica-Bold','Courier','Courier-Bold'];
-  const objs=[];                       // 1-based; objs[0] is object 1
-  const add=function(body){ objs.push(body); return objs.length; };
-  const kidIds=[];
-  const pagesId=1;                     // reserved, written last
-  objs.push('');                       // placeholder for the Pages object
-  const fontIds={};
-  FONTS.forEach(function(f){
-    fontIds[f]=add('<< /Type /Font /Subtype /Type1 /BaseFont /'+f+' /Encoding /WinAnsiEncoding >>');
-  });
-  for(let pi=0;pi<pages.length;pi++){
-    let content=pages[pi], filter='';
-    const z=await pdfDeflate(content);
-    if(z!==null){ content=z; filter=' /Filter /FlateDecode'; }
-    const sid=add('<< /Length '+content.length+filter+' >>\nstream\n'+content+'\nendstream');
-    const res='<< /Font << '+FONTS.map(function(f,i){
-      return '/F'+(i+1)+' '+fontIds[f]+' 0 R';
-    }).join(' ')+' >> >>';
-    kidIds.push(add('<< /Type /Page /Parent '+pagesId+' 0 R /MediaBox [0 0 '+
-      pdfNum(pageWpt)+' '+pdfNum(pageHpt)+'] /Resources '+res+
-      ' /Contents '+sid+' 0 R >>'));
-  }
-  objs[0]='<< /Type /Pages /Count '+kidIds.length+' /Kids ['+
-    kidIds.map(function(i){ return i+' 0 R'; }).join(' ')+'] >>';
-  const catId=add('<< /Type /Catalog /Pages '+pagesId+' 0 R >>');
-
-  let out='%PDF-1.4\n%\xE2\xE3\xCF\xD3\n';
-  const offsets=[];
-  objs.forEach(function(body,i){
-    offsets.push(out.length);
-    out+=(i+1)+' 0 obj\n'+body+'\nendobj\n';
-  });
-  const xref=out.length;
-  out+='xref\n0 '+(objs.length+1)+'\n0000000000 65535 f \n';
-  offsets.forEach(function(o){
-    out+=('0000000000'+o).slice(-10)+' 00000 n \n';
-  });
-  out+='trailer\n<< /Size '+(objs.length+1)+' /Root '+catId+' 0 R >>\nstartxref\n'+xref+'\n%%EOF\n';
-  return pdfBytes(out);
-}
-
-// ---- the export -----------------------------------------------------------
-// Captured from the board as it stands on screen, so what is exported is what
-// the person is looking at, filters and all. The heading block is drawn at the
-// top of EVERY page, with the table's own header rows under it, because a
-// continuation sheet with no week columns on it cannot be read.
-async function exportPDF(paper,orient){
-  const spec=PAGE_PAPERS[paper||PDF_PAPER]||PAGE_PAPERS.A3;
-  const land=(orient||PDF_ORIENT)==='landscape';
-  const pageWmm=land?spec.h:spec.w, pageHmm=land?spec.w:spec.h;
-  const pageWpt=pageWmm*PDF_MM_PT, pageHpt=pageHmm*PDF_MM_PT;
-  const mpt=PDF_MARGIN_MM*PDF_MM_PT;
-  const availW=pageWpt-2*mpt, availH=pageHpt-2*mpt;
-
-  const table=document.getElementById('main-table');
-  const hd=document.getElementById('rpt-hd');
-  if(!table) return;
-
-  // Board space origin: the leftmost of the heading and the table, so both
-  // sit in one coordinate system and the scale is decided once.
-  const tRect=table.getBoundingClientRect();
-  const hRect=hd?hd.getBoundingClientRect():tRect;
-  const origin={left:Math.min(tRect.left,hRect.left),top:Math.min(tRect.top,hRect.top)};
-  const boardW=Math.max(tRect.right,hRect.right)-origin.left;
-
-  // The title column, which every band repeats. Without it a second band is a
-  // grid of markers with nothing naming the rows.
-  const nameCell=table.querySelector('tbody tr .c-name, thead .c-name');
-  const nameW=nameCell?nameCell.getBoundingClientRect().width:0;
-
-  // One scale, from the width. Never above 1, because a small board blown up
-  // to fill an A3 sheet would render every hairline as a bar; and never below
-  // the legibility floor, because past that the answer is more pages, not
-  // smaller type.
-  const kFit=Math.min(availW/boardW,1);
-  const k=Math.max(kFit,PDF_MIN_SCALE);
-  // How much BOARD width one page can carry once the repeated title column has
-  // taken its share, and therefore how many bands the board needs.
-  const bandPxW=Math.max(availW/k-nameW,40);
-  const bandCount=(kFit>=PDF_MIN_SCALE)?1:Math.ceil((boardW-nameW)/bandPxW);
-
-  // The repeating block: the report heading plus the table's own <thead>.
-  const headList=[];
-  if(hd){
-    const n0=headList.length;
-    pdfCollect(hd,origin,headList);
-    for(let i=n0;i<headList.length;i++) headList[i].fromHead=true;
-  }
-  const thead=table.querySelector('thead');
-  if(thead) pdfCollect(thead,origin,headList);
-  const theadTopPx=thead?(thead.getBoundingClientRect().top-origin.top):0;
-  const theadHpt=thead?(thead.getBoundingClientRect().height*1):0;
-  const headTopPx=(hd?hRect.top:tRect.top)-origin.top;
-  const theadRect=thead?thead.getBoundingClientRect():null;
-  const headBottomPx=theadRect?(theadRect.bottom-origin.top):((hd?hRect.bottom:tRect.top)-origin.top);
-  const headHpt=(headBottomPx-headTopPx)*Math.min(availW/boardW,1);
-
-  // Body rows, each captured once and placed on whichever page it lands on. A
-  // row is never split across a page boundary: half a row of markers is worse
-  // than a short page.
-  const rows=Array.prototype.filter.call(table.querySelectorAll('tbody tr'),function(tr){
-    const cs=getComputedStyle(tr);
-    return cs.display!=='none'&&tr.getBoundingClientRect().height>0.5;
-  });
-  const bodyH=availH-headHpt;
-  const pagesOfRows=[]; let cur=[], curH=0;
-  rows.forEach(function(tr){
-    const h=tr.getBoundingClientRect().height*k;
-    if(cur.length&&curH+h>bodyH){ pagesOfRows.push(cur); cur=[]; curH=0; }
-    cur.push(tr); curH+=h;
-  });
-  if(cur.length) pagesOfRows.push(cur);
-  if(!pagesOfRows.length) pagesOfRows.push([]);
-
-  // The dependency layer spans the whole board rather than any one row, so it
-  // is captured once and clipped per page to the rows that page carries.
-  const depLayer=document.getElementById('dep-line-layer');
-  const depList=[];
-  if(depLayer&&getComputedStyle(depLayer).visibility!=='hidden') pdfCollectSvg(depLayer,origin,depList);
-
-  const fontMap={'Helvetica':'F1','Helvetica-Bold':'F2','Courier':'F3','Courier-Bold':'F4'};
-  const streams=[];
-  // Row groups are the outer loop and bands the inner one, so a reader gets
-  // the whole width of a set of rows before the rows move on. The other order
-  // would have them reading the left of the board for six sheets and then
-  // going back to the start for the right of it.
-  pagesOfRows.forEach(function(group){
-    for(let band=0;band<bandCount;band++){
-      const s=pdfStream();
-      // White sheet, so a reader is not looking at whatever their viewer uses.
-      s.fill([1,1,1]); s.rect(0,0,pageWpt,pageHpt); s.op('f');
-      // Where this band starts in board space, and the shift that brings it
-      // to just right of the repeated title column.
-      const x0=(bandCount===1)?0:(nameW+band*bandPxW);
-      const shift=(bandCount===1)?0:k*(nameW-x0);
-      const splitPt=mpt+((bandCount===1)?0:nameW*k);
-
-      // The heading is a text block, not part of the grid, so it is fitted to
-      // the page on its own rather than banded: a continuation sheet whose
-      // heading was cut in half would be worse than one that repeats it.
-      const kHead=Math.min(availW/boardW,1);
-      s.save();
-      s.rect(mpt,mpt,availW,availH); s.op('W n');
-      s.op(pdfNum(kHead)+' 0 0 '+pdfNum(-kHead)+' '+pdfNum(mpt)+' '+pdfNum(pageHpt-mpt+kHead*headTopPx)+' cm');
-      pdfEmit(s,headList.filter(function(it){ return it.fromHead; }),fontMap);
-      s.restore();
-
-      // The two clipped groups that make a band. The display list is emitted
-      // in BOTH and the clip does the selecting, rather than the list being
-      // filtered by x: an item's x is easy to read off a rect and not off a
-      // path's transform, and a filter that got that wrong would drop
-      // dependency lines silently.
-      const drawStrip=function(list,clipX,clipW,clipY,clipH,tx,ty){
-        if(clipW<=0.5) return;
-        s.save();
-        s.rect(clipX,clipY,clipW,clipH); s.op('W n');
-        s.op(pdfNum(k)+' 0 0 '+pdfNum(-k)+' '+pdfNum(tx)+' '+pdfNum(ty)+' cm');
-        pdfEmit(s,list,fontMap);
-        s.restore();
-      };
-      // Column headers, under the heading block.
-      const theadList=headList.filter(function(it){ return !it.fromHead; });
-      const thY=pageHpt-mpt-(headHpt-theadHpt);
-      if(bandCount>1) drawStrip(theadList,mpt,nameW*k,mpt,availH,mpt,thY+k*theadTopPx);
-      drawStrip(theadList,splitPt,mpt+availW-splitPt,mpt,availH,mpt+shift,thY+k*theadTopPx);
-
-      if(group.length){
-        const top=group[0].getBoundingClientRect().top-origin.top;
-        const bodyList=[];
-        group.forEach(function(tr){ pdfCollect(tr,origin,bodyList); });
-        const bodyY=pageHpt-mpt-headHpt+k*top;
-        const bodyClipY=mpt, bodyClipH=availH-headHpt;
-        if(bandCount>1) drawStrip(bodyList,mpt,nameW*k,bodyClipY,bodyClipH,mpt,bodyY);
-        // The dependency lines go with the week strip, not the title column:
-        // they live over the grid.
-        s.save();
-        s.rect(splitPt,bodyClipY,mpt+availW-splitPt,bodyClipH); s.op('W n');
-        s.op(pdfNum(k)+' 0 0 '+pdfNum(-k)+' '+pdfNum(mpt+shift)+' '+pdfNum(bodyY)+' cm');
-        pdfEmit(s,bodyList,fontMap);
-        if(depList.length) pdfEmit(s,depList,fontMap);
-        s.restore();
-      }
-      streams.push(s.text());
-    }
-  });
-
-  const bytes=await pdfBuild(streams,pageWpt,pageHpt);
-  const blob=new Blob([bytes],{type:'application/pdf'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download='eskay_dashboard_'+(paper||PDF_PAPER)+'_'+((orient||PDF_ORIENT)==='landscape'?'L':'P')+'.pdf';
-  a.click();
-  setTimeout(function(){ URL.revokeObjectURL(a.href); },4000);
-  return {pages:streams.length,scale:k,boardW:boardW,pageWpt:pageWpt,pageHpt:pageHpt};
-}
-function openPdfDialog(){
-  const d=document.getElementById('pdf-dialog');
-  if(!d) return;
-  d.hidden=false;
-  syncPdfDialog();
-}
-function closePdfDialog(){
-  const d=document.getElementById('pdf-dialog');
-  if(d) d.hidden=true;
-}
-function setPdfPaper(v){ PDF_PAPER=v; syncPdfDialog(); }
-function setPdfOrient(v){ PDF_ORIENT=v; syncPdfDialog(); }
-// One writer for the picker's state and for the fit line under it, so the
-// figure a person reads is computed from the same numbers the export uses
-// rather than from a second copy of the arithmetic.
-function syncPdfDialog(){
-  document.querySelectorAll('#pdf-dialog [data-paper]').forEach(function(b){
-    b.classList.toggle('active',b.getAttribute('data-paper')===PDF_PAPER); });
-  document.querySelectorAll('#pdf-dialog [data-orient]').forEach(function(b){
-    b.classList.toggle('active',b.getAttribute('data-orient')===PDF_ORIENT); });
-  const note=document.getElementById('pdf-fit-note');
-  if(!note) return;
-  const spec=PAGE_PAPERS[PDF_PAPER], land=PDF_ORIENT==='landscape';
-  const wmm=(land?spec.h:spec.w)-2*PDF_MARGIN_MM;
-  const table=document.getElementById('main-table');
-  const boardW=table?table.getBoundingClientRect().width:0;
-  const k=boardW?Math.min((wmm*PDF_MM_PT)/boardW,1):1;
-  note.textContent=Math.round(wmm)+'mm printable. The board is '+Math.round(boardW)+
-    'px wide, so it is drawn at '+Math.round(k*100)+'% of screen size'+
-    (k>=0.999?' (full size).':'.');
-}
-function doPdfExport(){
-  closePdfDialog();
-  exportPDF(PDF_PAPER,PDF_ORIENT);   // async; nothing waits on it, the download fires when it lands
-}
-
 function exportCSV(){
   const rows=buildCsvRows();
   const csv=rows.map(function(r){return r.map(csvEscape).join(',');}).join('\r\n');
@@ -10488,31 +9462,25 @@ function openMsDialog(m, snipId, anchorEl, hd, task){
   msDialogFor=msKeyFor(m);
   msDialogMs=m;
   msDialogHd=hd;
-  // Cleared before anything reads the form, so a mark or type picked on the
-  // PREVIOUS card cannot be carried into this one's baseline and read as an edit.
-  msFormTypeVal=null;
-  msFormMarkerVal=null;
   const dlg=document.getElementById('ms-dialog');
   const msEffState=effectiveState(m);
   dlg.className='ms-dialog status-'+statusClassOf(msEffState);
   dlg.hidden=false;
 
   document.getElementById('ms-code').textContent=snipId?('#'+snipId):('['+m.type+']');
+  document.getElementById('ms-type-inline').textContent=(TYPE_LABELS[m.type]||m.type)+' ('+m.type+')';
   document.getElementById('ms-status').textContent=STATE_LABELS[msEffState]||msEffState;
   const actName=m.actName||(function(){ const mm=String(m.notes||'').match(/^\[[^\]]+\]\s*-\s*(.*)$/); return mm?mm[1]:(m.notes||m.label||''); })();
   const titleText=actName||task.name;
   // Total float moved out of the title and into its own column. A milestone
   // whose schedule carries no float shows no column at all rather than a
   // placeholder, so the title keeps the full width.
-  document.getElementById('ms-title').value=titleText;
+  document.getElementById('ms-title').textContent=titleText;
   const hasFloat=(m.floatD!=null&&!isNaN(m.floatD));
   const floatCol=document.getElementById('ms-float-col');
   if(floatCol){
-    // The column no longer hides itself when the schedule carries no float. It
-    // is a field a person can fill in now, and a field that is not on screen
-    // cannot be filled in; a dash says "none recorded" in the same place.
-    floatCol.style.display='';
-    document.getElementById('ms-float-val').value=hasFloat?String(Math.round(m.floatD)):'';
+    floatCol.style.display=hasFloat?'':'none';
+    document.getElementById('ms-float-val').textContent=hasFloat?(Math.round(m.floatD)+' day'):'';
   }
   // "Unassigned" tells the reader nothing they can act on — a real discipline name
   // is worth showing, an empty/unassigned one isn't, so the line just doesn't
@@ -10523,37 +9491,33 @@ function openMsDialog(m, snipId, anchorEl, hd, task){
   else { subEl.style.display='none'; }
 
   const shortTitleKey=msKeyFor(m);
-  // What the field would hold with no custom short title at all. Held so the
-  // save can tell "left as it was" from "actually retitled", and so the edited
-  // mark can report what the auto default was.
-  msShortTitleDefault=shortenTitle(actName||task.name,22);
-  const shortTitleDefault=MS_SHORT_TITLES[shortTitleKey]||msShortTitleDefault;
+  const shortTitleDefault=MS_SHORT_TITLES[shortTitleKey]||shortenTitle(actName||task.name,22);
   document.getElementById('ms-shorttitle-input').value=shortTitleDefault;
+  document.getElementById('ms-shorttitle-input').defaultValue=shortTitleDefault;
+  document.getElementById('ms-shorttitle-save').style.display='none';
 
   const dateEl=document.getElementById('ms-date');
-  dateEl.value=fmtTipDate(m.date)+(m.actual?' A':'');
+  dateEl.textContent=fmtTipDate(m.date)+(m.actual?' A':'');
   dateEl.className='ms-date'+(m.actual?' is-actualised':'');
 
-  // Start date. The field is ALWAYS on screen now, showing a dash where a true
-  // zero-duration milestone has no start of its own. It used to hide itself,
-  // which moved Finish and Progress across and gave the row a different shape
-  // per card; equal weight and fixed positions were asked for directly, and a
-  // person cannot type a start date into a field that is not there.
-  // Actualised (start or finish) keeps the green "this really happened"
-  // treatment, which is the shading rather than a separate text indicator.
-  const startEl=document.getElementById('ms-start-date');
+  // Start date — shown only for real tasks (a start date that isn't just the
+  // same as the finish, which is what a true 0-duration milestone would have).
+  // Actualised (start or finish) now gets the same green "this really happened"
+  // treatment instead of a separate text indicator — the shading carries the
+  // meaning, so a redundant "Complete" label elsewhere would just repeat it.
+  const startField=document.getElementById('ms-start-field');
   const isRealTask=(m.start&&fmtTipDate(m.start)!==fmtTipDate(m.date))||m.finishFromStart;
   if(isRealTask){
+    startField.style.display='';
+    const startEl=document.getElementById('ms-start-date');
     const suffix=(m.startActual?' A':'')+(m.startStarred?' *':'');
-    startEl.value=fmtTipDate(m.start)+suffix;
+    startEl.textContent=fmtTipDate(m.start)+suffix;
     startEl.className='ms-date ms-start-date'+(m.startActual?' is-actualised':'');
   } else {
-    startEl.value='';
-    startEl.className='ms-date ms-start-date';
+    startField.style.display='none';
   }
-  startEl.placeholder='—';
 
-  document.getElementById('ms-weight').value=(m.weight!=null)?String(m.weight):'';
+  document.getElementById('ms-weight').textContent=(m.weight!=null)?m.weight+'%':'\u2014';
   // Collapsed on every open, not left wherever the last card was put. The row
   // exists because these are reference values; reopening it silently would make
   // "collapsed by default" a claim about the first card only.
@@ -10567,9 +9531,9 @@ function openMsDialog(m, snipId, anchorEl, hd, task){
 
   // -1 (not a real dot value) when nothing's been set at all, so no dot shows
   // as selected — distinct from 0, which is the real "explicitly N/A" state.
-  msFormHealth=(msDialogFor in MS_HEALTH_OVERRIDE)?MS_HEALTH_OVERRIDE[msDialogFor]:-1;
+  const curHealth=(msDialogFor in MS_HEALTH_OVERRIDE)?MS_HEALTH_OVERRIDE[msDialogFor]:-1;
   document.querySelectorAll('#ms-health-dots .health-dot').forEach(function(dot){
-    dot.classList.toggle('selected', parseInt(dot.getAttribute('data-val'),10)===msFormHealth);
+    dot.classList.toggle('selected', parseInt(dot.getAttribute('data-val'),10)===curHealth);
   });
 
   fillMsDepLists(snipId);
@@ -10586,122 +9550,7 @@ function openMsDialog(m, snipId, anchorEl, hd, task){
     document.getElementById('ms-toggle-succ').disabled=true;
   }
 
-  // The head icon, the type picker's closed state, and the baseline the dirty
-  // comparison is made against. The baseline is read back OUT of the form
-  // rather than assembled from the milestone, so "dirty" always means "the
-  // form differs from what it was opened showing" and cannot drift from a
-  // separate idea of what was put into it.
-  renderMsIcon();
-  closeMsTypeMenu();
-  msDraftClean=msReadForm();
-  syncMsDirtyUI();
-  syncMsEditedMarks();
   positionMsDialog(anchorEl,dlg);
-}
-// The milestone's own mark in the heading, drawn by renderIcon(), which is the
-// board's own helper. Not a second set of shapes: the card showed a glyph of
-// its own invention before this, keyed on TYPE, while the board's mark is keyed
-// on MARKER and carries the outline/filled convention, so the two could not
-// agree even in principle.
-//
-// Pending values, so the mark answers to the picker before anything is saved.
-function renderMsIcon(){
-  const btn=document.getElementById('ms-icon-btn');
-  if(!btn||!msDialogMs) return;
-  const state=previewEffState(msDialogMs,msDialogFor,msFormHealth);
-  btn.innerHTML=renderIcon(msFormMarker(),state,13);
-  const svg=btn.querySelector('.ms-icon');
-  if(svg) svg.id='ms-icon-glyph';
-  // The type name moved off the heading and onto this tooltip, which is the
-  // only place it is now written.
-  const ty=msFormType();
-  btn.title=(TYPE_LABELS[ty]||ty)+' ('+ty+')  \u00B7  click to change the mark or the type';
-}
-// The marker the FORM is showing, which is not necessarily the milestone's: an
-// unsaved change lives on the card until it is committed, like every other
-// field here.
-let msFormMarkerVal=null;
-// The auto-shortened short title for the open card, before any override.
-let msShortTitleDefault='';
-function msFormMarker(){
-  return msFormMarkerVal||(msDialogMs?(msDialogMs.marker||''):'');
-}
-// Shape vocabulary, with the meanings the legend already gives them. One list,
-// read by the picker; normalizeMarker() is what turns any of these back into a
-// sprite id, so a value typed here cannot disagree with what the board draws.
-const MS_MARKERS=[['diamond','Diamond, default milestone'],['lock','Lock, stage gate'],
-                  ['flag','Flag, notable milestone'],['star','Star, key project milestone'],
-                  ['circle','Circle']];
-function msTypeMenuEl(){ return document.getElementById('ms-type-menu'); }
-function closeMsTypeMenu(){
-  const menu=msTypeMenuEl();
-  if(menu) menu.hidden=true;
-  const btn=document.getElementById('ms-icon-btn');
-  if(btn) btn.setAttribute('aria-expanded','false');
-}
-// Clicking the icon offers the types. Built from TYPE_LABELS rather than a
-// second list typed out here, so a type added there appears here with no
-// further change: two hand-maintained copies of one vocabulary is the drift
-// this file has paid for before.
-function toggleMsTypeMenu(e){
-  if(e) e.stopPropagation();
-  const menu=msTypeMenuEl(), btn=document.getElementById('ms-icon-btn');
-  if(!menu||!msDialogMs) return;
-  if(!menu.hidden){ closeMsTypeMenu(); return; }
-  menu.innerHTML='';
-  const grp=function(txt){
-    const h=document.createElement('div'); h.className='ms-type-grp';
-    h.textContent=txt; menu.appendChild(h); };
-  const opt=function(cls,active,html,txt,fn,attr,val){
-    const b=document.createElement('button');
-    b.type='button';
-    b.className=cls+(active?' active':'');
-    if(attr) b.setAttribute(attr,val);
-    b.innerHTML=html;
-    b.appendChild(document.createTextNode(txt));
-    b.onclick=function(ev){ ev.stopPropagation(); fn(); };
-    menu.appendChild(b);
-  };
-  // Shape first, because the icon is what was clicked. Drawn in the state the
-  // card is actually in, so the picker previews the real mark rather than a
-  // sample in some other colour.
-  const state=previewEffState(msDialogMs,msDialogFor,msFormHealth);
-  const curMark=normalizeMarker(msFormMarker());
-  grp('Mark');
-  MS_MARKERS.forEach(function(pair){
-    opt('ms-type-opt',normalizeMarker(pair[0])===curMark,
-        renderIcon(pair[0],state,11),pair[1],
-        function(){ pickMsMarker(pair[0]); },'data-marker',pair[0]);
-  });
-  // The type carries no shape of its own, so it is listed as words. It is what
-  // the icon's tooltip reports, which is the only place it now appears.
-  const curType=msFormType();
-  grp('Type');
-  Object.keys(TYPE_LABELS).forEach(function(code){
-    opt('ms-type-opt',code===curType,'',TYPE_LABELS[code]+' ('+code+')',
-        function(){ pickMsType(code); },'data-type',code);
-  });
-  menu.hidden=false;
-  if(btn) btn.setAttribute('aria-expanded','true');
-}
-function pickMsMarker(v){
-  msFormMarkerVal=v;
-  renderMsIcon();
-  closeMsTypeMenu();
-  onMsFieldInput();
-}
-// The type the FORM is currently showing, which is not necessarily the
-// milestone's: an unsaved type change lives on the card until it is committed,
-// the same as every other field here.
-let msFormTypeVal=null;
-function msFormType(){
-  return msFormTypeVal||(msDialogMs?(msDialogMs.type||'MS'):'MS');
-}
-function pickMsType(code){
-  msFormTypeVal=code;
-  renderMsIcon();   // the tooltip is where the type is now written
-  closeMsTypeMenu();
-  onMsFieldInput();
 }
 // The raw relationship IDs for this milestone, comma separated. DEP_DATA
 // stores them comma packed with no spaces, which is unreadable in a narrow
@@ -10722,230 +9571,12 @@ function fillMsDepLists(snipId){
   wrap.style.display=snipId?'':'none';
   wrap.open=false;
 }
-// Raw close. Neither of the two ways OUT of the card calls this directly:
-// discardMsDialog() throws the edits away and saveMsDialog(true) commits them
-// first. It exists so both have one place that clears the card's state.
 function closeMsDialog(){
-  closeMsTypeMenu();
   document.getElementById('ms-dialog').hidden=true;
-  document.getElementById('ms-save-actions').hidden=true;
   msDialogFor=null;
   msDialogMs=null;
   msDialogHd=null;
-  msFormTypeVal=null;
-  msFormMarkerVal=null;
-  msFormHealth=-1;
-  msDraftClean=null;
 }
-// ===== The card is a form =====
-//
-// Every field used to write straight to its annotation store: the comment on
-// each keystroke, progress on blur, health on click. That gave the card no
-// state of its own, so there was nothing to discard and nothing to save, and
-// the one control that did say Save (the short title's) saved without hiding
-// itself, which is the defect that was reported.
-//
-// Now the form holds the pending values and the stores are written once, on
-// commit. msDraftClean is what the card was opened showing; dirty is simply
-// "what it shows now differs from that".
-let msDraftClean=null;
-function msReadForm(){
-  const g=function(id){ const e=document.getElementById(id); return e?String(e.value):''; };
-  return {
-    title:g('ms-title').trim(),
-    shortTitle:g('ms-shorttitle-input').trim(),
-    start:g('ms-start-date').trim(),
-    date:g('ms-date').trim(),
-    weight:g('ms-weight').trim(),
-    floatD:g('ms-float-val').trim(),
-    type:msFormType(),
-    marker:msFormMarker(),
-    progress:g('ms-progress-input').trim(),
-    comment:g('ms-comment-text'),
-    health:msFormHealth
-  };
-}
-// The pending health, held on the form like everything else rather than
-// written to MS_HEALTH_OVERRIDE on click. It used to commit immediately, which
-// made it the one field a discard could not throw away without special code to
-// put it back, and the one field that reached the board before Save. -1 means
-// no override, which is a different thing from 0 (explicitly N/A).
-let msFormHealth=-1;
-// The status a given pending health WOULD resolve to. Computed by effectiveState
-// itself against a momentarily-set store rather than by a second copy of its
-// mapping here: two copies of that mapping is how the card comes to show a
-// different status from the marker it was opened from.
-function previewEffState(m,key,pending){
-  const had=(key in MS_HEALTH_OVERRIDE), was=MS_HEALTH_OVERRIDE[key];
-  if(pending===-1) delete MS_HEALTH_OVERRIDE[key];
-  else MS_HEALTH_OVERRIDE[key]=pending;
-  const s=effectiveState(m);
-  if(had) MS_HEALTH_OVERRIDE[key]=was; else delete MS_HEALTH_OVERRIDE[key];
-  return s;
-}
-function msDirty(){
-  if(!msDraftClean) return false;
-  const now=msReadForm();
-  return Object.keys(now).some(function(k){ return now[k]!==msDraftClean[k]; });
-}
-// One writer for every "this differs from the source data" mark on the card.
-// Reads the STORES, not the form, because the question it answers is about
-// what has been saved: .ms-dirty-field already says "typed, not committed".
-// The tooltip carries the schedule's own value, since "this is different" is
-// only half the answer and "different from what" is the other half.
-//
-// A milestone that has been edited keeps its base values on _msBase, which is
-// where the originals come from; for the stores that predate the field layer
-// the original is on the milestone itself.
-function syncMsEditedMarks(){
-  const m=msDialogMs, key=msDialogFor;
-  if(!m||!key) return;
-  const base=m._msBase||{};
-  const own=function(f){ return (f in base)?base[f]:m[f]; };
-  const fieldOv=MS_FIELD_OVERRIDE[key]||{};
-  const fmt=function(v){ return (v===null||v===undefined||v==='')?'(none)':String(v); };
-  const marks={
-    actName:   ('actName' in fieldOv) ? fmt(own('actName')) : null,
-    start:     ('start'   in fieldOv) ? fmt(own('start')?fmtTipDate(own('start')):'') : null,
-    date:      ('date'    in fieldOv) ? fmt(own('date')?fmtTipDate(own('date')):'') : null,
-    weight:    ('weight'  in fieldOv) ? fmt(own('weight')) : null,
-    floatD:    ('floatD'  in fieldOv) ? fmt(own('floatD')) : null,
-    marker:    (('marker' in fieldOv)||('type' in fieldOv))
-                 ? ('mark '+fmt(own('marker'))+', type '+fmt(own('type'))) : null,
-    progress:  (key in MS_PROGRESS_OVERRIDE) ? fmt(m.progress)+'%' : null,
-    shortTitle:(key in MS_SHORT_TITLES) ? 'the auto-shortened '+fmt(msShortTitleDefault) : null,
-    health:    (key in MS_HEALTH_OVERRIDE) ? fmt(STATE_LABELS[m.state]||m.state) : null
-  };
-  Object.keys(marks).forEach(function(f){
-    const el=document.getElementById('ms-mark-'+f);
-    if(!el) return;
-    const v=marks[f];
-    el.hidden=(v===null);
-    if(v!==null) el.title='Changed from the schedule. It had: '+v;
-  });
-}
-// One writer for everything that depends on the form being dirty: the save
-// pair in the head, and the per-field tint that says which fields carry the
-// unsaved edit. Called from every input handler rather than each handler
-// toggling its own piece.
-function syncMsDirtyUI(){
-  const acts=document.getElementById('ms-save-actions');
-  const dirty=msDirty();
-  if(acts) acts.hidden=!dirty;
-  if(!msDraftClean) return;
-  const now=msReadForm();
-  [['title','ms-title'],['shortTitle','ms-shorttitle-input'],['start','ms-start-date'],
-   ['date','ms-date'],['weight','ms-weight'],['floatD','ms-float-val']].forEach(function(pair){
-    const el=document.getElementById(pair[1]);
-    if(el) el.classList.toggle('ms-dirty-field',now[pair[0]]!==msDraftClean[pair[0]]);
-  });
-  const pw=document.getElementById('ms-prog-edit');
-  if(pw) pw.classList.toggle('changed',now.progress!==msDraftClean.progress||
-                                       (msDialogFor in MS_PROGRESS_OVERRIDE));
-}
-// Every editable field routes here. The progress bar follows the typed figure
-// so the card stays coherent while it is being edited, but nothing is stored.
-function onMsFieldInput(){
-  const input=document.getElementById('ms-progress-input');
-  if(input){
-    const n=parseFloat(String(input.value).replace('%','').trim());
-    if(!isNaN(n)) document.getElementById('ms-progress-fill').style.width=
-      Math.min(100,Math.max(0,n))+'%';
-  }
-  syncMsDirtyUI();
-}
-// Commit. One write of each store, then ONE rebuild, rather than the rebuild
-// per keystroke and per click the old card did.
-function saveMsDialog(alsoClose){
-  if(!msDialogFor||!msDialogMs){ if(alsoClose) closeMsDialog(); return; }
-  const now=msReadForm(), m=msDialogMs, key=msDialogFor;
-  // Whether this save actually changes anything, decided BEFORE the stores are
-  // written. Saving a card nobody edited must not bump the unsaved-changes
-  // count: a "you have unsaved work" state that rises on a no-op is a state
-  // that stops meaning anything.
-  const changed=msDirty();
-
-  // Health. -1 is "no override", which is a different thing from 0.
-  if(msFormHealth===-1) delete MS_HEALTH_OVERRIDE[key];
-  else MS_HEALTH_OVERRIDE[key]=msFormHealth;
-
-  // Short title. Empty, or equal to the auto-shortened default the field was
-  // filled with, both mean "no custom short title": storing it whenever it was
-  // merely non-empty wrote one on every save of every card, for milestones
-  // nobody had retitled.
-  if(now.shortTitle&&now.shortTitle!==msShortTitleDefault) MS_SHORT_TITLES[key]=now.shortTitle;
-  else delete MS_SHORT_TITLES[key];
-
-  MS_COMMENTS[key]=now.comment;
-  document.getElementById('ms-comment-dot').className=
-    'ms-comment-dot'+(now.comment.trim()?'':' empty');
-
-  // Progress. Blank and unparseable both restore the schedule's own value: the
-  // one field whose whole job is to carry a number should not be able to store
-  // something that is not one.
-  const pr=(now.progress==='')?NaN:parseFloat(now.progress.replace('%',''));
-  if(isNaN(pr)) delete MS_PROGRESS_OVERRIDE[key];
-  else {
-    const v=Math.min(100,Math.max(0,Math.round(pr)));
-    if(m.progress!=null&&v===m.progress) delete MS_PROGRESS_OVERRIDE[key];
-    else MS_PROGRESS_OVERRIDE[key]=v;
-  }
-
-  // The schedule fields. Each is compared against the milestone's OWN value
-  // (its base, where an override is already applied), so typing a value back
-  // to what the schedule says removes the override rather than storing a
-  // duplicate of it. A date that cannot be read is left alone rather than
-  // written onto the board as a broken one.
-  const base=m._msBase||{};
-  const own=function(f){ return (f in base)?base[f]:m[f]; };
-  const ov=MS_FIELD_OVERRIDE[key]||{};
-  const clean=msDraftClean||now;
-  const put=function(f,formKey,val){
-    // Untouched on this card and nothing stored for it: leave it entirely
-    // alone. Without this every save wrote an override for every field.
-    if(now[formKey]===clean[formKey]&&!(f in ov)) return;
-    if(val===null||val===undefined||val===own(f)) delete ov[f];
-    else ov[f]=val;
-  };
-  put('actName','title',now.title||null);
-  put('type','type',now.type);
-  put('marker','marker',now.marker||null);
-  // A blank date field means "restore the schedule's own", which is a real
-  // instruction. Text that is not a date at all is neither that nor a new
-  // date, so the stored value is left exactly as it was rather than being
-  // silently cleared by a typo.
-  const sd=parseMsDate(now.start), fd=parseMsDate(now.date);
-  if(now.start===''||sd) put('start','start',(now.start==='')?null:sd);
-  if(now.date===''||fd) put('date','date',(now.date==='')?null:fd);
-  const wt=(now.weight==='')?null:parseFloat(now.weight);
-  put('weight','weight',(wt===null||isNaN(wt))?null:wt);
-  const fl=(now.floatD==='')?null:parseFloat(now.floatD);
-  put('floatD','floatD',(fl===null||isNaN(fl))?null:fl);
-  if(Object.keys(ov).length) MS_FIELD_OVERRIDE[key]=ov;
-  else delete MS_FIELD_OVERRIDE[key];
-
-  if(changed) noteMarkup();
-  if(alsoClose) closeMsDialog();
-  else {
-    // Repaint from the stores before the new baseline is taken, so a field
-    // whose override was just cleared shows the schedule's own value again
-    // rather than the empty box that cleared it.
-    renderMsProgress();
-    // Stays open, so the baseline has to move with it or the save pair would
-    // never go away. This is the reported defect, stated once for every field
-    // instead of once for the short title.
-    msDraftClean=msReadForm();
-    syncMsDirtyUI();
-    // After the stores are written, so a field that has just become different
-    // from the schedule is marked without waiting for the card to be reopened.
-    syncMsEditedMarks();
-  }
-  if(changed) scheduleRerender(true);
-}
-// Leaving by the close control throws the pending edits away. Nothing to undo:
-// every field, health included, is held on the form until Save, so closing
-// without saving simply drops what the form was holding.
-function discardMsDialog(){ closeMsDialog(); }
 // One writer for every part of the card that depends on progress: the field,
 // its edited indicator, the bar, and earned hours. Four places read m.progress
 // independently before this, which is the shape that lets a card show one
@@ -10963,46 +9594,87 @@ function renderMsProgress(){
   }
   document.getElementById('ms-progress-fill').style.width=Math.min(100,Math.max(0,eff||0))+'%';
   const total=(msDialogHd&&msDialogHd.total>0)?msDialogHd.total:0;
-  const wEl=document.getElementById('ms-weight');
-  const wVal=wEl?parseFloat(wEl.value):NaN;
-  const weight=isNaN(wVal)?(m.weight||0):wVal;
-  const msHrs=total*(weight/100);
+  const msHrs=total*(m.weight/100);
   const earned=msHrs*(eff||0)/100;
   document.getElementById('ms-hours').textContent=total>0?fmtHrs(msHrs)+'h':'—';
   const earnEl=document.getElementById('ms-earned');
   earnEl.textContent=total>0?fmtHrs(earned)+'h':'—';
   earnEl.className='ms-val'+((!earned)?' is-zero':'');
 }
+// The indicator tracks the field as it is typed. The STORE is written on commit
+// (blur, or Enter which blurs), because saving every keystroke would write 1,
+// then 10, then 100 on the way to typing 100, and each of those is a rebuild of
+// the whole board. The comment field autosaves per keystroke precisely because
+// it costs no rerender; this one does.
+function onMsProgressInput(){
+  const input=document.getElementById('ms-progress-input');
+  const wrap=document.getElementById('ms-prog-edit');
+  if(!input||!wrap||!msDialogMs) return;
+  const base=(msDialogMs.progress==null)?'':String(msDialogMs.progress);
+  wrap.classList.toggle('changed',input.value.trim()!==base);
+}
 function onMsProgressKey(e){
-  if(e.key==='Enter'){ e.preventDefault(); saveMsDialog(false); }
+  if(e.key==='Enter'){ e.preventDefault(); e.target.blur(); }
+  else if(e.key==='Escape'){ renderMsProgress(); e.target.blur(); } // back to the stored state, committing nothing
 }
-function onMsCommentInput(){
-  document.getElementById('ms-comment-dot').className=
-    'ms-comment-dot'+(document.getElementById('ms-comment-text').value.trim()?'':' empty');
-  syncMsDirtyUI();
+function saveMsProgress(){
+  if(!msDialogFor||!msDialogMs) return;
+  const input=document.getElementById('ms-progress-input');
+  const raw=String(input.value).replace('%','').trim();
+  const base=msDialogMs.progress;
+  const had=(msDialogFor in MS_PROGRESS_OVERRIDE);
+  const before=had?MS_PROGRESS_OVERRIDE[msDialogFor]:null;
+  const n=(raw==='')?NaN:parseFloat(raw);
+  if(isNaN(n)){
+    // Blank and unparseable both restore the schedule's own value rather than
+    // saving nothing-shaped-like-a-number into the one field whose whole job is
+    // to carry a number.
+    delete MS_PROGRESS_OVERRIDE[msDialogFor];
+  } else {
+    const v=Math.min(100,Math.max(0,Math.round(n)));
+    if(base!=null&&v===base) delete MS_PROGRESS_OVERRIDE[msDialogFor];
+    else MS_PROGRESS_OVERRIDE[msDialogFor]=v;
+  }
+  renderMsProgress();
+  const has=(msDialogFor in MS_PROGRESS_OVERRIDE);
+  if(has!==had||(has&&MS_PROGRESS_OVERRIDE[msDialogFor]!==before)){
+    noteMarkup();
+    // The row's rollup and every milestone tooltip read progress as well, so a
+    // committed override is a board change, not just a card change.
+    scheduleRerender(true);
+  }
 }
+function saveMsComment(){
+  if(!msDialogFor) return;
+  const text=document.getElementById('ms-comment-text').value;
+  MS_COMMENTS[msDialogFor]=text;
+  document.getElementById('ms-comment-dot').className='ms-comment-dot'+(text.trim()?'':' empty');
+}
+function onMsCommentInput(){ saveMsComment(); } // cheap (no rerender), so autosaving every keystroke is fine — no debounce needed
 function onMsHealthClick(dotEl){
   if(!msDialogFor) return;
   const val=parseInt(dotEl.getAttribute('data-val'),10);
-  const already=(msFormHealth===val);
+  const already=(msDialogFor in MS_HEALTH_OVERRIDE)&&MS_HEALTH_OVERRIDE[msDialogFor]===val;
   let nowSelected=null;
   if(already){
     // clicking the currently-selected dot again removes the override entirely —
     // a distinct action from switching to a different value, per spec.
-    msFormHealth=-1;
+    delete MS_HEALTH_OVERRIDE[msDialogFor];
   } else {
-    msFormHealth=val;
+    MS_HEALTH_OVERRIDE[msDialogFor]=val;
     nowSelected=dotEl;
-    // Marking a milestone done fills the Progress FIELD to 100, which is now a
-    // pending edit like anything else typed into it rather than a write to the
-    // store. Only where the schedule does not already say 100.
+    // Marking a milestone complete sets its progress to 100%. Only where the
+    // schedule does not already say 100: an override that matches the schedule
+    // changes nothing on screen but does add an entry to the count a reader is
+    // shown when they choose which annotations to restore.
     //
-    // One direction only. Clearing the dot does NOT drop the number back: by
-    // then the user may have typed over it, and silently discarding a figure
-    // they entered is worse than leaving one they can clear themselves.
-    if(val===2&&msDialogMs&&msDialogMs.progress!==100){
-      const pi=document.getElementById('ms-progress-input');
-      if(pi) pi.value='100';
+    // One direction only. Clearing the Complete dot does NOT drop the progress
+    // back: by then the user may have typed over it, and silently discarding a
+    // number they entered is worse than leaving one they can clear themselves.
+    if(val===2&&msDialogMs&&msDialogMs.progress!==100&&MS_PROGRESS_OVERRIDE[msDialogFor]!==100){
+      MS_PROGRESS_OVERRIDE[msDialogFor]=100;
+      renderMsProgress();
+      noteMarkup();
     }
   }
   document.querySelectorAll('#ms-health-dots .health-dot').forEach(function(dot){
@@ -11013,11 +9685,22 @@ function onMsHealthClick(dotEl){
   // including correctly reverting to the real computed state when cleared.
   const dlg=document.getElementById('ms-dialog');
   const m=msDialogMs||findMilestoneBySnip(msDialogFor);
-  const effState=m?previewEffState(m,msDialogFor,msFormHealth):'FUTURE';
+  const effState=m?effectiveState(m):'FUTURE';
   dlg.className='ms-dialog status-'+statusClassOf(effState);
   document.getElementById('ms-status').textContent=STATE_LABELS[effState]||effState;
-  renderMsIcon();
-  onMsFieldInput();
+  scheduleRerender(true);
+}
+function onMsShortTitleInput(){
+  const input=document.getElementById('ms-shorttitle-input');
+  const btn=document.getElementById('ms-shorttitle-save');
+  btn.style.display=(input.value.trim()!==(input.defaultValue||'').trim())?'':'none';
+}
+function saveMsShortTitle(){
+  if(!msDialogFor) return;
+  const text=document.getElementById('ms-shorttitle-input').value.trim();
+  if(text) MS_SHORT_TITLES[msDialogFor]=text;
+  else delete MS_SHORT_TITLES[msDialogFor]; // empty save reverts to the auto-shortened default
+  scheduleRerender(true);
 }
 function onMsDepToggle(){
   if(!msDialogFor) return;
@@ -11041,34 +9724,13 @@ function positionMsDialog(anchor,dlg){
   top=Math.max(pad,Math.min(top,window.innerHeight-dh-pad));
   dlg.style.left=left+'px'; dlg.style.top=top+'px';
 }
-// Clicking away from an edited card SAVES it. The reasoning the user gave is
-// that clicking off is not a decision to throw work away, it is just leaving;
-// the deliberate gestures (the close control, Escape) are the ones that
-// discard. So the two directions are: leave by accident, keep the work; leave
-// on purpose from the control marked with a cross, lose it.
 document.addEventListener('click',function(e){
   const dlg=document.getElementById('ms-dialog');
-  if(dlg.hidden) return;
-  if(dlg.contains(e.target)){
-    // A click inside the card but outside the type picker closes the picker,
-    // without touching the card itself.
-    const menu=msTypeMenuEl();
-    if(menu&&!menu.hidden&&!menu.contains(e.target)&&
-       !e.target.closest('#ms-icon-btn')) closeMsTypeMenu();
-    return;
+  if(!dlg.hidden && !dlg.contains(e.target) && !e.target.closest('.m-wrap')){
+    closeMsDialog();
   }
-  if(e.target.closest('.m-wrap')) return;
-  if(msDirty()) saveMsDialog(true);
-  else closeMsDialog();
 });
-// Escape mirrors the close control it sits beside in meaning: a deliberate
-// "get me out of here", so it discards rather than saving.
-document.addEventListener('keydown',function(e){
-  if(e.key!=='Escape') return;
-  const menu=msTypeMenuEl();
-  if(menu&&!menu.hidden){ closeMsTypeMenu(); return; }
-  discardMsDialog();
-});
+document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeMsDialog(); });
 
 // One writer for the theme glyph. It used to be written in two places as the
 // button's whole innerHTML; the row now carries a label as well, so writing the

@@ -1,39 +1,39 @@
 line,selector,property,raw_value,normalised_value,declaration,matches_existing_token,defined_in_themes,toggle_verdict,source
-401,#print-filter-note,background,#fff3cd,#fff3cd,#fff3cd,,,,style-block
-401,#print-filter-note,border-bottom,#e0b84a,#e0b84a,1px solid #e0b84a,,,,style-block
-401,#print-filter-note,color,#6b5000,#6b5000,#6b5000,,,,style-block
-402,.pfn-close,color,#6b5000,#6b5000,#6b5000,,,,style-block
-403,.pfn-close:hover,background,"rgba(107,80,0,.15)","rgba(107,80,0,.15)","rgba(107,80,0,.15)",,,,style-block
-417,#settings-drawer,box-shadow,"rgba(0,0,0,.25)","rgba(0,0,0,.25)","-2px 0 14px rgba(0,0,0,.25)",,,,style-block
-546,.sd-badge--cond,background,#c07500,#c07500,"var(--color-status-risk,#c07500)",--color-status-risk|--color-status-risk-fill,dark,"var() fallback, toggles correctly",style-block
-549,.sd-badge--done,background,#3f8f5f,#3f8f5f,"var(--color-health-good,#3f8f5f)",,,"var() fallback, toggles correctly",style-block
-620,.toggle-switch .tsw-slider:before,box-shadow,"rgba(0,0,0,.25)","rgba(0,0,0,.25)","0 1px 2px rgba(0,0,0,.25)",,,,style-block
-646,#filter-bar,box-shadow,"rgba(0,0,0,.18)","rgba(0,0,0,.18)","-2px 0 14px rgba(0,0,0,.18)",--color-shadow-soft,base,matches token in all themes,style-block
-665,.id-suggest-dropdown,box-shadow,"rgba(0,0,0,.15)","rgba(0,0,0,.15)","0 4px 10px rgba(0,0,0,.15)",--color-health-rim,base,matches token in all themes,style-block
-768,.rpt-hd,border-bottom,#e3e2de,#e3e2de,"1px solid var(--color-line-default,#e3e2de)",--color-border-panel|--color-line-default|--color-btn-inactive-border,light,"var() fallback, toggles correctly",style-block
-785,#icon-bar .title:focus,outline,#2f6fed,#2f6fed,"1.5px solid var(--color-status-track,#2f6fed)",--color-status-track,light,"var() fallback, toggles correctly",style-block
-833,tr.hdr-phase th,border-right,"rgba(255,255,255,.15)","rgba(255,255,255,.15)","0.5px solid rgba(255,255,255,.15)",,,,style-block
-834,tr.hdr-wk th,border-bottom,#99a,#9999aa,1.5px solid #99a,,,,style-block
-837,tr.hdr-wk th.past-wk,background,#e8e8e8,#e8e8e8,#e8e8e8,,,,style-block
-838,tr.hdr-wk th.past-wk:hover,background,#dcdcdc,#dcdcdc,#dcdcdc,,,,style-block
-924,.mnt-dot-empty,box-shadow,#334,#333344,inset 0 0 0 1px var(--color-text-faint),--color-text-small,dark,theme-blind (dark-only),style-block
-998,"td.c-alloc,td.c-prog",background,#f7f7fa,#f7f7fa,#f7f7fa,,,,style-block
-1173,.map-hd,color,#245,#224455,#245,,,,style-block
-1174,".map-hd .req,.map-cell .req",color,#b00020,#b00020,#b00020,,,,style-block
-1177,.map-cell select,border,#b8c8c0,#b8c8c0,1px solid #b8c8c0,,,,style-block
-1183,.import-pass.ok,color,#1a6b3a,#1a6b3a,#1a6b3a,--color-ok-text,light,theme-blind (light-only),style-block
-1184,.import-pass.err,color,#b00020,#b00020,#b00020,,,,style-block
-1185,#diag-panel,background,#fff8f0,#fff8f0,#fff8f0,,,,style-block
-1185,#diag-panel,border-bottom,#e0cdb8,#e0cdb8,1px solid #e0cdb8,,,,style-block
-1188,.diag-tbl th,background,#f0e2d2,#f0e2d2,#f0e2d2,,,,style-block
-1188,.diag-tbl th,border,#e0cdb8,#e0cdb8,1px solid #e0cdb8,,,,style-block
-1188,.diag-tbl th,color,#5a3a1a,#5a3a1a,#5a3a1a,,,,style-block
-1189,.diag-tbl td,border,#eee0d0,#eee0d0,1px solid #eee0d0,,,,style-block
-1189,.diag-tbl td,color,#443,#444433,#443,,,,style-block
-1190,.diag-tbl tr.dsev-err td,color,#8a0018,#8a0018,#8a0018,,,,style-block
-1191,.diag-tbl tr.dsev-warn td,background,#fff6e5,#fff6e5,#fff6e5,,,,style-block
-1192,.diag-none,color,#786,#778866,#786,,,,style-block
-1193,.toggle-btn.diag-warn,background,#e8a020,#e8a020,#e8a020,,,,style-block
-1193,.toggle-btn.diag-warn,border-color,#c88000,#c88000,#c88000,,,,style-block
-1194,.toggle-btn.diag-err,border-color,#900,#990000,#900,,,,style-block
-1227,.dep-comment-panel,box-shadow,"rgba(0,0,0,.3)","rgba(0,0,0,.3)","0 4px 16px rgba(0,0,0,.3)",,,,style-block
+460,#print-filter-note,background,#fff3cd,#fff3cd,#fff3cd,,,,style-block
+460,#print-filter-note,border-bottom,#e0b84a,#e0b84a,1px solid #e0b84a,,,,style-block
+460,#print-filter-note,color,#6b5000,#6b5000,#6b5000,,,,style-block
+461,.pfn-close,color,#6b5000,#6b5000,#6b5000,,,,style-block
+462,.pfn-close:hover,background,"rgba(107,80,0,.15)","rgba(107,80,0,.15)","rgba(107,80,0,.15)",,,,style-block
+478,#settings-drawer,box-shadow,"rgba(0,0,0,.25)","rgba(0,0,0,.25)","-2px 0 14px rgba(0,0,0,.25)",,,,style-block
+607,.sd-badge--cond,background,#c07500,#c07500,"var(--color-status-risk,#c07500)",--color-status-risk|--color-status-risk-fill,dark,"var() fallback, toggles correctly",style-block
+610,.sd-badge--done,background,#3f8f5f,#3f8f5f,"var(--color-health-good,#3f8f5f)",,,"var() fallback, toggles correctly",style-block
+698,.toggle-switch .tsw-slider:before,box-shadow,"rgba(0,0,0,.25)","rgba(0,0,0,.25)","0 1px 2px rgba(0,0,0,.25)",,,,style-block
+738,#filter-bar,box-shadow,"rgba(0,0,0,.18)","rgba(0,0,0,.18)","-2px 0 14px rgba(0,0,0,.18)",--color-shadow-soft,base,matches token in all themes,style-block
+799,.id-suggest-dropdown,box-shadow,"rgba(0,0,0,.15)","rgba(0,0,0,.15)","0 4px 10px rgba(0,0,0,.15)",--color-health-rim,base,matches token in all themes,style-block
+937,.rpt-hd,border-bottom,#e3e2de,#e3e2de,"1px solid var(--color-line-default,#e3e2de)",--color-border-panel|--color-line-default|--color-btn-inactive-border,light,"var() fallback, toggles correctly",style-block
+954,#icon-bar .title:focus,outline,#2f6fed,#2f6fed,"1.5px solid var(--color-status-track,#2f6fed)",--color-status-track,light,"var() fallback, toggles correctly",style-block
+1019,tr.hdr-phase th,border-right,"rgba(255,255,255,.15)","rgba(255,255,255,.15)","0.5px solid rgba(255,255,255,.15)",,,,style-block
+1020,tr.hdr-wk th,border-bottom,#99a,#9999aa,1.5px solid #99a,,,,style-block
+1023,tr.hdr-wk th.past-wk,background,#e8e8e8,#e8e8e8,#e8e8e8,,,,style-block
+1024,tr.hdr-wk th.past-wk:hover,background,#dcdcdc,#dcdcdc,#dcdcdc,,,,style-block
+1110,.mnt-dot-empty,box-shadow,#334,#333344,inset 0 0 0 1px var(--color-text-faint),--color-text-small,dark,theme-blind (dark-only),style-block
+1187,"td.c-alloc,td.c-prog",background,#f7f7fa,#f7f7fa,#f7f7fa,,,,style-block
+1364,.map-hd,color,#245,#224455,#245,,,,style-block
+1365,".map-hd .req,.map-cell .req",color,#b00020,#b00020,#b00020,,,,style-block
+1368,.map-cell select,border,#b8c8c0,#b8c8c0,1px solid #b8c8c0,,,,style-block
+1374,.import-pass.ok,color,#1a6b3a,#1a6b3a,#1a6b3a,--color-ok-text,light,theme-blind (light-only),style-block
+1375,.import-pass.err,color,#b00020,#b00020,#b00020,,,,style-block
+1376,#diag-panel,background,#fff8f0,#fff8f0,#fff8f0,,,,style-block
+1376,#diag-panel,border-bottom,#e0cdb8,#e0cdb8,1px solid #e0cdb8,,,,style-block
+1379,.diag-tbl th,background,#f0e2d2,#f0e2d2,#f0e2d2,,,,style-block
+1379,.diag-tbl th,border,#e0cdb8,#e0cdb8,1px solid #e0cdb8,,,,style-block
+1379,.diag-tbl th,color,#5a3a1a,#5a3a1a,#5a3a1a,,,,style-block
+1380,.diag-tbl td,border,#eee0d0,#eee0d0,1px solid #eee0d0,,,,style-block
+1380,.diag-tbl td,color,#443,#444433,#443,,,,style-block
+1381,.diag-tbl tr.dsev-err td,color,#8a0018,#8a0018,#8a0018,,,,style-block
+1382,.diag-tbl tr.dsev-warn td,background,#fff6e5,#fff6e5,#fff6e5,,,,style-block
+1383,.diag-none,color,#786,#778866,#786,,,,style-block
+1384,.toggle-btn.diag-warn,background,#e8a020,#e8a020,#e8a020,,,,style-block
+1384,.toggle-btn.diag-warn,border-color,#c88000,#c88000,#c88000,,,,style-block
+1385,.toggle-btn.diag-err,border-color,#900,#990000,#900,,,,style-block
+1418,.dep-comment-panel,box-shadow,"rgba(0,0,0,.3)","rgba(0,0,0,.3)","0 4px 16px rgba(0,0,0,.3)",,,,style-block

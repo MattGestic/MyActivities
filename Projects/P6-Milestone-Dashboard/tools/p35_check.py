@@ -133,7 +133,17 @@ PROBE = r"""
     input.value=txt;
     input.dispatchEvent(new Event('input',{bubbles:true}));
   }
-  function commit(){ document.getElementById('ms-progress-input').blur(); }
+  // Committing moved from blur to the card's own Save control at P43: the card
+  // is a form now, so leaving a field is no longer a decision to store what is
+  // in it (close DISCARDS, which blur-to-commit would have made impossible).
+  // Still driven as a user gesture, through the control the markup wires up,
+  // rather than by calling saveMsDialog() directly.
+  function commit(){
+    const acts=document.getElementById('ms-save-actions');
+    const btn=acts?acts.querySelector('.ms-act'):null;
+    if(!btn) throw new Error('no save control on the card to commit with');
+    btn.click();
+  }
   function openCardFor(id){
     const wrap=Array.from(document.querySelectorAll('.m-wrap:not(.m-ghost)'))
       .filter(function(w){ return (w.getAttribute('data-tip')||'').indexOf('['+id+']')>=0; })[0];
@@ -423,8 +433,20 @@ PROBE = r"""
     openCardFor(target.id); await settle();
     const completeDot=document.querySelector('#ms-health-dots .health-dot[data-val="2"]');
     completeDot.dispatchEvent(new MouseEvent('click',{bubbles:true}));
-    await settle(); await settle();
-    R.notes.complete={stored:MS_PROGRESS_OVERRIDE[msDialogFor],
+    await settle();
+    // The dot fills the Progress FIELD and marks the form dirty; it does not
+    // reach the board until the card is saved. That changed at P43, when
+    // health stopped being the one field that committed on click while
+    // everything else waited, which was also the one field a discard could
+    // not throw away. Asserted in both halves: pending first, then committed.
+    const pending={field:document.getElementById('ms-progress-input').value,
+                   rollup:rowProg(target.ref),
+                   stored:MS_PROGRESS_OVERRIDE[msDialogFor]};
+    ck('complete: the dot fills the field and waits for Save, storing nothing yet',
+       pending.field==='100'&&pending.stored===undefined,
+       JSON.stringify(pending));
+    commit(); await settle(); await settle();
+    R.notes.complete={pending:pending,stored:MS_PROGRESS_OVERRIDE[msDialogFor],
                       field:document.getElementById('ms-progress-input').value,
                       rollup:rowProg(target.ref)};
     ck('complete: marking the icon complete sets Progress to 100%',
@@ -531,9 +553,17 @@ def main():
     checks = []
     vers = len(re.findall(r"3\.[0-9]+\.[0-9]+-P", src))
     checks.append(("source: exactly one version literal", vers == 1, f"{vers} found"))
+    # Scoped to the .ms-dialog rule. The bare substring test failed at
+    # v3.1.0-P40 on an unrelated dialog added elsewhere in the stylesheet, which
+    # is a false positive: this assertion is about the milestone card's own cap,
+    # not about the string 340px appearing anywhere in a 10,000 line file.
+    ms_rule = ""
+    m = re.search(r"\.ms-dialog\{([^}]*)\}", src)
+    if m:
+        ms_rule = m.group(1)
     checks.append(("source: the card's width cap is 90% of the old 340px",
-                   "width:min(306px," in src and "width:min(340px," not in src,
-                   "306px cap not found, or 340px still present"))
+                   "width:min(306px," in ms_rule and "width:min(340px," not in ms_rule,
+                   f"the .ms-dialog rule reads: {ms_rule[:80]!r}"))
     checks.append(("source: the rollup reads effectiveProgress, not the record",
                    "m.weight*(effectiveProgress(m)||0)" in src
                    and "m.weight*(m.progress||0)" not in src,

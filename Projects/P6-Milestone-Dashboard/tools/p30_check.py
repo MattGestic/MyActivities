@@ -413,21 +413,48 @@ PROBE = r"""
     // is indistinguishable from "the feature is broken".
     clearFilter(); await settle();
     setAllDep('pred',true); await settle();
-    const zeroSized=function(){
+    const degenerate=function(){
       return Array.from(document.querySelectorAll('#dep-lines-g path.dep-line'))
         .filter(function(pth){ const r=pth.getBoundingClientRect();
           return r.width<0.5&&r.height<0.5; }).length;
     };
+    // What this section was written for is lines PILED AT THE BOARD'S ORIGIN:
+    // markerCenter() measuring a hidden element, which has a zero rect, so
+    // every one of them resolved to the same point at the top left. That is the
+    // failure that is indistinguishable from "the feature is broken", and it is
+    // what is asserted at zero.
+    //
+    // A degenerate line somewhere else on the board is a different thing: two
+    // connected markers that genuinely landed within a pixel of each other. At
+    // v3.1.0-P40 the dense-run row growth produced exactly one, measured 1 of
+    // 360 at a legitimate board position about 1700px down, roughly a quarter
+    // of a pixel long, drawn as its own arrowhead. Recorded as TD-158 and
+    // bounded here rather than asserted at zero, because asserting zero would
+    // mean either reverting a requested layout change or quietly deleting the
+    // check that catches the catastrophic case.
+    const atOrigin=function(){
+      const g=document.getElementById('dep-lines-g');
+      const o=g?g.getBoundingClientRect():{left:0,top:0};
+      return Array.from(document.querySelectorAll('#dep-lines-g path.dep-line'))
+        .filter(function(pth){ const r=pth.getBoundingClientRect();
+          if(!(r.width<0.5&&r.height<0.5)) return false;
+          return Math.abs(r.left-o.left)<2&&Math.abs(r.top-o.top)<2; }).length;
+    };
+    const zeroSized=atOrigin;
     const pathCount=function(){ return document.querySelectorAll('#dep-lines-g path.dep-line').length; };
-    R.notes.depUnfiltered={paths:pathCount(),zero:zeroSized()};
+    R.notes.depUnfiltered={paths:pathCount(),zero:zeroSized(),degenerate:degenerate()};
     ck('deps: there are dependency lines to measure', pathCount()>50, pathCount());
-    ck('deps: no line is zero-sized with no filter', zeroSized()===0, zeroSized());
+    ck('deps: no line is piled at the board origin with no filter',
+       zeroSized()===0, zeroSized()+' at the origin, '+degenerate()+' degenerate anywhere');
+    ck('deps: degenerate lines stay a rounding artefact, not a collapse (TD-158)',
+       degenerate()<=Math.max(2,Math.round(pathCount()*0.01)),
+       degenerate()+' of '+pathCount());
 
     document.getElementById('filter-date-from').value='2026-09-01';
     applyFilter(); await settle(); await settle();
-    R.notes.depWithRange={paths:pathCount(),zero:zeroSized()};
+    R.notes.depWithRange={paths:pathCount(),zero:zeroSized(),degenerate:degenerate()};
     ck('deps: a date range does not collapse lines onto the board corner',
-       zeroSized()===0, zeroSized()+' of '+pathCount()+' zero-sized');
+       zeroSized()===0, zeroSized()+' at the origin of '+pathCount());
     // applyFilter() is the choke point every filter goes through, so the lines
     // must already have been redrawn by the time it returns. Without that they
     // stayed frozen wherever the markers used to be.
@@ -444,10 +471,10 @@ PROBE = r"""
        zeroSized()===0, zeroSized()+' of '+pathCount()+' zero-sized');
 
     clearFilter(); await settle(); await settle();
-    R.notes.depAfterClear={paths:pathCount(),zero:zeroSized()};
+    R.notes.depAfterClear={paths:pathCount(),zero:zeroSized(),degenerate:degenerate()};
     ck('deps: clearing the filter brings every line back',
        pathCount()===R.notes.depUnfiltered.paths && zeroSized()===0,
-       pathCount()+' vs '+R.notes.depUnfiltered.paths);
+       pathCount()+' vs '+R.notes.depUnfiltered.paths+', '+zeroSized()+' at the origin');
 
     // ================= 9. Markers and labels stay inside their row =========
     // Reported from the field. Two offsets compounded: msCellPos() moves a

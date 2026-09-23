@@ -103,6 +103,94 @@ The log is a record of readings, not of changes, so a gap between two rows belon
 | 2026-09-18 | Audit script v3, after the v3.1.0-P35 milestone card rework | Hardcoded font-size declarations (px) | 112 |
 | 2026-09-18 | `tools/theme_check.py`, after the v3.1.0-P35 pass | Probes expected to toggle, frozen | 0 |
 | 2026-09-18 | `tools/theme_check.py`, after the v3.1.0-P35 pass | Probes below 3.0:1 | 0 |
+| 2026-09-19 | Audit script v3, after the v3.1.0-P36 More Actions consolidation | Hardcoded colour occurrences | 38 |
+| 2026-09-19 | Audit script v3, after the v3.1.0-P36 More Actions consolidation | Distinct hardcoded colour values | 34 |
+| 2026-09-19 | Audit script v3, after the v3.1.0-P36 More Actions consolidation | Colour occurrences matching an existing token exactly | 7 |
+| 2026-09-19 | Audit script v3, after the v3.1.0-P36 More Actions consolidation | `--space-*` token references in file | 71 |
+| 2026-09-19 | Audit script v3, after the v3.1.0-P36 More Actions consolidation | Hardcoded padding/margin/gap declarations (px) | 204 |
+| 2026-09-19 | Audit script v3, after the v3.1.0-P36 More Actions consolidation | `var(--text-*)` font-size references in file | 30 |
+| 2026-09-19 | Audit script v3, after the v3.1.0-P36 More Actions consolidation | Hardcoded font-size declarations (px) | 115 |
+| 2026-09-19 | `tools/theme_check.py`, after the v3.1.0-P36 pass | Probes expected to toggle, frozen | 0 |
+| 2026-09-19 | `tools/theme_check.py`, after the v3.1.0-P36 pass | Probes below 3.0:1 | 0 |
+| 2026-09-21 | Audit script v3, after the v3.1.0-P37 defect pass | Hardcoded colour occurrences | 38 |
+| 2026-09-21 | Audit script v3, after the v3.1.0-P37 defect pass | Distinct hardcoded colour values | 34 |
+| 2026-09-21 | Audit script v3, after the v3.1.0-P37 defect pass | Colour occurrences matching an existing token exactly | 7 |
+| 2026-09-21 | Audit script v3, after the v3.1.0-P37 defect pass | `--space-*` token references in file | 71 |
+| 2026-09-21 | Audit script v3, after the v3.1.0-P37 defect pass | Hardcoded padding/margin/gap declarations (px) | 203 |
+| 2026-09-21 | Audit script v3, after the v3.1.0-P37 defect pass | `var(--text-*)` font-size references in file | 30 |
+| 2026-09-21 | Audit script v3, after the v3.1.0-P37 defect pass | Hardcoded font-size declarations (px) | 115 |
+| 2026-09-21 | `tools/theme_check.py`, after the v3.1.0-P37 pass | Probes expected to toggle, frozen | 0 |
+| 2026-09-21 | `tools/theme_check.py`, after the v3.1.0-P37 pass | Probes below 3.0:1 | 0 |
+| 2026-09-22 | Audit script v3, after the v3.1.0-P38 pass | Hardcoded colour occurrences | 38 |
+| 2026-09-22 | Audit script v3, after the v3.1.0-P38 pass | Distinct hardcoded colour values | 34 |
+| 2026-09-22 | Audit script v3, after the v3.1.0-P38 pass | Colour occurrences matching an existing token exactly | 7 |
+| 2026-09-22 | Audit script v3, after the v3.1.0-P38 pass | `--space-*` token references in file | 71 |
+| 2026-09-22 | Audit script v3, after the v3.1.0-P38 pass | Hardcoded padding/margin/gap declarations (px) | 209 |
+| 2026-09-22 | Audit script v3, after the v3.1.0-P38 pass | `var(--text-*)` font-size references in file | 30 |
+| 2026-09-22 | Audit script v3, after the v3.1.0-P38 pass | Hardcoded font-size declarations (px) | 117 |
+| 2026-09-22 | `tools/theme_check.py`, after the v3.1.0-P38 pass | Probes expected to toggle, frozen | 0 |
+| 2026-09-22 | `tools/theme_check.py`, after the v3.1.0-P38 pass | Probes below 3.0:1 | 0 |
+| 2026-09-22 | Audit script v3, after the v3.1.0-P39 pass | Hardcoded colour occurrences | 38 |
+| 2026-09-22 | Audit script v3, after the v3.1.0-P39 pass | Distinct hardcoded colour values | 34 |
+| 2026-09-22 | Audit script v3, after the v3.1.0-P39 pass | Colour occurrences matching an existing token exactly | 7 |
+| 2026-09-22 | Audit script v3, after the v3.1.0-P39 pass | `--space-*` token references in file | 76 |
+| 2026-09-22 | Audit script v3, after the v3.1.0-P39 pass | Hardcoded padding/margin/gap declarations (px) | 213 |
+| 2026-09-22 | Audit script v3, after the v3.1.0-P39 pass | `var(--text-*)` font-size references in file | 30 |
+| 2026-09-22 | Audit script v3, after the v3.1.0-P39 pass | Hardcoded font-size declarations (px) | 117 |
+| 2026-09-22 | `tools/theme_check.py`, after the v3.1.0-P39 pass | Probes expected to toggle, frozen | 0 |
+| 2026-09-22 | `tools/theme_check.py`, after the v3.1.0-P39 pass | Probes below 3.0:1 | 0 |
+| 2026-09-22 | Audit script v3, after the v3.1.0-P40 pass | Hardcoded colour occurrences | 38 |
+| 2026-09-22 | Audit script v3, after the v3.1.0-P40 pass | Distinct hardcoded colour values | 34 |
+| 2026-09-22 | Audit script v3, after the v3.1.0-P40 pass | Colour occurrences matching an existing token exactly | 7 |
+| 2026-09-22 | Audit script v3, after the v3.1.0-P40 pass | `--space-*` token references in file | 79 |
+| 2026-09-22 | Audit script v3, after the v3.1.0-P40 pass | Hardcoded padding/margin/gap declarations (px) | 224 |
+| 2026-09-22 | Audit script v3, after the v3.1.0-P40 pass | `var(--text-*)` font-size references in file | 31 |
+| 2026-09-22 | Audit script v3, after the v3.1.0-P40 pass | Hardcoded font-size declarations (px) | 124 |
+| 2026-09-22 | `tools/theme_check.py`, after the v3.1.0-P40 pass | Probes expected to toggle, frozen | 0 |
+| 2026-09-22 | `tools/theme_check.py`, after the v3.1.0-P40 pass | Probes below 3.0:1 | 0 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P41 pass | Hardcoded colour occurrences | 38 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P41 pass | Distinct hardcoded colour values | 34 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P41 pass | Colour occurrences matching an existing token exactly | 7 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P41 pass | `--space-*` token references in file | 79 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P41 pass | Hardcoded padding/margin/gap declarations (px) | 224 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P41 pass | `var(--text-*)` font-size references in file | 31 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P41 pass | Hardcoded font-size declarations (px) | 124 |
+| 2026-09-23 | `tools/theme_check.py`, after the v3.1.0-P41 pass | Probes expected to toggle, frozen | 0 |
+| 2026-09-23 | `tools/theme_check.py`, after the v3.1.0-P41 pass | Probes below 3.0:1 | 0 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P42 pass | Hardcoded colour occurrences | 38 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P42 pass | Distinct hardcoded colour values | 34 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P42 pass | Colour occurrences matching an existing token exactly | 7 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P42 pass | `--space-*` token references in file | 79 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P42 pass | Hardcoded padding/margin/gap declarations (px) | 224 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P42 pass | `var(--text-*)` font-size references in file | 31 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P42 pass | Hardcoded font-size declarations (px) | 124 |
+| 2026-09-23 | `tools/theme_check.py`, after the v3.1.0-P42 pass | Probes expected to toggle, frozen | 0 |
+| 2026-09-23 | `tools/theme_check.py`, after the v3.1.0-P42 pass | Probes below 3.0:1 | 0 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P43 pass | Hardcoded colour occurrences | 38 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P43 pass | Distinct hardcoded colour values | 34 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P43 pass | Colour occurrences matching an existing token exactly | 7 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P43 pass | `--space-*` token references in file | 92 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P43 pass | Hardcoded padding/margin/gap declarations (px) | 227 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P43 pass | `var(--text-*)` font-size references in file | 31 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P43 pass | Hardcoded font-size declarations (px) | 123 |
+| 2026-09-23 | `tools/theme_check.py`, after the v3.1.0-P43 pass | Probes expected to toggle, frozen | 0 |
+| 2026-09-23 | `tools/theme_check.py`, after the v3.1.0-P43 pass | Probes below 3.0:1 | 0 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P44 pass | Hardcoded colour occurrences | 38 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P44 pass | Distinct hardcoded colour values | 34 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P44 pass | Colour occurrences matching an existing token exactly | 7 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P44 pass | `--space-*` token references in file | 93 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P44 pass | Hardcoded padding/margin/gap declarations (px) | 228 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P44 pass | `var(--text-*)` font-size references in file | 31 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P44 pass | Hardcoded font-size declarations (px) | 122 |
+| 2026-09-23 | `tools/theme_check.py`, after the v3.1.0-P44 pass | Probes expected to toggle, frozen | 0 |
+| 2026-09-23 | `tools/theme_check.py`, after the v3.1.0-P44 pass | Probes below 3.0:1 | 0 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P45 pass | Hardcoded colour occurrences | 38 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P45 pass | Distinct hardcoded colour values | 34 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P45 pass | Colour occurrences matching an existing token exactly | 7 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P45 pass | `--space-*` token references in file | 101 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P45 pass | Hardcoded padding/margin/gap declarations (px) | 229 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P45 pass | `var(--text-*)` font-size references in file | 31 |
+| 2026-09-23 | Audit script v3, after the v3.1.0-P45 pass | Hardcoded font-size declarations (px) | 125 |
 
 **Re-running the audit:** run `python3 tools/colour_audit.py` from the project root. It regenerates `Hardcoded_Colour_Audit.csv` and prints every metric above.
 
@@ -193,6 +281,10 @@ A defect found in v2 during this same run is recorded here rather than quietly f
 | App header / icon bar | Tokenized | 2026-09-09 |
 | Filter bars (top + sticky search) | Tokenized — sticky search muted text was frozen at the dark value and now follows the theme | 2026-09-09 |
 | Button states (primary/secondary/icon, incl. hover/pressed) | Tokenized | 2026-09-09 |
+| Icon bar and More Actions menu | Tokenized. Built at v3.1.0-P36 on existing tokens only; the audit's colour counts are unchanged across the change. Re-checked at v3.1.0-P38 when the bar gained print-preview sizing and the menu a second trigger; no colour touched | 2026-09-22 |
+| Top filter bar, including the critical-path set | Tokenized. The status chips at v3.1.0-P40 take `--color-status-crit/risk/track/done` and `--color-text-muted`, the same five the board paints with, so the filter reads in the board's vocabulary. No new values | 2026-09-22 |
+| Add-a-milestone dialog | Tokenized. Built at v3.1.0-P40 on the same dialog, input and scrim tokens `.ms-dialog` and the settings drawer already use. No new values; the audit's colour counts are unchanged across the change | 2026-09-22 |
+| Print preview banner and its controls | Tokenized. The three controls added at v3.1.0-P38 take `--color-chip-attention-bg` / `--color-chip-attention-ink`, the pair the strip already carries, inverted on hover, and `--color-crit` for the notification dot. No new values; the audit's colour counts are unchanged across the change | 2026-09-22 |
 | Milestone dialog | Tokenized. Reworked at v3.1.0-P35 (10% smaller, one schedule row, editable Progress) adding no hardcoded colour: every new declaration uses an existing token | 2026-09-18 |
 | Dependency lines | Tokenized | 2026-09-09 |
 | Dependency tooltip + comment panel | Tokenized — was frozen at dark values, near-white text over a background that toggled to near-white | 2026-09-09 |
@@ -204,6 +296,7 @@ A defect found in v2 during this same run is recorded here rather than quietly f
 | Milestone status text (`.s-done`/`.s-track`/`.s-future`) | Tokenized — all three were frozen at dark values | 2026-09-09 |
 | Milestone marker icon states (DONE/TRACK/RISK/CRIT/FUTURE) | Tokenized — one `--color-icon-*` default state per icon | 2026-09-10 |
 | Subtotal row | Tokenized — week-column bands now use `--color-col-past-bg` / `--color-col-filtered-alt-bg`; a malformed colour declaration was also repaired | 2026-09-09 |
+| Milestone card | Tokenized — the card's editable fields, type picker and save pair use the spacing scale; three accent-text rules moved off `--color-purple-dark`, which is ink for a light tint and measured 1.13:1 on a themed panel in dark, onto `--color-accent-ink` | 2026-09-23 |
 | Remarks field states | Tokenized — accent washes plus `--color-text-faint` placeholder | 2026-09-10 |
 
 Update the status cell **and** the date together whenever a row is re-checked, whether or not the status changed — an unchanged status with a fresh date is still useful information (confirms it wasn't silently missed).

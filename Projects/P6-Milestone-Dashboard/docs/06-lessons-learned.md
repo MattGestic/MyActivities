@@ -264,3 +264,272 @@ Two other probe defects in the same run, both of the standing families:
 The Start / Finish / Progress row was asserted on the first suitable milestone the board offered. That milestone carries no separate start date, so its Start field is `display:none` and the "all three sit on one row" and "all three are the same text size" checks were comparing two boxes, passing, and saying three.
 
 **Second time a milestone-card assertion has compared against a field that was not being rendered** (TEST-29, where the card was opened on a baseline seed and the parent heading and float column were both `display:none`, so two position assertions ran against zero rects). The card hides fields that do not apply, so *any* assertion about its layout has to state which fields were actually showing, and a claim about a field only appears when a milestone that renders it has been opened on purpose.
+
+## The API that answered one hiding mechanism and not the next (v3.1.0-P36)
+
+TEST-37 established that `getBoundingClientRect()` lies about content inside a closed `<details>` and that `checkVisibility()` tells the truth there. One partial later, the filter-row toggle moved into a menu and the TD-72 guard had to be rewritten to follow the path to a control rather than test for a visible button. A negative control was added to the rewrite, putting the toggle back inside the collapsed filter bar and requiring the assertion to go false.
+
+**The first rewrite passed the negative control.** Measured against a control trapped inside a `max-height:0; overflow:hidden` bar:
+
+| | trapped in the collapsed bar |
+|---|---|
+| `offsetParent !== null` | true |
+| height | 24px |
+| `getClientRects().length` | 1 |
+| `checkVisibility()` | **true** |
+| `elementFromPoint` at its centre | did not discriminate |
+| box intersected with clipping ancestors | **0px** |
+
+A clip does not zero its children's boxes. Every obvious API reports the trapped control as present and laid out, which is exactly what it reports for a control sitting in an open menu.
+
+Three things worth keeping:
+
+- **`checkVisibility()` is container-specific.** It is correct for `display:none` and for a closed `<details>`, and wrong for an `overflow:hidden` clip. "Is this hidden" has no single API answer; the answer depends on the mechanism doing the hiding. Before using a visibility API in a new context, show it distinguishing the two states in *that* context.
+- **The general measurement is geometric.** Intersect the element's box with the box of every clipping ancestor and with the viewport. That is what the user's eye does, and it is mechanism-independent.
+- **A rewritten guard needs a negative control, always.** The rewrite was reasoned about carefully and was still wrong. What caught it was six lines that reintroduced the original defect and demanded a failure. **Any assertion rewritten to accommodate a change has stopped being the assertion that was passing before, and is unproven until it has been shown to fail on the thing it guards.** This is the seventh measurement artefact in this project and the first found by deliberately breaking the code rather than by a surprising result.
+
+## An assumption about a layout change, refuted at one viewport out of three (v3.1.0-P36)
+
+The More Actions consolidation was expected to unclip the version label, and the check was written asserting exactly that. It holds at 768 and 1440 and fails at 390, where the bar also carries the editable report title and 216px of label plus that title plus the trigger does not fit.
+
+The fix was not to widen the change until the assertion passed. It was to assert what actually holds: the full width where the bar has room, and where it does not, the residual clip stated with its figures and the gain required to be real (35.2px to 167px). The condition is read from the **measurement** — does the label reach the width it needs — rather than from a viewport width typed into the check, because a hardcoded breakpoint is a constant standing in for a measured value, which is the defect family with the most occurrences in this file.
+
+The general form: **when a change delivers at some sizes and not others, the check says where, in numbers.** An assertion quietly scoped to the widths where it passes is the same defect as the hardcoded constant, one level up.
+
+## A measurement that was right once and wrong for the next positioning mode (v3.1.0-P37)
+
+P36 established that a control trapped in a `max-height:0; overflow:hidden` bar reports `offsetParent` non-null, height 24px, one client rect and `checkVisibility()` true, and that intersecting the element's box with every clipping ancestor is what discriminates it. That measurement was written, proven with a negative control, and correct.
+
+One partial later it reported a working fix as broken. Two popups were moved to `position:fixed` to escape exactly that kind of clip, and the ancestor walk said the fixed panel was 0px visible **exactly as it had said of the absolute one** — because a fixed element is not clipped by ancestor overflow at all, so walking the DOM chain intersecting overflow boxes answers a question that no longer applies.
+
+`elementFromPoint` at a single centre point was no better: it returned false for a panel that was genuinely on top, because one point can land on a child, a gap, or a shadow.
+
+What answers it is a hit-test **profile**: ask the document what paints at several points down the popup, and count how many of its children are individually reachable. That is mechanism-independent, and it is the same question the user is asking ("can I click this?").
+
+Two things worth keeping:
+
+- **A measurement is only valid for the mechanism it was derived against.** The clipping walk is correct for statically positioned content in a scroll container and meaningless for fixed content. `checkVisibility()` is correct for `display:none` and for a closed `<details>` and wrong for an `overflow:hidden` clip. There is no general "is this hidden" primitive, and each new positioning mode needs the technique re-proved, not reused.
+- **Third consecutive partial where the technique, not the code, was the thing that was wrong** (TD-133, TD-136, TD-140). The pattern is now strong enough to state as a rule: **when a check fails on a change you have reason to believe is correct, suspect the measurement first and prove it can still tell the two states apart.** In all three cases that took under ten minutes and in all three the code was fine.
+
+## Escaping a clip is half the job; the other half is the stacking context (v3.1.0-P37)
+
+Making the More Actions panel `position:fixed` removed the clip and the panel still could not be clicked: `#rpt-hd` and `#top-filter-bar` painted over it, and 0 of 7 rows were hit-testable at 390 wide.
+
+`#icon-bar` is `position:relative` with a `z-index`, which makes it a **stacking context**. Every descendant is stacked *within* it, so the panel's `z-index: 2147483000` competes with nothing outside the bar: what decides the outcome is the bar's own `z-index: 30` against later siblings at the same level, which also sat at 30 and won on document order.
+
+The generalisation, and it is easy to get wrong because the symptom looks like a z-index that is not big enough: **a huge z-index on a descendant is inert if an ancestor established a stacking context.** The number that matters is the ancestor's. Raising the popup is the instinct and it cannot work; raising the context is the fix.
+
+Two things to check together whenever a popup is not visible, because fixing either alone leaves it broken:
+
+1. Is anything clipping it (an ancestor's `overflow`, and for a fixed element, an ancestor with `transform`/`filter`/`contain` that makes it a containing block)?
+2. Is anything painting over it (which ancestor establishes its stacking context, and what does *that* compete with)?
+
+## A control whose label promised one thing and whose code did another (v3.1.0-P37)
+
+The zero-dependency filter's tooltip read *"Show only milestones with zero predecessors/dependencies"*. It gated dependency-**line** drawing, and lines only exist once dependencies are switched on, so from the default state it did nothing at all: 105 rows before, 105 rows after, 0 lines drawn.
+
+Nothing was broken in the sense of throwing or rendering wrongly. The code did exactly what it said in its own comment. The defect lived in the gap between the comment and the tooltip, and only a user reading the tooltip could find it.
+
+**A control's label is part of its contract, and it is the part nothing tests.** Worth asking of any filter or toggle: what does the label promise, in what state will a user first try it, and does it do that *there* rather than only in the state the author had set up. This one worked perfectly in the state its author was in and was inert in the state it ships in.
+
+## A probe that could not fire the event the defect lived in (v3.1.0-P38)
+
+The report was that setting one end of the date range did nothing. The first measurement refuted it: an end date alone narrowed the board to 20 of 39 week columns, a start date alone to 24 of 39, identical at 390 and 1440. `dateRangeToCols()` had always left the other end open.
+
+The report was right and the measurement was answering a different question. The probe dispatched a `change` event. `change` on `<input type="date">` does not fire until the field is committed and left, so a date set with the picker or the spinner sat there doing nothing until focus moved elsewhere. The logic was never the defect; **the event was.**
+
+Two things to carry:
+
+- **A synthetic event is a claim about how the control is used.** Dispatching `change` asserts "the user finished and left the field". Every earlier probe in this project fired `change` on these inputs and every one of them passed, because none of them could express the case the user was in. The fix's assertion dispatches `input` **only**, and would fail if `oninput` were removed.
+- **When a measurement refutes a user's report, the next question is what the measurement did differently from the user**, not whether the user was wrong. Both of the last two reports refuted at first measurement (TD-138, TD-143) turned out to be real, in a state or an interaction the probe had not reproduced.
+
+## The fourth occurrence of the same two-paths family, surfaced by a one-word default change (v3.1.0-P38)
+
+Changing `let mHrsVisible=true` to `false` should have been the whole change. It rendered **196 visible hours labels at first paint**, with the checkbox correctly reporting false.
+
+`rerender()` hid all three things a fresh render creates visible (type-code label, milestone hours, remarks); init's first-paint path hid only the label. So the declared default took effect the first time anything triggered a rebuild and not before. TD-59, TD-71 and TD-138 are the same shape: a line added to one build path and not the other.
+
+The fix was not a fourth line at the second call site. The three lines were folded into `applyMarkerLabelState()` inside `reapplyDisplaySettings()`, the function both paths already call, and deleted from both.
+
+**A default is a claim about first paint, so it has to be measured at first paint.** Reading the variable proves nothing: the variable was correct in every one of these four cases. And when the same family reaches its third occurrence, stop fixing the instance: move the thing being forgotten somewhere it cannot be, and let the call sites shrink.
+
+The companion rule, now recorded in the architecture: **anything that must be reapplied after a rebuild goes inside that one function, never beside a call to it.** Written both directions too (`display = on ? '' : 'none'`), so it states the state rather than depending on what a fresh render leaves behind.
+
+## A fix that moved a control off screen, and the measurement that caught it in the same run (v3.1.0-P38)
+
+Aligning the print preview's heading bars to the A3 sheet was correct and made three brand-new controls unreachable: the hit-test profile counted **0 of 3 on screen at 390** and 2 of 3 at 1024. Nothing had broken. A sheet is 1122.5px, the viewport was 390, the page scrolls sideways, and the right-hand end of a sheet-width strip is simply not on screen.
+
+The controls moved to the sheet's left edge, which is on screen at every width, and read 3 of 3 everywhere.
+
+**Widening an element to match a wider thing moves everything at its far end out of reach.** This is a general consequence of aligning chrome to a page rather than to a viewport, and it applies to any control that was safe at the right edge of a viewport-width bar.
+
+The related habit worth keeping: the assertion about the header bar's own trigger, which now scrolls with the sheet, is **conditional on measured room** rather than on a typed viewport width. Where the trigger is on screen the panel must anchor to it; where it is not, the panel must be clamped into the viewport. Both branches still require every row individually reachable. A hardcoded width in that assertion would have been a fifth instance of the constant-standing-in-for-a-measurement family.
+
+## A property the browser enforces that no test can see (v3.1.0-P39)
+
+Three size sliders were disabled while the text they scale is switched off. The check set `.value` and dispatched `input`, watched the CSS custom property move, and reported working code as broken.
+
+The experiment could not answer the question in either direction. `dispatchEvent` delivers to an `oninput` listener whether or not the input is disabled, and an untrusted pointer event never drives a range thumb, so an **enabled** slider would have failed the same test. `disabled` is real, the browser enforces it, and nothing writable from a probe can observe it.
+
+The fix was not a cleverer event. It was a **second barrier that is observable**: `pointer-events:none` on the disabled input, measured by asking the document what is at the slider's own centre. Off, the point belongs to the row; on, it belongs to the slider. The negative control runs on the same point.
+
+Two things to carry:
+
+- **When a property cannot be measured, add a mechanism that can, rather than asserting the property and hoping.** `disabled` plus `pointer-events` is also better behaviour, not just a more testable one.
+- **Fourth consecutive occasion where the measurement technique, not the code, was the thing that was wrong** (TD-133, TD-136, TD-140, TD-146). The rule stated at TD-140 held again: when a check fails on a change you have reason to believe is correct, suspect the measurement first and prove it can still tell the two states apart. Here the proof took one line, the enabled case, and it failed too.
+
+## A report against a build that no longer exists (v3.1.0-P39)
+
+"The predecessors and dependencies are not displaying on the page" measured, on the current build, as 675 lines in the DOM and 132 on screen the moment both kinds were switched on, unchanged through a date range, a rerender and a clear, and 0 again when switched off. Nothing was broken.
+
+The screenshot attached to the report was the answer: a **pre-P36 build**, identifiable from the separate header icon buttons, a "Title contains" filter that no longer exists, and a `Title col:` reading the panel no longer produces. In it, the Dependencies row's **All off** button is the active one.
+
+Two things worth keeping:
+
+- **Read the screenshot for which build it is before reading it for the defect.** Three of the eight items in that batch turned on this: one asked to remove a field that had already been removed, one reported a control that works, and the third named labels the current build no longer uses. None of that is the reporter's fault; a user reports against what they have open.
+- **A refuted report gets an assertion, not a shrug.** The measured behaviour is now part of the standing check, so if it ever does break, the failure names itself instead of landing in a thread that already concluded "that was already broken".
+
+## A control that reads as an action among controls that read as state (v3.1.0-P39)
+
+The Remarks row was one button labelled with what it would do next: it read "Hide" while the field was showing. Every other segmented control in the same panel labels the state it selects. Two idioms side by side, one of them inverted, and the only way to know which was which was to try it.
+
+It is now a `Show` / `Hide` pair where the active half is the current state, driven by `setRemarksVisible(on)` which takes the value rather than flipping, so clicking the half that is already active is a no-op instead of turning the field off.
+
+**Within one panel, pick one idiom and keep it.** A relabelling button is defensible on its own; beside four segmented state controls it is a trap. The check asserts the no-op case explicitly, because a flip-on-click implementation passes every other assertion in the set.
+
+## The reported example that contradicts itself once you look at the whole board (v3.1.0-P40)
+
+A request named four rows: "18 is OK, 37 would be increased, 46 would be increased, 51 is OK." The rule built from that reading, grow a row whose densest proximity run reaches the band count, matched three of them and not row 51.
+
+The measurement explained it rather than the rule being bent to fit. Row 51 carries four milestones at columns 13, 14, 15 and 17: one run of four, identically dense to rows 37 and 46. It read as fine in the screenshot because that board had a date range opening at column 15, so two of its four markers were off the visible board.
+
+**No rule reading the data could have separated row 51 from 37 and 46.** The distinguishing property was not in the data at all; it was in the filter the reporter had applied.
+
+Three things to carry:
+
+- **When one example out of a set disagrees, measure that example before adjusting the rule.** The instinct is to add a condition until all four fit. Here any such condition would have been fitted to an artefact of someone's date range.
+- **A screenshot shows a filtered board, and the filter is part of what it shows.** The same trap as the previous batch, where a report arrived against a build three versions old. Read what state the picture is in before reading what it says.
+- **Assert the disagreement, do not hide it.** The check asserts row 51 grown, asserts that two of its four markers fall before the reported window, and names the alternative rule (grow on VISIBLE markers) that would match the report at the cost of row heights moving on every filter pass. The gap between the rule and the report is on the record and the choice is the user's.
+
+## A change that is correct and still costs something, measured in the same run (v3.1.0-P40)
+
+Growing the dense rows introduced exactly one degenerate dependency line: a quarter of a pixel long, at a legitimate board position, drawn as its own arrowhead. It was isolated by rendering the same board with the growth factor at 1.0, which gives zero.
+
+The check it failed exists for a real catastrophe: markerCenter() measuring hidden elements, which have a zero rect, so 308 of 331 lines once resolved to the same point at the board's top-left corner. One tiny line elsewhere is not that.
+
+The temptation was to delete the check or to loosen it until it passed. Neither is right: the first throws away the guard for the catastrophic case, the second leaves an assertion that no longer means anything. What the check now asserts is the failure it was written for, lines **at the board origin**, at zero, and it bounds the degenerate count separately with the current figure recorded.
+
+**When a correct change breaks an assertion, the question is what that assertion was protecting.** Re-aim it at that, keep its teeth for the case it was written for, and record the residue as its own item rather than absorbing it into a relaxed threshold.
+
+## A check that can only see the headers cannot see the defect (v3.1.0-P40)
+
+The exported CSV mixed the schedule's own Progress % and Status with a person's overrides, both under the same headers. Splitting them into a schedule block and an entered block is easy; proving it is not, because `exportCSV()` triggered a download and a probe cannot read a download.
+
+A header-only assertion would have passed on the exact file the change exists to fix: two blocks with the right names, both carrying the same effective value.
+
+`exportCSV()` was split into `buildCsvRows()` plus a thin writer, so the check sets an override and then requires the two blocks to **disagree**: base reads 100%, entered reads 55%.
+
+**If the observable thing is the content, make the content observable.** Splitting the builder from the writer took two minutes and turned a check that could only confirm the shape into one that confirms the substance. The same move paid off earlier in this file when `positionFixedPopup` was extracted, and for the same reason: a function that does one thing can be asked what it did.
+
+## The comment three lines above the bug was already describing it (v3.1.0-P41)
+
+Row growth became dependent on which columns are visible, so `applyFilter()` gained a check for whether the rendered heights still matched. Both of its exits got it, including the early return, which felt like the careful version.
+
+`clearFilter()` did not. It un-hides every row and column **itself** rather than routing through `applyFilter()`, so Remove all filters put the columns back and left rows that should have grown sitting at the short height.
+
+The code directly above the line that was missing reads:
+
+> *clearFilter() un-hides every row and column itself rather than routing through applyFilter(), so it is a SECOND entry point into "what is on the board just changed" and needs the same redraw.*
+
+That comment was written for TD-106, when the dependency lines hit the identical gap. Reading it did not stop the same mistake being made in the same function one change later.
+
+Three things:
+
+- **Fourth instance of this family** (TD-59, TD-71, TD-106, TD-159), and the first where the warning was already written at the site. A comment records a trap; it does not check for it. What actually caught this was `p33_check`, a probe written two partials earlier for a different purpose.
+- **Count the entry points at source.** The check now asserts that exactly three call sites carry the staleness check, so a fourth added without it fails immediately rather than three partials later. A prose warning cannot do that.
+- **A failure message that says "4 of 105 rows changed height" says a regression happened and nothing about where to look.** Naming the rows turned a twenty-minute hunt into a one-line read: the clone row plus three that went 34.3 to 51, which is the growth ratio, which is the answer. Assertions over sets should name the members that broke them.
+
+## The defect was one state too early, not in the colours (v3.1.0-P42)
+
+The report was that a milestone someone marks off and a milestone the upload records as complete both render black, and the obvious reading is a colour defect. It was not. `--color-icon-done` already resolved to ink and the card's dot was already green. `effectiveState()` mapped a person's override of 2 onto the schedule's own `DONE`, so the two were the same state before any CSS ran, and no amount of work on the tokens could have separated them.
+
+**Two things that look alike on screen cannot be made different by styling if they are the same value upstream.** Find where they stop being distinguishable before touching what paints them. Half an hour reading `effectiveState()` beat any number of passes over the colour tokens.
+
+## A probe that cannot fail is not a probe (v3.1.0-P42)
+
+Two probes were added to `theme_check.py` for the new class, and then tested by pointing one at a class that does not exist. It inherited the ink colour, which toggles with the theme, was reported under TOGGLING correctly, and the script exited 0. The tool's `constant` expectation is informational by design: only the `toggle` direction can fail.
+
+So the two new probes asserted nothing, and would have sat in the file looking like coverage. **Every guard needs its negative control run once, including a guard added to a tool that already passes.** The assertion went where the colours are read for what they are instead. TD-161 carries the fix to the tool, deliberately not made inside an unrelated partial, because changing the semantics would put eighteen existing constant probes in play at once.
+
+## The sample has to be on the board (v3.1.0-P42)
+
+The first draft of `p42_check` picked `SNIP-101` and reported three failures about working code. SNIP-101 is dated 01-May, outside the visible week window, so no marker is drawn for it and there was nothing to read a colour off. A second weak spot in the same file: a chip assertion compared `onlyDone: 0` against a base count and passed trivially, because 0 differs from 159.
+
+**Filter a sample to what is actually rendered, and make sure a count you are comparing cannot be zero.** Both failures pointed at the app; both were in the check.
+
+## A field that autosaves cannot be discarded (v3.1.0-P43)
+
+The request was for save controls and a close that discards. The blocker was not the controls, it was that the card had no draft: every field wrote to its store on keystroke, blur or click, so by the time anything could be discarded it was already stored. The one field that did have a Save button had it *in addition* to writing on click, which is why that button never went away.
+
+**Before adding a save control, check whether the thing it would save has already been saved.** A Save button over autosaving fields is decoration, and a Discard over them is a lie. The work was building the draft, not the buttons.
+
+The same shape appeared one level down: health was the only field still committing on click after the rest became pending, which made it the only field discard had to special-case and the only one that reached the board early. Moving it onto the form deleted that special case entirely.
+
+## A probe pinned to the line after the one it meant (v3.1.0-P43)
+
+`p40_check` asserted that the user-milestone merge is the first thing `renderRows()` does, by requiring the literal text `mergeUserMilestones();\n  // Fresh per rebuild`. Inserting a statement *after* the merge failed it, although the merge had not moved. `p35_check` failed 27 checks because it committed a progress edit by blurring the field, which is the path this version deliberately replaced.
+
+**Anchor an assertion to the claim, not to the neighbouring text.** The claim was "nothing runs before the merge", which is now asserted by taking the slice between the function opening and the call and requiring it to hold nothing but comments. A check that breaks whenever a nearby line changes trains you to relax it, and a relaxed check is the one that misses the real regression.
+
+## A constant probe is worthless for toggling and still useful for contrast (v3.1.0-P43)
+
+TD-161 established that `theme_check.py` cannot fail a `constant` probe that starts toggling. That made the two probes added at P42 assert nothing. It does not make constant probes pointless: the contrast pass runs over every probe that carries **text**, and it can fail.
+
+Giving the new type picker a probe with a label in it immediately measured **1.13:1** in the dark theme. `--color-purple-dark` gets darker in dark mode, because it is ink for a light tint, not for a themed panel. Two pre-existing rules beside it had the same fault and had never been probed, so it had been invisible.
+
+**A probe with no content measures half of what a probe can measure.** Give it text when the real element has text.
+
+## The convention was written down in two places and implemented in neither (v3.1.0-P44)
+
+`.ms-icon.outline` was in the CSS. The legend rendered outline swatches beside the words explaining what outline meant. And every entry in `STATES` said `render:'filled'`, so the single function that draws a marker drew everything solid. The only element the outline rule had ever styled was the legend swatch sitting next to the claim.
+
+Nobody caught it for the life of the file, including several passes that read the legend and the STATES table in the same session. The user caught it from memory of what the convention was supposed to be.
+
+**A check that asserts the table is not checking the thing the table exists to produce.** The new assertion reads computed `fill` and `stroke-width` off the real SVGs on the board, and requires both populations to be non-empty, because "every marker is outline" would satisfy the outline half on its own. Asserting `STATES` would have passed throughout the entire period the board was wrong.
+
+## A probe that throws reports a smaller total, not a failure (v3.1.0-P44)
+
+`p43_check` read `.className` on an element that had become a real `<svg>`, where `className` is an `SVGAnimatedString` with no `indexOf`. The probe threw, and the suite line read **10/12 checks passed** rather than 36/36. Two failures look survivable; twenty-four assertions silently not running is not.
+
+**Read the total before the ratio.** A suite line whose denominator has moved is reporting that checks disappeared, which is a different and worse thing than checks failing. Worth saying plainly because the ratio is the part the eye goes to.
+
+## The assertion aimed elsewhere is the one that found the bug (v3.1.0-P44)
+
+Two real P43 defects turned up in this pass, neither from a check written to look for them. The float column had blown out to nearly four times its width, found by a geometry assertion measuring its way towards the heading. And every save was writing a "custom" short title for milestones nobody had retitled, found by "only the field that was edited is marked" reporting `weight,shortTitle`.
+
+**Assert the whole shape, not just the part the change touched.** Both of these were invisible to any check scoped to the feature being built, and both had shipped.
+
+## The cheap fix was in the presenting problem all along (v3.1.0-P45)
+
+The report was "the print output is misaligned to the page". The cause turned out to be one sentence long: the layout was A3 and the paper was A4. Instead of fixing that, a hand-written PDF engine was built to take the print dialog out of the loop, and then a search was made for a library to replace it.
+
+The engine's writer half works and passes 38/38. Its DOM walker does not, and finishing it is more work than the fix that was needed. The print path, once it lays out for the sheet the person will actually select, produces **better** output than any of it: the browser renders it, so the text is vector and selectable and the fidelity is exact.
+
+**Fix the reported defect before building the thing that would make the defect impossible.** The second is sometimes right, but it has to be chosen against the first rather than instead of it.
+
+## A bar that grew stopped wrapping (v3.1.0-P45)
+
+The print banner is sheet width by design, so its edges line up with the page frame. At A3 landscape that is 1587px, wider than any phone. Its contents were `flex-wrap:wrap`, which wrapped against **1587px** and therefore never wrapped at all: the new option set simply ran off the right, **5 of 8 controls reachable at 390px**.
+
+`max-width` on an inner wrapper gives the content something real to wrap against, and `position:sticky;left:0` keeps it at the viewport's left edge while the page scrolls sideways.
+
+**A percentage or a wrap resolves against its container, not against the screen.** When the container is deliberately wider than the screen, every layout rule inside it is answering a different question from the one being asked.
+
+## Two checks were asserting a default, not a rule (v3.1.0-P45)
+
+`p27_check` pinned "A3 portrait" in three assertions and `p38_check` pinned a literal count of three controls. Both failed on changes that were correct, and both would have had to be edited every time a default moved or the bar gained a button.
+
+They now assert the rule: the injected page rule matches **whatever** is currently chosen, and **every** control in the bar is reachable.
+
+**A check that has to be edited to change a default is measuring the default, not the behaviour.** That is the shape that trains you to relax checks, and a relaxed check is the one that misses the real regression.
+
