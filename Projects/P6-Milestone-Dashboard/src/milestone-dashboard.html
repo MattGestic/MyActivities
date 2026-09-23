@@ -398,6 +398,14 @@ body.cv-open{margin-right:300px}
 .sticky-search-box input{display:block;width:100%;box-sizing:border-box;
   font-size:var(--text-sm);border:1px solid transparent;background:transparent;
   color:var(--color-text-on-panel);padding:var(--space-2) 22px var(--space-2) 21px}
+/* D-15a2: the shared #top-filter-bar input[type="text"] rule further down
+   (same id+attribute specificity, later in source) was overriding this
+   padding to a flat 4px 6px, which put the placeholder text directly under
+   the icon. Icon measured at right:19px from the box's left edge (left:6px
+   plus an 11px glyph); this needs id+class+attribute specificity to win
+   regardless of source order, and 24px clears the icon with the +4px margin
+   the D-15a2 probe checks for. */
+#top-filter-bar .sticky-search-box input[type="text"]{padding-left:24px;padding-right:22px}
 .sticky-search-box input::placeholder{color:var(--color-text-on-panel-muted);opacity:.85;font-style:italic}
 .sticky-search-clear{position:absolute;right:3px;top:50%;transform:translateY(-50%);
   border:none;background:transparent;color:var(--color-text-on-panel-muted);cursor:pointer;
@@ -815,7 +823,17 @@ input[type=range]{width:110px;cursor:pointer}
   #top-filter-bar #tfb-find .tfb-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media (min-width:1280px){
-  #top-filter-bar #tfb-find .tfb-fields{grid-template-columns:repeat(4,minmax(0,1fr))}
+  /* D-15a2: Find's fields are short (a search box, two selects, an ID list),
+     so the equal 4-column grid gave each one a quarter of a wide desktop row,
+     which is what spread "Activity ID(s):" ~100px from its own field and left
+     Banding stretched into empty space on the right. Critical path and When
+     keep the grid below (theirs are long, multi-control fields that want the
+     row); Find instead flows as compact label+control units, one consistent
+     gap between them, sized to content rather than to a column. */
+  #top-filter-bar #tfb-find .tfb-fields{display:flex;flex-wrap:wrap;
+    column-gap:var(--space-5);row-gap:var(--space-3)}
+  #top-filter-bar #tfb-find .tfb-group{flex:0 0 auto}
+  #top-filter-bar #tfb-find .tfb-group>label{flex:0 0 auto}
 }
 /* One field: label, then its control cluster. Stacked (label above control)
    under 768px so nothing has to shrink to fit a label beside it; a fixed
@@ -932,14 +950,85 @@ input[type=range]{width:110px;cursor:pointer}
 #top-filter-bar .filter-btn{font-size:var(--text-sm);padding:var(--space-2) var(--space-4);border-radius:4px;border:1px solid var(--color-btn-secondary-outline);background:var(--color-btn-secondary-bg);cursor:pointer;color:var(--color-btn-secondary-text);font-weight:500}
 #top-filter-bar .filter-btn:hover{background:var(--color-btn-secondary-hover-bg)}
 #top-filter-bar .filter-btn:active{background:var(--color-btn-secondary-pressed-bg)}
-#top-filter-bar .tfb-hide{border:1px solid var(--color-btn-secondary-outline);background:var(--color-btn-secondary-bg);
-  color:var(--color-btn-secondary-text);border-radius:4px;cursor:pointer;font-size:var(--text-sm);line-height:1;padding:var(--space-2) var(--space-3);flex:0 0 auto}
-#top-filter-bar .tfb-hide:hover{background:var(--color-btn-secondary-hover-bg)}
+/* D-15a2: this was styled off .filter-btn's tokens (a filled, bordered
+   secondary button), which is right for a labelled action but reads as a
+   heavy square for an icon-only close control. It now uses the same
+   borderless pattern and --color-btn-icon-* tokens as .icon-btn: no border,
+   no fill at rest, hover/pressed backgrounds only. The 28px/44px hit-target
+   minimum and flex centering it already carries come from the shared
+   .icon-btn,...,.tfb-hide rule above; font-size here just matches the
+   other panel close controls' glyph size (.fb-close is 15px). */
+#top-filter-bar .tfb-hide{border:none;background:none;
+  color:var(--color-text-muted);border-radius:4px;cursor:pointer;font-size:15px;line-height:1;padding:4px;flex:0 0 auto}
+#top-filter-bar .tfb-hide:hover{background:var(--color-btn-icon-hover-bg)}
+#top-filter-bar .tfb-hide:active{background:var(--color-btn-icon-pressed-bg)}
 #top-filter-bar .filter-info{font-size:var(--text-xs);color:var(--color-text-muted);font-style:italic}
 .tfb-range-sep{font-size:var(--text-sm);color:var(--color-text-muted)}
 /* Hidden rather than removed, so clearing the range does not reflow the row
    and shift every control after it sideways. */
 #btn-clear-date-range{visibility:hidden}
+
+/* D-15a2: touch sizing. Every text/number/date input and select in the bar
+   was ~22-23px tall regardless of pointer type, and iOS zooms the page on
+   focus for any text input under 16px. Scoped to the bar's own field
+   elements, not the shared .icon-btn list, because those already carry their
+   own 44px minimum (line ~1832) and stretching THEM to 44px inflates the flex
+   row they sit in (the D-15a "empty gap" trap, documented above at
+   .fb-input-clear-row). Buttons that are ordinary flex siblings (chips,
+   .filter-btn, the two group-level field-clears) get the same 44px minimum
+   plus flex centering, since nothing else in their row constrains them. */
+@media (pointer:coarse){
+  #top-filter-bar select,#top-filter-bar input[type="text"],
+  #top-filter-bar input[type="number"],#top-filter-bar input[type="date"]{
+    min-height:44px;font-size:16px}
+  #top-filter-bar .toggle-btn,#top-filter-bar .filter-btn,
+  #top-filter-bar .fb-field-clear,#top-filter-bar .sticky-search-clear{
+    min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+}
+
+/* D-15a2: phone width. Every field's input/select goes full width (the label
+   already sits above it, stacked, below 768px). The three multi-control
+   fields (Total float op/value/unit; Week select/mode; Date from/to) are the
+   exception: stacking each one below the last would leave three lines for
+   what reads as a single control, so their row shares the width evenly
+   instead, sized by their own content rather than forced to 100% each. Quick
+   buttons (float presets, the crit clear; week presets; Full span) keep their
+   natural width and wrap onto their own row beneath, left-aligned: giving
+   the three input/select controls flex-grow:1 at a small flex-basis is
+   enough on its own to push everything else past the end of that first line
+   without hand-picking a break point. */
+@media (max-width:767px){
+  #top-filter-bar input[type="text"],#top-filter-bar input[type="number"],
+  #top-filter-bar input[type="date"],#top-filter-bar select{width:100%}
+  /* The single-control fields' wrappers (the search box, the ID clear-row)
+     are flex children of .tfb-fld-ctrl with no width of their own, so they
+     were shrink-wrapping to the input's browser-default size instead of
+     stretching, and the 100% above resolved against THAT circular auto
+     width rather than the field's real width. Give the wrapper itself the
+     full width so the input's 100% has something real to be 100% of. */
+  #top-filter-bar .sticky-search-box,#top-filter-bar .fb-input-clear-row{width:100%}
+
+  #top-filter-bar .tfb-fld-grid{display:flex;flex-wrap:wrap;
+    column-gap:var(--space-3);row-gap:var(--space-2);align-items:center}
+  #top-filter-bar .tfb-fld-grid>select,
+  #top-filter-bar .tfb-fld-grid>input{flex:1 1 90px;min-width:0;width:auto}
+  #top-filter-bar #filter-float-val{width:auto}
+  /* When's two fields hold only TWO row-1 controls each (week select+mode;
+     date-from+date-to), so a 90px basis left enough spare room on the row
+     for the quick-button group to squeeze on beside them instead of
+     wrapping beneath it: measured 54%/70% of the field's width used
+     instead of filling it. A basis just over half the row leaves no room
+     for anything else to join, so the quick buttons wrap reliably. Critical
+     path's three-control row already fills the width at 90px basis and
+     keeps it. */
+  #top-filter-bar #tfb-when .tfb-fld-grid>select,
+  #top-filter-bar #tfb-when .tfb-fld-grid>input{flex:1 1 45%}
+  #top-filter-bar .tfb-fld-grid>.fb-inline-group{margin-left:0;padding-left:0;
+    border-left:none;flex:0 0 auto}
+  #top-filter-bar .tfb-fld-grid>.fb-field-clear,
+  #top-filter-bar .tfb-fld-grid>.filter-btn,
+  #top-filter-bar .tfb-fld-grid>.tfb-range-sep{flex:0 0 auto}
+}
 /* Step 3 of setup uses the same two controls on the settings drawer's panel
    background, which is a different surface from the filter bar. */
 #range-wrap-section input[type="date"]{font-size:10px;padding:2px 4px;border-radius:3px;
@@ -2336,7 +2425,7 @@ textarea:focus-visible,[tabindex]:focus-visible{
    </div>
    <div class="tfb-group">
     <label>Total float:</label>
-    <div class="tfb-fld-ctrl">
+    <div class="tfb-fld-ctrl tfb-fld-grid">
      <select id="filter-float-op" onchange="applyFilter()" title="Which side of the threshold to keep" aria-label="Float comparison">
       <option value="">no float filter</option>
       <option value="le">at or below</option>
@@ -2367,7 +2456,7 @@ textarea:focus-visible,[tabindex]:focus-visible{
   <div class="tfb-fields">
    <div class="tfb-group">
     <label>&#128269; Week:</label>
-    <div class="tfb-fld-ctrl">
+    <div class="tfb-fld-ctrl tfb-fld-grid">
      <select id="week-filter" onchange="applyFilter()">
       <option value="">All weeks (no filter)</option>
      </select>
@@ -2388,7 +2477,7 @@ textarea:focus-visible,[tabindex]:focus-visible{
    </div>
    <div class="tfb-group">
     <label>Date range:</label>
-    <div class="tfb-fld-ctrl">
+    <div class="tfb-fld-ctrl tfb-fld-grid">
      <!-- oninput AND onchange. change on a date field does not fire until the
           field is committed and left, so a date set with the picker or the
           spinner sat there doing nothing until the user clicked elsewhere. input
