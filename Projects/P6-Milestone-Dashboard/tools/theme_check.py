@@ -85,6 +85,10 @@ const PROBES = [
   // the colour still resolves, so the toggle assertion is unaffected.
   ['.s-track',                   'toggle',   () => mk('<span class="s-track"></span>')],
   ['.s-future',                  'toggle',   () => mk('<span class="s-future"></span>')],
+  // s-doneuser is deliberately constant: --color-status-done carries the same
+  // green in both themes, because "done in this update" has to read as the same
+  // signal either way. s-done is the one that toggles, since it paints from ink.
+  ['.s-doneuser (const)',        'constant', () => mk('<span class="s-doneuser"></span>')],
   ['hist now-col',               'toggle',   () => {
       const tr = mk('<tr class="hist-row"><td class="c-wk now-col"></td></tr>', tbody);
       return tr.querySelector('td');
@@ -395,6 +399,7 @@ const PROBES = [
 
   // Icon default states. Each paints from its own --color-icon-* token.
   ['icon s-done',                'toggle',   () => mk('<svg class="ms-icon filled s-done"></svg>')],
+  ['icon s-doneuser (const)',    'constant', () => mk('<svg class="ms-icon filled s-doneuser"></svg>')],
   ['icon s-track',               'toggle',   () => mk('<svg class="ms-icon filled s-track"></svg>')],
   ['icon s-risk',                'toggle',   () => mk('<svg class="ms-icon filled s-risk"></svg>')],
   ['icon s-crit',                'toggle',   () => mk('<svg class="ms-icon filled s-crit"></svg>')],

@@ -25,6 +25,7 @@
 | TEST-19 | 2026-09-10 | Publish round trip: does a published file open cold with the schedule, timeline and annotations already in place, and does it carry nothing it should not | Publish captured at the Blob boundary, written to disk, then loaded as a separate page | **Pass after two fixes** | TD-41, TD-42 (both closed same pass), TD-43, TD-44 |
 | TEST-20 | 2026-09-11 | Does a published file describe itself correctly: mount slots, baseline counts, and the header provenance line | Publish probe extended to capture all three mount slots and the header meta | **Pass after fix** — reproduced the user's report first | TD-47, TD-48 (both closed same pass) |
 | TEST-21 | 2026-09-11 | Six requested changes: published schedule as the update, Source cell after a drag, empty-row delete, gutter alignment, column master toggle scope, header chrome colour | Publish round trip plus a combined DOM probe driving each interaction | **5 pass, 1 delivered failing** — the requested `#f4f5f8` is 1.79:1 on the light header | TD-50 (open), TD-51 to TD-55 (closed) |
+| TEST-44 | 2026-09-23 | One status vocabulary across icons, chips, picker and card, and a milestone a person marks off made visually distinct from one the upload recorded as complete | `tools/p42_check.py`, new, at 1440x900. Colours read off the RENDERED markers rather than out of the CSS, on two milestones on the same board. A negative control clears the mark and requires the milestone back at its schedule state. Both kinds asserted to carry rollup credit. The theme dimension asserted in the same file, because `theme_check.py`'s constant probes cannot fail (TD-161) | **Pass 25/25.** Complete `rgb(23,25,28)` against Done `rgb(31,157,85)` in light; in dark the green is byte-identical and the ink moves to `rgb(232,238,248)`, still distinct. Chips `CRIT,RISK,TRACK,DONEUSER,DONE,FUTURE`, base 159 rows narrowing to 32 Complete and 1 Done | TD-160 closed, TD-161 raised |
 | TEST-43 | 2026-09-23 | Row growth changed to follow the markers ON SCREEN rather than the row's total, which is the alternative TD-153 left open and the user chose | `tools/p40_check.py` section 1 rewritten, at 390x844 and 1440x900, plus three source-level assertions. The reported case is driven through the real date-range control rather than by calling the recompute directly, and asserted in BOTH directions: the range makes row 51 plain, clearing it grows row 51 back. A one-way check passes on code that can grow a row and never shrink it again. The whole board is re-audited against the rule after the round trip | **Pass 91/91**, up from 77, after a third entry point was found missing | TD-153 closed, TD-159 raised and closed, TD-158 re-checked |
 | TEST-42 | 2026-09-22 | Six items in one batch: rows grown when their milestones crowd each other; a critical-path filter set with multi-select status and a float threshold; the drawer's action bar back to one row; the exported CSV split into a schedule block and an entered block; and adding a milestone from a header button or a double click on a cell | `tools/p40_check.py` at 390x844 and 1440x900, plus seven source-level assertions, and four earlier checks moved to their new contracts. The growth rule is REBUILT from the run cut inside the probe rather than read back off the class the code wrote. The CSV is asserted on CONTENT: an override is set and the two blocks must then disagree, because a header check alone passes on the very file this change exists to fix. The user milestones are asserted as annotation-layer state: the seed arrays byte-identical before and after, weight 0, the `[ID]` notes form intact, survival across a rebuild, and re-applying the same payload a no-op. `exportCSV()` was split from `buildCsvRows()` so the rows can be read without a download | **Pass 77/77**, after one of the four reported rows turned out to disagree with the rule for a reason the measurement could name, and one new degenerate dependency line was isolated to the row growth | TD-153 to TD-157, TD-158 raised |
 | TEST-41 | 2026-09-22 | Eight items in one batch: the Layout section reordered, renamed and extended to 144px; label size sliders moved under their controls and disabled when their text is off; Remarks became a Show / Hide pair; the baseline overlay toggle moved to the heading; the drawer's action bar moved above the tabs; the filter row split into two wrapping columns; and a report that dependency lines do not display | `tools/p39_check.py` at 390x844, 1024x800 and 1440x900, plus nine source-level assertions, and `tools/p29_check.py`'s sticky-footer contract rewritten. The disabled sliders are asserted by **hit test at the slider's own centre**, because `disabled` is not observable through synthetic events in either direction. The one-writer claim is driven through three DIFFERENT entry points (the handler, `setColButtonState`, and a rebuild) and requires control and board to agree after each. The filter row is asserted as "side by side XOR cleanly stacked", with which one decided by measured room. The dependency report is asserted, not fixed | **Pass 108/108**, after the dependency report was refuted by measurement, one assertion was written against a panel that was parked off screen, and one asserted a layer visibility that carries no user-visible difference | TD-146 to TD-150, TD-151 and TD-152 raised |
@@ -1412,6 +1413,39 @@ Marker containment by setting, labels on, ID + Title:
 **Published:** `releases/v3.1.0-P32_marker-placement-and-filter-row-fixes.html`
 
 ---
+
+## TEST-44 — Status colour convention, two kinds of finished (v3.1.0-P42)
+
+`tools/p42_check.py`, 1440x900, 25 checks.
+
+**What the request was.** One status list (Critical, At risk, On track, Done, Complete, N/A) shared by the status icons and the health indicators, with black kept for what the upload records as complete and green for what a person marks off in the current update, so the two read as different things.
+
+**Where the defect actually was.** Not in the colours. `--color-icon-done` already resolved to ink and the milestone card's `mh-2` dot was already green. `effectiveState()` mapped a person's override of 2 onto the schedule's own `DONE`, so the two collapsed onto one state before any CSS ran. A new `DONEUSER` state takes the override.
+
+**Measurements.**
+
+| | Result |
+|---|---|
+| Vocabulary, one source | `STATE_LABELS` and `HEALTH_LABELS` name every icon, chip, picker option and card label; no second spelling found |
+| Health numbering | 0 to 3 unchanged, 4 added as Done, so published files and exported models do not re-colour |
+| Complete, on the board | `ms-icon filled s-done`, `rgb(23, 25, 28)`, `effectiveState` = `DONE` |
+| Done, on the board | `ms-icon filled s-doneuser`, `rgb(31, 157, 85)`, `effectiveState` = `DONEUSER` |
+| The two together | different colours on the same rendered board |
+| NEGATIVE CONTROL | clearing the mark returns the milestone to `s-risk` / `RISK`, its own schedule state, not to green |
+| Rollup credit | `DONE` and `DONEUSER` both `credit:1`, so marking off cannot drop a milestone out of the completed total |
+| Dark theme, green | `rgb(31, 157, 85)`, identical to light: the same signal in either theme |
+| Dark theme, ink | `rgb(232, 238, 248)`, follows the theme, still distinct from the green |
+| Chips | `CRIT,RISK,TRACK,DONEUSER,DONE,FUTURE`, each labelled from the vocabulary |
+| Chip filtering | base 159 rows, 32 with Complete alone, 1 with Done alone after one milestone is marked |
+| Picker | `Critical \| At risk \| On track \| Done \| N/A / clear` |
+
+**Two probe defects found and fixed in the check itself, not in the app.** `iconOf('SNIP-101')` returned null and reported three failures about working code: SNIP-101 is dated 01-May, outside the visible week window, so no marker is drawn and there was nothing to measure a colour on. Both samples are now filtered to milestones actually rendered. Separately, the chip assertion passed vacuously while `onlyDone` was 0, since 0 differs from the base count trivially; it now sets an override first and requires `onlyDone > 0`.
+
+**Why the theme assertion lives here.** Two probes were added to `theme_check.py` for the new class, then measured as worthless: a `constant` probe that starts toggling is reported as toggling and the script still exits 0. Pointed at a class that does not exist, the probe inherited the ink colour and passed. TD-161 carries the fix; the assertion that green holds across both themes is made in this file, where the colours are already read for what they are.
+
+**Regression suite:** p27 32/32, p28 34/34, p29 53/53, p30 68/68, p32 36/36, p33 38/38, p34 73/73, p35 117/117, p36 96/96, p37 65/65, p38 91/91, p39 117/117, p40 91/91, persist 22/0, ingest and board order exit 0, contrast gate 0 frozen and 0 below 3.0:1.
+
+**Published:** `releases/v3.1.0-P42_status-colour-convention.html`
 
 ## TEST-43 — Growth follows the visible columns (v3.1.0-P41)
 

@@ -448,3 +448,22 @@ Three things:
 - **Fourth instance of this family** (TD-59, TD-71, TD-106, TD-159), and the first where the warning was already written at the site. A comment records a trap; it does not check for it. What actually caught this was `p33_check`, a probe written two partials earlier for a different purpose.
 - **Count the entry points at source.** The check now asserts that exactly three call sites carry the staleness check, so a fourth added without it fails immediately rather than three partials later. A prose warning cannot do that.
 - **A failure message that says "4 of 105 rows changed height" says a regression happened and nothing about where to look.** Naming the rows turned a twenty-minute hunt into a one-line read: the clone row plus three that went 34.3 to 51, which is the growth ratio, which is the answer. Assertions over sets should name the members that broke them.
+
+## The defect was one state too early, not in the colours (v3.1.0-P42)
+
+The report was that a milestone someone marks off and a milestone the upload records as complete both render black, and the obvious reading is a colour defect. It was not. `--color-icon-done` already resolved to ink and the card's dot was already green. `effectiveState()` mapped a person's override of 2 onto the schedule's own `DONE`, so the two were the same state before any CSS ran, and no amount of work on the tokens could have separated them.
+
+**Two things that look alike on screen cannot be made different by styling if they are the same value upstream.** Find where they stop being distinguishable before touching what paints them. Half an hour reading `effectiveState()` beat any number of passes over the colour tokens.
+
+## A probe that cannot fail is not a probe (v3.1.0-P42)
+
+Two probes were added to `theme_check.py` for the new class, and then tested by pointing one at a class that does not exist. It inherited the ink colour, which toggles with the theme, was reported under TOGGLING correctly, and the script exited 0. The tool's `constant` expectation is informational by design: only the `toggle` direction can fail.
+
+So the two new probes asserted nothing, and would have sat in the file looking like coverage. **Every guard needs its negative control run once, including a guard added to a tool that already passes.** The assertion went where the colours are read for what they are instead. TD-161 carries the fix to the tool, deliberately not made inside an unrelated partial, because changing the semantics would put eighteen existing constant probes in play at once.
+
+## The sample has to be on the board (v3.1.0-P42)
+
+The first draft of `p42_check` picked `SNIP-101` and reported three failures about working code. SNIP-101 is dated 01-May, outside the visible week window, so no marker is drawn for it and there was nothing to read a colour off. A second weak spot in the same file: a chip assertion compared `onlyDone: 0` against a base count and passed trivially, because 0 differs from 159.
+
+**Filter a sample to what is actually rendered, and make sure a count you are comparing cannot be zero.** Both failures pointed at the app; both were in the check.
+
