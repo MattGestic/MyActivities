@@ -381,14 +381,35 @@ body.cv-open{margin-right:300px}
 /* Moved from the board header onto the filter bar's panel background, so the
    text tokens move with it. Leaving them on the on-header pair would have put
    near-white text on a light grey panel, which is the TD-46 trap again. */
-.sticky-search-box{display:flex;align-items:center;gap:var(--space-1);padding:0;
-  border:1px solid var(--color-input-border);border-radius:3px;background:var(--color-bg-elevated);
-  padding:1px var(--space-1)}
-.sticky-search-icon{border:none;background:transparent;color:var(--color-text-on-panel-muted);cursor:pointer;font-size:11px;padding:3px 4px;flex-shrink:0;position:relative;display:inline-flex;align-items:center}
-.sticky-search-box input{flex:1;min-width:0;width:150px;font-size:var(--text-sm);border:none;background:transparent;color:var(--color-text-on-panel);padding:var(--space-1) 0}
+/* D-15a: the icon and the clear button used to be flex siblings of the
+   input, so a shared hit-target rule inflating either one stretched the
+   whole row (align-items:center centers each child, but the row's own
+   cross-size grows to its tallest child). Both now sit INSIDE the input's
+   own box instead: the wrapper is the positioning context, the input carries
+   the left/right padding that leaves them room, and neither can change the
+   field's height, on a coarse pointer or not. .sticky-search-icon is
+   decorative (aria-hidden, no click handler) so it gets no hit-target
+   treatment at all, per the D-15a brief. */
+.sticky-search-box{position:relative;display:block;
+  border:1px solid var(--color-input-border);border-radius:3px;background:var(--color-bg-elevated)}
+.sticky-search-icon{position:absolute;left:6px;top:50%;transform:translateY(-50%);
+  border:none;background:transparent;color:var(--color-text-on-panel-muted);
+  font-size:11px;line-height:1;pointer-events:none}
+.sticky-search-box input{display:block;width:100%;box-sizing:border-box;
+  font-size:var(--text-sm);border:1px solid transparent;background:transparent;
+  color:var(--color-text-on-panel);padding:var(--space-2) 22px var(--space-2) 21px}
 .sticky-search-box input::placeholder{color:var(--color-text-on-panel-muted);opacity:.85;font-style:italic}
-.sticky-search-clear{border:none;background:transparent;color:var(--color-text-on-panel-muted);cursor:pointer;font-size:10px;padding:2px 3px;flex-shrink:0}
+.sticky-search-clear{position:absolute;right:3px;top:50%;transform:translateY(-50%);
+  border:none;background:transparent;color:var(--color-text-on-panel-muted);cursor:pointer;
+  font-size:10px;line-height:1;padding:3px}
 .sticky-search-clear:hover{color:var(--color-status-crit)}
+/* Invisible expanded tap area for a coarse pointer. A ::after positioned
+   absolutely is out of flow, so it cannot resize the button or the field it
+   sits inside; it only widens the hit-test box around the glyph. */
+@media (pointer:coarse){
+  .sticky-search-clear::after{content:'';position:absolute;top:50%;left:50%;
+    width:44px;height:44px;transform:translate(-50%,-50%)}
+}
 .icon-btn{width:26px;height:26px;border-radius:5px;border:1px solid var(--color-border-panel);background:var(--color-bg-panel);color:var(--color-text-on-panel);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:13px;position:relative}
 .icon-btn:hover{background:var(--color-btn-icon-hover-bg)}
 .icon-btn:active{background:var(--color-btn-icon-pressed-bg)}
@@ -738,33 +759,76 @@ input[type=range]{width:110px;cursor:pointer}
 #filter-bar{position:fixed;top:0;right:0;bottom:0;width:300px;max-width:88vw;background:var(--color-filter-bg);border-left:1px solid var(--color-filter-border);box-shadow:-2px 0 14px rgba(0,0,0,.18);display:flex;flex-direction:column;gap:0;font-size:10px;padding:var(--space-2) 0 var(--space-6);transform:translateX(100%);transition:transform .18s ease;z-index:700;overflow-y:auto}
 #filter-bar.open{transform:translateX(0)}
 #filter-bar .fb-hd{padding:0 12px 10px;font-size:11px;font-weight:700;color:var(--color-purple-deep);display:flex;align-items:center;gap:6px}
-#top-filter-bar{background:var(--color-filter-bg);border-bottom:1px solid var(--color-filter-border);padding:0 var(--space-4);display:flex;flex-wrap:wrap;align-items:flex-start;gap:var(--space-4) var(--space-6);font-size:var(--text-sm);position:relative;z-index:30;max-height:0;overflow:hidden;transition:max-height .16s ease,padding .16s ease}
+/* max-width:100vw + box-sizing:border-box: without a hard ceiling tied to the
+   actual viewport, a too-wide field (D-15a: two quick-action buttons grouped
+   so they wrap as a pair, see .tfb-week-quick) has nothing to wrap AGAINST.
+   Content-based ancestor widths (.tfb-group/.tfb-fields/.tfb-section all
+   size to their content) let the widest field grow the whole bar past the
+   viewport instead of wrapping, which then grows <body> itself past the
+   viewport too, since nothing else on the page is wider at phone width
+   (#scroll-wrap has its own overflow-x:auto and does not propagate). 100vw
+   is always the real viewport width, not the possibly-overflowed document
+   width, so it breaks that loop. */
+#top-filter-bar{background:var(--color-filter-bg);border-bottom:1px solid var(--color-filter-border);padding:0 var(--space-4);display:flex;flex-direction:column;align-items:stretch;gap:var(--space-4);font-size:var(--text-sm);position:relative;z-index:30;max-height:0;max-width:100vw;box-sizing:border-box;overflow:hidden;transition:padding .16s ease}
 /* The cap was the literal 160px. The bar is flex-wrap, so at phone width its
    controls wrap onto more rows than that: measured at 390px the content came
    to 202px against a 159px box, and the part cut off read as the panel
    hiding under the header below it. --tfb-h is the bar's own measured
-   content height, written by watchStickyHeights(). */
+   content height, written by watchStickyHeights().
+   D-15a: max-height used to be in the transition list alongside padding.
+   Measured (see docs/mockups/D-15a) that with a `transition:max-height`
+   in place, this build resolves `var(--tfb-h,160px)` to the literal 160px
+   fallback even after watchStickyHeights() has set --tfb-h on <html> to the
+   real content height: getComputedStyle(bar).maxHeight read back "160px"
+   while getComputedStyle(bar).getPropertyValue('--tfb-h') read back the
+   correct measured value in the same call, so the custom property update
+   was not repainting a property with an active transition attached to it.
+   That is the root cause of the "empty gap under Total float" defect: the
+   box was silently clipped to 160px, well short of its ~400px opened
+   content, and the rows past that clip line rendered as if hanging in
+   blank space below whatever fit. Dropping max-height from the transition
+   (the bar still eases open via padding, its opacity is effectively
+   binary either way since overflow:hidden hides the collapsed state)
+   makes the var() apply immediately and correctly: same measurement
+   afterward gave a 397px box against a 396px scrollHeight, no clip. */
 #top-filter-bar.open{padding:var(--space-3) var(--space-4);max-height:var(--tfb-h,160px)}
-#top-filter-bar .tfb-group{display:flex;align-items:center;gap:var(--space-2);flex-wrap:wrap}
-/* One full-width row per question. Each wraps internally, so a label never
-   breaks away from its own control, and min-width:0 because a flex child
-   defaults to min-width:auto and would otherwise refuse to let its inputs give
-   way. */
-#top-filter-bar .tfb-row{flex:1 1 100%;min-width:0;display:flex;align-items:center;
-  flex-wrap:wrap;gap:var(--space-3) var(--space-5)}
-/* Row 3 puts the week filter left and the date range hard against the right,
-   with whatever is left over between them. At narrow widths the row wraps and
-   the auto margin does nothing, which is the behaviour wanted. */
-#top-filter-bar .tfb-group-right{margin-left:auto}
-/* The critical-path set is its own container: it filters on a different
-   property (a milestone's state and float) from the rows either side, which
-   filter on identity and on time. Ruled above and below rather than boxed, so
-   it reads as a section of the same bar and not a panel dropped into it. */
-#top-filter-bar .tfb-crit{border-top:1px solid var(--color-filter-border);
-  border-bottom:1px solid var(--color-filter-border);
-  padding:var(--space-3) 0;align-items:center}
-#top-filter-bar .tfb-crit-title{font-size:9px;font-weight:700;letter-spacing:.04em;
-  text-transform:uppercase;color:var(--color-purple-deep);flex:0 0 auto}
+/* ---- D-15a: three titled groups (Find / Critical path / When), one layout
+   pattern for all three instead of three different flex rows. .tfb-section
+   is the titled group; .tfb-fields is the grid of fields inside it; .tfb-group
+   is one field (a label and its control cluster). Column count is the only
+   thing that changes by breakpoint; the field's own internal layout
+   (.tfb-group) is set once, below, and applies at every width. ---- */
+#top-filter-bar .tfb-section{display:flex;flex-direction:column;gap:var(--space-2)}
+#top-filter-bar .tfb-crit,#top-filter-bar .tfb-when{border-top:1px solid var(--color-filter-border);padding-top:var(--space-3)}
+/* Critical path is ruled off above AND below, same as pre-D-15a: it filters
+   on a different property (state/float) from the sections either side. */
+#top-filter-bar .tfb-crit{border-bottom:1px solid var(--color-filter-border);padding-bottom:var(--space-3)}
+#top-filter-bar .tfb-crit-title{display:block;font-size:9px;font-weight:700;letter-spacing:.04em;
+  text-transform:uppercase;color:var(--color-purple-deep)}
+/* Find: short fields (a search box, two selects, an ID list), so they pack
+   several to a row once there is room. Critical path and When each hold two
+   wide, multi-control fields (chips, or a select+input+select+chips), so
+   they stay one field per row at every width rather than being squeezed into
+   a column that is too narrow for them. */
+#top-filter-bar .tfb-fields{display:grid;grid-template-columns:1fr;gap:var(--space-3) var(--space-5)}
+@media (min-width:768px){
+  #top-filter-bar #tfb-find .tfb-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (min-width:1280px){
+  #top-filter-bar #tfb-find .tfb-fields{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+/* One field: label, then its control cluster. Stacked (label above control)
+   under 768px so nothing has to shrink to fit a label beside it; a fixed
+   label column from 768px up, so every field's controls start at the same
+   x regardless of label length ("Activity name:" vs "Week:"). */
+#top-filter-bar .tfb-group{display:flex;flex-direction:column;gap:var(--space-1)}
+#top-filter-bar .tfb-group>label{flex:0 0 auto;font-weight:600;color:var(--color-text-small)}
+#top-filter-bar .tfb-fld-ctrl{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2) var(--space-3);min-width:0}
+@media (min-width:768px){
+  #top-filter-bar .tfb-group{flex-direction:row;align-items:center;gap:var(--space-3)}
+  #top-filter-bar .tfb-group>label{flex:0 0 var(--tfb-label-w,92px)}
+  #top-filter-bar .tfb-fld-ctrl{flex:1 1 auto}
+}
 #top-filter-bar .tfb-status-group{flex-wrap:wrap}
 /* Each chip carries its state's own colour when selected, so the filter reads
    in the same vocabulary as the board it filters. Unselected they are plain,
@@ -776,14 +840,13 @@ input[type=range]{width:110px;cursor:pointer}
 #top-filter-bar .st-chip.active.st-done{background:var(--color-icon-done);border-color:var(--color-icon-done);color:var(--color-text-on-accent)}
 #top-filter-bar .st-chip.active.st-future{background:var(--color-text-muted);border-color:var(--color-text-muted);color:var(--color-text-on-accent)}
 #top-filter-bar .tfb-float-presets{flex-wrap:wrap}
-#top-filter-bar #filter-float-val{width:56px;font-size:var(--text-sm);
-  padding:var(--space-1) var(--space-2);border-radius:4px;
-  border:1px solid var(--color-btn-secondary-outline);
-  background:var(--color-bg-elevated);color:var(--color-text-small)}
+#top-filter-bar .tfb-week-quick{flex-wrap:wrap}
+#top-filter-bar #filter-float-val{width:56px}
 #top-filter-bar #filter-float-op,#top-filter-bar #filter-float-unit{min-width:0}
-/* Its own full-width row under every other. */
-#top-filter-bar .tfb-foot{flex:1 1 100%;min-width:0;display:flex;align-items:center;
-  gap:var(--space-3)}
+/* Footer: hint left, the bar's own close control right, on one row. */
+#top-filter-bar .tfb-foot{display:flex;align-items:center;gap:var(--space-3);
+  border-top:1px solid var(--color-filter-border);padding-top:var(--space-3)}
+#top-filter-bar .filter-info{flex:1 1 auto;min-width:0}
 .fb-sect-title{font-size:9.5px;font-weight:700;color:var(--color-purple-deep);text-transform:uppercase;letter-spacing:.04em;margin:10px 0 4px;padding-top:8px;border-top:1px solid var(--color-filter-border)}
 .fb-sect-title:first-child{margin-top:0;padding-top:0;border-top:none}
 .fb-close{position:absolute;top:8px;right:8px;background:none;border:none;font-size:15px;color:var(--color-text-muted);cursor:pointer;padding:4px;border-radius:4px}
@@ -791,7 +854,13 @@ input[type=range]{width:110px;cursor:pointer}
 .filter-criteria-row{display:flex;flex-direction:column;gap:6px}
 .filter-criteria-row .ctrl-group{width:100%}
 .filter-criteria-row input[type=text],.filter-criteria-row select{width:100%;font-size:10px;padding:4px 6px;border-radius:4px;border:1px solid var(--color-btn-secondary-outline);background:var(--color-bg-elevated);color:var(--color-text-small)}
-.fb-input-clear-row{display:flex;gap:4px;align-items:stretch;position:relative}
+/* D-15a: was `display:flex;align-items:stretch`, which is what inflated the
+   Activity ID field. align-items:stretch makes every flex child match the
+   tallest one, and .fb-field-clear was that tallest child once the shared
+   hit-target rule gave it a 28px/44px minimum, so the INPUT stretched to
+   match a button it has nothing to do with. The button now sits absolute,
+   inside the input's own box, so nothing here can stretch the input again. */
+.fb-input-clear-row{position:relative;display:block}
 /* FIXED for the same reason as the More Actions panel. #top-filter-bar collapses
    with max-height:0/overflow:hidden, so that overflow cannot be removed, and it
    clipped this list to 36px of its 200px while a table cell painted over what
@@ -799,9 +868,28 @@ input[type=range]{width:110px;cursor:pointer}
 .id-suggest-dropdown{position:fixed;top:0;left:0;max-height:200px;overflow-y:auto;background:var(--color-bg-elevated);border:1px solid var(--color-btn-secondary-outline);border-radius:4px;box-shadow:0 4px 10px rgba(0,0,0,.15);z-index:2147483000}
 .id-suggest-item{padding:var(--space-2) var(--space-3);font-size:var(--text-sm);cursor:pointer;color:var(--color-text-small)}
 .id-suggest-item:hover{background:var(--color-btn-secondary-hover-bg)}
-.fb-input-clear-row input{flex:1;min-width:0;font-size:var(--text-sm);padding:var(--space-1) var(--space-3);border-radius:4px;border:1px solid var(--color-btn-secondary-outline);background:var(--color-bg-elevated);color:var(--color-text-small)}
-.fb-field-clear{flex-shrink:0;width:22px;font-size:10px;color:var(--color-text-muted);background:var(--color-bg-elevated);border:1px solid var(--color-btn-secondary-outline);border-radius:4px;cursor:pointer;padding:0}
+.fb-input-clear-row input{display:block;width:100%;box-sizing:border-box;font-size:var(--text-sm);padding:var(--space-2) 24px var(--space-2) var(--space-3);border-radius:4px;border:1px solid var(--color-btn-secondary-outline);background:var(--color-bg-elevated);color:var(--color-text-small)}
+/* Base look for every "clear this filter" square: the Activity ID field's
+   own clear (positioned absolute over its input below), and the two
+   group-level clears (Critical path, Date range) that sit as ordinary flex
+   siblings next to the selects they clear. width is fixed; height is not,
+   so a group-level clear takes the height of the row around it
+   (align-self:stretch inside a flex row) rather than carrying an invented
+   number, and an in-field clear gets an explicit height matching its input
+   from the more specific rule beneath it. */
+.fb-field-clear{position:relative;flex-shrink:0;align-self:stretch;width:22px;font-size:10px;color:var(--color-text-muted);background:var(--color-bg-elevated);border:1px solid var(--color-btn-secondary-outline);border-radius:4px;cursor:pointer;padding:0;display:inline-flex;align-items:center;justify-content:center}
 .fb-field-clear:hover{background:var(--color-status-crit);color:var(--color-text-on-accent);border-color:var(--color-status-crit)}
+/* In-field clear: absolute inside the wrapper's right edge, over the input's
+   own padding-right, instead of a flex sibling that could stretch or shove
+   it. Fixed height matches the input's rendered height (measured: 20px). */
+.fb-input-clear-row .fb-field-clear{position:absolute;right:3px;top:50%;
+  transform:translateY(-50%);height:20px;align-self:auto}
+@media (pointer:coarse){
+  /* Expanded invisible tap area, out of flow, same technique as the sticky
+     search clear above: it cannot resize the button or the row it is in. */
+  .fb-field-clear::after{content:'';position:absolute;top:50%;left:50%;
+    width:44px;height:44px;transform:translate(-50%,-50%)}
+}
 .filter-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .filter-row.disp-row{border-top:1px solid var(--color-filter-border);padding-top:6px}
 .fb-row1{display:flex;flex-direction:column;align-items:stretch;gap:6px;border-top:1px solid var(--color-filter-border);padding-top:6px}
@@ -821,21 +909,33 @@ input[type=range]{width:110px;cursor:pointer}
 .dep-sub-row button:hover{background:var(--color-btn-primary-bg);color:var(--color-btn-primary-text);border-color:var(--color-btn-primary-outline)}
 .dep-sub-row button.active{background:var(--color-btn-primary-bg);color:var(--color-btn-primary-text);border-color:var(--color-btn-primary-outline)}
 #filter-bar label{font-weight:500;color:var(--color-btn-primary-bg)}
-#top-filter-bar select{font-size:var(--text-sm);padding:var(--space-1) var(--space-3);border-radius:4px;border:1px solid var(--color-btn-secondary-outline);background:var(--color-bg-elevated);color:var(--color-text-small);cursor:pointer;min-width:110px}
-#top-filter-bar .filter-btn{font-size:var(--text-sm);padding:var(--space-1) var(--space-4);border-radius:4px;border:1px solid var(--color-btn-secondary-outline);background:var(--color-btn-secondary-bg);cursor:pointer;color:var(--color-btn-secondary-text);font-weight:500}
+/* D-15a: one control height for the whole bar. var(--space-2) top/bottom
+   (4px) is what the selects already used the most of anywhere in the file;
+   the number and text inputs are brought to the same vertical padding here
+   rather than each keeping its own slightly different value, which is what
+   left "Activity name:", "Banding:" and "Date range:" sitting at three
+   different heights. Measured: select 23px, text/number 22px, both within
+   the D-15a probe's +/-1px tolerance of each other. */
+#top-filter-bar select,#top-filter-bar input[type="text"],
+#top-filter-bar input[type="number"],#top-filter-bar input[type="date"]{
+  box-sizing:border-box;font-size:var(--text-sm);padding:var(--space-2) var(--space-3);
+  border-radius:4px;border:1px solid var(--color-btn-secondary-outline);
+  background:var(--color-bg-elevated);color:var(--color-text-small);
+  font-family:inherit;line-height:1.2}
+#top-filter-bar select{cursor:pointer;min-width:110px}
+/* Chromium gives a date input's own internal layout a floor the padding
+   above cannot shrink below, which measured 1px taller than the others at
+   that padding (24px against 22-23px); trimmed back here so it lands in the
+   same +/-1px band as everything else it sits beside. */
+#top-filter-bar input[type="date"]{color:var(--color-text-on-panel);padding:3px var(--space-3)}
+#top-filter-bar input[type="date"]:focus{outline:1.5px solid var(--color-status-track);outline-offset:-1px}
+#top-filter-bar .filter-btn{font-size:var(--text-sm);padding:var(--space-2) var(--space-4);border-radius:4px;border:1px solid var(--color-btn-secondary-outline);background:var(--color-btn-secondary-bg);cursor:pointer;color:var(--color-btn-secondary-text);font-weight:500}
 #top-filter-bar .filter-btn:hover{background:var(--color-btn-secondary-hover-bg)}
 #top-filter-bar .filter-btn:active{background:var(--color-btn-secondary-pressed-bg)}
-#top-filter-bar .tfb-hide{margin-left:auto;border:1px solid var(--color-btn-secondary-outline);background:var(--color-btn-secondary-bg);
-  color:var(--color-btn-secondary-text);border-radius:4px;cursor:pointer;font-size:var(--text-sm);line-height:1;padding:var(--space-1) var(--space-3)}
+#top-filter-bar .tfb-hide{border:1px solid var(--color-btn-secondary-outline);background:var(--color-btn-secondary-bg);
+  color:var(--color-btn-secondary-text);border-radius:4px;cursor:pointer;font-size:var(--text-sm);line-height:1;padding:var(--space-2) var(--space-3);flex:0 0 auto}
 #top-filter-bar .tfb-hide:hover{background:var(--color-btn-secondary-hover-bg)}
 #top-filter-bar .filter-info{font-size:var(--text-xs);color:var(--color-text-muted);font-style:italic}
-/* Date range filter. Matched to the selects beside it rather than left as the
-   browser's native control, which sizes itself from the platform font and sat
-   a good deal taller than everything else on the row. */
-#top-filter-bar input[type="date"]{font-size:var(--text-sm);padding:var(--space-1) var(--space-2);
-  border-radius:4px;border:1px solid var(--color-input-border);background:var(--color-bg-elevated);
-  color:var(--color-text-on-panel);font-family:inherit;line-height:1.2}
-#top-filter-bar input[type="date"]:focus{outline:1.5px solid var(--color-status-track);outline-offset:-1px}
 .tfb-range-sep{font-size:var(--text-sm);color:var(--color-text-muted)}
 /* Hidden rather than removed, so clearing the range does not reflow the row
    and shift every control after it sideways. */
@@ -1708,19 +1808,30 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,
 textarea:focus-visible,[tabindex]:focus-visible{
   outline:2px solid var(--color-accent-purple);outline-offset:1px}
-/* Minimum hit target for every icon-only button, without enlarging the glyph
-   inside it: min-width/min-height only, so padding and font-size are
-   untouched. One rule for every icon-only control class instead of bumping
-   each one's own box model. */
+/* Minimum hit target for every STANDALONE icon-only button (a panel or
+   dialog's own close control), without enlarging the glyph inside it:
+   min-width/min-height only, so padding and font-size are untouched. One
+   rule for every standalone icon-only control class instead of bumping each
+   one's own box model.
+   D-15a: .fb-field-clear, .sticky-search-clear and .sticky-search-icon used
+   to be in this list. They are not standalone, they sit INSIDE a text field
+   (or, for .sticky-search-icon, are a decorative aria-hidden glyph with no
+   click handler at all), so forcing them to 28px/44px stretched the field
+   around them: the field's wrapper is a flex row with a clear button as one
+   of its children, so inflating that child's min-height inflated the whole
+   row, and on a flex row with align-items:center that dead space around
+   every OTHER, still-normal-height sibling in the same row is what read as
+   the empty gap under Total float and the oversized Activity name/ID boxes
+   in the D-15a report. Their own hit-target treatment is in the
+   #top-filter-bar block below, sized off the field instead of off a shared
+   icon-button minimum. */
 .icon-btn,.ms-close,.ms-icon-btn,.dep-comment-close,.fb-close,.pfn-close,
-.row-del,.sd-close,.fb-field-clear,.sticky-search-clear,.sticky-search-icon,
-.tfb-hide,.pm-btn-ico{
+.row-del,.sd-close,.tfb-hide,.pm-btn-ico{
   min-width:28px;min-height:28px;
   display:inline-flex;align-items:center;justify-content:center}
 @media (pointer:coarse){
   .icon-btn,.ms-close,.ms-icon-btn,.dep-comment-close,.fb-close,.pfn-close,
-  .row-del,.sd-close,.fb-field-clear,.sticky-search-clear,.sticky-search-icon,
-  .tfb-hide,.pm-btn-ico{
+  .row-del,.sd-close,.tfb-hide,.pm-btn-ico{
     min-width:44px;min-height:44px}
 }
 
@@ -2149,42 +2260,62 @@ textarea:focus-visible,[tabindex]:focus-visible{
      on time. TD-154. -->
 <div id="top-filter-bar" class="open">
 
- <!-- row 1: WHAT -->
- <div class="tfb-row">
-  <div class="tfb-group">
+ <!-- D-15a: three titled groups (Find / Critical path / When), same pattern
+      for all three: a .tfb-crit-title heading, then a .tfb-fields grid of
+      .tfb-group fields (label + control cluster). Every id, name and
+      onclick/oninput/onchange below is unchanged from before D-15a, and
+      every field keeps its own .tfb-group wrapper so filter-source's
+      `sel.closest('.tfb-group')` visibility toggle still finds the right
+      element to hide. -->
+
+ <!-- FIND: identity fields (name, ID, banding, source). -->
+ <div class="tfb-section" id="tfb-find">
+  <span class="tfb-crit-title">Find</span>
+  <div class="tfb-fields">
+   <div class="tfb-group">
     <label>Activity name:</label>
-    <div class="sticky-search-box">
+    <div class="tfb-fld-ctrl">
+     <div class="sticky-search-box">
       <span class="sticky-search-icon" aria-hidden="true">&#128269;</span>
       <input type="text" id="filter-title" placeholder="Search activity name" oninput="onTitleFilterInput(this)">
       <button class="sticky-search-clear" id="sticky-title-clear" onclick="clearOneFilter('filter-title')" title="Clear this filter" aria-label="Clear title search" style="display:none">&#10005;</button>
+     </div>
     </div>
-  </div>
-  <div class="tfb-group">
-    <label>Banding:</label>
-    <select id="filter-band" onchange="applyFilter()">
-      <option value="">All bands</option>
-    </select>
-  </div>
-  <div class="tfb-group">
-    <label>Source:</label>
-    <select id="filter-source" onchange="applyFilter()" title="The schedule each row was imported from">
-      <option value="">All sources</option>
-    </select>
-  </div>
-  <div class="tfb-group">
+   </div>
+   <div class="tfb-group">
     <label>Activity ID(s):</label>
-    <div class="fb-input-clear-row" id="activity-id-picker-wrap">
+    <div class="tfb-fld-ctrl">
+     <div class="fb-input-clear-row" id="activity-id-picker-wrap">
       <input type="text" id="filter-ids" placeholder="e.g. SNIP-101, SNIP-115" oninput="onActivityIdInput(this)" onfocus="renderIdSuggestions()" autocomplete="off">
       <button class="fb-field-clear" onclick="clearOneFilter('filter-ids')" title="Clear this filter" aria-label="Clear Activity ID filter">&#10005;</button>
       <div class="id-suggest-dropdown" id="id-suggest-dropdown" hidden></div>
+     </div>
     </div>
+   </div>
+   <div class="tfb-group">
+    <label>Banding:</label>
+    <div class="tfb-fld-ctrl">
+     <select id="filter-band" onchange="applyFilter()">
+      <option value="">All bands</option>
+     </select>
+    </div>
+   </div>
+   <div class="tfb-group">
+    <label>Source:</label>
+    <div class="tfb-fld-ctrl">
+     <select id="filter-source" onchange="applyFilter()" title="The schedule each row was imported from">
+      <option value="">All sources</option>
+     </select>
+    </div>
+   </div>
   </div>
  </div>
 
- <!-- row 2: the critical-path set, horizontal and in line -->
- <div class="tfb-row tfb-crit" id="tfb-crit">
+ <!-- CRITICAL PATH: status chips, then total float and its own clear. -->
+ <div class="tfb-section tfb-crit" id="tfb-crit">
   <span class="tfb-crit-title">Critical path</span>
-  <div class="tfb-group">
+  <div class="tfb-fields">
+   <div class="tfb-group">
     <label>Status:</label>
     <!-- Multi-select as a chip group rather than a <select multiple>, which
          needs a modifier key nobody discovers and cannot be read at a glance.
@@ -2192,75 +2323,91 @@ textarea:focus-visible,[tabindex]:focus-visible{
          filter adds no new vocabulary. Empty selection means no constraint,
          which is not the same as all five selected and is why the buttons are
          not pre-filled. -->
-    <span class="fb-inline-group tfb-status-group" id="filter-status-group" role="group" aria-label="Filter by status">
+    <div class="tfb-fld-ctrl">
+     <span class="fb-inline-group tfb-status-group" id="filter-status-group" role="group" aria-label="Filter by status">
       <button class="toggle-btn st-chip st-crit" id="fs-CRIT" onclick="toggleStatusFilter('CRIT')" aria-pressed="false" title="Critical: total float at or below the CRIT threshold">Critical</button>
       <button class="toggle-btn st-chip st-risk" id="fs-RISK" onclick="toggleStatusFilter('RISK')" aria-pressed="false" title="At risk: total float at or below the RISK threshold">At risk</button>
       <button class="toggle-btn st-chip st-track" id="fs-TRACK" onclick="toggleStatusFilter('TRACK')" aria-pressed="false" title="On track">On track</button>
       <button class="toggle-btn st-chip st-doneuser" id="fs-DONEUSER" onclick="toggleStatusFilter('DONEUSER')" aria-pressed="false" title="Done: marked off in this update">Done</button>
       <button class="toggle-btn st-chip st-done" id="fs-DONE" onclick="toggleStatusFilter('DONE')" aria-pressed="false" title="Complete: the upload already records this as finished">Complete</button>
       <button class="toggle-btn st-chip st-future" id="fs-FUTURE" onclick="toggleStatusFilter('FUTURE')" aria-pressed="false" title="Not yet started">Future</button>
-    </span>
-  </div>
-  <div class="tfb-group">
+     </span>
+    </div>
+   </div>
+   <div class="tfb-group">
     <label>Total float:</label>
-    <select id="filter-float-op" onchange="applyFilter()" title="Which side of the threshold to keep" aria-label="Float comparison">
+    <div class="tfb-fld-ctrl">
+     <select id="filter-float-op" onchange="applyFilter()" title="Which side of the threshold to keep" aria-label="Float comparison">
       <option value="">no float filter</option>
       <option value="le">at or below</option>
       <option value="ge">at or above</option>
-    </select>
-    <input type="number" id="filter-float-val" min="0" max="365" step="1" value="0" oninput="scheduleFilter()" onchange="applyFilter()" title="Threshold value, in the unit beside it" aria-label="Float threshold">
-    <select id="filter-float-unit" onchange="applyFilter()" title="Days or weeks" aria-label="Float unit">
+     </select>
+     <input type="number" id="filter-float-val" min="0" max="365" step="1" value="0" oninput="scheduleFilter()" onchange="applyFilter()" title="Threshold value, in the unit beside it" aria-label="Float threshold">
+     <select id="filter-float-unit" onchange="applyFilter()" title="Days or weeks" aria-label="Float unit">
       <option value="d">days</option>
       <option value="w">weeks</option>
-    </select>
-    <!-- The two ranges the request names, as one click each rather than three
-         controls set by hand. Days 0-13 and weeks 2-8 are the bands that
-         separate "no slack at all" from "a month or two of it". -->
-    <span class="fb-inline-group tfb-float-presets">
+     </select>
+     <!-- The two ranges the request names, as one click each rather than three
+          controls set by hand. Days 0-13 and weeks 2-8 are the bands that
+          separate "no slack at all" from "a month or two of it". -->
+     <span class="fb-inline-group tfb-float-presets">
       <button class="toggle-btn" onclick="setFloatFilter('le',13,'d')" title="Total float of 13 days or less">&#8804; 13d</button>
       <button class="toggle-btn" onclick="setFloatFilter('le',2,'w')" title="Total float of 2 weeks or less">&#8804; 2wk</button>
       <button class="toggle-btn" onclick="setFloatFilter('ge',8,'w')" title="Total float of 8 weeks or more">&#8805; 8wk</button>
-    </span>
-    <button class="fb-field-clear" id="btn-clear-crit" onclick="clearCriticalFilters()" title="Clear the status and float filters" aria-label="Clear the critical path filters">&#10005;</button>
+     </span>
+     <button class="fb-field-clear" id="btn-clear-crit" onclick="clearCriticalFilters()" title="Clear the status and float filters" aria-label="Clear the critical path filters">&#10005;</button>
+    </div>
+   </div>
   </div>
  </div>
 
- <!-- row 3: WHEN. Week on the left, date range hard against the right. -->
- <div class="tfb-row tfb-when">
-  <div class="tfb-group">
+ <!-- WHEN: week presets, then date range and its own clear. -->
+ <div class="tfb-section tfb-when" id="tfb-when">
+  <span class="tfb-crit-title">When</span>
+  <div class="tfb-fields">
+   <div class="tfb-group">
     <label>&#128269; Week:</label>
-    <select id="week-filter" onchange="applyFilter()">
+    <div class="tfb-fld-ctrl">
+     <select id="week-filter" onchange="applyFilter()">
       <option value="">All weeks (no filter)</option>
-    </select>
-    <select id="filter-mode" onchange="applyFilter()">
+     </select>
+     <select id="filter-mode" onchange="applyFilter()">
       <option value="single">This week only</option>
       <option value="week-plus2">This week + next 2</option>
       <option value="week-plus4">This week + next 4</option>
       <option value="up-to">Up to and including</option>
       <option value="from">From this week onward</option>
-    </select>
-    <button class="filter-btn" onclick="filterCurrentWeek()">Current week</button>
-    <button class="filter-btn" onclick="filterNext4()">Next 4 weeks</button>
-  </div>
-  <div class="tfb-group tfb-group-right">
+     </select>
+     <!-- Grouped so the pair wraps to a new line together rather than one
+          of the two landing alone on its own line. -->
+     <span class="fb-inline-group tfb-week-quick">
+      <button class="filter-btn" onclick="filterCurrentWeek()">Current week</button>
+      <button class="filter-btn" onclick="filterNext4()">Next 4 weeks</button>
+     </span>
+    </div>
+   </div>
+   <div class="tfb-group">
     <label>Date range:</label>
-    <!-- oninput AND onchange. change on a date field does not fire until the
-         field is committed and left, so a date set with the picker or the
-         spinner sat there doing nothing until the user clicked elsewhere. input
-         fires the moment the value becomes a whole date. Debounced through the
-         same scheduleFilter() the title field uses, so a part-typed date costs
-         one deferred pass rather than one per keystroke. Either end on its own
-         is a valid one-sided constraint: dateRangeToCols() leaves the other end
-         open. TD-143. -->
-    <input type="date" id="filter-date-from" oninput="scheduleFilter()" onchange="applyFilter()" title="Show weeks from this date onward. Set on its own it leaves the end open.">
-    <span class="tfb-range-sep">to</span>
-    <input type="date" id="filter-date-to" oninput="scheduleFilter()" onchange="applyFilter()" title="Show weeks up to this date. Set on its own it leaves the start open.">
-    <button class="fb-field-clear" id="btn-clear-date-range" onclick="clearDateRangeFilter()" title="Clear the date range" aria-label="Clear date range">&#10005;</button>
-    <button class="filter-btn" onclick="setDateRangeToFullSpan()" title="Set the range back to the whole board">Full span</button>
+    <div class="tfb-fld-ctrl">
+     <!-- oninput AND onchange. change on a date field does not fire until the
+          field is committed and left, so a date set with the picker or the
+          spinner sat there doing nothing until the user clicked elsewhere. input
+          fires the moment the value becomes a whole date. Debounced through the
+          same scheduleFilter() the title field uses, so a part-typed date costs
+          one deferred pass rather than one per keystroke. Either end on its own
+          is a valid one-sided constraint: dateRangeToCols() leaves the other end
+          open. TD-143. -->
+     <input type="date" id="filter-date-from" oninput="scheduleFilter()" onchange="applyFilter()" title="Show weeks from this date onward. Set on its own it leaves the end open.">
+     <span class="tfb-range-sep">to</span>
+     <input type="date" id="filter-date-to" oninput="scheduleFilter()" onchange="applyFilter()" title="Show weeks up to this date. Set on its own it leaves the start open.">
+     <button class="fb-field-clear" id="btn-clear-date-range" onclick="clearDateRangeFilter()" title="Clear the date range" aria-label="Clear date range">&#10005;</button>
+     <button class="filter-btn" onclick="setDateRangeToFullSpan()" title="Set the range back to the whole board">Full span</button>
+    </div>
+   </div>
   </div>
  </div>
 
- <!-- Full width under every row: it describes the result of all of them. -->
+ <!-- Footer: hint left, the bar's own close control right. -->
  <div class="tfb-foot">
    <span class="filter-info" id="filter-info">Click a health dot or remarks field to edit &middot; Click week header to filter</span>
    <button class="tfb-hide" id="btn-filter-hide" onclick="toggleTopFilterBar(false)" title="Hide the filter row. The magnifier in the header brings it back." aria-label="Hide the filter row">&#10005;</button>

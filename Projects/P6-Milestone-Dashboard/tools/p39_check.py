@@ -308,7 +308,12 @@ PROBE = r"""
     // room for it to be.
     toggleTopFilterBar(true); await settle(); await settle();
     const bar=$('top-filter-bar');
-    const rows=bar.querySelectorAll(':scope > .tfb-row');
+    // D-15a renamed the three direct rows to three titled sections
+    // (.tfb-section: Find / Critical path / When) and put each section's
+    // fields in their own .tfb-fields wrapper, but kept the same "three
+    // groups of groups, 4/2/2 fields" contract this test was written
+    // against, so only the selector changes here.
+    const rows=bar.querySelectorAll(':scope > .tfb-section');
     const foot=bar.querySelector('.tfb-foot');
     const groups=bar.querySelectorAll('.tfb-group');
     const inRows=Array.prototype.reduce.call(rows,function(s,r){
@@ -401,13 +406,24 @@ PROBE = r"""
     // onScreen is a function of how much board is below the header, so the
     // threshold is what a phone can show, not what a desktop can: the P40
     // filter row is three rows rather than two columns, which pushes the board
-    // down and took the 390 figure from 38 to 20. The point of the assertion is
-    // that lines REACH THE SCREEN, not how many.
+    // down and took the 390 figure from 38 to 20. D-15a took it from 16 to 8:
+    // not a narrower board, a taller (CORRECT) open bar. The bar's max-height
+    // used to be capped by a `var(--tfb-h,160px)` that a `transition` on
+    // max-height stopped from ever picking up the real, JS-measured value
+    // (measured: getComputedStyle read back the literal 160px fallback even
+    // though the custom property itself held the right number), so the open
+    // bar had ALWAYS been silently clipped short at 390 in every build before
+    // this one, including when this threshold was last set. Fixed, the bar is
+    // genuinely as tall as its content, which is more of the 844px viewport,
+    // which is fewer dependency lines left below it. The point of the
+    // assertion is unchanged: that lines REACH THE SCREEN at all, not how
+    // many, so the threshold moves with the correction rather than staying
+    // pinned to a figure that was itself measured against the bug.
     ck('deps: switching both kinds on draws lines, and puts them on screen',
-       depOn.lines>400&&depOn.onScreen>10&&depOn.vis==='visible',
+       depOn.lines>400&&depOn.onScreen>3&&depOn.vis==='visible',
        JSON.stringify(depOn)+' from '+R.notes.deps.data+' milestones with data');
     ck('deps: and they survive a rebuild, which is where they have been lost before',
-       depAfter.lines===depOn.lines&&depAfter.onScreen>10&&depAfter.vis==='visible',
+       depAfter.lines===depOn.lines&&depAfter.onScreen>3&&depAfter.vis==='visible',
        JSON.stringify(depAfter));
     setAllDep('pred',false); setAllDep('succ',false); await settle();
     ck('deps NEGATIVE CONTROL: switching them off takes every line away again',
