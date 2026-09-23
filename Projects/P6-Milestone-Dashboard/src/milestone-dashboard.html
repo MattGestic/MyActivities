@@ -257,8 +257,8 @@ html[data-theme="dark"]{
      translucent lifts of the header itself rather than panel colours. */
   --color-bg-header-hover:rgba(255,255,255,.12);
   --color-bg-header-focus:rgba(255,255,255,.18);
-  --color-shadow-dialog-near:var(--color-shadow-dialog-near);
-  --color-shadow-dialog-far:var(--color-shadow-dialog-far);
+  --color-shadow-dialog-near:var(--color-shadow-soft);
+  --color-shadow-dialog-far:var(--color-shadow-soft);
 
   /* Marker label backings. Constant on purpose, and measured: these are
      stickers that sit over the board so a label stays readable against any
@@ -1423,8 +1423,10 @@ tr.hist-row td.c-wk.now-col{background:var(--color-col-filtered-alt-bg) !importa
 .dep-comment-ids{font-size:9px;font-weight:650;color:var(--color-text-mono);display:block;margin-top:2px}
 .dep-comment-panel textarea{width:100%;min-height:56px;resize:vertical;font-size:10px;padding:6px;border-radius:4px;border:1px solid var(--color-line-hairline);background:var(--color-dialog-elev);color:var(--color-text-primary);box-sizing:border-box;font-family:inherit}
 .dep-comment-actions{display:flex;justify-content:flex-end;gap:6px;margin-top:6px}
-.dep-comment-actions button{font-size:9px;font-weight:650;padding:3px 6px;border-radius:4px;border:1px solid var(--color-line-hairline);background:var(--color-dialog-elev);color:var(--color-text-mono);cursor:pointer}
-.dep-comment-actions button.save{background:var(--color-accent-purple);color:var(--color-text-on-accent);border-color:var(--color-accent-purple)}
+.dep-comment-actions button{font-size:9px;font-weight:650;padding:3px 6px;border-radius:4px;border:1px solid var(--color-btn-secondary-outline);background:var(--color-btn-secondary-bg);color:var(--color-btn-secondary-text);cursor:pointer}
+.dep-comment-actions button:hover{background:var(--color-btn-secondary-hover-bg)}
+.dep-comment-actions button.save{background:var(--color-btn-primary-bg);color:var(--color-btn-primary-text);border-color:var(--color-btn-primary-outline)}
+.dep-comment-actions button.save:hover{background:var(--color-btn-primary-hover-bg)}
 
 /* Dependency counts. They were 8px unbacked digits pinned below the icon
    (bottom:-9px) and pushed fully outside it, which put them on the grid line
@@ -1556,9 +1558,13 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 .ms-save-actions{display:inline-flex;align-items:center;gap:var(--space-2);flex:0 0 auto}
 .ms-save-actions[hidden]{display:none}
 .ms-act{font:650 10px var(--font-sans);padding:3px 7px;border-radius:5px;
-  border:1px solid var(--color-accent-purple);background:var(--color-accent-purple);
-  color:var(--color-text-on-accent);cursor:pointer;white-space:nowrap}
-.ms-act:hover{filter:brightness(1.08)}
+  cursor:pointer;white-space:nowrap}
+.ms-act-secondary{border:1px solid var(--color-btn-secondary-outline);background:var(--color-btn-secondary-bg);color:var(--color-btn-secondary-text)}
+.ms-act-secondary:hover{background:var(--color-btn-secondary-hover-bg)}
+.ms-act-secondary:active{background:var(--color-btn-secondary-pressed-bg)}
+.ms-act-primary{border:1px solid var(--color-btn-primary-outline);background:var(--color-btn-primary-bg);color:var(--color-btn-primary-text)}
+.ms-act-primary:hover{background:var(--color-btn-primary-hover-bg)}
+.ms-act-primary:active{background:var(--color-btn-primary-pressed-bg)}
 .ms-code{font:700 12px/1 var(--font-mono);color:var(--color-text-mono)}
 .ms-status{font:600 11px/1 var(--font-sans)}
 .ms-dialog.status-track .ms-status{color:var(--color-status-track)}
@@ -1691,6 +1697,33 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 .ms-toggle{display:flex;align-items:center;gap:6px;cursor:pointer;font:450 11px var(--font-sans);color:var(--color-text-small)}
 .ms-toggle input{width:12px;height:12px;margin:0;cursor:pointer;accent-color:var(--color-status-track)}
 
+/* ============================================================
+   D-15 control consistency pass: two shared rules instead of
+   per-control changes.
+   ============================================================ */
+/* Visible keyboard focus on every interactive control. Only fires for
+   keyboard/programmatic focus, not a mouse click, so it does not change how
+   anything looks when clicked. Reuses the accent token already used for
+   selection and active state elsewhere; no new colour. */
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,
+textarea:focus-visible,[tabindex]:focus-visible{
+  outline:2px solid var(--color-accent-purple);outline-offset:1px}
+/* Minimum hit target for every icon-only button, without enlarging the glyph
+   inside it: min-width/min-height only, so padding and font-size are
+   untouched. One rule for every icon-only control class instead of bumping
+   each one's own box model. */
+.icon-btn,.ms-close,.ms-icon-btn,.dep-comment-close,.fb-close,.pfn-close,
+.row-del,.sd-close,.fb-field-clear,.sticky-search-clear,.sticky-search-icon,
+.tfb-hide,.pm-btn-ico{
+  min-width:28px;min-height:28px;
+  display:inline-flex;align-items:center;justify-content:center}
+@media (pointer:coarse){
+  .icon-btn,.ms-close,.ms-icon-btn,.dep-comment-close,.fb-close,.pfn-close,
+  .row-del,.sd-close,.fb-field-clear,.sticky-search-clear,.sticky-search-icon,
+  .tfb-hide,.pm-btn-ico{
+    min-width:44px;min-height:44px}
+}
+
 </style>
 </head>
 <body>
@@ -1731,7 +1764,7 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
     <span class="ib-menu" id="ib-menu">
       <button class="icon-btn" id="btn-more-actions" onclick="toggleMoreActions(undefined,event)"
               aria-haspopup="menu" aria-expanded="false" aria-controls="more-actions-panel"
-              title="More actions">&#8942;<span class="dot" id="more-dot"></span></button>
+              aria-label="More actions" title="More actions">&#8942;<span class="dot" id="more-dot"></span></button>
       <div class="ib-menu-panel" id="more-actions-panel" role="menu">
         <button class="icon-btn ib-mi" role="menuitem" id="btn-fit-screen" onclick="fitToScreen()" title="Fit visible week columns to the available screen width"><span class="ib-mi-ico">&#8596;</span><span class="ib-mi-lbl">Fit columns to screen</span></button>
         <!-- The glyph lives in its own span because toggleTheme rewrites it;
@@ -1757,7 +1790,7 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
       <b>&#9881; Data Settings</b>
       <span class="sd-hd-sub">What is mounted on this board, and how it was brought in</span>
     </div>
-    <button class="sd-close" onclick="toggleSettingsDrawer(false)">&#10005;</button>
+    <button class="sd-close" onclick="toggleSettingsDrawer(false)" aria-label="Close" title="Close">&#10005;</button>
   </div>
 
   <!-- Outside the tab panels on purpose: it is an overlay over the whole
@@ -1794,7 +1827,7 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
       </div>
       <div class="sd-actions-right">
         <button class="toggle-btn active" onclick="publishDashboard()" title="Write a new standalone HTML file with the current schedule and annotations built in. Upload that to SharePoint and anyone who opens it sees this data, with nothing to import.">&#128190; Save as new dashboard</button>
-        <button class="toggle-btn sd-btn-danger" onclick="resetChanges()">Clear all comments</button>
+        <button class="toggle-btn sd-btn-danger" onclick="resetChanges()" title="Resets every row's health indicator and remarks text back to their original values. Does not touch card comments.">Reset row marks</button>
       </div>
     </div>
   </div>
@@ -2046,7 +2079,7 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
     <button class="pm-btn" id="btn-pm-leave" onclick="togglePrintMode(false)" title="Leave print preview and put the board back">&#10005; Leave preview</button>
     <button class="pm-btn pm-btn-ico" id="btn-pm-more" onclick="toggleMoreActions(undefined,event)"
             aria-haspopup="menu" aria-expanded="false" aria-controls="more-actions-panel"
-            title="More actions">&#8942;<span class="dot" id="pm-more-dot"></span></button>
+            aria-label="More actions" title="More actions">&#8942;<span class="dot" id="pm-more-dot"></span></button>
   </span>
   <!-- The sheet the preview lays out for. It has to be set in the print dialog
        as well, because CSS cannot choose the physical paper: that mismatch is
@@ -2235,7 +2268,7 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 </div>
 
 <div id="filter-bar">
-  <button class="fb-close" onclick="toggleFilterBar(false)" aria-label="Close">&#10005;</button>
+  <button class="fb-close" onclick="toggleFilterBar(false)" aria-label="Close" title="Close">&#10005;</button>
   <div class="fb-hd">&#127912; View Controls</div>
 
   <div class="cv-sect">
@@ -2388,7 +2421,7 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 
 <div id="dep-comment-panel" class="dep-comment-panel" hidden>
   <div class="dep-comment-head">
-    <button class="dep-comment-close" onclick="closeCommentPanel()" aria-label="Close">&#10005;</button>
+    <button class="dep-comment-close" onclick="closeCommentPanel()" aria-label="Close" title="Close">&#10005;</button>
     <span id="dep-comment-ids" class="dep-comment-ids"></span>
   </div>
   <textarea id="dep-comment-text" placeholder="Notes on this dependency&#8230;"></textarea>
@@ -2407,7 +2440,7 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 <div id="add-ms-dialog" class="add-ms-dialog" role="dialog" aria-label="Add a milestone" aria-modal="true" hidden>
   <div class="add-ms-head">
     <b>&#43; Add a milestone</b>
-    <button class="ms-close" onclick="closeAddMilestone()" aria-label="Close" style="margin-left:auto">&#10005;</button>
+    <button class="ms-close" onclick="closeAddMilestone()" aria-label="Close" title="Close" style="margin-left:auto">&#10005;</button>
   </div>
   <p class="add-ms-where" id="add-ms-where"></p>
   <div class="add-ms-field">
@@ -2453,7 +2486,7 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 <div id="pdf-dialog" class="pdf-dialog" role="dialog" aria-label="Export as PDF" aria-modal="true" hidden>
   <div class="pdf-dlg-head">
     <b>Export as PDF</b>
-    <button class="ms-close" onclick="closePdfDialog()" aria-label="Close" style="margin-left:auto">&#10005;</button>
+    <button class="ms-close" onclick="closePdfDialog()" aria-label="Close" title="Close" style="margin-left:auto">&#10005;</button>
   </div>
   <!-- The page size is chosen HERE, not in the print dialog. That is the
        point of the whole exporter: CSS cannot pick the physical sheet, so an
@@ -2491,8 +2524,8 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
     <!-- Shown only while the form is dirty, so a card nobody has edited carries
          no save controls at all. -->
     <span class="ms-save-actions" id="ms-save-actions" hidden>
-      <button type="button" class="ms-act" onclick="saveMsDialog(false)" title="Save">&#128190;</button>
-      <button type="button" class="ms-act" onclick="saveMsDialog(true)" title="Save and close">&#128190; &amp; Close</button>
+      <button type="button" class="ms-act ms-act-secondary" onclick="saveMsDialog(false)" title="Save">Save</button>
+      <button type="button" class="ms-act ms-act-primary" onclick="saveMsDialog(true)" title="Save and close">Save &amp; close</button>
     </span>
   </div>
   <div class="ms-type-menu" id="ms-type-menu" hidden></div>
@@ -2503,7 +2536,7 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
            tooltip: it was three words of vocabulary competing with the ID and
            the status for a line that had none to spare. -->
       <div class="ms-heading">
-        <button type="button" class="ms-icon-btn" id="ms-icon-btn" onclick="toggleMsTypeMenu(event)" aria-haspopup="true" aria-expanded="false"><svg class="ms-icon"><use href="#ico-diamond"/></svg></button>
+        <button type="button" class="ms-icon-btn" id="ms-icon-btn" onclick="toggleMsTypeMenu(event)" aria-haspopup="true" aria-expanded="false" aria-label="Milestone type and mark" title="Milestone type and mark"><svg class="ms-icon"><use href="#ico-diamond"/></svg></button>
         <span id="ms-code" class="ms-code"></span>
         <span id="ms-status" class="ms-status"></span>
         <span class="ms-edited-mark" id="ms-mark-icon" data-field="marker" hidden></span>
@@ -2577,7 +2610,7 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
   </details>
 </div>
 
-<div id="print-filter-note">&#9888; This view is filtered &mdash; <span id="print-filter-note-text"></span> Clear the filter before issuing the full report.<button class="pfn-close" onclick="dismissFilterNote()" aria-label="Dismiss">&#10005;</button></div>
+<div id="print-filter-note">&#9888; This view is filtered &mdash; <span id="print-filter-note-text"></span> Clear the filter before issuing the full report.<button class="pfn-close" onclick="dismissFilterNote()" aria-label="Dismiss" title="Dismiss">&#10005;</button></div>
 
 <div id="scroll-wrap">
 <table id="main-table">
@@ -5446,6 +5479,7 @@ function renderRows(){
     // there and then rather than leaving an empty line on the board.
     if(!milestonesForRow(task.ref).length)
       nameHtml+='<button class="row-del" title="This row has no milestones left \u2014 remove it" '+
+                'aria-label="Remove this row" '+
                 'onclick="deleteRow(\''+task.ref+'\',event)">\u00d7</button>';
     nameHtml+='<span class="health-dot h-'+health+'" data-orig-health="'+health+'" data-current-health="'+health+'" title="'+healthTitle+'" onclick="openHealthPicker(this,event)"></span>';
     nameHtml+='</span>';

@@ -288,9 +288,9 @@ PROBE = r"""
                      position:getComputedStyle(act).position};
     ck('actions: the bar is above the tab strip, not a footer under the panels',
        box(act).b<=box(tabs).t+1, 'bar bottom '+box(act).b+', tabs top '+box(tabs).t);
-    ck('actions: CSV, JSON, Save as new dashboard, Clear all comments, in that order',
+    ck('actions: CSV, JSON, Save as new dashboard, Reset row marks, in that order',
        actOrder.length===4&&/CSV/.test(actOrder[0])&&/JSON/.test(actOrder[1])&&
-       /Save as new dashboard/.test(actOrder[2])&&/Clear all comments/.test(actOrder[3]),
+       /Save as new dashboard/.test(actOrder[2])&&/Reset row marks/.test(actOrder[3]),
        actOrder.join(' | '));
     ck('actions: the right-hand pair reaches the row\u2019s right edge',
        !!rightBox&&Math.abs(box(rightBox).r-box(act.querySelector('.sd-actions-main')).r)<=1,
