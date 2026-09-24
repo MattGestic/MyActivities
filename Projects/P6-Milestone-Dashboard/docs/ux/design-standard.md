@@ -89,7 +89,7 @@ Groups are separated by `--group-gap` and a 1px hairline. There is no empty spac
 ## Dates and weeks
 
 - **Week ending day** is a setting (Settings, Defaults, "Week ends on", a Mon to Sun segmented toggle). The default is Sunday, matching the current board. It drives the board's week columns, the week-range picker and the week filter together. Changing it re-buckets milestones into the new weeks. Comments and edits are unaffected.
-- **The week-range picker snaps to whole weeks.** It lists week-ending dates grouped by month, not a day calendar.
+- **The week-range picker snaps to whole weeks.** It lists week-ending dates grouped by month, not a day calendar. Markers: the selected start and end are accent-filled; the data-date week is outlined; the programme's first and last weeks carry an opening and closing bracket in `--color-text-primary`. No per-week milestone indicator.
 - **Closed-state range text** is structured, never a sentence: a muted uppercase tag (`W/E`, `From`, `Until`), dates in semibold, a muted arrow between them, a 1px divider, then a count pill (`8 wks`, `open end`, `open start`). Quick ranges use programme wording ("Rest of programme").
 - **Overlays stay inside their frame.** A popover is `box-sizing:border-box`, `max-width` bounded, and its grid columns use `minmax(0,…)` so content wraps rather than spills. Footer buttons grow in height rather than letting text cross the button edge.
 

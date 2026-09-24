@@ -122,8 +122,11 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
 .wr-wk.end{background:var(--color-accent-purple);color:#fff;font-weight:600;border-radius:var(--radius-ctl)}
 .wr-wk.preview{background:repeating-linear-gradient(135deg,var(--color-accent-tint-bg,#efe6f9) 0 4px,transparent 4px 8px)}
 .wr-wk.dd{box-shadow:inset 0 0 0 1.5px var(--color-accent-ink);border-radius:var(--radius-ctl)}
-.wr-wk .dot{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--color-text-muted)}
-.wr-wk.end .dot{background:#fff}
+.wr-wk.ps::before,.wr-wk.pe::after{content:"";position:absolute;top:1px;bottom:1px;width:4px;border:2px solid var(--color-text-primary);pointer-events:none}
+.wr-wk.ps::before{left:-1px;border-right:0;border-radius:2px 0 0 2px}
+.wr-wk.pe::after{right:-1px;border-left:0;border-radius:0 2px 2px 0}
+.wr-legend .brk{display:inline-block;width:10px;height:10px;vertical-align:-1px;margin-right:4px;border:2px solid var(--color-text-primary);border-right-width:0;border-left-width:2px;box-sizing:border-box}
+.wr-legend .brk.e{border-left-width:0;border-right-width:2px;margin-left:-2px}
 .wr-wk.out{color:var(--color-text-muted);opacity:.35;cursor:default}
 .wr-foot button{white-space:nowrap}
 .wr-foot .ds-seg button,.wr-foot .ds-btn{height:auto;min-height:var(--ctl-h);line-height:1.2;padding-block:2px}
@@ -182,7 +185,7 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
 
 <section class="pg-sect">
   <h2>Show weeks: week-range picker</h2>
-  <p>One field replaces the two date boxes. It picks <b>whole weeks</b>, because the board's columns are weeks. The panel is laid out like the board header: one row per month, one cell per week labelled with its week-ending day. It only offers weeks the board has. Click a start week, hover to preview, click an end week, Apply. The data-date week is outlined; a dot marks weeks with milestones in them.</p>
+  <p>One field replaces the two date boxes. It picks <b>whole weeks</b>, because the board's columns are weeks. The panel is laid out like the board header: one row per month, one cell per week labelled with its week-ending day. It only offers weeks the board has. Click a start week, hover to preview, click an end week, Apply. The data-date week is outlined. A bracket marks the programme's first week (opening bracket) and last week (closing bracket), so the ends of the programme are visible without reading dates.</p>
   <div class="pg-grid">
     <div><p class="pg-cap">Closed: the field states</p><div class="ds t-light"><div class="wr-states">
       <button class="wr-field empty"><span class="wr-ico" aria-hidden="true">&#128197;</span><span class="wr-txt">All weeks</span><span class="wr-caret">&#9662;</span></button>
@@ -292,7 +295,7 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
     var M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     var d=new Date(2026,4,24), end=new Date(2027,0,10), rows={}, order=[];
     while(d<=end){var k=d.getFullYear()+'-'+d.getMonth(); if(!rows[k]){rows[k]=[];order.push(k);} rows[k].push(new Date(d)); d.setDate(d.getDate()+7);}
-    var s0=new Date(2026,9,11), s1=opt.end, dd=new Date(2026,7,16), busy={'2026-6-5':1,'2026-6-26':1,'2026-7-2':1,'2026-7-30':1,'2026-8-13':1,'2026-9-11':1,'2026-9-25':1,'2026-10-8':1,'2026-10-22':1,'2026-10-29':1,'2026-11-13':1};
+    var s0=new Date(2026,9,11), s1=opt.end, dd=new Date(2026,7,16), pS=new Date(2026,4,24).getTime(), pE=end.getTime();
     var g='';
     order.forEach(function(k){var ws=rows[k],m=ws[0].getMonth(),y=ws[0].getFullYear();
       g+='<span class="wr-mon">'+M[m]+(m===0||k===order[0]?' '+String(y).slice(2):'')+'</span>';
@@ -302,14 +305,15 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
         else if(t>s0.getTime()&&t<s1.getTime()) c+=opt.done?' in':' preview';
         else if(!opt.done&&t===s1.getTime()) c+=' preview';
         if(t===dd.getTime()) c+=' dd';
-        var key=w.getFullYear()+'-'+w.getMonth()+'-'+w.getDate();
-        g+='<span class="'+c+'" role="button" aria-label="Week ending '+w.getDate()+' '+M[w.getMonth()]+'">'+('0'+w.getDate()).slice(-2)+(busy[key]?'<i class="dot"></i>':'')+'</span>';}
+        if(t===pS) c+=' ps'; if(t===pE) c+=' pe';
+        var lab='Week ending '+w.getDate()+' '+M[w.getMonth()]+(t===pS?', programme start':'')+(t===pE?', programme end':'');
+        g+='<span class="'+c+'" role="button" aria-label="'+lab+'" title="'+lab+'">'+('0'+w.getDate()).slice(-2)+'</span>';}
     });
     var q=['Next 4 weeks','Next 3 months','This month','Rest of programme','Full span'].map(function(x){return '<button aria-pressed="false">'+x+'</button>';}).join('');
     el.innerHTML='<div class="wr-pop"><div class="wr-quick">'+q+'</div><div class="wr-main">'+
       '<div class="wr-head"><span>'+(opt.done?'<span class="wr-val"><span class="wr-tag">W/E</span><b>11 Oct 26</b><span class="wr-arrow">&#8594;</span><b>29 Nov 26</b><span class="wr-div"></span><span class="wr-count">8 wks</span></span>':'<span class="wr-val"><span class="wr-tag">Start</span><b>11 Oct 26</b><span class="wr-div"></span><span class="wr-tag">Pick an end week</span></span>')+'</span></div>'+
       '<div class="wr-grid">'+g+'</div>'+
-      '<div class="wr-legend"><span><i style="background:var(--color-accent-purple)"></i>Start / end</span><span><i style="box-shadow:inset 0 0 0 1.5px var(--color-accent-ink)"></i>Data date</span><span>&#8226; Milestones due</span></div>'+
+      '<div class="wr-legend"><span><i style="background:var(--color-accent-purple)"></i>Selected start / end</span><span><i style="box-shadow:inset 0 0 0 1.5px var(--color-accent-ink)"></i>Data date</span><span><i class="brk"></i><i class="brk e"></i>Programme start / end</span></div>'+
       '<div class="wr-foot"><span class="ds-seg"><button aria-pressed="false" title="Show from the picked week onward">From only</button><button aria-pressed="false" title="Show up to the picked week">Until only</button></span><span style="display:flex;gap:8px"><button class="ds-btn">Clear</button><button class="ds-btn">Cancel</button><button class="ds-btn primary">Apply</button></span></div>'+
       '</div></div>';
   }
