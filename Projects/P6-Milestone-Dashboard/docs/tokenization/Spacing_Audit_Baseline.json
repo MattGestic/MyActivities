@@ -1,4 +1,4 @@
 {
-  "ceiling": 153,
-  "reason": "initial baseline, tools/spacing_audit.py introduced"
+  "ceiling": 152,
+  "reason": "ratcheted down from 153 by later tokenization work"
 }

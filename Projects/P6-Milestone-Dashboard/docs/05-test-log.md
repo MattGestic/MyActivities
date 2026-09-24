@@ -2128,3 +2128,66 @@ Total labels outside their row across the sweep: **62, down from 140.** No setti
 | Baseline render | unchanged, 105 rows / 146 milestones imported |
 
 **Published:** `releases/v3.1.0-P33_proximity-marker-staggering.html`
+
+---
+
+## TEST-49: D-16b filter bar rebuild (v3.1.0-P49)
+
+Top filter bar rebuilt to the signed-off D-16 design standard: two `.fb-box`
+containers (Find, When) side by side at >=1280px, Critical path as a third
+box, Total float rebuilt as five preset chips plus Custom, the week-range
+picker replacing the week/mode selects and date-range inputs, and "Week ends
+on" made a live Settings setting rather than import-only. Full detail and
+rationale: `docs/03-todo.md` TD-191 through TD-198.
+
+### Full suite at v3.1.0-P49
+
+| Suite | Result |
+|---|---|
+| `tools/ds_check.py` (new, TD-195) | **128/128** |
+| `tools/ds_check.py` against v3.1.0-P48 (proves the gate has teeth) | **58/104**, 46 failing — expected: P48 predates every `.ds-field`/`.ds-select`/`.ds-seg`/`.wr-field` class this tool asserts on |
+| `tools/d15a_check.py` (rewritten to the D-16 32px/40px/14px contract, TD-196) | **32/32** |
+| `tools/d15_check.py` | **11/11** |
+| `tools/d16_check.py` (component sheet, unaffected by this pass) | **2/2** sheets, 0px diff |
+| `tools/p39_check.py` (section 7 rewritten to the D-16b shape, TD-196) | **114/114** |
+| `tools/p27_check.py` | 32/32 |
+| `tools/p28_check.py` | 34/34 |
+| `tools/p29_check.py` | 53/53 |
+| `tools/p30_check.py` | 68/68 |
+| `tools/p32_check.py` | 36/36 |
+| `tools/p33_check.py` | 38/38 |
+| `tools/p34_check.py` | 73/73 |
+| `tools/p35_check.py` | 120/120 |
+| `tools/p36_check.py` | 96/96 |
+| `tools/p37_check.py` (id-suggest reachability assertion narrowed to the list's own box, TD-197) | 68/68 |
+| `tools/p38_check.py` | 91/91 |
+| `tools/p40_check.py` | 91/91 |
+| `tools/p42_check.py` | 25/25 |
+| `tools/p43_check.py` | 36/36 |
+| `tools/p44_check.py` | 31/31 |
+| `tools/p45_check.py` | 38/38 |
+| `tools/p46_check.py` | 37/37 |
+| `tools/order_check.py` | exit 0 |
+| `tools/persist_check.py` | 22/22 |
+| `tools/import_check.py` | exit 0 (AC-01, the SheetJS network load, not testable in this sandbox — unchanged limitation, see the file's own header) |
+| `tools/theme_check.py` | 75 toggling, 0 frozen, 2 not-found (stale `.sticky-search-icon`/`.sticky-search-clear` selectors the D-16b markup no longer uses — informational, not a failure) |
+| `tools/colour_audit.py` | 38 hardcoded occurrences (baseline unchanged — a new literal shadow value was found and tokened onto `--color-shadow-dialog-far` before landing) |
+| `tools/spacing_audit.py` | 152 raw px (baseline 153, ratchet tightened) |
+
+Two real bugs found by these probes during the pass (not test-contract issues,
+detail in TD-197/TD-198): a `.grow` flex-basis rotating into a height at phone
+width, inflating the Activity ID field wrapper to 160px tall; and the
+id-suggest dropdown painting underneath `#icon-bar`'s More Actions menu at
+some widths (a stacking-context trap on `#top-filter-bar`, same mechanism the
+P37 header comment already documents), fixed by moving the dropdown to a
+`<body>` child rather than raising the bar's own z-index (which was tried and
+reverted — it broke the More Actions menu's own reachability instead).
+
+One genuine, non-regression accessibility finding, left unfixed: a pressed
+`.ds-seg` chip (white text on `--color-accent-purple`) measures 4.43:1
+contrast, just under the 4.5:1 Caption threshold. This is the app's existing
+selected-state colour pairing (used well beyond the filter bar — nav buttons,
+primary actions elsewhere), not introduced by this pass; recoloring it is a
+design decision affecting more than the filter bar and is out of scope here.
+
+**Published:** `releases/v3.1.0-P49_filter-bar-standard.html`

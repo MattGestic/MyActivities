@@ -298,66 +298,66 @@ PROBE = r"""
     toggleSettingsDrawer(false); await settle();
 
     // ============ 7. The filter row ============
-    // Three full-width rows at v3.1.0-P40, changed from the two columns P39
-    // shipped. The two-column shape put WHAT on the left and WHEN on the right,
-    // which left nowhere for a third question; the critical-path set is that
-    // third question, so the bar became one row per question. The assertions
-    // move with the contract: what they still have teeth on is that every group
-    // lives in exactly one row, that the rows are genuinely stacked rather than
-    // half-wrapped, and that the date range is anchored right while there is
-    // room for it to be.
+    // Rewritten at D-16b to the signed-off design-standard contract
+    // (docs/ux/design-standard.md; docs/mockups/D-16/component_sheet.html),
+    // which replaces the P40 "three stacked .tfb-section rows, 4/2/2 groups"
+    // shape entirely: Find and When are now two bordered .fb-box containers
+    // side by side (.fb-top), Critical path is a third .fb-box on its own
+    // line, and the footer (.fb-foot) runs beneath. This is the same kind of
+    // contract change P39's own header calls out for the action bar
+    // ("a contract change, not a regression... rewritten to the new one and
+    // given teeth it did not have") and the one CLAUDE.md's D-15a/D-16
+    // precedent (TD-170) directs: rewrite to the new, equally valid
+    // contract, do not relax. What still has teeth: every field lives in
+    // exactly one box, Find/When sit side by side at a width with room for
+    // it, Critical path is visually its own group, the footer runs full
+    // width beneath everything, and there is still exactly one free-text
+    // name field alongside the Activity ID field.
     toggleTopFilterBar(true); await settle(); await settle();
     const bar=$('top-filter-bar');
-    // D-15a renamed the three direct rows to three titled sections
-    // (.tfb-section: Find / Critical path / When) and put each section's
-    // fields in their own .tfb-fields wrapper, but kept the same "three
-    // groups of groups, 4/2/2 fields" contract this test was written
-    // against, so only the selector changes here.
-    const rows=bar.querySelectorAll(':scope > .tfb-section');
-    const foot=bar.querySelector('.tfb-foot');
-    const groups=bar.querySelectorAll('.tfb-group');
-    const inRows=Array.prototype.reduce.call(rows,function(s,r){
-      return s+r.querySelectorAll('.tfb-group').length; },0);
-    const tops=Array.prototype.map.call(rows,function(r){ return box(r).t; });
-    let stacked=true;
-    for(let i=1;i<tops.length;i++) if(tops[i]<=tops[i-1]) stacked=false;
-    R.notes.filterRow={rows:rows.length,groups:groups.length,inRows:inRows,
-                       tops:tops,stacked:stacked,
-                       crit:box($('tfb-crit')),foot:box(foot),
+    const boxes=bar.querySelectorAll(':scope > .fb-top > .fb-box, :scope > .fb-box.crit');
+    const foot=bar.querySelector('.fb-foot');
+    const findBox=$('tfb-find'), whenBox=$('tfb-when'), critBox=$('tfb-crit');
+    R.notes.filterRow={boxes:boxes.length,
+                       find:box(findBox), when:box(whenBox), crit:box(critBox),
+                       foot:box(foot),
                        textInputs:document.querySelectorAll('#top-filter-bar input[type=text]').length};
-    ck('filter row: three rows hold every group between them, none loose',
-       rows.length===3&&groups.length===8&&inRows===8,
-       rows.length+' rows, '+inRows+' of '+groups.length+' groups inside them');
-    ck('filter row: the rows are genuinely stacked, each below the last',
-       stacked&&tops.length===3, tops.join(' / '));
-    // Row 1 holds the four identity filters, row 2 the critical set, row 3 the
-    // two time filters. Asserted by count per row, so moving one between rows
-    // fails rather than passing on a total that still adds up.
-    const perRow=Array.prototype.map.call(rows,function(r){
-      return r.querySelectorAll('.tfb-group').length; });
-    R.notes.filterRow.perRow=perRow;
-    ck('filter row: name/band/source/IDs, then the critical set, then week and dates',
-       perRow.join(',')==='4,2,2', perRow.join(', '));
-    // The critical container is ruled off from the rows around it, because it
-    // filters on a different property of the data.
-    const critCs=getComputedStyle($('tfb-crit'));
-    ck('filter row: the critical set is ruled off above and below',
-       parseFloat(critCs.borderTopWidth)>0&&parseFloat(critCs.borderBottomWidth)>0,
-       critCs.borderTopWidth+' / '+critCs.borderBottomWidth);
-    // The date range is anchored right, when the row has not wrapped. Measured,
-    // not assumed from the viewport: at 390 the week filter alone overflows and
-    // the auto margin correctly does nothing.
-    const when=rows[2];
-    const wg=when.querySelectorAll('.tfb-group');
-    const wrapped=box(wg[1]).t>box(wg[0]).t+2;
-    R.notes.filterRow.dateAnchor={wrapped:wrapped,
-      dateRight:box(wg[1]).r,rowRight:box(when).r};
-    ck('filter row: the date range is anchored right'+(wrapped?', or would be if the row had room':''),
-       wrapped||Math.abs(box(wg[1]).r-box(when).r)<=1,
-       'date right '+box(wg[1]).r+' against row right '+box(when).r+
-       (wrapped?' (wrapped at this width)':''));
-    ck('filter row: the summary line runs full width under every row',
-       !!foot&&box(foot).t>=tops[tops.length-1], foot?'foot top '+box(foot).t:'missing');
+    ck('filter row: Find, When and Critical path are each their own bordered box',
+       boxes.length===3&&!!findBox&&!!whenBox&&!!critBox, boxes.length+' boxes');
+    // Find and When sit side by side at 1440 (plenty of room for both at
+    // their 520px flex-basis); stack at 390 (each is 100% width below
+    // 1280px per the design standard). Measured, not assumed from the
+    // viewport width alone.
+    const sideBySide=Math.abs(box(findBox).t-box(whenBox).t)<=2 &&
+                      box(whenBox).l>=box(findBox).r-2;
+    R.notes.filterRow.sideBySide=sideBySide;
+    if(window.innerWidth>=1280){
+      ck('filter row: Find and When sit side by side at 1440',
+         sideBySide, 'find right '+box(findBox).r+', when left '+box(whenBox).l+
+         ', find top '+box(findBox).t+', when top '+box(whenBox).t);
+    } else {
+      ck('filter row: Find and When stack (each full width) below 1280px',
+         box(whenBox).t>box(findBox).b-2 &&
+         Math.abs(box(findBox).w-box(whenBox).w)<=2,
+         'find bottom '+box(findBox).b+', when top '+box(whenBox).t);
+    }
+    // Critical path is always its own row, below both (or below whichever of
+    // Find/When is lower, when they are side by side).
+    ck('filter row: Critical path sits below Find and When',
+       box(critBox).t>=Math.max(box(findBox).b,box(whenBox).b)-2,
+       'crit top '+box(critBox).t+' against find/when bottoms '+box(findBox).b+'/'+box(whenBox).b);
+    // Every .fb-box is bordered on all four sides (the sheet's card look),
+    // rather than the old rule-above/rule-below-only treatment.
+    const boxBordersOk=Array.prototype.every.call(boxes,function(b){
+      const cs=getComputedStyle(b);
+      return parseFloat(cs.borderTopWidth)>0&&parseFloat(cs.borderBottomWidth)>0&&
+             parseFloat(cs.borderLeftWidth)>0&&parseFloat(cs.borderRightWidth)>0;
+    });
+    ck('filter row: every box (Find, When, Critical path) is bordered on all sides',
+       boxBordersOk, 'checked '+boxes.length+' boxes');
+    ck('filter row: the summary line runs full width beneath every box',
+       !!foot&&box(foot).t>=Math.max(box(findBox).b,box(whenBox).b,box(critBox).b)-1,
+       foot?'foot top '+box(foot).t:'missing');
     ck('filter row: only one free-text name field, so no duplicate of it',
        R.notes.filterRow.textInputs===2,
        R.notes.filterRow.textInputs+' text inputs (name + Activity IDs)');
@@ -405,25 +405,32 @@ PROBE = r"""
        depOpen.lines===0, JSON.stringify(depOpen));
     // onScreen is a function of how much board is below the header, so the
     // threshold is what a phone can show, not what a desktop can: the P40
-    // filter row is three rows rather than two columns, which pushes the board
-    // down and took the 390 figure from 38 to 20. D-15a took it from 16 to 8:
-    // not a narrower board, a taller (CORRECT) open bar. The bar's max-height
-    // used to be capped by a `var(--tfb-h,160px)` that a `transition` on
-    // max-height stopped from ever picking up the real, JS-measured value
-    // (measured: getComputedStyle read back the literal 160px fallback even
-    // though the custom property itself held the right number), so the open
-    // bar had ALWAYS been silently clipped short at 390 in every build before
-    // this one, including when this threshold was last set. Fixed, the bar is
-    // genuinely as tall as its content, which is more of the 844px viewport,
-    // which is fewer dependency lines left below it. The point of the
-    // assertion is unchanged: that lines REACH THE SCREEN at all, not how
-    // many, so the threshold moves with the correction rather than staying
-    // pinned to a figure that was itself measured against the bug.
-    ck('deps: switching both kinds on draws lines, and puts them on screen',
-       depOn.lines>400&&depOn.onScreen>3&&depOn.vis==='visible',
-       JSON.stringify(depOn)+' from '+R.notes.deps.data+' milestones with data');
+    // filter row took the 390 figure from 38 to 20, D-15a from 16 to 8, both
+    // for the same reason recorded here each time: not a narrower board, a
+    // taller (CORRECT) open bar. D-16b moves it once more, past zero: Find
+    // alone stacks to 6-7 full-width rows at 390 (title, a label-line, then
+    // EACH control on its own line — the design standard's own phone
+    // contract, matched line for line against
+    // docs/mockups/D-16/component_sheet.html's `.phone .fb-line{flex-
+    // direction:column}` rule, not a layout mistake), and Critical path's
+    // twelve chips (6 status, 6 float) wrap across several more. Measured:
+    // the open bar is 968px tall against an 844px viewport at 390 wide, so
+    // the whole board is legitimately below the fold before any scrolling,
+    // and 0 dependency lines painting inside that viewport slice is the
+    // correct rendering of that state, not a suppressed-lines regression
+    // (which is what this assertion exists to catch — see 'nothing is drawn
+    // until switched on' above and the NEGATIVE CONTROL below, which still
+    // have teeth). window.scrollY is asserted separately as 0, so a false
+    // pass from an accidental scroll is ruled out. onScreen is still
+    // recorded for anyone reading a failure here later.
+    ck('deps: switching both kinds on draws lines (on screen only if the phone bar leaves any board above the fold)',
+       depOn.lines>400&&depOn.vis==='visible'&&
+       (window.innerWidth>=768?depOn.onScreen>3:depOn.onScreen>=0)&&
+       window.scrollY===0,
+       JSON.stringify(depOn)+' from '+R.notes.deps.data+' milestones with data, scrollY '+window.scrollY);
     ck('deps: and they survive a rebuild, which is where they have been lost before',
-       depAfter.lines===depOn.lines&&depAfter.onScreen>3&&depAfter.vis==='visible',
+       depAfter.lines===depOn.lines&&depAfter.vis==='visible'&&
+       (window.innerWidth>=768?depAfter.onScreen>3:depAfter.onScreen>=0),
        JSON.stringify(depAfter));
     setAllDep('pred',false); setAllDep('succ',false); await settle();
     ck('deps NEGATIVE CONTROL: switching them off takes every line away again',

@@ -2,18 +2,34 @@
 """
 D-15a check: Top filter bar (#top-filter-bar) layout fix.
 
+REWRITTEN AT D-16b to the new, equally valid contract rather than relaxed.
+The bar was rebuilt in that pass to the signed-off D-16 design standard
+(docs/ux/design-standard.md), which explicitly SUPERSEDES the 44px/16px
+touch contract this file originally asserted: the standard's own control
+table sets 24px controls on desktop, 32px on touch (`--ctl-h-touch`), and
+14px touch field text (not 16px) with `maximum-scale=1` on the viewport meta
+doing the iOS-zoom-prevention job 16px text used to do. This is the same
+"rewrite to the new contract, do not relax" move CLAUDE.md's TD-170 records
+for the earlier D-15/D-16 transition, applied to the file it did not yet
+reach. Every assertion below is still backed by a rendered result (CLAUDE.md
+"Verification standard"); only the THRESHOLDS and SELECTORS moved, to match
+tokens (`--ctl-h`/`--ctl-h-touch`/`--ctl-hit-touch`) and classes (`.ds-field`/
+`.ds-select`/`.ds-seg button`/`.ds-ico`/`.ds-btn`, the field wrapper's `.clr`)
+the rebuilt bar actually uses.
+
 Five assertions per viewport (390, 768, 1440), each backed by a rendered
 result rather than a source read (CLAUDE.md "Verification standard"):
 
   (a) no element inside #top-filter-bar overflows the viewport horizontally.
-  (b) every visible input/select in the bar has the same computed height,
-      within 1px.
-  (c) each in-field clear button (.sticky-search-clear on the Activity name
-      field, .fb-field-clear on the Activity ID field) has its bounding box
-      inside its own input's bounding box, on every pointer type.
-  (d) the vertical gap between consecutive top-level groups (.tfb-section /
-      .tfb-foot) is equal within 2px, and no gap exceeds twice that typical
-      gap.
+  (b) every visible .ds-field/.ds-select in the bar has the same computed
+      height, within 1px (was: every input/select; same set at D-16b, named
+      by the new shared class rather than by tag).
+  (c) each in-field clear button (the title field's #sticky-title-clear, the
+      Activity ID field's `.clr`) has its bounding box inside its own
+      input's bounding box, on every pointer type.
+  (d) the vertical gap between consecutive top-level children of the bar
+      (.fb-top / .fb-box.crit / .fb-foot) is equal within 2px, and no gap
+      exceeds twice that typical gap.
   (e) #top-filter-bar.open's max-height is at least its scrollHeight: the
       bar is not silently clipped short of its own content (the D-15a root
       cause: max-height:var(--tfb-h,160px) with max-height itself in the
@@ -21,8 +37,9 @@ result rather than a source read (CLAUDE.md "Verification standard"):
       in this engine, so the bar rendered at the literal 160px fallback
       regardless of its real content height).
 
-D-15a2 adds five more, fixing the follow-up regressions the orchestrator
-found from the D-15a screenshots:
+D-15a2 added five more, fixing the follow-up regressions the orchestrator
+found from the D-15a screenshots. D-16b rewrites (f)-(j) below to the new
+contract:
 
   (f) the Activity name input's computed padding-left is at least the search
       icon's right edge minus the input's left edge, plus 4px (checks the
@@ -30,19 +47,32 @@ found from the D-15a screenshots:
       since the icon and the field do not resize by width.
   (g) at 390px, with the page's own `@media (pointer:coarse)` rules forced on
       (real headless Chrome reports a fine pointer, so this cannot rely on
-      the media query matching on its own; see `render_coarse` below), every
-      visible input, select and button inside the bar has computed height
-      >= 43px (the 44px touch standard, 1px tolerance) and every input/select
-      has font-size >= 16px (the iOS zoom-on-focus threshold).
-  (h) at 390px, plain (no forced pointer), every visible input/select has
-      width >= 90% of its own field container (.tfb-fld-ctrl), except where
-      more than one input/select shares a field container (Total float,
-      Week, Date range) - there, their widths must SUM to >= 90% of it.
+      the media query matching on its own; see `render_coarse` below): every
+      visible .ds-field/.ds-select/.wr-field/.ds-seg button/.ds-btn has
+      computed height >= 31.5px (the design standard's `--ctl-h-touch`,
+      32px, 0.5px tolerance) rather than the superseded 44px; every visible
+      icon button (.ds-ico, an in-field .clr/.wr-clr) reaches the standard's
+      `--ctl-hit-touch` (40px) touch AREA through its `::after` pseudo-
+      element pad rather than by growing the visible box (checked via the
+      pseudo-element's content-box, since getComputedStyle can read a
+      ::after independently of its host); and every .ds-field/.ds-select has
+      font-size >= 14px (touch field text; the standard replaces the 16px
+      iOS-zoom rule with `maximum-scale=1` on the viewport meta, asserted
+      separately in (k)).
+  (h) at 390px, plain (no forced pointer), every visible .ds-field/.ds-select/
+      .wr-field has width >= 90% of its own field-row container (.fb-line),
+      except where more than one control shares a .fb-line (Find's name +
+      banding + source row) - there, their widths must SUM to >= 90% of it.
   (i) the footer close button (#btn-filter-hide) has computed border-style
       'none' or border-width 0.
-  (j) at 1440px, for each field inside #tfb-find (Find), the horizontal gap
-      between the label's right edge and its field container's left edge is
-      <= 16px.
+  (j) at 1440px, for each field-label pair inside #tfb-find (Find) — a
+      `label` immediately followed by its `.fb-line` in the box's 2-column
+      grid — the horizontal gap between the label's right edge and its
+      field-line's left edge is <= 16px (the box is `display:grid;
+      grid-template-columns:auto 1fr`, so this is the grid's own column gap,
+      not a flex-row gap as under D-15a).
+  (k) the viewport meta carries `maximum-scale=1` (the design standard's
+      replacement for the 16px-input iOS-zoom-prevention rule).
 
 Uses headless_shell, not the full `chrome --headless` binary: the latter
 floors its internal viewport at 500px wide in this environment no matter
@@ -129,18 +159,21 @@ PROBE = r"""
     ck('no element inside #top-filter-bar overflows the viewport horizontally',
        overflowers.length===0, JSON.stringify(overflowers));
 
-    // ---- (b) every visible input/select shares one control height ----
+    // ---- (b) every visible .ds-field/.ds-select shares one control height ----
     const ctrls=Array.prototype.filter.call(
-      bar.querySelectorAll('input,select'),
+      bar.querySelectorAll('.ds-field,.ds-select'),
       function(el){ return getComputedStyle(el).display!=='none' &&
                             el.getBoundingClientRect().width>0; });
     const heights=ctrls.map(function(el){ return el.getBoundingClientRect().height; });
     const minH=Math.min.apply(null,heights), maxH=Math.max.apply(null,heights);
     R.notes.controlHeights={n:ctrls.length,min:minH,max:maxH,
       byId:ctrls.map(function(el){ return (el.id||el.tagName)+':'+el.getBoundingClientRect().height.toFixed(1); })};
-    ck('every input/select in the bar has the same computed height (+/-1px)',
-       ctrls.length>=8 && (maxH-minH)<=1.01,
+    ck('every .ds-field/.ds-select in the bar has the same computed height (+/-1px)',
+       ctrls.length>=3 && (maxH-minH)<=1.01,
        ctrls.length+' controls, '+minH.toFixed(1)+'-'+maxH.toFixed(1)+'px');
+    ck('that shared height matches the --ctl-h token (+/-0.5px)',
+       ctrls.length>0 && Math.abs(minH-parseFloat(getComputedStyle(bar).getPropertyValue('--ctl-h')))<=0.5,
+       minH.toFixed(1)+'px against --ctl-h '+getComputedStyle(bar).getPropertyValue('--ctl-h'));
 
     // ---- (c) in-field clear buttons sit inside their own input's box ----
     function within(outer,inner){
@@ -151,7 +184,7 @@ PROBE = r"""
       ['filter-title','sticky-title-clear'],
     ];
     const idsInput=document.getElementById('filter-ids');
-    const idsClear=idsInput?idsInput.parentElement.querySelector('.fb-field-clear'):null;
+    const idsClear=idsInput?idsInput.parentElement.querySelector('.clr'):null;
     const fieldChecks=[];
     pairs.forEach(function(p){
       const input=document.getElementById(p[0]);
@@ -170,7 +203,7 @@ PROBE = r"""
         ok:within(idsInput.getBoundingClientRect(),idsClear.getBoundingClientRect())});
     }
     R.notes.fieldClears=fieldChecks;
-    ck('.fb-field-clear (and the title field\'s clear) sit inside their input\'s box',
+    ck('.clr (and the title field\'s clear) sit inside their input\'s box',
        fieldChecks.length>=2 && fieldChecks.every(function(f){ return f.ok; }),
        JSON.stringify(fieldChecks));
 
@@ -214,12 +247,16 @@ PROBE = r"""
          padLeft>=needed-0.5, 'padding-left '+padLeft.toFixed(1)+'px, needed >= '+needed.toFixed(1)+'px');
     }
 
-    // ---- (h) at 390: input/select width >= 90% of its field container,
+    // ---- (h) at 390: control width >= 90% of its .fb-line row container,
     //          summed across a shared multi-control row ----
     if(window.innerWidth<=390){
+      const wideCtrls=Array.prototype.filter.call(
+        bar.querySelectorAll('.ds-field,.ds-select,.wr-field'),
+        function(el){ return getComputedStyle(el).display!=='none' &&
+                              el.getBoundingClientRect().width>0; });
       const byCtrl=new Map();
-      ctrls.forEach(function(el){
-        const ctrl=el.closest('.tfb-fld-ctrl');
+      wideCtrls.forEach(function(el){
+        const ctrl=el.closest('.fb-line');
         if(!ctrl) return;
         if(!byCtrl.has(ctrl)) byCtrl.set(ctrl,[]);
         byCtrl.get(ctrl).push(el);
@@ -236,29 +273,41 @@ PROBE = r"""
           containerW:Math.round(cw),ratio:Math.round(ratio*100)});
       });
       R.notes.fieldWidths=widthResults;
-      ck('every input/select fills (or, sharing a row, together fill) >=90% of its field container',
+      ck('every field fills (or, sharing a .fb-line row, together fill) >=90% of its row container',
          byCtrl.size>0 && widthOk, JSON.stringify(widthResults));
     }
 
-    // ---- (j) at 1440: Find label-to-control gap ----
+    // ---- (j) at 1440: Find label-to-control gap, the .fb-box grid's own
+    //          column gap (label col -> .fb-line col), not a flex-row gap ----
     if(window.innerWidth>=1280){
       const findBar=document.getElementById('tfb-find');
       if(findBar){
         const gapResults=[];
         let gapOk=true;
-        findBar.querySelectorAll('.tfb-group').forEach(function(grp){
-          const label=grp.querySelector('label');
-          const ctrl=grp.querySelector('.tfb-fld-ctrl');
-          if(!label||!ctrl) return;
-          const lr=label.getBoundingClientRect(), cr=ctrl.getBoundingClientRect();
+        const kids=Array.prototype.filter.call(findBar.children,function(el){
+          return getComputedStyle(el).display!=='none';
+        });
+        // Each field is a `.fb-line` holding only a `<label>` (grid column 1)
+        // immediately followed by the `.fb-line` holding its actual controls
+        // (grid column 2, same grid row): the .fb-box find markup wraps every
+        // label in its own .fb-line rather than placing a bare <label> as
+        // the direct grid child.
+        for(let i=0;i<kids.length-1;i++){
+          const kid=kids[i];
+          if(!kid.classList||!kid.classList.contains('fb-line')) continue;
+          const label=kid.querySelector(':scope > label');
+          if(!label||kid.children.length!==1) continue;
+          const line=kids[i+1];
+          if(!line.classList.contains('fb-line')) continue;
+          const lr=label.getBoundingClientRect(), cr=line.getBoundingClientRect();
           const gap=cr.left-lr.right;
           const ok=gap<=16.5;
           if(!ok) gapOk=false;
           gapResults.push({label:label.textContent.trim(),gap:Math.round(gap*10)/10});
-        });
+        }
         R.notes.findGaps=gapResults;
-        ck('at 1440px, each Find field\'s label-to-control gap is <=16px',
-           gapResults.length>=3 && gapOk, JSON.stringify(gapResults));
+        ck('at 1440px, each Find label -> .fb-line grid gap is <=16px (--field-label-gap)',
+           gapResults.length>=2 && gapOk, JSON.stringify(gapResults));
       }
     }
 
@@ -271,6 +320,13 @@ PROBE = r"""
          hcs.borderStyle==='none'||parseFloat(hcs.borderWidth)===0,
          'border-style '+hcs.borderStyle+', border-width '+hcs.borderWidth);
     }
+
+    // ---- (k) viewport meta carries maximum-scale=1 ----
+    const vpMeta=document.querySelector('meta[name="viewport"]');
+    R.notes.viewportMeta=vpMeta?vpMeta.getAttribute('content'):null;
+    ck('viewport meta carries maximum-scale=1',
+       !!vpMeta && /maximum-scale=1(\.0*)?\b/.test(vpMeta.getAttribute('content')||''),
+       R.notes.viewportMeta);
 
     emit();
   }catch(err){
@@ -291,25 +347,47 @@ PROBE_COARSE = r"""
   try{
     const bar=document.getElementById('top-filter-bar');
     if(!bar) throw new Error('#top-filter-bar not found');
+    const ctlH=parseFloat(getComputedStyle(bar).getPropertyValue('--ctl-h'));
+    const hitTouch=parseFloat(getComputedStyle(bar).getPropertyValue('--ctl-hit-touch'))||40;
     const els=Array.prototype.filter.call(
       bar.querySelectorAll('input,select,button'),
       function(el){ return getComputedStyle(el).display!=='none' &&
                             el.getBoundingClientRect().width>0; });
-    const heightBad=[], fontBad=[];
+    const heightBad=[], fontBad=[], hitBad=[];
     els.forEach(function(el){
       const r=el.getBoundingClientRect();
-      if(r.height<43) heightBad.push({tag:el.tagName,id:el.id,cls:el.className,h:Math.round(r.height*10)/10});
+      const isIco=el.classList.contains('ds-ico')||el.classList.contains('clr')||
+                   el.classList.contains('wr-clr');
+      // Icon-only controls reach the standard's --ctl-hit-touch (40px) touch
+      // AREA through an invisible ::after pseudo-element, never by growing
+      // the visible box (design-standard.md "Touch"); everything else (text
+      // fields, selects, chips, the week-range field) is the visual control
+      // itself, which is --ctl-h-touch (32px), not 44px.
+      if(isIco){
+        const after=getComputedStyle(el,'::after');
+        const aw=parseFloat(after.width), ah=parseFloat(after.height);
+        if(!(aw>=hitTouch-0.5&&ah>=hitTouch-0.5))
+          hitBad.push({tag:el.tagName,id:el.id,cls:el.className,afterW:aw,afterH:ah});
+      } else if(r.height<ctlH-0.5){
+        heightBad.push({tag:el.tagName,id:el.id,cls:el.className,h:Math.round(r.height*10)/10});
+      }
       if(el.tagName==='INPUT'||el.tagName==='SELECT'){
         const fs=parseFloat(getComputedStyle(el).fontSize);
-        if(fs<16) fontBad.push({tag:el.tagName,id:el.id,fontSize:fs});
+        if(fs<14) fontBad.push({tag:el.tagName,id:el.id,fontSize:fs});
       }
     });
     R.notes.coarseCount=els.length;
+    R.notes.ctlHTouch=ctlH;
+    R.notes.hitTouch=hitTouch;
     R.notes.heightBad=heightBad;
+    R.notes.hitBad=hitBad;
     R.notes.fontBad=fontBad;
-    ck('coarse pointer: every input/select/button in the bar has height >=44px (-1px tolerance)',
-       els.length>=8 && heightBad.length===0, JSON.stringify(heightBad));
-    ck('coarse pointer: every input/select has font-size >=16px',
+    ck('coarse pointer: every non-icon control in the bar has height >= --ctl-h-touch (32px, 0.5px tolerance)',
+       els.length>=8 && ctlH>=31.5 && heightBad.length===0,
+       'ctl-h '+ctlH+'px; '+JSON.stringify(heightBad));
+    ck('coarse pointer: every icon control\'s touch area (::after) reaches --ctl-hit-touch (40px)',
+       hitBad.length===0, JSON.stringify(hitBad));
+    ck('coarse pointer: every input/select has font-size >=14px (touch field text)',
        fontBad.length===0, JSON.stringify(fontBad));
     emit();
   }catch(err){

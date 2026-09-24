@@ -199,6 +199,15 @@ The log is a record of readings, not of changes, so a gap between two rows belon
 | 2026-09-24 | Audit script v3, after the v3.1.0-P46/P47/P48 passes | `var(--text-*)` font-size references in file | 28 |
 | 2026-09-24 | Audit script v3, after the v3.1.0-P46/P47/P48 passes | Hardcoded font-size declarations (px) | 127 |
 | 2026-09-24 | `tools/spacing_audit.py` (new gate, TD-188; a separate, ratcheted count — see its own header for why it will not equal the `px_spacing` row above) | Raw px in padding/margin/gap declarations, ceiling | 153 |
+| 2026-09-24 | Audit script v3, after the v3.1.0-P49 pass (D-16b filter bar rebuild) | Hardcoded colour occurrences | 38 |
+| 2026-09-24 | Audit script v3, after the v3.1.0-P49 pass | Distinct hardcoded colour values | 34 |
+| 2026-09-24 | Audit script v3, after the v3.1.0-P49 pass | Colour occurrences matching an existing token exactly | 7 |
+| 2026-09-24 | Audit script v3, after the v3.1.0-P49 pass | `--space-*` token references in file | 120 |
+| 2026-09-24 | Audit script v3, after the v3.1.0-P49 pass | Hardcoded padding/margin/gap declarations (px) | 227 |
+| 2026-09-24 | Audit script v3, after the v3.1.0-P49 pass | `var(--text-*)` font-size references in file | 35 |
+| 2026-09-24 | Audit script v3, after the v3.1.0-P49 pass | Hardcoded font-size declarations (px) | 134 |
+| 2026-09-24 | `tools/theme_check.py`, after the v3.1.0-P49 pass | Probes expected to toggle, frozen | 0 |
+| 2026-09-24 | `tools/spacing_audit.py`, after the v3.1.0-P49 pass | Raw px in padding/margin/gap declarations, ceiling | 152 |
 
 **Re-running the audit:** run `python3 tools/colour_audit.py` from the project root. It regenerates `Hardcoded_Colour_Audit.csv` and prints every metric above.
 
