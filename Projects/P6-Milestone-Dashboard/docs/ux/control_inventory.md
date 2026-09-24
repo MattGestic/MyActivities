@@ -161,11 +161,27 @@ Two shared rules apply across every surface and are not repeated per row:
   is filtered &mdash; ...") predates this pass and is not a string this pass
   added; left untouched per the bounded scope (this pass only relabels and
   fixes accessibility/token attributes, not unrelated copy).
-- **Wholesale token consolidation of `.pm-btn`, `.vt-btn`, `.rpt-hd-btn`**
+- **Colour consolidation of `.pm-btn`, `.vt-btn`, `.rpt-hd-btn`**
   (print banner, view toggle, header row) onto `--color-btn-primary-*`/
-  `--color-btn-secondary-*` — each of these already has its own internal
-  primary/secondary distinction, built on tokens with their own documented
-  rationale (header chrome, print-banner "on" state, and the purple accent
-  used for the active view). Re-pointing all of them is a larger
-  visual-language change than a control-consistency pass and is not one of
-  the three confirmed defects; deferred.
+  `--color-btn-secondary-*` — still deferred, and on inspection this is a
+  correctness call, not just a larger-than-this-pass one. All three sit on
+  surfaces the panel button tokens are not built for: `.rpt-hd-btn` is on
+  `--color-bg-header`, which stays dark in both themes by design (the same
+  reasoning that keeps `#btn-add-ms` off these tokens, above); `.pm-btn` is
+  on the print banner's `--color-chip-attention-bg`, a warm "attention" fill
+  the panel tokens were never checked against; `.vt-btn` is a Baseline/Update
+  **segmented toggle**, the design standard's own "Selected = accent fill
+  with on-accent text" role, not a primary/secondary action pair — it
+  already follows that role (`.vt-btn.active` is accent-purple on
+  on-accent text). Forcing the panel button tokens onto any of the three
+  risks a real contrast defect (`--color-btn-secondary-bg` is near-white in
+  light theme, which would sit invisibly on the dark header) rather than a
+  cosmetic mismatch, so this is left as a colour decision for the same
+  reason `#btn-add-ms` was: it needs a person to weigh in, not a token swap.
+  **D-16 (this pass) did migrate what was safe** across the three: shared
+  `--ctl-pad-x`/`--space-1` padding and `--radius-ctl` where a literal
+  already matched the new token's value (`.view-toggle`'s border-radius,
+  the padding on all three button classes and on `.toggle-btn`), so their
+  box-model no longer carries raw literals even though their colour
+  families stay separate. See `docs/ux/design-standard.md`'s new
+  `--ctl-*` tokens.
