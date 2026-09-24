@@ -16,12 +16,12 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
 .pg-cap{font-size:11px;color:var(--pg-muted);margin:0 0 6px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
 
 /* App tokens, copied from src/milestone-dashboard.html */
-.t-light{--color-bg-panel:#f4f5f8;--color-bg-elevated:#ffffff;--color-filter-bg:#e4e9ed;--color-filter-border:#c9d2d8;
+.t-light{--color-accent-tint-bg:#efe6f9;--color-accent-wash:rgba(139,100,199,.10);--color-bg-panel:#f4f5f8;--color-bg-elevated:#ffffff;--color-filter-bg:#e4e9ed;--color-filter-border:#c9d2d8;
   --color-text-primary:#17191c;--color-text-muted:#6f7480;--color-accent-purple:#8b64c7;--color-accent-ink:#6f46ad;
   --color-btn-primary-bg:#1c3a63;--color-btn-primary-text:#ffffff;--color-btn-primary-hover-bg:#2a4a7a;
   --color-btn-secondary-bg:#ffffff;--color-btn-secondary-text:#1c3a63;--color-btn-secondary-outline:#9fb0bd;--color-btn-secondary-hover-bg:#eef1f7;
   --color-btn-icon-hover-bg:#dde1ea;--color-status-crit:#c0392b;--color-line-default:#e3e2de}
-.t-dark{--color-bg-panel:#1e2240;--color-bg-elevated:#232f4a;--color-filter-bg:#1e2240;--color-filter-border:#3a3e60;
+.t-dark{--color-accent-tint-bg:#2a2440;--color-accent-wash:rgba(139,100,199,.10);--color-bg-panel:#1e2240;--color-bg-elevated:#232f4a;--color-filter-bg:#1e2240;--color-filter-border:#3a3e60;
   --color-text-primary:#e8eef8;--color-text-muted:#8b9bb8;--color-accent-purple:#8b64c7;--color-accent-ink:#a98ad8;
   --color-btn-primary-bg:#3a6ea8;--color-btn-primary-text:#ffffff;--color-btn-primary-hover-bg:#4a80ba;
   --color-btn-secondary-bg:#1e2240;--color-btn-secondary-text:#9cbcff;--color-btn-secondary-outline:#3a3e60;--color-btn-secondary-hover-bg:#2a2e50;
@@ -106,15 +106,15 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
 .wr-field.empty .wr-txt{color:var(--color-text-muted)}
 .wr-field .wr-caret{color:var(--color-text-muted);font-size:10px}
 .wr-field .wr-clr{border:0;background:transparent;color:var(--color-text-muted);width:20px;height:20px;border-radius:var(--radius-ctl);cursor:pointer;font-size:11px}
-.wr-pop{border:1px solid var(--color-filter-border);border-radius:var(--radius-overlay);background:var(--color-bg-elevated);box-shadow:0 8px 24px rgba(0,0,0,.18);display:grid;grid-template-columns:auto 1fr;gap:0;width:max-content;max-width:100%;color:var(--color-text-primary)}
-.wr-quick{display:flex;flex-direction:column;gap:2px;padding:8px;border-right:1px solid var(--color-line-default);min-width:130px}
+.wr-pop{box-sizing:border-box;width:100%;max-width:560px;border:1px solid var(--color-filter-border);border-radius:var(--radius-overlay);background:var(--color-bg-elevated);box-shadow:0 8px 24px rgba(0,0,0,.18);display:grid;grid-template-columns:minmax(120px,auto) minmax(0,1fr);gap:0;color:var(--color-text-primary)}
+.wr-quick{display:flex;flex-direction:column;gap:2px;padding:8px;border-right:1px solid var(--color-line-default);min-width:0}
 .wr-quick button{height:var(--ctl-h);text-align:left;border:0;background:transparent;color:var(--color-text-primary);font:inherit;font-size:var(--fs-caption);padding:0 8px;border-radius:var(--radius-ctl);cursor:pointer}
 .wr-quick button:hover{background:var(--color-btn-icon-hover-bg)}
 .wr-quick button[aria-pressed="true"]{background:var(--color-accent-wash,rgba(139,100,199,.12));color:var(--color-accent-ink);font-weight:600}
-.wr-main{padding:8px 12px;display:flex;flex-direction:column;gap:8px}
+.wr-main{min-width:0;padding:8px 12px;display:flex;flex-direction:column;gap:8px}
 .wr-head{display:flex;justify-content:space-between;align-items:center;font-size:var(--fs-caption)}
 .wr-head b{font-weight:600}
-.wr-grid{display:grid;grid-template-columns:64px repeat(5,40px);gap:2px 0;align-items:center}
+.wr-grid{display:grid;grid-template-columns:minmax(44px,auto) repeat(5,minmax(28px,1fr));gap:2px 0;align-items:center}
 .wr-mon{font-size:var(--fs-caption);font-weight:600;color:var(--color-text-muted);padding-right:8px}
 .wr-wk{position:relative;height:var(--ctl-h);display:flex;align-items:center;justify-content:center;font-size:var(--fs-caption);cursor:pointer;color:var(--color-text-primary)}
 .wr-wk:hover{background:var(--color-btn-icon-hover-bg);border-radius:var(--radius-ctl)}
@@ -126,10 +126,22 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
 .wr-wk.end .dot{background:#fff}
 .wr-wk.out{color:var(--color-text-muted);opacity:.35;cursor:default}
 .wr-foot button{white-space:nowrap}
-.wr-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid var(--color-line-default);padding-top:8px;font-size:var(--fs-caption)}
-.wr-legend{display:flex;gap:12px;color:var(--color-text-muted);font-size:11px;align-items:center}
+.wr-foot .ds-seg button,.wr-foot .ds-btn{height:auto;min-height:var(--ctl-h);line-height:1.2;padding-block:2px}
+.wr-foot>span{display:flex;flex-wrap:wrap;gap:8px}
+.wr-foot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid var(--color-line-default);padding-top:8px;font-size:var(--fs-caption)}
+.wr-legend{flex-wrap:wrap;display:flex;gap:12px;color:var(--color-text-muted);font-size:11px;align-items:center}
 .wr-legend i{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:-1px;margin-right:4px}
-.wr-states{display:flex;flex-direction:column;gap:8px}
+.wr-states{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.wr-val{display:inline-flex;align-items:center;gap:6px;flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden}
+.wr-tag{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--color-text-muted)}
+.wr-val b{font-weight:600}
+.wr-arrow{color:var(--color-text-muted)}
+.wr-div{width:1px;align-self:stretch;margin:4px 2px;background:var(--color-btn-secondary-outline)}
+.wr-count{flex:0 0 auto;font-size:11px;font-weight:600;color:var(--color-accent-ink);background:var(--color-accent-tint-bg,#efe6f9);border-radius:999px;padding:1px 8px}
+.wr-field{min-width:260px}
+.st-row{display:grid;grid-template-columns:120px 1fr;gap:4px 12px;align-items:center}
+.st-row .ds-seg{justify-self:start}
+.st-help{grid-column:2;font-size:11px;color:var(--color-text-muted);line-height:1.4}
 .touch .wr-grid{grid-template-columns:56px repeat(5,minmax(0,1fr))}
 .touch .wr-pop{grid-template-columns:1fr;width:100%}
 .touch .wr-quick{flex-direction:row;flex-wrap:wrap;border-right:0;border-bottom:1px solid var(--color-line-default);min-width:0}
@@ -159,7 +171,7 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
   <p><b>Total float</b> becomes one choice set: <b>Any, 0d, &lt; 10d, &lt; 3 wk, &lt; 5 wk, Custom</b>. 0d keeps activities with zero or negative float (the critical path). Custom opens a small panel (at or below / at or above, a number, days or weeks) and then shows as its own chip, e.g. "&#8804; 7d". It replaces the three separate controls plus preset buttons, with the same range of filters.</p>
   <p><b>Show weeks</b> is one field that picks a whole-week range (see the week-range picker below). It narrows the board, as the two date boxes did.</p>
   <p><b>Week</b> becomes a week picker (defaulting to this week) plus one span choice: Only, +2, +4, Up to, From. This replaces the mode dropdown and the Current week / Next 4 weeks buttons: Next 4 weeks is this week with +4. Show dates still narrows the board to a range and Full span resets it; Week still highlights, as now.</p>
-  <div class="pg-scroll"><div style="min-width:1100px"><div class="ds t-light fb" id="fb-desk"></div></div></div>
+  <div class="pg-scroll"><div style="min-width:900px"><div class="ds t-light fb" id="fb-desk"></div></div></div>
 </section>
 
 <section class="pg-sect">
@@ -174,10 +186,17 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
   <div class="pg-grid">
     <div><p class="pg-cap">Closed: the field states</p><div class="ds t-light"><div class="wr-states">
       <button class="wr-field empty"><span class="wr-ico" aria-hidden="true">&#128197;</span><span class="wr-txt">All weeks</span><span class="wr-caret">&#9662;</span></button>
-      <button class="wr-field"><span class="wr-ico" aria-hidden="true">&#128197;</span><span class="wr-txt">W/e 11 Oct to 29 Nov 2026 &#183; 8 weeks</span><span class="wr-clr" aria-label="Clear">&#10005;</span></button>
-      <button class="wr-field"><span class="wr-ico" aria-hidden="true">&#128197;</span><span class="wr-txt">From w/e 11 Oct 2026</span><span class="wr-clr" aria-label="Clear">&#10005;</span></button>
-      <button class="wr-field"><span class="wr-ico" aria-hidden="true">&#128197;</span><span class="wr-txt">Until w/e 29 Nov 2026</span><span class="wr-clr" aria-label="Clear">&#10005;</span></button>
+      <button class="wr-field" aria-label="Weeks ending 11 Oct 2026 to 29 Nov 2026, 8 weeks"><span class="wr-ico" aria-hidden="true">&#128197;</span><span class="wr-val"><span class="wr-tag">W/E</span><b>11 Oct 26</b><span class="wr-arrow">&#8594;</span><b>29 Nov 26</b></span><span class="wr-div" aria-hidden="true"></span><span class="wr-count">8 wks</span><span class="wr-clr" aria-label="Clear">&#10005;</span></button>
+      <button class="wr-field"><span class="wr-ico" aria-hidden="true">&#128197;</span><span class="wr-val"><span class="wr-tag">From</span><b>11 Oct 26</b></span><span class="wr-div" aria-hidden="true"></span><span class="wr-count">open end</span><span class="wr-clr" aria-label="Clear">&#10005;</span></button>
+      <button class="wr-field"><span class="wr-ico" aria-hidden="true">&#128197;</span><span class="wr-val"><span class="wr-tag">Until</span><b>29 Nov 26</b></span><span class="wr-div" aria-hidden="true"></span><span class="wr-count">open start</span><span class="wr-clr" aria-label="Clear">&#10005;</span></button>
     </div></div></div>
+    <div><p class="pg-cap">Settings: week ending day</p><div class="ds t-light"><div class="st-row">
+      <label style="font-weight:600">Week ends on</label>
+      <span class="ds-seg" role="group" aria-label="Week ends on"><button aria-pressed="false">Mon</button><button aria-pressed="false">Tue</button><button aria-pressed="false">Wed</button><button aria-pressed="false">Thu</button><button aria-pressed="false">Fri</button><button aria-pressed="false">Sat</button><button aria-pressed="true">Sun</button></span>
+      <span class="st-help">Sets the board's week columns, the week picker and the week filter. Lives in Settings, Defaults. Changing it re-buckets every milestone into the new weeks; comments and edits are unaffected.</span>
+    </div></div></div>
+  </div>
+  <div class="pg-grid" style="grid-template-columns:repeat(auto-fit,minmax(min(480px,100%),1fr));margin-top:12px">
     <div><p class="pg-cap">Open: picking the end week (desktop)</p><div class="pg-scroll"><div class="ds t-light"><div id="wr-desk"></div></div></div></div>
     <div><p class="pg-cap">Open: dark</p><div class="pg-scroll"><div class="ds t-dark"><div id="wr-dark"></div></div></div></div>
     <div><p class="pg-cap">Phone sheet (touch)</p><div class="pg-scroll"><div style="width:390px"><div class="ds touch t-light"><div id="wr-phone"></div></div></div></div></div>
@@ -235,7 +254,7 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
       <div class="fb-line"><select class="ds-select" style="min-width:150px"><option>This week (21 Sep)</option><option>All weeks</option></select>
         <span class="ds-seg chips" role="group" aria-label="Week span"><button aria-pressed="true">Only</button><button aria-pressed="false">+2</button><button aria-pressed="false">+4</button><button aria-pressed="false">Up to</button><button aria-pressed="false">From</button></span></div>
       <label>Show weeks</label>
-      <div class="fb-line"><button class="wr-field grow" aria-haspopup="dialog"><span class="wr-ico" aria-hidden="true">&#128197;</span><span class="wr-txt">All weeks</span><span class="wr-caret" aria-hidden="true">&#9662;</span></button></div>
+      <div class="fb-line"><button class="wr-field grow" aria-haspopup="dialog"><span class="wr-ico" aria-hidden="true">&#128197;</span><span class="wr-val"><span class="wr-tag">W/E</span><b>11 Oct 26</b><span class="wr-arrow">&#8594;</span><b>29 Nov 26</b></span><span class="wr-div" aria-hidden="true"></span><span class="wr-count">8 wks</span><span class="wr-clr" aria-label="Clear">&#10005;</span></button></div>
     </div>
   </div>
   <div class="fb-box crit">
@@ -286,9 +305,9 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
         var key=w.getFullYear()+'-'+w.getMonth()+'-'+w.getDate();
         g+='<span class="'+c+'" role="button" aria-label="Week ending '+w.getDate()+' '+M[w.getMonth()]+'">'+('0'+w.getDate()).slice(-2)+(busy[key]?'<i class="dot"></i>':'')+'</span>';}
     });
-    var q=['Next 4 weeks','Next 3 months','This month','Rest of study','Full span'].map(function(x){return '<button aria-pressed="false">'+x+'</button>';}).join('');
+    var q=['Next 4 weeks','Next 3 months','This month','Rest of programme','Full span'].map(function(x){return '<button aria-pressed="false">'+x+'</button>';}).join('');
     el.innerHTML='<div class="wr-pop"><div class="wr-quick">'+q+'</div><div class="wr-main">'+
-      '<div class="wr-head"><span>'+(opt.done?'<b>11 Oct to 29 Nov 2026</b> &#183; 8 weeks':'Start <b>w/e 11 Oct</b> &#183; pick an end week')+'</span></div>'+
+      '<div class="wr-head"><span>'+(opt.done?'<span class="wr-val"><span class="wr-tag">W/E</span><b>11 Oct 26</b><span class="wr-arrow">&#8594;</span><b>29 Nov 26</b><span class="wr-div"></span><span class="wr-count">8 wks</span></span>':'<span class="wr-val"><span class="wr-tag">Start</span><b>11 Oct 26</b><span class="wr-div"></span><span class="wr-tag">Pick an end week</span></span>')+'</span></div>'+
       '<div class="wr-grid">'+g+'</div>'+
       '<div class="wr-legend"><span><i style="background:var(--color-accent-purple)"></i>Start / end</span><span><i style="box-shadow:inset 0 0 0 1.5px var(--color-accent-ink)"></i>Data date</span><span>&#8226; Milestones due</span></div>'+
       '<div class="wr-foot"><span class="ds-seg"><button aria-pressed="false" title="Show from the picked week onward">From only</button><button aria-pressed="false" title="Show up to the picked week">Until only</button></span><span style="display:flex;gap:8px"><button class="ds-btn">Clear</button><button class="ds-btn">Cancel</button><button class="ds-btn primary">Apply</button></span></div>'+
