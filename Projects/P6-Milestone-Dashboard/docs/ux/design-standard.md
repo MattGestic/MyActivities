@@ -100,7 +100,9 @@ Groups are separated by `--group-gap` and a 1px hairline. There is no empty spac
 
 ## How this is verified
 
-`tools/ds_check.py` (built at D-16b) loads the app at 390, 768 and 1440 wide, with fine and forced-coarse pointer, in light and dark. For every control class in the table above it asserts:
+`tools/d16_check.py` renders `docs/mockups/D-16/component_sheet.html` (the sign-off sheet referenced above) at each committed width, measures its own full content height rather than guessing one, and diffs the result pixel-for-pixel against the committed PNG in `docs/mockups/D-16/png/`. It fails on a dimension change or on more than 0.1% of pixels differing beyond anti-aliasing tolerance, so a control-sizing regression (a token value change breaking a control's dimensions) fails the diff instead of shipping silently. Run it before merging any change touching control CSS; `--update` re-renders and accepts the current sheet as the new baseline after a reviewed, intentional visual change. This checks the SHEET, not the live app.
+
+`tools/ds_check.py` (built at D-16b, not yet written) is the deeper, live-app companion: it will load the app itself at 390, 768 and 1440 wide, with fine and forced-coarse pointer, in light and dark. For every control class in the table above it will assert:
 - computed height equals the token (±0.5px)
 - horizontal padding
 - border radius
