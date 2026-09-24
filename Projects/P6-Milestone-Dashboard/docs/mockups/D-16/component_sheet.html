@@ -99,6 +99,41 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
 .phone .ds-seg.chips.pills button{flex:0 0 auto;border:1px solid var(--color-btn-secondary-outline);border-radius:999px;padding:0 12px}
 .phone .fb-box.crit .crit-clear{position:absolute;top:6px;right:8px}
 .fb-box.crit{position:relative}
+
+/* Week-range picker (D-16a rev 4) */
+.wr-field{box-sizing:border-box;height:var(--ctl-h);display:inline-flex;align-items:center;gap:6px;padding:0 var(--ctl-pad-x);border:1px solid var(--color-btn-secondary-outline);border-radius:var(--radius-ctl);background:var(--color-bg-elevated);color:var(--color-text-primary);font:inherit;font-size:var(--fs-field);cursor:pointer;text-align:left;min-width:220px}
+.wr-field .wr-txt{flex:1 1 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wr-field.empty .wr-txt{color:var(--color-text-muted)}
+.wr-field .wr-caret{color:var(--color-text-muted);font-size:10px}
+.wr-field .wr-clr{border:0;background:transparent;color:var(--color-text-muted);width:20px;height:20px;border-radius:var(--radius-ctl);cursor:pointer;font-size:11px}
+.wr-pop{border:1px solid var(--color-filter-border);border-radius:var(--radius-overlay);background:var(--color-bg-elevated);box-shadow:0 8px 24px rgba(0,0,0,.18);display:grid;grid-template-columns:auto 1fr;gap:0;width:max-content;max-width:100%;color:var(--color-text-primary)}
+.wr-quick{display:flex;flex-direction:column;gap:2px;padding:8px;border-right:1px solid var(--color-line-default);min-width:130px}
+.wr-quick button{height:var(--ctl-h);text-align:left;border:0;background:transparent;color:var(--color-text-primary);font:inherit;font-size:var(--fs-caption);padding:0 8px;border-radius:var(--radius-ctl);cursor:pointer}
+.wr-quick button:hover{background:var(--color-btn-icon-hover-bg)}
+.wr-quick button[aria-pressed="true"]{background:var(--color-accent-wash,rgba(139,100,199,.12));color:var(--color-accent-ink);font-weight:600}
+.wr-main{padding:8px 12px;display:flex;flex-direction:column;gap:8px}
+.wr-head{display:flex;justify-content:space-between;align-items:center;font-size:var(--fs-caption)}
+.wr-head b{font-weight:600}
+.wr-grid{display:grid;grid-template-columns:64px repeat(5,40px);gap:2px 0;align-items:center}
+.wr-mon{font-size:var(--fs-caption);font-weight:600;color:var(--color-text-muted);padding-right:8px}
+.wr-wk{position:relative;height:var(--ctl-h);display:flex;align-items:center;justify-content:center;font-size:var(--fs-caption);cursor:pointer;color:var(--color-text-primary)}
+.wr-wk:hover{background:var(--color-btn-icon-hover-bg);border-radius:var(--radius-ctl)}
+.wr-wk.in{background:var(--color-accent-tint-bg,#efe6f9)}
+.wr-wk.end{background:var(--color-accent-purple);color:#fff;font-weight:600;border-radius:var(--radius-ctl)}
+.wr-wk.preview{background:repeating-linear-gradient(135deg,var(--color-accent-tint-bg,#efe6f9) 0 4px,transparent 4px 8px)}
+.wr-wk.dd{box-shadow:inset 0 0 0 1.5px var(--color-accent-ink);border-radius:var(--radius-ctl)}
+.wr-wk .dot{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--color-text-muted)}
+.wr-wk.end .dot{background:#fff}
+.wr-wk.out{color:var(--color-text-muted);opacity:.35;cursor:default}
+.wr-foot button{white-space:nowrap}
+.wr-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid var(--color-line-default);padding-top:8px;font-size:var(--fs-caption)}
+.wr-legend{display:flex;gap:12px;color:var(--color-text-muted);font-size:11px;align-items:center}
+.wr-legend i{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:-1px;margin-right:4px}
+.wr-states{display:flex;flex-direction:column;gap:8px}
+.touch .wr-grid{grid-template-columns:56px repeat(5,minmax(0,1fr))}
+.touch .wr-pop{grid-template-columns:1fr;width:100%}
+.touch .wr-quick{flex-direction:row;flex-wrap:wrap;border-right:0;border-bottom:1px solid var(--color-line-default);min-width:0}
+.touch .wr-quick button{border:1px solid var(--color-btn-secondary-outline);border-radius:999px}
 </style>
 
 <div class="wrap">
@@ -122,6 +157,7 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
   <h2>Top filter bar, desktop 1440px (four rows)</h2>
   <p>Rows 1 and 2: <b>Find</b> and <b>When</b> as two containers side by side. Find has Activity name and Banding on one line, Activity IDs full width beneath. When has Week on one line and Show dates beneath. Row 3: <b>Critical path</b> on one line. Row 4: the hint and the hide control.</p>
   <p><b>Total float</b> becomes one choice set: <b>Any, 0d, &lt; 10d, &lt; 3 wk, &lt; 5 wk, Custom</b>. 0d keeps activities with zero or negative float (the critical path). Custom opens a small panel (at or below / at or above, a number, days or weeks) and then shows as its own chip, e.g. "&#8804; 7d". It replaces the three separate controls plus preset buttons, with the same range of filters.</p>
+  <p><b>Show weeks</b> is one field that picks a whole-week range (see the week-range picker below). It narrows the board, as the two date boxes did.</p>
   <p><b>Week</b> becomes a week picker (defaulting to this week) plus one span choice: Only, +2, +4, Up to, From. This replaces the mode dropdown and the Current week / Next 4 weeks buttons: Next 4 weeks is this week with +4. Show dates still narrows the board to a range and Full span resets it; Week still highlights, as now.</p>
   <div class="pg-scroll"><div style="min-width:1100px"><div class="ds t-light fb" id="fb-desk"></div></div></div>
 </section>
@@ -130,6 +166,22 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
   <h2>Total float: Custom</h2>
   <p>Custom opens a small panel under the chip. Apply sets the filter and relabels the chip with the value; choosing any other chip replaces it.</p>
   <div class="pg-scroll"><div style="min-width:760px"><div class="ds t-light fb" id="fb-custom"></div></div></div>
+</section>
+
+<section class="pg-sect">
+  <h2>Show weeks: week-range picker</h2>
+  <p>One field replaces the two date boxes. It picks <b>whole weeks</b>, because the board's columns are weeks. The panel is laid out like the board header: one row per month, one cell per week labelled with its week-ending day. It only offers weeks the board has. Click a start week, hover to preview, click an end week, Apply. The data-date week is outlined; a dot marks weeks with milestones in them.</p>
+  <div class="pg-grid">
+    <div><p class="pg-cap">Closed: the field states</p><div class="ds t-light"><div class="wr-states">
+      <button class="wr-field empty"><span class="wr-ico" aria-hidden="true">&#128197;</span><span class="wr-txt">All weeks</span><span class="wr-caret">&#9662;</span></button>
+      <button class="wr-field"><span class="wr-ico" aria-hidden="true">&#128197;</span><span class="wr-txt">W/e 11 Oct to 29 Nov 2026 &#183; 8 weeks</span><span class="wr-clr" aria-label="Clear">&#10005;</span></button>
+      <button class="wr-field"><span class="wr-ico" aria-hidden="true">&#128197;</span><span class="wr-txt">From w/e 11 Oct 2026</span><span class="wr-clr" aria-label="Clear">&#10005;</span></button>
+      <button class="wr-field"><span class="wr-ico" aria-hidden="true">&#128197;</span><span class="wr-txt">Until w/e 29 Nov 2026</span><span class="wr-clr" aria-label="Clear">&#10005;</span></button>
+    </div></div></div>
+    <div><p class="pg-cap">Open: picking the end week (desktop)</p><div class="pg-scroll"><div class="ds t-light"><div id="wr-desk"></div></div></div></div>
+    <div><p class="pg-cap">Open: dark</p><div class="pg-scroll"><div class="ds t-dark"><div id="wr-dark"></div></div></div></div>
+    <div><p class="pg-cap">Phone sheet (touch)</p><div class="pg-scroll"><div style="width:390px"><div class="ds touch t-light"><div id="wr-phone"></div></div></div></div></div>
+  </div>
 </section>
 
 <section class="pg-sect">
@@ -182,8 +234,8 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
       <label>Week</label>
       <div class="fb-line"><select class="ds-select" style="min-width:150px"><option>This week (21 Sep)</option><option>All weeks</option></select>
         <span class="ds-seg chips" role="group" aria-label="Week span"><button aria-pressed="true">Only</button><button aria-pressed="false">+2</button><button aria-pressed="false">+4</button><button aria-pressed="false">Up to</button><button aria-pressed="false">From</button></span></div>
-      <label>Show dates</label>
-      <div class="fb-line dates"><input class="ds-field" type="date" aria-label="From"><span class="fb-note">to</span><input class="ds-field" type="date" aria-label="To"><button class="ds-btn">Full span</button></div>
+      <label>Show weeks</label>
+      <div class="fb-line"><button class="wr-field grow" aria-haspopup="dialog"><span class="wr-ico" aria-hidden="true">&#128197;</span><span class="wr-txt">All weeks</span><span class="wr-caret" aria-hidden="true">&#9662;</span></button></div>
     </div>
   </div>
   <div class="fb-box crit">
@@ -215,5 +267,36 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
   ['ctl-desk-light','ctl-desk-dark','ctl-touch-light','ctl-touch-dark'].forEach(function(id){fill(id,'tpl-ctl');});
   ['fb-desk','fb-phone-light','fb-phone-dark'].forEach(function(id){fill(id,'tpl-fb');});
   fill('fb-custom','tpl-custom');
+  // Week-range picker mock: board weeks end on Sundays, 24 May 2026 to 10 Jan 2027.
+  function buildWR(host,opt){
+    var el=document.getElementById(host); if(!el) return;
+    var M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var d=new Date(2026,4,24), end=new Date(2027,0,10), rows={}, order=[];
+    while(d<=end){var k=d.getFullYear()+'-'+d.getMonth(); if(!rows[k]){rows[k]=[];order.push(k);} rows[k].push(new Date(d)); d.setDate(d.getDate()+7);}
+    var s0=new Date(2026,9,11), s1=opt.end, dd=new Date(2026,7,16), busy={'2026-6-5':1,'2026-6-26':1,'2026-7-2':1,'2026-7-30':1,'2026-8-13':1,'2026-9-11':1,'2026-9-25':1,'2026-10-8':1,'2026-10-22':1,'2026-10-29':1,'2026-11-13':1};
+    var g='';
+    order.forEach(function(k){var ws=rows[k],m=ws[0].getMonth(),y=ws[0].getFullYear();
+      g+='<span class="wr-mon">'+M[m]+(m===0||k===order[0]?' '+String(y).slice(2):'')+'</span>';
+      for(var i=0;i<5;i++){var w=ws[i]; if(!w){g+='<span></span>';continue;}
+        var c='wr-wk', t=w.getTime();
+        if(t===s0.getTime()||(opt.done&&t===s1.getTime())) c+=' end';
+        else if(t>s0.getTime()&&t<s1.getTime()) c+=opt.done?' in':' preview';
+        else if(!opt.done&&t===s1.getTime()) c+=' preview';
+        if(t===dd.getTime()) c+=' dd';
+        var key=w.getFullYear()+'-'+w.getMonth()+'-'+w.getDate();
+        g+='<span class="'+c+'" role="button" aria-label="Week ending '+w.getDate()+' '+M[w.getMonth()]+'">'+('0'+w.getDate()).slice(-2)+(busy[key]?'<i class="dot"></i>':'')+'</span>';}
+    });
+    var q=['Next 4 weeks','Next 3 months','This month','Rest of study','Full span'].map(function(x){return '<button aria-pressed="false">'+x+'</button>';}).join('');
+    el.innerHTML='<div class="wr-pop"><div class="wr-quick">'+q+'</div><div class="wr-main">'+
+      '<div class="wr-head"><span>'+(opt.done?'<b>11 Oct to 29 Nov 2026</b> &#183; 8 weeks':'Start <b>w/e 11 Oct</b> &#183; pick an end week')+'</span></div>'+
+      '<div class="wr-grid">'+g+'</div>'+
+      '<div class="wr-legend"><span><i style="background:var(--color-accent-purple)"></i>Start / end</span><span><i style="box-shadow:inset 0 0 0 1.5px var(--color-accent-ink)"></i>Data date</span><span>&#8226; Milestones due</span></div>'+
+      '<div class="wr-foot"><span class="ds-seg"><button aria-pressed="false" title="Show from the picked week onward">From only</button><button aria-pressed="false" title="Show up to the picked week">Until only</button></span><span style="display:flex;gap:8px"><button class="ds-btn">Clear</button><button class="ds-btn">Cancel</button><button class="ds-btn primary">Apply</button></span></div>'+
+      '</div></div>';
+  }
+  buildWR('wr-desk',{end:new Date(2026,10,1),done:false});
+  buildWR('wr-dark',{end:new Date(2026,10,29),done:true});
+  buildWR('wr-phone',{end:new Date(2026,10,29),done:true});
+
 })();
 </script>
