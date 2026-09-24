@@ -16,6 +16,7 @@ Status baseline is the delivered v3.1.0-P1 build. Features marked `Published` we
 | EPIC-06 | Design system tokenization and development discipline | FEAT-14, FEAT-16 | 1/2 published |
 | EPIC-07 | Grouping and presentation (future) | FEAT-10, FEAT-11 | 0/2 published |
 | EPIC-08 | Repository and delivery | FEAT-12, FEAT-15 | 1/2 published |
+| EPIC-09 | Edit ledger, schedule hand-back and review | FEAT-18 to FEAT-23 | 0/6 published. Staged plan agreed 2026-09-23, one release per stage |
 
 ## Features
 
@@ -38,6 +39,12 @@ Status baseline is the delivered v3.1.0-P1 build. Features marked `Published` we
 | FEAT-15 | EPIC-08 | Git repository migration + project kit | — | H | L | Published | Orphan branch `p6-milestone-dashboard` as the app's main. Tagged `v3.1.0-P1`. |
 | FEAT-16 | EPIC-06 | Lessons-learned capture and promotion of general rules to repository governance | — | M | L | Published | `docs/06-lessons-learned.md`. Two rules promoted to `Governance/` on the hub branch. |
 | FEAT-17 | EPIC-01 | Mount manager: three fixed source slots with unmount and remount | — | H | M | Published | v3.1.0-P9. Baseline (locked) / Schedule / Annotations, each showing file name, data date and load time, so an active override is visible as an override. |
+| FEAT-18 | EPIC-09 | Data envelope: schedule data in a JSON block with a schema version, separate from code (D-02) | — | M | M | Not started | Published state moves to a JSON block too; publish keeps a whitelist of the file's own blocks. |
+| FEAT-19 | EPIC-09 | Edit ledger: every edit and comment timestamped with its period, one reader per field (D-03 to D-05) | — | H | H | Not started | Wraps the five existing annotation stores. Drafts stay on the card (P43). Timestamped comment thread, Clear comments, per-field discard, saved asterisk, NEW badge. |
+| FEAT-20 | EPIC-09 | Scheduler hand-back export and ID mapping (D-10, D-11) | — | H | M | Not started | Change request workbook for the master schedule; temporary IDs mapped back to master IDs. Never writes to P6. |
+| FEAT-21 | EPIC-09 | Import reconciliation: confirm, acknowledge or dismiss changes between periods (D-12) | — | H | H | Not started | Summary first, expand for exceptions and bulk update; a decision is recorded so the same item is not raised again. |
+| FEAT-22 | EPIC-09 | Multi-select and saved lists panel, filter the board to a list (D-06) | — | M | M | Not started | Ctrl-click selection; one default list and named lists; full-height panel docked left or right. |
+| FEAT-23 | EPIC-09 | Variance, summary strip and milestone register (D-07 to D-09) | — | M | H | Not started | Register uses Tabulator vendored inline, a constraint change needing sign-off before D-09. |
 
 ## Tasks
 

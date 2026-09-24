@@ -209,10 +209,10 @@ PROBE = r"""
     const expLabels=exports?Array.prototype.map.call(exports.querySelectorAll('button'),lbl):[];
     const rightLabels=right?Array.prototype.map.call(right.querySelectorAll('button'),lbl):[];
     R.notes.actionOrder={exports:expLabels,right:rightLabels};
-    ck('layout: CSV and JSON on the left, Save then Clear on the right',
+    ck('layout: CSV and JSON on the left, Save then Reset on the right',
        expLabels.length===2 && /CSV/.test(expLabels[0]) && /JSON/.test(expLabels[1]) &&
        rightLabels.length===2 && /Save as new dashboard/.test(rightLabels[0]) &&
-       /Clear all comments/.test(rightLabels[1]),
+       /Reset row marks/.test(rightLabels[1]),
        expLabels.join(' | ')+'  ///  '+rightLabels.join(' | '));
     const rr=right?right.getBoundingClientRect():null;
     const mr=main?main.getBoundingClientRect():null;

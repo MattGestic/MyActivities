@@ -1,0 +1,325 @@
+<title>Design Standard Sheet</title>
+<style>
+/* Page chrome */
+:root{--pg-bg:#f3f4f7;--pg-surface:#ffffff;--pg-ink:#17191c;--pg-muted:#575c67;--pg-line:#e1e3e8}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){color-scheme:dark;--pg-bg:#14171c;--pg-surface:#1c2027;--pg-ink:#e6e8ec;--pg-muted:#a6adba;--pg-line:#2c323c}}
+:root[data-theme="dark"]{color-scheme:dark;--pg-bg:#14171c;--pg-surface:#1c2027;--pg-ink:#e6e8ec;--pg-muted:#a6adba;--pg-line:#2c323c}
+body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable Text','Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;padding-inline:16px}
+.wrap{max-width:1500px;margin:0 auto;padding-block:20px 32px;display:flex;flex-direction:column;gap:20px}
+.pg-head h1{margin:0 0 6px;font-size:20px;line-height:28px}
+.pg-head p{margin:0;font-size:13px;line-height:1.5;color:var(--pg-muted);max-width:80ch}
+.pg-sect{background:var(--pg-surface);border:1px solid var(--pg-line);border-radius:8px;padding:16px;min-width:0}
+.pg-sect>h2{margin:0 0 4px;font-size:14px;line-height:20px}
+.pg-sect>p{margin:0 0 12px;font-size:12px;line-height:1.5;color:var(--pg-muted)}
+.pg-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:12px}
+.pg-scroll{overflow-x:auto}
+.pg-cap{font-size:11px;color:var(--pg-muted);margin:0 0 6px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+
+/* App tokens, copied from src/milestone-dashboard.html */
+.t-light{--color-accent-tint-bg:#efe6f9;--color-accent-wash:rgba(139,100,199,.10);--color-bg-panel:#f4f5f8;--color-bg-elevated:#ffffff;--color-filter-bg:#e4e9ed;--color-filter-border:#c9d2d8;
+  --color-text-primary:#17191c;--color-text-muted:#6f7480;--color-accent-purple:#8b64c7;--color-accent-ink:#6f46ad;
+  --color-btn-primary-bg:#1c3a63;--color-btn-primary-text:#ffffff;--color-btn-primary-hover-bg:#2a4a7a;
+  --color-btn-secondary-bg:#ffffff;--color-btn-secondary-text:#1c3a63;--color-btn-secondary-outline:#9fb0bd;--color-btn-secondary-hover-bg:#eef1f7;
+  --color-btn-icon-hover-bg:#dde1ea;--color-status-crit:#c0392b;--color-line-default:#e3e2de}
+.t-dark{--color-accent-tint-bg:#2a2440;--color-accent-wash:rgba(139,100,199,.10);--color-bg-panel:#1e2240;--color-bg-elevated:#232f4a;--color-filter-bg:#1e2240;--color-filter-border:#3a3e60;
+  --color-text-primary:#e8eef8;--color-text-muted:#8b9bb8;--color-accent-purple:#8b64c7;--color-accent-ink:#a98ad8;
+  --color-btn-primary-bg:#3a6ea8;--color-btn-primary-text:#ffffff;--color-btn-primary-hover-bg:#4a80ba;
+  --color-btn-secondary-bg:#1e2240;--color-btn-secondary-text:#9cbcff;--color-btn-secondary-outline:#3a3e60;--color-btn-secondary-hover-bg:#2a2e50;
+  --color-btn-icon-hover-bg:#2a2e50;--color-status-crit:#c00000;--color-line-default:rgba(160,184,230,.2)}
+
+/* D-16 standard tokens */
+.ds{--ctl-h:24px;--icon-btn:24px;--ctl-pad-x:8px;--ctl-gap:8px;--ctl-gap-tight:4px;--field-label-gap:12px;--group-gap:16px;
+  --radius-ctl:4px;--radius-overlay:8px;--fs-caption:12px;--lh-caption:16px;--fs-field:12px;
+  font-family:'Segoe UI Variable Text','Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;
+  background:var(--color-filter-bg);color:var(--color-text-primary);border-radius:var(--radius-overlay);padding:var(--group-gap);
+  font-size:var(--fs-caption);line-height:var(--lh-caption)}
+.ds.touch{--ctl-h:32px;--icon-btn:32px;--fs-field:14px}
+
+.ds-btn,.ds-field,.ds-select,.ds-chip,.ds-seg button{box-sizing:border-box;height:var(--ctl-h);font:inherit;font-size:var(--fs-caption);border-radius:var(--radius-ctl)}
+.ds-btn{padding:0 var(--ctl-pad-x);border:1px solid var(--color-btn-secondary-outline);background:var(--color-btn-secondary-bg);color:var(--color-btn-secondary-text);cursor:pointer;white-space:nowrap}
+.ds-btn:hover{background:var(--color-btn-secondary-hover-bg)}
+.ds-btn.primary{background:var(--color-btn-primary-bg);border-color:var(--color-btn-primary-bg);color:var(--color-btn-primary-text);font-weight:600}
+.ds-btn.primary:hover{background:var(--color-btn-primary-hover-bg)}
+.ds-ico{box-sizing:border-box;width:var(--icon-btn);height:var(--icon-btn);border:0;background:transparent;color:var(--color-text-primary);border-radius:var(--radius-ctl);font-size:14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.ds-ico:hover{background:var(--color-btn-icon-hover-bg)}
+.ds-field,.ds-select{padding:0 var(--ctl-pad-x);border:1px solid var(--color-btn-secondary-outline);background:var(--color-bg-elevated);color:var(--color-text-primary);font-size:var(--fs-field);min-width:120px}
+.ds-field::placeholder{color:var(--color-text-muted)}
+.ds-fwrap{position:relative;display:inline-flex}
+.ds-fwrap .lead{position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--color-text-muted);font-size:12px;pointer-events:none}
+.ds-fwrap.has-lead .ds-field{padding-left:26px}
+.ds-fwrap .clr{position:absolute;right:2px;top:50%;transform:translateY(-50%);width:20px;height:20px;border:0;background:transparent;color:var(--color-text-muted);border-radius:var(--radius-ctl);cursor:pointer;font-size:11px}
+.ds-fwrap .clr:hover{background:var(--color-btn-icon-hover-bg)}
+.ds-fwrap.has-clr .ds-field{padding-right:24px}
+.ds-chip{padding:0 10px;border:1px solid var(--color-btn-secondary-outline);background:var(--color-bg-elevated);color:var(--color-text-primary);border-radius:999px;cursor:pointer}
+.ds-chip[aria-pressed="true"]{background:var(--color-accent-purple);border-color:var(--color-accent-purple);color:#fff}
+.ds-seg{display:inline-flex;border:1px solid var(--color-btn-secondary-outline);border-radius:var(--radius-ctl);overflow:hidden}
+.ds-seg button{border:0;border-radius:0;padding:0 var(--ctl-pad-x);background:var(--color-bg-elevated);color:var(--color-text-primary);cursor:pointer}
+.ds-seg button[aria-pressed="true"]{background:var(--color-accent-purple);color:#fff;font-weight:600}
+.ds-check{display:inline-flex;align-items:center;gap:6px;min-height:var(--ctl-h)}
+.ds-check input{width:16px;height:16px;margin:0;accent-color:var(--color-accent-purple)}
+.ds-row{display:flex;flex-wrap:wrap;gap:var(--ctl-gap);align-items:center}
+.ds-row+.ds-row{margin-top:var(--ctl-gap)}
+.ds-focus{outline:2px solid var(--color-accent-purple);outline-offset:1px}
+.ds :focus-visible{outline:2px solid var(--color-accent-purple);outline-offset:1px}
+
+/* Filter bar mock (D-16a rev 2): max four rows on desktop */
+.fb{display:flex;flex-direction:column;gap:var(--ctl-gap)}
+.fb-top{display:flex;flex-wrap:wrap;gap:var(--ctl-gap)}
+.fb-box{border:1px solid var(--color-filter-border);border-radius:var(--radius-overlay);background:color-mix(in srgb,var(--color-bg-elevated) 45%,transparent);padding:var(--ctl-gap) 12px;display:grid;grid-template-columns:auto 1fr;gap:var(--ctl-gap) var(--field-label-gap);align-items:center;min-width:0}
+.fb-box.find{flex:1 1 520px}
+.fb-box.when{flex:1 1 520px}
+.fb-box.crit{display:flex;flex-wrap:wrap;align-items:center;gap:var(--ctl-gap) var(--group-gap)}
+.fb-title{grid-column:1/-1;margin:0;font-size:var(--fs-caption);font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--color-accent-ink)}
+.fb-box.crit .fb-title{margin-right:var(--ctl-gap)}
+.fb-box label{font-weight:600;white-space:nowrap}
+.fb-line{display:flex;flex-wrap:wrap;gap:var(--ctl-gap);align-items:center;min-width:0}
+.fb-line .grow{flex:1 1 160px;min-width:0}
+.fb-line .grow .ds-field,.fb-line .grow.ds-field,.fb-line .grow.ds-select{width:100%}
+.fb-inline{display:flex;align-items:center;gap:var(--field-label-gap)}
+.fb-sep{width:1px;align-self:stretch;background:var(--color-filter-border)}
+.ds-seg.chips button{border-right:1px solid var(--color-btn-secondary-outline)}
+.ds-seg.chips button:last-child{border-right:0}
+.fb-note{font-size:11px;color:var(--color-text-muted)}
+.fb-foot{display:flex;align-items:center;justify-content:space-between;gap:var(--ctl-gap);color:var(--color-text-muted);font-size:11px}
+.pop{position:relative;display:inline-block}
+.pop-card{position:absolute;left:0;top:calc(100% + 6px);z-index:2;border:1px solid var(--color-filter-border);border-radius:var(--radius-overlay);background:var(--color-bg-elevated);padding:12px;display:flex;flex-direction:column;gap:var(--ctl-gap);box-shadow:0 8px 24px rgba(0,0,0,.18);width:max-content}
+/* Phone: containers stack, labels above, fields full width */
+.phone .fb-box{display:flex;flex-direction:column;align-items:stretch}
+.phone .fb-box.crit{display:flex;flex-direction:column;align-items:stretch}
+.phone .fb-inline{flex-direction:column;align-items:stretch;gap:var(--ctl-gap-tight)}
+.phone .fb-sep{display:none}
+.phone .ds-fwrap,.phone .ds-field,.phone .ds-select{width:100%;min-width:0}
+.phone .ds-seg{display:flex;flex-wrap:wrap}
+.phone .ds-seg button{flex:1 1 auto}
+.phone .fb-line{flex-direction:column;align-items:stretch}
+.phone .fb-line .grow{flex:0 0 auto}
+.phone .fb-line.dates{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center}
+.phone .fb-line.dates .ds-btn{grid-column:1/-1;justify-self:start}
+.phone .ds-seg.chips.pills{border:0;gap:var(--ctl-gap);background:transparent}
+.phone .ds-seg.chips.pills button{flex:0 0 auto;border:1px solid var(--color-btn-secondary-outline);border-radius:999px;padding:0 12px}
+.phone .fb-box.crit .crit-clear{position:absolute;top:6px;right:8px}
+.fb-box.crit{position:relative}
+
+/* Week-range picker (D-16a rev 4) */
+.wr-field{box-sizing:border-box;height:var(--ctl-h);display:inline-flex;align-items:center;gap:6px;padding:0 var(--ctl-pad-x);border:1px solid var(--color-btn-secondary-outline);border-radius:var(--radius-ctl);background:var(--color-bg-elevated);color:var(--color-text-primary);font:inherit;font-size:var(--fs-field);cursor:pointer;text-align:left;min-width:220px}
+.wr-field .wr-txt{flex:1 1 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wr-field.empty .wr-txt{color:var(--color-text-muted)}
+.wr-field .wr-caret{color:var(--color-text-muted);font-size:10px}
+.wr-field .wr-clr{border:0;background:transparent;color:var(--color-text-muted);width:20px;height:20px;border-radius:var(--radius-ctl);cursor:pointer;font-size:11px}
+.wr-pop{box-sizing:border-box;width:100%;max-width:560px;border:1px solid var(--color-filter-border);border-radius:var(--radius-overlay);background:var(--color-bg-elevated);box-shadow:0 8px 24px rgba(0,0,0,.18);display:grid;grid-template-columns:minmax(120px,auto) minmax(0,1fr);gap:0;color:var(--color-text-primary)}
+.wr-quick{display:flex;flex-direction:column;gap:2px;padding:8px;border-right:1px solid var(--color-line-default);min-width:0}
+.wr-quick button{height:var(--ctl-h);text-align:left;border:0;background:transparent;color:var(--color-text-primary);font:inherit;font-size:var(--fs-caption);padding:0 8px;border-radius:var(--radius-ctl);cursor:pointer}
+.wr-quick button:hover{background:var(--color-btn-icon-hover-bg)}
+.wr-quick button[aria-pressed="true"]{background:var(--color-accent-wash,rgba(139,100,199,.12));color:var(--color-accent-ink);font-weight:600}
+.wr-main{min-width:0;padding:8px 12px;display:flex;flex-direction:column;gap:8px}
+.wr-head{display:flex;justify-content:space-between;align-items:center;font-size:var(--fs-caption)}
+.wr-head b{font-weight:600}
+.wr-grid{display:grid;grid-template-columns:minmax(44px,auto) repeat(5,minmax(28px,1fr));gap:2px 0;align-items:center}
+.wr-mon{font-size:var(--fs-caption);font-weight:600;color:var(--color-text-muted);padding-right:8px}
+.wr-wk{position:relative;height:var(--ctl-h);display:flex;align-items:center;justify-content:center;font-size:var(--fs-caption);cursor:pointer;color:var(--color-text-primary)}
+.wr-wk:hover{background:var(--color-btn-icon-hover-bg);border-radius:var(--radius-ctl)}
+.wr-wk.in{background:var(--color-accent-tint-bg,#efe6f9)}
+.wr-wk.end{background:var(--color-accent-purple);color:#fff;font-weight:600;border-radius:var(--radius-ctl)}
+.wr-wk.preview{background:repeating-linear-gradient(135deg,var(--color-accent-tint-bg,#efe6f9) 0 4px,transparent 4px 8px)}
+.wr-wk.dd{box-shadow:inset 0 0 0 1.5px var(--color-accent-ink);border-radius:var(--radius-ctl)}
+.wr-wk.ps::before,.wr-wk.pe::after{content:"";position:absolute;top:1px;bottom:1px;width:4px;border:2px solid var(--color-text-primary);pointer-events:none}
+.wr-wk.ps::before{left:-1px;border-right:0;border-radius:2px 0 0 2px}
+.wr-wk.pe::after{right:-1px;border-left:0;border-radius:0 2px 2px 0}
+.wr-legend .brk{display:inline-block;width:10px;height:10px;vertical-align:-1px;margin-right:4px;border:2px solid var(--color-text-primary);border-right-width:0;border-left-width:2px;box-sizing:border-box}
+.wr-legend .brk.e{border-left-width:0;border-right-width:2px;margin-left:-2px}
+.wr-wk.out{color:var(--color-text-muted);opacity:.35;cursor:default}
+.wr-foot button{white-space:nowrap}
+.wr-foot .ds-seg button,.wr-foot .ds-btn{height:auto;min-height:var(--ctl-h);line-height:1.2;padding-block:2px}
+.wr-foot>span{display:flex;flex-wrap:wrap;gap:8px}
+.wr-foot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid var(--color-line-default);padding-top:8px;font-size:var(--fs-caption)}
+.wr-legend{flex-wrap:wrap;display:flex;gap:12px;color:var(--color-text-muted);font-size:11px;align-items:center}
+.wr-legend i{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:-1px;margin-right:4px}
+.wr-states{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.wr-val{display:inline-flex;align-items:center;gap:6px;flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden}
+.wr-tag{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--color-text-muted)}
+.wr-val b{font-weight:600}
+.wr-arrow{color:var(--color-text-muted)}
+.wr-div{width:1px;align-self:stretch;margin:4px 2px;background:var(--color-btn-secondary-outline)}
+.wr-count{flex:0 0 auto;font-size:11px;font-weight:600;color:var(--color-accent-ink);background:var(--color-accent-tint-bg,#efe6f9);border-radius:999px;padding:1px 8px}
+.wr-field{min-width:260px}
+.st-row{display:grid;grid-template-columns:120px 1fr;gap:4px 12px;align-items:center}
+.st-row .ds-seg{justify-self:start}
+.st-help{grid-column:2;font-size:11px;color:var(--color-text-muted);line-height:1.4}
+.touch .wr-grid{grid-template-columns:56px repeat(5,minmax(0,1fr))}
+.touch .wr-pop{grid-template-columns:1fr;width:100%}
+.touch .wr-quick{flex-direction:row;flex-wrap:wrap;border-right:0;border-bottom:1px solid var(--color-line-default);min-width:0}
+.touch .wr-quick button{border:1px solid var(--color-btn-secondary-outline);border-radius:999px}
+</style>
+
+<div class="wrap">
+<header class="pg-head">
+  <h1>D-16 design standard: component sheet</h1>
+  <p>Every control in the dashboard, drawn to one standard based on the Windows UI kit (Fluent 2): 24px controls on desktop and 32px on touch screens, 12px control text, 4px corners, and spacing on a 4px grid. Colours are the app's own tokens. The written spec is <code>docs/ux/design-standard.md</code>. Sign-off on this sheet is the gate before any app code changes.</p>
+</header>
+
+<section class="pg-sect">
+  <h2>Controls: desktop (24px) and touch (32px), light and dark</h2>
+  <p>Same markup in all four frames; only the density class and the theme change. The focused field shows the keyboard focus ring.</p>
+  <div class="pg-grid">
+    <div><p class="pg-cap">Desktop · light</p><div class="ds t-light" id="ctl-desk-light"></div></div>
+    <div><p class="pg-cap">Desktop · dark</p><div class="ds t-dark" id="ctl-desk-dark"></div></div>
+    <div><p class="pg-cap">Touch · light</p><div class="ds touch t-light" id="ctl-touch-light"></div></div>
+    <div><p class="pg-cap">Touch · dark</p><div class="ds touch t-dark" id="ctl-touch-dark"></div></div>
+  </div>
+</section>
+
+<section class="pg-sect">
+  <h2>Top filter bar, desktop 1440px (four rows)</h2>
+  <p>Rows 1 and 2: <b>Find</b> and <b>When</b> as two containers side by side. Find has Activity name and Banding on one line, Activity IDs full width beneath. When has Week on one line and Show dates beneath. Row 3: <b>Critical path</b> on one line. Row 4: the hint and the hide control.</p>
+  <p><b>Total float</b> becomes one choice set: <b>Any, 0d, &lt; 10d, &lt; 3 wk, &lt; 5 wk, Custom</b>. 0d keeps activities with zero or negative float (the critical path). Custom opens a small panel (at or below / at or above, a number, days or weeks) and then shows as its own chip, e.g. "&#8804; 7d". It replaces the three separate controls plus preset buttons, with the same range of filters.</p>
+  <p><b>Show weeks</b> is one field that picks a whole-week range (see the week-range picker below). It narrows the board, as the two date boxes did.</p>
+  <p><b>Week</b> becomes a week picker (defaulting to this week) plus one span choice: Only, +2, +4, Up to, From. This replaces the mode dropdown and the Current week / Next 4 weeks buttons: Next 4 weeks is this week with +4. Show dates still narrows the board to a range and Full span resets it; Week still highlights, as now.</p>
+  <div class="pg-scroll"><div style="min-width:900px"><div class="ds t-light fb" id="fb-desk"></div></div></div>
+</section>
+
+<section class="pg-sect">
+  <h2>Total float: Custom</h2>
+  <p>Custom opens a small panel under the chip. Apply sets the filter and relabels the chip with the value; choosing any other chip replaces it.</p>
+  <div class="pg-scroll"><div style="min-width:760px"><div class="ds t-light fb" id="fb-custom"></div></div></div>
+</section>
+
+<section class="pg-sect">
+  <h2>Show weeks: week-range picker</h2>
+  <p>One field replaces the two date boxes. It picks <b>whole weeks</b>, because the board's columns are weeks. The panel is laid out like the board header: one row per month, one cell per week labelled with its week-ending day. It only offers weeks the board has. Click a start week, hover to preview, click an end week, Apply. The data-date week is outlined. A bracket marks the programme's first week (opening bracket) and last week (closing bracket), so the ends of the programme are visible without reading dates.</p>
+  <div class="pg-grid">
+    <div><p class="pg-cap">Closed: the field states</p><div class="ds t-light"><div class="wr-states">
+      <button class="wr-field empty"><span class="wr-ico" aria-hidden="true">&#128197;</span><span class="wr-txt">All weeks</span><span class="wr-caret">&#9662;</span></button>
+      <button class="wr-field" aria-label="Weeks ending 11 Oct 2026 to 29 Nov 2026, 8 weeks"><span class="wr-ico" aria-hidden="true">&#128197;</span><span class="wr-val"><span class="wr-tag">W/E</span><b>11 Oct 26</b><span class="wr-arrow">&#8594;</span><b>29 Nov 26</b></span><span class="wr-div" aria-hidden="true"></span><span class="wr-count">8 wks</span><span class="wr-clr" aria-label="Clear">&#10005;</span></button>
+      <button class="wr-field"><span class="wr-ico" aria-hidden="true">&#128197;</span><span class="wr-val"><span class="wr-tag">From</span><b>11 Oct 26</b></span><span class="wr-div" aria-hidden="true"></span><span class="wr-count">open end</span><span class="wr-clr" aria-label="Clear">&#10005;</span></button>
+      <button class="wr-field"><span class="wr-ico" aria-hidden="true">&#128197;</span><span class="wr-val"><span class="wr-tag">Until</span><b>29 Nov 26</b></span><span class="wr-div" aria-hidden="true"></span><span class="wr-count">open start</span><span class="wr-clr" aria-label="Clear">&#10005;</span></button>
+    </div></div></div>
+    <div><p class="pg-cap">Settings: week ending day</p><div class="ds t-light"><div class="st-row">
+      <label style="font-weight:600">Week ends on</label>
+      <span class="ds-seg" role="group" aria-label="Week ends on"><button aria-pressed="false">Mon</button><button aria-pressed="false">Tue</button><button aria-pressed="false">Wed</button><button aria-pressed="false">Thu</button><button aria-pressed="false">Fri</button><button aria-pressed="false">Sat</button><button aria-pressed="true">Sun</button></span>
+      <span class="st-help">Sets the board's week columns, the week picker and the week filter. Lives in Settings, Defaults. Changing it re-buckets every milestone into the new weeks; comments and edits are unaffected.</span>
+    </div></div></div>
+  </div>
+  <div class="pg-grid" style="grid-template-columns:repeat(auto-fit,minmax(min(480px,100%),1fr));margin-top:12px">
+    <div><p class="pg-cap">Open: picking the end week (desktop)</p><div class="pg-scroll"><div class="ds t-light"><div id="wr-desk"></div></div></div></div>
+    <div><p class="pg-cap">Open: dark</p><div class="pg-scroll"><div class="ds t-dark"><div id="wr-dark"></div></div></div></div>
+    <div><p class="pg-cap">Phone sheet (touch)</p><div class="pg-scroll"><div style="width:390px"><div class="ds touch t-light"><div id="wr-phone"></div></div></div></div></div>
+  </div>
+</section>
+
+<section class="pg-sect">
+  <h2>Top filter bar, phone 390px, touch sizing</h2>
+  <p>The same containers stacked: Find, When, Critical path. Labels above full-width fields; choice sets wrap as one group. Compare with P47's 44px fields in <code>docs/mockups/D-15a/after-390x900-light-coarse.png</code>.</p>
+  <div class="pg-grid">
+    <div><p class="pg-cap">Phone · light</p><div class="pg-scroll"><div style="width:390px"><div class="ds touch t-light fb phone" id="fb-phone-light"></div></div></div></div>
+    <div><p class="pg-cap">Phone · dark</p><div class="pg-scroll"><div style="width:390px"><div class="ds touch t-dark fb phone" id="fb-phone-dark"></div></div></div></div>
+  </div>
+</section>
+</div>
+
+<template id="tpl-ctl">
+  <div class="ds-row">
+    <button class="ds-btn primary">Save &amp; close</button>
+    <button class="ds-btn">Save</button>
+    <button class="ds-btn">Cancel</button>
+    <button class="ds-ico" aria-label="More actions" title="More actions">&#8942;</button>
+    <button class="ds-ico" aria-label="Close" title="Close">&#10005;</button>
+  </div>
+  <div class="ds-row">
+    <span class="ds-fwrap has-lead has-clr"><span class="lead" aria-hidden="true">&#128269;</span><input class="ds-field ds-focus" placeholder="Search activity name"><button class="clr" aria-label="Clear">&#10005;</button></span>
+    <select class="ds-select"><option>All bands</option></select>
+  </div>
+  <div class="ds-row">
+    <input class="ds-field" type="number" value="13" style="min-width:64px;width:64px">
+    <input class="ds-field" type="date" value="2026-09-23">
+    <span class="ds-seg"><button aria-pressed="true">Baseline</button><button aria-pressed="false">Update</button></span>
+  </div>
+  <div class="ds-row">
+    <button class="ds-chip" aria-pressed="true">Critical</button>
+    <button class="ds-chip" aria-pressed="false">At risk</button>
+    <button class="ds-chip" aria-pressed="false">On track</button>
+    <label class="ds-check"><input type="checkbox" checked> Show predecessors</label>
+  </div>
+</template>
+
+<template id="tpl-fb">
+  <div class="fb-top">
+    <div class="fb-box find">
+      <p class="fb-title">Find</p>
+      <label>Activity name</label>
+      <div class="fb-line"><span class="ds-fwrap has-lead grow"><span class="lead" aria-hidden="true">&#128269;</span><input class="ds-field" placeholder="Search activity name"></span>
+        <span class="fb-inline"><label>Banding</label><select class="ds-select" style="min-width:150px"><option>All bands</option></select></span></div>
+      <label>Activity IDs</label>
+      <div class="fb-line"><span class="ds-fwrap has-clr grow"><input class="ds-field" placeholder="e.g. SNIP-101, SNIP-115"><button class="clr" aria-label="Clear">&#10005;</button></span></div>
+    </div>
+    <div class="fb-box when">
+      <p class="fb-title">When</p>
+      <label>Week</label>
+      <div class="fb-line"><select class="ds-select" style="min-width:150px"><option>This week (21 Sep)</option><option>All weeks</option></select>
+        <span class="ds-seg chips" role="group" aria-label="Week span"><button aria-pressed="true">Only</button><button aria-pressed="false">+2</button><button aria-pressed="false">+4</button><button aria-pressed="false">Up to</button><button aria-pressed="false">From</button></span></div>
+      <label>Show weeks</label>
+      <div class="fb-line"><button class="wr-field grow" aria-haspopup="dialog"><span class="wr-ico" aria-hidden="true">&#128197;</span><span class="wr-val"><span class="wr-tag">W/E</span><b>11 Oct 26</b><span class="wr-arrow">&#8594;</span><b>29 Nov 26</b></span><span class="wr-div" aria-hidden="true"></span><span class="wr-count">8 wks</span><span class="wr-clr" aria-label="Clear">&#10005;</span></button></div>
+    </div>
+  </div>
+  <div class="fb-box crit">
+    <p class="fb-title">Critical path</p>
+    <span class="fb-inline"><label>Status</label><span class="ds-seg chips pills" role="group" aria-label="Status"><button aria-pressed="true">Critical</button><button aria-pressed="false">At risk</button><button aria-pressed="false">On track</button><button aria-pressed="false">Done</button><button aria-pressed="false">Complete</button><button aria-pressed="false">Future</button></span></span>
+    <span class="fb-sep" aria-hidden="true"></span>
+    <span class="fb-inline"><label>Total float</label><span class="ds-seg chips" role="group" aria-label="Total float"><button aria-pressed="false">Any</button><button aria-pressed="true">0d</button><button aria-pressed="false">&lt; 10d</button><button aria-pressed="false">&lt; 3 wk</button><button aria-pressed="false">&lt; 5 wk</button><button aria-pressed="false">Custom&#8230;</button></span></span>
+    <button class="ds-ico crit-clear" aria-label="Clear the critical path filters" title="Clear the critical path filters">&#10005;</button>
+  </div>
+  <div class="fb-foot"><span>Click a health dot or remarks field to edit &#183; Click a week header to filter</span><button class="ds-ico" aria-label="Hide filters" title="Hide filters">&#10005;</button></div>
+</template>
+
+<template id="tpl-custom">
+  <div class="fb-box crit" style="padding-bottom:150px">
+    <p class="fb-title">Critical path</p>
+    <span class="fb-inline"><label>Total float</label>
+      <span class="pop"><span class="ds-seg chips" role="group" aria-label="Total float"><button aria-pressed="false">Any</button><button aria-pressed="false">0d</button><button aria-pressed="false">&lt; 10d</button><button aria-pressed="false">&lt; 3 wk</button><button aria-pressed="false">&lt; 5 wk</button><button aria-pressed="true">&#8804; 7d</button></span>
+        <span class="pop-card" role="dialog" aria-label="Custom float">
+          <span class="fb-line"><span class="ds-seg" role="group" aria-label="Comparison"><button aria-pressed="true">At or below</button><button aria-pressed="false">At or above</button></span></span>
+          <span class="fb-line"><input class="ds-field" type="number" value="7" style="min-width:64px;width:64px"><span class="ds-seg" role="group" aria-label="Unit"><button aria-pressed="true">days</button><button aria-pressed="false">weeks</button></span></span>
+          <span class="fb-line"><button class="ds-btn primary">Apply</button><button class="ds-btn">Cancel</button></span>
+        </span></span></span>
+  </div>
+</template>
+
+<script>
+(function(){
+  function fill(id,tpl){var el=document.getElementById(id);if(el)el.appendChild(document.getElementById(tpl).content.cloneNode(true));}
+  ['ctl-desk-light','ctl-desk-dark','ctl-touch-light','ctl-touch-dark'].forEach(function(id){fill(id,'tpl-ctl');});
+  ['fb-desk','fb-phone-light','fb-phone-dark'].forEach(function(id){fill(id,'tpl-fb');});
+  fill('fb-custom','tpl-custom');
+  // Week-range picker mock: board weeks end on Sundays, 24 May 2026 to 10 Jan 2027.
+  function buildWR(host,opt){
+    var el=document.getElementById(host); if(!el) return;
+    var M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var d=new Date(2026,4,24), end=new Date(2027,0,10), rows={}, order=[];
+    while(d<=end){var k=d.getFullYear()+'-'+d.getMonth(); if(!rows[k]){rows[k]=[];order.push(k);} rows[k].push(new Date(d)); d.setDate(d.getDate()+7);}
+    var s0=new Date(2026,9,11), s1=opt.end, dd=new Date(2026,7,16), pS=new Date(2026,4,24).getTime(), pE=end.getTime();
+    var g='';
+    order.forEach(function(k){var ws=rows[k],m=ws[0].getMonth(),y=ws[0].getFullYear();
+      g+='<span class="wr-mon">'+M[m]+(m===0||k===order[0]?' '+String(y).slice(2):'')+'</span>';
+      for(var i=0;i<5;i++){var w=ws[i]; if(!w){g+='<span></span>';continue;}
+        var c='wr-wk', t=w.getTime();
+        if(t===s0.getTime()||(opt.done&&t===s1.getTime())) c+=' end';
+        else if(t>s0.getTime()&&t<s1.getTime()) c+=opt.done?' in':' preview';
+        else if(!opt.done&&t===s1.getTime()) c+=' preview';
+        if(t===dd.getTime()) c+=' dd';
+        if(t===pS) c+=' ps'; if(t===pE) c+=' pe';
+        var lab='Week ending '+w.getDate()+' '+M[w.getMonth()]+(t===pS?', programme start':'')+(t===pE?', programme end':'');
+        g+='<span class="'+c+'" role="button" aria-label="'+lab+'" title="'+lab+'">'+('0'+w.getDate()).slice(-2)+'</span>';}
+    });
+    var q=['Next 4 weeks','Next 3 months','This month','Rest of programme','Full span'].map(function(x){return '<button aria-pressed="false">'+x+'</button>';}).join('');
+    el.innerHTML='<div class="wr-pop"><div class="wr-quick">'+q+'</div><div class="wr-main">'+
+      '<div class="wr-head"><span>'+(opt.done?'<span class="wr-val"><span class="wr-tag">W/E</span><b>11 Oct 26</b><span class="wr-arrow">&#8594;</span><b>29 Nov 26</b><span class="wr-div"></span><span class="wr-count">8 wks</span></span>':'<span class="wr-val"><span class="wr-tag">Start</span><b>11 Oct 26</b><span class="wr-div"></span><span class="wr-tag">Pick an end week</span></span>')+'</span></div>'+
+      '<div class="wr-grid">'+g+'</div>'+
+      '<div class="wr-legend"><span><i style="background:var(--color-accent-purple)"></i>Selected start / end</span><span><i style="box-shadow:inset 0 0 0 1.5px var(--color-accent-ink)"></i>Data date</span><span><i class="brk"></i><i class="brk e"></i>Programme start / end</span></div>'+
+      '<div class="wr-foot"><span class="ds-seg"><button aria-pressed="false" title="Show from the picked week onward">From only</button><button aria-pressed="false" title="Show up to the picked week">Until only</button></span><span style="display:flex;gap:8px"><button class="ds-btn">Clear</button><button class="ds-btn">Cancel</button><button class="ds-btn primary">Apply</button></span></div>'+
+      '</div></div>';
+  }
+  buildWR('wr-desk',{end:new Date(2026,10,1),done:false});
+  buildWR('wr-dark',{end:new Date(2026,10,29),done:true});
+  buildWR('wr-phone',{end:new Date(2026,10,29),done:true});
+
+})();
+</script>
