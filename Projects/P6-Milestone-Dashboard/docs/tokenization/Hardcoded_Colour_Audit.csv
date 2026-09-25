@@ -9,31 +9,31 @@ line,selector,property,raw_value,normalised_value,declaration,matches_existing_t
 671,.sd-badge--done,background,#3f8f5f,#3f8f5f,"var(--color-health-good,#3f8f5f)",,,"var() fallback, toggles correctly",style-block
 759,.toggle-switch .tsw-slider:before,box-shadow,"rgba(0,0,0,.25)","rgba(0,0,0,.25)","0 1px 2px rgba(0,0,0,.25)",,,,style-block
 799,#filter-bar,box-shadow,"rgba(0,0,0,.18)","rgba(0,0,0,.18)","-2px 0 14px rgba(0,0,0,.18)",--color-shadow-soft,base,matches token in all themes,style-block
-1029,.id-suggest-dropdown,box-shadow,"rgba(0,0,0,.15)","rgba(0,0,0,.15)","0 4px 10px rgba(0,0,0,.15)",--color-health-rim,base,matches token in all themes,style-block
-1179,.rpt-hd,border-bottom,#e3e2de,#e3e2de,"1px solid var(--color-line-default,#e3e2de)",--color-border-panel|--color-line-default|--color-btn-inactive-border,light,"var() fallback, toggles correctly",style-block
-1196,#icon-bar .title:focus,outline,#2f6fed,#2f6fed,"1.5px solid var(--color-status-track,#2f6fed)",--color-status-track,light,"var() fallback, toggles correctly",style-block
-1261,tr.hdr-phase th,border-right,"rgba(255,255,255,.15)","rgba(255,255,255,.15)","0.5px solid rgba(255,255,255,.15)",,,,style-block
-1262,tr.hdr-wk th,border-bottom,#99a,#9999aa,1.5px solid #99a,,,,style-block
-1265,tr.hdr-wk th.past-wk,background,#e8e8e8,#e8e8e8,#e8e8e8,,,,style-block
-1266,tr.hdr-wk th.past-wk:hover,background,#dcdcdc,#dcdcdc,#dcdcdc,,,,style-block
-1352,.mnt-dot-empty,box-shadow,#334,#333344,inset 0 0 0 1px var(--color-text-faint),--color-text-small,dark,theme-blind (dark-only),style-block
-1429,"td.c-alloc,td.c-prog",background,#f7f7fa,#f7f7fa,#f7f7fa,,,,style-block
-1606,.map-hd,color,#245,#224455,#245,,,,style-block
-1607,".map-hd .req,.map-cell .req",color,#b00020,#b00020,#b00020,,,,style-block
-1610,.map-cell select,border,#b8c8c0,#b8c8c0,1px solid #b8c8c0,,,,style-block
-1616,.import-pass.ok,color,#1a6b3a,#1a6b3a,#1a6b3a,--color-ok-text,light,theme-blind (light-only),style-block
-1617,.import-pass.err,color,#b00020,#b00020,#b00020,,,,style-block
-1618,#diag-panel,background,#fff8f0,#fff8f0,#fff8f0,,,,style-block
-1618,#diag-panel,border-bottom,#e0cdb8,#e0cdb8,1px solid #e0cdb8,,,,style-block
-1621,.diag-tbl th,background,#f0e2d2,#f0e2d2,#f0e2d2,,,,style-block
-1621,.diag-tbl th,border,#e0cdb8,#e0cdb8,1px solid #e0cdb8,,,,style-block
-1621,.diag-tbl th,color,#5a3a1a,#5a3a1a,#5a3a1a,,,,style-block
-1622,.diag-tbl td,border,#eee0d0,#eee0d0,1px solid #eee0d0,,,,style-block
-1622,.diag-tbl td,color,#443,#444433,#443,,,,style-block
-1623,.diag-tbl tr.dsev-err td,color,#8a0018,#8a0018,#8a0018,,,,style-block
-1624,.diag-tbl tr.dsev-warn td,background,#fff6e5,#fff6e5,#fff6e5,,,,style-block
-1625,.diag-none,color,#786,#778866,#786,,,,style-block
-1626,.toggle-btn.diag-warn,background,#e8a020,#e8a020,#e8a020,,,,style-block
-1626,.toggle-btn.diag-warn,border-color,#c88000,#c88000,#c88000,,,,style-block
-1627,.toggle-btn.diag-err,border-color,#900,#990000,#900,,,,style-block
-1660,.dep-comment-panel,box-shadow,"rgba(0,0,0,.3)","rgba(0,0,0,.3)","0 4px 16px rgba(0,0,0,.3)",,,,style-block
+1033,.id-suggest-dropdown,box-shadow,"rgba(0,0,0,.15)","rgba(0,0,0,.15)","0 4px 10px rgba(0,0,0,.15)",--color-health-rim,base,matches token in all themes,style-block
+1183,.rpt-hd,border-bottom,#e3e2de,#e3e2de,"1px solid var(--color-line-default,#e3e2de)",--color-border-panel|--color-line-default|--color-btn-inactive-border,light,"var() fallback, toggles correctly",style-block
+1200,#icon-bar .title:focus,outline,#2f6fed,#2f6fed,"1.5px solid var(--color-status-track,#2f6fed)",--color-status-track,light,"var() fallback, toggles correctly",style-block
+1265,tr.hdr-phase th,border-right,"rgba(255,255,255,.15)","rgba(255,255,255,.15)","0.5px solid rgba(255,255,255,.15)",,,,style-block
+1266,tr.hdr-wk th,border-bottom,#99a,#9999aa,1.5px solid #99a,,,,style-block
+1269,tr.hdr-wk th.past-wk,background,#e8e8e8,#e8e8e8,#e8e8e8,,,,style-block
+1270,tr.hdr-wk th.past-wk:hover,background,#dcdcdc,#dcdcdc,#dcdcdc,,,,style-block
+1372,.sd-warn b,color,#334,#333344,var(--color-status-risk),--color-text-small,dark,theme-blind (dark-only),style-block
+1449,"td.c-alloc,td.c-prog",background,#f7f7fa,#f7f7fa,#f7f7fa,,,,style-block
+1626,.map-hd,color,#245,#224455,#245,,,,style-block
+1627,".map-hd .req,.map-cell .req",color,#b00020,#b00020,#b00020,,,,style-block
+1630,.map-cell select,border,#b8c8c0,#b8c8c0,1px solid #b8c8c0,,,,style-block
+1636,.import-pass.ok,color,#1a6b3a,#1a6b3a,#1a6b3a,--color-ok-text,light,theme-blind (light-only),style-block
+1637,.import-pass.err,color,#b00020,#b00020,#b00020,,,,style-block
+1638,#diag-panel,background,#fff8f0,#fff8f0,#fff8f0,,,,style-block
+1638,#diag-panel,border-bottom,#e0cdb8,#e0cdb8,1px solid #e0cdb8,,,,style-block
+1641,.diag-tbl th,background,#f0e2d2,#f0e2d2,#f0e2d2,,,,style-block
+1641,.diag-tbl th,border,#e0cdb8,#e0cdb8,1px solid #e0cdb8,,,,style-block
+1641,.diag-tbl th,color,#5a3a1a,#5a3a1a,#5a3a1a,,,,style-block
+1642,.diag-tbl td,border,#eee0d0,#eee0d0,1px solid #eee0d0,,,,style-block
+1642,.diag-tbl td,color,#443,#444433,#443,,,,style-block
+1643,.diag-tbl tr.dsev-err td,color,#8a0018,#8a0018,#8a0018,,,,style-block
+1644,.diag-tbl tr.dsev-warn td,background,#fff6e5,#fff6e5,#fff6e5,,,,style-block
+1645,.diag-none,color,#786,#778866,#786,,,,style-block
+1646,.toggle-btn.diag-warn,background,#e8a020,#e8a020,#e8a020,,,,style-block
+1646,.toggle-btn.diag-warn,border-color,#c88000,#c88000,#c88000,,,,style-block
+1647,.toggle-btn.diag-err,border-color,#900,#990000,#900,,,,style-block
+1680,.dep-comment-panel,box-shadow,"rgba(0,0,0,.3)","rgba(0,0,0,.3)","0 4px 16px rgba(0,0,0,.3)",,,,style-block

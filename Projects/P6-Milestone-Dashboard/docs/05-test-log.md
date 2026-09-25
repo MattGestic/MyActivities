@@ -2260,3 +2260,74 @@ sets `ms.ref`, nothing else), so it is not a date edit under this app's own
 mechanics and needed no wiring.
 
 **Published:** `releases/v3.1.0-P50_board-edit-mark.html`
+
+## TEST-51: D-17a Sources tab (v3.1.0-P51)
+
+The Settings drawer's Sources tab restyled to the D-17 mockup: on/off switches
+per mounted schedule (`PRIMARY_SOURCES` gains `enabled`), a duplicate-Activity-
+ID warning between enabled sources, user-defined milestones surfaced as their
+own "User-defined" source row (driven by `USER_MILESTONES`, never by
+`PRIMARY_SOURCES`), a schedule-format `.xlsx` export of them, and round-trip
+re-import of that export back into `USER_MILESTONES` rather than as a new
+read-only source. Remove now uses the design standard's inline confirmation.
+Fixed in the same pass: publish/model-export previously serialised only the
+currently-enabled sources' rows, so a disabled source vanished (not just hid)
+on reopen — `allSourceTasksMilestones()` now serialises every source's full
+content regardless of its `enabled` flag. Full detail and rationale:
+`docs/03-todo.md` TD-200.
+
+### Full suite at v3.1.0-P51
+
+| Suite | Result |
+|---|---|
+| `tools/d17a_check.py` (new) | **46/46** |
+| `tools/d17a_check.py` against v3.1.0-P50 (proves the gate has teeth) | fails at its first real assertion — `toggleSourceEnabled is not defined` (that function, `USER_MS_ENABLED`, `enabled` on `PRIMARY_SOURCES`, `computeSourceDuplicates()` and `allSourceTasksMilestones()` do not exist on P50) |
+| `tools/theme_check.py` | unchanged from P50 (no new hardcoded colour; every new class reuses existing tokens) |
+| `tools/colour_audit.py` | 38 hardcoded occurrences (unchanged) |
+| `tools/spacing_audit.py` | 152 raw px (held at the P49/P50 ceiling — one `gap:6px` in the first pass was replaced with the exact existing `--space-3` token before shipping) |
+| `tools/d15_check.py` | 11/11 |
+| `tools/d15a_check.py` | 32/32 |
+| `tools/d16_check.py` | 2/2 sheets, 0px diff |
+| `tools/ds_check.py` | 128/128 |
+| `tools/d18_check.py` | 27/27 |
+| `tools/order_check.py` | exit 0 |
+| `tools/persist_check.py` | 22/22 |
+| `tools/import_check.py` | exit 0 |
+| `tools/p29_check.py` (rewritten to the new Sources-tab contract, not relaxed) | **56/56** |
+| `tools/p40_check.py` (one assertion's literal-substring count fixed after a code comment tripped it; the assertion itself unchanged) | **91/91** |
+| every other `tools/pNN_check.py` (p27, p28, p30, p32-p39, p42-p46) | unchanged from P50, all green |
+
+No regressions found in any pre-existing suite once the two above were
+brought up to date. Design decisions, recorded rather than left implicit:
+
+- **Duplicate-ID detection is pairwise across enabled sources, by `msId()`,
+  not by the suffixed incoming ID.** Append-time `dedupeIncomingIds()` already
+  prevents a genuine collision between a newly appended source and whatever
+  is already mounted, so a real duplicate can only arise from two sources
+  built or restored independently of each other (the check constructs this
+  case directly, since the append path cannot produce it).
+- **Round-trip import routes by Activity ID pattern (`^USR-\d+$`) or by the
+  source name being exactly "User-defined", not by file name.** A file that
+  is entirely user-defined short-circuits before touching the timeline or
+  `PRIMARY_SOURCES` at all; a mixed file splits per milestone, and the
+  non-USR remainder becomes an ordinary new source exactly as any other
+  import would.
+- **User-defined off hides by filtering `TASKS`/`MILESTONES`, not by
+  re-slicing from `UPDATE_*`.** The merge (`mergeUserMilestones()`, called at
+  the top of every `renderRows()`) is the only place that ADDS user-defined
+  rows/milestones, guarded by `USER_MS_ENABLED`; it was never what removes
+  them, so the off switch strips the existing copies by
+  `sourceSchedule`/`source === 'User-defined'` and lets the guard keep them
+  out on the next render. Turning it back on needs nothing further.
+- **Control classes: reused, not re-invented.** The Sources tab's switch and
+  buttons are the Settings drawer's existing `.toggle-switch`/`.toggle-btn`
+  components (already used for every other on/off and action in this same
+  tab), not a new pair built to the mockup's literal 32x16/24px figures —
+  neither component is on the D-16 token anywhere in the drawer yet, and
+  un-tokenizing one instance in isolation would have been a second, divergent
+  control style rather than a fix. `tools/d17a_check.py` asserts consistency
+  with the app's own existing instance of each rather than the literal
+  token value for this reason; the full D-16 pass over these classes is
+  D-16c.
+
+**Published:** `releases/v3.1.0-P51_sources-tab.html`

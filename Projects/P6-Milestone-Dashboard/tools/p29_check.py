@@ -357,15 +357,27 @@ PROBE = r"""
        document.querySelectorAll('#diag-body .diag-tbl tr').length>1,
        document.querySelectorAll('#diag-body .diag-tbl tr').length+' rows');
 
-    // The mount panel is .sd-card now. Same information, shared surface.
+    // D-17a rewrote the Sources tab: the Schedules and User-defined groups
+    // are .sd-group/.sd-row (name, data date, counts, on/off switch, Rename,
+    // Remove), not .sd-card any more — that shape has controls a read-only
+    // card never carried (a switch, an inline confirm, a duplicate warning).
+    // The Annotations slot (unchanged by D-17a, D-17b territory) still uses
+    // mountSlotHtml()'s .sd-card, so both shapes should be present together.
     setSettingsTab('sources'); await settle();
+    const mountGroups=document.querySelectorAll('#mount-body .sd-group');
+    const mountRows=document.querySelectorAll('#mount-body .sd-group .sd-row');
     const cards=document.querySelectorAll('#mount-body .sd-card');
-    R.notes.mountCards=cards.length;
-    ck('sources: the mount panel renders cards', cards.length>=3, cards.length+' cards');
+    R.notes.mountGroups=mountGroups.length; R.notes.mountRows=mountRows.length; R.notes.mountCards=cards.length;
+    ck('sources: the Sources tab renders its two groups (Schedules, User-defined)', mountGroups.length>=2, mountGroups.length+' groups');
+    ck('sources: each group renders rows (schedule/baseline/user-defined entries)', mountRows.length>=2, mountRows.length+' rows');
+    ck('sources: the Annotations slot still renders as a card (D-17b territory, untouched)', cards.length>=1, cards.length+' cards');
     ck('sources: no mount slot still uses the retired classes',
        document.querySelectorAll('#mount-body .mnt-slot,#mount-body .mnt-title,#mount-body .mnt-lines').length===0);
     const cardRadii=uniq(Array.from(cards).map(function(c){ return getComputedStyle(c).borderTopLeftRadius; }));
-    ck('sources: every mount card shares one radius', cardRadii.length===1, cardRadii.join('/'));
+    ck('sources: every annotation card shares one radius', cardRadii.length===1, cardRadii.join('/'));
+    ck('sources: every schedule row has an on/off switch',
+       document.querySelectorAll('#mount-body .src-row .toggle-switch').length>=1,
+       document.querySelectorAll('#mount-body .src-row .toggle-switch').length+' switches');
 
     // ================= 6. Nothing else moved =================
     R.notes.boardAfter=snapBoard();

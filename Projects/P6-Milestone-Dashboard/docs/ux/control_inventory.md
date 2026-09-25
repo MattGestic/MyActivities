@@ -78,6 +78,28 @@ them: `filterCurrentWeek()`, `filterNext4()`, `setDateRangeToFullSpan()`
 | `select#map-*` (per column, JS-built) | select | select | none | |
 | checkboxes `#annot-cb-*` (JS-built) | toggle | toggle | none | |
 
+### Sources tab (rebuilt at D-17a, v3.1.0-P51, `docs/03-todo.md` TD-200)
+
+Replaces the row `"Source-manager row actions ... .mnt-btn"` above for the
+Schedules/User-defined groups specifically (the Annotations slot, D-17b
+territory, is unchanged and still `.mnt-btn`/`.sd-card`). New controls, all
+JS-built into `#mount-body`, `.toggle-switch`/`.toggle-btn` per the existing
+Settings-drawer convention (see TEST-51's design-decisions note on why these
+were reused rather than rebuilt to the mockup's literal 32x16/24px figures):
+
+| Id/class | Label | Role | Token class | Keyboard | Notes |
+|---|---|---|---|---|---|
+| per-source `.toggle-switch` (`onchange="toggleSourceEnabled(id)"`) | "On"/"Off" via `title` | toggle | `.toggle-switch` | Tab, Space | one per `PRIMARY_SOURCES` entry; the board's rows drop to/return from exactly that source's count |
+| baseline row's `.toggle-switch` | "Built in. Cannot be unmounted." | toggle (disabled) | `.toggle-switch` | not tabbable (`disabled`) | always on, never interactive |
+| per-source "Rename&hellip;" (`renameSource(id)`) | text | secondary | `.toggle-btn.mnt-btn` | Tab, Enter/Space | unchanged behaviour, unchanged class |
+| per-source "Remove" (`askRemoveSource(id)`) | text | secondary/danger | `.toggle-btn.mnt-btn.sd-btn-danger` | Tab, Enter/Space | opens the inline confirm below it, replacing the native `confirm()` |
+| inline confirm "Cancel" / "Remove" (`cancelRemoveSource()` / `removeSource(id)`) | text | secondary / danger | `.toggle-btn` / `.toggle-btn.sd-btn-danger` inside `.sd-confirm` | Tab, Enter/Space, Esc (via the drawer's existing Esc-closes-topmost-surface handling) | design standard's inline confirmation: message full width (`.sd-confirm-txt`), Cancel bottom-left, danger action bottom-right (`.sd-confirm-actions`) |
+| `.sd-warn` (JS-built, no control) | duplicate-ID warning text | status text, not interactive | `.sd-warn` | n/a | one line per pair of enabled sources sharing an Activity ID; disappears the moment either is switched off |
+| User-defined row's `.toggle-switch` (`toggleUserDefinedEnabled()`) | "On"/"Off" via `title` | toggle | `.toggle-switch` | Tab, Space | hides/shows the 3-layer-rule-respecting `USER_MILESTONES` merge without deleting it |
+| "Manage&hellip;" (disabled) | text | secondary (disabled) | `.toggle-btn.mnt-btn` | not tabbable while `disabled` | `title="Grid arrives in D-17c"`; the grid itself is out of scope for this pass |
+| "Export (schedule format)" (`exportUserDefinedSchedule()`) | text | secondary | `.toggle-btn.mnt-btn` | Tab, Enter/Space | `.xlsx` via the same `ensureXLSX()` loader `exportComments()` uses; falls back to CSV if the library cannot load |
+| User-defined "Remove" (`askRemoveUserDefined()`) | text | secondary/danger | `.toggle-btn.mnt-btn.sd-btn-danger` | Tab, Enter/Space | same inline-confirm pattern; deletes `USER_MILESTONES`/`USER_ROWS` only, annotations keyed by Activity ID are kept (stated in the confirm text) |
+
 ## Print preview banner
 
 | Id/class | Label | Role | Issue(s) | Action taken |
