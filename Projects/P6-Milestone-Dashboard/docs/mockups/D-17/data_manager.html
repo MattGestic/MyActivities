@@ -174,6 +174,46 @@ table.dm-sheet td.editing:hover .cell{background:var(--color-bg-elevated)}
 .dm-tip-box{display:inline-flex;align-items:center;gap:8px;background:var(--color-bg-header);color:#fff;font-size:11px;line-height:1.5;padding:6px 10px;border-radius:6px;margin:6px 10px 0;max-width:100%;box-sizing:border-box}
 .dm-legend{display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:11px;color:var(--color-text-muted);margin-top:18px}
 .dm-legend .mk{font-weight:700;color:var(--color-accent-ink);margin-right:2px}
+
+/* ---- Notes panel (D-19) ---- */
+.grow{flex:1 1 auto}
+.ds-seg{display:inline-flex;border:1px solid var(--color-btn-secondary-outline);border-radius:var(--radius-ctl);overflow:hidden;flex:0 0 auto}
+.ds-seg button{border:0;background:var(--color-btn-secondary-bg);color:var(--color-btn-secondary-text);padding:0 var(--ctl-pad-x);cursor:pointer}
+.ds-seg button+button{border-left:1px solid var(--color-btn-secondary-outline)}
+.ds-seg button.active{background:var(--color-accent-purple);color:#fff}
+
+.np-shell{display:flex;align-items:stretch;height:560px;max-width:520px;width:100%;box-sizing:border-box;min-width:0}
+.np-iconbar{width:44px;flex:0 0 44px;background:var(--color-bg-header);display:flex;flex-direction:column;align-items:center;gap:10px;padding:12px 0;border-radius:var(--radius-overlay) 0 0 var(--radius-overlay)}
+.np-iconbar .ico{position:relative;width:var(--icon-btn);height:var(--icon-btn);border-radius:var(--radius-ctl);display:flex;align-items:center;justify-content:center;color:#fff;background:transparent;border:0;cursor:pointer;font-size:14px}
+.np-iconbar .ico:hover{background:rgba(255,255,255,.14)}
+.np-iconbar .ico.active{background:rgba(255,255,255,.22)}
+.np-badge{position:absolute;top:-4px;right:-4px;min-width:14px;height:14px;padding:0 3px;border-radius:999px;background:var(--color-status-crit);color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1;box-sizing:border-box}
+.np-phone .np-iconbar{display:none}
+.np-phone .np-shell{max-width:none}
+.np-phone .np-panel{border-radius:var(--radius-overlay)}
+.np-panel{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;background:var(--color-bg-panel);border-radius:0 var(--radius-overlay) var(--radius-overlay) 0;overflow:hidden}
+.np-hd{background:var(--color-bg-header);color:#fff;padding:10px var(--group-gap);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.np-hd-title{font-weight:700;font-size:13px}
+.np-menu{padding:6px var(--group-gap);background:var(--color-bg-elevated);border-bottom:1px solid var(--color-line-default);display:flex;justify-content:flex-end}
+.np-link-btn{background:transparent;border-color:transparent;color:var(--color-accent-ink);text-decoration:underline}
+.np-link-btn:hover{background:var(--color-accent-wash-weak)}
+.np-filter{padding:8px var(--group-gap);display:flex;gap:var(--ctl-gap);align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--color-line-default);background:var(--color-bg-elevated)}
+.np-filter .ds-field{flex:1 1 120px;min-width:0}
+.np-list{flex:1 1 auto;overflow-y:auto;padding:var(--group-gap);display:flex;flex-direction:column;gap:10px;min-height:0;min-width:0}
+.np-note{border:1px solid var(--color-line-default);border-radius:var(--radius-overlay);background:var(--color-bg-elevated);padding:10px 12px;min-width:0}
+.np-note.carried{opacity:.55}
+.np-note-hd{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.np-note-time{font-size:11px;color:var(--color-text-muted)}
+.np-note-actions{margin-left:auto;display:flex;gap:2px;flex:0 0 auto}
+.np-note-txt{font-size:12px;color:var(--color-text-primary);line-height:1.5;margin-top:6px;white-space:pre-line;overflow-wrap:anywhere}
+.np-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.np-chip{font-size:10px;font-weight:700;padding:1px 7px;border-radius:999px;background:var(--color-accent-wash);color:var(--color-accent-ink);cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
+.np-chip-x{font-size:9px;cursor:pointer}
+.np-composer{border-top:1px solid var(--color-line-default);padding:var(--group-gap);background:var(--color-bg-elevated);display:flex;flex-direction:column;gap:8px}
+.np-composer textarea{width:100%;min-height:56px;resize:vertical;border:1px solid var(--color-btn-secondary-outline);background:var(--color-bg-elevated);color:var(--color-text-primary);font:inherit;font-size:var(--fs-field);padding:8px;border-radius:var(--radius-ctl);box-sizing:border-box}
+.np-composer-chips{display:flex;gap:6px;flex-wrap:wrap}
+.np-composer-row{display:flex;align-items:center;gap:var(--ctl-gap);flex-wrap:wrap}
+.np-hint{font-size:10px;color:var(--color-text-muted);white-space:nowrap}
 </style>
 </head>
 <body>
@@ -280,9 +320,164 @@ table.dm-sheet td.editing:hover .cell{background:var(--color-bg-elevated)}
     </div>
   </div>
 </section>
+
+<!-- ===================== 6. Notes panel (D-19) ===================== -->
+<section class="pg-sect">
+  <h2>6. Notes panel (D-19)</h2>
+  <p>Freeform notes, not tied to a single milestone, part of the annotation layer so they export, publish, mount and merge like comments. The panel docks full height at the right of the board, opened from a Notes icon in the icon bar (count badge shows entries in the current period). Header carries the same reporting-period pill as section 3 and a close button; a "Clear notes" text button sits in the header menu row, with its inline confirmation shown separately below per the design standard (full-width message, Cancel left, danger action right). Filters are This period / All periods plus a text search. Notes list newest first; a note carried over from an earlier period shows dimmed with its own W/E tag, the same carry-over convention as comments. Each note has a timestamp, linked milestone chips (typing <code>#SNIP-102</code> makes a chip; clicking one would scroll to and open that card), and edit/delete. The composer at the bottom takes freeform text, a chip already added from typing an ID, a "Link selected" button for Ctrl-selected board milestones, and Ctrl+Enter to save. A milestone card shows "Mentioned in N notes" linking back to the thread.</p>
+
+  <div class="pg-grid">
+    <div><p class="pg-cap">Desktop &middot; light</p><div class="ds t-light" style="padding:0;border-radius:8px" id="notes-desk-light"></div></div>
+    <div><p class="pg-cap">Desktop &middot; dark</p><div class="ds t-dark" style="padding:0;border-radius:8px" id="notes-desk-dark"></div></div>
+  </div>
+  <div class="pg-grid" style="margin-top:12px">
+    <div><p class="pg-cap">Phone 390, touch &middot; light (full-screen overlay)</p><div class="ds touch t-light np-phone" style="padding:0;border-radius:8px;max-width:390px" id="notes-phone-light"></div></div>
+    <div><p class="pg-cap">Phone 390, touch &middot; dark (full-screen overlay)</p><div class="ds touch t-dark np-phone" style="padding:0;border-radius:8px;max-width:390px" id="notes-phone-dark"></div></div>
+  </div>
+
+  <div class="pg-grid" style="margin-top:12px">
+    <div>
+      <p class="pg-cap">Header menu: "Clear notes" inline confirm</p>
+      <div class="ds t-light" style="padding:0;border-radius:8px;max-width:420px" id="notes-confirm-light"></div>
+    </div>
+    <div>
+      <p class="pg-cap">Milestone card: "Mentioned in N notes"</p>
+      <div class="ds t-dark" style="padding:16px;border-radius:8px">
+        <div class="dm-card" style="max-width:360px">
+          <div class="dm-card-hd"><span class="dm-card-title">SNIP-117 Process design criteria issue</span></div>
+          <div class="dm-card-sub">Engineering &middot; Milestone &middot; 22 Sep 26</div>
+          <div class="dm-card-note" style="font-style:normal"><a href="#" style="color:var(--color-accent-ink);text-decoration:underline">Mentioned in 2 notes</a></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 </div>
 
 <!-- ===================== Templates ===================== -->
+<template id="tpl-notes-panel">
+  <div class="np-shell">
+    <div class="np-iconbar">
+      <button class="ico" title="Board view" aria-label="Board view">&#9638;</button>
+      <button class="ico" title="Saved lists" aria-label="Saved lists">&#9776;</button>
+      <button class="ico active" title="Notes" aria-label="Notes, 3 in this period">
+        &#128221;
+        <span class="np-badge">3</span>
+      </button>
+    </div>
+    <div class="np-panel">
+      <div class="np-hd">
+        <span class="np-hd-title">Notes</span>
+        <button class="dm-pill current">Reporting <b>W/E 14 Sep 26</b> <span class="car">&#9662;</span></button>
+        <span class="grow"></span>
+        <button class="ds-ico" title="Close" aria-label="Close">&#10005;</button>
+      </div>
+      <div class="np-menu">
+        <button class="ds-btn np-link-btn">Clear notes</button>
+      </div>
+      <div class="np-filter">
+        <div class="ds-seg" role="tablist" aria-label="Notes filter">
+          <button class="active" aria-pressed="true">This period</button>
+          <button aria-pressed="false">All periods</button>
+        </div>
+        <input class="ds-field" type="text" placeholder="Search notes">
+      </div>
+      <div class="np-list">
+        <div class="np-note">
+          <div class="np-note-hd">
+            <span class="np-note-time">14 Sep 26, 08:12 &middot; Matt</span>
+            <span class="dm-tag">W/E 14 Sep 26</span>
+            <span class="np-note-actions">
+              <button class="ds-ico" title="Edit note" aria-label="Edit note">&#9998;</button>
+              <button class="ds-ico" title="Delete note" aria-label="Delete note">&#128465;</button>
+            </span>
+          </div>
+          <div class="np-note-txt">Weekly coordination:
+- Geotech report slipping 1 wk, owner to confirm
+- Process design criteria rev B issued</div>
+          <div class="np-chips">
+            <span class="np-chip">#SNIP-102</span>
+            <span class="np-chip">#SNIP-117</span>
+          </div>
+        </div>
+
+        <div class="np-note">
+          <div class="np-note-hd">
+            <span class="np-note-time">13 Sep 26, 16:40 &middot; Matt</span>
+            <span class="dm-tag">W/E 14 Sep 26</span>
+            <span class="np-note-actions">
+              <button class="ds-ico" title="Edit note" aria-label="Edit note">&#9998;</button>
+              <button class="ds-ico" title="Delete note" aria-label="Delete note">&#128465;</button>
+            </span>
+          </div>
+          <div class="np-note-txt">Client requested a revised tie-in sequence for the tank farm interconnect. Awaiting markup from process.</div>
+          <div class="np-chips">
+            <span class="np-chip">#SNIP-140</span>
+          </div>
+        </div>
+
+        <div class="np-note">
+          <div class="np-note-hd">
+            <span class="np-note-time">11 Sep 26, 09:05 &middot; Matt</span>
+            <span class="dm-tag">W/E 14 Sep 26</span>
+            <span class="np-note-actions">
+              <button class="ds-ico" title="Edit note" aria-label="Edit note">&#9998;</button>
+              <button class="ds-ico" title="Delete note" aria-label="Delete note">&#128465;</button>
+            </span>
+          </div>
+          <div class="np-note-txt">Vendor data for the long-lead compressor package due Friday. Flagged to the procurement lead.</div>
+          <div class="np-chips">
+            <span class="np-chip">#SNIP-101</span>
+          </div>
+        </div>
+
+        <div class="np-note carried">
+          <div class="np-note-hd">
+            <span class="np-note-time">05 Sep 26, 14:20 &middot; Matt</span>
+            <span class="dm-tag amber">W/E 07 Sep 26 &middot; carried</span>
+            <span class="np-note-actions">
+              <button class="ds-ico" title="Edit note" aria-label="Edit note">&#9998;</button>
+              <button class="ds-ico" title="Delete note" aria-label="Delete note">&#128465;</button>
+            </span>
+          </div>
+          <div class="np-note-txt">Site access agreement still pending landowner sign-off, third week of delay.</div>
+          <div class="np-chips">
+            <span class="np-chip">#SNIP-118</span>
+          </div>
+        </div>
+      </div>
+      <div class="np-composer">
+        <textarea placeholder="Add a note. Type #ID to link a milestone." rows="3"></textarea>
+        <div class="np-composer-chips">
+          <span class="np-chip">#SNIP-102 <span class="np-chip-x" title="Remove">&#10005;</span></span>
+        </div>
+        <div class="np-composer-row">
+          <button class="ds-btn">Link selected (2)</button>
+          <span class="grow"></span>
+          <span class="np-hint">Ctrl+Enter to save</span>
+          <button class="ds-btn primary">Add note</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<template id="tpl-notes-confirm">
+  <div class="np-hd">
+    <span class="np-hd-title">Notes</span>
+    <button class="dm-pill current">Reporting <b>W/E 14 Sep 26</b> <span class="car">&#9662;</span></button>
+    <span class="grow"></span>
+    <button class="ds-ico" title="Close" aria-label="Close">&#10005;</button>
+  </div>
+  <div class="np-menu" style="display:block">
+    <div class="dm-confirm" style="margin-top:0">
+      <span class="dm-confirm-txt">Clear 4 notes for W/E 14 Sep 26? This cannot be undone.</span>
+      <button class="ds-btn">Cancel</button>
+      <button class="ds-btn danger">Clear</button>
+    </div>
+  </div>
+</template>
+
 <template id="tpl-sources">
   <div class="dm-hd"><span>&#9881; Data Settings</span></div>
   <div class="dm-tabs">
@@ -459,6 +654,8 @@ table.dm-sheet td.editing:hover .cell{background:var(--color-bg-elevated)}
   ['src-desk-light','src-desk-dark','src-phone-light','src-phone-dark'].forEach(function(id){fill(id,'tpl-sources');});
   ['annot-desk-light','annot-desk-dark','annot-phone-light','annot-phone-dark'].forEach(function(id){fill(id,'tpl-annot');});
   ['grid-desk-light','grid-desk-dark'].forEach(function(id){fill(id,'tpl-grid');});
+  ['notes-desk-light','notes-desk-dark','notes-phone-light','notes-phone-dark'].forEach(function(id){fill(id,'tpl-notes-panel');});
+  fill('notes-confirm-light','tpl-notes-confirm');
 
   // Period dropdown
   var dd=document.getElementById('period-dd');
