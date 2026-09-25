@@ -21,7 +21,7 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
 .pg-cap{font-size:11px;color:var(--pg-muted);margin:0 0 6px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
 
 /* App colour tokens, copied from src/milestone-dashboard.html and docs/mockups/D-17 */
-.t-light{--color-bg-panel:#f4f5f8;--color-bg-elevated:#ffffff;--color-bg-header:#2e4f82;
+.t-light{--color-bg-panel:#f4f5f8;--color-bg-elevated:#ffffff;--color-bg-header:#2e4f82;--color-bg-workspace-hd:#3a2f63;
   --color-line-default:#e3e2de;--color-text-primary:#17191c;--color-text-muted:#6f7480;--color-text-note:#767b85;
   --color-accent-purple:#8b64c7;--color-accent-ink:#6f46ad;--color-accent-tint-bg:#efe6f9;
   --color-accent-wash-weak:rgba(139,100,199,.05);--color-accent-wash:rgba(139,100,199,.10);
@@ -31,7 +31,7 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
   --color-status-risk:#a2690a;--color-status-crit:#c0392b;--color-status-done:#1f9d55;--color-status-done-tint:rgba(31,157,85,.16);
   --color-crit-tint-bg:#fdecec;--color-badge-neutral-bg:#889;--color-input-border:#b8c0d8;
   --color-icon-done:#17191c;--color-icon-track:#2f6fed;--color-icon-risk:#a2690a;--color-icon-crit:#c0392b;--color-icon-baseline:#767b85}
-.t-dark{--color-bg-panel:#1e2240;--color-bg-elevated:#232f4a;--color-bg-header:#15182f;
+.t-dark{--color-bg-panel:#1e2240;--color-bg-elevated:#232f4a;--color-bg-header:#15182f;--color-bg-workspace-hd:#241a3d;
   --color-line-default:rgba(160,184,230,.2);--color-text-primary:#e8eef8;--color-text-muted:#8b9bb8;--color-text-note:#889;
   --color-accent-purple:#8b64c7;--color-accent-ink:#a98ad8;--color-accent-tint-bg:#2a2440;
   --color-accent-wash-weak:rgba(139,100,199,.05);--color-accent-wash:rgba(139,100,199,.10);
@@ -128,6 +128,8 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
 
 /* Notes panel primitives, copied from D-17 */
 .np-hd{background:var(--color-bg-header);color:#fff;padding:10px var(--group-gap);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+/* D-20 revision: Workspace-side panel headers use a deeper, purple-tinted shade so the annotation zone reads as its own, distinct from the app header and the Data & view header */
+.np-hd.ws-hd{background:var(--color-bg-workspace-hd)}
 .np-hd>.np-hd-title{order:0}.np-hd>.grow{order:1;flex:1 1 0}.np-hd>.ds-ico{order:2;flex:0 0 auto}
 .np-hd>.dm-pill{order:3;flex:0 0 auto;max-width:100%}
 .np-hd>.dm-pill::before{content:'';flex-basis:100%}
@@ -169,8 +171,32 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
 .app-shell{width:1440px;max-width:100%;border:1px solid var(--color-line-default);border-radius:var(--radius-overlay);overflow:hidden;background:var(--color-bg-panel);box-sizing:border-box}
 .app-hd{height:48px;flex:0 0 48px;background:var(--color-bg-header);color:#fff;display:flex;align-items:center;gap:12px;padding:0 16px;box-sizing:border-box}
 .app-hd .ttl{font-size:13px;font-weight:700;flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.app-side-btn{height:var(--ctl-h);padding:0 var(--ctl-pad-x);border-radius:var(--radius-ctl);border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.10);color:#fff;font:inherit;font-size:var(--fs-caption);font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;flex:0 0 auto}
-.app-side-btn.active{background:rgba(255,255,255,.26)}
+
+/* ---- D-20 revision: left Workspace toggle, distinct from the right icon cluster ---- */
+.ws-toggle{height:var(--ctl-h);padding:0 10px;border-radius:var(--radius-ctl);border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.08);color:#fff;font:inherit;font-size:var(--fs-caption);font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;flex:0 0 auto}
+.ws-toggle:hover{background:rgba(255,255,255,.16)}
+.ws-toggle .ic{font-size:14px;line-height:1}
+.ws-toggle.pressed{background:var(--color-accent-purple);border-color:var(--color-accent-purple)}
+.ws-toggle .cnt{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:#fff;color:var(--color-accent-ink);font-size:10px;font-weight:700;line-height:1}
+
+/* ---- D-20 revision: right-side compact icon-button cluster (Print / View controls / More / Settings) ---- */
+.app-cluster{display:flex;align-items:center;gap:2px;flex:0 0 auto}
+.app-ico-btn{width:var(--icon-btn);height:var(--icon-btn);border-radius:var(--radius-ctl);border:0;background:transparent;color:#fff;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+.app-ico-btn:hover{background:rgba(255,255,255,.14)}
+.app-ico-btn.active{background:rgba(255,255,255,.26)}
+.app-ico-btn.settings{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.35);margin-left:4px}
+.app-ico-btn.settings.active{background:var(--color-accent-purple);border-color:var(--color-accent-purple)}
+.more-wrap{position:relative;display:inline-flex}
+.more-menu{position:absolute;top:calc(100% + 6px);right:0;min-width:210px;background:var(--color-bg-elevated);color:var(--color-text-primary);border:1px solid var(--color-line-default);border-radius:var(--radius-overlay);box-shadow:0 6px 18px rgba(0,0,0,.30);padding:6px;z-index:5;box-sizing:border-box}
+.more-item{display:flex;align-items:center;width:100%;height:var(--ctl-h);padding:0 8px;border-radius:var(--radius-ctl);border:0;background:transparent;color:var(--color-text-primary);font:inherit;font-size:var(--fs-caption);cursor:pointer;text-align:left;white-space:nowrap;box-sizing:border-box}
+.more-item:hover{background:var(--color-btn-secondary-hover-bg)}
+.more-sep{height:1px;background:var(--color-line-default);margin:4px 2px}
+
+/* ---- D-20 revision: top filter bar strip -- date range / mode / fit columns ---- */
+.app-filterbar{padding:8px 16px;background:var(--color-bg-elevated);border-bottom:1px solid var(--color-line-default);display:flex;align-items:center;gap:var(--ctl-gap);flex-wrap:wrap;box-sizing:border-box}
+.fb-lbl{font-size:var(--fs-caption);color:var(--color-text-muted);white-space:nowrap;font-weight:600;flex:0 0 auto}
+.fb-sep{width:1px;align-self:stretch;background:var(--color-line-default);flex:0 0 auto}
+
 .app-body{display:flex;align-items:stretch;height:640px;box-sizing:border-box}
 .board-sliver{flex:1 1 auto;min-width:60px;background:repeating-linear-gradient(135deg,var(--color-bg-elevated),var(--color-bg-elevated) 10px,var(--color-bg-panel) 10px,var(--color-bg-panel) 20px);display:flex;align-items:center;justify-content:center;color:var(--color-text-muted);font-size:11px;text-align:center;padding:8px;box-sizing:border-box}
 .side-shell{flex:0 0 360px;width:360px;max-width:44%;display:flex;min-width:0;box-sizing:border-box;background:var(--color-bg-panel)}
@@ -203,6 +229,7 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
 /* ---- D-20: phone overlay, rail becomes a top segmented tab row ---- */
 .ph-shell{width:390px;max-width:100%;border:1px solid var(--color-line-default);border-radius:var(--radius-overlay);overflow:hidden;background:var(--color-bg-panel);box-sizing:border-box;display:flex;flex-direction:column;height:640px}
 .ph-hd{background:var(--color-bg-header);color:#fff;padding:10px 16px;font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px}
+.ph-hd.ws-hd{background:var(--color-bg-workspace-hd)}
 .ph-tabs{display:flex;gap:6px;padding:8px 12px;background:var(--color-bg-elevated);border-bottom:1px solid var(--color-line-default);overflow-x:auto}
 .ph-tab{flex:0 0 auto;height:var(--ctl-h);padding:0 var(--ctl-pad-x);border:1px solid var(--color-btn-secondary-outline);border-radius:999px;background:var(--color-btn-secondary-bg);color:var(--color-btn-secondary-text);font:inherit;font-size:var(--fs-caption);font-weight:600;cursor:pointer;white-space:nowrap}
 .ph-tab.active{background:var(--color-accent-purple);border-color:var(--color-accent-purple);color:#fff}
@@ -239,7 +266,7 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
 <!-- ===================== 1. Overview ===================== -->
 <section class="pg-sect">
   <h2>1. Overview: the app shell with both sides open</h2>
-  <p>The icon bar carries a Workspace button on the left and a Data &amp; view button on the right, either of which docks its panel full height and pushes the board into a sliver between them. Both are shown open at once here to demonstrate the split; day to day, one or both can be closed. Workspace shows Notes active behind a rail of Notes, Comments &amp; markups, User milestones and Lists. Data &amp; view shows Sources active behind a rail of View controls, Sources, Import, Data settings and Diagnostics. A label strip at each panel's top names the layer: "Your annotations" and "Schedule and view".</p>
+  <p>The header's left Workspace toggle and its right icon cluster open the two panels; either docks full height and pushes the board into a sliver between them. Both are shown open at once here to demonstrate the split; day to day, one or both can be closed. Workspace shows Notes active behind a rail of Notes, Comments &amp; markups, User milestones and Lists. Data &amp; view shows Sources active behind a rail of View controls, Sources, Import, Data settings and Diagnostics. A label strip at each panel's top names the layer: "Your annotations" and "Schedule and view", reinforced now by colour: the Workspace panel's header bar (and the Notes/Comments/User milestones headers inside it) use a deeper, purple-tinted shade (<code>--color-bg-workspace-hd</code>) distinct from the app header and from the Data &amp; view panel's header, which stays the app header colour. Below the app header sits the top filter bar: Date range (Weeks, a W/E field), Mode (Highlight / Show only) and, at the end of that line, Fit columns, moved in from the old More actions menu.</p>
   <div class="pg-scroll">
     <p class="pg-cap">Desktop 1440 &middot; light</p>
     <div class="ds t-light app-shell" id="ov-light"></div>
@@ -250,9 +277,28 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
   </div>
 </section>
 
-<!-- ===================== 2. Notes with status ===================== -->
+<!-- ===================== 2. Top-right control cluster ===================== -->
 <section class="pg-sect">
-  <h2>2. Notes with status</h2>
+  <h2>2. Top-right control cluster, and the left toggle it is no longer a mirror of</h2>
+  <p>Left and right are deliberately not mirror images any more. Left: a labelled toggle with a notes/annotation icon, in the Workspace accent colour, with a pressed state when the panel is open and a count badge of open notes (Open + Sent + Pending, excluding Closed). Right: a compact icon-button cluster, left to right: Print (A3 preview), View controls (opens the View controls section of the right panel directly), More actions (the remaining overflow items), Settings (the gear, opens Data &amp; view, rightmost). Settings is a plain icon button with a tooltip, not a labelled mirror of the Workspace toggle.</p>
+  <div class="pg-grid">
+    <div><p class="pg-cap">Header, closed &middot; light</p><div class="ds t-light" style="padding:0;border-radius:8px;overflow:hidden" id="hdr-closed-light"></div></div>
+    <div><p class="pg-cap">Header, closed &middot; dark</p><div class="ds t-dark" style="padding:0;border-radius:8px;overflow:hidden" id="hdr-closed-dark"></div></div>
+  </div>
+  <div class="pg-grid" style="margin-top:12px">
+    <div><p class="pg-cap">More actions open, remaining items &middot; light</p><div class="ds t-light" style="padding:0;border-radius:8px;overflow:visible;position:relative;min-height:200px" id="hdr-menu-light"></div></div>
+    <div><p class="pg-cap">More actions open, remaining items &middot; dark</p><div class="ds t-dark" style="padding:0;border-radius:8px;overflow:visible;position:relative;min-height:200px" id="hdr-menu-dark"></div></div>
+  </div>
+  <p class="imp-cap" style="margin-top:12px">Phone 390: the cluster collapses. Print drops out of the row and into More actions; View controls, More actions and Settings remain, Settings still rightmost.</p>
+  <div class="pg-grid">
+    <div><p class="pg-cap">Phone header &middot; light</p><div class="ds touch t-light" style="padding:0;border-radius:8px;overflow:visible;position:relative;max-width:390px;min-height:260px" id="hdr-phone-light"></div></div>
+    <div><p class="pg-cap">Phone header &middot; dark</p><div class="ds touch t-dark" style="padding:0;border-radius:8px;overflow:visible;position:relative;max-width:390px;min-height:260px" id="hdr-phone-dark"></div></div>
+  </div>
+</section>
+
+<!-- ===================== 3. Notes with status ===================== -->
+<section class="pg-sect">
+  <h2>3. Notes with status</h2>
   <p>Each note gets a status pill (Open / Sent / Pending / Closed) to track its progress against the master schedule, in distinct token colours: Open is neutral, Sent is the accent/blue used for on-track markers, Pending is amber, Closed is a muted green. A status filter chip row sits beside This period / All periods. #ID chips still link a note to several milestones; the second note here links three.</p>
   <div class="pg-grid">
     <div><p class="pg-cap">Desktop &middot; light</p><div class="ds t-light" style="padding:0;border-radius:8px" id="notes-desk-light"></div></div>
@@ -264,10 +310,10 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
   </div>
 </section>
 
-<!-- ===================== 3. Comments and markups ===================== -->
+<!-- ===================== 4. Comments and markups ===================== -->
 <section class="pg-sect">
-  <h2>3. Comments &amp; markups</h2>
-  <p>The milestone comment threads across the board, filterable by period, status and milestone. Below that, the mounted annotation layers as a stack: Local edits is always the top layer, two mounted files sit below it, each with an on/off switch, Merge into Local edits and Remove. The three exports close out the section.</p>
+  <h2>4. Comments &amp; markups</h2>
+  <p>The milestone comment threads across the board, filterable by period, status and milestone. Below that, the mounted annotation layers as a stack: Local edits is always the top layer, two mounted files sit below it, each with an on/off switch, Merge into Local edits and Remove. The three exports close out the section, and this is also where Export comments now lives, moved down from the old More actions menu.</p>
   <div class="pg-grid">
     <div><p class="pg-cap">Desktop &middot; light</p><div class="ds t-light" style="padding:0;border-radius:8px" id="cm-desk-light"></div></div>
     <div><p class="pg-cap">Desktop &middot; dark</p><div class="ds t-dark" style="padding:0;border-radius:8px" id="cm-desk-dark"></div></div>
@@ -278,9 +324,9 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
   </div>
 </section>
 
-<!-- ===================== 4. User milestones ===================== -->
+<!-- ===================== 5. User milestones ===================== -->
 <section class="pg-sect">
-  <h2>4. User milestones</h2>
+  <h2>5. User milestones</h2>
   <p>Moves here from the Sources tab. The count, the on/off switch, an Export in schedule format so items round-trip through the importer, a Manage grid button that opens the full editable sheet (D-17c), and a compact list of the USR- items themselves.</p>
   <div class="pg-grid">
     <div><p class="pg-cap">Desktop &middot; light</p><div class="ds t-light" style="padding:0;border-radius:8px" id="um-desk-light"></div></div>
@@ -292,10 +338,10 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
   </div>
 </section>
 
-<!-- ===================== 5. Right side sections ===================== -->
+<!-- ===================== 6. Right side sections ===================== -->
 <section class="pg-sect">
-  <h2>5. Right side: Data &amp; view sections</h2>
-  <p>Four of the Data &amp; view rail's five sections, each a representative slice. View controls folds in the current Customize sidebar's groups; Sources drops User-defined (it now lives in the Workspace's User milestones section) and shows schedules only; Import pairs a file drop with a mapping summary; Data settings covers thresholds and the week-ends-on setting.</p>
+  <h2>6. Right side: Data &amp; view sections</h2>
+  <p>Four of the Data &amp; view rail's five sections, each a representative slice. View controls folds in the current Customize sidebar's groups, and now opens with a Theme control (Light / Dark / System) at the top, moved in from the old header theme toggle; the light widget below shows Light selected, the dark widget shows Dark selected. Sources drops User-defined (it now lives in the Workspace's User milestones section) and shows schedules only; Import pairs a file drop with a mapping summary; Data settings covers thresholds and the week-ends-on setting.</p>
   <div class="pg-grid">
     <div><p class="pg-cap">View controls &middot; light</p><div class="ds t-light sw-widget" id="vc-light"></div></div>
     <div><p class="pg-cap">View controls &middot; dark</p><div class="ds t-dark sw-widget" id="vc-dark"></div></div>
@@ -314,9 +360,9 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
   </div>
 </section>
 
-<!-- ===================== 6. Import confirmation sequence ===================== -->
+<!-- ===================== 7. Import confirmation sequence ===================== -->
 <section class="pg-sect">
-  <h2>6. Import confirmation sequence</h2>
+  <h2>7. Import confirmation sequence</h2>
   <p>When a schedule import finishes, the panel switches to Sources, scrolls the new card into view and plays a short highlight: an accent-tint background with an outline that fades over 1.2 seconds. With <code>prefers-reduced-motion</code> the highlight is a static outline for 2 seconds instead of a fade. The same sequence runs on the Workspace side when an annotation file is mounted. Press Replay to re-trigger either animation live.</p>
   <div class="pg-grid">
     <div>
@@ -389,9 +435,9 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
   </div>
 </section>
 
-<!-- ===================== 7. Phone 390: full-screen overlays ===================== -->
+<!-- ===================== 8. Phone 390: full-screen overlays ===================== -->
 <section class="pg-sect">
-  <h2>7. Phone 390: each side as a full-screen overlay</h2>
+  <h2>8. Phone 390: each side as a full-screen overlay</h2>
   <p>On phone, Workspace and Data &amp; view each open as a full-screen overlay rather than a docked panel. The vertical icon rail becomes a top segmented tab row, scrollable if it does not fit; the active tab shows the section, exactly as the active rail icon does on desktop.</p>
   <div class="pg-grid">
     <div><p class="pg-cap">Workspace overlay &middot; light</p><div class="ds touch t-light" id="phws-light"></div></div>
@@ -427,7 +473,7 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
 
 <template id="tpl-ov-ws-panel">
   <div class="side-panel">
-    <div class="np-hd">
+    <div class="np-hd ws-hd">
       <span class="np-hd-title">Workspace</span>
       <span class="np-break"></span><button class="dm-pill current">Reporting <b>W/E 14 Sep 26</b> <span class="car">&#9662;</span></button>
       <span class="grow"></span>
@@ -499,15 +545,57 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
 (function(){
   function fill(id,tpl){var el=document.getElementById(id);if(el)el.appendChild(document.getElementById(tpl).content.cloneNode(true));}
 
+  // ---- App header: left Workspace toggle + right icon cluster (Print / View controls / More / Settings) ----
+  function appHeaderHtml(o){
+    o = o||{};
+    var wsOpen = o.wsOpen!==false, dvOpen = o.dvOpen!==false, phone = !!o.phone, menuOpen = !!o.menuOpen;
+    var cluster = '<div class="app-cluster">';
+    if(!phone){
+      cluster += '<button class="app-ico-btn" title="Print: A3 preview" aria-label="Print">&#128438;</button>';
+    }
+    cluster += '<button class="app-ico-btn'+(o.vcActive?' active':'')+'" title="View controls" aria-label="View controls">&#127912;</button>';
+    cluster += '<div class="more-wrap">'+
+      '<button class="app-ico-btn'+(menuOpen?' active':'')+'" title="More actions" aria-label="More actions" aria-haspopup="true" aria-expanded="'+(menuOpen?'true':'false')+'">&#8942;</button>';
+    if(menuOpen){
+      cluster += '<div class="more-menu" role="menu">'+
+        (phone?'<button class="more-item" role="menuitem">&#128438; Print</button><div class="more-sep"></div>':'')+
+        '<button class="more-item" role="menuitem">Filter row toggle</button>'+
+        '<button class="more-item" role="menuitem">Reset row marks</button>'+
+        '<button class="more-item" role="menuitem">Save as new dashboard&hellip;</button>'+
+        '<div class="more-sep"></div>'+
+        '<button class="more-item" role="menuitem">Help / About</button>'+
+      '</div>';
+    }
+    cluster += '</div>';
+    cluster += '<button class="app-ico-btn settings'+(dvOpen?' active':'')+'" title="Data & view" aria-label="Data and view">&#9881;</button>';
+    cluster += '</div>';
+    return '<div class="app-hd">'+
+      '<button class="ws-toggle'+(wsOpen?' pressed':'')+'" aria-pressed="'+(wsOpen?'true':'false')+'" title="Workspace: your notes, comments and lists"><span class="ic">&#128221;</span> Workspace<span class="cnt" title="3 open notes">3</span></button>'+
+      '<span class="ttl">Eskay | Snip PFS &amp; Technical Report 2026 &middot; Deliverables Dashboard</span>'+
+      cluster+
+    '</div>';
+  }
+
+  // ---- Top filter bar: date range, mode, fit columns (moved in from More actions) ----
+  function filterbarHtml(){
+    return '<div class="app-filterbar">'+
+      '<span class="fb-lbl">Date range:</span>'+
+      '<span class="fb-lbl">Weeks</span>'+
+      '<input class="ds-field" type="text" value="W/E 14 Sep 26" style="max-width:130px" aria-label="Week ending">'+
+      '<span class="fb-sep"></span>'+
+      '<span class="fb-lbl">Mode</span>'+
+      '<div class="ds-seg" role="tablist" aria-label="Filter mode"><button class="active" aria-pressed="true">Highlight</button><button aria-pressed="false">Show only</button></div>'+
+      '<span class="grow"></span>'+
+      '<button class="ds-btn" title="Fit all visible columns to the screen width">&#8622; Fit columns</button>'+
+    '</div>';
+  }
+
   // ---- Section 1: overview app shell ----
   function buildOverview(id){
     var el=document.getElementById(id); if(!el) return;
     el.innerHTML =
-      '<div class="app-hd">'+
-        '<button class="app-side-btn active" title="Workspace: your notes, comments and lists">&#9776; Workspace</button>'+
-        '<span class="ttl">Eskay | Snip PFS &amp; Technical Report 2026 &mdash; Deliverables Dashboard</span>'+
-        '<button class="app-side-btn active" title="Data and view: schedules, import and format">Data &amp; view &#9776;</button>'+
-      '</div>'+
+      appHeaderHtml({wsOpen:true,dvOpen:true})+
+      filterbarHtml()+
       '<div class="app-body">'+
         '<div class="side-shell ws" id="'+id+'-ws"></div>'+
         '<div class="board-sliver">Board (compressed for this mockup)<br>Milestone timeline continues here</div>'+
@@ -523,9 +611,20 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
   buildOverview('ov-light');
   buildOverview('ov-dark');
 
-  // ---- Section 2: notes with status ----
+  // ---- Section 2: top-right control cluster ----
+  ['hdr-closed-light','hdr-closed-dark'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.innerHTML = appHeaderHtml({wsOpen:true,dvOpen:false});
+  });
+  ['hdr-menu-light','hdr-menu-dark'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.innerHTML = appHeaderHtml({wsOpen:true,dvOpen:false,menuOpen:true});
+  });
+  ['hdr-phone-light','hdr-phone-dark'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.innerHTML = appHeaderHtml({wsOpen:false,dvOpen:false,phone:true,menuOpen:true});
+  });
+
+  // ---- Section 3: notes with status ----
   var notesBody =
-    '<div class="np-hd">'+
+    '<div class="np-hd ws-hd">'+
       '<span class="np-hd-title">Notes</span>'+
       '<button class="dm-pill current">Reporting <b>W/E 14 Sep 26</b> <span class="car">&#9662;</span></button>'+
       '<span class="grow"></span>'+
@@ -598,9 +697,9 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
     var el=document.getElementById(id); if(el) el.innerHTML = notesBody;
   });
 
-  // ---- Section 3: comments & markups ----
+  // ---- Section 4: comments & markups ----
   var cmBody =
-    '<div class="np-hd">'+
+    '<div class="np-hd ws-hd">'+
       '<span class="np-hd-title">Comments &amp; markups</span>'+
       '<span class="grow"></span>'+
       '<button class="ds-ico" title="Close" aria-label="Close">&#10005;</button>'+
@@ -650,9 +749,9 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
     var el=document.getElementById(id); if(el) el.innerHTML = cmBody;
   });
 
-  // ---- Section 4: user milestones ----
+  // ---- Section 5: user milestones ----
   var umBody =
-    '<div class="np-hd">'+
+    '<div class="np-hd ws-hd">'+
       '<span class="np-hd-title">User milestones</span>'+
       '<span class="grow"></span>'+
       '<button class="ds-ico" title="Close" aria-label="Close">&#10005;</button>'+
@@ -679,7 +778,7 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
     var el=document.getElementById(id); if(el) el.innerHTML = umBody;
   });
 
-  // ---- Section 5: right side widgets (rail + panel each) ----
+  // ---- Section 6: right side widgets (rail + panel each) ----
   function railHtml(active){
     var items=[['View controls','&#127912;'],['Sources','&#128193;'],['Import','&#128229;'],['Data settings','&#9881;'],['Diagnostics','&#129514;']];
     var out='<div class="side-rail">';
@@ -697,7 +796,15 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
       '</div>';
   }
 
-  var vcBody =
+  function themeGroup(active){
+    function seg(v,lbl){return '<button'+(v===active?' class="active" aria-pressed="true"':' aria-pressed="false"')+'>'+lbl+'</button>';}
+    return '<div class="dm-group">'+
+      '<div class="dm-group-title">Theme</div>'+
+      '<div class="dm-group-desc">Moved in from the header toggle.</div>'+
+      '<div class="ds-seg" role="tablist" aria-label="Theme">'+seg('light','Light')+seg('dark','Dark')+seg('system','System')+'</div>'+
+    '</div>';
+  }
+  var vcBodyBase =
     '<div class="dm-group">'+
       '<div class="dm-group-title">Layout</div>'+
       '<div class="fr-row"><label>Title Column</label><input type="range" min="140" max="400" value="220"><span class="fr-val">220px</span></div>'+
@@ -714,8 +821,8 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
       '<div class="dm-row" style="border-top:0"><span style="flex:1 1 auto">Milestone labels</span><div class="dm-switch on"><span class="trk"></span></div></div>'+
       '<div class="dm-row"><span style="flex:1 1 auto">Milestone hrs</span><div class="dm-switch"><span class="trk"></span></div></div>'+
     '</div>';
-  widget('vc-light',0,'Schedule and view',vcBody);
-  widget('vc-dark',0,'Schedule and view',vcBody);
+  widget('vc-light',0,'Schedule and view',themeGroup('light')+vcBodyBase);
+  widget('vc-dark',0,'Schedule and view',themeGroup('dark')+vcBodyBase);
 
   var srcBody =
     '<div class="dm-group">'+
@@ -774,7 +881,7 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
   widget('ds-light',3,'Schedule and view',dsBody);
   widget('ds-dark',3,'Schedule and view',dsBody);
 
-  // ---- Section 6 replay ----
+  // ---- Section 7 replay ----
   window.replayHighlight = function(id){
     var el = document.getElementById(id);
     if (!el) return;
@@ -785,7 +892,7 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
     setTimeout(function(){ el.classList.remove('hl-on'); }, reduced ? 2000 : 1200);
   };
 
-  // ---- Section 7: phone overlays ----
+  // ---- Section 8: phone overlays ----
   function wsTabsHtml(){
     var items=[['Notes','&#128221;'],['Comments','&#128172;'],['User milestones','&#128681;'],['Lists','&#9776;']];
     var out='';
@@ -798,23 +905,23 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
     items.forEach(function(it,i){out+='<button class="ph-tab'+(i===1?' active':'')+'">'+it[1]+' '+it[0]+'</button>';});
     return out;
   }
-  function phShell(hostId,title,tabsHtml,bodyHtml){
+  function phShell(hostId,title,tabsHtml,bodyHtml,hdClass){
     var el=document.getElementById(hostId); if(!el) return;
     el.innerHTML =
       '<div class="ph-shell">'+
-        '<div class="ph-hd"><span>'+title+'</span><span class="grow"></span><button class="ds-ico" style="background:rgba(255,255,255,.12);color:#fff" title="Close" aria-label="Close">&#10005;</button></div>'+
+        '<div class="ph-hd'+(hdClass?' '+hdClass:'')+'"><span>'+title+'</span><span class="grow"></span><button class="ds-ico" style="background:rgba(255,255,255,.12);color:#fff" title="Close" aria-label="Close">&#10005;</button></div>'+
         '<div class="ph-tabs" role="tablist">'+tabsHtml+'</div>'+
         '<div class="ph-body">'+bodyHtml+'</div>'+
       '</div>';
   }
-  var phWsBody = notesBody.replace('<div class="np-hd">'+
+  var phWsBody = notesBody.replace('<div class="np-hd ws-hd">'+
       '<span class="np-hd-title">Notes</span>'+
       '<button class="dm-pill current">Reporting <b>W/E 14 Sep 26</b> <span class="car">&#9662;</span></button>'+
       '<span class="grow"></span>'+
       '<button class="ds-ico" title="Close" aria-label="Close">&#10005;</button>'+
     '</div>','');
-  phShell('phws-light','Workspace',wsTabsHtml(),phWsBody);
-  phShell('phws-dark','Workspace',wsTabsHtml(),phWsBody);
+  phShell('phws-light','Workspace',wsTabsHtml(),phWsBody,'ws-hd');
+  phShell('phws-dark','Workspace',wsTabsHtml(),phWsBody,'ws-hd');
 
   var phDvBody = srcBody + srcFoot;
   phShell('phdv-light','Data &amp; view',dvTabsHtml(),phDvBody);
