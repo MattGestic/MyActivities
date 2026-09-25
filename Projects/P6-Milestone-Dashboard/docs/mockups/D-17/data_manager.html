@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>D-17 Data manager mockups</title>
+<style>
+/* Page chrome, copied from docs/mockups/D-16/component_sheet.html */
+:root{--pg-bg:#f3f4f7;--pg-surface:#ffffff;--pg-ink:#17191c;--pg-muted:#575c67;--pg-line:#e1e3e8}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){color-scheme:dark;--pg-bg:#14171c;--pg-surface:#1c2027;--pg-ink:#e6e8ec;--pg-muted:#a6adba;--pg-line:#2c323c}}
+:root[data-theme="dark"]{color-scheme:dark;--pg-bg:#14171c;--pg-surface:#1c2027;--pg-ink:#e6e8ec;--pg-muted:#a6adba;--pg-line:#2c323c}
+body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable Text','Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;padding-inline:16px;margin:0}
+.wrap{max-width:1500px;margin:0 auto;padding-block:20px 40px;display:flex;flex-direction:column;gap:20px;box-sizing:border-box}
+.pg-head h1{margin:0 0 6px;font-size:20px;line-height:28px}
+.pg-head p{margin:0;font-size:13px;line-height:1.5;color:var(--pg-muted);max-width:86ch}
+.pg-sect{background:var(--pg-surface);border:1px solid var(--pg-line);border-radius:8px;padding:16px;min-width:0;box-sizing:border-box}
+.pg-sect>h2{margin:0 0 4px;font-size:14px;line-height:20px}
+.pg-sect>p{margin:0 0 12px;font-size:12px;line-height:1.5;color:var(--pg-muted);max-width:86ch}
+.pg-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(380px,100%),1fr));gap:12px}
+.pg-scroll{overflow-x:auto;box-sizing:border-box}
+.pg-cap{font-size:11px;color:var(--pg-muted);margin:0 0 6px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+
+/* App colour tokens, copied from src/milestone-dashboard.html */
+.t-light{--color-bg-panel:#f4f5f8;--color-bg-elevated:#ffffff;--color-bg-header:#2e4f82;
+  --color-line-default:#e3e2de;--color-text-primary:#17191c;--color-text-muted:#6f7480;--color-text-note:#767b85;
+  --color-accent-purple:#8b64c7;--color-accent-ink:#6f46ad;--color-accent-tint-bg:#efe6f9;
+  --color-accent-wash-weak:rgba(139,100,199,.05);--color-accent-wash:rgba(139,100,199,.10);
+  --color-btn-primary-bg:#1c3a63;--color-btn-primary-text:#ffffff;--color-btn-primary-hover-bg:#2a4a7a;
+  --color-btn-secondary-bg:#ffffff;--color-btn-secondary-text:#1c3a63;--color-btn-secondary-outline:#9fb0bd;--color-btn-secondary-hover-bg:#eef1f7;
+  --color-btn-icon-hover-bg:#dde1ea;--color-text-on-accent:#ffffff;
+  --color-status-risk:#a2690a;--color-status-crit:#c0392b;--color-status-done:#1f9d55;
+  --color-crit-tint-bg:#fdecec;--color-badge-neutral-bg:#889;--color-input-border:#b8c0d8;
+  --color-icon-done:#17191c;--color-icon-track:#2f6fed;--color-icon-risk:#a2690a;--color-icon-crit:#c0392b;--color-icon-baseline:#767b85}
+.t-dark{--color-bg-panel:#1e2240;--color-bg-elevated:#232f4a;--color-bg-header:#15182f;
+  --color-line-default:rgba(160,184,230,.2);--color-text-primary:#e8eef8;--color-text-muted:#8b9bb8;--color-text-note:#889;
+  --color-accent-purple:#8b64c7;--color-accent-ink:#a98ad8;--color-accent-tint-bg:#2a2440;
+  --color-accent-wash-weak:rgba(139,100,199,.05);--color-accent-wash:rgba(139,100,199,.10);
+  --color-btn-primary-bg:#3a6ea8;--color-btn-primary-text:#ffffff;--color-btn-primary-hover-bg:#4a80ba;
+  --color-btn-secondary-bg:#1e2240;--color-btn-secondary-text:#9cbcff;--color-btn-secondary-outline:#3a3e60;--color-btn-secondary-hover-bg:#2a2e50;
+  --color-btn-icon-hover-bg:#2a2e50;--color-text-on-accent:#ffffff;
+  --color-status-risk:#c07500;--color-status-crit:#c00000;--color-status-done:#1f9d55;
+  --color-crit-tint-bg:#3a1a1a;--color-badge-neutral-bg:#5a6478;--color-input-border:#3a3e60;
+  --color-icon-done:#e8eef8;--color-icon-track:#5a90e0;--color-icon-risk:#e0a030;--color-icon-crit:#e05050;--color-icon-baseline:#889}
+
+/* D-16 standard tokens, copied from docs/mockups/D-16/component_sheet.html */
+.ds{--ctl-h:24px;--icon-btn:24px;--ctl-pad-x:8px;--ctl-gap:8px;--ctl-gap-tight:4px;--field-label-gap:12px;--group-gap:16px;
+  --radius-ctl:4px;--radius-overlay:8px;--fs-caption:12px;--lh-caption:16px;--fs-field:12px;
+  font-family:'Segoe UI Variable Text','Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;
+  background:var(--color-bg-panel);color:var(--color-text-primary);border-radius:var(--radius-overlay);
+  font-size:var(--fs-caption);line-height:var(--lh-caption);box-sizing:border-box}
+.ds *{box-sizing:border-box}
+.ds.touch{--ctl-h:32px;--icon-btn:32px;--fs-field:14px}
+.ds-btn,.ds-field,.ds-select,.ds-chip,.ds-seg button{height:var(--ctl-h);font:inherit;font-size:var(--fs-caption);border-radius:var(--radius-ctl)}
+.ds-btn{padding:0 var(--ctl-pad-x);border:1px solid var(--color-btn-secondary-outline);background:var(--color-btn-secondary-bg);color:var(--color-btn-secondary-text);cursor:pointer;white-space:nowrap}
+.ds-btn:hover{background:var(--color-btn-secondary-hover-bg)}
+.ds-btn.primary{background:var(--color-btn-primary-bg);border-color:var(--color-btn-primary-bg);color:var(--color-btn-primary-text);font-weight:600}
+.ds-btn.primary:hover{background:var(--color-btn-primary-hover-bg)}
+.ds-btn.danger{background:var(--color-status-crit);border-color:var(--color-status-crit);color:#fff;font-weight:600}
+.ds-ico{box-sizing:border-box;width:var(--icon-btn);height:var(--icon-btn);border:0;background:transparent;color:var(--color-text-primary);border-radius:var(--radius-ctl);font-size:14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.ds-ico:hover{background:var(--color-btn-icon-hover-bg)}
+.ds-field,.ds-select{padding:0 var(--ctl-pad-x);border:1px solid var(--color-btn-secondary-outline);background:var(--color-bg-elevated);color:var(--color-text-primary);font-size:var(--fs-field);min-width:0}
+.ds-check{display:inline-flex;align-items:center;gap:6px;min-height:var(--ctl-h)}
+.ds-check input{width:16px;height:16px;margin:0;accent-color:var(--color-accent-purple)}
+.ds-row{display:flex;flex-wrap:wrap;gap:var(--ctl-gap);align-items:center}
+.ds :focus-visible{outline:2px solid var(--color-accent-purple);outline-offset:1px}
+
+/* ---- Switch: hit area is --ctl-h, visual track stays 32x16 regardless ----
+   (design-standard.md: "Checkbox / switch | 16px box / 32x16 switch"). The
+   track never grows on touch; only the surrounding hit area does, same
+   pattern as .ds-check's 16px box inside a --ctl-h row. */
+.dm-switch{display:inline-flex;align-items:center;height:var(--ctl-h);gap:6px;cursor:pointer;flex:0 0 auto}
+.dm-switch .trk{position:relative;width:32px;height:16px;border-radius:999px;background:var(--color-btn-secondary-outline);flex:0 0 auto;transition:background .12s}
+.dm-switch .trk::after{content:'';position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3);transition:transform .12s}
+.dm-switch.on .trk{background:var(--color-accent-purple)}
+.dm-switch.on .trk::after{transform:translateX(16px)}
+.dm-switch.disabled{cursor:not-allowed;opacity:.55}
+.dm-switch .lbl{font-size:11px;color:var(--color-text-muted);white-space:nowrap}
+
+/* ---- Data manager drawer shell ---- */
+.dm-drawer{width:360px;max-width:100%;background:var(--color-bg-panel);border:1px solid var(--color-line-default);border-radius:var(--radius-overlay);overflow:hidden;box-sizing:border-box}
+.dm-drawer.phone{width:390px}
+.dm-hd{background:var(--color-bg-header);color:#fff;padding:10px var(--group-gap);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:space-between}
+.dm-tabs{display:flex;gap:4px;padding:8px var(--group-gap);background:var(--color-bg-elevated);border-bottom:1px solid var(--color-line-default);overflow-x:auto}
+.dm-tab{flex:0 0 auto;height:var(--ctl-h);padding:0 var(--ctl-pad-x);border:1px solid transparent;border-radius:999px;background:transparent;color:var(--color-text-muted);font:inherit;font-size:var(--fs-caption);font-weight:600;cursor:pointer;white-space:nowrap}
+.dm-tab.active{background:var(--color-accent-purple);color:#fff}
+.dm-body{}
+.dm-group{padding:var(--group-gap);border-bottom:1px solid var(--color-line-default)}
+.dm-group:last-child{border-bottom:0}
+.dm-group-title{font-size:var(--fs-caption);font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--color-accent-ink);margin:0 0 4px}
+.dm-group-desc{font-size:11px;color:var(--color-text-note);line-height:1.5;margin:0 0 10px}
+.dm-foot{padding:10px var(--group-gap);border-top:1px solid var(--color-line-default);display:flex;justify-content:flex-end}
+
+/* ---- Source / mount row ---- */
+.dm-row{display:flex;align-items:center;gap:var(--ctl-gap);padding:10px 0;flex-wrap:wrap}
+.dm-row+.dm-row{border-top:1px solid var(--color-line-default)}
+.dm-row-main{flex:1 1 200px;min-width:0}
+.dm-row-name{font-size:13px;font-weight:700;color:var(--color-text-primary);line-height:1.4;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.dm-row-meta{font-size:11px;color:var(--color-text-muted);line-height:1.5;margin-top:2px}
+.dm-row-ctrl{display:flex;align-items:center;gap:var(--ctl-gap);flex:0 0 auto;flex-wrap:wrap;justify-content:flex-end}
+.dm-badge{font-size:10px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;padding:1px 7px;border-radius:999px;color:#fff;background:var(--color-badge-neutral-bg);white-space:nowrap}
+.dm-badge.baseline{background:var(--color-text-muted)}
+
+.dm-confirm .ds-btn.danger{margin-left:auto}
+.dm-confirm{display:flex;align-items:center;gap:var(--ctl-gap);flex-wrap:wrap;background:var(--color-crit-tint-bg);border:1px solid var(--color-status-crit);border-radius:var(--radius-ctl);padding:8px 10px;margin-top:6px;width:100%}
+.dm-confirm-txt{flex:1 1 100%;font-size:12px;color:var(--color-text-primary);line-height:1.4;min-width:0}
+
+.dm-warn{display:flex;align-items:flex-start;gap:6px;background:var(--color-crit-tint-bg,rgba(200,120,0,.12));border-left:3px solid var(--color-status-risk);border-radius:var(--radius-ctl);padding:6px 10px;font-size:11px;color:var(--color-text-primary);line-height:1.5;margin-top:6px}
+.dm-warn b{color:var(--color-status-risk)}
+
+/* ---- Mount / export card ---- */
+.dm-card{border:1px solid var(--color-line-default);border-radius:var(--radius-overlay);background:var(--color-bg-elevated);padding:10px 12px}
+.dm-card+.dm-card{margin-top:10px}
+.dm-card-hd{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dm-card-title{font-size:13px;font-weight:700;color:var(--color-text-primary);flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
+.dm-card-sub{font-size:11px;color:var(--color-text-muted);line-height:1.5;margin-top:4px}
+.dm-card-note{font-size:11px;color:var(--color-accent-ink);line-height:1.5;margin-top:4px;font-style:italic}
+.dm-card-actions{display:flex;gap:var(--ctl-gap);margin-top:8px;flex-wrap:wrap}
+.dm-dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+.dm-dot.on{background:var(--color-status-done)}
+.dm-dot.off{background:var(--color-text-muted)}
+.dm-dot.locked{background:var(--color-badge-neutral-bg)}
+
+.dm-export-row{display:flex;align-items:flex-start;gap:var(--ctl-gap);padding:8px 0}
+.dm-export-row+.dm-export-row{border-top:1px solid var(--color-line-default)}
+.dm-export-main{flex:1 1 auto;min-width:0}
+.dm-export-name{font-size:12px;font-weight:600;color:var(--color-text-primary)}
+.dm-export-desc{font-size:11px;color:var(--color-text-note);line-height:1.5;margin-top:2px}
+
+.dm-drop{border:1px dashed var(--color-btn-secondary-outline);border-radius:var(--radius-overlay);padding:14px;text-align:center;color:var(--color-text-muted);font-size:11px;margin-top:6px}
+
+/* ---- Reporting period pill + dropdown ---- */
+.dm-pill{display:inline-flex;align-items:center;gap:6px;height:var(--ctl-h);padding:0 10px;border-radius:999px;border:1.5px solid var(--color-accent-purple);background:transparent;color:var(--color-accent-ink);font:inherit;font-size:var(--fs-caption);font-weight:600;cursor:pointer;white-space:nowrap}
+.dm-pill.current{background:var(--color-accent-purple);color:#fff;border-color:var(--color-accent-purple)}
+.dm-pill.historic{border-color:var(--color-status-risk);color:var(--color-status-risk)}
+.dm-pill .car{font-size:10px}
+.dm-dropdown{margin-top:6px;border:1px solid var(--color-line-default);border-radius:var(--radius-overlay);background:var(--color-bg-elevated);overflow:hidden;width:max-content;max-width:100%}
+.dm-dd-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 12px;font-size:12px;color:var(--color-text-primary);cursor:pointer;min-height:var(--ctl-h)}
+.dm-dd-item:hover{background:var(--color-accent-wash-weak)}
+.dm-dd-item+.dm-dd-item{border-top:1px solid var(--color-line-default)}
+.dm-dd-item.new{color:var(--color-accent-ink);font-weight:700}
+.dm-dd-count{font-size:11px;color:var(--color-text-muted)}
+
+.dm-banner{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--color-crit-tint-bg,rgba(200,120,0,.12));border:1px solid var(--color-status-risk);border-radius:var(--radius-ctl);padding:6px 10px;font-size:11px;color:var(--color-text-primary);line-height:1.5}
+.dm-banner b{color:var(--color-status-risk)}
+
+.dm-thread{border:1px solid var(--color-line-default);border-radius:var(--radius-overlay);background:var(--color-bg-elevated);padding:10px 12px;max-width:420px}
+.dm-thread-hd{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dm-tag{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:1px 7px;border-radius:999px;background:var(--color-accent-wash);color:var(--color-accent-ink);cursor:pointer;white-space:nowrap}
+.dm-tag.amber{background:var(--color-crit-tint-bg,rgba(200,120,0,.12));color:var(--color-status-risk)}
+.dm-thread-txt{font-size:12px;color:var(--color-text-primary);line-height:1.5;margin-top:6px}
+.dm-move-menu{margin-top:8px;border:1px solid var(--color-line-default);border-radius:var(--radius-ctl);overflow:hidden}
+
+/* ---- Grid sheet ---- */
+.dm-sheet-wrap{border:1px solid var(--color-line-default);border-radius:var(--radius-overlay);overflow:hidden;background:var(--color-bg-elevated)}
+.dm-sheet-hd{display:flex;align-items:center;gap:var(--ctl-gap);padding:8px 12px;border-bottom:1px solid var(--color-line-default);background:var(--color-bg-panel);flex-wrap:wrap}
+.dm-sheet-hd .grow{flex:1 1 auto}
+.dm-sheet-scroll{overflow-x:auto}
+table.dm-sheet{border-collapse:separate;border-spacing:0;width:100%;font-size:12px;min-width:900px}
+table.dm-sheet th{text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--color-text-muted);padding:6px 10px;border-bottom:1px solid var(--color-line-default);white-space:nowrap;background:var(--color-bg-panel);position:sticky;top:0}
+table.dm-sheet td{padding:0;border-bottom:1px solid var(--color-line-default)}
+table.dm-sheet td .cell{display:flex;align-items:center;height:var(--ctl-h);padding:0 10px;white-space:nowrap;color:var(--color-text-primary)}
+table.dm-sheet td.editing .cell{background:var(--color-bg-elevated);box-shadow:inset 0 0 0 2px var(--color-accent-purple);border-radius:2px}
+table.dm-sheet tr:hover td .cell{background:var(--color-accent-wash-weak)}
+table.dm-sheet td.editing:hover .cell{background:var(--color-bg-elevated)}
+
+/* ---- Board marker preview ---- */
+.dm-board-strip{display:flex;gap:36px;align-items:flex-end;padding:26px 10px 10px;flex-wrap:wrap}
+.dm-mk{position:relative;width:24px;height:24px;display:flex;align-items:center;justify-content:center}
+.dm-mk svg{width:20px;height:20px}
+.dm-mk .edited{position:absolute;top:-6px;right:-6px;font-size:14px;font-weight:700;color:var(--color-accent-ink);line-height:1}
+.dm-mk .ghost{position:absolute;left:-34px;top:50%;transform:translateY(-50%);width:14px;height:14px;opacity:.4}
+.dm-mk .ghost svg{width:14px;height:14px}
+.dm-mk-lbl{position:absolute;top:28px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--color-text-muted);white-space:nowrap}
+.dm-tip-box{display:inline-flex;align-items:center;gap:8px;background:var(--color-bg-header);color:#fff;font-size:11px;line-height:1.5;padding:6px 10px;border-radius:6px;margin:6px 10px 0;max-width:100%;box-sizing:border-box}
+.dm-legend{display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:11px;color:var(--color-text-muted);margin-top:18px}
+.dm-legend .mk{font-weight:700;color:var(--color-accent-ink);margin-right:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="pg-head">
+  <h1>D-17 data manager: mockups for sign-off</h1>
+  <p>Static mockups only, no app code changed. Restyles the Settings drawer's Sources and Annotations tabs, the User-defined grid, the reporting-period control, and the D-18 board edit mark, to the D-16 design standard (24px desktop controls, 32px touch, tokens, type ramp, field row pattern). Source: the D-17 Data manager plan and its addendum. Reference for control conventions: <code>docs/mockups/D-16/component_sheet.html</code>.</p>
+</header>
+
+<!-- ===================== 1. Sources tab (D-17a) ===================== -->
+<section class="pg-sect">
+  <h2>1. Sources tab (D-17a)</h2>
+  <p>Tabs become <b>Sources &middot; Annotations &middot; Import &middot; Defaults</b>. Each schedule layer is one row: name, data date, row/milestone counts, an on/off switch, Rename, Remove. Off means the source's rows leave the board; its annotations and filter entries stay. The embedded baseline is shown locked, never toggled. User-defined milestones are a source like any other: same row shape, with Manage&hellip; to open the grid and a schedule-format export so they round-trip through the importer. Two enabled sources sharing an Activity ID raise a one-line warning rather than silently overlapping.</p>
+  <div class="pg-grid">
+    <div><p class="pg-cap">Desktop &middot; light</p><div class="ds t-light dm-drawer" id="src-desk-light"></div></div>
+    <div><p class="pg-cap">Desktop &middot; dark</p><div class="ds t-dark dm-drawer" id="src-desk-dark"></div></div>
+  </div>
+  <div class="pg-grid" style="margin-top:12px">
+    <div><p class="pg-cap">Phone 390, touch &middot; light</p><div class="ds touch t-light dm-drawer phone" id="src-phone-light"></div></div>
+    <div><p class="pg-cap">Phone 390, touch &middot; dark</p><div class="ds touch t-dark dm-drawer phone" id="src-phone-dark"></div></div>
+  </div>
+</section>
+
+<!-- ===================== 2. Annotations tab (D-17b preview) ===================== -->
+<section class="pg-sect">
+  <h2>2. Annotations tab (D-17b preview)</h2>
+  <p>Consolidates the exports that are today scattered across More Actions and the action bar into one named list, each with its purpose stated in one line. Mounting is a stack of layers rather than one slot: Local edits sits on top and cannot be removed, only exported; each mounted file below it shows its counts, an on/off switch, Merge into Local edits, Remove, and, where it changes an earlier file's value, an override note. Order is oldest first, later overrides earlier. Merge folds a file into Local edits so the two become one set; the file leaves the list and the merge cannot be undone, so it asks first. Where Local edits already holds a value for the same field, the local value is kept, so merging never changes what an on layer already shows.</p>
+  <div class="pg-grid">
+    <div><p class="pg-cap">Desktop &middot; light</p><div class="ds t-light dm-drawer" id="annot-desk-light"></div></div>
+    <div><p class="pg-cap">Desktop &middot; dark</p><div class="ds t-dark dm-drawer" id="annot-desk-dark"></div></div>
+  </div>
+  <div class="pg-grid" style="margin-top:12px">
+    <div><p class="pg-cap">Phone 390, touch &middot; light</p><div class="ds touch t-light dm-drawer phone" id="annot-phone-light"></div></div>
+    <div><p class="pg-cap">Phone 390, touch &middot; dark</p><div class="ds touch t-dark dm-drawer phone" id="annot-phone-dark"></div></div>
+  </div>
+</section>
+
+<!-- ===================== 3. Reporting period control ===================== -->
+<section class="pg-sect">
+  <h2>3. Reporting period control (D-03/D-04 preview)</h2>
+  <p>Its own pill at the start of the header meta line, so it reads as a control rather than a caption. Filled accent means the current period; an outlined amber pill means a historic one is being viewed. The dropdown offers a one-click "New period" for the next week ending, every period with entries newest first, and a date picker for anything else. Writing into a historic period shows a banner on the card so the choice is explicit, and every entry's period tag opens a small "Move to" menu, alone or in bulk from the Annotations tab.</p>
+  <div class="pg-grid">
+    <div>
+      <p class="pg-cap">Pill states &middot; light</p>
+      <div class="ds t-light" style="padding:16px;border-radius:8px">
+        <div class="ds-row" style="margin-bottom:10px"><button class="dm-pill current">Reporting <b>W/E 14 Sep 26</b> <span class="car">&#9662;</span></button></div>
+        <div class="ds-row"><button class="dm-pill historic">Viewing <b>W/E 07 Sep 26</b> <span class="car">&#9662;</span></button></div>
+      </div>
+    </div>
+    <div>
+      <p class="pg-cap">Open dropdown &middot; dark</p>
+      <div class="ds t-dark" style="padding:16px;border-radius:8px">
+        <button class="dm-pill current">Reporting <b>W/E 14 Sep 26</b> <span class="car">&#9662;</span></button>
+        <div class="dm-dropdown" id="period-dd"></div>
+      </div>
+    </div>
+  </div>
+  <div class="pg-grid" style="margin-top:12px">
+    <div>
+      <p class="pg-cap">Card banner: writing to a historic period</p>
+      <div class="ds t-light" style="padding:16px;border-radius:8px">
+        <div class="dm-banner"><b>&#9888;</b> Adding to W/E 07 Sep 26, not the current period. <button class="ds-btn" style="margin-left:auto">Switch to current</button></div>
+      </div>
+    </div>
+    <div>
+      <p class="pg-cap">Card thread entry: period tag, open Move to menu</p>
+      <div class="ds t-dark" style="padding:16px;border-radius:8px">
+        <div class="dm-thread">
+          <div class="dm-thread-hd"><span class="dm-tag amber">W/E 07 Sep 26</span><span style="font-size:11px;color:var(--color-text-muted)">Matt &middot; 08 Sep 26</span></div>
+          <div class="dm-thread-txt">SNIP-102 slipped two weeks against the update. Flagging for the Wed review.</div>
+          <div class="dm-move-menu ds t-dark">
+            <div class="dm-dd-item new">New period: W/E 21 Sep 26</div>
+            <div class="dm-dd-item">W/E 14 Sep 26 <span class="dm-dd-count">current</span></div>
+            <div class="dm-dd-item">W/E 07 Sep 26 <span class="dm-dd-count">this entry</span></div>
+            <div class="dm-dd-item">W/E 31 Aug 26 <span class="dm-dd-count">9 entries</span></div>
+            <div class="dm-dd-item">Pick a date&hellip;</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 4. User-defined grid (D-17c preview) ===================== -->
+<section class="pg-sect">
+  <h2>4. User-defined grid, "the sheet" (D-17c preview)</h2>
+  <p>A native editable table, no Tabulator, no new dependency. Opens full height from Sources &gt; User-defined &gt; Manage&hellip;. One cell shown mid-edit with the focus ring the standard specifies. Desktop only for this mockup: on a phone the sheet scrolls horizontally inside its own frame, the header actions stack, and the rest of the drawer is unaffected, the same pattern <code>.pg-scroll</code> uses on this page for anything wider than the viewport.</p>
+  <div class="pg-scroll"><div style="min-width:960px"><div class="ds t-light" id="grid-desk-light" style="padding:16px;border-radius:8px"></div></div></div>
+  <div class="pg-scroll" style="margin-top:12px"><div style="min-width:960px"><div class="ds t-dark" id="grid-desk-dark" style="padding:16px;border-radius:8px"></div></div></div>
+</section>
+
+<!-- ===================== 5. Board edited mark (D-18 preview) ===================== -->
+<section class="pg-sect">
+  <h2>5. Board edited mark (D-18 preview)</h2>
+  <p>When the effective Finish/Start date or the status/health comes from a user override rather than the source, the marker gets a small <span style="font-weight:700">*</span> beside its icon: the same glyph as the card's saved-edit mark, at the icon's top right, in accent ink, outside the icon so the shape and fill never change. A date override that moves the marker to a different week keeps a faint ghost tick at the source week. It reads the effective value against the source, so it cannot drift from the card.</p>
+  <div class="pg-grid">
+    <div>
+      <p class="pg-cap">Light</p>
+      <div class="ds t-light" style="padding:0;border-radius:8px" id="board-light"></div>
+    </div>
+    <div>
+      <p class="pg-cap">Dark</p>
+      <div class="ds t-dark" style="padding:0;border-radius:8px" id="board-dark"></div>
+    </div>
+  </div>
+</section>
+</div>
+
+<!-- ===================== Templates ===================== -->
+<template id="tpl-sources">
+  <div class="dm-hd"><span>&#9881; Data Settings</span></div>
+  <div class="dm-tabs">
+    <button class="dm-tab active">Sources</button>
+    <button class="dm-tab">Annotations</button>
+    <button class="dm-tab">Import</button>
+    <button class="dm-tab">Defaults</button>
+  </div>
+  <div class="dm-body">
+    <div class="dm-group">
+      <div class="dm-group-title">Schedules</div>
+      <div class="dm-group-desc">One row per mounted schedule. Off takes its rows off the board; comments and filter entries stay.</div>
+
+      <div class="dm-row">
+        <div class="dm-row-main">
+          <div class="dm-row-name">Wk 38 schedule <span class="dm-badge">primary</span></div>
+          <div class="dm-row-meta">DD 07 Sep 26 &middot; 159 tasks / 198 milestones</div>
+        </div>
+        <div class="dm-row-ctrl">
+          <div class="dm-switch on"><span class="trk"></span></div>
+          <button class="ds-btn">Rename&hellip;</button>
+          <button class="ds-btn">Remove</button>
+        </div>
+        <div class="dm-warn"><span>&#9888;&#65039;</span><span><b>SNIP-102</b> and 41 others are in both Wk 38 and Wk 39. Turn one off.</span></div>
+      </div>
+
+      <div class="dm-row">
+        <div class="dm-row-main">
+          <div class="dm-row-name">Wk 39 schedule <span class="dm-badge">primary</span></div>
+          <div class="dm-row-meta">DD 14 Sep 26 &middot; 164 tasks / 201 milestones</div>
+        </div>
+        <div class="dm-row-ctrl">
+          <div class="dm-switch on"><span class="trk"></span></div>
+          <button class="ds-btn">Rename&hellip;</button>
+          <button class="ds-btn danger">Remove</button>
+        </div>
+        <div class="dm-confirm">
+          <span class="dm-confirm-txt">Remove Wk 38 schedule? Its rows leave the board; comments stay.</span>
+          <button class="ds-btn">Cancel</button>
+          <button class="ds-btn danger">Remove</button>
+        </div>
+      </div>
+
+      <div class="dm-row">
+        <div class="dm-row-main">
+          <div class="dm-row-name">Embedded baseline <span class="dm-badge baseline">baseline</span></div>
+          <div class="dm-row-meta">DD 31 Aug 26 &middot; 142 tasks / 176 milestones</div>
+        </div>
+        <div class="dm-row-ctrl">
+          <div class="dm-switch on disabled"><span class="trk"></span></div>
+          <span style="font-size:11px;color:var(--color-text-note)">Built in. Cannot be unmounted.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dm-group">
+      <div class="dm-group-title">User-defined</div>
+      <div class="dm-group-desc">A user-defined milestone is a schedule item whose source is "User-defined". Exports in the importer's own columns so it re-imports as editable USR- items.</div>
+      <div class="dm-row">
+        <div class="dm-row-main">
+          <div class="dm-row-name">User-defined</div>
+          <div class="dm-row-meta">6 milestones</div>
+        </div>
+        <div class="dm-row-ctrl">
+          <div class="dm-switch on"><span class="trk"></span></div>
+          <button class="ds-btn">Manage&hellip;</button>
+          <button class="ds-btn">Export (schedule format)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="dm-foot"><button class="ds-btn primary">Add schedule&hellip;</button></div>
+</template>
+
+<template id="tpl-annot">
+  <div class="dm-hd"><span>&#9881; Data Settings</span></div>
+  <div class="dm-tabs">
+    <button class="dm-tab">Sources</button>
+    <button class="dm-tab active">Annotations</button>
+    <button class="dm-tab">Import</button>
+    <button class="dm-tab">Defaults</button>
+  </div>
+  <div class="dm-body">
+    <div class="dm-group">
+      <div class="dm-group-title">Export</div>
+      <div class="dm-group-desc">Three named outputs. Replaces the export buttons previously split across More Actions and the action bar.</div>
+      <div class="dm-export-row">
+        <div class="dm-export-main"><div class="dm-export-name">Comments &amp; edits (.json, re-importable)</div><div class="dm-export-desc">Everything entered on the board, in the format Mount file&hellip; reads back.</div></div>
+        <button class="ds-btn">Export</button>
+      </div>
+      <div class="dm-export-row">
+        <div class="dm-export-main"><div class="dm-export-name">Comments report (.xlsx)</div><div class="dm-export-desc">A readable sheet of every comment, for circulation outside the board.</div></div>
+        <button class="ds-btn">Export</button>
+      </div>
+      <div class="dm-export-row">
+        <div class="dm-export-main"><div class="dm-export-name">Status report (.csv)</div><div class="dm-export-desc">Health and progress overrides only, one row per milestone.</div></div>
+        <button class="ds-btn">Export</button>
+      </div>
+    </div>
+
+    <div class="dm-group">
+      <div class="dm-group-title">Mount</div>
+      <div class="dm-group-desc">Later mounts override earlier ones where they touch the same field. Local edits is always the top layer.</div>
+      <button class="ds-btn">Mount file&hellip;</button>
+      <div class="dm-drop">Drop a comments file here</div>
+
+      <div class="dm-card" style="margin-top:12px">
+        <div class="dm-card-hd"><span class="dm-dot locked"></span><span class="dm-card-title">Local edits</span><span class="dm-badge baseline">top layer</span></div>
+        <div class="dm-card-sub">41 comments &middot; 6 health &middot; 3 dates &middot; not exported yet</div>
+        <div class="dm-card-actions"><button class="ds-btn">Export</button><span style="font-size:11px;color:var(--color-text-note);align-self:center">Cannot be removed.</span></div>
+      </div>
+
+      <div class="dm-card">
+        <div class="dm-card-hd"><span class="dm-dot on"></span><span class="dm-card-title">comments_W-E-07-Sep.json</span></div>
+        <div class="dm-card-sub">Exported 07 Sep 26 &middot; 23 comments &middot; 4 health &middot; 2 dates</div>
+        <div class="dm-card-note">Overrides 3 entries from comments_W-E-31-Aug.json</div>
+        <div class="dm-card-actions">
+          <div class="dm-switch on"><span class="trk"></span><span class="lbl">On</span></div>
+          <button class="ds-btn">Merge into Local edits</button>
+          <button class="ds-btn">Remove</button>
+        </div>
+        <div class="dm-confirm">
+          <span class="dm-confirm-txt">Merge comments_W-E-07-Sep.json into Local edits? Its 23 comments, 4 health and 2 dates become your own edits and the file leaves this list. Where Local edits already has a value, yours is kept. This cannot be undone.</span>
+          <button class="ds-btn">Cancel</button>
+          <button class="ds-btn danger">Merge</button>
+        </div>
+      </div>
+
+      <div class="dm-card">
+        <div class="dm-card-hd"><span class="dm-dot off"></span><span class="dm-card-title">comments_W-E-31-Aug.json</span></div>
+        <div class="dm-card-sub">Exported 31 Aug 26 &middot; 19 comments &middot; 3 health &middot; 1 date</div>
+        <div class="dm-card-actions">
+          <div class="dm-switch"><span class="trk"></span><span class="lbl">Off</span></div>
+          <button class="ds-btn">Merge into Local edits</button>
+          <button class="ds-btn">Remove</button>
+        </div>
+      </div>
+      <div class="dm-card-actions" style="margin-top:8px"><button class="ds-btn">Merge all into Local edits</button><span style="font-size:11px;color:var(--color-text-note);align-self:center">Merges every file that is on, oldest first. Cannot be undone.</span></div>
+    </div>
+  </div>
+</template>
+
+<template id="tpl-grid">
+  <div class="dm-sheet-wrap">
+    <div class="dm-sheet-hd">
+      <button class="ds-btn primary">Add row</button>
+      <button class="ds-btn">Delete selected</button>
+      <span class="grow"></span>
+      <button class="ds-btn">Export (schedule format)</button>
+      <button class="ds-btn">Close</button>
+    </div>
+    <div class="dm-sheet-scroll">
+      <table class="dm-sheet">
+        <thead><tr>
+          <th>ID</th><th>Name</th><th>Type</th><th>Start</th><th>Finish</th><th>Band/WBS</th>
+          <th>Status</th><th>Predecessor</th><th>Successor</th><th>% complete</th><th>Comment</th>
+        </tr></thead>
+        <tbody>
+          <tr><td><div class="cell">USR-001</div></td><td><div class="cell">Client design review</div></td><td><div class="cell">Milestone</div></td><td><div class="cell">02 Oct 26</div></td><td><div class="cell">02 Oct 26</div></td><td><div class="cell">Engineering</div></td><td><div class="cell">On track</div></td><td><div class="cell">SNIP-118</div></td><td><div class="cell">SNIP-121</div></td><td><div class="cell">0%</div></td><td><div class="cell">Added for the Oct steering pack</div></td></tr>
+          <tr><td><div class="cell">USR-002</div></td><td class="editing"><div class="cell">Site access granted</div></td><td><div class="cell">Milestone</div></td><td><div class="cell">14 Oct 26</div></td><td><div class="cell">14 Oct 26</div></td><td><div class="cell">Civil</div></td><td><div class="cell">At risk</div></td><td><div class="cell">&mdash;</div></td><td><div class="cell">SNIP-140</div></td><td><div class="cell">0%</div></td><td><div class="cell">Pending landowner sign-off</div></td></tr>
+          <tr><td><div class="cell">USR-003</div></td><td><div class="cell">Long-lead order placed</div></td><td><div class="cell">Milestone</div></td><td><div class="cell">21 Oct 26</div></td><td><div class="cell">21 Oct 26</div></td><td><div class="cell">Procurement</div></td><td><div class="cell">Done</div></td><td><div class="cell">SNIP-101</div></td><td><div class="cell">&mdash;</div></td><td><div class="cell">100%</div></td><td><div class="cell"></div></td></tr>
+          <tr><td><div class="cell">USR-004</div></td><td><div class="cell">Interim report issued</div></td><td><div class="cell">Milestone</div></td><td><div class="cell">30 Oct 26</div></td><td><div class="cell">30 Oct 26</div></td><td><div class="cell">Reporting</div></td><td><div class="cell">Future</div></td><td><div class="cell">SNIP-155</div></td><td><div class="cell">&mdash;</div></td><td><div class="cell">0%</div></td><td><div class="cell"></div></td></tr>
+          <tr><td><div class="cell">USR-005</div></td><td><div class="cell">Vendor kickoff call</div></td><td><div class="cell">Gate</div></td><td><div class="cell">05 Nov 26</div></td><td><div class="cell">05 Nov 26</div></td><td><div class="cell">Procurement</div></td><td><div class="cell">Future</div></td><td><div class="cell">USR-003</div></td><td><div class="cell">&mdash;</div></td><td><div class="cell">0%</div></td><td><div class="cell">Recurring, keep for the quarter</div></td></tr>
+          <tr><td><div class="cell">USR-006</div></td><td><div class="cell">Internal QA pass</div></td><td><div class="cell">Milestone</div></td><td><div class="cell">18 Nov 26</div></td><td><div class="cell">20 Nov 26</div></td><td><div class="cell">Quality</div></td><td><div class="cell">Future</div></td><td><div class="cell">SNIP-160</div></td><td><div class="cell">SNIP-162</div></td><td><div class="cell">0%</div></td><td><div class="cell"></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</template>
+
+<script>
+(function(){
+  function fill(id,tpl){var el=document.getElementById(id);if(el)el.appendChild(document.getElementById(tpl).content.cloneNode(true));}
+  ['src-desk-light','src-desk-dark','src-phone-light','src-phone-dark'].forEach(function(id){fill(id,'tpl-sources');});
+  ['annot-desk-light','annot-desk-dark','annot-phone-light','annot-phone-dark'].forEach(function(id){fill(id,'tpl-annot');});
+  ['grid-desk-light','grid-desk-dark'].forEach(function(id){fill(id,'tpl-grid');});
+
+  // Period dropdown
+  var dd=document.getElementById('period-dd');
+  if(dd){
+    dd.innerHTML=
+      '<div class="dm-dd-item new">New period: W/E 21 Sep 26</div>'+
+      '<div class="dm-dd-item">W/E 14 Sep 26 <span class="dm-dd-count">current &middot; 31 entries</span></div>'+
+      '<div class="dm-dd-item">W/E 07 Sep 26 <span class="dm-dd-count">23 entries</span></div>'+
+      '<div class="dm-dd-item">W/E 31 Aug 26 <span class="dm-dd-count">9 entries</span></div>'+
+      '<div class="dm-dd-item">Pick a date&hellip;</div>';
+  }
+
+  // Board marker preview: reuses the app's own diamond path (#ico-diamond).
+  function markerSvg(cls){
+    return '<svg viewBox="0 0 20 20" class="'+cls+'"><path d="M 10 2 L 18 10 L 10 18 L 2 10 Z"/></svg>';
+  }
+  function buildBoard(hostId){
+    var el=document.getElementById(hostId); if(!el) return;
+    el.innerHTML=
+      '<div class="dm-board-strip">'+
+        '<div class="dm-mk" style="color:var(--color-icon-done)" title="">'+
+          markerSvg('fill-done')+
+          '<span class="edited">*</span>'+
+          '<span class="dm-mk-lbl">SNIP-118</span>'+
+        '</div>'+
+        '<div class="dm-mk" style="color:var(--color-icon-track);margin-left:34px" title="">'+
+          '<span class="ghost" style="color:var(--color-icon-baseline)">'+markerSvg('outline-track')+'</span>'+
+          markerSvg('outline-track')+
+          '<span class="edited">*</span>'+
+          '<span class="dm-mk-lbl">SNIP-140</span>'+
+        '</div>'+
+        '<div class="dm-mk" style="color:var(--color-icon-risk)">'+
+          markerSvg('outline-risk')+
+          '<span class="dm-mk-lbl">SNIP-155</span>'+
+        '</div>'+
+        '<div class="dm-mk" style="color:var(--color-icon-crit)">'+
+          markerSvg('outline-crit')+
+          '<span class="edited">*</span>'+
+          '<span class="dm-mk-lbl">SNIP-160</span>'+
+        '</div>'+
+      '</div>'+
+      '<div class="dm-tip-box">&#128172; Tooltip on SNIP-118: Finish edited: source 29 Oct 26, now 12 Nov 26</div>'+
+      '<div class="dm-legend">'+
+        '<span><span class="mk">*</span>Edited, not the source value</span>'+
+        '<span>Faint ghost icon = the marker’s week before the override moved it</span>'+
+      '</div>';
+    el.querySelectorAll('.fill-done').forEach(function(s){s.style.fill='currentColor';s.style.stroke='currentColor';s.style.strokeWidth='.75';});
+    el.querySelectorAll('[class^="outline-"]').forEach(function(s){s.style.fill='none';s.style.stroke='currentColor';s.style.strokeWidth='2';s.style.strokeLinejoin='round';});
+  }
+  buildBoard('board-light');
+  buildBoard('board-dark');
+  var bl=document.getElementById('board-light'); if(bl) bl.style.padding='16px';
+  var bd=document.getElementById('board-dark'); if(bd) bd.style.padding='16px';
+})();
+</script>
+</body>
+</html>

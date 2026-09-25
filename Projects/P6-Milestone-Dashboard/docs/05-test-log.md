@@ -2191,3 +2191,72 @@ primary actions elsewhere), not introduced by this pass; recoloring it is a
 design decision affecting more than the filter bar and is out of scope here.
 
 **Published:** `releases/v3.1.0-P49_filter-bar-standard.html`
+
+---
+
+## TEST-50: D-18 on-board "edited" mark (v3.1.0-P50)
+
+A milestone whose effective Finish/Start date, health, or progress comes from
+a user override now carries a small mark beside its board icon (reusing the
+P44 card mark's `.ms-edited-mark` class), a native-`title` tooltip naming the
+source and current value per field, and, for a Finish override that crosses a
+week column, a faint ghost tick in the source week. Full detail and rationale:
+`docs/03-todo.md` TD-199.
+
+### Full suite at v3.1.0-P50
+
+| Suite | Result |
+|---|---|
+| `tools/d18_check.py` (new) | **27/27** |
+| `tools/d18_check.py` against v3.1.0-P50's own parent commit (proves the gate has teeth) | **2/12** before the probe throws for lack of the mark — expected: that build has no `msEditedFields`/`.m-board-edit-mark`/`.m-edit-ghost` at all |
+| `tools/theme_check.py` (two probes added: `.m-board-edit-mark`, the legend swatch) | 77 toggling, 0 frozen, 2 not-found (pre-existing, unrelated — see TEST-49) |
+| `tools/colour_audit.py` | 38 hardcoded occurrences (unchanged) |
+| `tools/spacing_audit.py` | 152 raw px (at the P49 ceiling, unchanged — the mark's own top/right/width/height/border are geometry, not padding/margin/gap; its one new margin use was tokened onto `--space-1`) |
+| `tools/d15_check.py` | 11/11 |
+| `tools/d15a_check.py` | 32/32 |
+| `tools/d16_check.py` | 2/2 sheets, 0px diff |
+| `tools/ds_check.py` | 128/128 |
+| `tools/order_check.py` | exit 0 |
+| `tools/persist_check.py` | 22/22 |
+| `tools/import_check.py` | exit 0 (AC-01 unchanged limitation, see the file's own header) |
+| `tools/p27_check.py` | 32/32 |
+| `tools/p28_check.py` | 34/34 |
+| `tools/p29_check.py` | 53/53 |
+| `tools/p30_check.py` | 68/68 |
+| `tools/p32_check.py` | 36/36 |
+| `tools/p33_check.py` | 38/38 |
+| `tools/p34_check.py` | 73/73 |
+| `tools/p35_check.py` | 120/120 |
+| `tools/p36_check.py` | 96/96 |
+| `tools/p37_check.py` | 68/68 |
+| `tools/p38_check.py` | 91/91 |
+| `tools/p39_check.py` | 114/114 |
+| `tools/p40_check.py` | 91/91 |
+| `tools/p42_check.py` | 25/25 |
+| `tools/p43_check.py` | 36/36 |
+| `tools/p44_check.py` | 31/31 |
+| `tools/p45_check.py` | 38/38 |
+| `tools/p46_check.py` | 37/37 |
+
+No regressions found in any pre-existing suite. `d18_check.py` manipulates the
+override stores (`MS_FIELD_OVERRIDE`/`MS_HEALTH_OVERRIDE`/
+`MS_PROGRESS_OVERRIDE`) directly rather than driving the milestone card's UI,
+including a case a real card save can never produce (an override literally
+equal to its source, written straight to the store to prove `msEditedFields()`
+itself dedupes rather than relying on `saveMsDialog()`'s own guard), and
+covers: N=3 separate milestones (date, health, progress overrides) each
+showing the mark; an untouched milestone showing none; an equal-to-source
+override showing none; clearing an override removing the mark; the tooltip
+text matching exactly, field by field; a cross-week Finish override producing
+exactly one ghost tick in the source week and a same-week override producing
+none; the mark's `getBoundingClientRect()` never intersecting the icon's; the
+icon's own rendered size unchanged edited or not; the legend entry; the mark
+surviving print mode; and the mark's colour differing between themes.
+
+One deliberate deviation from the brief, recorded rather than built against a
+mechanism that does not exist: `MS_MOVES` (a milestone dragged to a different
+row) never changes the milestone's date, only its row (`moveMilestoneToRow()`
+sets `ms.ref`, nothing else), so it is not a date edit under this app's own
+mechanics and needed no wiring.
+
+**Published:** `releases/v3.1.0-P50_board-edit-mark.html`

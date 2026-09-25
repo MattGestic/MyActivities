@@ -93,6 +93,16 @@ Groups are separated by `--group-gap` and a 1px hairline. There is no empty spac
 - **Closed-state range text** is structured, never a sentence: a muted uppercase tag (`W/E`, `From`, `Until`), dates in semibold, a muted arrow between them, a 1px divider, then a count pill (`8 wks`, `open end`, `open start`). Quick ranges use programme wording ("Rest of programme").
 - **Overlays stay inside their frame.** A popover is `box-sizing:border-box`, `max-width` bounded, and its grid columns use `minmax(0,…)` so content wraps rather than spills. Footer buttons grow in height rather than letting text cross the button edge.
 
+## Inline confirmation
+
+For an action that removes, merges or otherwise can't be undone:
+- The message takes the full width and states what will happen, with counts.
+- The buttons go on one row beneath the message: **Cancel on the left, the action on the right**.
+- The action button uses the danger style and repeats the verb ("Remove", "Merge").
+- Esc cancels.
+
+This layout was set by Matt on 2026-09-25.
+
 ## Focus and keyboard
 
 - The same `--focus-ring` on `:focus-visible` everywhere. The mouse never shows it.
