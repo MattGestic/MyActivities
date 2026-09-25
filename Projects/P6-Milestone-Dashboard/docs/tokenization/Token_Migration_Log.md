@@ -208,6 +208,16 @@ The log is a record of readings, not of changes, so a gap between two rows belon
 | 2026-09-24 | Audit script v3, after the v3.1.0-P49 pass | Hardcoded font-size declarations (px) | 134 |
 | 2026-09-24 | `tools/theme_check.py`, after the v3.1.0-P49 pass | Probes expected to toggle, frozen | 0 |
 | 2026-09-24 | `tools/spacing_audit.py`, after the v3.1.0-P49 pass | Raw px in padding/margin/gap declarations, ceiling | 152 |
+| 2026-09-25 | Audit script v3, after the v3.1.0-P50 pass (D-18 on-board "edited" mark) | Hardcoded colour occurrences | 38 |
+| 2026-09-25 | Audit script v3, after the v3.1.0-P50 pass | Distinct hardcoded colour values | 34 |
+| 2026-09-25 | Audit script v3, after the v3.1.0-P50 pass | Colour occurrences matching an existing token exactly | 7 |
+| 2026-09-25 | Audit script v3, after the v3.1.0-P50 pass | `--space-*` token references in file | 122 |
+| 2026-09-25 | Audit script v3, after the v3.1.0-P50 pass | Hardcoded padding/margin/gap declarations (px) | 227 |
+| 2026-09-25 | Audit script v3, after the v3.1.0-P50 pass | `var(--text-*)` font-size references in file | 35 |
+| 2026-09-25 | Audit script v3, after the v3.1.0-P50 pass | Hardcoded font-size declarations (px) | 134 |
+| 2026-09-25 | `tools/spacing_audit.py`, after the v3.1.0-P50 pass — the mark's own top/right/width/height/border are geometry, not padding/margin/gap, so only its legend-swatch margin counted, and that one was tokened onto `--space-1` | Raw px in padding/margin/gap declarations, ceiling | 152 (unchanged, at ceiling) |
+| 2026-09-25 | `tools/theme_check.py`, `.m-board-edit-mark` and the legend swatch added (D-18; deliberately `--color-accent-ink`, not the P44 card mark's `--color-accent-purple`, which is constant across themes) | Probes expected to toggle, frozen | 0 |
+| 2026-09-25 | `tools/theme_check.py`, after the v3.1.0-P50 pass | Probes expected to toggle | 77 |
 
 **Re-running the audit:** run `python3 tools/colour_audit.py` from the project root. It regenerates `Hardcoded_Colour_Audit.csv` and prints every metric above.
 
@@ -315,6 +325,7 @@ A defect found in v2 during this same run is recorded here rather than quietly f
 | Subtotal row | Tokenized — week-column bands now use `--color-col-past-bg` / `--color-col-filtered-alt-bg`; a malformed colour declaration was also repaired | 2026-09-09 |
 | Milestone card | Tokenized — the card's editable fields, type picker and save pair use the spacing scale; three accent-text rules moved off `--color-purple-dark`, which is ink for a light tint and measured 1.13:1 on a themed panel in dark, onto `--color-accent-ink` | 2026-09-23 |
 | Remarks field states | Tokenized — accent washes plus `--color-text-faint` placeholder | 2026-09-10 |
+| On-board "edited" mark + legend swatch (D-18) | Tokenized — reuses the P44 card mark's `.ms-edited-mark` class/shape, but its background is `--color-accent-ink`, not that mark's `--color-accent-purple`: the latter is deliberately the same hex in both themes (see the `.ms-act`/`.ms-type-opt.active` constants), which would make the board mark invisible against a dark-theme icon and fail `theme_check`'s toggle expectation. One new spacing use (`--space-1` for the legend swatch's own gap), no new colour values | 2026-09-25 |
 
 Update the status cell **and** the date together whenever a row is re-checked, whether or not the status changed — an unchanged status with a fresh date is still useful information (confirms it wasn't silently missed).
 

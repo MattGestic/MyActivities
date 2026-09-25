@@ -99,6 +99,14 @@ const PROBES = [
   // but it is still measured against the 3.0:1 gate, which can.
   ['.ms-act (constant)',         'constant', () => mk('<button class="ms-act">Save</button>')],
   ['.ms-type-opt.active (const)','constant', () => mk('<button class="ms-type-opt active">Milestone (MS)</button>')],
+  // D-18 board "edited" mark. Deliberately NOT --color-accent-purple, the
+  // card's own P44 mark's token, which is the same hex in both themes (see
+  // the .ms-act/.ms-type-opt constants above) — this one has to read against
+  // either an outline or a filled icon in either theme, so it uses
+  // --color-accent-ink instead, the one accent role that genuinely toggles.
+  ['.m-board-edit-mark',         'toggle',   () => mk('<span class="ms-edited-mark m-board-edit-mark"></span>')],
+  ['.legend .ms-edited-mark.li-swatch','toggle', () => mk(
+      '<div class="legend-row"><span class="ms-edited-mark li-swatch"></span></div>').querySelector('.li-swatch')],
   ['hist now-col',               'toggle',   () => {
       const tr = mk('<tr class="hist-row"><td class="c-wk now-col"></td></tr>', tbody);
       return tr.querySelector('td');
