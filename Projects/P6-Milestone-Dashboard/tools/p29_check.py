@@ -293,12 +293,18 @@ PROBE = r"""
       'sched-file','file-picker-wrap','paste-wrap','paste-box','ingest-status',
       'import-error-wrap','map-wrap','map-wrap-section','range-wrap-section','range-note',
       'cfg-range-from','cfg-range-to','btn-range-reset','import-summary-wrap',
-      'cfg-weekday','cfg-before','cfg-after','cfg-crit','cfg-risk',
+      'cfg-weekday','cfg-crit','cfg-risk',
       'diag-sect','diag-badge-text','diag-body','toggle-diag-onscreen','sd-src-box'];
     const gone=NEEDED.filter(function(id){ return !document.getElementById(id); });
     R.notes.missingIds=gone;
     ck('wiring: every id the rest of the file addresses still exists',
        gone.length===0, gone.join(', '));
+    // P53 (TD-202): cfg-before/cfg-after (the Fallback window setting) were
+    // removed from NEEDED above and are asserted GONE here instead — the
+    // fallback window is now a fixed internal assumption with no UI control,
+    // so their absence is the correct contract, not a wiring gap.
+    ck('wiring: cfg-before/cfg-after (Fallback window) are gone, not merely unwired',
+       !document.getElementById('cfg-before')&&!document.getElementById('cfg-after'));
 
     // The paste box is a .sd-row now, so showing it must restore the row's
     // layout rather than flattening it. Toggled through the real handler.

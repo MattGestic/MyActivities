@@ -33,29 +33,45 @@ week-range picker); Enter applies the week-range picker.
 | `#filter-title` | "Search activity name" | text field | `.ds-field` (in `.ds-fwrap.has-lead.has-clr`) | text input | two-way synced with the sticky corner search |
 | `#sticky-title-clear` | icon (X) | icon, in-field | `.clr` | Tab, Enter/Space | shown only once there is a value |
 | `#filter-ids` | "e.g. SNIP-101, SNIP-115" | text field + autocomplete | `.ds-field` (in `.ds-fwrap.has-clr`) | text input, `↓`/`↑`/Enter in the suggestion list | `#id-suggest-dropdown` is moved to a `<body>` child the first time it is shown (TD-197), so it always paints above `#icon-bar` |
-| `#filter-band` | "All bands" | select | `.ds-select` | native select | |
+| `#filter-band` | "All bands" | select | `.ds-select` | native select | P53: sits with Activity name and Source on one nowrap row (`.fb-row-1`), not its own wrapped row |
 | `#filter-source` | "All sources" | select | `.ds-select` | native select | wrapped in `#tfb-source-group.tfb-group`; hidden via `closest('.tfb-group')` while only one source is mounted (`onSourceModeChange()`, unchanged) |
-| `#wr-field` | "All weeks" / structured W/E text | button, opens the week-range popover | `.wr-field` | Tab, Enter/Space opens; Esc closes the popover; Enter in the popover applies | replaces the Week select, mode select, Current week/Next 4 weeks buttons and the two date inputs; see below |
+| `#wr-field` | "All weeks" / structured W/E text | button, opens the week-range popover | `.wr-field` | Tab, Enter/Space opens; Esc closes the popover; Enter in the popover applies | replaces the Week select, mode select, Current week/Next 4 weeks buttons and the two date inputs; see below. P53: its box (`#tfb-when`) is titled "Date range" (was "When"), and shares one line with `#wr-mode-seg` and `#btn-fit-screen-inline` |
 | `#wr-mode-seg` (`Highlight`/`Show only`) | segmented toggle | toggle | `.ds-seg` | Tab, arrow keys (native), Enter/Space | picks which pre-existing mechanism (`week-filter`+`filter-mode`, or `filter-date-from`/`-to`) a picked range is expressed through |
+| `#btn-fit-screen-inline` | icon (↔) | icon | `.ds-ico` | Tab, Enter/Space | P53: `fitToScreen()`, moved onto the Date range row as a secondary entry point; `#btn-fit-screen` in the More Actions menu is unchanged and still works |
 | `#filter-status-group` (`Critical`/`At risk`/`On track`/`Done`/`Complete`/`Future`) | status chips | multi-select toggle | `.ds-seg.chips .st-chip` | Tab, Enter/Space | `aria-pressed`; each keeps its own state colour when pressed |
 | `#float-chip-group` (`Any`/`0d`/`<10d`/`<3 wk`/`<5 wk`/`Custom…`) | Total float preset chips | single-select toggle | `.ds-seg.chips` | Tab, Enter/Space | replaces the op/val/unit selects and the old ≤13d/≤2wk/≥8wk presets; single hidden hold-state (`filter-float-op`/`-val`/`-unit`) unchanged underneath |
 | `#float-custom-pop` (comparison, value, unit, Apply/Cancel) | Custom float popover | popover | `.pop-card` | Esc closes, Tab within | opens under the Custom chip; Apply relabels the chip with the value |
-| `#btn-clear-crit` | icon (X) | icon | `.ds-ico.crit-clear` | Tab, Enter/Space | clears status + float together, unchanged |
+| `#annot-chip-group` (`Any`/`Commented`/`Edited`/`Either`) | Annotations preset chips | single-select toggle | `.ds-seg.chips` | Tab, Enter/Space | P53 (item 9): after Total float, a divider before it; drives `ANNOT_FILTER`, read by `applyFilter()`'s `rowMatchesAnnotation()` |
+| `#btn-clear-crit` | icon (X) | icon | `.ds-ico.crit-clear` | Tab, Enter/Space | clears status + float + annotations together; the box's own title was removed (P53 item 8) |
 | `#btn-filter-hide` | icon (X) | icon | `.ds-ico` | Tab, Enter/Space | |
 | `#btn-filter-expand` | icon + text ("Expand filters") | secondary | (unchanged, outside `#top-filter-bar`) | Tab, Enter/Space | shows only while the bar is collapsed |
+| `#filter-info` | filter summary text | status text | `.filter-info` | none | P53 (item 11): no reserved hint text; empty and effectively invisible when nothing is filtered, footer keeps only the close (×) control |
 
 ### Week-range picker (`#wr-pop-el`, opened by `#wr-field`)
 
+P53: the quick-range list, order and wording changed (This week / This month
+/ Next 4 weeks / Next 3 months / Rest of programme / Full programme / Full
+range); From only/Until only are gone, replaced by Range start/Range end
+date fields plus Reset to schedule.
+
 | Element | Role | Token class | Keyboard |
 |---|---|---|---|
-| Quick ranges (Next 4 weeks / Next 3 months / This month / Rest of programme / Full span) | buttons | `.wr-quick button` | Tab, Enter/Space |
+| Quick ranges (This week / This month / Next 4 weeks / Next 3 months / Rest of programme / Full programme / Full range) | buttons | `.wr-quick button` | Tab, Enter/Space |
 | Week grid (one row per month, one cell per week) | grid of buttons | `.wr-wk` | Tab, Enter/Space per cell (`role="button" tabindex="0"`) |
-| From only / Until only | segmented toggle | `.wr-foot .ds-seg` | Tab, Enter/Space |
-| Clear / Cancel / Apply | buttons | `.wr-foot .ds-btn` | Tab, Enter/Space; Enter anywhere in the popover triggers Apply |
+| `#wr-range-start`, `#wr-range-end` | date fields | `.ds-field` (`input[type=date]`) | text/native date input, `onchange` | edit the board's own bounds (`rebuildTimelineForBaseRange()`); week-snapped to the week-ending day; prefilled from the live timeline on every render |
+| Reset to schedule | button | `.ds-btn` | Tab, Enter/Space | restores the span derived from the schedule's own min/max dates (`wrResetToSchedule()`) |
+| Clear / Cancel / Apply | buttons | `.wr-foot .ds-btn` | Tab, Enter/Space; Enter anywhere in the popover triggers Apply | Apply with only a start week picked applies as "from", open end (the From-only replacement) |
 
 Superseded by the picker but kept as functions for any caller still using
 them: `filterCurrentWeek()`, `filterNext4()`, `setDateRangeToFullSpan()`
-(the picker's "Full span" quick range drives the same fields).
+(the picker's own "Full range" quick range drives the same fields).
+
+### Board headers (P53 items 12/13)
+
+| Element | Role | Notes |
+|---|---|---|
+| `#week-hdr th.col-wk` | clickable week heading | `title="Filter to W/E … (click)"`; hover/cursor affordance pre-existing (`tr.hdr-wk th:hover`) |
+| `#phase-hdr th.mo-band` | clickable month heading | new in P53: `onMonthHeaderClick()`, same range the Date range picker would set for that month; `title="Filter to <Month Year> (click)"`; hover via an inset overlay (the band's own background is set inline per month) |
 
 ## Settings drawer
 
