@@ -199,7 +199,7 @@ table.dm-sheet td.editing:hover .cell{background:var(--color-bg-elevated)}
 <!-- ===================== 2. Annotations tab (D-17b preview) ===================== -->
 <section class="pg-sect">
   <h2>2. Annotations tab (D-17b preview)</h2>
-  <p>Consolidates the exports that are today scattered across More Actions and the action bar into one named list, each with its purpose stated in one line. Mounting is a stack of layers rather than one slot: Local edits sits on top and cannot be removed, only exported; each mounted file below it shows its counts, an on/off switch, Remove, and, where it changes an earlier file's value, an override note. Order is oldest first, later overrides earlier.</p>
+  <p>Consolidates the exports that are today scattered across More Actions and the action bar into one named list, each with its purpose stated in one line. Mounting is a stack of layers rather than one slot: Local edits sits on top and cannot be removed, only exported; each mounted file below it shows its counts, an on/off switch, Merge into Local edits, Remove, and, where it changes an earlier file's value, an override note. Order is oldest first, later overrides earlier. Merge folds a file into Local edits so the two become one set; the file leaves the list and the merge cannot be undone, so it asks first. Where Local edits already holds a value for the same field, the local value is kept, so merging never changes what an on layer already shows.</p>
   <div class="pg-grid">
     <div><p class="pg-cap">Desktop &middot; light</p><div class="ds t-light dm-drawer" id="annot-desk-light"></div></div>
     <div><p class="pg-cap">Desktop &middot; dark</p><div class="ds t-dark dm-drawer" id="annot-desk-dark"></div></div>
@@ -400,7 +400,13 @@ table.dm-sheet td.editing:hover .cell{background:var(--color-bg-elevated)}
         <div class="dm-card-note">Overrides 3 entries from comments_W-E-31-Aug.json</div>
         <div class="dm-card-actions">
           <div class="dm-switch on"><span class="trk"></span><span class="lbl">On</span></div>
+          <button class="ds-btn">Merge into Local edits</button>
           <button class="ds-btn">Remove</button>
+        </div>
+        <div class="dm-confirm">
+          <span class="dm-confirm-txt">Merge comments_W-E-07-Sep.json into Local edits? Its 23 comments, 4 health and 2 dates become your own edits and the file leaves this list. Where Local edits already has a value, yours is kept. This cannot be undone.</span>
+          <button class="ds-btn danger">Merge</button>
+          <button class="ds-btn">Cancel</button>
         </div>
       </div>
 
@@ -409,9 +415,11 @@ table.dm-sheet td.editing:hover .cell{background:var(--color-bg-elevated)}
         <div class="dm-card-sub">Exported 31 Aug 26 &middot; 19 comments &middot; 3 health &middot; 1 date</div>
         <div class="dm-card-actions">
           <div class="dm-switch"><span class="trk"></span><span class="lbl">Off</span></div>
+          <button class="ds-btn">Merge into Local edits</button>
           <button class="ds-btn">Remove</button>
         </div>
       </div>
+      <div class="dm-card-actions" style="margin-top:8px"><button class="ds-btn">Merge all into Local edits</button><span style="font-size:11px;color:var(--color-text-note);align-self:center">Merges every file that is on, oldest first. Cannot be undone.</span></div>
     </div>
   </div>
 </template>
