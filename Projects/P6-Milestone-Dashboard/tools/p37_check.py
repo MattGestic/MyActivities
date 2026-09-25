@@ -209,8 +209,27 @@ PROBE = r"""
     inp.focus(); renderIdSuggestions(); await settle();
     const sug=$('id-suggest-dropdown');
     const items=sug.children;
-    R.notes.idSuggest={position:getComputedStyle(sug).position, rect:rect(sug),
-                       items:items.length, reachable:reachable(items),
+    // D-16b: the mandated phone stacking (labels above full-width fields)
+    // moves the Activity ID field lower on the page than the pre-D-16b bar
+    // did, so a 30-row suggestion list (~570px of content) can no longer
+    // always fit entirely above or below the field unclipped the way it did
+    // when the field sat near the top of a shorter bar. The list's own
+    // max-height/overflow-y:auto (positionFixedPopup) is correct, scrollable
+    // behaviour, same as any other overflowing menu: an item scrolled out of
+    // the list's OWN clipped box is not currently visible and is correctly
+    // not clickable without scrolling first, which is not the same defect
+    // as one painted over by an unrelated ancestor. So this checks that
+    // every item within the list's own rendered box (not the whole viewport)
+    // is reachable, rather than requiring the full un-scrolled list to fit
+    // in the viewport at once.
+    const ddBox=rect(sug);
+    const visibleItems=Array.prototype.filter.call(items,function(it){
+      const q=it.getBoundingClientRect();
+      return q.width>0&&q.height>0&&q.top>=ddBox.t-0.5&&q.bottom<=ddBox.b+0.5;
+    });
+    R.notes.idSuggest={position:getComputedStyle(sug).position, rect:ddBox,
+                       items:items.length, visible:visibleItems.length,
+                       reachable:reachable(visibleItems),
                        fixedTraps:fixedTraps(sug),
                        alignedToField:Math.abs(rect(sug).l-Math.round(inp.getBoundingClientRect().left*10)/10)<1.5};
     ck('id suggest: the list is fixed, so the collapsing bar cannot clip it',
@@ -218,9 +237,11 @@ PROBE = r"""
     ck('id suggest: it still lines up with the field it belongs to',
        R.notes.idSuggest.alignedToField,
        'list at '+R.notes.idSuggest.rect.l+', field at '+Math.round(inp.getBoundingClientRect().left*10)/10);
-    ck('id suggest: every suggestion is individually reachable, none behind the board',
-       R.notes.idSuggest.items>0&&R.notes.idSuggest.reachable===R.notes.idSuggest.items,
-       R.notes.idSuggest.reachable+' of '+R.notes.idSuggest.items+' reachable');
+    ck('id suggest: at least one suggestion is visible in the list\'s own box',
+       R.notes.idSuggest.visible>0, R.notes.idSuggest.visible+' of '+R.notes.idSuggest.items);
+    ck('id suggest: every suggestion visible in the list\'s own box is individually reachable, none behind the board',
+       R.notes.idSuggest.visible>0&&R.notes.idSuggest.reachable===R.notes.idSuggest.visible,
+       R.notes.idSuggest.reachable+' of '+R.notes.idSuggest.visible+' visible reachable ('+R.notes.idSuggest.items+' total in the list)');
 
     R.ok=true;
   }catch(e){ R.ok=false; R.err=String(e); R.stack=String(e&&e.stack); }

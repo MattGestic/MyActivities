@@ -102,7 +102,7 @@ Groups are separated by `--group-gap` and a 1px hairline. There is no empty spac
 
 `tools/d16_check.py` renders `docs/mockups/D-16/component_sheet.html` (the sign-off sheet referenced above) at each committed width, measures its own full content height rather than guessing one, and diffs the result pixel-for-pixel against the committed PNG in `docs/mockups/D-16/png/`. It fails on a dimension change or on more than 0.1% of pixels differing beyond anti-aliasing tolerance, so a control-sizing regression (a token value change breaking a control's dimensions) fails the diff instead of shipping silently. Run it before merging any change touching control CSS; `--update` re-renders and accepts the current sheet as the new baseline after a reviewed, intentional visual change. This checks the SHEET, not the live app.
 
-`tools/ds_check.py` (built at D-16b, not yet written) is the deeper, live-app companion: it will load the app itself at 390, 768 and 1440 wide, with fine and forced-coarse pointer, in light and dark. For every control class in the table above it will assert:
+`tools/ds_check.py` **is built** (D-16b, v3.1.0-P49, `docs/03-todo.md` TD-195): it loads the app itself at 390, 768 and 1440 wide, with fine and forced-coarse pointer, in light and dark. For every control class in the table above it asserts:
 - computed height equals the token (±0.5px)
 - horizontal padding
 - border radius
@@ -113,3 +113,15 @@ Groups are separated by `--group-gap` and a 1px hairline. There is no empty spac
 - text contrast of at least 4.5:1 for Caption against its surface in both themes
 
 A control with no class in the table fails the check until it is given one.
+Also asserts (added beyond the original scope, folded in rather than kept as
+a separate tool): the open week-range popover stays inside the viewport, the
+desktop control-row count is <=4 at 1440px, no control has `scrollWidth >
+clientWidth`, and no horizontal page scroll. Plus one set of functional
+probes: float chip boundaries (N=3 either side of every threshold), the
+week-range picker's apply/clear/one-sided behaviour, Highlight vs Show only
+visible-column counts, a week-header click reflected in the field, "Week
+ends on" re-bucketing the timeline without dropping milestones, and the
+sticky search sync. Proven failing against v3.1.0-P48 (`--html
+releases/v3.1.0-P48_component-reliability.html`): 46 of 104 per-viewport
+checks fail there, since that build predates every `.ds-field`/`.ds-select`/
+`.ds-seg`/`.wr-field` class this tool asserts on.

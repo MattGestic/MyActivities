@@ -20,20 +20,42 @@ Two shared rules apply across every surface and are not repeated per row:
 | `#btn-more-actions` | icon (kebab) | icon | had `title` but no `aria-label` | added `aria-label="More actions"` |
 | `#btn-fit-screen`, `#btn-theme-toggle`, `#btn-print-mode`, `#btn-export-comments`, `#btn-filter-toggle`, `#btn-style-icon`, `#btn-settings-icon` | icon + text label (menu items) | menu item | none, has icon + visible label + title | |
 
-## Top filter bar
+## Top filter bar (rebuilt at D-16b, v3.1.0-P49, `docs/03-todo.md` TD-191+)
 
-| Id/class | Label | Role | Issue(s) | Action taken |
-|---|---|---|---|---|
-| `#sticky-title-clear` | icon (X) | icon | none, has `aria-label` + `title` | |
-| `.fb-field-clear` (Activity ID, critical filters, date range) | icon (X) | icon | none, each already has `aria-label` + `title` | |
-| `#fs-CRIT`/`#fs-RISK`/`#fs-TRACK`/`#fs-DONEUSER`/`#fs-DONE`/`#fs-FUTURE` | status chip toggles | toggle | none, `aria-pressed` already present | |
-| float shortcut buttons (`&le; 13d`, `&le; 2wk`, `&ge; 8wk`) | text | secondary | none | |
-| `#btn-clear-crit` | icon (X) | icon | none, has `aria-label` + `title` | |
-| "Current week" / "Next 4 weeks" | text | secondary | none | |
-| `#btn-clear-date-range` | icon (X) | icon | none, has `aria-label` + `title` | |
-| "Full span" | text | secondary | none | |
-| `#btn-filter-hide` | icon (X) | icon | none, has `aria-label` + `title` | |
-| `#btn-filter-expand` | icon + text ("Expand filters") | secondary | none | |
+Every control below uses the D-16 tokens (`docs/ux/design-standard.md`):
+`--ctl-h`/`--ctl-h-touch` height, `--ctl-pad-x` padding, `--radius-ctl`
+(pill for chips), `--focus-ring` on `:focus-visible`. Keyboard: Tab order
+follows visual order; Esc closes the topmost open popover (Custom float, the
+week-range picker); Enter applies the week-range picker.
+
+| Id/class | Label | Role | Token class | Keyboard | Notes |
+|---|---|---|---|---|---|
+| `#filter-title` | "Search activity name" | text field | `.ds-field` (in `.ds-fwrap.has-lead.has-clr`) | text input | two-way synced with the sticky corner search |
+| `#sticky-title-clear` | icon (X) | icon, in-field | `.clr` | Tab, Enter/Space | shown only once there is a value |
+| `#filter-ids` | "e.g. SNIP-101, SNIP-115" | text field + autocomplete | `.ds-field` (in `.ds-fwrap.has-clr`) | text input, `↓`/`↑`/Enter in the suggestion list | `#id-suggest-dropdown` is moved to a `<body>` child the first time it is shown (TD-197), so it always paints above `#icon-bar` |
+| `#filter-band` | "All bands" | select | `.ds-select` | native select | |
+| `#filter-source` | "All sources" | select | `.ds-select` | native select | wrapped in `#tfb-source-group.tfb-group`; hidden via `closest('.tfb-group')` while only one source is mounted (`onSourceModeChange()`, unchanged) |
+| `#wr-field` | "All weeks" / structured W/E text | button, opens the week-range popover | `.wr-field` | Tab, Enter/Space opens; Esc closes the popover; Enter in the popover applies | replaces the Week select, mode select, Current week/Next 4 weeks buttons and the two date inputs; see below |
+| `#wr-mode-seg` (`Highlight`/`Show only`) | segmented toggle | toggle | `.ds-seg` | Tab, arrow keys (native), Enter/Space | picks which pre-existing mechanism (`week-filter`+`filter-mode`, or `filter-date-from`/`-to`) a picked range is expressed through |
+| `#filter-status-group` (`Critical`/`At risk`/`On track`/`Done`/`Complete`/`Future`) | status chips | multi-select toggle | `.ds-seg.chips .st-chip` | Tab, Enter/Space | `aria-pressed`; each keeps its own state colour when pressed |
+| `#float-chip-group` (`Any`/`0d`/`<10d`/`<3 wk`/`<5 wk`/`Custom…`) | Total float preset chips | single-select toggle | `.ds-seg.chips` | Tab, Enter/Space | replaces the op/val/unit selects and the old ≤13d/≤2wk/≥8wk presets; single hidden hold-state (`filter-float-op`/`-val`/`-unit`) unchanged underneath |
+| `#float-custom-pop` (comparison, value, unit, Apply/Cancel) | Custom float popover | popover | `.pop-card` | Esc closes, Tab within | opens under the Custom chip; Apply relabels the chip with the value |
+| `#btn-clear-crit` | icon (X) | icon | `.ds-ico.crit-clear` | Tab, Enter/Space | clears status + float together, unchanged |
+| `#btn-filter-hide` | icon (X) | icon | `.ds-ico` | Tab, Enter/Space | |
+| `#btn-filter-expand` | icon + text ("Expand filters") | secondary | (unchanged, outside `#top-filter-bar`) | Tab, Enter/Space | shows only while the bar is collapsed |
+
+### Week-range picker (`#wr-pop-el`, opened by `#wr-field`)
+
+| Element | Role | Token class | Keyboard |
+|---|---|---|---|
+| Quick ranges (Next 4 weeks / Next 3 months / This month / Rest of programme / Full span) | buttons | `.wr-quick button` | Tab, Enter/Space |
+| Week grid (one row per month, one cell per week) | grid of buttons | `.wr-wk` | Tab, Enter/Space per cell (`role="button" tabindex="0"`) |
+| From only / Until only | segmented toggle | `.wr-foot .ds-seg` | Tab, Enter/Space |
+| Clear / Cancel / Apply | buttons | `.wr-foot .ds-btn` | Tab, Enter/Space; Enter anywhere in the popover triggers Apply |
+
+Superseded by the picker but kept as functions for any caller still using
+them: `filterCurrentWeek()`, `filterNext4()`, `setDateRangeToFullSpan()`
+(the picker's "Full span" quick range drives the same fields).
 
 ## Settings drawer
 
@@ -52,7 +74,8 @@ Two shared rules apply across every surface and are not repeated per row:
 | Source-manager row actions "Rename&hellip;", "Remove", "Add&hellip;", "Mount&hellip;", "Unmount", "Remount&hellip;" (JS-built, `.mnt-btn`) | text | secondary | none, one vocabulary already, own actions bounded to each row | |
 | `#toggle-diag-onscreen` (checkbox, `.toggle-switch`) | toggle | toggle | none | |
 | radios `#src-mode-replace` / `#src-mode-append` | toggle | toggle | none, each carries adjacent label text | |
-| `select#cfg-weekday`, `select#map-*` (per column, JS-built) | select | select | none | |
+| `#st-weekday-seg` (Mon..Sun) | "Week ends on" | segmented toggle | added at D-16b (TD-194): was a 5-option `select#cfg-weekday` (Tue/Wed missing) | `.ds-seg` segmented toggle, the sheet's `.st-row` mock; Tab, Enter/Space; `select#cfg-weekday` kept, extended to all 7 days, hidden, and kept in sync — still the one place `onchange`/`runIngest()` reads the value from |
+| `select#map-*` (per column, JS-built) | select | select | none | |
 | checkboxes `#annot-cb-*` (JS-built) | toggle | toggle | none | |
 
 ## Print preview banner
