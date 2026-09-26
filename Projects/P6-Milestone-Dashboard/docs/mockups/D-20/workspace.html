@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>D-20a workspace mockups</title>
+<style>
+/* Page chrome, copied from docs/mockups/D-17/data_manager.html */
+:root{--pg-bg:#f3f4f7;--pg-surface:#ffffff;--pg-ink:#17191c;--pg-muted:#575c67;--pg-line:#e1e3e8}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){color-scheme:dark;--pg-bg:#14171c;--pg-surface:#1c2027;--pg-ink:#e6e8ec;--pg-muted:#a6adba;--pg-line:#2c323c}}
+:root[data-theme="dark"]{color-scheme:dark;--pg-bg:#14171c;--pg-surface:#1c2027;--pg-ink:#e6e8ec;--pg-muted:#a6adba;--pg-line:#2c323c}
+body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable Text','Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;padding-inline:16px;margin:0}
+.wrap{max-width:1560px;margin:0 auto;padding-block:20px 40px;display:flex;flex-direction:column;gap:20px;box-sizing:border-box}
+.pg-head h1{margin:0 0 6px;font-size:20px;line-height:28px}
+.pg-head p{margin:0;font-size:13px;line-height:1.5;color:var(--pg-muted);max-width:92ch}
+.pg-sect{background:var(--pg-surface);border:1px solid var(--pg-line);border-radius:8px;padding:16px;min-width:0;box-sizing:border-box}
+.pg-sect>h2{margin:0 0 4px;font-size:14px;line-height:20px}
+.pg-sect>p{margin:0 0 12px;font-size:12px;line-height:1.5;color:var(--pg-muted);max-width:92ch}
+.pg-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(380px,100%),1fr));gap:12px}
+.pg-scroll{overflow-x:auto;box-sizing:border-box;max-width:100%}
+.pg-cap{font-size:11px;color:var(--pg-muted);margin:0 0 6px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+
+/* App colour tokens, copied from src/milestone-dashboard.html and docs/mockups/D-17 */
+.t-light{--color-bg-panel:#f4f5f8;--color-bg-elevated:#ffffff;--color-bg-header:#2e4f82;--color-bg-workspace-hd:#3d4b66;
+  --color-line-default:#e3e2de;--color-text-primary:#17191c;--color-text-muted:#6f7480;--color-text-note:#767b85;
+  --color-accent-purple:#0e7c86;--color-accent-ink:#0b6570;--color-accent-tint-bg:#e1f1f2;
+  --color-accent-wash-weak:rgba(14,124,134,.05);--color-accent-wash:rgba(14,124,134,.10);
+  --color-btn-primary-bg:#1c3a63;--color-btn-primary-text:#ffffff;--color-btn-primary-hover-bg:#2a4a7a;
+  --color-btn-secondary-bg:#ffffff;--color-btn-secondary-text:#1c3a63;--color-btn-secondary-outline:#9fb0bd;--color-btn-secondary-hover-bg:#eef1f7;
+  --color-btn-icon-hover-bg:#dde1ea;--color-text-on-accent:#ffffff;
+  --color-status-risk:#a2690a;--color-status-crit:#c0392b;--color-status-done:#1f9d55;--color-status-done-tint:rgba(31,157,85,.16);
+  --color-crit-tint-bg:#fdecec;--color-badge-neutral-bg:#889;--color-input-border:#b8c0d8;
+  --color-icon-done:#17191c;--color-icon-track:#2f6fed;--color-icon-risk:#a2690a;--color-icon-crit:#c0392b;--color-icon-baseline:#767b85}
+.t-dark{--color-bg-panel:#1e2240;--color-bg-elevated:#232f4a;--color-bg-header:#15182f;--color-bg-workspace-hd:#252f45;
+  --color-line-default:rgba(160,184,230,.2);--color-text-primary:#e8eef8;--color-text-muted:#8b9bb8;--color-text-note:#889;
+  --color-accent-purple:#2fa3ac;--color-accent-ink:#6cc6cd;--color-accent-tint-bg:#16353b;
+  --color-accent-wash-weak:rgba(47,163,172,.08);--color-accent-wash:rgba(47,163,172,.16);
+  --color-btn-primary-bg:#3a6ea8;--color-btn-primary-text:#ffffff;--color-btn-primary-hover-bg:#4a80ba;
+  --color-btn-secondary-bg:#1e2240;--color-btn-secondary-text:#9cbcff;--color-btn-secondary-outline:#3a3e60;--color-btn-secondary-hover-bg:#2a2e50;
+  --color-btn-icon-hover-bg:#2a2e50;--color-text-on-accent:#ffffff;
+  --color-status-risk:#c07500;--color-status-crit:#c00000;--color-status-done:#1f9d55;--color-status-done-tint:rgba(31,157,85,.28);
+  --color-crit-tint-bg:#3a1a1a;--color-badge-neutral-bg:#5a6478;--color-input-border:#3a3e60;
+  --color-icon-done:#e8eef8;--color-icon-track:#5a90e0;--color-icon-risk:#e0a030;--color-icon-crit:#e05050;--color-icon-baseline:#889}
+
+/* D-16 standard tokens, copied from docs/mockups/D-17/data_manager.html */
+.ds{--ctl-h:24px;--icon-btn:24px;--ctl-pad-x:8px;--ctl-gap:8px;--ctl-gap-tight:4px;--field-label-gap:12px;--group-gap:16px;
+  --radius-ctl:4px;--radius-overlay:8px;--fs-caption:12px;--lh-caption:16px;--fs-field:12px;
+  font-family:'Segoe UI Variable Text','Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;
+  background:var(--color-bg-panel);color:var(--color-text-primary);border-radius:var(--radius-overlay);
+  font-size:var(--fs-caption);line-height:var(--lh-caption);box-sizing:border-box}
+.ds *{box-sizing:border-box}
+.ds.touch{--ctl-h:32px;--icon-btn:32px;--fs-field:14px}
+.ds-btn,.ds-field,.ds-select,.ds-chip,.ds-seg button{height:var(--ctl-h);font:inherit;font-size:var(--fs-caption);border-radius:var(--radius-ctl)}
+.ds-btn{padding:0 var(--ctl-pad-x);border:1px solid var(--color-btn-secondary-outline);background:var(--color-btn-secondary-bg);color:var(--color-btn-secondary-text);cursor:pointer;white-space:nowrap}
+.ds-btn:hover{background:var(--color-btn-secondary-hover-bg)}
+.ds-btn.primary{background:var(--color-btn-primary-bg);border-color:var(--color-btn-primary-bg);color:var(--color-btn-primary-text);font-weight:600}
+.ds-btn.primary:hover{background:var(--color-btn-primary-hover-bg)}
+.ds-btn.danger{background:var(--color-status-crit);border-color:var(--color-status-crit);color:#fff;font-weight:600}
+.ds-ico{box-sizing:border-box;width:var(--icon-btn);height:var(--icon-btn);padding:0;border:0;background:transparent;color:var(--color-text-primary);border-radius:var(--radius-ctl);font-size:14px;cursor:pointer;display:inline-block;text-align:center;line-height:var(--icon-btn);flex:0 0 auto;overflow:hidden;vertical-align:middle}
+.ds-ico:hover{background:var(--color-btn-icon-hover-bg)}
+.ds-field,.ds-select{padding:0 var(--ctl-pad-x);border:1px solid var(--color-btn-secondary-outline);background:var(--color-bg-elevated);color:var(--color-text-primary);font-size:var(--fs-field);min-width:0}
+.ds-check{display:inline-flex;align-items:center;gap:6px;min-height:var(--ctl-h)}
+.ds-check input{width:16px;height:16px;margin:0;accent-color:var(--color-accent-purple)}
+.ds-row{display:flex;flex-wrap:wrap;gap:var(--ctl-gap);align-items:center;min-width:0}
+.ds :focus-visible{outline:2px solid var(--color-accent-purple);outline-offset:1px}
+.grow{flex:1 1 auto;min-width:0}
+.ds-seg{display:inline-flex;border:1px solid var(--color-btn-secondary-outline);border-radius:var(--radius-ctl);overflow:hidden;flex:0 0 auto}
+.ds-seg button{border:0;background:var(--color-btn-secondary-bg);color:var(--color-btn-secondary-text);padding:0 var(--ctl-pad-x);cursor:pointer}
+.ds-seg button+button{border-left:1px solid var(--color-btn-secondary-outline)}
+.ds-seg button.active{background:var(--color-accent-purple);color:#fff}
+.ds-chip{display:inline-flex;align-items:center;padding:0 10px;border-radius:999px;border:1px solid var(--color-btn-secondary-outline);background:var(--color-btn-secondary-bg);color:var(--color-btn-secondary-text);cursor:pointer;white-space:nowrap;flex:0 0 auto}
+.ds-chip[aria-pressed="true"]{background:var(--color-accent-purple);border-color:var(--color-accent-purple);color:#fff}
+
+/* Switch, copied from D-17 (hit area is --ctl-h, visual track stays 32x16) */
+.dm-switch{display:inline-flex;align-items:center;height:var(--ctl-h);gap:6px;cursor:pointer;flex:0 0 auto}
+.dm-switch .trk{position:relative;width:32px;height:16px;border-radius:999px;background:var(--color-btn-secondary-outline);flex:0 0 auto;transition:background .12s}
+.dm-switch .trk::after{content:'';position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3);transition:transform .12s}
+.dm-switch.on .trk{background:var(--color-accent-purple)}
+.dm-switch.on .trk::after{transform:translateX(16px)}
+.dm-switch.disabled{cursor:not-allowed;opacity:.55}
+.dm-switch .lbl{font-size:11px;color:var(--color-text-muted);white-space:nowrap}
+
+/* Reporting period pill, dropdown, tags, banners, threads, cards, rows, exports, drop zone -- copied from D-17 */
+.dm-pill{display:inline-flex;align-items:center;gap:6px;height:var(--ctl-h);padding:0 10px;border-radius:999px;border:1.5px solid var(--color-accent-purple);background:transparent;color:var(--color-accent-ink);font:inherit;font-size:var(--fs-caption);font-weight:600;cursor:pointer;white-space:nowrap;flex:0 0 auto}
+.dm-pill.current{background:var(--color-accent-purple);color:#fff;border-color:var(--color-accent-purple)}
+.dm-pill.historic{border-color:var(--color-status-risk);color:var(--color-status-risk)}
+.dm-pill .car{font-size:10px}
+.dm-tag{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:1px 7px;border-radius:999px;background:var(--color-accent-wash);color:var(--color-accent-ink);cursor:pointer;white-space:nowrap;flex:0 0 auto}
+.dm-tag.amber{background:var(--color-crit-tint-bg,rgba(200,120,0,.12));color:var(--color-status-risk)}
+.dm-banner{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--color-crit-tint-bg,rgba(200,120,0,.12));border:1px solid var(--color-status-risk);border-radius:var(--radius-ctl);padding:6px 10px;font-size:11px;color:var(--color-text-primary);line-height:1.5}
+.dm-thread{border:1px solid var(--color-line-default);border-radius:var(--radius-overlay);background:var(--color-bg-elevated);padding:10px 12px}
+.dm-thread-hd{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dm-thread-txt{font-size:12px;color:var(--color-text-primary);line-height:1.5;margin-top:6px}
+.dm-thread+.dm-thread{margin-top:8px}
+.dm-card{border:1px solid var(--color-line-default);border-radius:var(--radius-overlay);background:var(--color-bg-elevated);padding:10px 12px;min-width:0}
+.dm-card+.dm-card{margin-top:10px}
+.dm-card-hd{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dm-card-title{font-size:13px;font-weight:700;color:var(--color-text-primary);flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
+.dm-card-sub{font-size:11px;color:var(--color-text-muted);line-height:1.5;margin-top:4px}
+.dm-card-note{font-size:11px;color:var(--color-accent-ink);line-height:1.5;margin-top:4px;font-style:italic}
+.dm-card-actions{display:flex;gap:var(--ctl-gap);margin-top:8px;flex-wrap:wrap;align-items:center}
+.dm-dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+.dm-dot.on{background:var(--color-status-done)}
+.dm-dot.off{background:var(--color-text-muted)}
+.dm-dot.locked{background:var(--color-badge-neutral-bg)}
+.dm-badge{font-size:10px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;padding:1px 7px;border-radius:999px;color:#fff;background:var(--color-badge-neutral-bg);white-space:nowrap;flex:0 0 auto}
+.dm-badge.baseline{background:var(--color-text-muted)}
+.dm-row{display:flex;align-items:center;gap:var(--ctl-gap);padding:10px 0;flex-wrap:wrap}
+.dm-row+.dm-row{border-top:1px solid var(--color-line-default)}
+.dm-row-main{flex:1 1 200px;min-width:0}
+.dm-row-name{font-size:13px;font-weight:700;color:var(--color-text-primary);line-height:1.4;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.dm-row-meta{font-size:11px;color:var(--color-text-muted);line-height:1.5;margin-top:2px}
+.dm-row-ctrl{display:flex;align-items:center;gap:var(--ctl-gap);flex:0 0 auto;flex-wrap:wrap;justify-content:flex-end}
+.dm-export-row{display:flex;align-items:flex-start;gap:var(--ctl-gap);padding:8px 0}
+.dm-export-row+.dm-export-row{border-top:1px solid var(--color-line-default)}
+.dm-export-main{flex:1 1 auto;min-width:0}
+.dm-export-name{font-size:12px;font-weight:600;color:var(--color-text-primary)}
+.dm-export-desc{font-size:11px;color:var(--color-text-note);line-height:1.5;margin-top:2px}
+.dm-drop{border:1px dashed var(--color-btn-secondary-outline);border-radius:var(--radius-overlay);padding:14px;text-align:center;color:var(--color-text-muted);font-size:11px;margin-top:6px}
+.dm-group{padding:var(--group-gap);border-bottom:1px solid var(--color-line-default)}
+.dm-group:last-child{border-bottom:0}
+.dm-group-title{font-size:var(--fs-caption);font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--color-accent-ink);margin:0 0 4px}
+.dm-group-desc{font-size:11px;color:var(--color-text-note);line-height:1.5;margin:0 0 10px}
+.dm-foot{padding:10px var(--group-gap);border-top:1px solid var(--color-line-default);display:flex;justify-content:flex-end}
+.dm-confirm{display:flex;align-items:center;gap:var(--ctl-gap);flex-wrap:wrap;background:var(--color-crit-tint-bg);border:1px solid var(--color-status-crit);border-radius:var(--radius-ctl);padding:8px 10px;margin-top:6px;width:100%}
+.dm-confirm-txt{flex:1 1 100%;font-size:12px;color:var(--color-text-primary);line-height:1.4;min-width:0}
+.dm-confirm .ds-btn.danger{margin-left:auto}
+
+/* Notes panel primitives, copied from D-17 */
+.np-hd{background:var(--color-bg-header);color:#fff;padding:10px var(--group-gap);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+/* D-20 revision: Workspace-side panel headers use a workspace slate, related to but distinct from the app header navy and the Data & view header */
+.np-hd.ws-hd{background:var(--color-bg-workspace-hd)}
+.np-hd>.np-hd-title{order:0}.np-hd>.grow{order:1;flex:1 1 0}.np-hd>.ds-ico{order:2;flex:0 0 auto}
+.np-hd>.dm-pill{order:3;flex:0 0 auto;max-width:100%}
+.np-hd>.dm-pill::before{content:'';flex-basis:100%}
+.np-hd .np-break{order:3;flex-basis:100%;height:0}
+.np-hd-title{font-weight:700;font-size:13px}
+.np-filter{padding:8px var(--group-gap);display:flex;gap:var(--ctl-gap);align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--color-line-default);background:var(--color-bg-elevated)}
+.np-filter .ds-field{flex:1 1 120px;min-width:0}
+.np-list{flex:1 1 auto;overflow-y:auto;padding:var(--group-gap);display:flex;flex-direction:column;gap:10px;min-height:0;min-width:0}
+.np-note{border:1px solid var(--color-line-default);border-radius:var(--radius-overlay);background:var(--color-bg-elevated);padding:10px 12px;min-width:0}
+.np-note.carried{opacity:.55}
+.np-note-hd{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.np-note-time{font-size:11px;color:var(--color-text-muted)}
+.np-note-actions{margin-left:auto;display:flex;gap:2px;flex:0 0 auto}
+.np-note-txt{font-size:12px;color:var(--color-text-primary);line-height:1.5;margin-top:6px;white-space:pre-line;overflow-wrap:anywhere}
+.np-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center}
+.np-chip{font-size:10px;font-weight:700;padding:1px 7px;border-radius:999px;background:var(--color-accent-wash);color:var(--color-accent-ink);cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;flex:0 0 auto}
+.np-chip-x{font-size:9px;cursor:pointer}
+.np-composer{border-top:1px solid var(--color-line-default);padding:var(--group-gap);background:var(--color-bg-elevated);display:flex;flex-direction:column;gap:8px}
+.np-composer textarea{width:100%;min-height:56px;resize:vertical;border:1px solid var(--color-btn-secondary-outline);background:var(--color-bg-elevated);color:var(--color-text-primary);font:inherit;font-size:var(--fs-field);padding:8px;border-radius:var(--radius-ctl);box-sizing:border-box}
+.np-composer-row{display:flex;align-items:center;gap:var(--ctl-gap);flex-wrap:wrap}
+.np-hint{font-size:10px;color:var(--color-text-muted);white-space:nowrap}
+.np-link-btn{background:transparent;border-color:transparent;color:var(--color-accent-ink);text-decoration:underline}
+.np-link-btn:hover{background:var(--color-accent-wash-weak)}
+.np-menu{padding:6px var(--group-gap);background:var(--color-bg-elevated);border-bottom:1px solid var(--color-line-default);display:flex;justify-content:flex-end}
+
+/* ---- D-20: status pill on a note ---- */
+.st-pill{display:inline-flex;align-items:center;gap:4px;height:var(--ctl-h);padding:0 8px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap;border:1px solid transparent;cursor:pointer;flex:0 0 auto}
+.st-pill .car{font-size:8px;opacity:.85}
+.st-open{background:var(--color-btn-secondary-bg);border-color:var(--color-btn-secondary-outline);color:var(--color-text-muted)}
+.st-sent{background:var(--color-icon-track);border-color:var(--color-icon-track);color:#fff}
+.st-pending{background:var(--color-status-risk);border-color:var(--color-status-risk);color:#fff}
+.st-closed{background:var(--color-status-done-tint);border-color:var(--color-status-done-tint);color:var(--color-status-done)}
+
+/* ---- D-20: status filter chips ---- */
+.flt-chip{height:var(--ctl-h);padding:0 10px;border-radius:999px;border:1px solid var(--color-btn-secondary-outline);background:var(--color-btn-secondary-bg);color:var(--color-btn-secondary-text);font:inherit;font-size:var(--fs-caption);cursor:pointer;white-space:nowrap;flex:0 0 auto}
+.flt-chip[aria-pressed="true"]{background:var(--color-accent-purple);border-color:var(--color-accent-purple);color:#fff}
+
+/* ---- D-20: app shell overview (icon bar, board sliver, two docked panels + rails) ---- */
+.app-shell{width:1440px;max-width:100%;border:1px solid var(--color-line-default);border-radius:var(--radius-overlay);overflow:hidden;background:var(--color-bg-panel);box-sizing:border-box}
+.app-hd{height:48px;flex:0 0 48px;background:var(--color-bg-header);color:#fff;display:flex;align-items:center;gap:12px;padding:0 16px;box-sizing:border-box}
+.app-hd .ttl{font-size:13px;font-weight:700;flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ---- D-20 revision: always-visible left Workspace icon rail, sits outside the panel, full height of the app body ---- */
+.app-rail{width:44px;flex:0 0 44px;background:var(--color-bg-workspace-hd);display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 0;box-sizing:border-box}
+.app-rail .ico{box-sizing:border-box;position:relative;width:var(--icon-btn);height:var(--icon-btn);padding:0;border-radius:var(--radius-ctl);display:inline-block;text-align:center;line-height:var(--icon-btn);color:#fff;background:transparent;border:0;cursor:pointer;font-size:14px;flex:0 0 auto;overflow:hidden}
+.app-rail .ico:hover{background:rgba(255,255,255,.14)}
+.app-rail .ico.active{background:rgba(255,255,255,.26)}
+.app-rail .badge{position:absolute;top:1px;right:1px;min-width:12px;height:12px;padding:0 2px;border-radius:999px;background:#fff;color:var(--color-accent-ink);font-size:8px;font-weight:700;line-height:12px;text-align:center;box-sizing:border-box}
+.ws-standalone-panel{flex:0 0 316px;max-width:44%;min-width:0;display:flex;flex-direction:column;overflow:hidden;box-sizing:border-box;background:var(--color-bg-panel);border-right:1px solid var(--color-line-default)}
+
+/* ---- D-20 revision: right-side compact icon-button cluster (header actions) ---- */
+.app-cluster{display:flex;align-items:center;gap:2px;flex:0 0 auto}
+.app-ico-btn{box-sizing:border-box;width:var(--icon-btn);height:var(--icon-btn);padding:0;border-radius:var(--radius-ctl);border:0;background:transparent;color:#fff;font-size:14px;cursor:pointer;display:inline-block;text-align:center;line-height:var(--icon-btn);flex:0 0 auto;overflow:hidden;vertical-align:middle}
+.app-ico-btn:hover{background:rgba(255,255,255,.14)}
+.app-ico-btn.active{background:rgba(255,255,255,.26)}
+.app-ico-btn.settings{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.35);margin-left:4px}
+.app-ico-btn.settings.active{background:var(--color-accent-purple);border-color:var(--color-accent-purple)}
+.more-wrap{position:relative;display:inline-flex}
+.more-menu{position:absolute;top:calc(100% + 6px);right:0;min-width:210px;background:var(--color-bg-elevated);color:var(--color-text-primary);border:1px solid var(--color-line-default);border-radius:var(--radius-overlay);box-shadow:0 6px 18px rgba(0,0,0,.30);padding:6px;z-index:5;box-sizing:border-box}
+.more-item{display:flex;align-items:center;width:100%;height:var(--ctl-h);padding:0 8px;border-radius:var(--radius-ctl);border:0;background:transparent;color:var(--color-text-primary);font:inherit;font-size:var(--fs-caption);cursor:pointer;text-align:left;white-space:nowrap;box-sizing:border-box}
+.more-item:hover{background:var(--color-btn-secondary-hover-bg)}
+.more-sep{height:1px;background:var(--color-line-default);margin:4px 2px}
+
+/* ---- D-20 revision: top filter bar strip -- date range / mode / fit columns ---- */
+.app-filterbar{padding:8px 16px;background:var(--color-bg-elevated);border-bottom:1px solid var(--color-line-default);display:flex;align-items:center;gap:var(--ctl-gap);flex-wrap:wrap;box-sizing:border-box}
+.fb-lbl{font-size:var(--fs-caption);color:var(--color-text-muted);white-space:nowrap;font-weight:600;flex:0 0 auto}
+.fb-sep{width:1px;align-self:stretch;background:var(--color-line-default);flex:0 0 auto}
+
+.app-body{display:flex;align-items:stretch;height:640px;box-sizing:border-box}
+.board-sliver{flex:1 1 auto;min-width:60px;background:repeating-linear-gradient(135deg,var(--color-bg-elevated),var(--color-bg-elevated) 10px,var(--color-bg-panel) 10px,var(--color-bg-panel) 20px);display:flex;align-items:center;justify-content:center;color:var(--color-text-muted);font-size:11px;text-align:center;padding:8px;box-sizing:border-box}
+.side-shell{flex:0 0 360px;width:360px;max-width:44%;display:flex;min-width:0;box-sizing:border-box;background:var(--color-bg-panel)}
+.side-shell.ws{border-right:1px solid var(--color-line-default)}
+.side-shell.dv{border-left:1px solid var(--color-line-default);flex-direction:row-reverse}
+.side-rail{width:44px;flex:0 0 44px;background:var(--color-bg-header);display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 0;box-sizing:border-box}
+.side-rail .ico{box-sizing:border-box;position:relative;width:var(--icon-btn);height:var(--icon-btn);padding:0;border-radius:var(--radius-ctl);display:inline-block;text-align:center;line-height:var(--icon-btn);color:#fff;background:transparent;border:0;cursor:pointer;font-size:14px;flex:0 0 auto;overflow:hidden}
+.side-rail .ico:hover{background:rgba(255,255,255,.14)}
+.side-rail .ico.active{background:rgba(255,255,255,.24)}
+.side-panel{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;overflow:hidden}
+.side-strip{padding:6px 12px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--color-accent-ink);background:var(--color-bg-elevated);border-bottom:1px solid var(--color-line-default);flex:0 0 auto}
+.side-scroll{flex:1 1 auto;overflow-y:auto;min-height:0;min-width:0}
+.side-close{margin-left:auto}
+
+/* standalone side widget (section 5), same rail+panel pattern at a fixed height */
+.sw-widget{display:flex;height:480px;max-width:520px;width:100%;box-sizing:border-box;min-width:0;border:1px solid var(--color-line-default);border-radius:var(--radius-overlay);overflow:hidden}
+
+/* ---- D-20: import / mount confirmation highlight ---- */
+.hl-card{outline:2px solid transparent;outline-offset:2px;border-radius:var(--radius-overlay);transition:outline-color 1.2s ease, background-color 1.2s ease}
+.hl-card.hl-on{outline-color:var(--color-accent-purple);background:var(--color-accent-tint-bg)}
+@media (prefers-reduced-motion: reduce){
+  .hl-card{transition:none}
+}
+.imp-frame{border:1px solid var(--color-line-default);border-radius:var(--radius-overlay);background:var(--color-bg-elevated);padding:12px;min-width:0;height:100%}
+.imp-progress{height:6px;border-radius:999px;background:var(--color-line-default);overflow:hidden;margin-top:10px}
+.imp-progress i{display:block;height:100%;width:62%;background:var(--color-accent-purple)}
+.imp-status{font-size:11px;color:var(--color-accent-ink);margin-top:10px;font-weight:600}
+.imp-cap{font-size:11px;color:var(--color-text-muted);margin:0 0 8px}
+
+/* ---- D-20: phone overlay, rail becomes a top segmented tab row ---- */
+.ph-shell{width:390px;max-width:100%;border:1px solid var(--color-line-default);border-radius:var(--radius-overlay);overflow:hidden;background:var(--color-bg-panel);box-sizing:border-box;display:flex;flex-direction:column;height:640px}
+.ph-hd{background:var(--color-bg-header);color:#fff;padding:10px 16px;font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px}
+.ph-hd.ws-hd{background:var(--color-bg-workspace-hd)}
+.ph-tabs{display:flex;gap:6px;padding:8px 12px;background:var(--color-bg-elevated);border-bottom:1px solid var(--color-line-default);overflow-x:auto}
+.ph-tab{flex:0 0 auto;height:var(--ctl-h);padding:0 var(--ctl-pad-x);border:1px solid var(--color-btn-secondary-outline);border-radius:999px;background:var(--color-btn-secondary-bg);color:var(--color-btn-secondary-text);font:inherit;font-size:var(--fs-caption);font-weight:600;cursor:pointer;white-space:nowrap}
+.ph-tab.active{background:var(--color-accent-purple);border-color:var(--color-accent-purple);color:#fff}
+.ph-body{flex:1 1 auto;overflow-y:auto;min-height:0;display:flex;flex-direction:column}
+
+/* compact rows for user milestones list */
+.um-row{display:flex;align-items:center;gap:10px;padding:6px 0;font-size:12px;color:var(--color-text-primary);flex-wrap:wrap}
+.um-row+.um-row{border-top:1px solid var(--color-line-default)}
+.um-id{font-weight:700;flex:0 0 auto}
+.um-name{flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
+.um-status{font-size:11px;color:var(--color-text-muted);flex:0 0 auto}
+
+/* field row (view controls / data settings) */
+.fr-row{display:flex;align-items:center;gap:var(--field-label-gap);margin-bottom:10px;flex-wrap:wrap}
+.fr-row label{font-size:var(--fs-caption);color:var(--color-text-primary);flex:0 0 140px}
+.fr-row input[type=range]{flex:1 1 120px;min-width:0;accent-color:var(--color-accent-purple)}
+.fr-val{font-size:11px;color:var(--color-text-muted);flex:0 0 auto}
+
+/* mapping summary rows (import) */
+.mp-row{display:flex;align-items:center;gap:8px;font-size:12px;padding:4px 0}
+.mp-row+.mp-row{border-top:1px solid var(--color-line-default)}
+.mp-col{color:var(--color-text-muted);flex:1 1 0;min-width:0;overflow-wrap:anywhere}
+.mp-arrow{color:var(--color-accent-ink);flex:0 0 auto}
+.mp-field{font-weight:600;flex:1 1 0;min-width:0;overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="pg-head">
+  <h1>D-20a: two-sided workspace mockups (rev 3)</h1>
+  <p>Static mockups only, no app code changed. Draws the hard line between the annotation layer (Workspace, left) and the schedule/format layer (Data &amp; view, right). Rev 3: the Workspace side is now an always-visible left icon rail, full height, with its panel opening beside it rather than nested inside it; Data &amp; view keeps its own docked rail-plus-panel, opened from the header. Re-houses the D-17b Sources/Annotations tab content and the D-19 notes panel into these two sides. Source: the D-20 Two-sided workspace and D-19 Notes panel plan sections. Reference for control conventions: <code>docs/mockups/D-16/component_sheet.html</code>; reference for the panel patterns being re-housed: <code>docs/mockups/D-17/data_manager.html</code>.</p>
+</header>
+
+<!-- ===================== 1. Overview ===================== -->
+<section class="pg-sect">
+  <h2>1. Overview: the always-visible Workspace rail</h2>
+  <p>The header's Workspace toggle is gone. In its place, a slim vertical icon rail sits on the left edge of the app, below the header, full height, at all times: Notes (with an open-note count badge), Comments &amp; markups, User milestones and Lists, each with a tooltip. The rail is never hidden, only its panel is. Clicking an icon opens that section's panel beside the rail; clicking the active icon again, or the panel's &times;, closes the panel back down to the bare rail and the board reclaims the width. The active icon is highlighted. On the right, Data &amp; view still docks as a rail-plus-panel pair, opened from the header's Colour &amp; theme or Import &amp; settings buttons (section 2); it is closed here so the collapsed and single-panel states are easy to read. A label strip at the open panel's top still names the layer, "Your annotations", and the Workspace rail and panel header keep a distinct <b>workspace slate</b> (<code>--color-bg-workspace-hd</code>), related to but visibly different from the app header navy and from the Data &amp; view panel, which stays the app header colour. Below the app header sits the top filter bar: Date range (Weeks, a W/E field), Mode (Highlight / Show only) and Fit columns. Click a rail icon below to try the live toggle.</p>
+  <div class="pg-scroll">
+    <p class="pg-cap">(a) Rail collapsed, board full width beside it &middot; light</p>
+    <div class="ds t-light app-shell" id="ov-collapsed-light"></div>
+  </div>
+  <div class="pg-scroll" style="margin-top:12px">
+    <p class="pg-cap">(a) Rail collapsed, board full width beside it &middot; dark</p>
+    <div class="ds t-dark app-shell" id="ov-collapsed-dark"></div>
+  </div>
+  <div class="pg-scroll" style="margin-top:12px">
+    <p class="pg-cap">(b) Rail with Notes open &middot; light</p>
+    <div class="ds t-light app-shell" id="ov-notes-light"></div>
+  </div>
+  <div class="pg-scroll" style="margin-top:12px">
+    <p class="pg-cap">(b) Rail with Notes open &middot; dark</p>
+    <div class="ds t-dark app-shell" id="ov-notes-dark"></div>
+  </div>
+  <div class="pg-scroll" style="margin-top:12px">
+    <p class="pg-cap">(c) Rail with Comments &amp; markups open &middot; light</p>
+    <div class="ds t-light app-shell" id="ov-comments-light"></div>
+  </div>
+  <div class="pg-scroll" style="margin-top:12px">
+    <p class="pg-cap">(c) Rail with Comments &amp; markups open &middot; dark</p>
+    <div class="ds t-dark app-shell" id="ov-comments-dark"></div>
+  </div>
+</section>
+
+<!-- ===================== 2. Header right-hand buttons ===================== -->
+<section class="pg-sect">
+  <h2>2. Header right-hand buttons, and compact mode</h2>
+  <p>Desktop, left to right, each a plain icon button with a tooltip: Light/Dark (toggles the theme; the icon shows the mode a click switches <em>to</em>), Print (A3 preview), Save as (was "Save as new dashboard" in the old More actions menu, now its own button), Colour &amp; theme (opens the View controls section of the right panel), Import &amp; settings (the gear, rightmost, opens the Data &amp; view panel at Sources / Import / Data settings). One consistent treatment throughout: icon-only with a tooltip at this width, never a mix of labelled and unlabelled buttons in the same row. The More actions menu no longer exists at this width: Filter row toggle is removed outright, and Reset row marks has moved into the Workspace's Comments &amp; markups section (section 4).</p>
+  <div class="pg-grid">
+    <div><p class="pg-cap">Header, desktop &middot; light</p><div class="ds t-light" style="padding:0;border-radius:8px;overflow:hidden" id="hdr-closed-light"></div></div>
+    <div><p class="pg-cap">Header, desktop &middot; dark</p><div class="ds t-dark" style="padding:0;border-radius:8px;overflow:hidden" id="hdr-closed-dark"></div></div>
+  </div>
+  <p class="imp-cap" style="margin-top:12px">Compact mode (narrow desktop / tablet &le; 1024, and phone): all five buttons collapse into a single More actions (&#8942;) menu, in the same order, each item keeping its icon alongside the label since the menu always shows text.</p>
+  <div class="pg-grid">
+    <div><p class="pg-cap">Compact header, tablet width &middot; light</p><div class="ds t-light" style="padding:0;border-radius:8px;overflow:visible;position:relative;max-width:700px;min-height:220px" id="hdr-tablet-light"></div></div>
+    <div><p class="pg-cap">Compact header, tablet width &middot; dark</p><div class="ds t-dark" style="padding:0;border-radius:8px;overflow:visible;position:relative;max-width:700px;min-height:220px" id="hdr-tablet-dark"></div></div>
+  </div>
+  <div class="pg-grid" style="margin-top:12px">
+    <div><p class="pg-cap">Compact header, phone 390, touch &middot; light</p><div class="ds touch t-light" style="padding:0;border-radius:8px;overflow:visible;position:relative;max-width:390px;min-height:260px" id="hdr-phone-light"></div></div>
+    <div><p class="pg-cap">Compact header, phone 390, touch &middot; dark</p><div class="ds touch t-dark" style="padding:0;border-radius:8px;overflow:visible;position:relative;max-width:390px;min-height:260px" id="hdr-phone-dark"></div></div>
+  </div>
+</section>
+
+<!-- ===================== 3. Notes with status ===================== -->
+<section class="pg-sect">
+  <h2>3. Notes with status</h2>
+  <p>Each note gets a status pill (Open / Sent / Pending / Closed) to track its progress against the master schedule, in distinct token colours: Open is neutral, Sent is the accent/blue used for on-track markers, Pending is amber, Closed is a muted green. A status filter chip row sits beside This period / All periods. #ID chips still link a note to several milestones; the second note here links three.</p>
+  <div class="pg-grid">
+    <div><p class="pg-cap">Desktop &middot; light</p><div class="ds t-light" style="padding:0;border-radius:8px" id="notes-desk-light"></div></div>
+    <div><p class="pg-cap">Desktop &middot; dark</p><div class="ds t-dark" style="padding:0;border-radius:8px" id="notes-desk-dark"></div></div>
+  </div>
+  <div class="pg-grid" style="margin-top:12px">
+    <div><p class="pg-cap">Phone 390, touch &middot; light</p><div class="ds touch t-light" style="padding:0;border-radius:8px;max-width:390px" id="notes-phone-light"></div></div>
+    <div><p class="pg-cap">Phone 390, touch &middot; dark</p><div class="ds touch t-dark" style="padding:0;border-radius:8px;max-width:390px" id="notes-phone-dark"></div></div>
+  </div>
+</section>
+
+<!-- ===================== 4. Comments and markups ===================== -->
+<section class="pg-sect">
+  <h2>4. Comments &amp; markups</h2>
+  <p>The milestone comment threads across the board, filterable by period, status and milestone. Below that, the mounted annotation layers as a stack: Local edits is always the top layer, two mounted files sit below it, each with an on/off switch, Merge into Local edits and Remove. The three exports come next, moved down from the old More actions menu. Last is Reset row marks, moved here from the header's old More actions menu as a secondary action with a one-line explanation of what it does and does not touch. Its inline confirmation follows the design standard: message full width, Cancel at bottom-left, Reset at bottom-right; it is shown already expanded below so the layout can be reviewed without a click.</p>
+  <div class="pg-grid">
+    <div><p class="pg-cap">Desktop &middot; light</p><div class="ds t-light" style="padding:0;border-radius:8px" id="cm-desk-light"></div></div>
+    <div><p class="pg-cap">Desktop &middot; dark</p><div class="ds t-dark" style="padding:0;border-radius:8px" id="cm-desk-dark"></div></div>
+  </div>
+  <div class="pg-grid" style="margin-top:12px">
+    <div><p class="pg-cap">Phone 390, touch &middot; light</p><div class="ds touch t-light" style="padding:0;border-radius:8px;max-width:390px" id="cm-phone-light"></div></div>
+    <div><p class="pg-cap">Phone 390, touch &middot; dark</p><div class="ds touch t-dark" style="padding:0;border-radius:8px;max-width:390px" id="cm-phone-dark"></div></div>
+  </div>
+</section>
+
+<!-- ===================== 5. User milestones ===================== -->
+<section class="pg-sect">
+  <h2>5. User milestones</h2>
+  <p>Moves here from the Sources tab. The count, the on/off switch, an Export in schedule format so items round-trip through the importer, a Manage grid button that opens the full editable sheet (D-17c), and a compact list of the USR- items themselves.</p>
+  <div class="pg-grid">
+    <div><p class="pg-cap">Desktop &middot; light</p><div class="ds t-light" style="padding:0;border-radius:8px" id="um-desk-light"></div></div>
+    <div><p class="pg-cap">Desktop &middot; dark</p><div class="ds t-dark" style="padding:0;border-radius:8px" id="um-desk-dark"></div></div>
+  </div>
+  <div class="pg-grid" style="margin-top:12px">
+    <div><p class="pg-cap">Phone 390, touch &middot; light</p><div class="ds touch t-light" style="padding:0;border-radius:8px;max-width:390px" id="um-phone-light"></div></div>
+    <div><p class="pg-cap">Phone 390, touch &middot; dark</p><div class="ds touch t-dark" style="padding:0;border-radius:8px;max-width:390px" id="um-phone-dark"></div></div>
+  </div>
+</section>
+
+<!-- ===================== 6. Right side sections ===================== -->
+<section class="pg-sect">
+  <h2>6. Right side: Data &amp; view sections</h2>
+  <p>The Data &amp; view rail now carries seven sections; five representative slices follow. View controls folds in the current Customize sidebar's groups, and now opens with a Theme control (Light / Dark / System) at the top, moved in from the old header theme toggle; the light widget below shows Light selected, the dark widget shows Dark selected. Sources drops User-defined (it now lives in the Workspace's User milestones section) and shows schedules only; Import pairs a file drop with a mapping summary; Data settings covers thresholds and the week-ends-on setting. Help and About are new: short placeholder content only, to be written up properly once the rest of this revision is settled.</p>
+  <div class="pg-grid">
+    <div><p class="pg-cap">View controls &middot; light</p><div class="ds t-light sw-widget" id="vc-light"></div></div>
+    <div><p class="pg-cap">View controls &middot; dark</p><div class="ds t-dark sw-widget" id="vc-dark"></div></div>
+  </div>
+  <div class="pg-grid" style="margin-top:12px">
+    <div><p class="pg-cap">Sources (schedules only) &middot; light</p><div class="ds t-light sw-widget" id="src-light"></div></div>
+    <div><p class="pg-cap">Sources (schedules only) &middot; dark</p><div class="ds t-dark sw-widget" id="src-dark"></div></div>
+  </div>
+  <div class="pg-grid" style="margin-top:12px">
+    <div><p class="pg-cap">Import &middot; light</p><div class="ds t-light sw-widget" id="imp-light"></div></div>
+    <div><p class="pg-cap">Import &middot; dark</p><div class="ds t-dark sw-widget" id="imp-dark"></div></div>
+  </div>
+  <div class="pg-grid" style="margin-top:12px">
+    <div><p class="pg-cap">Data settings &middot; light</p><div class="ds t-light sw-widget" id="ds-light"></div></div>
+    <div><p class="pg-cap">Data settings &middot; dark</p><div class="ds t-dark sw-widget" id="ds-dark"></div></div>
+  </div>
+  <div class="pg-grid" style="margin-top:12px">
+    <div><p class="pg-cap">Help &middot; light</p><div class="ds t-light sw-widget" id="help-light"></div></div>
+    <div><p class="pg-cap">Help &middot; dark</p><div class="ds t-dark sw-widget" id="help-dark"></div></div>
+  </div>
+  <div class="pg-grid" style="margin-top:12px">
+    <div><p class="pg-cap">About &middot; light</p><div class="ds t-light sw-widget" id="about-light"></div></div>
+    <div><p class="pg-cap">About &middot; dark</p><div class="ds t-dark sw-widget" id="about-dark"></div></div>
+  </div>
+</section>
+
+<!-- ===================== 7. Import confirmation sequence ===================== -->
+<section class="pg-sect">
+  <h2>7. Import confirmation sequence</h2>
+  <p>When a schedule import finishes, the panel switches to Sources, scrolls the new card into view and plays a short highlight: an accent-tint background with an outline that fades over 1.2 seconds. With <code>prefers-reduced-motion</code> the highlight is a static outline for 2 seconds instead of a fade. The same sequence runs on the Workspace side when an annotation file is mounted. Press Replay to re-trigger either animation live.</p>
+  <div class="pg-grid">
+    <div>
+      <p class="imp-cap">(a) Importing</p>
+      <div class="ds t-light" style="padding:0" >
+        <div class="imp-frame">
+          <div class="dm-card-title">Wk 39 schedule.xlsx</div>
+          <div class="imp-status">Importing&hellip; parsing rows</div>
+          <div class="imp-progress"><i></i></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <p class="imp-cap">(b) Done: switched to Sources, new card highlighted</p>
+      <div class="ds t-light" style="padding:0">
+        <div class="imp-frame">
+          <div class="dm-card hl-card hl-on">
+            <div class="dm-card-hd"><span class="dm-card-title">Wk 39 schedule</span><span class="dm-badge">primary</span></div>
+            <div class="dm-card-sub">DD 14 Sep 26 &middot; 105 tasks / 146 milestones</div>
+          </div>
+          <div class="imp-status">Wk 39 schedule added: 105 tasks, 146 milestones</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <p class="imp-cap">(c) 1.2s later: highlight faded</p>
+      <div class="ds t-light" style="padding:0">
+        <div class="imp-frame">
+          <div class="dm-card hl-card">
+            <div class="dm-card-hd"><span class="dm-card-title">Wk 39 schedule</span><span class="dm-badge">primary</span></div>
+            <div class="dm-card-sub">DD 14 Sep 26 &middot; 105 tasks / 146 milestones</div>
+          </div>
+          <div class="imp-status" style="color:var(--color-text-muted);font-weight:400">Wk 39 schedule added: 105 tasks, 146 milestones</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pg-grid" style="margin-top:12px">
+    <div>
+      <p class="imp-cap">Live demo: Sources card (right side)</p>
+      <div class="ds t-dark" style="padding:0">
+        <div class="imp-frame">
+          <div class="dm-card hl-card" id="hl-src">
+            <div class="dm-card-hd"><span class="dm-card-title">Wk 39 schedule</span><span class="dm-badge">primary</span></div>
+            <div class="dm-card-sub">DD 14 Sep 26 &middot; 105 tasks / 146 milestones</div>
+          </div>
+          <div class="dm-row" style="border-top:0;padding-top:10px">
+            <button class="ds-btn" onclick="replayHighlight('hl-src')">Replay</button>
+            <span style="font-size:11px;color:var(--color-text-muted)">Respects prefers-reduced-motion (static outline, 2s).</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <p class="imp-cap">Live demo: mounted annotation file (left side)</p>
+      <div class="ds t-dark" style="padding:0">
+        <div class="imp-frame">
+          <div class="dm-card hl-card" id="hl-mount">
+            <div class="dm-card-hd"><span class="dm-dot on"></span><span class="dm-card-title">comments_W-E-14-Sep.json</span></div>
+            <div class="dm-card-sub">Mounted 14 Sep 26 &middot; 12 comments &middot; 2 health &middot; 1 date</div>
+          </div>
+          <div class="dm-row" style="border-top:0;padding-top:10px">
+            <button class="ds-btn" onclick="replayHighlight('hl-mount')">Replay</button>
+            <span style="font-size:11px;color:var(--color-text-muted)">Annotation mount added: comments_W-E-14-Sep.json, 12 comments.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 8. Phone 390: full-screen overlays ===================== -->
+<section class="pg-sect">
+  <h2>8. Phone 390: each side as a full-screen overlay</h2>
+  <p>On phone, Workspace and Data &amp; view each open as a full-screen overlay rather than a docked panel. Design call: the vertical rail becomes a <strong>top</strong> segmented tab row rather than a bottom bar, so it sits directly under the app header in the same reading order the desktop rail uses (left edge, top to bottom becomes left to right), and it does not compete with the browser's own bottom chrome on a phone. It scrolls horizontally if it does not fit; the active tab shows the section, exactly as the active rail icon does on desktop.</p>
+  <div class="pg-grid">
+    <div><p class="pg-cap">Workspace overlay &middot; light</p><div class="ds touch t-light" id="phws-light"></div></div>
+    <div><p class="pg-cap">Workspace overlay &middot; dark</p><div class="ds touch t-dark" id="phws-dark"></div></div>
+  </div>
+  <div class="pg-grid" style="margin-top:12px">
+    <div><p class="pg-cap">Data &amp; view overlay &middot; light</p><div class="ds touch t-light" id="phdv-light"></div></div>
+    <div><p class="pg-cap">Data &amp; view overlay &middot; dark</p><div class="ds touch t-dark" id="phdv-dark"></div></div>
+  </div>
+</section>
+</div>
+
+<!-- ===================== Templates ===================== -->
+
+<template id="tpl-dv-rail">
+  <div class="side-rail">
+    <button class="ico" title="View controls" aria-label="View controls">&#127912;</button>
+    <button class="ico active" title="Sources" aria-label="Sources">&#128193;</button>
+    <button class="ico" title="Import" aria-label="Import">&#128229;</button>
+    <button class="ico" title="Data settings" aria-label="Data settings">&#9881;</button>
+    <button class="ico" title="Diagnostics" aria-label="Diagnostics">&#129514;</button>
+    <button class="ico" title="Help" aria-label="Help">&#10067;</button>
+    <button class="ico" title="About" aria-label="About">&#8505;</button>
+  </div>
+</template>
+
+<template id="tpl-ov-dv-panel">
+  <div class="side-panel">
+    <div class="np-hd">
+      <span class="np-hd-title">Data &amp; view</span>
+      <span class="grow"></span>
+      <button class="ds-ico" title="Close" aria-label="Close">&#10005;</button>
+    </div>
+    <div class="side-strip">Schedule and view</div>
+    <div class="side-scroll">
+      <div class="dm-group">
+        <div class="dm-group-title">Schedules</div>
+        <div class="dm-row">
+          <div class="dm-row-main">
+            <div class="dm-row-name">Wk 39 schedule <span class="dm-badge">primary</span></div>
+            <div class="dm-row-meta">DD 14 Sep 26 &middot; 164 tasks / 201 milestones</div>
+          </div>
+          <div class="dm-row-ctrl"><div class="dm-switch on"><span class="trk"></span></div></div>
+        </div>
+        <div class="dm-row">
+          <div class="dm-row-main">
+            <div class="dm-row-name">Embedded baseline <span class="dm-badge baseline">baseline</span></div>
+            <div class="dm-row-meta">DD 31 Aug 26 &middot; 142 tasks / 176 milestones</div>
+          </div>
+          <div class="dm-row-ctrl"><div class="dm-switch on disabled"><span class="trk"></span></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="dm-foot"><button class="ds-btn primary">Add schedule&hellip;</button></div>
+  </div>
+</template>
+
+<script>
+(function(){
+  function fill(id,tpl){var el=document.getElementById(id);if(el)el.appendChild(document.getElementById(tpl).content.cloneNode(true));}
+
+  // ---- App header: title + right-hand action buttons (Light/Dark, Print, Save as, Colour & theme, Import & settings) ----
+  // Desktop: five icon buttons, tooltip only. Compact (tablet <=1024 and phone): one More actions (⋮) menu with the same five, icon + label.
+  function headerItems(theme){
+    var themeDark = theme === 'dark';
+    return [
+      {ico: themeDark ? '&#9728;' : '&#127769;', label:'Light/Dark', title: themeDark ? 'Switch to light' : 'Switch to dark'},
+      {ico:'&#128424;', label:'Print', title:'Print: A3 preview'},
+      {ico:'&#128190;', label:'Save as', title:'Save as new dashboard'},
+      {ico:'&#127912;', label:'Colour & theme', title:'Colour & theme', flag:'vcActive'},
+      {ico:'&#9881;', label:'Import & settings', title:'Import & settings', flag:'dvOpen', cls:'settings'}
+    ];
+  }
+  function appHeaderHtml(o){
+    o = o||{};
+    var theme = o.theme || 'light', compact = !!o.compact, menuOpen = !!o.menuOpen;
+    var items = headerItems(theme);
+    var cluster = '<div class="app-cluster">';
+    if(!compact){
+      items.forEach(function(it){
+        cluster += '<button class="app-ico-btn'+(it.cls?' '+it.cls:'')+(o[it.flag]?' active':'')+'" title="'+it.title+'" aria-label="'+it.label+'">'+it.ico+'</button>';
+      });
+    } else {
+      cluster += '<div class="more-wrap">'+
+        '<button class="app-ico-btn'+(menuOpen?' active':'')+'" title="More actions" aria-label="More actions" aria-haspopup="true" aria-expanded="'+(menuOpen?'true':'false')+'">&#8942;</button>';
+      if(menuOpen){
+        cluster += '<div class="more-menu" role="menu">';
+        items.forEach(function(it){
+          cluster += '<button class="more-item" role="menuitem">'+it.ico+' '+it.label+'</button>';
+        });
+        cluster += '</div>';
+      }
+      cluster += '</div>';
+    }
+    cluster += '</div>';
+    return '<div class="app-hd">'+
+      '<span class="ttl">Eskay | Snip PFS &amp; Technical Report 2026 &middot; Deliverables Dashboard</span>'+
+      cluster+
+    '</div>';
+  }
+
+  // ---- Top filter bar: date range, mode, fit columns (moved in from More actions) ----
+  function filterbarHtml(){
+    return '<div class="app-filterbar">'+
+      '<span class="fb-lbl">Date range:</span>'+
+      '<span class="fb-lbl">Weeks</span>'+
+      '<input class="ds-field" type="text" value="W/E 14 Sep 26" style="max-width:130px" aria-label="Week ending">'+
+      '<span class="fb-sep"></span>'+
+      '<span class="fb-lbl">Mode</span>'+
+      '<div class="ds-seg" role="tablist" aria-label="Filter mode"><button class="active" aria-pressed="true">Highlight</button><button aria-pressed="false">Show only</button></div>'+
+      '<span class="grow"></span>'+
+      '<button class="ds-btn" title="Fit all visible columns to the screen width">&#8622; Fit columns</button>'+
+    '</div>';
+  }
+
+  // ---- Section 1: the always-visible Workspace rail, three states ----
+  var railItems = [['Notes','&#128221;',3],['Comments &amp; markups','&#128172;',null],['User milestones','&#128681;',null],['Lists','&#9776;',null]];
+  function wsRailHtml(activeIdx){
+    var out='';
+    railItems.forEach(function(it,i){
+      out+='<button class="ico'+(i===activeIdx?' active':'')+'" title="'+it[0]+'" aria-label="'+it[0]+'" data-idx="'+i+'">'+it[1]+(it[2]?'<span class="badge" title="'+it[2]+' open notes">'+it[2]+'</span>':'')+'</button>';
+    });
+    return out;
+  }
+  function wsPanelNotesHtml(){
+    return '<div class="np-hd ws-hd"><span class="np-hd-title">Notes</span>'+
+        '<span class="grow"></span><button class="ds-ico rail-close" title="Close" aria-label="Close">&#10005;</button></div>'+
+      '<div class="side-strip">Your annotations</div>'+
+      '<div class="np-filter"><div class="ds-seg" role="tablist" aria-label="Notes filter"><button class="active" aria-pressed="true">This period</button><button aria-pressed="false">All periods</button></div></div>'+
+      '<div class="side-scroll"><div class="np-list">'+
+        '<div class="np-note"><div class="np-note-hd"><span class="st-pill st-open">Open <span class="car">&#9662;</span></span><span class="np-note-time">14 Sep, 08:12</span></div><div class="np-note-txt">Geotech report slipping 1 wk, owner to confirm.</div><div class="np-chips"><span class="np-chip">#SNIP-102</span></div></div>'+
+        '<div class="np-note"><div class="np-note-hd"><span class="st-pill st-pending">Pending <span class="car">&#9662;</span></span><span class="np-note-time">13 Sep, 16:40</span></div><div class="np-note-txt">Client requested a revised tie-in sequence for the tank farm interconnect.</div><div class="np-chips"><span class="np-chip">#SNIP-140</span></div></div>'+
+      '</div></div>';
+  }
+  function wsPanelCommentsHtml(){
+    return '<div class="np-hd ws-hd"><span class="np-hd-title">Comments &amp; markups</span>'+
+        '<span class="grow"></span><button class="ds-ico rail-close" title="Close" aria-label="Close">&#10005;</button></div>'+
+      '<div class="side-strip">Your annotations</div>'+
+      '<div class="side-scroll">'+
+        '<div style="padding:var(--group-gap);display:flex;flex-direction:column;gap:8px">'+
+          '<div class="dm-thread"><div class="dm-thread-hd"><span class="dm-tag">SNIP-102</span><span style="font-size:11px;color:var(--color-text-muted)">Matt &middot; 14 Sep 26</span></div><div class="dm-thread-txt">Slipped two weeks against the update. Flagging for the Wed review.</div></div>'+
+        '</div>'+
+        '<div class="dm-group">'+
+          '<div class="dm-group-title">Reset row marks</div>'+
+          '<div class="dm-group-desc">Clears the health dots and remarks you set on rows this session. Milestone comments and edits are not affected.</div>'+
+          '<button class="ds-btn danger">Reset row marks</button>'+
+        '</div>'+
+      '</div>';
+  }
+  function buildOverview(id, opts){
+    opts = opts || {};
+    var theme = opts.theme || 'light';
+    var railState = opts.railState || 'collapsed'; // collapsed | notes | comments
+    var activeIdx = railState==='notes' ? 0 : (railState==='comments' ? 1 : -1);
+    var el=document.getElementById(id); if(!el) return;
+    var panelHtml = '';
+    if(railState==='notes') panelHtml = '<div class="ws-standalone-panel">'+wsPanelNotesHtml()+'</div>';
+    else if(railState==='comments') panelHtml = '<div class="ws-standalone-panel">'+wsPanelCommentsHtml()+'</div>';
+    el.innerHTML =
+      appHeaderHtml({theme:theme})+
+      filterbarHtml()+
+      '<div class="app-body">'+
+        '<div class="app-rail" id="'+id+'-rail"></div>'+
+        panelHtml+
+        '<div class="board-sliver">Board (compressed for this mockup)<br>Milestone timeline continues here'+
+          (railState==='collapsed' ? '<br><br><em>Rail collapsed: board runs full width beside the 44px rail.</em>' : '')+
+        '</div>'+
+      '</div>';
+    var railEl = document.getElementById(id+'-rail');
+    railEl.innerHTML = wsRailHtml(activeIdx);
+    railEl.querySelectorAll('.ico').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var idx = parseInt(btn.getAttribute('data-idx'),10);
+        var wasActive = btn.classList.contains('active');
+        var next = wasActive ? 'collapsed' : (idx===0 ? 'notes' : (idx===1 ? 'comments' : 'collapsed'));
+        buildOverview(id, {theme:theme, railState:next});
+      });
+    });
+    var closeBtn = el.querySelector('.rail-close');
+    if(closeBtn) closeBtn.addEventListener('click', function(){ buildOverview(id, {theme:theme, railState:'collapsed'}); });
+  }
+  buildOverview('ov-collapsed-light', {theme:'light', railState:'collapsed'});
+  buildOverview('ov-collapsed-dark', {theme:'dark', railState:'collapsed'});
+  buildOverview('ov-notes-light', {theme:'light', railState:'notes'});
+  buildOverview('ov-notes-dark', {theme:'dark', railState:'notes'});
+  buildOverview('ov-comments-light', {theme:'light', railState:'comments'});
+  buildOverview('ov-comments-dark', {theme:'dark', railState:'comments'});
+
+  // ---- Section 2: header right-hand buttons, desktop and compact ----
+  ['hdr-closed-light','hdr-closed-dark'].forEach(function(id){
+    var theme = id.indexOf('dark')>-1 ? 'dark' : 'light';
+    var el=document.getElementById(id); if(el) el.innerHTML = appHeaderHtml({theme:theme});
+  });
+  ['hdr-tablet-light','hdr-tablet-dark'].forEach(function(id){
+    var theme = id.indexOf('dark')>-1 ? 'dark' : 'light';
+    var el=document.getElementById(id); if(el) el.innerHTML = appHeaderHtml({theme:theme,compact:true,menuOpen:true});
+  });
+  ['hdr-phone-light','hdr-phone-dark'].forEach(function(id){
+    var theme = id.indexOf('dark')>-1 ? 'dark' : 'light';
+    var el=document.getElementById(id); if(el) el.innerHTML = appHeaderHtml({theme:theme,compact:true,menuOpen:true});
+  });
+
+  // ---- Section 3: notes with status ----
+  var notesBody =
+    '<div class="np-hd ws-hd">'+
+      '<span class="np-hd-title">Notes</span>'+
+      '<button class="dm-pill current">Reporting <b>W/E 14 Sep 26</b> <span class="car">&#9662;</span></button>'+
+      '<span class="grow"></span>'+
+      '<button class="ds-ico" title="Close" aria-label="Close">&#10005;</button>'+
+    '</div>'+
+    '<div class="np-filter">'+
+      '<div class="ds-seg" role="tablist" aria-label="Period filter">'+
+        '<button class="active" aria-pressed="true">This period</button>'+
+        '<button aria-pressed="false">All periods</button>'+
+      '</div>'+
+      '<button class="flt-chip" aria-pressed="true">All statuses</button>'+
+      '<button class="flt-chip" aria-pressed="false">Open</button>'+
+      '<button class="flt-chip" aria-pressed="false">Sent</button>'+
+      '<button class="flt-chip" aria-pressed="false">Pending</button>'+
+      '<button class="flt-chip" aria-pressed="false">Closed</button>'+
+      '<input class="ds-field" type="text" placeholder="Search notes">'+
+    '</div>'+
+    '<div class="np-list">'+
+      '<div class="np-note">'+
+        '<div class="np-note-hd">'+
+          '<span class="st-pill st-sent">Sent <span class="car">&#9662;</span></span>'+
+          '<span class="np-note-time">14 Sep 26, 08:12 &middot; Matt</span>'+
+          '<span class="dm-tag">W/E 14 Sep 26</span>'+
+          '<span class="np-note-actions"><button class="ds-ico" title="Edit note" aria-label="Edit note">&#9998;</button><button class="ds-ico" title="Delete note" aria-label="Delete note">&#128465;</button></span>'+
+        '</div>'+
+        '<div class="np-note-txt">Weekly coordination:\n- Geotech report slipping 1 wk, owner to confirm\n- Process design criteria rev B issued</div>'+
+        '<div class="np-chips"><span class="np-chip">#SNIP-102</span></div>'+
+      '</div>'+
+      '<div class="np-note">'+
+        '<div class="np-note-hd">'+
+          '<span class="st-pill st-pending">Pending <span class="car">&#9662;</span></span>'+
+          '<span class="np-note-time">13 Sep 26, 16:40 &middot; Matt</span>'+
+          '<span class="dm-tag">W/E 14 Sep 26</span>'+
+          '<span class="np-note-actions"><button class="ds-ico" title="Edit note" aria-label="Edit note">&#9998;</button><button class="ds-ico" title="Delete note" aria-label="Delete note">&#128465;</button></span>'+
+        '</div>'+
+        '<div class="np-note-txt">Client requested a revised tie-in sequence for the tank farm interconnect. Links the process, civil and procurement milestones that the change touches.</div>'+
+        '<div class="np-chips"><span class="np-chip">#SNIP-117</span><span class="np-chip">#SNIP-140</span><span class="np-chip">#SNIP-155</span></div>'+
+      '</div>'+
+      '<div class="np-note">'+
+        '<div class="np-note-hd">'+
+          '<span class="st-pill st-open">Open <span class="car">&#9662;</span></span>'+
+          '<span class="np-note-time">11 Sep 26, 09:05 &middot; Matt</span>'+
+          '<span class="dm-tag">W/E 14 Sep 26</span>'+
+          '<span class="np-note-actions"><button class="ds-ico" title="Edit note" aria-label="Edit note">&#9998;</button><button class="ds-ico" title="Delete note" aria-label="Delete note">&#128465;</button></span>'+
+        '</div>'+
+        '<div class="np-note-txt">Vendor data for the long-lead compressor package due Friday. Flagged to the procurement lead.</div>'+
+        '<div class="np-chips"><span class="np-chip">#SNIP-101</span></div>'+
+      '</div>'+
+      '<div class="np-note carried">'+
+        '<div class="np-note-hd">'+
+          '<span class="st-pill st-closed">Closed <span class="car">&#9662;</span></span>'+
+          '<span class="np-note-time">05 Sep 26, 14:20 &middot; Matt</span>'+
+          '<span class="dm-tag amber">W/E 07 Sep 26 &middot; carried</span>'+
+          '<span class="np-note-actions"><button class="ds-ico" title="Edit note" aria-label="Edit note">&#9998;</button><button class="ds-ico" title="Delete note" aria-label="Delete note">&#128465;</button></span>'+
+        '</div>'+
+        '<div class="np-note-txt">Site access agreement signed off, landowner confirmed access from 08 Sep.</div>'+
+        '<div class="np-chips"><span class="np-chip">#SNIP-118</span></div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="np-composer">'+
+      '<textarea placeholder="Add a note. Type #ID to link a milestone." rows="3"></textarea>'+
+      '<div class="np-composer-row">'+
+        '<button class="ds-btn">Link selected (1)</button>'+
+        '<span class="grow"></span>'+
+        '<span class="np-hint">Ctrl+Enter to save</span>'+
+        '<button class="ds-btn primary">Add note</button>'+
+      '</div>'+
+    '</div>';
+  ['notes-desk-light','notes-desk-dark','notes-phone-light','notes-phone-dark'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.innerHTML = notesBody;
+  });
+
+  // ---- Section 4: comments & markups ----
+  var cmBody =
+    '<div class="np-hd ws-hd">'+
+      '<span class="np-hd-title">Comments &amp; markups</span>'+
+      '<span class="grow"></span>'+
+      '<button class="ds-ico" title="Close" aria-label="Close">&#10005;</button>'+
+    '</div>'+
+    '<div class="np-filter">'+
+      '<select class="ds-select"><option>This period</option><option>All periods</option></select>'+
+      '<select class="ds-select"><option>All statuses</option><option>Open</option><option>Sent</option><option>Pending</option><option>Closed</option></select>'+
+      '<input class="ds-field" type="text" placeholder="Search comments">'+
+    '</div>'+
+    '<div style="padding:var(--group-gap);display:flex;flex-direction:column;gap:8px">'+
+      '<div class="dm-thread">'+
+        '<div class="dm-thread-hd"><span class="dm-tag">SNIP-102</span><span class="dm-tag">W/E 14 Sep 26</span><span style="font-size:11px;color:var(--color-text-muted)">Matt &middot; 14 Sep 26</span></div>'+
+        '<div class="dm-thread-txt">Slipped two weeks against the update. Flagging for the Wed review.</div>'+
+      '</div>'+
+      '<div class="dm-thread">'+
+        '<div class="dm-thread-hd"><span class="dm-tag">SNIP-140</span><span class="dm-tag amber">W/E 07 Sep 26</span><span style="font-size:11px;color:var(--color-text-muted)">Matt &middot; 08 Sep 26</span></div>'+
+        '<div class="dm-thread-txt">Client markup received, tie-in sequence to be revised.</div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="dm-group">'+
+      '<div class="dm-group-title">Mount</div>'+
+      '<div class="dm-group-desc">Later mounts override earlier ones where they touch the same field. Local edits is always the top layer.</div>'+
+      '<button class="ds-btn">Mount file&hellip;</button>'+
+      '<div class="dm-drop">Drop a comments file here</div>'+
+      '<div class="dm-card" style="margin-top:12px">'+
+        '<div class="dm-card-hd"><span class="dm-dot locked"></span><span class="dm-card-title">Local edits</span><span class="dm-badge baseline">top layer</span></div>'+
+        '<div class="dm-card-sub">41 comments &middot; 6 health &middot; 3 dates &middot; not exported yet</div>'+
+      '</div>'+
+      '<div class="dm-card">'+
+        '<div class="dm-card-hd"><span class="dm-dot on"></span><span class="dm-card-title">comments_W-E-07-Sep.json</span></div>'+
+        '<div class="dm-card-sub">Exported 07 Sep 26 &middot; 23 comments &middot; 4 health &middot; 2 dates</div>'+
+        '<div class="dm-card-actions"><div class="dm-switch on"><span class="trk"></span><span class="lbl">On</span></div><button class="ds-btn">Merge into Local edits</button><button class="ds-btn">Remove</button></div>'+
+      '</div>'+
+      '<div class="dm-card">'+
+        '<div class="dm-card-hd"><span class="dm-dot off"></span><span class="dm-card-title">comments_W-E-31-Aug.json</span></div>'+
+        '<div class="dm-card-sub">Exported 31 Aug 26 &middot; 19 comments &middot; 3 health &middot; 1 date</div>'+
+        '<div class="dm-card-actions"><div class="dm-switch"><span class="trk"></span><span class="lbl">Off</span></div><button class="ds-btn">Merge into Local edits</button><button class="ds-btn">Remove</button></div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="dm-group">'+
+      '<div class="dm-group-title">Export</div>'+
+      '<div class="dm-export-row"><div class="dm-export-main"><div class="dm-export-name">Comments &amp; edits (.json, re-importable)</div><div class="dm-export-desc">Everything entered on the board, in the format Mount file&hellip; reads back.</div></div><button class="ds-btn">Export</button></div>'+
+      '<div class="dm-export-row"><div class="dm-export-main"><div class="dm-export-name">Comments report (.xlsx)</div><div class="dm-export-desc">A readable sheet of every comment, for circulation outside the board.</div></div><button class="ds-btn">Export</button></div>'+
+      '<div class="dm-export-row"><div class="dm-export-main"><div class="dm-export-name">Status report (.csv)</div><div class="dm-export-desc">Health and progress overrides only, one row per milestone.</div></div><button class="ds-btn">Export</button></div>'+
+    '</div>'+
+    '<div class="dm-group">'+
+      '<div class="dm-group-title">Reset row marks</div>'+
+      '<div class="dm-group-desc">Clears the health dots and remarks you set on rows this session. Milestone comments and edits are not affected.</div>'+
+      '<button class="ds-btn danger">Reset row marks</button>'+
+      '<div class="dm-confirm">'+
+        '<div class="dm-confirm-txt">This clears health dots and remarks on 12 rows set this session. Milestone comments and edits are not affected.</div>'+
+        '<button class="ds-btn">Cancel</button>'+
+        '<button class="ds-btn danger">Reset</button>'+
+      '</div>'+
+    '</div>';
+  ['cm-desk-light','cm-desk-dark','cm-phone-light','cm-phone-dark'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.innerHTML = cmBody;
+  });
+
+  // ---- Section 5: user milestones ----
+  var umBody =
+    '<div class="np-hd ws-hd">'+
+      '<span class="np-hd-title">User milestones</span>'+
+      '<span class="grow"></span>'+
+      '<button class="ds-ico" title="Close" aria-label="Close">&#10005;</button>'+
+    '</div>'+
+    '<div class="dm-group">'+
+      '<div class="dm-row" style="border-top:0">'+
+        '<div class="dm-row-main"><div class="dm-row-name">6 user milestones</div><div class="dm-row-meta">Shown on the board like any other milestone</div></div>'+
+        '<div class="dm-row-ctrl"><div class="dm-switch on"><span class="trk"></span><span class="lbl">On</span></div></div>'+
+      '</div>'+
+      '<div class="dm-row-ctrl" style="justify-content:flex-start;margin-top:8px">'+
+        '<button class="ds-btn">Export (schedule format)</button>'+
+        '<button class="ds-btn primary">Manage grid&hellip;</button>'+
+      '</div>'+
+      '<div style="margin-top:12px">'+
+        '<div class="um-row"><span class="um-id">USR-001</span><span class="um-name">Client design review</span><span class="um-status">On track</span></div>'+
+        '<div class="um-row"><span class="um-id">USR-002</span><span class="um-name">Site access granted</span><span class="um-status">At risk</span></div>'+
+        '<div class="um-row"><span class="um-id">USR-003</span><span class="um-name">Long-lead order placed</span><span class="um-status">Done</span></div>'+
+        '<div class="um-row"><span class="um-id">USR-004</span><span class="um-name">Interim report issued</span><span class="um-status">Future</span></div>'+
+        '<div class="um-row"><span class="um-id">USR-005</span><span class="um-name">Vendor kickoff call</span><span class="um-status">Future</span></div>'+
+        '<div class="um-row"><span class="um-id">USR-006</span><span class="um-name">Internal QA pass</span><span class="um-status">Future</span></div>'+
+      '</div>'+
+    '</div>';
+  ['um-desk-light','um-desk-dark','um-phone-light','um-phone-dark'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.innerHTML = umBody;
+  });
+
+  // ---- Section 6: right side widgets (rail + panel each) ----
+  function railHtml(active){
+    var items=[['View controls','&#127912;'],['Sources','&#128193;'],['Import','&#128229;'],['Data settings','&#9881;'],['Diagnostics','&#129514;'],['Help','&#10067;'],['About','&#8505;']];
+    var out='<div class="side-rail">';
+    items.forEach(function(it,i){out+='<button class="ico'+(i===active?' active':'')+'" title="'+it[0]+'" aria-label="'+it[0]+'">'+it[1]+'</button>';});
+    out+='</div>';
+    return out;
+  }
+  function widget(hostId,activeIdx,stripLabel,bodyHtml,footHtml){
+    var el=document.getElementById(hostId); if(!el) return;
+    el.innerHTML = railHtml(activeIdx)+
+      '<div class="side-panel">'+
+        '<div class="side-strip">'+stripLabel+'</div>'+
+        '<div class="side-scroll">'+bodyHtml+'</div>'+
+        (footHtml||'')+
+      '</div>';
+  }
+
+  function themeGroup(active){
+    function seg(v,lbl){return '<button'+(v===active?' class="active" aria-pressed="true"':' aria-pressed="false"')+'>'+lbl+'</button>';}
+    return '<div class="dm-group">'+
+      '<div class="dm-group-title">Theme</div>'+
+      '<div class="dm-group-desc">Opened here, or directly via the header&#39;s Colour &amp; theme button.</div>'+
+      '<div class="ds-seg" role="tablist" aria-label="Theme">'+seg('light','Light')+seg('dark','Dark')+seg('system','System')+'</div>'+
+    '</div>';
+  }
+  var vcBodyBase =
+    '<div class="dm-group">'+
+      '<div class="dm-group-title">Layout</div>'+
+      '<div class="fr-row"><label>Title Column</label><input type="range" min="140" max="400" value="220"><span class="fr-val">220px</span></div>'+
+      '<div class="fr-row"><label>Column Width</label><input type="range" min="20" max="144" value="36"><span class="fr-val">36px</span></div>'+
+      '<div class="fr-row"><label>Row height</label><input type="range" min="28" max="72" value="34"><span class="fr-val">34px</span></div>'+
+    '</div>'+
+    '<div class="dm-group">'+
+      '<div class="dm-group-title">Fields</div>'+
+      '<button class="ds-btn" style="width:100%">Show All Columns</button>'+
+      '<div class="ds-row" style="margin-top:8px"><button class="ds-chip" aria-pressed="true">Ref</button><button class="ds-chip">Hrs</button><button class="ds-chip">%Prog</button><button class="ds-chip">Type</button></div>'+
+    '</div>'+
+    '<div class="dm-group">'+
+      '<div class="dm-group-title">Labels</div>'+
+      '<div class="dm-row" style="border-top:0"><span style="flex:1 1 auto">Milestone labels</span><div class="dm-switch on"><span class="trk"></span></div></div>'+
+      '<div class="dm-row"><span style="flex:1 1 auto">Milestone hrs</span><div class="dm-switch"><span class="trk"></span></div></div>'+
+    '</div>';
+  widget('vc-light',0,'Schedule and view',themeGroup('light')+vcBodyBase);
+  widget('vc-dark',0,'Schedule and view',themeGroup('dark')+vcBodyBase);
+
+  var srcBody =
+    '<div class="dm-group">'+
+      '<div class="dm-group-title">Schedules</div>'+
+      '<div class="dm-group-desc">One row per mounted schedule. Off takes its rows off the board; comments and filter entries stay.</div>'+
+      '<div class="dm-row">'+
+        '<div class="dm-row-main"><div class="dm-row-name">Wk 38 schedule <span class="dm-badge">primary</span></div><div class="dm-row-meta">DD 07 Sep 26 &middot; 159 tasks / 198 milestones</div></div>'+
+        '<div class="dm-row-ctrl"><div class="dm-switch on"><span class="trk"></span></div><button class="ds-btn">Rename&hellip;</button><button class="ds-btn">Remove</button></div>'+
+      '</div>'+
+      '<div class="dm-row">'+
+        '<div class="dm-row-main"><div class="dm-row-name">Wk 39 schedule <span class="dm-badge">primary</span></div><div class="dm-row-meta">DD 14 Sep 26 &middot; 164 tasks / 201 milestones</div></div>'+
+        '<div class="dm-row-ctrl"><div class="dm-switch on"><span class="trk"></span></div><button class="ds-btn">Rename&hellip;</button><button class="ds-btn danger">Remove</button></div>'+
+      '</div>'+
+      '<div class="dm-row">'+
+        '<div class="dm-row-main"><div class="dm-row-name">Embedded baseline <span class="dm-badge baseline">baseline</span></div><div class="dm-row-meta">DD 31 Aug 26 &middot; 142 tasks / 176 milestones</div></div>'+
+        '<div class="dm-row-ctrl"><div class="dm-switch on disabled"><span class="trk"></span></div><span style="font-size:11px;color:var(--color-text-note)">Built in.</span></div>'+
+      '</div>'+
+    '</div>';
+  var srcFoot = '<div class="dm-foot"><button class="ds-btn primary">Add schedule&hellip;</button></div>';
+  widget('src-light',1,'Schedule and view',srcBody,srcFoot);
+  widget('src-dark',1,'Schedule and view',srcBody,srcFoot);
+
+  var impBody =
+    '<div class="dm-group">'+
+      '<div class="dm-group-title">Import</div>'+
+      '<div class="dm-group-desc">Drop a P6 export, or browse for one. The importer maps its columns to board fields automatically; adjust the mapping before confirming.</div>'+
+      '<button class="ds-btn">Browse&hellip;</button>'+
+      '<div class="dm-drop">Drop a schedule export here (.xlsx, .csv)</div>'+
+    '</div>'+
+    '<div class="dm-group">'+
+      '<div class="dm-group-title">Mapping summary</div>'+
+      '<div class="mp-row"><span class="mp-col">Activity ID</span><span class="mp-arrow">&#8594;</span><span class="mp-field">ID</span></div>'+
+      '<div class="mp-row"><span class="mp-col">Activity Name</span><span class="mp-arrow">&#8594;</span><span class="mp-field">Name</span></div>'+
+      '<div class="mp-row"><span class="mp-col">Start</span><span class="mp-arrow">&#8594;</span><span class="mp-field">Start date</span></div>'+
+      '<div class="mp-row"><span class="mp-col">Finish</span><span class="mp-arrow">&#8594;</span><span class="mp-field">Finish date</span></div>'+
+      '<div class="mp-row"><span class="mp-col">Activity % Complete</span><span class="mp-arrow">&#8594;</span><span class="mp-field">% complete</span></div>'+
+    '</div>';
+  var impFoot = '<div class="dm-foot"><button class="ds-btn primary">Import</button></div>';
+  widget('imp-light',2,'Schedule and view',impBody,impFoot);
+  widget('imp-dark',2,'Schedule and view',impBody,impFoot);
+
+  var dsBody =
+    '<div class="dm-group">'+
+      '<div class="dm-group-title">Thresholds</div>'+
+      '<div class="fr-row"><label>At risk after</label><input class="ds-field" style="max-width:64px" type="number" value="5"><span class="fr-val">days late</span></div>'+
+      '<div class="fr-row"><label>Critical after</label><input class="ds-field" style="max-width:64px" type="number" value="14"><span class="fr-val">days late</span></div>'+
+    '</div>'+
+    '<div class="dm-group">'+
+      '<div class="dm-group-title">Weeks</div>'+
+      '<div class="fr-row"><label>Week ends on</label>'+
+        '<div class="ds-seg">'+
+          '<button>Mon</button><button>Tue</button><button>Wed</button><button>Thu</button><button>Fri</button><button>Sat</button><button class="active">Sun</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  widget('ds-light',3,'Schedule and view',dsBody);
+  widget('ds-dark',3,'Schedule and view',dsBody);
+
+  var helpBody =
+    '<div class="dm-group">'+
+      '<div class="dm-group-title">Keyboard shortcuts</div>'+
+      '<div class="dm-row" style="border-top:0"><span style="flex:1 1 auto">Fit columns</span><span class="dm-badge">Ctrl+0</span></div>'+
+      '<div class="dm-row"><span style="flex:1 1 auto">Add note</span><span class="dm-badge">Ctrl+Enter</span></div>'+
+      '<div class="dm-row"><span style="flex:1 1 auto">Search board</span><span class="dm-badge">Ctrl+F</span></div>'+
+      '<div class="dm-row"><span style="flex:1 1 auto">Close panel</span><span class="dm-badge">Esc</span></div>'+
+    '</div>'+
+    '<div class="dm-group">'+
+      '<div class="dm-group-title">Support</div>'+
+      '<div class="dm-group-desc">Placeholder content. Links out to the real help centre once written.</div>'+
+      '<button class="ds-btn">Contact support</button>'+
+    '</div>';
+  widget('help-light',5,'Schedule and view',helpBody);
+  widget('help-dark',5,'Schedule and view',helpBody);
+
+  var aboutBody =
+    '<div class="dm-group">'+
+      '<div class="dm-group-title">Version</div>'+
+      '<div class="dm-group-desc">Read from APP_VERSION at load. Placeholder value shown here.</div>'+
+      '<div class="dm-row" style="border-top:0"><span style="flex:1 1 auto">Deliverables Dashboard</span><span class="dm-badge baseline">3.1.0-P50</span></div>'+
+    '</div>'+
+    '<div class="dm-group">'+
+      '<div class="dm-group-title">What&#39;s new</div>'+
+      '<div class="dm-group-desc">Placeholder. The most recent release notes would list here.</div>'+
+      '<div class="dm-row" style="border-top:0"><span style="flex:1 1 auto">Left Workspace rail replaces the header toggle</span></div>'+
+      '<div class="dm-row"><span style="flex:1 1 auto">Header actions regrouped, More actions removed on desktop</span></div>'+
+    '</div>';
+  widget('about-light',6,'Schedule and view',aboutBody);
+  widget('about-dark',6,'Schedule and view',aboutBody);
+
+  // ---- Section 7 replay ----
+  window.replayHighlight = function(id){
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('hl-on');
+    void el.offsetWidth; // restart transition
+    el.classList.add('hl-on');
+    var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    setTimeout(function(){ el.classList.remove('hl-on'); }, reduced ? 2000 : 1200);
+  };
+
+  // ---- Section 8: phone overlays ----
+  function wsTabsHtml(){
+    var items=[['Notes','&#128221;'],['Comments','&#128172;'],['User milestones','&#128681;'],['Lists','&#9776;']];
+    var out='';
+    items.forEach(function(it,i){out+='<button class="ph-tab'+(i===0?' active':'')+'">'+it[1]+' '+it[0]+'</button>';});
+    return out;
+  }
+  function dvTabsHtml(){
+    var items=[['View controls','&#127912;'],['Sources','&#128193;'],['Import','&#128229;'],['Data settings','&#9881;'],['Diagnostics','&#129514;'],['Help','&#10067;'],['About','&#8505;']];
+    var out='';
+    items.forEach(function(it,i){out+='<button class="ph-tab'+(i===1?' active':'')+'">'+it[1]+' '+it[0]+'</button>';});
+    return out;
+  }
+  function phShell(hostId,title,tabsHtml,bodyHtml,hdClass){
+    var el=document.getElementById(hostId); if(!el) return;
+    el.innerHTML =
+      '<div class="ph-shell">'+
+        '<div class="ph-hd'+(hdClass?' '+hdClass:'')+'"><span>'+title+'</span><span class="grow"></span><button class="ds-ico" style="background:rgba(255,255,255,.12);color:#fff" title="Close" aria-label="Close">&#10005;</button></div>'+
+        '<div class="ph-tabs" role="tablist">'+tabsHtml+'</div>'+
+        '<div class="ph-body">'+bodyHtml+'</div>'+
+      '</div>';
+  }
+  var phWsBody = notesBody.replace('<div class="np-hd ws-hd">'+
+      '<span class="np-hd-title">Notes</span>'+
+      '<button class="dm-pill current">Reporting <b>W/E 14 Sep 26</b> <span class="car">&#9662;</span></button>'+
+      '<span class="grow"></span>'+
+      '<button class="ds-ico" title="Close" aria-label="Close">&#10005;</button>'+
+    '</div>','');
+  phShell('phws-light','Workspace',wsTabsHtml(),phWsBody,'ws-hd');
+  phShell('phws-dark','Workspace',wsTabsHtml(),phWsBody,'ws-hd');
+
+  var phDvBody = srcBody + srcFoot;
+  phShell('phdv-light','Data &amp; view',dvTabsHtml(),phDvBody);
+  phShell('phdv-dark','Data &amp; view',dvTabsHtml(),phDvBody);
+})();
+</script>
+</body>
+</html>

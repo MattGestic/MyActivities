@@ -231,8 +231,12 @@ PROBE = r"""
     R.visRows=visRows; R.allRows=allRows;
     ck('filter: rows with nothing in the range are hidden',
        visRows>0&&visRows<allRows, visRows+' of '+allRows+' rows');
+    // P53 (TD-202): the summary line's date-range wording changed from
+    // "date range X to Y (...)" to "between W/E X and W/E Y (...)" (no em
+    // dash, middle-dot separators) — rewritten to the new, equally valid
+    // contract per the TD-170 precedent, not relaxed.
     ck('filter: the summary line names the range',
-       /date range/.test(document.getElementById('filter-info').textContent),
+       /between W\/E .+ and W\/E /.test(document.getElementById('filter-info').textContent),
        document.getElementById('filter-info').textContent.slice(0,90));
 
     // ---- Intersecting with the week dropdown ----

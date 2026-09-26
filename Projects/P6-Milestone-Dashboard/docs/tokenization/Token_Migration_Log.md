@@ -218,6 +218,15 @@ The log is a record of readings, not of changes, so a gap between two rows belon
 | 2026-09-25 | `tools/spacing_audit.py`, after the v3.1.0-P50 pass — the mark's own top/right/width/height/border are geometry, not padding/margin/gap, so only its legend-swatch margin counted, and that one was tokened onto `--space-1` | Raw px in padding/margin/gap declarations, ceiling | 152 (unchanged, at ceiling) |
 | 2026-09-25 | `tools/theme_check.py`, `.m-board-edit-mark` and the legend swatch added (D-18; deliberately `--color-accent-ink`, not the P44 card mark's `--color-accent-purple`, which is constant across themes) | Probes expected to toggle, frozen | 0 |
 | 2026-09-25 | `tools/theme_check.py`, after the v3.1.0-P50 pass | Probes expected to toggle | 77 |
+| 2026-09-25 | Audit script v3, after v3.1.0-P53 (date range filter revision: Fallback window UI removed, Find/Date range layout, Annotations filter, em-dash fixes incl. the subtotal-row colour fix) | Hardcoded colour occurrences | 40 |
+| 2026-09-25 | Audit script v3, after v3.1.0-P53 | Distinct hardcoded colour values | 36 |
+| 2026-09-25 | Audit script v3, after v3.1.0-P53 | Colour occurrences matching an existing token exactly | 9 |
+| 2026-09-25 | Audit script v3, after v3.1.0-P53 | `--space-*` token references in file | 128 |
+| 2026-09-25 | Audit script v3, after v3.1.0-P53 | Hardcoded padding/margin/gap declarations (px) | 227 |
+| 2026-09-25 | Audit script v3, after v3.1.0-P53 | `var(--text-*)` font-size references in file | 41 |
+| 2026-09-25 | Audit script v3, after v3.1.0-P53 | Hardcoded font-size declarations (px) | 135 |
+| 2026-09-25 | `tools/spacing_audit.py`, after v3.1.0-P53 — all new spacing in the Range start/end footer, the Annotations chip group and the Find/Date range row layout used existing `var(--space-*)`/`--ctl-*` tokens; no new raw px | Raw px in padding/margin/gap declarations, ceiling | 152 (unchanged, at ceiling) |
+| 2026-09-25 | `tools/theme_check.py`, after v3.1.0-P53 (subtotal row's text colour moved from the fixed `--color-text-on-accent` to the themed `--color-text-primary`, fixing a near-invisible white-on-pale-lilac reading in light theme) | Probes toggling / frozen | 77 toggling / 0 frozen |
 
 **Re-running the audit:** run `python3 tools/colour_audit.py` from the project root. It regenerates `Hardcoded_Colour_Audit.csv` and prints every metric above.
 

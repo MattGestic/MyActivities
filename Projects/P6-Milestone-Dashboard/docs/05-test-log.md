@@ -2331,3 +2331,104 @@ brought up to date. Design decisions, recorded rather than left implicit:
   D-16c.
 
 **Published:** `releases/v3.1.0-P51_sources-tab.html`
+
+## TEST-53: P53 date range filter revision (v3.1.0-P53)
+
+The Fallback window setting removed (fixed 12-before/26-after internal
+assumption); the week-range picker's footer replaced From only/Until only
+with Range start/Range end (`input[type=date]`, week-snapped, editing the
+board's own bounds via `rebuildTimelineForBaseRange()`) + Reset to schedule;
+the reselect bug fixed at its root cause; quick ranges reordered/reworded
+(This week, This month, Next 4 weeks, Next 3 months, Rest of programme, Full
+programme, Full range) with "programme" now meaning the schedule's own dated
+span, not the board's plotted one; the Find/Date range/Critical path rows
+relaid out (Find row 1 on one line, Weeks+Mode on one line under "Date
+range," the Critical path title removed, Fit columns to screen added inline);
+an Annotations filter (Any/Commented/Edited/Either); filter-summary/banner
+copy rewritten (no em dashes, one notice on screen instead of two, the
+subtotal row's unreadable light-theme text fixed); and week/month headers
+gained tooltips, with month headers now clickable and a deselect-to-previous-
+state stack for both. Full detail and rationale: `docs/03-todo.md` TD-202
+through TD-207.
+
+**Root cause of the reselect bug**, reproduced with a headless probe against
+v3.1.0-P52 before any fix (`tools/p53_check.py`'s own P52 proof run, and the
+ad hoc repro scripts that found it): `wrPickWeek()`'s first click of a new
+pair only wrote `WR_POP_STATE.startCol`; `.lo`/`.hi` stayed at the PREVIOUS
+range's values until a second click completed a new pair. The Apply button's
+enabled state, though, is computed from `loActual`/`hiActual` (derived fresh
+from `startCol` on every render), so it read as clickable the instant a
+single new week was clicked — and `wrApply()` read `.lo`/`.hi` directly, so
+hitting Apply right after one reselect click silently reapplied the stale
+old range. The new click was dropped; that is what read as "clicking weeks
+again doesn't work." Fixed by writing `.lo` (and clearing `.hi`) on the
+first click too, and by giving `wrApply()` a defined meaning for
+`hi===null`: apply as "from that week onward," open end.
+
+**How Range start/Range end are stored and persisted:** `INGEST_CONFIG.
+baseRangeFrom/To` (calendar dates, the same pair `rebuildTimelineForWeekday()`
+already reads to decide `buildTimelineFromRange()` vs. `buildTimeline()`), so
+a later "Week ends on" change and the base range cannot drift apart from each
+other. The published file's own baked `timeline` block (labels/dates/months/
+nowCol) is what actually survives a publish/reopen round trip — the same
+mechanism the base range already relied on before this pass — so no new
+payload field was needed; `applyPublishedState()` restores the live timeline
+verbatim and a subsequent bounds edit rebuilds from there.
+
+### Full suite at v3.1.0-P53
+
+| Suite | Result |
+|---|---|
+| `tools/p53_check.py` (new) | **63/63** functional + layout checks |
+| `tools/p53_check.py` against v3.1.0-P52 (proves the gate has teeth) | fails at its first real assertion — `#cfg-before` still exists there, and none of `wrRangeBoundChange`/`rebuildTimelineForBaseRange`/`wrResetToSchedule`/`setAnnotFilter` exist |
+| `tools/theme_check.py` | 77 toggling, 0 frozen (subtotal-row fix verified toggling in both themes) |
+| `tools/colour_audit.py` | 40 hardcoded occurrences / 36 distinct (see Token_Migration_Log.md Measurement Log) |
+| `tools/spacing_audit.py` | 152 raw px, held at the ceiling — no new raw px introduced |
+| `tools/d15_check.py` | 11/11 |
+| `tools/d15a_check.py` | 32/32 |
+| `tools/d16_check.py` | 2/2 sheets, 0px diff (not touched by this pass) |
+| `tools/ds_check.py` | 128/128 (the filter-bar restructure did not break any D-16 token assertion) |
+| `tools/d17a_check.py` | 46/46 |
+| `tools/d18_check.py` | 27/27 |
+| `tools/order_check.py` | exit 0 |
+| `tools/persist_check.py` | 22/22 |
+| `tools/import_check.py` | exit 0 |
+| `tools/p28_check.py` (the summary-line assertion rewritten to the new "between W/E … and W/E …" wording, not relaxed) | **34/34** |
+| `tools/p29_check.py` (`cfg-before`/`cfg-after` moved from the "must exist" list to a new "must be gone" assertion, not relaxed) | **57/57** |
+| every other `tools/pNN_check.py` (p27, p30, p32–p39, p40, p42–p46) | unchanged from P52, all green |
+
+**Proven-failing assertion vs P52** (the check that most directly guards the
+shipped fix): `tools/p53_check.py`'s "Apply with only a start = from-only,
+open end" and the three "reselect round N" assertions — against P52's own
+`wrApply(fromOnly,untilOnly)` signature and stale-`.lo`/`.hi` bug, the
+equivalent interaction reapplies the wrong range; against this build it does
+not (verified via `currentWeekRange()` after each reselect, not by reading
+the rendered field text).
+
+**Deviations, with reasons:**
+- The task text named the fallback UI's values as "12 before / 25 after";
+  the app's own actual default (both in `INGEST_CONFIG` and the removed
+  inputs' `value` attributes) is 12/26. Kept at 12/26 — the fixed assumption
+  preserves EXISTING behaviour exactly, which is what "keep the fallback
+  internally" asked for; changing the number itself was not requested.
+- Item 1 asked to prove "a no-date import still builds a timeline." A
+  workbook with every row genuinely dateless never reaches the fallback
+  branch through the real ingest pipeline at all: `normalise()` silently
+  drops any row with neither a Start nor a Finish (pre-existing, unrelated
+  to this pass), so `runIngest()` aborts at "No usable activity rows" before
+  `aggregate()`/`deriveScheduleRange()` ever run. `tools/p53_check.py`
+  instead calls `buildTimeline()` directly with the fixed 12/26 constants
+  and asserts the 39-column result, which is the actual thing P53 changed
+  (no UI control feeding those constants any more) without misrepresenting
+  how the fallback branch is really reached in production.
+- Week/month header clicks: checked whether either should be disabled in
+  print mode (per the brief's "match existing behaviour") and found NEITHER
+  is today — no guard was added to month headers either, so the two stay
+  consistent with each other rather than the month header gaining a
+  restriction the week header never had.
+- `#btn-fit-screen` (the More Actions menu item) was left in place alongside
+  the new inline `#btn-fit-screen-inline`, per the brief's own fallback: the
+  two sit far enough apart (menu vs. filter bar) that having both did not
+  read as confusing during review.
+
+**Published:** `releases/v3.1.0-P53_date-range.html`
