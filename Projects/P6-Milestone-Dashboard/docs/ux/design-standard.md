@@ -20,7 +20,7 @@ The one standard every control in the dashboard follows. It replaces per-control
 | `--group-gap` | 16px | Between groups; page gutter | `--space-6` |
 | `--radius-ctl` | 4px | Control corner | `--radius-sm` |
 | `--radius-overlay` | 8px | Flyout, dialog, card corner | new (`--radius-md` is 6px and stays for existing cards until they are migrated) |
-| `--focus-ring` | 2px outer, accent | Focus visual | `--color-accent-purple` |
+| `--focus-ring` | 2px outer, accent | Focus visual | `--color-accent` |
 | `--stroke-ctl` | 1px | Control stroke | `--color-btn-secondary-outline` |
 | `--icon` / `--icon-btn` | 16px / 24px (32px touch) | Icon sizing | new |
 
@@ -46,7 +46,7 @@ Board labels, meta lines and fine print keep the existing `--text-xs` / `--text-
 
 | Role | Token |
 |---|---|
-| Accent (focus, selected chip, primary emphasis) | `--color-accent-purple`, text on panels `--color-accent-ink` |
+| Accent (focus, selected chip, primary emphasis) | `--color-accent`, text on panels `--color-accent-ink` |
 | Primary button | `--color-btn-primary-*` |
 | Secondary button, field stroke | `--color-btn-secondary-*` |
 | Icon button hover / pressed | `--color-btn-icon-hover-bg` / `--color-btn-icon-pressed-bg` |
@@ -54,7 +54,34 @@ Board labels, meta lines and fine print keep the existing `--text-xs` / `--text-
 | Text | `--color-text-primary`; secondary text `--color-text-muted` |
 | Danger | `--color-status-crit` |
 
-**Never `--color-text-small` for text on a themed panel.** It is near-black in dark (TD-28).
+**`--color-text-small` is themed since P55** (TD-28 closed). Text on a board sticker uses `--color-sticker-ink` / `-muted` / `-accent-ink` instead.
+
+### Colour tiers (P55)
+
+Colour is set in one place. A theme change edits tier 1 only.
+
+| Tier | Names | Where | Holds |
+|---|---|---|---|
+| 1 Palette | `--pal-*`, `--shadow-color` | the two `html[data-theme]` blocks, nowhere else | the only literal colour values in the file, one per name per theme |
+| 2 Role | `--color-*`, `--shadow-1/2/3` | `:root` | `var(--pal-*)` or a `color-mix()` of one; never a literal |
+| 3 Component | as needed | beside the component | `var(--color-*)` only |
+
+- Components consume roles, never `--pal-*` directly.
+- Tints, washes, hovers and shadows are derived with `color-mix()` from a palette token, not written as their own hex.
+- `var(--token, #fallback)` literal fallbacks are not allowed.
+- Stickers (marker label backings) and the ink on them are constant across themes on purpose (`--pal-sticker*`).
+- Verified by `tools/colour_audit.py --strict` (ceiling 0) and `tools/palette_swap_check.py`. The swap check sets every palette token to test colours and fails on any rendered colour that does not move with them.
+
+### Elevation
+
+| Level | Token | Used by |
+|---|---|---|
+| 1 | `--shadow-1` | switch knob, small raised controls |
+| 2 | `--shadow-2` | dropdowns (Activity ID suggestions), dependency comment panel, milestone tooltip |
+| 3 | `--shadow-3` | edge drawers: Settings drawer, View controls panel |
+
+All three are built from `--shadow-color`, one value per theme.
+
 
 ## Controls
 

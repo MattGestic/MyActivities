@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<title>Tokens fail fixture</title>
+<style>
+html[data-theme="light"]{
+  --pal-navy:#1c3a63;
+  /* Violation: tier1-misuse. --color-* is a tier2 role name, not --pal-*/--shadow-color,
+     so a literal on it inside a theme block is not allowed even though it sits
+     in the "right" place for a --pal- definition. */
+  --color-text:#111111;
+}
+html[data-theme="dark"]{
+  --pal-navy:#8fb3ff;
+  /* --pal-teal is intentionally absent here: defined in one theme only. */
+}
+html[data-theme="light"]{
+  --pal-teal:#0b6570;
+}
+:root{
+  --color-bg-header:var(--pal-navy);
+  /* Violation: var() fallback literal. */
+  --color-fallback:var(--pal-navy, #223344);
+}
+/* Violation: a plain CSS rule with a hardcoded hex. */
+.card{ color:#ff0000; }
+/* Violation: rgba() box-shadow literal. */
+.card{ box-shadow:0 2px 4px rgba(0,0,0,0.35); }
+/* Violation: named colour in a colour context. */
+.bar{ color:white; }
+</style>
+</head>
+<body>
+<!-- Violation: inline style hex. -->
+<div class="card" style="color:#123456">Card</div>
+<svg width="10" height="10">
+  <!-- Violation: SVG fill literal. -->
+  <rect fill="#ff00ff"/>
+</svg>
+
+<script id="app-script">
+// Violation: JS .style.background assignment with a literal.
+const el = document.querySelector('.card');
+el.style.background = '#123456';
+
+const MONTHS = [
+  // Violation: JSON-shaped data with a literal "bg" field.
+  { label: 'Jan', bg: '#1D4D3A' },
+];
+</script>
+</body>
+</html>

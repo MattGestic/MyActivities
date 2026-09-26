@@ -166,9 +166,11 @@ PROBE = r"""
     const dkComplete=iconOf(msId(uploadDone)), dkDone=iconOf(msId(notDone));
     const dkC=rgb(dkComplete&&dkComplete.colour), dkD=rgb(dkDone&&dkDone.colour);
     R.notes.dark={complete:dkC,done:dkD};
-    // Green carries the same meaning in either theme, so it must not move.
-    ck('dark theme: the person-marked green is the same colour it is in light',
-       !!dkD&&!!dRGB&&dkD[0]===dRGB[0]&&dkD[1]===dRGB[1]&&dkD[2]===dRGB[2],
+    // Green carries the same meaning in either theme. P55 (palette Option A)
+    // lifts the dark value so it reads on the dark surface, so the check is
+    // that it stays green (green channel dominant), not that the bytes match.
+    ck('dark theme: the person-marked marker is still green',
+       !!dkD&&!!dRGB&&dkD[1]>dkD[0]+40&&dkD[1]>dkD[2]+30&&dRGB[1]>dRGB[0]+40,
        'light '+JSON.stringify(dRGB)+' against dark '+JSON.stringify(dkD));
     // The upload one paints from ink, so it must follow the theme and go light.
     ck('dark theme: the upload’s finished milestone follows the ink and goes light',

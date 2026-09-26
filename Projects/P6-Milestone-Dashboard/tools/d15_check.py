@@ -143,7 +143,7 @@ def main():
     # the rule is unchanged in effect (verified below by the computed-style
     # check), so the source pattern follows the token rather than the literal.
     has_focus_rule = bool(re.search(
-        r":focus-visible[^{]*\{outline:var\(--focus-ring\)solidvar\(--color-accent-purple\)", nospace))
+        r":focus-visible[^{]*\{outline:var\(--focus-ring\)solidvar\(--color-accent\)", nospace))
     checks.append((
         "source: a shared :focus-visible rule exists (one rule, not per-control)",
         has_focus_rule,
