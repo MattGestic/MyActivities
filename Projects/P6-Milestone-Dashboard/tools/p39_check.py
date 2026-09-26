@@ -270,32 +270,54 @@ PROBE = r"""
        JSON.stringify(R.notes.baseline));
 
     // ============ 6. The drawer's action bar ============
-    // One row at v3.1.0-P40: the two exports spread across the left, Save and
-    // Clear anchored together against the right edge. P39 put Clear on its own
-    // line; the user asked for it back in line with Save, so this follows the
-    // requested contract. p29_check carries the detailed version of this,
-    // including that the exports are genuinely spread and not just left
-    // aligned; what is asserted here is the placement relative to the tabs.
-    toggleSettingsDrawer(true); await settle(); await settle();
-    const DR=$('settings-drawer'), act=DR.querySelector('.sd-actions');
-    const tabs=DR.querySelector('.sd-tabs');
-    const exportsBox=act.querySelector('.sd-actions-exports');
-    const rightBox=act.querySelector('.sd-actions-right');
+    // P56/D-20b removed the single-row .sd-actions bar (exports left, Save
+    // and Reset right, one horizontal row above the tabs) outright: it was
+    // schedule/format content living in the annotation side by accident of
+    // history. Exports and Reset row marks moved to the Workspace panel's
+    // Comments & markups section (#ws-panel, tools/p29_check.py has the
+    // detailed layout contract there); Save as is the header's #btn-save-as,
+    // no longer in the drawer at all. Dropped outright rather than
+    // re-expressed: "the bar is above the tab strip" and "the right-hand pair
+    // reaches the row's right edge" \u2014 both were about that one horizontal
+    // row's internal geometry, which has no equivalent once exports and
+    // Reset are three separate full-width rows in a different panel. What
+    // still applies, re-expressed against the new home: the exports keep a
+    // stable order, Reset is a distinct destructive control that comes after
+    // them, and Save as still reaches the same publish flow from the header.
+    if(typeof toggleWorkspace==='function') toggleWorkspace(true);
+    if(typeof setWorkspaceSection==='function') setWorkspaceSection('comments');
+    await settle();
+    const wsComments=$('ws-sec-comments');
+    const expIds=['btn-export-comments','btn-export-csv','btn-export-json'];
+    const expBtns=expIds.map(function(id){ return $(id); });
+    const resetRow=$('ws-reset-row');
     const lbl=function(b){ return b.textContent.replace(/[^A-Za-z ]/g,'').trim(); };
-    const actOrder=Array.prototype.map.call(act.querySelectorAll('button'),lbl);
-    R.notes.actions={order:actOrder,actBox:box(act),tabsBox:box(tabs),
-                     exports:box(exportsBox),right:box(rightBox),
-                     position:getComputedStyle(act).position};
-    ck('actions: the bar is above the tab strip, not a footer under the panels',
-       box(act).b<=box(tabs).t+1, 'bar bottom '+box(act).b+', tabs top '+box(tabs).t);
-    ck('actions: CSV, JSON, Save as new dashboard, Reset row marks, in that order',
-       actOrder.length===4&&/CSV/.test(actOrder[0])&&/JSON/.test(actOrder[1])&&
-       /Save as new dashboard/.test(actOrder[2])&&/Reset row marks/.test(actOrder[3]),
+    const actOrder=expBtns.map(function(b){ return b?lbl(b):'(missing)'; });
+    R.notes.actions={order:actOrder,
+                     resetPresent:!!resetRow,
+                     resetDanger:!!(resetRow&&resetRow.querySelector('.sd-btn-danger')),
+                     exportsInWorkspace:!!wsComments&&expBtns.every(function(b){ return !!b&&wsComments.contains(b); })};
+    ck('actions: the three exports are present, in a stable order (Comments, CSV, JSON)',
+       expBtns.every(Boolean)&&/Export/.test(actOrder[0])&&/Export/.test(actOrder[1])&&/Export/.test(actOrder[2]),
        actOrder.join(' | '));
-    ck('actions: the right-hand pair reaches the row\u2019s right edge',
-       !!rightBox&&Math.abs(box(rightBox).r-box(act.querySelector('.sd-actions-main')).r)<=1,
-       box(rightBox).r+' against row right '+box(act.querySelector('.sd-actions-main')).r);
-    toggleSettingsDrawer(false); await settle();
+    ck('actions: Reset row marks sits after the exports and carries destructive styling',
+       R.notes.actions.resetPresent&&R.notes.actions.resetDanger&&
+       !!expBtns[expBtns.length-1]&&
+       (expBtns[expBtns.length-1].compareDocumentPosition(resetRow)&Node.DOCUMENT_POSITION_FOLLOWING)!==0,
+       JSON.stringify(R.notes.actions));
+    ck('actions: exports and Reset both live in the Workspace\u2019s Comments & markups section, not the drawer',
+       R.notes.actions.exportsInWorkspace&&!!wsComments&&wsComments.contains(resetRow),
+       JSON.stringify(R.notes.actions));
+    const saveAs=$('btn-save-as');
+    R.notes.saveAs={present:!!saveAs,
+                    inDrawer:!!($('settings-drawer')&&$('settings-drawer').contains(saveAs)),
+                    onclick:saveAs?saveAs.getAttribute('onclick'):null};
+    ck('actions: Save as is the header\u2019s own control, not the drawer\u2019s, and still calls publishDashboard()',
+       R.notes.saveAs.present&&!R.notes.saveAs.inDrawer&&
+       /publishDashboard\s*\(/.test(R.notes.saveAs.onclick||''),
+       JSON.stringify(R.notes.saveAs));
+    if(typeof toggleWorkspace==='function') toggleWorkspace(false);
+    await settle();
 
     // ============ 7. The filter row ============
     // Rewritten at D-16b to the signed-off design-standard contract
@@ -498,11 +520,24 @@ def main():
         "source: the baseline note text lives in one place, as the tooltip",
         src.count("Matches the embedded baseline") == 1,
         f"{src.count('Matches the embedded baseline')} copies"))
+    # P56/D-20b: the sd-actions-main/-exports/-right containers were retired
+    # with the row they built (see the "drawer's action bar" note above), so
+    # this source check is retargeted to their replacement: the Workspace
+    # exports/reset markup, and that no element still USES the old container
+    # classes. Matched as a class attribute, not a bare substring: the
+    # retired classes' CSS rules and any other unrelated hit on the same
+    # letters would otherwise be indistinguishable from real markup use.
+    retired_in_markup = [
+        cls for cls in ("sd-actions-main", "sd-actions-exports", "sd-actions-right")
+        if re.search(r'class="[^"]*\b' + re.escape(cls) + r'\b', src)
+    ]
     checks.append((
-        "source: the action bar is one row with the exports and the right-hand pair split",
-        "sd-actions-main" in src and "sd-actions-exports" in src
-        and "sd-actions-right" in src and "sd-actions-danger" not in src,
-        "the action row containers are not as expected"))
+        "source: exports and Reset row marks are Workspace markup now, not the retired action-row containers",
+        "ws-reset-row" in src and 'id="btn-export-comments"' in src
+        and 'id="btn-export-csv"' in src and 'id="btn-export-json"' in src
+        and not retired_in_markup,
+        "expected the Workspace ids present and no element still classed "
+        + (", ".join(retired_in_markup) if retired_in_markup else "(none found in markup)")))
 
     fails = 0
     for (w, h) in VIEWPORTS:

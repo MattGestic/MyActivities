@@ -90,9 +90,10 @@ PROBE = r"""
                            matches:probeBtn?probeBtn.matches(':focus-visible'):null};
 
     // ---- (d) the relabelled reset button ----
-    const resetBtn=Array.prototype.find.call(
-      document.querySelectorAll('.sd-actions-right button'),
-      b=>/resetChanges/.test(b.getAttribute('onclick')||''));
+    // P56/D-20b: the old .sd-actions-right action bar is gone. The reset
+    // control now lives in the Workspace panel's #ws-reset-row as
+    // #btn-reset-row-marks, in its default (not-yet-confirming) render state.
+    const resetBtn=document.getElementById('btn-reset-row-marks');
     R.notes.resetLabel={text:resetBtn?resetBtn.textContent:null};
     ck('the row-marks reset button reads "Reset row marks"',
        !!resetBtn && resetBtn.textContent.trim()==='Reset row marks',

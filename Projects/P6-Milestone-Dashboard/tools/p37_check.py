@@ -136,8 +136,12 @@ PROBE = r"""
     ck('menu: it opens DOWN past the header row, over the board',
        R.notes.menu.rect.b>R.notes.menu.barBottom+20,
        'panel bottom '+R.notes.menu.rect.b+' against bar bottom '+R.notes.menu.barBottom);
+    // P56/D-20b shrank the panel from seven rows to five (three moved to the
+    // Workspace panel and the Date range filter, one retired outright — see
+    // tools/p36_check.py's ROWS table), so the reachable/total pair is
+    // compared against 5, not the P37-era 7.
     ck('menu: every row is individually reachable by a click',
-       R.notes.menu.reachable===R.notes.menu.total&&R.notes.menu.total===7,
+       R.notes.menu.reachable===R.notes.menu.total&&R.notes.menu.total===5,
        R.notes.menu.reachable+' of '+R.notes.menu.total+' reachable');
     toggleMoreActions(false); await settle();
 

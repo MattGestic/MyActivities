@@ -51,34 +51,70 @@ from import_check import build_aoa, find_chrome  # noqa: E402
 
 OUT_RE = re.compile(r'<pre id="p36-out">(.*?)</pre>', re.S)
 
-VIEWPORTS = [(390, 844), (768, 1024), (1440, 900)]
+VIEWPORTS = [(390, 844), (1024, 900), (1440, 900)]
 
-# The seven ids that must survive, with the function each row still calls.
+# P56/D-20b re-shaped the panel to five rows and made it position:static,
+# inline in #icon-bar above 1024px (the trigger, #btn-more-actions, is
+# display:none there; below and at 1024px it stays the fixed dropdown). Three
+# rows left for other homes, each with a real replacement, none deleted
+# outright:
+#   btn-fit-screen      -> #btn-fit-screen-inline, in the Date range filter
+#   btn-export-comments -> still #btn-export-comments, now a .toggle-btn in
+#                          the Workspace panel (#ws-panel), covered by
+#                          tools/p29_check.py / tools/p39_check.py
+#   btn-filter-toggle    -> removed outright (with its #filter-dot): the
+#                          filter row's own re-open control is
+#                          #btn-filter-expand in the report heading,
+#                          covered by tools/p32_check.py
 ROWS = [
-    ("btn-fit-screen", "fitToScreen"),
     ("btn-theme-toggle", "toggleTheme"),
     ("btn-print-mode", "togglePrintMode"),
-    ("btn-export-comments", "exportComments"),
-    ("btn-filter-toggle", "toggleTopFilterBar"),
+    ("btn-save-as", "publishDashboard"),
     ("btn-style-icon", "toggleFilterBar"),
     ("btn-settings-icon", "toggleSettingsDrawer"),
 ]
+# Ids the old panel carried that are gone outright (not merely moved), so a
+# regression that resurrects them is still worth catching by name.
+RETIRED_IDS = ["btn-filter-toggle", "filter-dot"]
 
 # Function bodies that must be byte-identical to the previous release. If the
 # consolidation needed any of them changed, the "nothing had to be touched"
 # claim is false and this says so rather than the commit message.
 #
-# toggleTopFilterBar left this set at v3.1.0-P40, when the heading gained a
-# one-click expand control and the bar's own toggle became the single writer of
-# its hidden state. That is a change for its own reason, made four partials
-# later, not the consolidation reaching into it: the P36 claim is about what the
-# menu needed, and dropping the name silently would let a future consolidation
-# change hide behind this note. So it moves to CHANGED_SINCE, which asserts that
-# it changed for a REASON THIS CHECK CAN NAME rather than merely allowing it.
-UNTOUCHED = ["toggleSettingsDrawer", "toggleFilterBar"]
-# name -> the marker that must be present in the new body for the change to be
-# the one expected. A different change fails the check.
-CHANGED_SINCE = {"toggleTopFilterBar": "btn-filter-expand"}
+# Both original members left this set for reasons this check can name, not
+# because the assertion stopped mattering:
+#
+# toggleTopFilterBar left at v3.1.0-P40, when the heading gained a one-click
+# expand control and the bar's own toggle became the single writer of its
+# hidden state.
+#
+# toggleSettingsDrawer and toggleFilterBar left at v3.1.0-P56 (D-20b), when
+# View controls moved from its own sidebar into #settings-drawer as the
+# 'view' tabpanel: toggleFilterBar now docks/undocks through the drawer's own
+# tab machinery instead of a sidebar class, and toggleSettingsDrawer gained
+# the "leaving the view tab doesn't count as closing" branch that makes that
+# possible. That is the P56 partial's own claim to prove (view controls
+# genuinely needed the drawer's state machine, nothing else in the
+# consolidation reached into these two by accident), not the 2026 More
+# Actions menu reaching into them four years later.
+#
+# Dropping a name from UNTOUCHED silently would let a future, unrelated change
+# hide behind this note, so every departure moves to one of the two
+# CHANGED_SINCE maps below, which assert it changed for A REASON THIS CHECK
+# CAN NAME rather than merely allowing it. Split in two because "changed for a
+# reason" only means something against the build the change actually started
+# from: toggleTopFilterBar's P40 change is proved against the pinned P35
+# baseline (the same file --baseline measures the header reclaim against),
+# while toggleSettingsDrawer/toggleFilterBar's P56 change is proved against
+# --prev-release (P55, the release immediately before this partial) — diffed
+# against P35 they would ALSO show as changed, but for P40's reason as well as
+# P56's, which is not a check this file could tell apart.
+UNTOUCHED = []
+CHANGED_SINCE_FROM_BASELINE = {"toggleTopFilterBar": "btn-filter-expand"}
+CHANGED_SINCE_FROM_PREV_RELEASE = {
+    "toggleSettingsDrawer": "SETTINGS_TAB",
+    "toggleFilterBar": "setSettingsTab('view')",
+}
 
 BASELINE = r"""
 (function(){
@@ -126,6 +162,12 @@ PROBE = r"""
   };
   const dotShown=function(id){
     const el=$(id); return el?getComputedStyle(el).display!=='none':null; };
+  // Laid out at all, regardless of whether it happens to sit off the current
+  // viewport: display:none (or a display:none ancestor) is the only thing
+  // that zeroes getClientRects(), so this is the right test for "does the CSS
+  // even attempt to show this element right now" (the trigger vs. the inline
+  // row set toggle on exactly this).
+  const laidOut=function(el){ return !!el && el.getClientRects().length>0; };
 
   try{
     const st=document.createElement('style');
@@ -133,15 +175,25 @@ PROBE = r"""
     document.head.appendChild(st); void document.body.offsetWidth;
 
     R.notes.viewport=window.innerWidth+'x'+window.innerHeight;
+    // P56/D-20b: above 1024px the panel is shown INLINE as a row of icon
+    // buttons in #icon-bar (position:static) and the (kebab) trigger is
+    // display:none; at <=1024px the trigger shows and the panel is the fixed
+    // dropdown, same as P36 shipped. Read from the same media query the CSS
+    // uses, not a re-typed breakpoint number.
+    const desktop=window.matchMedia('(min-width:1025px)').matches;
+    R.notes.desktop=desktop;
 
     // ================= 1. The header reclaims its room ====================
     const grp=document.querySelector('.ib-right-icons');
     const lbl=$('ib-label');
     const bar=$('icon-bar');
-    const triggers=grp.querySelectorAll(':scope > .ib-menu > .icon-btn');
+    const trigger=$('btn-more-actions');
+    const triggerVisible=laidOut(trigger);
+    const rowsVisibleCount=ROW_IDS.filter(function(id){ return laidOut($(id)); }).length;
     R.notes.header={
       buttonsInGroup:grp.querySelectorAll('.icon-btn').length,
-      triggersInBar:triggers.length,
+      triggerVisible:triggerVisible,
+      rowsVisibleInline:rowsVisibleCount,
       groupWidth:Math.round(grp.getBoundingClientRect().width*10)/10,
       labelWidth:Math.round(lbl.getBoundingClientRect().width*10)/10,
       labelNeeds:lbl.scrollWidth,
@@ -150,8 +202,15 @@ PROBE = r"""
       labelText:lbl.textContent.trim()
     };
     R.header=R.notes.header;
-    ck('header: exactly one button sits in the bar, not seven',
-       triggers.length===1, triggers.length+' trigger(s)');
+    if(desktop){
+      ck('header: above 1024px the kebab trigger is hidden and all five rows show inline instead',
+         !triggerVisible && rowsVisibleCount===ROW_IDS.length,
+         'triggerVisible='+triggerVisible+', rows inline '+rowsVisibleCount+' of '+ROW_IDS.length);
+    } else {
+      ck('header: at or below 1024px, exactly the trigger shows, not the rows underneath it',
+         triggerVisible && rowsVisibleCount===0,
+         'triggerVisible='+triggerVisible+', rows inline '+rowsVisibleCount+' of '+ROW_IDS.length);
+    }
     // Conditional on measured room, not on a viewport width typed into the
     // check: a hardcoded "768 and above" would be a constant standing in for a
     // measurement, which is a recurring defect family in this project. Where
@@ -175,8 +234,11 @@ PROBE = r"""
 
     // ================= 2. Every id survived, still wired ==================
     const missing=ROW_IDS.filter(function(id){ return !$(id); });
-    ck('rows: all seven ids from the old buttons still exist',
+    ck('rows: all five ids from the current row set exist',
        missing.length===0, ROW_IDS.length+' expected, missing: '+(missing.join(', ')||'none'));
+    const resurrected=RETIRED_IDS.filter(function(id){ return !!$(id); });
+    ck('rows: ids retired outright (btn-filter-toggle, filter-dot) have not come back',
+       resurrected.length===0, resurrected.length+' resurrected: '+(resurrected.join(', ')||'none'));
     // A handler naming a function that no longer exists throws only when
     // clicked and looks perfect until then. Same check as TEST-32.
     let dead=[];
@@ -191,46 +253,65 @@ PROBE = r"""
        dead.length===0, ROW_IDS.length+' rows, broken: '+(dead.join(', ')||'none'));
 
     // ================= 3. Opening and closing =============================
-    ck('menu: it starts closed', !menuOpen()&&rowsVisible()===0,
-       'open='+menuOpen()+', '+rowsVisible()+' of 7 rows visible');
-    ck('menu: aria-expanded starts false',
-       $('btn-more-actions').getAttribute('aria-expanded')==='false',
-       $('btn-more-actions').getAttribute('aria-expanded'));
+    // Above 1024px the panel is inline (position:static, no .open, the rows
+    // simply laid out in the bar) and the trigger that would open a dropdown
+    // is display:none, so there is no open/close cycle to drive there. Below
+    // and at 1024px it is the same fixed dropdown P36 shipped.
+    if(!desktop){
+      ck('menu: it starts closed', !menuOpen()&&rowsVisible()===0,
+         'open='+menuOpen()+', '+rowsVisible()+' of '+ROW_IDS.length+' rows visible');
+      ck('menu: aria-expanded starts false',
+         $('btn-more-actions').getAttribute('aria-expanded')==='false',
+         $('btn-more-actions').getAttribute('aria-expanded'));
 
-    click($('btn-more-actions')); await settle();
-    // The trap this is aimed at: the document listener seeing the very click
-    // that opened the menu and shutting it again.
-    R.notes.afterTriggerClick={open:menuOpen(),rowsVisible:rowsVisible()};
-    ck('menu: the trigger opens it and it STAYS open',
-       menuOpen(), 'open='+menuOpen());
-    ck('menu: all seven rows are visible when it is open',
-       rowsVisible()===7, rowsVisible()+' of 7 visible');
-    ck('menu: aria-expanded follows',
-       $('btn-more-actions').getAttribute('aria-expanded')==='true',
-       $('btn-more-actions').getAttribute('aria-expanded'));
+      click($('btn-more-actions')); await settle();
+      // The trap this is aimed at: the document listener seeing the very click
+      // that opened the menu and shutting it again.
+      R.notes.afterTriggerClick={open:menuOpen(),rowsVisible:rowsVisible()};
+      ck('menu: the trigger opens it and it STAYS open',
+         menuOpen(), 'open='+menuOpen());
+      ck('menu: all five rows are visible when it is open',
+         rowsVisible()===ROW_IDS.length, rowsVisible()+' of '+ROW_IDS.length+' visible');
+      ck('menu: aria-expanded follows',
+         $('btn-more-actions').getAttribute('aria-expanded')==='true',
+         $('btn-more-actions').getAttribute('aria-expanded'));
 
-    // Escape
-    document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
-    await settle();
-    ck('menu: Escape closes it', !menuOpen(), 'open='+menuOpen());
+      // Escape
+      document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
+      await settle();
+      ck('menu: Escape closes it', !menuOpen(), 'open='+menuOpen());
 
-    // Click outside
-    click($('btn-more-actions')); await settle();
-    const wasOpen=menuOpen();
-    click(document.body); await settle();
-    ck('menu: a click outside closes it',
-       wasOpen&&!menuOpen(), 'was '+wasOpen+', now '+menuOpen());
+      // Click outside
+      click($('btn-more-actions')); await settle();
+      const wasOpen=menuOpen();
+      click(document.body); await settle();
+      ck('menu: a click outside closes it',
+         wasOpen&&!menuOpen(), 'was '+wasOpen+', now '+menuOpen());
+    } else {
+      // Desktop: no menu to open. What has to hold instead is that every row
+      // is already on screen and individually clickable without any trigger.
+      const reachable=ROW_IDS.filter(function(id){
+        const el=$(id); if(!el) return false;
+        const r=el.getBoundingClientRect(); return r.width>0&&r.height>0;
+      }).length;
+      ck('menu: above 1024px every row is already reachable inline, no trigger needed',
+         reachable===ROW_IDS.length, reachable+' of '+ROW_IDS.length+' reachable');
+      ck('menu: the panel carries no .open state to manage at this width',
+         !menuOpen(), 'open='+menuOpen());
+    }
 
     // ================= 4. State still set, and still shown ================
-    // Each toggle is driven THROUGH the menu row, so the path under test is the
-    // one a user takes, not a direct call.
+    // Each toggle is driven the way a user actually reaches it: through the
+    // dropdown at <=1024px, directly (already inline, no trigger to click)
+    // above it.
     async function viaMenu(id){
-      if(!menuOpen()){ click($('btn-more-actions')); await settle(); }
+      if(!desktop && !menuOpen()){ click($('btn-more-actions')); await settle(); }
       click($(id)); await settle(); await settle();
     }
     const inactiveBg=function(){
       // A row known to carry no .on state, as the comparison for "painted".
-      return getComputedStyle($('btn-fit-screen')).backgroundColor;
+      // Save as is a one-shot action (publishDashboard), never toggled.
+      return getComputedStyle($('btn-save-as')).backgroundColor;
     };
 
     await viaMenu('btn-settings-icon');
@@ -243,8 +324,10 @@ PROBE = r"""
     // The specificity trap. Class presence proves nothing; the paint does.
     ck('state: and the active row actually PAINTS differently',
        sBg!==inactiveBg(), sBg+' against inactive '+inactiveBg());
-    ck('state: choosing a row closed the menu behind it',
-       !menuOpen(), 'open='+menuOpen());
+    if(!desktop){
+      ck('state: choosing a row closed the menu behind it',
+         !menuOpen(), 'open='+menuOpen());
+    }
     await viaMenu('btn-settings-icon');   // back off
     ck('state: choosing it again closes the drawer and clears the row',
        !$('btn-settings-icon').classList.contains('on')&&
@@ -258,13 +341,10 @@ PROBE = r"""
        'on='+$('btn-style-icon').classList.contains('on'));
     await viaMenu('btn-style-icon');
 
-    await viaMenu('btn-filter-toggle');
-    const fAria=$('btn-filter-toggle').getAttribute('aria-pressed');
-    R.notes.filterRow={on:$('btn-filter-toggle').classList.contains('on'),aria:fAria,
-                       barOpen:$('top-filter-bar').classList.contains('open')};
-    ck('state: the filter row toggles, and aria-pressed still tracks it',
-       fAria===String($('top-filter-bar').classList.contains('open')),
-       JSON.stringify(R.notes.filterRow));
+    // btn-filter-toggle / #filter-dot were removed outright by design
+    // (TD-72's re-open route is #btn-filter-expand in the report heading now,
+    // covered by tools/p32_check.py), so there is no filter-row toggle left
+    // in this panel to drive through the menu.
 
     await viaMenu('btn-print-mode');
     R.notes.print={on:$('btn-print-mode').classList.contains('on'),
@@ -294,28 +374,25 @@ PROBE = r"""
        lblAfter===lblBefore&&lblAfter.length>0, JSON.stringify(R.notes.theme.label));
     await viaMenu('btn-theme-toggle');    // back to where it started
 
-    // ================= 5. The dots reach the trigger ======================
-    // Driven by adding the class the real writers add, so what is under test is
-    // the derivation, not a second copy of the rule.
-    $('filter-dot').classList.remove('show');
+    // ================= 5. The dot reaches the trigger ======================
+    // Driven by adding the class the real writer adds, so what is under test is
+    // the derivation, not a second copy of the rule. #filter-dot is retired
+    // outright with #btn-filter-toggle (asserted gone in section 2 above), so
+    // #settings-dot is now the only row-level dot the panel carries and the
+    // only one this derivation has to cover.
     $('settings-dot').classList.remove('show');
     await settle();
     const none=dotShown('more-dot');
-    $('filter-dot').classList.add('show'); await settle();
-    const viaFilter=dotShown('more-dot');
-    $('filter-dot').classList.remove('show');
     $('settings-dot').classList.add('show'); await settle();
     const viaSettings=dotShown('more-dot');
     $('settings-dot').classList.remove('show'); await settle();
     const backToNone=dotShown('more-dot');
-    R.notes.dots={neither:none,filterOnly:viaFilter,settingsOnly:viaSettings,cleared:backToNone};
-    ck('dots: the trigger carries none when neither row does',
+    R.notes.dots={neither:none,settingsOnly:viaSettings,cleared:backToNone};
+    ck('dots: the trigger carries none when the settings row does not',
        none===false, JSON.stringify(R.notes.dots));
-    ck('dots: a filter-active dot reaches the trigger',
-       viaFilter===true, JSON.stringify(R.notes.dots));
     ck('dots: a settings dot reaches the trigger',
        viaSettings===true, JSON.stringify(R.notes.dots));
-    ck('dots: and clearing them clears the trigger, both directions',
+    ck('dots: and clearing it clears the trigger',
        backToNone===false, JSON.stringify(R.notes.dots));
 
     R.ok=true;
@@ -373,12 +450,24 @@ def main():
     ap.add_argument("--xlsx", default=str(root / "data" / "schedules" /
                                           "103787-13_PFS_Weekly_Update_DD-2026-08-29.xlsx"))
     ap.add_argument("--html", default=str(root / "src" / "milestone-dashboard.html"))
+    # v3.1.0-P35: the true pre-consolidation shape (seven flat buttons, no
+    # trigger, no panel at all). The header-reclaim measurement below is a
+    # historical proof tied to THAT specific shape, so it stays pinned here
+    # rather than following "whatever release shipped last."
     ap.add_argument("--baseline", default=str(root / "releases" /
                                              "v3.1.0-P35_milestone-card-and-progress-override.html"))
+    # The release immediately before the partial actually under test, used
+    # only for the CHANGED_SINCE/UNTOUCHED source diffs below. Separate from
+    # --baseline: those diffs ask "did THIS partial have to touch this
+    # function", which only means something against the build THIS partial
+    # started from, not against the original P36 shape.
+    ap.add_argument("--prev-release", default=str(root / "releases" /
+                                             "v3.1.0-P55_palette-tokens.html"))
     a = ap.parse_args()
 
     html = pathlib.Path(a.html)
     baseline = pathlib.Path(a.baseline)
+    prev_release = pathlib.Path(a.prev_release)
     src = html.read_text(encoding="utf-8", errors="replace")
     checks = []
 
@@ -389,18 +478,23 @@ def main():
     # proved: the state-writing functions did not have to change.
     if baseline.exists():
         base_src = baseline.read_text(encoding="utf-8", errors="replace")
-        changed = []
-        for name in UNTOUCHED:
-            a_body, b_body = fn_body(src, name), fn_body(base_src, name)
-            if a_body is None or b_body is None:
-                changed.append(f"{name} (not found)")
-            elif a_body != b_body:
-                changed.append(name)
-        checks.append((
-            "source: the state-writing functions are byte-identical to the previous release",
-            not changed,
-            f"{len(UNTOUCHED)} compared, changed: " + (", ".join(changed) or "none")))
-        for name, marker in CHANGED_SINCE.items():
+        # UNTOUCHED is empty as of P56 (both original members moved to
+        # CHANGED_SINCE_FROM_PREV_RELEASE, each for a reason named above). An
+        # empty set would pass vacuously, which this project's own standing
+        # rule is not to allow, so the check is skipped rather than asserted.
+        if UNTOUCHED:
+            changed = []
+            for name in UNTOUCHED:
+                a_body, b_body = fn_body(src, name), fn_body(base_src, name)
+                if a_body is None or b_body is None:
+                    changed.append(f"{name} (not found)")
+                elif a_body != b_body:
+                    changed.append(name)
+            checks.append((
+                "source: the state-writing functions are byte-identical to the previous release",
+                not changed,
+                f"{len(UNTOUCHED)} compared, changed: " + (", ".join(changed) or "none")))
+        for name, marker in CHANGED_SINCE_FROM_BASELINE.items():
             now, was = fn_body(src, name), fn_body(base_src, name)
             checks.append((
                 f"source: {name} changed only for the reason this check names",
@@ -409,6 +503,18 @@ def main():
     else:
         checks.append(("source: the previous release was available to diff against",
                        False, f"missing {baseline}"))
+
+    if prev_release.exists():
+        prev_src = prev_release.read_text(encoding="utf-8", errors="replace")
+        for name, marker in CHANGED_SINCE_FROM_PREV_RELEASE.items():
+            now, was = fn_body(src, name), fn_body(prev_src, name)
+            checks.append((
+                f"source: {name} changed only for the reason this check names (since {prev_release.name})",
+                now is not None and was is not None and now != was and marker in now,
+                f"expected {marker!r} in the new body"))
+    else:
+        checks.append(("source: the release immediately before this partial was available to diff against",
+                       False, f"missing {prev_release}"))
 
     checks.append((
         "source: the active-row rule is restated, not left to source order",
@@ -424,7 +530,8 @@ def main():
         "a second glyph writer survives"))
 
     consts = ("const ROW_IDS=" + json.dumps([r[0] for r in ROWS]) + ";"
-              "const ROW_FNS=" + json.dumps([r[1] for r in ROWS]) + ";")
+              "const ROW_FNS=" + json.dumps([r[1] for r in ROWS]) + ";"
+              "const RETIRED_IDS=" + json.dumps(RETIRED_IDS) + ";")
 
     fails = 0
     for (w, h) in VIEWPORTS:
@@ -448,15 +555,26 @@ def main():
                 print("   before: %d buttons, group %spx, label %spx for %spx, clipped=%s"
                       % (B["buttons"], B["groupWidth"], B["label"]["w"],
                          B["label"]["need"], B["label"]["clipped"]))
-                print("   after:  %d button,  group %spx, label %spx for %spx, clipped=%s"
-                      % (R["header"]["triggersInBar"], R["header"]["groupWidth"],
-                         R["header"]["labelWidth"], R["header"]["labelNeeds"],
-                         R["header"]["labelClipped"]))
+                print("   after:  trigger visible=%s, %d row(s) inline, group %spx, label %spx for %spx, clipped=%s"
+                      % (R["header"]["triggerVisible"], R["header"]["rowsVisibleInline"],
+                         R["header"]["groupWidth"], R["header"]["labelWidth"],
+                         R["header"]["labelNeeds"], R["header"]["labelClipped"]))
                 reclaimed = B["groupWidth"] - R["header"]["groupWidth"]
                 checks.append((f"[{w}x{h}] header: the previous release really did carry seven buttons",
                                B["buttons"] == 7, f"{B['buttons']} found"))
-                checks.append((f"[{w}x{h}] header: the icon group gave back real width",
-                               reclaimed > 150, f"{reclaimed:.1f}px reclaimed"))
+                # The reclaimed-width claim is specifically about collapsing
+                # seven buttons down to one trigger, so it only holds at the
+                # widths where the panel is still the collapsed dropdown.
+                # Above 1024px the panel is inline by design (P56/D-20b) and
+                # the group is deliberately back to five buttons wide, which
+                # is not a regression of the P36 claim, just a later partial
+                # spending the reclaimed room on something else.
+                if not R["notes"]["desktop"]:
+                    checks.append((f"[{w}x{h}] header: the icon group gave back real width",
+                                   reclaimed > 150, f"{reclaimed:.1f}px reclaimed"))
+                else:
+                    print(f"   [{w}x{h}] group width not compared to the P35 baseline here: "
+                          "panel is inline by design above 1024px (P56/D-20b)")
                 # What is claimed depends on whether the bar has the room, and
                 # that is read from the measurement rather than from a width
                 # typed in here.

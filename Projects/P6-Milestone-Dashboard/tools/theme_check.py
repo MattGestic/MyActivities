@@ -333,11 +333,13 @@ const PROBES = [
       const d = sd('<div class="sd-card"><span class="mnt-note">Built in. Cannot be unmounted.</span></div>');
       return d.querySelector('.mnt-note');
   }],
-  // The drawer subtitle is the only text on --color-bg-header inside the
-  // panel, and the header token has moved twice before.
-  ['.sd-hd-sub (constant)',      'constant', () => {
-      const d = sd('<div class="sd-hd"><span class="sd-hd-sub">What is mounted on this board</span></div>');
-      return d.querySelector('.sd-hd-sub');
+  // P56/D-20b: .sd-hd is now a surface-coloured heading (--color-bg-elevated),
+  // not the navy header, and the old .sd-hd-sub subtitle span is gone. The
+  // heading's layer label (.sd-hd-layer, e.g. "Data & view") is real markup
+  // and paints with --color-text-muted, which does toggle with theme.
+  ['.sd-hd-layer',               'toggle',   () => {
+      const d = sd('<div class="sd-hd"><div class="sd-hd-titles"><span class="sd-hd-layer">Data &amp; view</span></div></div>');
+      return d.querySelector('.sd-hd-layer');
   }],
   // Import status line, all three states. Its ink was hardcoded (#456/#1a6b3a/
   // #b00020) until P29 and had no probe, so a one-theme colour could not have

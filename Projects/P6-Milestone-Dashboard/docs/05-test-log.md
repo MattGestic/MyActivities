@@ -2595,3 +2595,58 @@ at source.
 
 **Published:** `releases/v3.1.0-P55_palette-tokens.html`
 
+## TEST-56: D-20b two-sided workspace shell (v3.1.0-P56)
+
+The approved D-20 layout (rev 3 with palette sheet 4b): Workspace on the
+left for the user's annotations, Data & view on the right for the schedule
+and its format. Existing content moved into sections; ids and entry points
+(`toggleFilterBar`, `toggleSettingsDrawer`, `setSettingsTab`,
+`toggleMoreActions`) kept. Detail: `docs/03-todo.md` TD-213; panel rules:
+`docs/04-architecture.md` Panel Systems.
+
+**Found and fixed during the stage (real defects, caught by the suite):**
+- Leaving print preview no longer reopened View controls: `togglePrintMode`
+  remembered it through `body.cv-open`, which P56 retired. It now reads
+  `#filter-bar.open`, kept in sync by `syncDataViewButtons()`.
+- At desktop width the print banner's menu trigger opened a panel still laid
+  out inline in the header. The inline row now applies only while the panel
+  is not opened as a menu.
+- With a side panel open on a wide screen, Find and Date range sat side by
+  side in a narrower bar and Find's fields ran over their labels. A
+  ResizeObserver stacks them when the bar itself is narrow (not a container
+  query, which would re-parent the bar's fixed popovers).
+- View controls carried eight inline padding/margin styles into the drawer,
+  which its spacing contract forbids (p29). Converted to token classes.
+
+**Check expectations changed** (each re-expresses the same guarantee for the
+new layout, and each was shown to fail against a mutated build):
+- `p36`, `p37`, `p38`: the menu has five rows, not seven; above 1024px the
+  rows are an inline icon row and the trigger is hidden; the icon bar's
+  width is the viewport less the Workspace rail.
+- `p32`: the collapsed filter row is brought back by `#btn-filter-expand`
+  (the header Filter row toggle was removed by design).
+- `p27`: View controls open means `#filter-bar.open` with the drawer on the
+  `view` section, not `body.cv-open`.
+- `p29`, `p39`: the drawer's tab strip is a vertical rail; the old action
+  bar's exports and Reset live in the Workspace, Save as in the header.
+  Two assertions about that bar's internal geometry were dropped, as the
+  bar no longer exists.
+- `d15`: the Reset row marks button is `#btn-reset-row-marks`.
+- `d17a`: View controls' switches are measured inside Data & view.
+- `theme_check`: the drawer heading label is `.sd-hd-layer`, which toggles.
+
+**Results at v3.1.0-P56:** every tool exits 0: `colour_audit --strict` (0),
+`palette_swap_check` (0 escapes), `theme_check`, `ds_check` 128/128, d15
+11/11, d15a 32/32, d16 2/2, d17a, d18 27/27, order, import, persist 22/22,
+`spacing_audit` at ceiling, p27 32/32, p28 34/34, p29 63/63, p30 68/68,
+p32 37/37, p33 38/38, p34 73/73, p35 120/120, p36 87/87, p37 68/68,
+p38 91/91, p39 117/117, p40 91/91, p42 25/25, p43 36/36, p44 31/31,
+p45 38/38, p46 37/37, p53, p54 82/82. Version grep 1.
+
+**Visual check:** 1440 light and dark with each panel open, 900 compact menu,
+390 phone Workspace; screenshots reviewed in session.
+
+**Not yet on the rail:** Notes (D-19) and Lists (D-06), which are not built.
+
+**Published:** `releases/v3.1.0-P56_workspace-shell.html`
+
