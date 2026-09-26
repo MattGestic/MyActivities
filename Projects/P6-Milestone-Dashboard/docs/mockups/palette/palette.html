@@ -97,6 +97,17 @@ p{margin:0;max-width:68ch;color:var(--pg-muted)}
 .legend .it{display:flex;align-items:center;gap:6px}
 .legend .d{width:14px;height:14px;transform:rotate(45deg);border:2.5px solid;display:inline-block}
 .note-box{border-left:3px solid var(--pg-line);padding-left:10px}
+/* 4b: workspace as one continuous slate rail, no floating tile, no stacked bands */
+.app.v2{display:grid;grid-template-columns:44px minmax(0,1fr)}
+.app.v2 .rail{background:var(--ws);display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0}
+.app.v2 .rail .ri{width:32px;height:32px;border-radius:6px;display:grid;place-items:center;color:color-mix(in srgb,#fff 70%,transparent);font-size:15px;position:relative}
+.app.v2 .rail .ri.on{background:color-mix(in srgb,#fff 14%,transparent);color:#fff}
+.app.v2 .rail .ri.on::before{content:'';position:absolute;left:-6px;top:6px;bottom:6px;width:3px;border-radius:2px;background:var(--accent)}
+.app.v2 .rail .ri .bd{position:absolute;top:2px;right:2px;min-width:14px;height:14px;border-radius:7px;background:var(--accent);color:#fff;font-size:9px;font-weight:700;display:grid;place-items:center;padding:0 3px}
+.app.v2 .rail .sp{flex:1}
+.app.v2 .ws .wh{background:var(--surface);color:var(--ink);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;font-size:13px}
+.app.v2 .ws .wh .per{margin-left:auto;font-size:10px;font-weight:600;color:var(--accent-ink);background:var(--accent-tint);border-radius:99px;padding:1px 7px}
+@media (max-width:620px){.app.v2 .body{grid-template-columns:1fr}}
 </style>
 
 <div class="wrap">
@@ -153,6 +164,19 @@ p{margin:0;max-width:68ch;color:var(--pg-muted)}
     <div class="pair">
       <div class="app optA" id="ctxA1"></div>
       <div class="app optA dark" id="ctxA2"></div>
+    </div>
+  </section>
+
+  <section class="sect">
+    <h2>4b. Workspace treatment: floating tile vs continuous rail <span class="k rec" style="font-size:10px;padding:1px 6px;border-radius:99px">For approval</span></h2>
+    <p>Left: as shown above. The slate tile floats on the navy header and the slate Notes bar stacks under it, which gives two near-matching blue bands. Right: the slate becomes one full-height rail, the D-20 icon rail running up through the header row. The rail is the way into the Workspace, so the header tile goes. The panel heading sits on the surface colour, so no second band. Navy is the schedule side and slate is your side, split by one vertical edge.</p>
+    <div class="pair">
+      <div class="app optA" id="v1a"></div>
+      <div class="app optA v2" id="v2a"></div>
+    </div>
+    <div class="pair">
+      <div class="app optA dark" id="v1b"></div>
+      <div class="app optA dark v2" id="v2b"></div>
     </div>
   </section>
 
@@ -241,5 +265,14 @@ function ctx(el){el.innerHTML=
  '<div class="rl">Process design criteria</div><div><span class="mk fill"></span></div><div></div><div class="now"><span class="mk"></span><span class="edit">*</span></div><div></div><div><span class="mk risk"></span></div><div></div>'+
  '<div class="rl">Geotech report</div><div></div><div><span class="mk crit issue"></span></div><div class="now"></div><div><span class="mk fut"></span></div><div></div><div><span class="mk base"></span></div></div></div>'+
  '</div></div>'}
-['ctxA1','ctxA2','ctxB1','ctxB2'].forEach(function(id){ctx(document.getElementById(id))});
+['ctxA1','ctxA2','ctxB1','ctxB2','v1a','v1b'].forEach(function(id){ctx(document.getElementById(id))});
+function ctx2(el){ctx(el);
+ var hdr=el.querySelector('.hdr'),body=el.querySelector('.body');
+ hdr.querySelector('.ws-btn').remove();
+ el.querySelector('.ws .wh').innerHTML='Notes<span class="per">W/E 27 Sep 26</span>';
+ var right=document.createElement('div');right.style.minWidth='0';right.appendChild(hdr);right.appendChild(body);
+ var rail=document.createElement('div');rail.className='rail';
+ rail.innerHTML='<span class="ri on" title="Notes">&#9998;<span class="bd">3</span></span><span class="ri" title="Comments and markups">&#128172;</span><span class="ri" title="User milestones">&#9670;</span><span class="ri" title="Lists">&#9776;</span><span class="sp"></span><span class="ri" title="Collapse">&#171;</span>';
+ el.appendChild(rail);el.appendChild(right)}
+['v2a','v2b'].forEach(function(id){ctx2(document.getElementById(id))});
 </script>
