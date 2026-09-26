@@ -2431,4 +2431,96 @@ the rendered field text).
   two sit far enough apart (menu vs. filter bar) that having both did not
   read as confusing during review.
 
+## TEST-54: D-21 histogram component (v3.1.0-P54)
+
+A measure toggle (Hours/Tasks) and a position toggle (Top/Bottom) for the
+histogram, one `renderHistogram(measure, position)` owning the row, its
+label-cell controls and the subtotal row it moves with, and the label cell's
+colour tokens corrected. Full detail and rationale: `docs/03-todo.md` TD-208.
+
+**What each measure counts:** Hours is `hd.perCol` unchanged from P53 — a
+deliverable ROW's total hours (`task.hrs`), spread across the weeks its
+milestones fall in by weight, or evenly across an LoE task's spanned weeks.
+Tasks counts MILESTONES, not rows: `data-cols`, the same per-row column list
+`renderRows()` already builds for every milestone's marker. A deliverable row
+with three milestones in three different weeks contributes 1 to each of those
+three weeks under Tasks, not 3 to one — stated because the brief asked "use
+what the current bars mean when counting" and the current (Hours) bars mean
+something row-shaped, which Tasks deliberately does not copy.
+
+**Sticky decision:** Top is NOT sticky. Stacking a second sticky pair beneath
+the header's own `--hdr-search-h`-anchored stack would mean giving the
+histogram row its own tracking offset at a second call site, duplicating that
+mechanism for a row whose columns already move with anything that resizes the
+header. Not attempted this release — the row still scrolls with the board, so
+its cells stay aligned with the week columns above them (verified: every week
+cell's x/width equals the header cell above it, both bounds, in both
+positions).
+
+**Subtotal decision:** the subtotal row's own figure stays hours-only; only
+the histogram bars switch measure. The two rows keep moving together as one
+component because POSITION is what "component" and "moves together" asked
+for, and no reason was found to split it — Top/Bottom always carries both
+rows.
+
+**Found via this pass's own theme_check probes, not fixed:** `--color-bg-
+subtle` is declared twice in the dark theme block (`docs/03-todo.md` TD-98/
+TD-88 already named this as pending removal); the second declaration
+silently shadows the real dark value with the light one, so `tr.hdr-wk`,
+`.wk-lbl`, `.legend` and `tr.disc` have all been painting a light background
+in dark theme for as long as the duplicate has existed. Confirmed live by
+briefly correcting it and re-running `theme_check.py`, which then measured
+`--color-text-small` (paired with the same token) at 1.08:1 on the corrected
+dark background — the text colour's own dark value is a near-black meant for
+that same accidentally-light surface. Reverted rather than fixed here: the
+correction changes the rendered dark-theme background of four already-shipped
+components this release did not otherwise touch, which is a separately
+reviewable change. The histogram's own new cells use `--color-bg-panel`
+(unmodified, no override) with `--color-text-on-panel-muted`/
+`--color-text-primary` instead, which is not affected by the duplicate.
+
+### Full suite at v3.1.0-P54
+
+| Suite | Result |
+|---|---|
+| `tools/p54_check.py` (new) | **58/58** functional + persistence + layout + theme checks |
+| `tools/p54_check.py` against `releases/v3.1.0-P53_date-range.html` (proves the gate has teeth) | fails at its first assertions — `HIST_MEASURE` is undefined, no `.hist-seg` control exists, `renderHistogram` is not a function |
+| `tools/theme_check.py` | 79 toggling, 0 frozen (two new probes: `.hist-bar`, `.hist-lbl`; the pre-existing `tr.hist-row td.c-name` probe re-verified against the corrected tokens) |
+| `tools/colour_audit.py` | 38 hardcoded occurrences / 34 distinct, unchanged from the true P53 baseline (see Token_Migration_Log.md Measurement Log) |
+| `tools/spacing_audit.py` | 152 raw px, held at the ceiling — new gaps/padding tokened onto `--space-1`/`--space-2`/`--space-3` |
+| `tools/d15_check.py` | 11/11 |
+| `tools/d15a_check.py` | 32/32 |
+| `tools/d16_check.py` | 2/2 sheets, 0px diff (not touched by this pass) |
+| `tools/ds_check.py` | 128/128 |
+| `tools/d17a_check.py` | exit 0 |
+| `tools/d18_check.py` | 27/27 |
+| `tools/p53_check.py` | exit 0 |
+| `tools/persist_check.py` | 22/22 |
+| `tools/order_check.py` | exit 0 |
+| `tools/import_check.py` | exit 0 |
+| every `tools/pNN_check.py` (p27–p46) | unchanged, all green |
+
+**Proven-failing assertion vs P53:** `tools/p54_check.py`'s three existence
+checks (`HIST_MEASURE`, `.hist-seg`, `renderHistogram`) against
+`releases/v3.1.0-P53_date-range.html`, which has none of the three — P53's
+histogram is the single hardcoded hours-only row `renderSummary()` built
+inline, with no measure/position state and no controls at all.
+
+**Deviations, with reasons:**
+- The shipped seed data carries no hours at all (every `task.hrs` is `""`,
+  159/159 occurrences) — a genuine no-hours dataset, not a defect, and used
+  as-is for the no-hours/Tasks-default scenario. The Hours-measure and
+  per-week-value checks needed real numbers to test meaningfully, so
+  `tools/p54_check.py` injects a small synthetic set (14 real tasks, spread
+  across the timeline) rather than requiring a schedule import.
+- The `--color-bg-subtle` dark-theme duplicate (above) was found but not
+  fixed, per TD-208's reasoning; TD-98/TD-88 remain the tracking items, now
+  with a reproduced, dated example attached.
+- Print preview honouring position is verified as "print mode does not
+  reorder or drop the row" (`togglePrintMode(true)`, DOM order unchanged)
+  rather than against real `@media print` rendering, which headless
+  `--dump-dom` does not evaluate; the measure/position CONTROLS are hidden
+  under `@media print` in the stylesheet (`.hist-ctl-row{display:none}`), a
+  static assertion checked by reading the rule rather than a print capture.
+
 **Published:** `releases/v3.1.0-P53_date-range.html`

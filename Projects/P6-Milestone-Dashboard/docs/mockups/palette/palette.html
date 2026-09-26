@@ -34,6 +34,15 @@ p{margin:0;max-width:68ch;color:var(--pg-muted)}
 .tag .k{font-size:10px;padding:1px 6px;border-radius:99px;background:var(--pg-line)}
 .rec{background:#dff0ee;color:#0b5c63}
 .decide{display:flex;flex-wrap:wrap;gap:8px}
+/* 3b: group bands and month headers, light + dark strips */
+.gstrip{--mA:#2f4468;--mB:#3e5680;--b1:#4a5568;--b2:#3f4c85;--b3:#1f6b70;--b4:#6b5c50;--b5:#2f3645;--surf:#ffffff;--ln:#dde1e8;--ink:#1b2230;
+  border:1px solid var(--ln);border-radius:8px;overflow:hidden;background:var(--surf);color:var(--ink);font-size:12px;min-width:0}
+.gstrip.dark{--mA:#1f2b43;--mB:#2a3857;--b1:#56627a;--b2:#4f5c98;--b3:#2b7a7f;--b4:#7a6a5d;--b5:#454d5e;--surf:#1a2133;--ln:#2c3549;--ink:#e6eaf2}
+.gstrip .mrow{display:grid;grid-template-columns:120px repeat(6,minmax(0,1fr));color:#fff;font-weight:600;font-size:11px}
+.gstrip .mrow div{padding:4px 6px;border-right:1px solid color-mix(in srgb,#fff 20%,transparent)}
+.gstrip .band{color:#fff;font-weight:600;padding:4px 8px;font-size:11px;letter-spacing:.02em}
+.gstrip .row{display:grid;grid-template-columns:120px repeat(6,minmax(0,1fr));border-bottom:1px solid var(--ln)}
+.gstrip .row div{padding:4px 6px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .decide label{display:flex;align-items:center;gap:6px;border:1px solid var(--pg-line);border-radius:6px;padding:6px 10px;cursor:pointer}
 
 /* ===== The proposed app palette, as it would live in the app ===== */
@@ -127,6 +136,18 @@ p{margin:0;max-width:68ch;color:var(--pg-muted)}
   </section>
 
   <section class="sect">
+    <h2>3b. Milestone groups and month headers <span class="k rec" style="font-size:10px;padding:1px 6px;border-radius:99px">For approval</span></h2>
+    <p>Group bands are ordered, not meaningful, so they use muted tones from the navy, slate and teal family. They carry no green, amber or red, so a group can never be read as a status. Month headers alternate two navy shades, where today each season has its own colour. Every tone takes white text at AA or better in both themes.</p>
+    <div class="grid" id="grp"></div>
+    <div class="grid" id="mon"></div>
+    <div class="pair">
+      <div class="gstrip" id="gs1"></div>
+      <div class="gstrip dark" id="gs2"></div>
+    </div>
+    <p class="note-box">Tokens: <span class="mono">--color-band-1..5</span>, <span class="mono">--color-month-a</span> / <span class="mono">-b</span>, with the band divider derived from the on-band text colour at 20%. The month colour moves out of the schedule data (<span class="mono">MONTHS[].bg</span>) into CSS, so a theme change never needs a data change.</p>
+  </section>
+
+  <section class="sect">
     <h2>4. In context: Option A</h2>
     <p>A slice of the app: the Workspace on the left, filter chips, a board strip with markers, light and dark.</p>
     <div class="pair">
@@ -185,6 +206,21 @@ fill('stat',[
  {name:'Future',hex:'#a3aab5',dark:'#6f7889',role:'Grey, not yet started.'},
  {name:'Clear / N/A',hex:'#1b2230',dark:'#e6eaf2',role:'Black outline, no health set.'}
 ]);
+fill('grp',[
+ {name:'Group 1 · Slate',hex:'#4a5568',dark:'#56627a',role:'Replaces grey #5B6472.',chip:'Engineering',vs:['#ffffff','#4a5568']},
+ {name:'Group 2 · Indigo',hex:'#3f4c85',dark:'#4f5c98',role:'Replaces indigo #4154A6, calmer.',chip:'Procurement',vs:['#ffffff','#3f4c85']},
+ {name:'Group 3 · Deep teal',hex:'#1f6b70',dark:'#2b7a7f',role:'Replaces green #1D9E75, which read as Complete.',chip:'Permitting',vs:['#ffffff','#1f6b70']},
+ {name:'Group 4 · Taupe',hex:'#6b5c50',dark:'#7a6a5d',role:'Replaces amber-brown #B56500, which read as At risk.',chip:'Studies',vs:['#ffffff','#6b5c50']},
+ {name:'Group 5 · Graphite',hex:'#2f3645',dark:'#454d5e',role:'Replaces red #A00000, which read as Issue.',chip:'Reporting',vs:['#ffffff','#2f3645']}
+]);
+fill('mon',[
+ {name:'Month A',hex:'#2f4468',dark:'#1f2b43',role:'Odd months. Replaces the per-season map (navy, green, olive, brown, maroon).',chip:'Sep 26',vs:['#ffffff','#2f4468']},
+ {name:'Month B',hex:'#3e5680',dark:'#2a3857',role:'Even months. Alternation marks the boundary, not the season.',chip:'Oct 26',vs:['#ffffff','#3e5680']}
+]);
+function gstrip(el){var rows=[['Engineering','b1',['Process design criteria','Geotech report']],['Procurement','b2',['Long-lead MR issued']],['Permitting','b3',['EA submission']],['Studies','b4',['Tie-in study']],['Reporting','b5',['PFS report issued']]];
+ el.innerHTML='<div class="mrow"><div style="background:var(--mA)">Group</div><div style="background:var(--mA)">Sep 26</div><div style="background:var(--mA)"></div><div style="background:var(--mB)">Oct 26</div><div style="background:var(--mB)"></div><div style="background:var(--mA)">Nov 26</div><div style="background:var(--mA)"></div></div>'+
+ rows.map(function(r){return '<div class="band" style="background:var(--'+r[1]+')">'+r[0]+'</div>'+r[2].map(function(t){return '<div class="row"><div>'+t+'</div><div></div><div></div><div></div><div></div><div></div><div></div></div>'}).join('')}).join('')}
+gstrip(document.getElementById('gs1'));gstrip(document.getElementById('gs2'));
 fill('ba',[
  {name:'Accent, before',hex:'#8b64c7',role:'Bright lavender: reads playful and clashes with navy.',chip:'Before'},
  {name:'Accent, after',hex:'#0e7c86',role:'Petrol teal (Option A).',chip:'After'},

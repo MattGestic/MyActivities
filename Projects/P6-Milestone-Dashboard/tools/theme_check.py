@@ -111,6 +111,19 @@ const PROBES = [
       const tr = mk('<tr class="hist-row"><td class="c-wk now-col"></td></tr>', tbody);
       return tr.querySelector('td');
   }],
+  // P54 (D-21): the bar fill's gradient ends on --color-purple-deep, which
+  // toggles, so the composite background-image string differs between themes
+  // even though the gradient's top stop (--color-hist-bar-top) is a
+  // deliberately constant pastel highlight. The bar LABEL ink
+  // (--color-text-on-panel) toggles outright.
+  ['.hist-bar',                  'toggle',   () => {
+      const tr = mk('<tr class="hist-row"><td class="c-wk"><div class="hist-bar" style="height:60%"></div></td></tr>', tbody);
+      return tr.querySelector('.hist-bar');
+  }],
+  ['.hist-lbl',                  'toggle',   () => {
+      const tr = mk('<tr class="hist-row"><td class="c-wk"><div class="hist-lbl">42</div></td></tr>', tbody);
+      return tr.querySelector('.hist-lbl');
+  }],
   ['.dep-tooltip',               'toggle',   () => mk('<div class="dep-tooltip">x</div>')],
   ['.dep-comment-panel',         'toggle',   () => mk('<div class="dep-comment-panel">x</div>')],
   ['.dep-comment-close',         'toggle',   () => mk('<button class="dep-comment-close">x</button>')],
