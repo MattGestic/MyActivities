@@ -295,20 +295,23 @@ PROBE = r"""
        offY===0, offY+' off their pair');
 
     // ============ 5. Defect A: the filter row can always be brought back ============
-    const hdrBtn=document.getElementById('btn-filter-toggle');
+    // TD-72 / P56 (D-20b): the old always-visible header toggle
+    // (#btn-filter-toggle, with #filter-dot) was removed outright by design.
+    // The route back is now #btn-filter-expand in the report heading
+    // (.rpt-hd), outside #top-filter-bar, shown only while the bar is
+    // collapsed (toggleTopFilterBar() is the one writer of both states). The
+    // guarantee TD-72 records is unchanged: once the bar is collapsed there
+    // must be an on-screen control, outside the bar, that brings it back.
+    const expandBtn=document.getElementById('btn-filter-expand');
     const bar=document.getElementById('top-filter-bar');
     ck('defect A: the toggle lives in the header, outside the bar it hides',
-       !!hdrBtn && !bar.contains(hdrBtn), hdrBtn?('in bar: '+bar.contains(hdrBtn)):'missing');
+       !!expandBtn && !!expandBtn.closest('.rpt-hd') && !bar.contains(expandBtn),
+       expandBtn?('in bar: '+bar.contains(expandBtn)+', in .rpt-hd: '+!!expandBtn.closest('.rpt-hd')):'missing');
     toggleTopFilterBar(false);
     await settle();
     const barHidden=bar.getBoundingClientRect().height<2;
     ck('defect A: hiding the row really collapses it', barHidden,
        bar.getBoundingClientRect().height+'px');
-    // The rule TD-72 records is that the control OUTLIVES what it hides, not
-    // that it is a visible header button. P36 moved it into the More Actions
-    // menu, so the assertion follows the PATH: something laid out on screen,
-    // not inside the bar it would restore, that exposes the toggle when used.
-    //
     // HOW "on screen" is measured matters more than it looks. Measured against
     // this build, a control trapped inside the collapsed bar reports
     // offsetParent non-null, height 24px, one client rect AND checkVisibility()
@@ -334,35 +337,29 @@ PROBE = r"""
       top=Math.max(top,0); bot=Math.min(bot,window.innerHeight);
       return Math.max(0,Math.round((bot-top)*10)/10);
     };
-    const reacher=document.getElementById('btn-more-actions')||hdrBtn;
-    const reacherLive=visibleH(reacher)>8;
-    const reacherOutside=!!reacher&&!bar.contains(reacher);
-    if(typeof toggleMoreActions==='function') toggleMoreActions(true);
-    await settle();
-    const exposed=visibleH(hdrBtn)>8;
-    if(typeof toggleMoreActions==='function') toggleMoreActions(false);
-    await settle();
-    const stillReachable=reacherLive&&reacherOutside&&exposed;
-    R.notes.defectA={reacher:reacher?reacher.id:null,
-                     reacherVisibleH:visibleH(reacher),
+    const reacherOutside=!!expandBtn&&!bar.contains(expandBtn);
+    const exposed=!expandBtn.hidden&&visibleH(expandBtn)>8;
+    const stillReachable=reacherOutside&&exposed;
+    R.notes.defectA={reacher:expandBtn?expandBtn.id:null,
+                     reacherVisibleH:visibleH(expandBtn),
                      reacherOutsideBar:reacherOutside,
-                     toggleVisibleHWhenMenuOpen:exposed};
+                     expandHidden:expandBtn?expandBtn.hidden:null};
     ck('defect A: with the row hidden, the toggle is still reachable from screen',
        stillReachable, JSON.stringify(R.notes.defectA));
     // Does the rewritten assertion still catch the defect it exists for? Put
-    // the toggle back inside the collapsed bar, which is the TD-72 state, and
-    // require the same expression to go false. The first version of this
-    // rewrite passed here, which is how the measurement above was found to be
-    // the wrong one.
-    const homeParent=hdrBtn?hdrBtn.parentNode:null;
-    const homeNext=hdrBtn?hdrBtn.nextSibling:null;
+    // the expand button back inside the collapsed bar (the TD-72 state:
+    // trapped inside what it is meant to bring back) and require the same
+    // expression to go false.
+    const homeParent=expandBtn?expandBtn.parentNode:null;
+    const homeNext=expandBtn?expandBtn.nextSibling:null;
     let trappedVerdict=null, trappedVisibleH=null;
-    if(hdrBtn&&homeParent){
-      bar.appendChild(hdrBtn);
+    if(expandBtn&&homeParent){
+      bar.appendChild(expandBtn);
       await settle();
-      trappedVisibleH=visibleH(hdrBtn);
-      trappedVerdict=(reacherLive&&reacherOutside&&trappedVisibleH>8);
-      homeParent.insertBefore(hdrBtn,homeNext);
+      trappedVisibleH=visibleH(expandBtn);
+      const trappedOutside=!bar.contains(expandBtn);
+      trappedVerdict=(trappedOutside&&!expandBtn.hidden&&trappedVisibleH>8);
+      homeParent.insertBefore(expandBtn,homeNext);
       await settle();
     }
     R.notes.defectA.visibleHWhenTrapped=trappedVisibleH;
@@ -370,13 +367,15 @@ PROBE = r"""
     ck('defect A: and that check still FAILS when the toggle is trapped in the bar',
        trappedVerdict===false, 'trapped visible height '+trappedVisibleH+
        'px, verdict '+trappedVerdict);
-    ck('defect A: the toggle shows the state it sets',
-       hdrBtn && hdrBtn.getAttribute('aria-pressed')==='false' && !hdrBtn.classList.contains('on'),
-       hdrBtn?(hdrBtn.getAttribute('aria-pressed')+' / on='+hdrBtn.classList.contains('on')):'');
-    toggleTopFilterBar(true);
+    ck('defect A: the toggle shows the state it sets (hidden once the bar is open)',
+       expandBtn && expandBtn.hidden===false,
+       expandBtn?('hidden='+expandBtn.hidden):'');
+    expandBtn.click();
     await settle();
     ck('defect A: clicking it brings the row back',
        bar.getBoundingClientRect().height>20, bar.getBoundingClientRect().height+'px');
+    ck('defect A: and the expand button hides itself again once the row is back',
+       expandBtn.hidden===true, 'hidden='+expandBtn.hidden);
     const hideBtn=document.getElementById('btn-filter-hide');
     // getComputedStyle reports the USED value of margin-left, a pixel number,
     // never the literal 'auto'. Right-alignment is a position, so it is

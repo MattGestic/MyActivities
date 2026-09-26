@@ -245,7 +245,13 @@ PROBE = r"""
     await settle();
     freeze();
     ck('print: body enters print-mode', document.body.classList.contains('print-mode'));
-    ck('print: the view-controls panel was closed', !document.body.classList.contains('cv-open'));
+    // P56/D-20b: View controls is now the 'view' tabpanel inside
+    // #settings-drawer, not a body.cv-open sidebar. "closed" means the drawer
+    // is no longer showing that tabpanel.
+    ck('print: the view-controls panel was closed',
+       !(document.getElementById('filter-bar').classList.contains('open')
+         && document.getElementById('settings-drawer').classList.contains('open')
+         && SETTINGS_TAB==='view'));
     const ps=document.getElementById('print-page-style');
     // The sheet is chosen by the user from P45, so this asserts that the
     // injected rule matches WHATEVER is currently chosen rather than a literal
@@ -297,8 +303,13 @@ PROBE = r"""
     ck('print: leaving restores the week width',
        document.getElementById('wk-width').value===wkBefore,
        wkBefore+' -> '+document.getElementById('wk-width').value);
+    // P56/D-20b: re-expressed against the drawer/tab state that now backs
+    // View controls (see the "was closed" assertion above for the same
+    // guarantee in reverse).
     ck('print: leaving reopens the view-controls panel it closed',
-       document.body.classList.contains('cv-open'));
+       document.getElementById('filter-bar').classList.contains('open')
+       && document.getElementById('settings-drawer').classList.contains('open')
+       && SETTINGS_TAB==='view');
     ck('print: the page frame is display:contents again',
        getComputedStyle(document.getElementById('page-frame')).display==='contents');
 

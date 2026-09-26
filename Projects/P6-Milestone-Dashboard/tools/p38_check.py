@@ -284,35 +284,69 @@ PROBE = r"""
        R.notes.menuFromBanner.open&&near(pb.right,tb.right)&&pb.top>=tb.bottom,
        'panel right '+r1(pb.right)+' against trigger right '+r1(tb.right)+
        ', panel top '+r1(pb.top)+' against trigger bottom '+r1(tb.bottom));
+    // P56/D-20b shrank the panel to five rows (tools/p36_check.py's ROWS
+    // table has the current set and where the other two went).
     ck('print: every menu row opened from the banner is individually clickable',
        R.notes.menuFromBanner.reachable===R.notes.menuFromBanner.total&&
-       R.notes.menuFromBanner.total===7,
+       R.notes.menuFromBanner.total===5,
        R.notes.menuFromBanner.reachable+' of '+R.notes.menuFromBanner.total);
     ck('print: both triggers report the panel open, since both describe it',
        R.notes.menuFromBanner.ariaBanner==='true'&&R.notes.menuFromBanner.ariaHeader==='true',
        'banner '+R.notes.menuFromBanner.ariaBanner+', header '+R.notes.menuFromBanner.ariaHeader);
     toggleMoreActions(false); await settle();
 
-    // The header trigger has to still anchor to ITSELF, or moving the anchor
-    // would have broken the control that was already there. Conditional on
-    // MEASURED room, not on a typed viewport width: the header bar is one A3
-    // sheet wide in the preview, so at anything narrower than 1122.5px its
-    // right-hand trigger has scrolled off the visible area and the panel is
-    // clamped into the viewport instead, which is what positionFixedPopup is
-    // for. Both outcomes require a fully reachable panel.
-    $('btn-more-actions').click(); await settle();
-    const pb2=panel.getBoundingClientRect(), hb=$('btn-more-actions').getBoundingClientRect();
-    const hdrOnScreen=hb.right<=window.innerWidth&&hb.left>=0;
-    R.notes.menuFromHeader={open:panel.classList.contains('open'),
-      panelRight:r1(pb2.right),triggerRight:r1(hb.right),
-      triggerOnScreen:hdrOnScreen,inViewport:pb2.right<=window.innerWidth+1&&pb2.left>=-1,
-      reachable:reachable(panel.querySelectorAll('.ib-mi'))};
-    ck('print: the header trigger still opens a fully reachable panel'+
-       (hdrOnScreen?', anchored to itself':', clamped into the viewport since it has scrolled off the sheet'),
-       R.notes.menuFromHeader.open&&R.notes.menuFromHeader.reachable===7&&
-       (hdrOnScreen?near(pb2.right,hb.right):R.notes.menuFromHeader.inViewport),
-       JSON.stringify(R.notes.menuFromHeader));
-    toggleMoreActions(false); await settle();
+    // P56/D-20b: above 1024px the header's own kebab trigger
+    // (#btn-more-actions) is display:none by design, whether or not the
+    // print preview is showing - the row set is inline in #icon-bar instead
+    // (tools/p36_check.py covers the general case). So the "still opens a
+    // fully reachable panel, anchored to itself" contract only applies at
+    // <=1024px, where the trigger is real; above it, what has to hold is that
+    // the five rows are already reachable directly, with no trigger needed.
+    const desktop=window.matchMedia('(min-width:1025px)').matches;
+    if(!desktop){
+      // The header trigger has to still anchor to ITSELF, or moving the anchor
+      // would have broken the control that was already there. Conditional on
+      // MEASURED room, not on a typed viewport width: the header bar is one A3
+      // sheet wide in the preview, so at anything narrower than 1122.5px its
+      // right-hand trigger has scrolled off the visible area and the panel is
+      // clamped into the viewport instead, which is what positionFixedPopup is
+      // for. Both outcomes require a fully reachable panel.
+      $('btn-more-actions').click(); await settle();
+      const pb2=panel.getBoundingClientRect(), hb=$('btn-more-actions').getBoundingClientRect();
+      const hdrOnScreen=hb.right<=window.innerWidth&&hb.left>=0;
+      R.notes.menuFromHeader={open:panel.classList.contains('open'),
+        panelRight:r1(pb2.right),triggerRight:r1(hb.right),
+        triggerOnScreen:hdrOnScreen,inViewport:pb2.right<=window.innerWidth+1&&pb2.left>=-1,
+        reachable:reachable(panel.querySelectorAll('.ib-mi'))};
+      ck('print: the header trigger still opens a fully reachable panel'+
+         (hdrOnScreen?', anchored to itself':', clamped into the viewport since it has scrolled off the sheet'),
+         R.notes.menuFromHeader.open&&R.notes.menuFromHeader.reachable===5&&
+         (hdrOnScreen?near(pb2.right,hb.right):R.notes.menuFromHeader.inViewport),
+         JSON.stringify(R.notes.menuFromHeader));
+      toggleMoreActions(false); await settle();
+    } else {
+      // In print preview the bar is sheet-width (this file's own "the icon
+      // bar takes the sheet edges, not the viewport" contract), which can run
+      // wider than the actual window, e.g. an A3 sheet against a 1440px
+      // browser. #icon-bar and .pm-banner sit outside #page-frame at that
+      // full sheet width, which makes the PAGE (not the bar itself: its own
+      // scrollWidth/clientWidth are equal) wider than the viewport, so the
+      // browser's own horizontal scroll is how a real user reaches a
+      // right-hand row that is off the current scroll position, not a
+      // trapped control. Scrolled here the way a user reaching for it would,
+      // then measured, then put back.
+      const hb=$('btn-more-actions').getBoundingClientRect();
+      window.scrollTo(document.documentElement.scrollWidth,window.scrollY);
+      await settle();
+      const rowsReachable=reachable(document.querySelectorAll('#icon-bar .ib-mi'));
+      R.notes.menuFromHeader={triggerLaidOut:$('btn-more-actions').getClientRects().length>0,
+        pageScrolled:window.scrollX>0,
+        reachable:rowsReachable};
+      ck('print: above 1024px the header trigger stays hidden and its five rows are reachable inline (scrolling the page if the sheet is wider than the window)',
+         hb.width===0&&hb.height===0&&rowsReachable===5,
+         JSON.stringify(R.notes.menuFromHeader));
+      window.scrollTo(0,window.scrollY); await settle();
+    }
 
     // Leave. The control has to do what the header row does, including putting
     // the week width back.
@@ -324,24 +358,42 @@ PROBE = r"""
     ck('print: the Leave control leaves the preview and restores the week width',
        !R.notes.leave.printMode&&R.notes.leave.wk===wkBefore&&!R.notes.leave.bannerShown,
        JSON.stringify(R.notes.leave));
-    ck('print: the icon bar goes back to viewport width, leaving no sheet sizing behind',
-       Math.abs(barOut.w-window.innerWidth)<=1.0,
-       barOut.w+' against viewport '+window.innerWidth);
+    // P56/D-20b: body carries a permanent margin-left for the always-on
+    // Workspace rail (#ws-rail, --ws-rail-w), print-mode or not, so leaving
+    // the preview puts the bar back to viewport width MINUS the rail, not the
+    // bare viewport. Read the rail's own token rather than hardcoding 44, so
+    // this does not need editing if the rail widens.
+    const railW=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ws-rail-w'))||0;
+    ck('print: the icon bar goes back to viewport width (less the Workspace rail), leaving no sheet sizing behind',
+       Math.abs(barOut.w-(window.innerWidth-railW))<=1.0,
+       barOut.w+' against viewport '+window.innerWidth+' minus rail '+railW);
 
     // Out of the preview, the banner trigger is not laid out, so the anchor
-    // falls back to the header one. Checked, because a stale anchor would place
-    // the panel against nothing.
-    $('btn-more-actions').click(); await settle();
-    const pb3=panel.getBoundingClientRect(), hb3=$('btn-more-actions').getBoundingClientRect();
-    R.notes.menuAfter={open:panel.classList.contains('open'),
-                       reachable:reachable(panel.querySelectorAll('.ib-mi')),
-                       anchoredToHeader:Math.abs(pb3.right-hb3.right)<=1.0,
-                       pmTriggerRects:$('btn-pm-more').getClientRects().length};
-    ck('after the preview: the menu still opens from the header, anchored to it',
-       R.notes.menuAfter.open&&R.notes.menuAfter.reachable===7&&
-       R.notes.menuAfter.anchoredToHeader&&R.notes.menuAfter.pmTriggerRects===0,
-       JSON.stringify(R.notes.menuAfter));
-    toggleMoreActions(false);
+    // falls back to the header one below 1025px; above it there is no trigger
+    // at all by design and the rows are simply reachable inline again, same
+    // as the "above 1024px" branch above.
+    if(!desktop){
+      $('btn-more-actions').click(); await settle();
+      const pb3=panel.getBoundingClientRect(), hb3=$('btn-more-actions').getBoundingClientRect();
+      R.notes.menuAfter={open:panel.classList.contains('open'),
+                         reachable:reachable(panel.querySelectorAll('.ib-mi')),
+                         anchoredToHeader:Math.abs(pb3.right-hb3.right)<=1.0,
+                         pmTriggerRects:$('btn-pm-more').getClientRects().length};
+      ck('after the preview: the menu still opens from the header, anchored to it',
+         R.notes.menuAfter.open&&R.notes.menuAfter.reachable===5&&
+         R.notes.menuAfter.anchoredToHeader&&R.notes.menuAfter.pmTriggerRects===0,
+         JSON.stringify(R.notes.menuAfter));
+      toggleMoreActions(false);
+    } else {
+      const rowsReachable=reachable(document.querySelectorAll('#icon-bar .ib-mi'));
+      R.notes.menuAfter={triggerLaidOut:$('btn-more-actions').getClientRects().length>0,
+        pmTriggerRects:$('btn-pm-more').getClientRects().length,
+        reachable:rowsReachable};
+      ck('after the preview: above 1024px the rows stay reachable inline, no header trigger involved',
+         !R.notes.menuAfter.triggerLaidOut&&R.notes.menuAfter.pmTriggerRects===0&&
+         rowsReachable===5,
+         JSON.stringify(R.notes.menuAfter));
+    }
     R.ok=true;
   }catch(e){ R.ok=false; R.err=String(e); R.stack=e&&e.stack; }
   emit();

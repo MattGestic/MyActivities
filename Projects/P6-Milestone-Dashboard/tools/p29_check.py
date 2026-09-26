@@ -164,80 +164,103 @@ PROBE = r"""
     ck('type: no helper text is italic', italic.length===0, italic.length+' italic');
 
     // ================= 2. Layout =================
+    // P56/D-20b: the drawer gained the vertical rail (44px) alongside its
+    // 360px content column, so its own width grew by the rail's width rather
+    // than staying 360px. Read the rail's own width token instead of
+    // hardcoding the sum, so this does not need editing if the rail widens.
+    const railW=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ws-rail-w'))||0;
     R.notes.drawerWidth=getComputedStyle(DR).width;
-    ck('layout: the drawer is 360px wide', getComputedStyle(DR).width==='360px', R.notes.drawerWidth);
+    ck('layout: the drawer is the content column plus the rail width',
+       Math.abs(parseFloat(R.notes.drawerWidth)-(360+railW))<1,
+       R.notes.drawerWidth+' vs 360+'+railW);
+    // The old horizontal .sd-tabs strip (scrolling, not wrapping) is now a
+    // vertical rail (.sd-tabs.sd-rail) fixed to the drawer's own left edge,
+    // same ids, same setSettingsTab(). The contract worth keeping: it is a
+    // column, it sits at the drawer's left edge, every visible tab is at
+    // least the standard icon-button square, and every tab still carries a
+    // label a screen reader can reach even though .sd-tab-lbl is visually
+    // hidden on the rail.
     const strip=DR.querySelector('.sd-tabs');
-    ck('layout: the tab strip scrolls rather than wrapping',
-       !!strip && getComputedStyle(strip).overflowX==='auto' && getComputedStyle(strip).flexWrap!=='wrap',
-       strip?getComputedStyle(strip).overflowX+'/'+getComputedStyle(strip).flexWrap:'missing');
-    // The action bar moved above the tabs at v3.1.0-P39 (TD-149), so it is no
-    // longer a sticky footer. The contract it replaces: it is the first thing
-    // in the drawer under the heading, above the tab strip, and on screen
-    // without scrolling when the drawer opens. Asserted in BOTH document order
-    // and geometry, because either alone can be satisfied while the other is
-    // wrong. The old sticky assertion's companion check ("still on screen when
-    // scrolled to the foot") could pass vacuously whenever the open tab was
-    // short enough not to scroll, so it is not carried over in that form.
-    const act=DR.querySelector('.sd-actions');
-    R.notes.actionsPos=act?getComputedStyle(act).position:'missing';
-    ck('layout: the action bar comes before the tab strip in document order',
-       !!act && !!strip &&
-       (act.compareDocumentPosition(strip)&Node.DOCUMENT_POSITION_FOLLOWING)!==0,
-       act?'position '+R.notes.actionsPos:'missing');
-    DR.scrollTop=0; await settle();
-    const ar=act.getBoundingClientRect(), dr=DR.getBoundingClientRect();
-    const sr=strip.getBoundingClientRect();
-    R.notes.actionsBox=Math.round(ar.top)+'..'+Math.round(ar.bottom)+
-                       ' drawer '+Math.round(dr.top)+'..'+Math.round(dr.bottom)+
-                       ' tabs at '+Math.round(sr.top);
-    ck('layout: it sits above the tabs and is on screen with the drawer opened',
-       ar.bottom<=sr.top+1 && ar.top>=dr.top-1 && ar.bottom<=dr.bottom,
-       R.notes.actionsBox);
-    // One row at v3.1.0-P40, changed from the two-row shape P39 shipped: the
-    // two exports spread across the left, the two right-hand actions anchored
-    // together against the edge. The P39 arrangement put the destructive
-    // action on its own line; the user asked for it back in line with Save as
-    // new dashboard, so the assertion follows the requested contract rather
-    // than the one this check preferred. What it still asserts with teeth: the
-    // order, the right anchor, and that the destructive button is LAST, so it
-    // is never the one next to the button you meant to press.
-    const main=act.querySelector('.sd-actions-main');
-    const exports=act.querySelector('.sd-actions-exports');
-    const right=act.querySelector('.sd-actions-right');
-    const danger=act.querySelector('.sd-actions-right .sd-btn-danger');
-    const lbl=function(b){ return b.textContent.replace(/[^A-Za-z ]/g,'').trim(); };
-    const expLabels=exports?Array.prototype.map.call(exports.querySelectorAll('button'),lbl):[];
-    const rightLabels=right?Array.prototype.map.call(right.querySelectorAll('button'),lbl):[];
-    R.notes.actionOrder={exports:expLabels,right:rightLabels};
-    ck('layout: CSV and JSON on the left, Save then Reset on the right',
-       expLabels.length===2 && /CSV/.test(expLabels[0]) && /JSON/.test(expLabels[1]) &&
-       rightLabels.length===2 && /Save as new dashboard/.test(rightLabels[0]) &&
-       /Reset row marks/.test(rightLabels[1]),
-       expLabels.join(' | ')+'  ///  '+rightLabels.join(' | '));
-    const rr=right?right.getBoundingClientRect():null;
-    const mr=main?main.getBoundingClientRect():null;
-    ck('layout: the right-hand pair is anchored to the right edge of the row',
-       !!rr && !!mr && Math.abs(rr.right-mr.right)<=1,
-       rr?Math.round(rr.right)+' against row right '+Math.round(mr.right):'missing');
-    // Spread, not bunched: the two exports must not simply sit side by side at
-    // the left, which is what removing the justify-content would give.
-    const eb=exports?exports.querySelectorAll('button'):[];
-    const gap=(eb.length===2)
-      ? Math.round(eb[1].getBoundingClientRect().left-eb[0].getBoundingClientRect().right)
-      : -1;
-    R.notes.exportGap=gap;
-    ck('layout: the two exports are distributed across their share of the width',
-       gap>12, gap+'px between them');
-    const db=danger?danger.getBoundingClientRect():null;
-    R.notes.dangerBox=db?Math.round(db.left)+' vs row right '+Math.round(mr.right):'missing';
-    ck('layout: the destructive action is the last control in the row',
-       !!db && !!rr && Math.abs(db.right-rr.right)<=1, R.notes.dangerBox);
+    const stripCs=strip?getComputedStyle(strip):null;
+    ck('layout: the rail is a vertical column',
+       !!strip && stripCs.flexDirection==='column',
+       strip?stripCs.flexDirection:'missing');
+    const stripRect=strip?strip.getBoundingClientRect():null;
+    const drRectForRail=DR.getBoundingClientRect();
+    R.notes.railBox=stripRect?Math.round(stripRect.left)+' vs drawer left '+Math.round(drRectForRail.left):'missing';
+    ck('layout: the rail sits on the drawer\'s own left edge',
+       !!stripRect && Math.abs(stripRect.left-drRectForRail.left)<=1,
+       R.notes.railBox);
+    const iconBtn=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--icon-btn'))||0;
+    const visTabs=strip?Array.from(strip.querySelectorAll('.sd-tab')).filter(function(b){ return !b.hidden; }):[];
+    const undersized=visTabs.filter(function(b){
+      const r=b.getBoundingClientRect(); return r.width<iconBtn-0.5||r.height<iconBtn-0.5;
+    });
+    R.notes.railTabs=visTabs.length; R.notes.iconBtnToken=iconBtn;
+    ck('layout: there are visible rail tabs to measure', visTabs.length>=4, visTabs.length);
+    ck('layout: every visible tab button is at least the standard icon-button square',
+       undersized.length===0,
+       undersized.map(function(b){ const r=b.getBoundingClientRect(); return (b.id||'?')+'='+Math.round(r.width)+'x'+Math.round(r.height); }).join(', ')+' (token '+iconBtn+'px)');
+    const unlabelled=visTabs.filter(function(b){
+      const lbl=b.querySelector('.sd-tab-lbl');
+      return !(b.getAttribute('aria-label')||'').trim()
+          || !(b.getAttribute('title')||'').trim()
+          || !(lbl&&lbl.textContent.trim());
+    });
+    ck('layout: every rail tab carries a reachable label (aria-label, title, and .sd-tab-lbl text)',
+       unlabelled.length===0, unlabelled.map(function(b){ return b.id||'?'; }).join(', '));
+
+    // The old .sd-actions bar (CSV/JSON/Save as/Reset in one row, footer then
+    // header-of-drawer across P39/P40) is gone by design (P56/D-20b): exports
+    // and Reset row marks moved to the Workspace panel's Comments & markups
+    // section (#ws-panel), and Save as is the header's #btn-save-as
+    // (publishDashboard()), no longer inside the drawer at all. What survives
+    // from the old contract, re-expressed against the new home: the three
+    // exports are present and in a stable order, Reset is a distinct,
+    // clearly-dangerous control that comes AFTER them (never sandwiched
+    // between two things you meant to press), and Save as still opens the
+    // same publish flow, just from the header, not the drawer.
+    if(typeof toggleWorkspace==='function') toggleWorkspace(true);
+    if(typeof setWorkspaceSection==='function') setWorkspaceSection('comments');
+    await settle();
+    const wsPanel=document.getElementById('ws-panel');
+    const wsComments=document.getElementById('ws-sec-comments');
+    const expIds=['btn-export-comments','btn-export-csv','btn-export-json'];
+    const expBtns=expIds.map(function(id){ return document.getElementById(id); });
+    const resetRow=document.getElementById('ws-reset-row');
+    R.notes.wsExportsFound=expBtns.map(function(b){ return !!b; });
+    ck('layout: the three Workspace exports are present',
+       expBtns.every(Boolean), JSON.stringify(R.notes.wsExportsFound));
+    const docOrderOk=expBtns.every(function(b,i){
+      return i===0 || (expBtns[i-1].compareDocumentPosition(b)&Node.DOCUMENT_POSITION_FOLLOWING)!==0;
+    });
+    ck('layout: the exports keep a stable order (comments, CSV, JSON)', docOrderOk);
+    ck('layout: Reset row marks sits in the Workspace, after the exports',
+       !!resetRow && !!expBtns[expBtns.length-1] &&
+       (expBtns[expBtns.length-1].compareDocumentPosition(resetRow)&Node.DOCUMENT_POSITION_FOLLOWING)!==0,
+       resetRow?'present':'missing');
+    ck('layout: every export sits inside the Workspace Comments & markups section',
+       !!wsComments && expBtns.every(function(b){ return wsComments.contains(b); }));
+    ck('layout: Reset row marks is styled as a destructive control',
+       !!resetRow && !!resetRow.querySelector('.sd-btn-danger'));
+    ck('layout: Workspace panel and its Comments & markups section resolved',
+       !!wsPanel && !!wsComments);
+    const saveAs=document.getElementById('btn-save-as');
+    R.notes.saveAsOnclick=saveAs?saveAs.getAttribute('onclick'):null;
+    ck('layout: Save as lives in the header, not the drawer, and still calls publishDashboard()',
+       !!saveAs && !DR.contains(saveAs) && /publishDashboard\s*\(/.test(R.notes.saveAsOnclick||''),
+       R.notes.saveAsOnclick||'missing');
+    if(typeof toggleWorkspace==='function') toggleWorkspace(false);
+    await settle();
 
     // ================= 3. Tabs =================
     const panels=Array.from(DR.querySelectorAll('.sd-tabpanel'));
     const tabs=Array.from(DR.querySelectorAll('.sd-tab'));
     R.notes.panels=panels.length; R.notes.tabs=tabs.length;
-    ck('tabs: four tabs and four panels', tabs.length===4 && panels.length===4,
+    // P56/D-20b added the 'view' tabpanel (View controls moved inside the
+    // drawer) alongside the four this partial shipped with (sources, import,
+    // defaults, diag) plus help/about, for seven tabs and seven panels total.
+    ck('tabs: seven tabs and seven panels', tabs.length===7 && panels.length===7,
        tabs.length+' tabs / '+panels.length+' panels');
     const tabResults=[];
     ['sources','import','defaults'].forEach(function(t){
@@ -367,20 +390,42 @@ PROBE = r"""
     // are .sd-group/.sd-row (name, data date, counts, on/off switch, Rename,
     // Remove), not .sd-card any more — that shape has controls a read-only
     // card never carried (a switch, an inline confirm, a duplicate warning).
-    // The Annotations slot (unchanged by D-17a, D-17b territory) still uses
-    // mountSlotHtml()'s .sd-card, so both shapes should be present together.
+    // P56/D-20b then split the annotation layer out of Data & view entirely:
+    // #mount-body now holds ONLY the Schedules group (schedule and format
+    // content stays on the Data & view side); User-defined renders into the
+    // Workspace's #ws-userms-body and Annotations into its #ws-annot-body
+    // (both still using mountSlotHtml()'s .sd-card for Annotations), so the
+    // "both shapes present together" contract now spans two mount points
+    // instead of one.
     setSettingsTab('sources'); await settle();
+    if(typeof toggleWorkspace==='function') toggleWorkspace(true);
+    if(typeof setWorkspaceSection==='function') setWorkspaceSection('userms');
+    await settle();
     const mountGroups=document.querySelectorAll('#mount-body .sd-group');
     const mountRows=document.querySelectorAll('#mount-body .sd-group .sd-row');
-    const cards=document.querySelectorAll('#mount-body .sd-card');
+    const userDefGroup=document.querySelectorAll('#ws-userms-body .sd-group');
+    const cards=document.querySelectorAll('#ws-annot-body .sd-card');
     R.notes.mountGroups=mountGroups.length; R.notes.mountRows=mountRows.length; R.notes.mountCards=cards.length;
-    ck('sources: the Sources tab renders its two groups (Schedules, User-defined)', mountGroups.length>=2, mountGroups.length+' groups');
-    ck('sources: each group renders rows (schedule/baseline/user-defined entries)', mountRows.length>=2, mountRows.length+' rows');
-    ck('sources: the Annotations slot still renders as a card (D-17b territory, untouched)', cards.length>=1, cards.length+' cards');
+    ck('sources: the Sources tab (#mount-body) renders exactly the Schedules group',
+       mountGroups.length===1, mountGroups.length+' groups');
+    ck('sources: the Schedules group renders rows (schedule/baseline entries)',
+       mountRows.length>=1, mountRows.length+' rows');
+    ck('sources: User-defined now renders into the Workspace, not #mount-body',
+       document.querySelectorAll('#mount-body .sd-group-title').length===1
+       && document.querySelector('#mount-body .sd-group-title').textContent.trim()==='Schedules'
+       && userDefGroup.length>=1,
+       'mount-body titles='+Array.from(document.querySelectorAll('#mount-body .sd-group-title')).map(function(e){return e.textContent.trim();}).join(',')
+       +' ; ws-userms-body groups='+userDefGroup.length);
+    ck('sources: the Annotations slot still renders as a card, now in the Workspace (#ws-annot-body)',
+       cards.length>=1, cards.length+' cards');
     ck('sources: no mount slot still uses the retired classes',
-       document.querySelectorAll('#mount-body .mnt-slot,#mount-body .mnt-title,#mount-body .mnt-lines').length===0);
+       document.querySelectorAll('#mount-body .mnt-slot,#mount-body .mnt-title,#mount-body .mnt-lines,'+
+         '#ws-userms-body .mnt-slot,#ws-userms-body .mnt-title,#ws-userms-body .mnt-lines,'+
+         '#ws-annot-body .mnt-slot,#ws-annot-body .mnt-title,#ws-annot-body .mnt-lines').length===0);
     const cardRadii=uniq(Array.from(cards).map(function(c){ return getComputedStyle(c).borderTopLeftRadius; }));
     ck('sources: every annotation card shares one radius', cardRadii.length===1, cardRadii.join('/'));
+    if(typeof toggleWorkspace==='function') toggleWorkspace(false);
+    await settle();
     ck('sources: every schedule row has an on/off switch',
        document.querySelectorAll('#mount-body .src-row .toggle-switch').length>=1,
        document.querySelectorAll('#mount-body .src-row .toggle-switch').length+' switches');

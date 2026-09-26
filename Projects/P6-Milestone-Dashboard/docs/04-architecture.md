@@ -65,17 +65,19 @@ Export is currently one-directional. There is no import path that reads the JSON
 
 ## Panel Systems
 
-Three distinct systems. Do not conflate them.
+Two sides plus the filter bar, since P56 (D-20, directed by Matt 2026-09-25/26). Do not conflate them.
 
-| Panel | Element | Toggle | Scope |
+| Side | Element | Opened from | Scope |
 |---|---|---|---|
-| Style / Customize View | `#filter-bar`, left docked sidebar | Palette icon | Layout, field visibility, label text sizing, dependency line visibility/thickness |
-| Top filter bar | `#top-filter-bar`, collapsible horizontal bar | Magnifying glass | Row filtering: Title contains, Banding, Source, Activity ID(s), Week range, Date range. The Source group hides itself while only one schedule is mounted, since a filter that can only mean "all" is noise. |
-| Settings / Data Settings | `#settings-drawer`, right docked overlay | Gear | Four tabs: Sources (what is mounted), Import (the setup stepper), Defaults (settings that outlive an import), Diagnostics. Publish and the exports live in a sticky action footer reachable from every tab. |
+| Workspace (left): your annotations | `#ws-rail` (always visible, full height, slate) + `#ws-panel` | Rail icons; `setWorkspaceSection()` / `toggleWorkspace()` | Comments & markups (annotation layers, the three exports, Reset row marks), User milestones. Notes (D-19) and Lists (D-06) join the rail when built |
+| Data & view (right): schedule and format | `#settings-drawer` with a vertical rail `.sd-rail` | Header Colour & theme (`toggleFilterBar()`, opens View controls) and Import & settings (`toggleSettingsDrawer()`) | View controls (the former Customize sidebar, `#filter-bar` moved in), Sources (schedules only), Import, Data settings, Diagnostics, Help, About |
+| Top filter bar | `#top-filter-bar` | Always shown; collapsible from its own control | Row filtering |
+
+Both side panels push the board above 1024px (`body.ws-open`, `body.dv-open` margins) and overlay below it. The header's five actions (Light/Dark, Print, Save as, Colour & theme, Import & settings) are one set of buttons: a row of icons above 1024px, the More actions menu at and below it.
 
 Plus the sticky-corner quick search in the top-left sticky table cell, two-way synced with the Top Filter Bar Title field.
 
-The Customize sidebar docks via a `body.cv-open{margin-left:300px}` class toggle rather than a DOM restructure, because `position:fixed` overlays (the sidebar included) are unaffected by an ancestor's margin. That is what lets it dock without disturbing the rest of the page.
+Before P56 the Customize sidebar docked via a `body.cv-open` class toggle (retired; `body.ws-open`/`body.dv-open` follow the same pattern) rather than a DOM restructure, because `position:fixed` overlays (the sidebar included) are unaffected by an ancestor's margin. That is what lets it dock without disturbing the rest of the page.
 
 ### The `sd-` component set and the drawer's spacing contract
 
@@ -130,6 +132,7 @@ The version lives only in `APP_VERSION`. The working file keeps a stable filenam
 | `scheduleRerender()` debounce over incremental DOM diffing | Virtual DOM; targeted patching | Debounce fixed the reported slowdown at a fraction of the complexity and risk. Revisit only if it resurfaces. | Pre-migration |
 | Label collision: 3-band cycling, same-row only | General N-marker collision solver | Covers the common case. A 4+ marker cluster in a very tight span can still partially overlap — an explicit, acknowledged scope boundary. | Pre-migration |
 | Exact-match header aliases, not fuzzy | Fuzzy/levenshtein matching | Primary `Start`/`Finish` already cover the core need. Fuzzy risks silent mis-mapping, which is worse than a visible failure. | Pre-migration |
+| Two-sided workspace: annotations left, schedule and format right (D-20) | Keep three separate panel systems; one combined drawer with tabs | The old drawer mixed the user's own layer with the schedule layer, and exports sat in a menu. A hard left/right line makes ownership visible. Existing ids and entry points kept so behaviour and checks carry over | 2026-09-26 (P56) |
 | Orphan branch per app | Monorepo on one `main`; separate repos | Apps are independent; a shared `main` makes every diff noisy. A separate repo per app fragments a personal workspace. | 2026-09-09 |
 | Board order follows the schedule's own order | Alphabetical by WBS path; by phase; by date | The board presents the client's schedule, so it presents it in the client's sequence. Anything else makes the reader reconcile two orderings, and the schedule's order carries meaning the dashboard does not know. **This rule was assumed rather than recorded, and the code did the opposite for as long as import existed (TD-65).** | 2026-09-14 |
 | Baseline overlay is matched by Activity ID, placed at the baseline's own date on the live marker's row line, and painted behind everything | Match by row; match by title; overlay as a separate row; overlay as a date label | The Activity ID is the only key both datasets share and the only one that survives a row being regrouped. Taking Y from the live marker and X from the baseline date makes the horizontal gap between the pair the slip itself, readable without a legend. Behind, because the current schedule is what the board is about and the baseline is context for it. | 2026-09-15 |

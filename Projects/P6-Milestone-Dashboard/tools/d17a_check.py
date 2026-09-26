@@ -299,13 +299,29 @@ renderMounts();
 // 24/32px token: a full D-16 pass over .toggle-switch/.toggle-btn is D-16c,
 // not D-17a. Measure the element itself, not a parent (CLAUDE.md).
 // ============================================================
+// P56/D-20b: View controls (the old Customize sidebar, #filter-bar) moved
+// inside #settings-drawer as the 'view' tabpanel (#sd-panel-view), alongside
+// Sources (#sd-panel-sources). A non-active .sd-tabpanel carries [hidden],
+// which zeroes out getBoundingClientRect, so "elsewhere" has to mean a
+// switch outside #sd-panel-sources while ITS OWN tab is the active one, not
+// a literal always-on selector. Flip to 'view' to measure, then restore
+// 'sources' (the tab already active by default) so nothing else in this
+// harness observes a different active tab.
 const newSwitch=document.querySelector('#mount-body .src-row .toggle-switch');
-const otherSwitch=document.querySelector('.toggle-switch-row .toggle-switch');
 assert('a toggle-switch is present on a Sources-tab row', !!newSwitch);
+const sourcesHeight=newSwitch?newSwitch.getBoundingClientRect().height:null;
+if(typeof setSettingsTab==='function') setSettingsTab('view');
+const otherSwitch=Array.prototype.find.call(
+  document.querySelectorAll('#settings-drawer .toggle-switch-row .toggle-switch'),
+  function(el){ return !el.closest('#sd-panel-sources'); });
+// Measure while 'view' is still the active tab (getBoundingClientRect is 0
+// once its tabpanel is [hidden] again), then restore 'sources'.
+const otherHeight=otherSwitch?otherSwitch.getBoundingClientRect().height:null;
+if(typeof setSettingsTab==='function') setSettingsTab('sources');
 if(newSwitch && otherSwitch){
-  const a=newSwitch.getBoundingClientRect(), b=otherSwitch.getBoundingClientRect();
+  const a=sourcesHeight, b=otherHeight;
   assert('its height matches the app\'s one existing toggle-switch component (no second, divergent switch style)',
-    Math.abs(a.height-b.height)<0.5, {sourcesTab:a.height, elsewhere:b.height});
+    Math.abs(a-b)<0.5, {sourcesTab:a, elsewhere:b});
 }
 const newBtn=document.querySelector('#mount-body .src-row .toggle-btn');
 const otherBtn=Array.prototype.find.call(document.querySelectorAll('.toggle-btn'),
