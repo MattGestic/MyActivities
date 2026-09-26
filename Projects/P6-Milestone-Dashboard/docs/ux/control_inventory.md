@@ -197,6 +197,33 @@ were reused rather than rebuilt to the mockup's literal 32x16/24px figures):
 |---|---|---|---|---|
 | `.pfn-close` | icon (X) | icon | had `aria-label` but no `title` | added `title="Dismiss"` |
 
+## Histogram row (D-21, v3.1.0-P54)
+
+New controls, built in `renderHistogram()` and mirrored in View Controls.
+Both segments reuse `.view-toggle`/`.vt-btn`'s existing token pair
+(`--color-vt-divider`, `--color-accent-purple`, `--color-text-on-accent`,
+`--color-btn-icon-hover-bg`) rather than a third accent look; the only
+addition is `.hist-seg`'s explicit `height:var(--ctl-h)`, so the control
+measures the D-16 24px desktop standard on its own box rather than inheriting
+a padding-derived height. Keyboard: native `<button>`, tab order follows DOM
+order, `role="group"`/`aria-label` on each `.hist-seg` pair.
+
+| Id/class | Label | Role | Token | Keyboard |
+|---|---|---|---|---|
+| `.hist-seg button[data-measure]` (`#hist-measure-seg`, in the label cell) | Hours / Tasks | segmented toggle | `--ctl-h`, `--color-vt-divider`, `--color-accent-purple` | native button, tab/Enter/Space |
+| `.hist-seg button[data-pos]` (`#hist-pos-seg`, in the label cell) | Top / Bottom | segmented toggle | same as above | native button |
+| `#btn-hist-measure-hours` / `#btn-hist-measure-tasks` (View Controls > Histogram) | Hours / Tasks | `.toggle-btn` pair (existing "Show/Hide" idiom, TD-147) | `--color-btn-primary-*`/`--color-btn-secondary-*` (unchanged `.toggle-btn`) | native button |
+| `#btn-hist-pos-top` / `#btn-hist-pos-bottom` (View Controls > Histogram) | Top / Bottom | `.toggle-btn` pair | same as above | native button |
+
+The label-cell measure/position buttons and the View Controls buttons are
+two entry points to the same two globals (`HIST_MEASURE`/`HIST_POS` via
+`setHistMeasure()`/`setHistPos()`); `syncHistControlsUI()` is the single
+writer that keeps both pairs showing the same `.active` state, since only the
+label cell is rebuilt from scratch on every render. Hidden under
+`@media print` (`.hist-ctl-row{display:none}`) — interactive chrome, not
+report content; the bars and the "Histogram" label still print, wherever
+`HIST_POS` placed the row.
+
 ## Deferred (not changed this pass)
 
 - **`#btn-pred-all-on`/`-off`, `#btn-succ-all-on`/`-off`** — unstyled `<button>`
