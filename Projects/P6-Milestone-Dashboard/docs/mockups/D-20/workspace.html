@@ -21,20 +21,20 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
 .pg-cap{font-size:11px;color:var(--pg-muted);margin:0 0 6px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
 
 /* App colour tokens, copied from src/milestone-dashboard.html and docs/mockups/D-17 */
-.t-light{--color-bg-panel:#f4f5f8;--color-bg-elevated:#ffffff;--color-bg-header:#2e4f82;--color-bg-workspace-hd:#3a2f63;
+.t-light{--color-bg-panel:#f4f5f8;--color-bg-elevated:#ffffff;--color-bg-header:#2e4f82;--color-bg-workspace-hd:#3d4b66;
   --color-line-default:#e3e2de;--color-text-primary:#17191c;--color-text-muted:#6f7480;--color-text-note:#767b85;
-  --color-accent-purple:#8b64c7;--color-accent-ink:#6f46ad;--color-accent-tint-bg:#efe6f9;
-  --color-accent-wash-weak:rgba(139,100,199,.05);--color-accent-wash:rgba(139,100,199,.10);
+  --color-accent-purple:#0e7c86;--color-accent-ink:#0b6570;--color-accent-tint-bg:#e1f1f2;
+  --color-accent-wash-weak:rgba(14,124,134,.05);--color-accent-wash:rgba(14,124,134,.10);
   --color-btn-primary-bg:#1c3a63;--color-btn-primary-text:#ffffff;--color-btn-primary-hover-bg:#2a4a7a;
   --color-btn-secondary-bg:#ffffff;--color-btn-secondary-text:#1c3a63;--color-btn-secondary-outline:#9fb0bd;--color-btn-secondary-hover-bg:#eef1f7;
   --color-btn-icon-hover-bg:#dde1ea;--color-text-on-accent:#ffffff;
   --color-status-risk:#a2690a;--color-status-crit:#c0392b;--color-status-done:#1f9d55;--color-status-done-tint:rgba(31,157,85,.16);
   --color-crit-tint-bg:#fdecec;--color-badge-neutral-bg:#889;--color-input-border:#b8c0d8;
   --color-icon-done:#17191c;--color-icon-track:#2f6fed;--color-icon-risk:#a2690a;--color-icon-crit:#c0392b;--color-icon-baseline:#767b85}
-.t-dark{--color-bg-panel:#1e2240;--color-bg-elevated:#232f4a;--color-bg-header:#15182f;--color-bg-workspace-hd:#241a3d;
+.t-dark{--color-bg-panel:#1e2240;--color-bg-elevated:#232f4a;--color-bg-header:#15182f;--color-bg-workspace-hd:#252f45;
   --color-line-default:rgba(160,184,230,.2);--color-text-primary:#e8eef8;--color-text-muted:#8b9bb8;--color-text-note:#889;
-  --color-accent-purple:#8b64c7;--color-accent-ink:#a98ad8;--color-accent-tint-bg:#2a2440;
-  --color-accent-wash-weak:rgba(139,100,199,.05);--color-accent-wash:rgba(139,100,199,.10);
+  --color-accent-purple:#2fa3ac;--color-accent-ink:#6cc6cd;--color-accent-tint-bg:#16353b;
+  --color-accent-wash-weak:rgba(47,163,172,.08);--color-accent-wash:rgba(47,163,172,.16);
   --color-btn-primary-bg:#3a6ea8;--color-btn-primary-text:#ffffff;--color-btn-primary-hover-bg:#4a80ba;
   --color-btn-secondary-bg:#1e2240;--color-btn-secondary-text:#9cbcff;--color-btn-secondary-outline:#3a3e60;--color-btn-secondary-hover-bg:#2a2e50;
   --color-btn-icon-hover-bg:#2a2e50;--color-text-on-accent:#ffffff;
@@ -56,7 +56,7 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
 .ds-btn.primary{background:var(--color-btn-primary-bg);border-color:var(--color-btn-primary-bg);color:var(--color-btn-primary-text);font-weight:600}
 .ds-btn.primary:hover{background:var(--color-btn-primary-hover-bg)}
 .ds-btn.danger{background:var(--color-status-crit);border-color:var(--color-status-crit);color:#fff;font-weight:600}
-.ds-ico{box-sizing:border-box;width:var(--icon-btn);height:var(--icon-btn);border:0;background:transparent;color:var(--color-text-primary);border-radius:var(--radius-ctl);font-size:14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+.ds-ico{box-sizing:border-box;width:var(--icon-btn);height:var(--icon-btn);padding:0;border:0;background:transparent;color:var(--color-text-primary);border-radius:var(--radius-ctl);font-size:14px;cursor:pointer;display:inline-block;text-align:center;line-height:var(--icon-btn);flex:0 0 auto;overflow:hidden;vertical-align:middle}
 .ds-ico:hover{background:var(--color-btn-icon-hover-bg)}
 .ds-field,.ds-select{padding:0 var(--ctl-pad-x);border:1px solid var(--color-btn-secondary-outline);background:var(--color-bg-elevated);color:var(--color-text-primary);font-size:var(--fs-field);min-width:0}
 .ds-check{display:inline-flex;align-items:center;gap:6px;min-height:var(--ctl-h)}
@@ -128,7 +128,7 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
 
 /* Notes panel primitives, copied from D-17 */
 .np-hd{background:var(--color-bg-header);color:#fff;padding:10px var(--group-gap);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-/* D-20 revision: Workspace-side panel headers use a deeper, purple-tinted shade so the annotation zone reads as its own, distinct from the app header and the Data & view header */
+/* D-20 revision: Workspace-side panel headers use a workspace slate, related to but distinct from the app header navy and the Data & view header */
 .np-hd.ws-hd{background:var(--color-bg-workspace-hd)}
 .np-hd>.np-hd-title{order:0}.np-hd>.grow{order:1;flex:1 1 0}.np-hd>.ds-ico{order:2;flex:0 0 auto}
 .np-hd>.dm-pill{order:3;flex:0 0 auto;max-width:100%}
@@ -172,16 +172,17 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
 .app-hd{height:48px;flex:0 0 48px;background:var(--color-bg-header);color:#fff;display:flex;align-items:center;gap:12px;padding:0 16px;box-sizing:border-box}
 .app-hd .ttl{font-size:13px;font-weight:700;flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-/* ---- D-20 revision: left Workspace toggle, distinct from the right icon cluster ---- */
-.ws-toggle{height:var(--ctl-h);padding:0 10px;border-radius:var(--radius-ctl);border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.08);color:#fff;font:inherit;font-size:var(--fs-caption);font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;flex:0 0 auto}
-.ws-toggle:hover{background:rgba(255,255,255,.16)}
-.ws-toggle .ic{font-size:14px;line-height:1}
-.ws-toggle.pressed{background:var(--color-accent-purple);border-color:var(--color-accent-purple)}
-.ws-toggle .cnt{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:#fff;color:var(--color-accent-ink);font-size:10px;font-weight:700;line-height:1}
+/* ---- D-20 revision: always-visible left Workspace icon rail, sits outside the panel, full height of the app body ---- */
+.app-rail{width:44px;flex:0 0 44px;background:var(--color-bg-workspace-hd);display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 0;box-sizing:border-box}
+.app-rail .ico{box-sizing:border-box;position:relative;width:var(--icon-btn);height:var(--icon-btn);padding:0;border-radius:var(--radius-ctl);display:inline-block;text-align:center;line-height:var(--icon-btn);color:#fff;background:transparent;border:0;cursor:pointer;font-size:14px;flex:0 0 auto;overflow:hidden}
+.app-rail .ico:hover{background:rgba(255,255,255,.14)}
+.app-rail .ico.active{background:rgba(255,255,255,.26)}
+.app-rail .badge{position:absolute;top:1px;right:1px;min-width:12px;height:12px;padding:0 2px;border-radius:999px;background:#fff;color:var(--color-accent-ink);font-size:8px;font-weight:700;line-height:12px;text-align:center;box-sizing:border-box}
+.ws-standalone-panel{flex:0 0 316px;max-width:44%;min-width:0;display:flex;flex-direction:column;overflow:hidden;box-sizing:border-box;background:var(--color-bg-panel);border-right:1px solid var(--color-line-default)}
 
-/* ---- D-20 revision: right-side compact icon-button cluster (Print / View controls / More / Settings) ---- */
+/* ---- D-20 revision: right-side compact icon-button cluster (header actions) ---- */
 .app-cluster{display:flex;align-items:center;gap:2px;flex:0 0 auto}
-.app-ico-btn{width:var(--icon-btn);height:var(--icon-btn);border-radius:var(--radius-ctl);border:0;background:transparent;color:#fff;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+.app-ico-btn{box-sizing:border-box;width:var(--icon-btn);height:var(--icon-btn);padding:0;border-radius:var(--radius-ctl);border:0;background:transparent;color:#fff;font-size:14px;cursor:pointer;display:inline-block;text-align:center;line-height:var(--icon-btn);flex:0 0 auto;overflow:hidden;vertical-align:middle}
 .app-ico-btn:hover{background:rgba(255,255,255,.14)}
 .app-ico-btn.active{background:rgba(255,255,255,.26)}
 .app-ico-btn.settings{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.35);margin-left:4px}
@@ -203,7 +204,7 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
 .side-shell.ws{border-right:1px solid var(--color-line-default)}
 .side-shell.dv{border-left:1px solid var(--color-line-default);flex-direction:row-reverse}
 .side-rail{width:44px;flex:0 0 44px;background:var(--color-bg-header);display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 0;box-sizing:border-box}
-.side-rail .ico{position:relative;width:var(--icon-btn);height:var(--icon-btn);border-radius:var(--radius-ctl);display:flex;align-items:center;justify-content:center;color:#fff;background:transparent;border:0;cursor:pointer;font-size:14px;flex:0 0 auto}
+.side-rail .ico{box-sizing:border-box;position:relative;width:var(--icon-btn);height:var(--icon-btn);padding:0;border-radius:var(--radius-ctl);display:inline-block;text-align:center;line-height:var(--icon-btn);color:#fff;background:transparent;border:0;cursor:pointer;font-size:14px;flex:0 0 auto;overflow:hidden}
 .side-rail .ico:hover{background:rgba(255,255,255,.14)}
 .side-rail .ico.active{background:rgba(255,255,255,.24)}
 .side-panel{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;overflow:hidden}
@@ -259,40 +260,56 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
 <body>
 <div class="wrap">
 <header class="pg-head">
-  <h1>D-20a: two-sided workspace mockups</h1>
-  <p>Static mockups only, no app code changed. Draws the hard line between the annotation layer (Workspace, left) and the schedule/format layer (Data &amp; view, right), each a full-height panel with its own vertical icon rail. Re-houses the D-17b Sources/Annotations tab content and the D-19 notes panel into these two sides. Source: the D-20 Two-sided workspace and D-19 Notes panel plan sections. Reference for control conventions: <code>docs/mockups/D-16/component_sheet.html</code>; reference for the panel patterns being re-housed: <code>docs/mockups/D-17/data_manager.html</code>.</p>
+  <h1>D-20a: two-sided workspace mockups (rev 3)</h1>
+  <p>Static mockups only, no app code changed. Draws the hard line between the annotation layer (Workspace, left) and the schedule/format layer (Data &amp; view, right). Rev 3: the Workspace side is now an always-visible left icon rail, full height, with its panel opening beside it rather than nested inside it; Data &amp; view keeps its own docked rail-plus-panel, opened from the header. Re-houses the D-17b Sources/Annotations tab content and the D-19 notes panel into these two sides. Source: the D-20 Two-sided workspace and D-19 Notes panel plan sections. Reference for control conventions: <code>docs/mockups/D-16/component_sheet.html</code>; reference for the panel patterns being re-housed: <code>docs/mockups/D-17/data_manager.html</code>.</p>
 </header>
 
 <!-- ===================== 1. Overview ===================== -->
 <section class="pg-sect">
-  <h2>1. Overview: the app shell with both sides open</h2>
-  <p>The header's left Workspace toggle and its right icon cluster open the two panels; either docks full height and pushes the board into a sliver between them. Both are shown open at once here to demonstrate the split; day to day, one or both can be closed. Workspace shows Notes active behind a rail of Notes, Comments &amp; markups, User milestones and Lists. Data &amp; view shows Sources active behind a rail of View controls, Sources, Import, Data settings and Diagnostics. A label strip at each panel's top names the layer: "Your annotations" and "Schedule and view", reinforced now by colour: the Workspace panel's header bar (and the Notes/Comments/User milestones headers inside it) use a deeper, purple-tinted shade (<code>--color-bg-workspace-hd</code>) distinct from the app header and from the Data &amp; view panel's header, which stays the app header colour. Below the app header sits the top filter bar: Date range (Weeks, a W/E field), Mode (Highlight / Show only) and, at the end of that line, Fit columns, moved in from the old More actions menu.</p>
+  <h2>1. Overview: the always-visible Workspace rail</h2>
+  <p>The header's Workspace toggle is gone. In its place, a slim vertical icon rail sits on the left edge of the app, below the header, full height, at all times: Notes (with an open-note count badge), Comments &amp; markups, User milestones and Lists, each with a tooltip. The rail is never hidden, only its panel is. Clicking an icon opens that section's panel beside the rail; clicking the active icon again, or the panel's &times;, closes the panel back down to the bare rail and the board reclaims the width. The active icon is highlighted. On the right, Data &amp; view still docks as a rail-plus-panel pair, opened from the header's Colour &amp; theme or Import &amp; settings buttons (section 2); it is closed here so the collapsed and single-panel states are easy to read. A label strip at the open panel's top still names the layer, "Your annotations", and the Workspace rail and panel header keep a distinct <b>workspace slate</b> (<code>--color-bg-workspace-hd</code>), related to but visibly different from the app header navy and from the Data &amp; view panel, which stays the app header colour. Below the app header sits the top filter bar: Date range (Weeks, a W/E field), Mode (Highlight / Show only) and Fit columns. Click a rail icon below to try the live toggle.</p>
   <div class="pg-scroll">
-    <p class="pg-cap">Desktop 1440 &middot; light</p>
-    <div class="ds t-light app-shell" id="ov-light"></div>
+    <p class="pg-cap">(a) Rail collapsed, board full width beside it &middot; light</p>
+    <div class="ds t-light app-shell" id="ov-collapsed-light"></div>
   </div>
   <div class="pg-scroll" style="margin-top:12px">
-    <p class="pg-cap">Desktop 1440 &middot; dark</p>
-    <div class="ds t-dark app-shell" id="ov-dark"></div>
+    <p class="pg-cap">(a) Rail collapsed, board full width beside it &middot; dark</p>
+    <div class="ds t-dark app-shell" id="ov-collapsed-dark"></div>
+  </div>
+  <div class="pg-scroll" style="margin-top:12px">
+    <p class="pg-cap">(b) Rail with Notes open &middot; light</p>
+    <div class="ds t-light app-shell" id="ov-notes-light"></div>
+  </div>
+  <div class="pg-scroll" style="margin-top:12px">
+    <p class="pg-cap">(b) Rail with Notes open &middot; dark</p>
+    <div class="ds t-dark app-shell" id="ov-notes-dark"></div>
+  </div>
+  <div class="pg-scroll" style="margin-top:12px">
+    <p class="pg-cap">(c) Rail with Comments &amp; markups open &middot; light</p>
+    <div class="ds t-light app-shell" id="ov-comments-light"></div>
+  </div>
+  <div class="pg-scroll" style="margin-top:12px">
+    <p class="pg-cap">(c) Rail with Comments &amp; markups open &middot; dark</p>
+    <div class="ds t-dark app-shell" id="ov-comments-dark"></div>
   </div>
 </section>
 
-<!-- ===================== 2. Top-right control cluster ===================== -->
+<!-- ===================== 2. Header right-hand buttons ===================== -->
 <section class="pg-sect">
-  <h2>2. Top-right control cluster, and the left toggle it is no longer a mirror of</h2>
-  <p>Left and right are deliberately not mirror images any more. Left: a labelled toggle with a notes/annotation icon, in the Workspace accent colour, with a pressed state when the panel is open and a count badge of open notes (Open + Sent + Pending, excluding Closed). Right: a compact icon-button cluster, left to right: Print (A3 preview), View controls (opens the View controls section of the right panel directly), More actions (the remaining overflow items), Settings (the gear, opens Data &amp; view, rightmost). Settings is a plain icon button with a tooltip, not a labelled mirror of the Workspace toggle.</p>
+  <h2>2. Header right-hand buttons, and compact mode</h2>
+  <p>Desktop, left to right, each a plain icon button with a tooltip: Light/Dark (toggles the theme; the icon shows the mode a click switches <em>to</em>), Print (A3 preview), Save as (was "Save as new dashboard" in the old More actions menu, now its own button), Colour &amp; theme (opens the View controls section of the right panel), Import &amp; settings (the gear, rightmost, opens the Data &amp; view panel at Sources / Import / Data settings). One consistent treatment throughout: icon-only with a tooltip at this width, never a mix of labelled and unlabelled buttons in the same row. The More actions menu no longer exists at this width: Filter row toggle is removed outright, and Reset row marks has moved into the Workspace's Comments &amp; markups section (section 4).</p>
   <div class="pg-grid">
-    <div><p class="pg-cap">Header, closed &middot; light</p><div class="ds t-light" style="padding:0;border-radius:8px;overflow:hidden" id="hdr-closed-light"></div></div>
-    <div><p class="pg-cap">Header, closed &middot; dark</p><div class="ds t-dark" style="padding:0;border-radius:8px;overflow:hidden" id="hdr-closed-dark"></div></div>
+    <div><p class="pg-cap">Header, desktop &middot; light</p><div class="ds t-light" style="padding:0;border-radius:8px;overflow:hidden" id="hdr-closed-light"></div></div>
+    <div><p class="pg-cap">Header, desktop &middot; dark</p><div class="ds t-dark" style="padding:0;border-radius:8px;overflow:hidden" id="hdr-closed-dark"></div></div>
+  </div>
+  <p class="imp-cap" style="margin-top:12px">Compact mode (narrow desktop / tablet &le; 1024, and phone): all five buttons collapse into a single More actions (&#8942;) menu, in the same order, each item keeping its icon alongside the label since the menu always shows text.</p>
+  <div class="pg-grid">
+    <div><p class="pg-cap">Compact header, tablet width &middot; light</p><div class="ds t-light" style="padding:0;border-radius:8px;overflow:visible;position:relative;max-width:700px;min-height:220px" id="hdr-tablet-light"></div></div>
+    <div><p class="pg-cap">Compact header, tablet width &middot; dark</p><div class="ds t-dark" style="padding:0;border-radius:8px;overflow:visible;position:relative;max-width:700px;min-height:220px" id="hdr-tablet-dark"></div></div>
   </div>
   <div class="pg-grid" style="margin-top:12px">
-    <div><p class="pg-cap">More actions open, remaining items &middot; light</p><div class="ds t-light" style="padding:0;border-radius:8px;overflow:visible;position:relative;min-height:200px" id="hdr-menu-light"></div></div>
-    <div><p class="pg-cap">More actions open, remaining items &middot; dark</p><div class="ds t-dark" style="padding:0;border-radius:8px;overflow:visible;position:relative;min-height:200px" id="hdr-menu-dark"></div></div>
-  </div>
-  <p class="imp-cap" style="margin-top:12px">Phone 390: the cluster collapses. Print drops out of the row and into More actions; View controls, More actions and Settings remain, Settings still rightmost.</p>
-  <div class="pg-grid">
-    <div><p class="pg-cap">Phone header &middot; light</p><div class="ds touch t-light" style="padding:0;border-radius:8px;overflow:visible;position:relative;max-width:390px;min-height:260px" id="hdr-phone-light"></div></div>
-    <div><p class="pg-cap">Phone header &middot; dark</p><div class="ds touch t-dark" style="padding:0;border-radius:8px;overflow:visible;position:relative;max-width:390px;min-height:260px" id="hdr-phone-dark"></div></div>
+    <div><p class="pg-cap">Compact header, phone 390, touch &middot; light</p><div class="ds touch t-light" style="padding:0;border-radius:8px;overflow:visible;position:relative;max-width:390px;min-height:260px" id="hdr-phone-light"></div></div>
+    <div><p class="pg-cap">Compact header, phone 390, touch &middot; dark</p><div class="ds touch t-dark" style="padding:0;border-radius:8px;overflow:visible;position:relative;max-width:390px;min-height:260px" id="hdr-phone-dark"></div></div>
   </div>
 </section>
 
@@ -313,7 +330,7 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
 <!-- ===================== 4. Comments and markups ===================== -->
 <section class="pg-sect">
   <h2>4. Comments &amp; markups</h2>
-  <p>The milestone comment threads across the board, filterable by period, status and milestone. Below that, the mounted annotation layers as a stack: Local edits is always the top layer, two mounted files sit below it, each with an on/off switch, Merge into Local edits and Remove. The three exports close out the section, and this is also where Export comments now lives, moved down from the old More actions menu.</p>
+  <p>The milestone comment threads across the board, filterable by period, status and milestone. Below that, the mounted annotation layers as a stack: Local edits is always the top layer, two mounted files sit below it, each with an on/off switch, Merge into Local edits and Remove. The three exports come next, moved down from the old More actions menu. Last is Reset row marks, moved here from the header's old More actions menu as a secondary action with a one-line explanation of what it does and does not touch. Its inline confirmation follows the design standard: message full width, Cancel at bottom-left, Reset at bottom-right; it is shown already expanded below so the layout can be reviewed without a click.</p>
   <div class="pg-grid">
     <div><p class="pg-cap">Desktop &middot; light</p><div class="ds t-light" style="padding:0;border-radius:8px" id="cm-desk-light"></div></div>
     <div><p class="pg-cap">Desktop &middot; dark</p><div class="ds t-dark" style="padding:0;border-radius:8px" id="cm-desk-dark"></div></div>
@@ -341,7 +358,7 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
 <!-- ===================== 6. Right side sections ===================== -->
 <section class="pg-sect">
   <h2>6. Right side: Data &amp; view sections</h2>
-  <p>Four of the Data &amp; view rail's five sections, each a representative slice. View controls folds in the current Customize sidebar's groups, and now opens with a Theme control (Light / Dark / System) at the top, moved in from the old header theme toggle; the light widget below shows Light selected, the dark widget shows Dark selected. Sources drops User-defined (it now lives in the Workspace's User milestones section) and shows schedules only; Import pairs a file drop with a mapping summary; Data settings covers thresholds and the week-ends-on setting.</p>
+  <p>The Data &amp; view rail now carries seven sections; five representative slices follow. View controls folds in the current Customize sidebar's groups, and now opens with a Theme control (Light / Dark / System) at the top, moved in from the old header theme toggle; the light widget below shows Light selected, the dark widget shows Dark selected. Sources drops User-defined (it now lives in the Workspace's User milestones section) and shows schedules only; Import pairs a file drop with a mapping summary; Data settings covers thresholds and the week-ends-on setting. Help and About are new: short placeholder content only, to be written up properly once the rest of this revision is settled.</p>
   <div class="pg-grid">
     <div><p class="pg-cap">View controls &middot; light</p><div class="ds t-light sw-widget" id="vc-light"></div></div>
     <div><p class="pg-cap">View controls &middot; dark</p><div class="ds t-dark sw-widget" id="vc-dark"></div></div>
@@ -357,6 +374,14 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
   <div class="pg-grid" style="margin-top:12px">
     <div><p class="pg-cap">Data settings &middot; light</p><div class="ds t-light sw-widget" id="ds-light"></div></div>
     <div><p class="pg-cap">Data settings &middot; dark</p><div class="ds t-dark sw-widget" id="ds-dark"></div></div>
+  </div>
+  <div class="pg-grid" style="margin-top:12px">
+    <div><p class="pg-cap">Help &middot; light</p><div class="ds t-light sw-widget" id="help-light"></div></div>
+    <div><p class="pg-cap">Help &middot; dark</p><div class="ds t-dark sw-widget" id="help-dark"></div></div>
+  </div>
+  <div class="pg-grid" style="margin-top:12px">
+    <div><p class="pg-cap">About &middot; light</p><div class="ds t-light sw-widget" id="about-light"></div></div>
+    <div><p class="pg-cap">About &middot; dark</p><div class="ds t-dark sw-widget" id="about-dark"></div></div>
   </div>
 </section>
 
@@ -438,7 +463,7 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
 <!-- ===================== 8. Phone 390: full-screen overlays ===================== -->
 <section class="pg-sect">
   <h2>8. Phone 390: each side as a full-screen overlay</h2>
-  <p>On phone, Workspace and Data &amp; view each open as a full-screen overlay rather than a docked panel. The vertical icon rail becomes a top segmented tab row, scrollable if it does not fit; the active tab shows the section, exactly as the active rail icon does on desktop.</p>
+  <p>On phone, Workspace and Data &amp; view each open as a full-screen overlay rather than a docked panel. Design call: the vertical rail becomes a <strong>top</strong> segmented tab row rather than a bottom bar, so it sits directly under the app header in the same reading order the desktop rail uses (left edge, top to bottom becomes left to right), and it does not compete with the browser's own bottom chrome on a phone. It scrolls horizontally if it does not fit; the active tab shows the section, exactly as the active rail icon does on desktop.</p>
   <div class="pg-grid">
     <div><p class="pg-cap">Workspace overlay &middot; light</p><div class="ds touch t-light" id="phws-light"></div></div>
     <div><p class="pg-cap">Workspace overlay &middot; dark</p><div class="ds touch t-dark" id="phws-dark"></div></div>
@@ -452,15 +477,6 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
 
 <!-- ===================== Templates ===================== -->
 
-<template id="tpl-ws-rail">
-  <div class="side-rail">
-    <button class="ico active" title="Notes" aria-label="Notes">&#128221;</button>
-    <button class="ico" title="Comments &amp; markups" aria-label="Comments and markups">&#128172;</button>
-    <button class="ico" title="User milestones" aria-label="User milestones">&#128681;</button>
-    <button class="ico" title="Lists" aria-label="Lists">&#9776;</button>
-  </div>
-</template>
-
 <template id="tpl-dv-rail">
   <div class="side-rail">
     <button class="ico" title="View controls" aria-label="View controls">&#127912;</button>
@@ -468,45 +484,8 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
     <button class="ico" title="Import" aria-label="Import">&#128229;</button>
     <button class="ico" title="Data settings" aria-label="Data settings">&#9881;</button>
     <button class="ico" title="Diagnostics" aria-label="Diagnostics">&#129514;</button>
-  </div>
-</template>
-
-<template id="tpl-ov-ws-panel">
-  <div class="side-panel">
-    <div class="np-hd ws-hd">
-      <span class="np-hd-title">Workspace</span>
-      <span class="np-break"></span><button class="dm-pill current">Reporting <b>W/E 14 Sep 26</b> <span class="car">&#9662;</span></button>
-      <span class="grow"></span>
-      <button class="ds-ico" title="Close" aria-label="Close">&#10005;</button>
-    </div>
-    <div class="side-strip">Your annotations</div>
-    <div class="np-filter">
-      <div class="ds-seg" role="tablist" aria-label="Notes filter">
-        <button class="active" aria-pressed="true">This period</button>
-        <button aria-pressed="false">All periods</button>
-      </div>
-      <input class="ds-field" type="text" placeholder="Search notes">
-    </div>
-    <div class="side-scroll">
-      <div class="np-list">
-        <div class="np-note">
-          <div class="np-note-hd">
-            <span class="st-pill st-open">Open <span class="car">&#9662;</span></span>
-            <span class="np-note-time">14 Sep, 08:12</span>
-          </div>
-          <div class="np-note-txt">Geotech report slipping 1 wk, owner to confirm.</div>
-          <div class="np-chips"><span class="np-chip">#SNIP-102</span></div>
-        </div>
-        <div class="np-note">
-          <div class="np-note-hd">
-            <span class="st-pill st-pending">Pending <span class="car">&#9662;</span></span>
-            <span class="np-note-time">13 Sep, 16:40</span>
-          </div>
-          <div class="np-note-txt">Client requested a revised tie-in sequence for the tank farm interconnect.</div>
-          <div class="np-chips"><span class="np-chip">#SNIP-140</span></div>
-        </div>
-      </div>
-    </div>
+    <button class="ico" title="Help" aria-label="Help">&#10067;</button>
+    <button class="ico" title="About" aria-label="About">&#8505;</button>
   </div>
 </template>
 
@@ -545,32 +524,41 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
 (function(){
   function fill(id,tpl){var el=document.getElementById(id);if(el)el.appendChild(document.getElementById(tpl).content.cloneNode(true));}
 
-  // ---- App header: left Workspace toggle + right icon cluster (Print / View controls / More / Settings) ----
+  // ---- App header: title + right-hand action buttons (Light/Dark, Print, Save as, Colour & theme, Import & settings) ----
+  // Desktop: five icon buttons, tooltip only. Compact (tablet <=1024 and phone): one More actions (⋮) menu with the same five, icon + label.
+  function headerItems(theme){
+    var themeDark = theme === 'dark';
+    return [
+      {ico: themeDark ? '&#9728;' : '&#127769;', label:'Light/Dark', title: themeDark ? 'Switch to light' : 'Switch to dark'},
+      {ico:'&#128424;', label:'Print', title:'Print: A3 preview'},
+      {ico:'&#128190;', label:'Save as', title:'Save as new dashboard'},
+      {ico:'&#127912;', label:'Colour & theme', title:'Colour & theme', flag:'vcActive'},
+      {ico:'&#9881;', label:'Import & settings', title:'Import & settings', flag:'dvOpen', cls:'settings'}
+    ];
+  }
   function appHeaderHtml(o){
     o = o||{};
-    var wsOpen = o.wsOpen!==false, dvOpen = o.dvOpen!==false, phone = !!o.phone, menuOpen = !!o.menuOpen;
+    var theme = o.theme || 'light', compact = !!o.compact, menuOpen = !!o.menuOpen;
+    var items = headerItems(theme);
     var cluster = '<div class="app-cluster">';
-    if(!phone){
-      cluster += '<button class="app-ico-btn" title="Print: A3 preview" aria-label="Print">&#128438;</button>';
+    if(!compact){
+      items.forEach(function(it){
+        cluster += '<button class="app-ico-btn'+(it.cls?' '+it.cls:'')+(o[it.flag]?' active':'')+'" title="'+it.title+'" aria-label="'+it.label+'">'+it.ico+'</button>';
+      });
+    } else {
+      cluster += '<div class="more-wrap">'+
+        '<button class="app-ico-btn'+(menuOpen?' active':'')+'" title="More actions" aria-label="More actions" aria-haspopup="true" aria-expanded="'+(menuOpen?'true':'false')+'">&#8942;</button>';
+      if(menuOpen){
+        cluster += '<div class="more-menu" role="menu">';
+        items.forEach(function(it){
+          cluster += '<button class="more-item" role="menuitem">'+it.ico+' '+it.label+'</button>';
+        });
+        cluster += '</div>';
+      }
+      cluster += '</div>';
     }
-    cluster += '<button class="app-ico-btn'+(o.vcActive?' active':'')+'" title="View controls" aria-label="View controls">&#127912;</button>';
-    cluster += '<div class="more-wrap">'+
-      '<button class="app-ico-btn'+(menuOpen?' active':'')+'" title="More actions" aria-label="More actions" aria-haspopup="true" aria-expanded="'+(menuOpen?'true':'false')+'">&#8942;</button>';
-    if(menuOpen){
-      cluster += '<div class="more-menu" role="menu">'+
-        (phone?'<button class="more-item" role="menuitem">&#128438; Print</button><div class="more-sep"></div>':'')+
-        '<button class="more-item" role="menuitem">Filter row toggle</button>'+
-        '<button class="more-item" role="menuitem">Reset row marks</button>'+
-        '<button class="more-item" role="menuitem">Save as new dashboard&hellip;</button>'+
-        '<div class="more-sep"></div>'+
-        '<button class="more-item" role="menuitem">Help / About</button>'+
-      '</div>';
-    }
-    cluster += '</div>';
-    cluster += '<button class="app-ico-btn settings'+(dvOpen?' active':'')+'" title="Data & view" aria-label="Data and view">&#9881;</button>';
     cluster += '</div>';
     return '<div class="app-hd">'+
-      '<button class="ws-toggle'+(wsOpen?' pressed':'')+'" aria-pressed="'+(wsOpen?'true':'false')+'" title="Workspace: your notes, comments and lists"><span class="ic">&#128221;</span> Workspace<span class="cnt" title="3 open notes">3</span></button>'+
       '<span class="ttl">Eskay | Snip PFS &amp; Technical Report 2026 &middot; Deliverables Dashboard</span>'+
       cluster+
     '</div>';
@@ -590,36 +578,91 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
     '</div>';
   }
 
-  // ---- Section 1: overview app shell ----
-  function buildOverview(id){
+  // ---- Section 1: the always-visible Workspace rail, three states ----
+  var railItems = [['Notes','&#128221;',3],['Comments &amp; markups','&#128172;',null],['User milestones','&#128681;',null],['Lists','&#9776;',null]];
+  function wsRailHtml(activeIdx){
+    var out='';
+    railItems.forEach(function(it,i){
+      out+='<button class="ico'+(i===activeIdx?' active':'')+'" title="'+it[0]+'" aria-label="'+it[0]+'" data-idx="'+i+'">'+it[1]+(it[2]?'<span class="badge" title="'+it[2]+' open notes">'+it[2]+'</span>':'')+'</button>';
+    });
+    return out;
+  }
+  function wsPanelNotesHtml(){
+    return '<div class="np-hd ws-hd"><span class="np-hd-title">Notes</span>'+
+        '<span class="grow"></span><button class="ds-ico rail-close" title="Close" aria-label="Close">&#10005;</button></div>'+
+      '<div class="side-strip">Your annotations</div>'+
+      '<div class="np-filter"><div class="ds-seg" role="tablist" aria-label="Notes filter"><button class="active" aria-pressed="true">This period</button><button aria-pressed="false">All periods</button></div></div>'+
+      '<div class="side-scroll"><div class="np-list">'+
+        '<div class="np-note"><div class="np-note-hd"><span class="st-pill st-open">Open <span class="car">&#9662;</span></span><span class="np-note-time">14 Sep, 08:12</span></div><div class="np-note-txt">Geotech report slipping 1 wk, owner to confirm.</div><div class="np-chips"><span class="np-chip">#SNIP-102</span></div></div>'+
+        '<div class="np-note"><div class="np-note-hd"><span class="st-pill st-pending">Pending <span class="car">&#9662;</span></span><span class="np-note-time">13 Sep, 16:40</span></div><div class="np-note-txt">Client requested a revised tie-in sequence for the tank farm interconnect.</div><div class="np-chips"><span class="np-chip">#SNIP-140</span></div></div>'+
+      '</div></div>';
+  }
+  function wsPanelCommentsHtml(){
+    return '<div class="np-hd ws-hd"><span class="np-hd-title">Comments &amp; markups</span>'+
+        '<span class="grow"></span><button class="ds-ico rail-close" title="Close" aria-label="Close">&#10005;</button></div>'+
+      '<div class="side-strip">Your annotations</div>'+
+      '<div class="side-scroll">'+
+        '<div style="padding:var(--group-gap);display:flex;flex-direction:column;gap:8px">'+
+          '<div class="dm-thread"><div class="dm-thread-hd"><span class="dm-tag">SNIP-102</span><span style="font-size:11px;color:var(--color-text-muted)">Matt &middot; 14 Sep 26</span></div><div class="dm-thread-txt">Slipped two weeks against the update. Flagging for the Wed review.</div></div>'+
+        '</div>'+
+        '<div class="dm-group">'+
+          '<div class="dm-group-title">Reset row marks</div>'+
+          '<div class="dm-group-desc">Clears the health dots and remarks you set on rows this session. Milestone comments and edits are not affected.</div>'+
+          '<button class="ds-btn danger">Reset row marks</button>'+
+        '</div>'+
+      '</div>';
+  }
+  function buildOverview(id, opts){
+    opts = opts || {};
+    var theme = opts.theme || 'light';
+    var railState = opts.railState || 'collapsed'; // collapsed | notes | comments
+    var activeIdx = railState==='notes' ? 0 : (railState==='comments' ? 1 : -1);
     var el=document.getElementById(id); if(!el) return;
+    var panelHtml = '';
+    if(railState==='notes') panelHtml = '<div class="ws-standalone-panel">'+wsPanelNotesHtml()+'</div>';
+    else if(railState==='comments') panelHtml = '<div class="ws-standalone-panel">'+wsPanelCommentsHtml()+'</div>';
     el.innerHTML =
-      appHeaderHtml({wsOpen:true,dvOpen:true})+
+      appHeaderHtml({theme:theme})+
       filterbarHtml()+
       '<div class="app-body">'+
-        '<div class="side-shell ws" id="'+id+'-ws"></div>'+
-        '<div class="board-sliver">Board (compressed for this mockup)<br>Milestone timeline continues here</div>'+
-        '<div class="side-shell dv" id="'+id+'-dv"></div>'+
+        '<div class="app-rail" id="'+id+'-rail"></div>'+
+        panelHtml+
+        '<div class="board-sliver">Board (compressed for this mockup)<br>Milestone timeline continues here'+
+          (railState==='collapsed' ? '<br><br><em>Rail collapsed: board runs full width beside the 44px rail.</em>' : '')+
+        '</div>'+
       '</div>';
-    var wsShell=document.getElementById(id+'-ws');
-    wsShell.appendChild(document.getElementById('tpl-ws-rail').content.cloneNode(true));
-    wsShell.appendChild(document.getElementById('tpl-ov-ws-panel').content.cloneNode(true));
-    var dvShell=document.getElementById(id+'-dv');
-    dvShell.appendChild(document.getElementById('tpl-ov-dv-panel').content.cloneNode(true));
-    dvShell.appendChild(document.getElementById('tpl-dv-rail').content.cloneNode(true));
+    var railEl = document.getElementById(id+'-rail');
+    railEl.innerHTML = wsRailHtml(activeIdx);
+    railEl.querySelectorAll('.ico').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var idx = parseInt(btn.getAttribute('data-idx'),10);
+        var wasActive = btn.classList.contains('active');
+        var next = wasActive ? 'collapsed' : (idx===0 ? 'notes' : (idx===1 ? 'comments' : 'collapsed'));
+        buildOverview(id, {theme:theme, railState:next});
+      });
+    });
+    var closeBtn = el.querySelector('.rail-close');
+    if(closeBtn) closeBtn.addEventListener('click', function(){ buildOverview(id, {theme:theme, railState:'collapsed'}); });
   }
-  buildOverview('ov-light');
-  buildOverview('ov-dark');
+  buildOverview('ov-collapsed-light', {theme:'light', railState:'collapsed'});
+  buildOverview('ov-collapsed-dark', {theme:'dark', railState:'collapsed'});
+  buildOverview('ov-notes-light', {theme:'light', railState:'notes'});
+  buildOverview('ov-notes-dark', {theme:'dark', railState:'notes'});
+  buildOverview('ov-comments-light', {theme:'light', railState:'comments'});
+  buildOverview('ov-comments-dark', {theme:'dark', railState:'comments'});
 
-  // ---- Section 2: top-right control cluster ----
+  // ---- Section 2: header right-hand buttons, desktop and compact ----
   ['hdr-closed-light','hdr-closed-dark'].forEach(function(id){
-    var el=document.getElementById(id); if(el) el.innerHTML = appHeaderHtml({wsOpen:true,dvOpen:false});
+    var theme = id.indexOf('dark')>-1 ? 'dark' : 'light';
+    var el=document.getElementById(id); if(el) el.innerHTML = appHeaderHtml({theme:theme});
   });
-  ['hdr-menu-light','hdr-menu-dark'].forEach(function(id){
-    var el=document.getElementById(id); if(el) el.innerHTML = appHeaderHtml({wsOpen:true,dvOpen:false,menuOpen:true});
+  ['hdr-tablet-light','hdr-tablet-dark'].forEach(function(id){
+    var theme = id.indexOf('dark')>-1 ? 'dark' : 'light';
+    var el=document.getElementById(id); if(el) el.innerHTML = appHeaderHtml({theme:theme,compact:true,menuOpen:true});
   });
   ['hdr-phone-light','hdr-phone-dark'].forEach(function(id){
-    var el=document.getElementById(id); if(el) el.innerHTML = appHeaderHtml({wsOpen:false,dvOpen:false,phone:true,menuOpen:true});
+    var theme = id.indexOf('dark')>-1 ? 'dark' : 'light';
+    var el=document.getElementById(id); if(el) el.innerHTML = appHeaderHtml({theme:theme,compact:true,menuOpen:true});
   });
 
   // ---- Section 3: notes with status ----
@@ -744,6 +787,16 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
       '<div class="dm-export-row"><div class="dm-export-main"><div class="dm-export-name">Comments &amp; edits (.json, re-importable)</div><div class="dm-export-desc">Everything entered on the board, in the format Mount file&hellip; reads back.</div></div><button class="ds-btn">Export</button></div>'+
       '<div class="dm-export-row"><div class="dm-export-main"><div class="dm-export-name">Comments report (.xlsx)</div><div class="dm-export-desc">A readable sheet of every comment, for circulation outside the board.</div></div><button class="ds-btn">Export</button></div>'+
       '<div class="dm-export-row"><div class="dm-export-main"><div class="dm-export-name">Status report (.csv)</div><div class="dm-export-desc">Health and progress overrides only, one row per milestone.</div></div><button class="ds-btn">Export</button></div>'+
+    '</div>'+
+    '<div class="dm-group">'+
+      '<div class="dm-group-title">Reset row marks</div>'+
+      '<div class="dm-group-desc">Clears the health dots and remarks you set on rows this session. Milestone comments and edits are not affected.</div>'+
+      '<button class="ds-btn danger">Reset row marks</button>'+
+      '<div class="dm-confirm">'+
+        '<div class="dm-confirm-txt">This clears health dots and remarks on 12 rows set this session. Milestone comments and edits are not affected.</div>'+
+        '<button class="ds-btn">Cancel</button>'+
+        '<button class="ds-btn danger">Reset</button>'+
+      '</div>'+
     '</div>';
   ['cm-desk-light','cm-desk-dark','cm-phone-light','cm-phone-dark'].forEach(function(id){
     var el=document.getElementById(id); if(el) el.innerHTML = cmBody;
@@ -780,7 +833,7 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
 
   // ---- Section 6: right side widgets (rail + panel each) ----
   function railHtml(active){
-    var items=[['View controls','&#127912;'],['Sources','&#128193;'],['Import','&#128229;'],['Data settings','&#9881;'],['Diagnostics','&#129514;']];
+    var items=[['View controls','&#127912;'],['Sources','&#128193;'],['Import','&#128229;'],['Data settings','&#9881;'],['Diagnostics','&#129514;'],['Help','&#10067;'],['About','&#8505;']];
     var out='<div class="side-rail">';
     items.forEach(function(it,i){out+='<button class="ico'+(i===active?' active':'')+'" title="'+it[0]+'" aria-label="'+it[0]+'">'+it[1]+'</button>';});
     out+='</div>';
@@ -800,7 +853,7 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
     function seg(v,lbl){return '<button'+(v===active?' class="active" aria-pressed="true"':' aria-pressed="false"')+'>'+lbl+'</button>';}
     return '<div class="dm-group">'+
       '<div class="dm-group-title">Theme</div>'+
-      '<div class="dm-group-desc">Moved in from the header toggle.</div>'+
+      '<div class="dm-group-desc">Opened here, or directly via the header&#39;s Colour &amp; theme button.</div>'+
       '<div class="ds-seg" role="tablist" aria-label="Theme">'+seg('light','Light')+seg('dark','Dark')+seg('system','System')+'</div>'+
     '</div>';
   }
@@ -881,6 +934,37 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
   widget('ds-light',3,'Schedule and view',dsBody);
   widget('ds-dark',3,'Schedule and view',dsBody);
 
+  var helpBody =
+    '<div class="dm-group">'+
+      '<div class="dm-group-title">Keyboard shortcuts</div>'+
+      '<div class="dm-row" style="border-top:0"><span style="flex:1 1 auto">Fit columns</span><span class="dm-badge">Ctrl+0</span></div>'+
+      '<div class="dm-row"><span style="flex:1 1 auto">Add note</span><span class="dm-badge">Ctrl+Enter</span></div>'+
+      '<div class="dm-row"><span style="flex:1 1 auto">Search board</span><span class="dm-badge">Ctrl+F</span></div>'+
+      '<div class="dm-row"><span style="flex:1 1 auto">Close panel</span><span class="dm-badge">Esc</span></div>'+
+    '</div>'+
+    '<div class="dm-group">'+
+      '<div class="dm-group-title">Support</div>'+
+      '<div class="dm-group-desc">Placeholder content. Links out to the real help centre once written.</div>'+
+      '<button class="ds-btn">Contact support</button>'+
+    '</div>';
+  widget('help-light',5,'Schedule and view',helpBody);
+  widget('help-dark',5,'Schedule and view',helpBody);
+
+  var aboutBody =
+    '<div class="dm-group">'+
+      '<div class="dm-group-title">Version</div>'+
+      '<div class="dm-group-desc">Read from APP_VERSION at load. Placeholder value shown here.</div>'+
+      '<div class="dm-row" style="border-top:0"><span style="flex:1 1 auto">Deliverables Dashboard</span><span class="dm-badge baseline">3.1.0-P50</span></div>'+
+    '</div>'+
+    '<div class="dm-group">'+
+      '<div class="dm-group-title">What&#39;s new</div>'+
+      '<div class="dm-group-desc">Placeholder. The most recent release notes would list here.</div>'+
+      '<div class="dm-row" style="border-top:0"><span style="flex:1 1 auto">Left Workspace rail replaces the header toggle</span></div>'+
+      '<div class="dm-row"><span style="flex:1 1 auto">Header actions regrouped, More actions removed on desktop</span></div>'+
+    '</div>';
+  widget('about-light',6,'Schedule and view',aboutBody);
+  widget('about-dark',6,'Schedule and view',aboutBody);
+
   // ---- Section 7 replay ----
   window.replayHighlight = function(id){
     var el = document.getElementById(id);
@@ -900,7 +984,7 @@ body{background:var(--pg-bg);color:var(--pg-ink);font-family:'Segoe UI Variable 
     return out;
   }
   function dvTabsHtml(){
-    var items=[['View controls','&#127912;'],['Sources','&#128193;'],['Import','&#128229;'],['Data settings','&#9881;'],['Diagnostics','&#129514;']];
+    var items=[['View controls','&#127912;'],['Sources','&#128193;'],['Import','&#128229;'],['Data settings','&#9881;'],['Diagnostics','&#129514;'],['Help','&#10067;'],['About','&#8505;']];
     var out='';
     items.forEach(function(it,i){out+='<button class="ph-tab'+(i===1?' active':'')+'">'+it[1]+' '+it[0]+'</button>';});
     return out;
