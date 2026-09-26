@@ -71,7 +71,7 @@ Instance: Eskay Creek PFS Deliverable Milestone Dashboard
 - The Activity ID autocomplete dropdown uses `onmousedown` with `event.preventDefault()`. This is load-bearing. Removing it silently reintroduces a focus-stealing bug where the cursor jumps to the start of the field (mousedown on a non-focusable element blurs the focused input before any click handler runs).
 - New code needing a rebuild after a user action calls `scheduleRerender(true)`, **not** `rerender(true)`. All 5 existing call sites were checked — none need synchronous DOM.
 - Sticky corner search box and Top Filter Bar Title field are two-way synced. Do not let them drift apart.
-- The three panel systems (Style/Customize sidebar, Top filter bar, Settings drawer) are distinct. Do not conflate them.
+- Two sides plus the filter bar are distinct (P56): Workspace (left, annotation layer), Data & view (right, schedule and format layer), and the Top filter bar. See `docs/04-architecture.md` Panel Systems. Do not conflate them.
 - Display state never mutates schedule data. Overrides and annotations are a separate layer.
 
 ## 6. Future Phases (not started)

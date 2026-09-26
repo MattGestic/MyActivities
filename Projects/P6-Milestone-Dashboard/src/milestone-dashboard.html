@@ -402,7 +402,7 @@ body{font-family:var(--font-sans);font-size:11px;background:var(--color-bg-eleva
 /* The View Controls panel moved to the right, so the page has to be pushed
    from the right. Left as margin-left, it shifted the whole board 300px the
    wrong way and left the panel off the edge of the viewport. */
-body.cv-open{margin-right:300px}
+/* body.cv-open retired at P56: View controls lives in Data & view (body.dv-open). */
 /* ---- Icon bar (collapsed state, always visible, print-safe) ---- */
 /* z-index 40, not 30. The bar is position:relative with a z-index, so it is a
    STACKING CONTEXT, and the More Actions panel inside it is resolved within
@@ -513,6 +513,20 @@ body.cv-open{margin-right:300px}
    derived, still no new state. */
 body:has(.ib-menu-panel .dot.show) #pm-more-dot{display:block}
 #btn-more-actions{font-size:15px;line-height:1}
+/* P56 (D-20b): above 1024px the menu panel IS the header's action row, icon
+   buttons with tooltips, and the trigger is hidden. At 1024px and below the
+   trigger returns and the panel is the dropdown above, labels shown. */
+@media (min-width:1025px){
+  #btn-more-actions{display:none}
+  #icon-bar .ib-menu-panel{position:static;display:flex;flex-direction:row;align-items:center;gap:var(--space-2);
+    min-width:0;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;overflow:visible;z-index:auto}
+  #icon-bar .icon-btn.ib-mi{width:var(--icon-btn);height:var(--icon-btn);min-height:0;padding:0;justify-content:center;
+    color:var(--color-text-on-header);position:relative}
+  #icon-bar .icon-btn.ib-mi:hover{background:var(--color-bg-header-hover);color:var(--color-text-on-header)}
+  #icon-bar .icon-btn.ib-mi.on{background:var(--color-bg-header-focus);border-color:transparent;color:var(--color-text-on-header)}
+  #icon-bar .ib-mi-lbl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  #icon-bar .icon-btn.ib-mi .dot{position:absolute;top:2px;right:2px}
+}
 /* Moved to the right of the icon bar, so it no longer acts as the flexible
    filler that pushed the icons over. The spacer before it does that now. */
 /* Pushed to the right of the bar, with the icon group still hard against the
@@ -535,6 +549,84 @@ body:has(.ib-menu-panel .dot.show) #pm-more-dot{display:block}
 body.print-mode #print-filter-note.show{display:block}
 @media print{ #print-filter-note.show{display:block} }
 
+
+/* ===== P56 (D-20b): two-sided workspace =====
+   Left: the Workspace, your annotation layer. A slate icon rail, always
+   visible and full height (it runs up through the header row, palette sheet
+   4b), and the panel it opens beside it. Right: Data & view, the schedule and
+   format layer (#settings-drawer), with its own rail of sections. The board
+   is pushed, not covered, by whichever panel is open, above 1024px. */
+:root{--ws-rail-w:44px;--ws-panel-w:320px;--dv-w:404px}
+body{margin-left:var(--ws-rail-w);transition:margin-left .18s ease,margin-right .18s ease}
+#ws-rail{position:fixed;left:0;top:0;bottom:0;width:var(--ws-rail-w);z-index:880;
+  background:var(--color-bg-workspace);display:flex;flex-direction:column;align-items:center;
+  gap:var(--space-2);padding:var(--space-4) 0}
+.ws-ri{position:relative;width:32px;height:32px;display:grid;place-items:center;padding:0;cursor:pointer;
+  border:0;border-radius:var(--radius-md);background:transparent;font-size:15px;line-height:1;
+  color:color-mix(in srgb,var(--color-text-on-header) 72%,transparent)}
+.ws-ri:hover{background:var(--color-bg-header-hover);color:var(--color-text-on-header)}
+.ws-ri.is-active{background:var(--color-bg-header-focus);color:var(--color-text-on-header)}
+.ws-ri.is-active::before{content:'';position:absolute;left:-6px;top:6px;bottom:6px;width:3px;
+  border-radius:2px;background:var(--color-accent)}
+.ws-ri:focus-visible{outline:var(--focus-ring) solid var(--color-accent);outline-offset:1px}
+.ws-bd{position:absolute;top:0;right:0;min-width:14px;height:14px;padding:0 3px;border-radius:7px;
+  background:var(--color-accent);color:var(--color-text-on-accent);font-size:9px;font-weight:700;
+  line-height:14px;text-align:center}
+.ws-bd:empty{display:none}
+#ws-panel{position:fixed;left:var(--ws-rail-w);top:0;bottom:0;width:var(--ws-panel-w);
+  max-width:calc(100vw - var(--ws-rail-w));z-index:870;display:none;flex-direction:column;overflow-y:auto;
+  background:var(--color-bg-panel);border-right:1px solid var(--color-line-default);
+  --sd-gutter:var(--space-6);--sd-group-pad:var(--space-6);--sd-row-y:var(--space-5);
+  --sd-stack:var(--space-4);--sd-inline:var(--space-3);--sd-card-pad:var(--space-5);--sd-label-col:120px}
+#ws-panel.open{display:flex}
+body.ws-open #ws-panel{box-shadow:var(--shadow-2)}
+/* Panel headings sit on the surface colour: the rail already carries the
+   slate, so a second slate band under the navy header would stack two
+   near-matching blues (palette sheet 4b, approved 2026-09-26). */
+.ws-hd,.sd-hd{position:sticky;top:0;z-index:3;display:flex;align-items:flex-start;justify-content:space-between;
+  gap:var(--space-3);padding:var(--space-4) var(--space-6);background:var(--color-bg-elevated);
+  color:var(--color-text-primary);border-bottom:1px solid var(--color-line-default)}
+.ws-hd-titles,.sd-hd-titles{display:flex;flex-direction:column;gap:var(--space-1);min-width:0}
+.ws-hd-layer,.sd-hd-layer{font-size:var(--text-xs);font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--color-text-muted)}
+.ws-hd b,.sd-hd b{font-size:var(--text-lg);line-height:1.3;color:var(--color-text-primary)}
+.ws-hd .sd-close,.sd-hd .sd-close{color:var(--color-text-muted)}
+.ws-sec[hidden]{display:none}
+.sd-list{margin:0;padding-left:var(--space-6);display:flex;flex-direction:column;gap:var(--space-3);
+  font-size:var(--text-sm);color:var(--color-text-primary);line-height:1.5}
+/* Data & view: the rail of sections on the panel's left edge. */
+.sd-tabs.sd-rail{flex:0 0 var(--ws-rail-w);flex-direction:column;align-items:center;gap:var(--space-2);
+  padding:var(--space-4) 0;position:static;overflow-y:auto;overflow-x:hidden;
+  background:var(--color-bg-header);border-bottom:0;border-right:1px solid var(--color-line-default)}
+.sd-rail-grow{flex:1 1 auto}
+.sd-rail .sd-tab[hidden]{display:none}
+.sd-rail .sd-tab{position:relative;width:32px;height:32px;padding:0;display:grid;place-items:center;
+  border-radius:var(--radius-md);font-size:14px;line-height:1;
+  color:color-mix(in srgb,var(--color-text-on-header) 72%,transparent)}
+.sd-rail .sd-tab:hover:not(.is-active){background:var(--color-bg-header-hover);color:var(--color-text-on-header)}
+.sd-rail .sd-tab.is-active{background:var(--color-bg-header-focus);border-color:transparent;color:var(--color-text-on-header)}
+.sd-rail .sd-tab.is-active::before{content:'';position:absolute;left:-6px;top:6px;bottom:6px;width:3px;
+  border-radius:2px;background:var(--color-accent)}
+.sd-tab-lbl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.sd-rail .sd-tab .sd-badge{position:absolute;top:-2px;right:-4px;margin:0}
+.sd-main{flex:1 1 auto;min-width:0;overflow-y:auto;display:flex;flex-direction:column;padding-bottom:var(--space-6)}
+@media (min-width:1025px){
+  body.ws-open{margin-left:calc(var(--ws-rail-w) + var(--ws-panel-w))}
+  body.dv-open{margin-right:var(--dv-w)}
+  body.dv-open #settings-drawer{box-shadow:none}
+}
+@media (max-width:640px){
+  :root{--ws-panel-w:calc(100vw - var(--ws-rail-w));--dv-w:100vw}
+}
+body.print-mode #ws-rail,body.print-mode #ws-panel{display:none}
+body.print-mode{margin-left:0}
+@media print{ #ws-rail,#ws-panel,#settings-drawer{display:none!important} body{margin:0!important} }
+/* Import confirmation: the new entry is shown where it landed, then fades. */
+@keyframes sret-landed{from{background:var(--color-accent-tint-bg);outline-color:var(--color-accent)}
+  to{background:transparent;outline-color:transparent}}
+.is-landed{outline:2px solid transparent;outline-offset:-2px;animation:sret-landed 1.2s ease-out 1}
+@media (prefers-reduced-motion:reduce){
+  .is-landed{animation:none;outline-color:var(--color-accent)}
+}
 /* ---- Settings drawer: full-height vertical panel sliding from left ---- */
 /* ---- Settings drawer ----
    Every horizontal edge inside this panel resolves to --sd-gutter and every
@@ -548,7 +640,7 @@ body.print-mode #print-filter-note.show{display:block}
    tabs, so nothing holds the bottom of the scroll open any more and the last
    group ended flush against the edge. It is set on the drawer itself, which is
    the one element the no-inline-spacing rule is about the INSIDE of. */
-#settings-drawer{position:fixed;top:0;right:0;bottom:0;width:360px;max-width:88vw;background:var(--color-bg-panel);border-left:1px solid var(--color-line-default);box-shadow:var(--shadow-3);transform:translateX(100%);transition:transform .18s ease;z-index:900;overflow-y:auto;padding:0 0 var(--space-6);display:flex;flex-direction:column;
+#settings-drawer{position:fixed;top:0;right:0;bottom:0;width:var(--dv-w);max-width:88vw;background:var(--color-bg-panel);border-left:1px solid var(--color-line-default);box-shadow:var(--shadow-3);transform:translateX(100%);transition:transform .18s ease;z-index:900;overflow:hidden;padding:0;display:flex;flex-direction:row;
   --sd-gutter:var(--space-6);     /* 16px  every left and right edge */
   --sd-group-pad:var(--space-6);  /* 16px  group top and bottom */
   --sd-row-y:var(--space-5);      /* 12px  row top and bottom */
@@ -559,9 +651,7 @@ body.print-mode #print-filter-note.show{display:block}
 #settings-drawer.open{transform:translateX(0)}
 #settings-scrim{position:fixed;inset:0;background:var(--color-scrim);display:none;z-index:850}
 #settings-scrim.open{display:block}
-.sd-hd{background:var(--color-bg-header);color:var(--color-text-on-accent);padding:var(--space-4) var(--sd-gutter);display:flex;align-items:flex-start;justify-content:space-between;gap:var(--sd-inline);position:sticky;top:0;z-index:3;flex:0 0 auto}
-.sd-hd b{font-size:var(--text-md);letter-spacing:.02em;line-height:1.3}
-.sd-hd-titles{display:flex;flex-direction:column;gap:var(--space-1);min-width:0}
+/* .sd-hd: see the shared .ws-hd,.sd-hd rule (P56). */
 .sd-hd-sub{font-size:var(--text-xs);color:var(--color-text-on-header-muted);line-height:1.4}
 .sd-close{background:none;border:none;color:var(--color-text-on-panel);font-size:16px;cursor:pointer;line-height:1}
 .file-picker-wrap{display:inline-block;opacity:.55;filter:grayscale(.4);transition:opacity .15s,filter .15s}
@@ -808,7 +898,12 @@ input[type=range]{width:110px;cursor:pointer;background-color:transparent}
 .sd-src-text b{color:var(--color-text-emphasis)}
 
 /* ---- Filter panel: horizontal strip below title, above meta row (filter/sort row + display controls row) ---- */
-#filter-bar{position:fixed;top:0;right:0;bottom:0;width:300px;max-width:88vw;background:var(--color-filter-bg);border-left:1px solid var(--color-filter-border);box-shadow:var(--shadow-3);display:flex;flex-direction:column;gap:0;font-size:10px;padding:var(--space-2) 0 var(--space-6);transform:translateX(100%);transition:transform .18s ease;z-index:700;overflow-y:auto}
+/* P56 (D-20b): View controls is a section of Data & view now, so the old
+   sidebar's own position, width, shadow and slide are gone; the section body
+   flows inside the panel. Its close button and heading give way to the
+   panel's. */
+#filter-bar{position:static;display:flex;flex-direction:column;gap:0;font-size:10px;padding:var(--space-4) 0 var(--space-6);background:transparent}
+#settings-drawer #filter-bar>.fb-close,#settings-drawer #filter-bar>.fb-hd{display:none}
 #filter-bar.open{transform:translateX(0)}
 #filter-bar .fb-hd{padding:0 12px 10px;font-size:11px;font-weight:700;color:var(--color-accent-deep);display:flex;align-items:center;gap:6px}
 /* max-width:100vw + box-sizing:border-box: without a hard ceiling tied to the
@@ -1018,6 +1113,13 @@ select.ds-select{cursor:pointer}
 @media (max-width:1279px){
   #top-filter-bar .fb-box.find,#top-filter-bar .fb-box.when{flex:1 1 100%}
 }
+/* P56: the same stacking when the BAR is narrow, not only the viewport. An
+   open Workspace or Data & view panel takes width from the board without the
+   viewport changing, and Find/Date range side by side then squeezed Find's
+   fields over their labels. Set by a ResizeObserver (fbNarrowWatch); not a
+   container query, which would make the bar the containing block for its
+   fixed popovers. 1235 = the old 1279 breakpoint less the workspace rail. */
+#top-filter-bar.fb-narrow .fb-box.find,#top-filter-bar.fb-narrow .fb-box.when{flex:1 1 100%}
 @media (max-width:767px){
   /* Phone: labels above full-width fields, per the design standard's field
      row pattern (>=768 inline with a fixed label column; <768 stacked). */
@@ -1110,7 +1212,7 @@ select.ds-select{cursor:pointer}
 .dep-sub-row button{font-size:9px;font-weight:600;padding:2px 6px;border:1px solid var(--color-btn-secondary-outline);background:var(--color-btn-secondary-bg);color:var(--color-btn-secondary-text);border-radius:3px;cursor:pointer}
 .dep-sub-row button:hover{background:var(--color-btn-primary-bg);color:var(--color-btn-primary-text);border-color:var(--color-btn-primary-outline)}
 .dep-sub-row button.active{background:var(--color-btn-primary-bg);color:var(--color-btn-primary-text);border-color:var(--color-btn-primary-outline)}
-#filter-bar label{font-weight:500;color:var(--color-btn-primary-bg)}
+#filter-bar label{font-weight:500;color:var(--color-text-emphasis)}
 /* D-15a: one control height for the whole bar. var(--space-2) top/bottom
    (4px) is what the selects already used the most of anywhere in the file;
    the number and text inputs are brought to the same vertical padding here
@@ -1128,7 +1230,7 @@ select.ds-select{cursor:pointer}
 #range-wrap-section input[type="date"]{font-size:10px;padding:2px 4px;border-radius:3px;
   border:1px solid var(--color-input-border);background:var(--color-bg-elevated);
   color:var(--color-text-on-panel);font-family:inherit}
-#filter-bar .ctrl-group label{color:var(--color-btn-primary-bg)}
+#filter-bar .ctrl-group label{color:var(--color-text-emphasis)}
 
 
 @media print{
@@ -2156,6 +2258,66 @@ textarea:focus-visible,[tabindex]:focus-visible{
 </defs>
 </svg>
 
+<!-- ===== P56 (D-20b): Workspace, the annotation layer (left) =====
+     The rail is always on screen; only its panel opens and closes. Notes
+     (D-19) and Lists (D-06) join the rail when they are built; until then the
+     rail carries only sections with real content. -->
+<nav id="ws-rail" aria-label="Workspace: your annotations">
+  <button class="ws-ri" id="ws-tab-comments" onclick="setWorkspaceSection('comments')" title="Comments &amp; markups" aria-label="Comments and markups" aria-pressed="false">&#128172;</button>
+  <button class="ws-ri" id="ws-tab-userms" onclick="setWorkspaceSection('userms')" title="User milestones" aria-label="User milestones" aria-pressed="false">&#9670;<span class="ws-bd" id="ws-userms-count"></span></button>
+</nav>
+<aside id="ws-panel" aria-label="Workspace">
+  <div class="ws-hd">
+    <div class="ws-hd-titles">
+      <span class="ws-hd-layer">Your annotations</span>
+      <b id="ws-hd-title">Comments &amp; markups</b>
+    </div>
+    <button class="sd-close" onclick="toggleWorkspace(false)" aria-label="Close" title="Close">&#10005;</button>
+  </div>
+  <div class="ws-sec" id="ws-sec-comments" data-sec="comments">
+    <div class="sd-group">
+      <div class="sd-group-title">Annotation layers</div>
+      <div class="sd-group-desc">Comments, health, progress and edits you have entered, and any annotation file mounted on top of them.</div>
+      <div id="ws-annot-body"></div>
+    </div>
+    <div class="sd-group">
+      <div class="sd-group-title">Exports</div>
+      <div class="sd-row">
+        <div class="sd-row-main"><div class="sd-row-label">Comments report (.xlsx)</div><div class="sd-row-help">Milestone comments, dependencies and remarks as a workbook.</div></div>
+        <div class="sd-row-ctrl"><button class="toggle-btn" id="btn-export-comments" onclick="exportComments()" title="Export comments only (milestones, dependencies, remarks) as a workbook">&#11015; Export</button></div>
+      </div>
+      <div class="sd-row">
+        <div class="sd-row-main"><div class="sd-row-label">Status report (.csv)</div><div class="sd-row-help">The schedule fields and everything entered on the board, one row per milestone.</div></div>
+        <div class="sd-row-ctrl"><button class="toggle-btn" id="btn-export-csv" onclick="exportCSV()" title="Export the schedule fields and everything entered on the board as CSV">&#11015; Export</button></div>
+      </div>
+      <div class="sd-row">
+        <div class="sd-row-main"><div class="sd-row-label">Model and annotations (.json)</div><div class="sd-row-help">Everything, in a file this dashboard can mount again.</div></div>
+        <div class="sd-row-ctrl"><button class="toggle-btn" id="btn-export-json" onclick="exportModel()" title="Export the model as JSON">&#11015; Export</button></div>
+      </div>
+    </div>
+    <div class="sd-group">
+      <div class="sd-group-title">Reset row marks</div>
+      <div class="sd-group-desc">Puts every row's health indicator and remarks text back to their original values. Card comments and edits are not touched.</div>
+      <div class="sd-row" id="ws-reset-row"></div>
+    </div>
+  </div>
+  <div class="ws-sec" id="ws-sec-userms" data-sec="userms" hidden>
+    <div id="ws-userms-body"></div>
+  </div>
+</aside>
+<div id="annot-dialog" class="annot-dialog" hidden>
+  <div class="annot-panel" role="dialog" aria-label="Import annotations">
+    <div class="annot-hd">Mount annotations</div>
+    <div id="annot-dialog-body"></div>
+    <div class="annot-foot">
+      <button class="toggle-btn" id="annot-all" onclick="annotSelectAll()">Select all</button>
+      <span class="sd-actions-sep"></span>
+      <button class="toggle-btn" onclick="closeAnnotDialog()">Cancel</button>
+      <button class="toggle-btn" id="annot-apply" onclick="applyAnnotSelection()">Import selected</button>
+    </div>
+  </div>
+</div>
+
 <div id="icon-bar">
   <span class="title" id="rpt-title-text" contenteditable="true" spellcheck="false" title="Click to edit the report title">Eskay | Snip PFS &amp; Technical Report 2026 &middot; Deliverables Dashboard</span>
   <span id="dirty-indicator" title="You have edits that haven't been exported">&#9679; Unsaved changes</span>
@@ -2171,18 +2333,24 @@ textarea:focus-visible,[tabindex]:focus-visible{
               aria-haspopup="menu" aria-expanded="false" aria-controls="more-actions-panel"
               aria-label="More actions" title="More actions">&#8942;<span class="dot" id="more-dot"></span></button>
       <div class="ib-menu-panel" id="more-actions-panel" role="menu">
-        <button class="icon-btn ib-mi" role="menuitem" id="btn-fit-screen" onclick="fitToScreen()" title="Fit visible week columns to the available screen width"><span class="ib-mi-ico">&#8596;</span><span class="ib-mi-lbl">Fit columns to screen</span></button>
+        <!-- P56 (D-20b): five actions, left to right, the order of the approved
+             D-20 rev 3 header. On desktop this panel is shown inline as a row of
+             icon buttons and the trigger is hidden; at 1024px and below it is the
+             More actions (⋮) dropdown again, labels shown. One set of buttons in
+             both modes, so every id and writer (toggleTheme, togglePrintMode,
+             the two dots) addresses the same element. Fit columns lives in the
+             Date range filter; Export comments moved to the Workspace's
+             Comments & markups; the Filter row toggle was removed (D-20). -->
         <!-- The glyph lives in its own span because toggleTheme rewrites it;
              writing it onto the button would take the row's label with it. -->
-        <button class="icon-btn ib-mi" role="menuitem" id="btn-theme-toggle" onclick="toggleTheme()" title="Switch light/dark theme"><span class="ib-mi-ico">&#127765;</span><span class="ib-mi-lbl">Light / dark theme</span></button>
+        <button class="icon-btn ib-mi" role="menuitem" id="btn-theme-toggle" onclick="toggleTheme()" title="Switch light/dark theme" aria-label="Switch light/dark theme"><span class="ib-mi-ico">&#127765;</span><span class="ib-mi-lbl">Light / dark</span></button>
         <!-- U+FE0F after the printer, so the glyph is requested in emoji
              presentation rather than as a text-mode outline that some platforms
              draw as a box. -->
-        <button class="icon-btn ib-mi" role="menuitem" id="btn-print-mode" onclick="togglePrintMode()" title="Print preview &mdash; hold the board at A3 portrait page width" aria-pressed="false"><span class="ib-mi-ico">&#128424;&#65039;</span><span class="ib-mi-lbl">Print preview (A3)</span></button>
-        <button class="icon-btn ib-mi" role="menuitem" id="btn-export-comments" onclick="exportComments()" title="Export comments only (milestones, dependencies, remarks) as a workbook"><span class="ib-mi-ico"><span class="ib-ico-stack">&#128172;<i>&#8595;</i></span></span><span class="ib-mi-lbl">Export comments</span></button>
-        <button class="icon-btn ib-mi" role="menuitem" id="btn-filter-toggle" onclick="toggleTopFilterBar()" title="Show or hide the filter row" aria-pressed="true"><span class="ib-mi-ico">&#128269;</span><span class="ib-mi-lbl">Filter row</span><span class="dot" id="filter-dot"></span></button>
-        <button class="icon-btn ib-mi" role="menuitem" id="btn-style-icon" onclick="toggleFilterBar()" title="View controls"><span class="ib-mi-ico">&#127912;</span><span class="ib-mi-lbl">View controls</span></button>
-        <button class="icon-btn ib-mi" role="menuitem" id="btn-settings-icon" onclick="toggleSettingsDrawer()" title="Settings"><span class="ib-mi-ico">&#9881;</span><span class="ib-mi-lbl">Settings</span><span class="dot" id="settings-dot"></span></button>
+        <button class="icon-btn ib-mi" role="menuitem" id="btn-print-mode" onclick="togglePrintMode()" title="Print preview: hold the board at A3 portrait page width" aria-label="Print preview (A3)" aria-pressed="false"><span class="ib-mi-ico">&#128424;&#65039;</span><span class="ib-mi-lbl">Print</span></button>
+        <button class="icon-btn ib-mi" role="menuitem" id="btn-save-as" onclick="publishDashboard()" title="Save as a new dashboard: a standalone HTML file with the current schedule and annotations built in" aria-label="Save as a new dashboard"><span class="ib-mi-ico">&#128190;</span><span class="ib-mi-lbl">Save as</span></button>
+        <button class="icon-btn ib-mi" role="menuitem" id="btn-style-icon" onclick="toggleFilterBar()" title="Colour and theme: view controls" aria-label="Colour and theme"><span class="ib-mi-ico">&#127912;</span><span class="ib-mi-lbl">Colour &amp; theme</span></button>
+        <button class="icon-btn ib-mi" role="menuitem" id="btn-settings-icon" onclick="toggleSettingsDrawer()" title="Import and settings" aria-label="Import and settings"><span class="ib-mi-ico">&#9881;</span><span class="ib-mi-lbl">Import &amp; settings</span><span class="dot" id="settings-dot"></span></button>
       </div>
     </span>
   </span>
@@ -2190,59 +2358,204 @@ textarea:focus-visible,[tabindex]:focus-visible{
 
 <div id="settings-scrim" onclick="toggleSettingsDrawer(false)"></div>
 <div id="settings-drawer">
-  <div class="sd-hd">
-    <div class="sd-hd-titles">
-      <b>&#9881; Data Settings</b>
-      <span class="sd-hd-sub">What is mounted on this board, and how it was brought in</span>
-    </div>
-    <button class="sd-close" onclick="toggleSettingsDrawer(false)" aria-label="Close" title="Close">&#10005;</button>
+  <!-- P56 (D-20b): Data & view, the schedule-and-format side. A vertical rail
+       of sections on the panel's left edge (the old horizontal tab strip; same
+       button ids, same setSettingsTab()), the section content beside it. -->
+  <div class="sd-tabs sd-rail" role="tablist" aria-orientation="vertical" aria-label="Data and view sections">
+    <button class="sd-tab" id="sd-tab-view" role="tab" aria-selected="false" onclick="setSettingsTab('view')" title="View controls" aria-label="View controls"><span class="sd-tab-ico" aria-hidden="true">&#127912;</span><span class="sd-tab-lbl">View controls</span></button>
+    <button class="sd-tab is-active" id="sd-tab-sources" role="tab" aria-selected="true" onclick="setSettingsTab('sources')" title="Sources" aria-label="Sources"><span class="sd-tab-ico" aria-hidden="true">&#128451;&#65039;</span><span class="sd-tab-lbl">Sources</span></button>
+    <button class="sd-tab" id="sd-tab-import" role="tab" aria-selected="false" onclick="setSettingsTab('import')" title="Import" aria-label="Import"><span class="sd-tab-ico" aria-hidden="true">&#128229;</span><span class="sd-tab-lbl">Import</span></button>
+    <button class="sd-tab" id="sd-tab-defaults" role="tab" aria-selected="false" onclick="setSettingsTab('defaults')" title="Data settings" aria-label="Data settings"><span class="sd-tab-ico" aria-hidden="true">&#9881;</span><span class="sd-tab-lbl">Data settings</span></button>
+    <button class="sd-tab" id="sd-tab-diag" role="tab" aria-selected="false" onclick="setSettingsTab('diag')" title="Diagnostics" aria-label="Diagnostics" hidden><span class="sd-tab-ico" aria-hidden="true">&#9888;&#65039;</span><span class="sd-tab-lbl">Diagnostics</span><span class="sd-badge sd-badge--cond" id="sd-diag-count">0</span></button>
+    <span class="sd-rail-grow"></span>
+    <button class="sd-tab" id="sd-tab-help" role="tab" aria-selected="false" onclick="setSettingsTab('help')" title="Help" aria-label="Help"><span class="sd-tab-ico" aria-hidden="true">?</span><span class="sd-tab-lbl">Help</span></button>
+    <button class="sd-tab" id="sd-tab-about" role="tab" aria-selected="false" onclick="setSettingsTab('about')" title="About" aria-label="About"><span class="sd-tab-ico" aria-hidden="true">i</span><span class="sd-tab-lbl">About</span></button>
   </div>
-
-  <!-- Outside the tab panels on purpose: it is an overlay over the whole
-       drawer, so switching tabs underneath it must not take it away. -->
-  <div id="annot-dialog" class="annot-dialog" hidden>
-    <div class="annot-panel" role="dialog" aria-label="Import annotations">
-      <div class="annot-hd">Mount annotations</div>
-      <div id="annot-dialog-body"></div>
-      <div class="annot-foot">
-        <button class="toggle-btn" id="annot-all" onclick="annotSelectAll()">Select all</button>
-        <span class="sd-actions-sep"></span>
-        <button class="toggle-btn" onclick="closeAnnotDialog()">Cancel</button>
-        <button class="toggle-btn" id="annot-apply" onclick="applyAnnotSelection()">Import selected</button>
+  <div class="sd-main">
+    <div class="sd-hd">
+      <div class="sd-hd-titles">
+        <span class="sd-hd-layer">Data &amp; view</span>
+        <b id="sd-hd-title">Sources</b>
+      </div>
+      <button class="sd-close" onclick="toggleSettingsDrawer(false)" aria-label="Close" title="Close">&#10005;</button>
+    </div>
+  <!-- ===== Section: View controls (was the Customize sidebar) ===== -->
+  <div class="sd-tabpanel" id="sd-panel-view" data-tab="view" hidden>
+  <div id="filter-bar">
+    <button class="fb-close" onclick="toggleFilterBar(false)" aria-label="Close" title="Close">&#10005;</button>
+    <div class="fb-hd">&#127912; View Controls</div>
+  
+    <div class="cv-sect">
+      <div class="cv-sect-title">Layout</div>
+      <!-- Widest to narrowest, then the two that size a cell: Title Column,
+           Column Width, Row height, Icon size. Ordered so the two that decide how
+           much board fits across the screen sit together at the top. -->
+      <div class="cv-field-row">
+        <label>Title Column: <span id="name-width-val">220px</span></label>
+        <input type="range" id="name-width" min="140" max="400" value="220" oninput="setNameWidth(this.value)" onchange="onSizeSliderRelease()">
+      </div>
+      <div class="cv-field-row">
+        <label>Column Width: <span id="wk-width-val">36px</span></label>
+        <input type="range" id="wk-width" min="20" max="144" value="36" oninput="setWkWidth(this.value)" onchange="onSizeSliderRelease()">
+      </div>
+      <div class="cv-field-row">
+        <label>Row height: <span id="row-height-val">34px</span></label>
+        <input type="range" id="row-height" min="28" max="72" value="34" oninput="setRowHeight(this.value)" onchange="onSizeSliderRelease()">
+      </div>
+      <div class="cv-field-row">
+        <label>Icon size: <span id="ico-size-val">15px</span></label>
+        <input type="range" id="ico-size" min="10" max="24" value="15" oninput="setIcoSize(this.value)" onchange="onSizeSliderRelease()">
+      </div>
+      <div class="toggle-switch-row">
+        <span class="tsw-label">Allow activity title to wrap</span>
+        <label class="toggle-switch"><input type="checkbox" id="btn-dname-wrap" onchange="toggleDnameWrap(this)"><span class="tsw-slider"></span></label>
       </div>
     </div>
-  </div>
-
-  <!-- Above the tabs, not under them. Publishing is what the drawer is FOR, and
-       as a sticky footer it sat below the source and import tables that feed it,
-       so the first thing read was the machinery and the last was the outcome.
-       Two rows: the three exports right-anchored, and the destructive action on
-       its own line underneath, where a mis-aimed click cannot reach it. TD-149. -->
-  <div class="sd-actions">
-    <!-- The two exports spread across the width on the left; the two actions
-         that change something, or write a file of everything, anchored together
-         on the right. Clear all comments was on its own line at P39 so a
-         mis-aimed click could not reach it; the user asked for it back in line
-         with Save as new dashboard, so it is there, still visually separated by
-         its danger colour. TD-155. -->
-    <div class="sd-actions-main">
-      <div class="sd-actions-exports">
-        <button class="toggle-btn" onclick="exportCSV()" title="Export the schedule fields and everything entered on the board as CSV">&#11015; CSV</button>
-        <button class="toggle-btn" onclick="exportModel()" title="Export the model as JSON">&#11015; JSON</button>
-      </div>
-      <div class="sd-actions-right">
-        <button class="toggle-btn active" onclick="publishDashboard()" title="Write a new standalone HTML file with the current schedule and annotations built in. Upload that to SharePoint and anyone who opens it sees this data, with nothing to import.">&#128190; Save as new dashboard</button>
-        <button class="toggle-btn sd-btn-danger" onclick="resetChanges()" title="Resets every row's health indicator and remarks text back to their original values. Does not touch card comments.">Reset row marks</button>
+  
+    <div class="cv-sect">
+      <div class="cv-sect-title">Fields</div>
+      <button class="toggle-btn" id="btn-toggle-all-cols" onclick="toggleAllCols(this)" style="width:100%">Show All Columns</button>
+      <details class="cv-cols-expander">
+        <summary>Show/hide individual columns</summary>
+        <div class="cv-cols-grid">
+          <button class="toggle-btn" id="btn-ref" onclick="toggleCol('ref',this)">Ref</button>
+          <button class="toggle-btn" id="btn-hrs" onclick="toggleCol('hrs',this)">Hrs</button>
+          <button class="toggle-btn" id="btn-alloc" onclick="toggleCol('alloc',this)">Alloc</button>
+          <button class="toggle-btn" id="btn-prog" onclick="toggleCol('prog',this)">%Prog</button>
+          <button class="toggle-btn" id="btn-type" onclick="toggleCol('type',this)">Type</button>
+          <button class="toggle-btn" id="btn-doc" onclick="toggleCol('doc',this)">Doc No.</button>
+          <button class="toggle-btn" id="btn-task" onclick="toggleCol('task',this)">Task Code</button>
+          <button class="toggle-btn" id="btn-src" onclick="toggleCol('src',this)" title="The Activity IDs behind each row">Source IDs</button>
+          <button class="toggle-btn" id="btn-srcsch" onclick="toggleCol('srcsch',this)" title="The schedule each row was imported from">Source Sched.</button>
+        </div>
+      </details>
+      <!-- Two buttons, not one that relabels itself. A single button reading
+           "Hide" had to be read as an ACTION to make sense, and every other
+           segmented control in this panel reads as a STATE, so the two idioms sat
+           side by side meaning opposite things. TD-147. -->
+      <div class="cv-field-row cv-remarks-row">
+        <label>Row Comments field</label>
+        <span class="fb-inline-group" style="margin-left:0;padding-left:0;border-left:none">
+          <button class="toggle-btn active" id="btn-remarks-show" onclick="setRemarksVisible(true)" title="Show the comments field under each row">Show</button>
+          <button class="toggle-btn" id="btn-remarks-hide" onclick="setRemarksVisible(false)" title="Hide the comments field under each row">Hide</button>
+        </span>
       </div>
     </div>
+  
+    <!-- P54 (D-21): mirrors the label-cell controls on the histogram row itself
+         (renderHistogram()); either sets the same two globals through the same
+         setHistMeasure()/setHistPos(), and syncHistControlsUI() keeps both
+         pairs of buttons agreeing with whichever one was clicked. -->
+    <div class="cv-sect">
+      <div class="cv-sect-title">Histogram</div>
+      <div class="cv-field-row cv-hist-row">
+        <label>Measure</label>
+        <span class="fb-inline-group" style="margin-left:0;padding-left:0;border-left:none">
+          <button class="toggle-btn active" id="btn-hist-measure-hours" onclick="setHistMeasure('hours')" title="Hours attributed to each week">Hours</button>
+          <button class="toggle-btn" id="btn-hist-measure-tasks" onclick="setHistMeasure('tasks')" title="Milestones falling in each week">Tasks</button>
+        </span>
+      </div>
+      <div class="cv-field-row cv-hist-row">
+        <label>Position</label>
+        <span class="fb-inline-group" style="margin-left:0;padding-left:0;border-left:none">
+          <button class="toggle-btn" id="btn-hist-pos-top" onclick="setHistPos('top')" title="Directly under the week headers">Top</button>
+          <button class="toggle-btn active" id="btn-hist-pos-bottom" onclick="setHistPos('bottom')" title="At the end of the report">Bottom</button>
+        </span>
+      </div>
+    </div>
+  
+    <div class="cv-sect">
+      <div class="cv-sect-title">Labels</div>
+      <!-- Each size slider sits directly under the control that turns its text on,
+           and is disabled while that text is off: a slider that scales nothing is
+           a control with no effect, and it read as broken. The enabled state is
+           DERIVED from the same three variables the board reads, by one writer
+           (syncLabelScaleEnabled) called from every path that changes them,
+           including the rebuild reapply. TD-146. -->
+      <div class="toggle-switch-row">
+        <span class="tsw-label">Milestone labels</span>
+        <label class="toggle-switch"><input type="checkbox" id="btn-lbl" onchange="toggleLabels(this)"><span class="tsw-slider"></span></label>
+      </div>
+      <div class="cv-field-row cv-sub-field" id="row-label-scale">
+        <label>Label text size <span id="label-scale-val">100%</span></label>
+        <input type="range" id="label-scale" min="70" max="150" value="100" step="5" oninput="setLabelScale(this.value)" title="Scales the type-code label (INT/CLI/MS...) shown next to each milestone">
+      </div>
+      <div class="toggle-switch-row">
+        <span class="tsw-label">Milestone hrs</span>
+        <label class="toggle-switch"><input type="checkbox" id="btn-mhrs" onchange="toggleMHours(this)"><span class="tsw-slider"></span></label>
+      </div>
+      <div class="cv-field-row cv-sub-field" id="row-hrs-scale">
+        <label>Hours text size <span id="hrs-scale-val">100%</span></label>
+        <input type="range" id="hrs-scale" min="70" max="150" value="100" step="5" oninput="setHrsScale(this.value)" title="Scales the milestone-hours text shown next to each milestone">
+      </div>
+      <div class="cv-field-row" style="margin-top:2px">
+        <label>Milestone title</label>
+        <span class="fb-inline-group" style="margin-left:0;padding-left:0;border-left:none">
+          <button class="toggle-btn" id="btn-title-mode-off" onclick="setShortTitleMode('off')" title="Don't show the short title on the board">Off</button>
+          <button class="toggle-btn" id="btn-title-mode-title" onclick="setShortTitleMode('title')" title="Show just the short title">Title</button>
+          <!-- active here, and SHORT_TITLE_MODE='id' with shortTitlesVisible=true
+               in the script, are the same default stated twice. TD-144. -->
+          <button class="toggle-btn active" id="btn-title-mode-id" onclick="setShortTitleMode('id')" title="Show just the Activity ID">ID</button>
+          <button class="toggle-btn" id="btn-title-mode-both" onclick="setShortTitleMode('both')" title="Show Activity ID as a prefix, then the title">ID + Title</button>
+        </span>
+      </div>
+      <div class="cv-field-row cv-sub-field" id="row-title-scale">
+        <label>Title text size <span id="title-scale-val">100%</span></label>
+        <input type="range" id="title-scale" min="70" max="150" value="100" step="5" oninput="setTitleScale(this.value)" title="Scales the short-title text shown next to each milestone">
+      </div>
+    </div>
+  
+    <div class="cv-sect">
+      <div class="cv-sect-title">Dependencies</div>
+      <div class="dep-sub-row">
+        <span class="dep-lbl pred">Predecessors</span>
+        <button id="btn-pred-all-on" onclick="setAllDep('pred', true)">All on</button>
+        <button id="btn-pred-all-off" onclick="setAllDep('pred', false)">All off</button>
+      </div>
+      <div class="dep-sub-row" style="margin-top:4px">
+        <span class="dep-lbl succ">Dependencies</span>
+        <button id="btn-succ-all-on" onclick="setAllDep('succ', true)">All on</button>
+        <button id="btn-succ-all-off" onclick="setAllDep('succ', false)">All off</button>
+      </div>
+      <div class="cv-field-row" style="margin-top:8px">
+        <label>Line thickness: <span id="line-thickness-val">1.6</span></label>
+        <input type="range" id="line-thickness" min="0.6" max="4" step="0.2" value="1.6" oninput="onThicknessChange(this.value)">
+      </div>
+      <div class="toggle-switch-row">
+        <span class="tsw-label">Show dependency counts</span>
+        <label class="toggle-switch"><input type="checkbox" id="toggle-counts" onchange="onCountsToggle()"><span class="tsw-slider"></span></label>
+      </div>
+      <div class="cv-field-row">
+        <label>Zero-count filter</label>
+        <span class="fb-inline-group" style="margin-left:0;padding-left:0;border-left:none">
+          <button class="toggle-btn active" id="btn-zerofilter-all" onclick="setZeroFilter('all')" title="Show everything — the neutral state">All</button>
+          <button class="toggle-btn" id="btn-zerofilter-hide" onclick="setZeroFilter('hide-zero')" title="Hide milestones with zero predecessors/dependencies">Hide zero</button>
+          <button class="toggle-btn" id="btn-zerofilter-only" onclick="setZeroFilter('only-zero')" title="Show only milestones with zero predecessors/dependencies">Only zero</button>
+        </span>
+      </div>
+    </div>
+  
+    <!-- The Baseline section moved to the report heading, beside the View toggle
+         it depends on: the overlay only means anything in the Update view, so the
+         control belongs next to the thing that selects the view. It was NOT
+         duplicated here, because two controls for one flag is the shape this file
+         has drifted on before. Its explanatory note became the control's tooltip,
+         written by the same updateViewToggleUI(). TD-148. -->
+  
+    <div class="cv-sect">
+      <div class="cv-sect-title">Sorting <span class="cv-future-tag">Future</span></div>
+      <div class="sd-note">Custom band and row ordering &mdash; planned, not yet available.</div>
+    </div>
+  
+    <div class="cv-sect">
+      <div class="cv-sect-title">Icons <span class="cv-future-tag">Future</span></div>
+      <div class="sd-note">Per-type icon customisation &mdash; planned, not yet available.</div>
+    </div>
+  </div>
   </div>
 
-  <div class="sd-tabs" role="tablist">
-    <button class="sd-tab is-active" id="sd-tab-sources" role="tab" aria-selected="true" onclick="setSettingsTab('sources')">Sources</button>
-    <button class="sd-tab" id="sd-tab-import" role="tab" aria-selected="false" onclick="setSettingsTab('import')">Import</button>
-    <button class="sd-tab" id="sd-tab-defaults" role="tab" aria-selected="false" onclick="setSettingsTab('defaults')">Defaults</button>
-    <button class="sd-tab" id="sd-tab-diag" role="tab" aria-selected="false" onclick="setSettingsTab('diag')" hidden>Diagnostics<span class="sd-badge sd-badge--cond" id="sd-diag-count">0</span></button>
-  </div>
+
+
 
   <!-- ===== Tab: Sources ===== -->
   <div class="sd-tabpanel" id="sd-panel-sources" data-tab="sources">
@@ -2471,6 +2784,26 @@ textarea:focus-visible,[tabindex]:focus-visible{
     </div>
   </div>
 
+  <!-- ===== Section: Help (placeholder, D-20: to be written once the layout settles) ===== -->
+  <div class="sd-tabpanel" id="sd-panel-help" data-tab="help" hidden>
+    <div class="sd-group">
+      <div class="sd-group-title">Getting around</div>
+      <ul class="sd-list">
+        <li><b>Left rail, your annotations:</b> comments and markups, and your own milestones.</li>
+        <li><b>This panel, the schedule and its format:</b> view controls, sources, import and data settings.</li>
+        <li><b>On the board:</b> click a milestone to open its card; double-click a week cell to add a milestone on that row.</li>
+        <li><b>Esc</b> closes the topmost panel or card.</li>
+      </ul>
+    </div>
+  </div>
+  <!-- ===== Section: About ===== -->
+  <div class="sd-tabpanel" id="sd-panel-about" data-tab="about" hidden>
+    <div class="sd-group">
+      <div class="sd-group-title">Schedule Reporting and Evaluation Tool</div>
+      <div class="sd-group-desc">Version <b id="about-version"></b>. Reads P6 schedule exports and renders them; it never writes back to P6.</div>
+    </div>
+  </div>
+  </div>
 </div>
 
 <!-- The heading strip for the preview, and the only controls the preview needs
@@ -2750,177 +3083,6 @@ textarea:focus-visible,[tabindex]:focus-visible{
  </div>
 </div>
 
-<div id="filter-bar">
-  <button class="fb-close" onclick="toggleFilterBar(false)" aria-label="Close" title="Close">&#10005;</button>
-  <div class="fb-hd">&#127912; View Controls</div>
-
-  <div class="cv-sect">
-    <div class="cv-sect-title">Layout</div>
-    <!-- Widest to narrowest, then the two that size a cell: Title Column,
-         Column Width, Row height, Icon size. Ordered so the two that decide how
-         much board fits across the screen sit together at the top. -->
-    <div class="cv-field-row">
-      <label>Title Column: <span id="name-width-val">220px</span></label>
-      <input type="range" id="name-width" min="140" max="400" value="220" oninput="setNameWidth(this.value)" onchange="onSizeSliderRelease()">
-    </div>
-    <div class="cv-field-row">
-      <label>Column Width: <span id="wk-width-val">36px</span></label>
-      <input type="range" id="wk-width" min="20" max="144" value="36" oninput="setWkWidth(this.value)" onchange="onSizeSliderRelease()">
-    </div>
-    <div class="cv-field-row">
-      <label>Row height: <span id="row-height-val">34px</span></label>
-      <input type="range" id="row-height" min="28" max="72" value="34" oninput="setRowHeight(this.value)" onchange="onSizeSliderRelease()">
-    </div>
-    <div class="cv-field-row">
-      <label>Icon size: <span id="ico-size-val">15px</span></label>
-      <input type="range" id="ico-size" min="10" max="24" value="15" oninput="setIcoSize(this.value)" onchange="onSizeSliderRelease()">
-    </div>
-    <div class="toggle-switch-row">
-      <span class="tsw-label">Allow activity title to wrap</span>
-      <label class="toggle-switch"><input type="checkbox" id="btn-dname-wrap" onchange="toggleDnameWrap(this)"><span class="tsw-slider"></span></label>
-    </div>
-  </div>
-
-  <div class="cv-sect">
-    <div class="cv-sect-title">Fields</div>
-    <button class="toggle-btn" id="btn-toggle-all-cols" onclick="toggleAllCols(this)" style="width:100%">Show All Columns</button>
-    <details class="cv-cols-expander">
-      <summary>Show/hide individual columns</summary>
-      <div class="cv-cols-grid">
-        <button class="toggle-btn" id="btn-ref" onclick="toggleCol('ref',this)">Ref</button>
-        <button class="toggle-btn" id="btn-hrs" onclick="toggleCol('hrs',this)">Hrs</button>
-        <button class="toggle-btn" id="btn-alloc" onclick="toggleCol('alloc',this)">Alloc</button>
-        <button class="toggle-btn" id="btn-prog" onclick="toggleCol('prog',this)">%Prog</button>
-        <button class="toggle-btn" id="btn-type" onclick="toggleCol('type',this)">Type</button>
-        <button class="toggle-btn" id="btn-doc" onclick="toggleCol('doc',this)">Doc No.</button>
-        <button class="toggle-btn" id="btn-task" onclick="toggleCol('task',this)">Task Code</button>
-        <button class="toggle-btn" id="btn-src" onclick="toggleCol('src',this)" title="The Activity IDs behind each row">Source IDs</button>
-        <button class="toggle-btn" id="btn-srcsch" onclick="toggleCol('srcsch',this)" title="The schedule each row was imported from">Source Sched.</button>
-      </div>
-    </details>
-    <!-- Two buttons, not one that relabels itself. A single button reading
-         "Hide" had to be read as an ACTION to make sense, and every other
-         segmented control in this panel reads as a STATE, so the two idioms sat
-         side by side meaning opposite things. TD-147. -->
-    <div class="cv-field-row cv-remarks-row">
-      <label>Row Comments field</label>
-      <span class="fb-inline-group" style="margin-left:0;padding-left:0;border-left:none">
-        <button class="toggle-btn active" id="btn-remarks-show" onclick="setRemarksVisible(true)" title="Show the comments field under each row">Show</button>
-        <button class="toggle-btn" id="btn-remarks-hide" onclick="setRemarksVisible(false)" title="Hide the comments field under each row">Hide</button>
-      </span>
-    </div>
-  </div>
-
-  <!-- P54 (D-21): mirrors the label-cell controls on the histogram row itself
-       (renderHistogram()); either sets the same two globals through the same
-       setHistMeasure()/setHistPos(), and syncHistControlsUI() keeps both
-       pairs of buttons agreeing with whichever one was clicked. -->
-  <div class="cv-sect">
-    <div class="cv-sect-title">Histogram</div>
-    <div class="cv-field-row cv-hist-row">
-      <label>Measure</label>
-      <span class="fb-inline-group" style="margin-left:0;padding-left:0;border-left:none">
-        <button class="toggle-btn active" id="btn-hist-measure-hours" onclick="setHistMeasure('hours')" title="Hours attributed to each week">Hours</button>
-        <button class="toggle-btn" id="btn-hist-measure-tasks" onclick="setHistMeasure('tasks')" title="Milestones falling in each week">Tasks</button>
-      </span>
-    </div>
-    <div class="cv-field-row cv-hist-row">
-      <label>Position</label>
-      <span class="fb-inline-group" style="margin-left:0;padding-left:0;border-left:none">
-        <button class="toggle-btn" id="btn-hist-pos-top" onclick="setHistPos('top')" title="Directly under the week headers">Top</button>
-        <button class="toggle-btn active" id="btn-hist-pos-bottom" onclick="setHistPos('bottom')" title="At the end of the report">Bottom</button>
-      </span>
-    </div>
-  </div>
-
-  <div class="cv-sect">
-    <div class="cv-sect-title">Labels</div>
-    <!-- Each size slider sits directly under the control that turns its text on,
-         and is disabled while that text is off: a slider that scales nothing is
-         a control with no effect, and it read as broken. The enabled state is
-         DERIVED from the same three variables the board reads, by one writer
-         (syncLabelScaleEnabled) called from every path that changes them,
-         including the rebuild reapply. TD-146. -->
-    <div class="toggle-switch-row">
-      <span class="tsw-label">Milestone labels</span>
-      <label class="toggle-switch"><input type="checkbox" id="btn-lbl" onchange="toggleLabels(this)"><span class="tsw-slider"></span></label>
-    </div>
-    <div class="cv-field-row cv-sub-field" id="row-label-scale">
-      <label>Label text size <span id="label-scale-val">100%</span></label>
-      <input type="range" id="label-scale" min="70" max="150" value="100" step="5" oninput="setLabelScale(this.value)" title="Scales the type-code label (INT/CLI/MS...) shown next to each milestone">
-    </div>
-    <div class="toggle-switch-row">
-      <span class="tsw-label">Milestone hrs</span>
-      <label class="toggle-switch"><input type="checkbox" id="btn-mhrs" onchange="toggleMHours(this)"><span class="tsw-slider"></span></label>
-    </div>
-    <div class="cv-field-row cv-sub-field" id="row-hrs-scale">
-      <label>Hours text size <span id="hrs-scale-val">100%</span></label>
-      <input type="range" id="hrs-scale" min="70" max="150" value="100" step="5" oninput="setHrsScale(this.value)" title="Scales the milestone-hours text shown next to each milestone">
-    </div>
-    <div class="cv-field-row" style="margin-top:2px">
-      <label>Milestone title</label>
-      <span class="fb-inline-group" style="margin-left:0;padding-left:0;border-left:none">
-        <button class="toggle-btn" id="btn-title-mode-off" onclick="setShortTitleMode('off')" title="Don't show the short title on the board">Off</button>
-        <button class="toggle-btn" id="btn-title-mode-title" onclick="setShortTitleMode('title')" title="Show just the short title">Title</button>
-        <!-- active here, and SHORT_TITLE_MODE='id' with shortTitlesVisible=true
-             in the script, are the same default stated twice. TD-144. -->
-        <button class="toggle-btn active" id="btn-title-mode-id" onclick="setShortTitleMode('id')" title="Show just the Activity ID">ID</button>
-        <button class="toggle-btn" id="btn-title-mode-both" onclick="setShortTitleMode('both')" title="Show Activity ID as a prefix, then the title">ID + Title</button>
-      </span>
-    </div>
-    <div class="cv-field-row cv-sub-field" id="row-title-scale">
-      <label>Title text size <span id="title-scale-val">100%</span></label>
-      <input type="range" id="title-scale" min="70" max="150" value="100" step="5" oninput="setTitleScale(this.value)" title="Scales the short-title text shown next to each milestone">
-    </div>
-  </div>
-
-  <div class="cv-sect">
-    <div class="cv-sect-title">Dependencies</div>
-    <div class="dep-sub-row">
-      <span class="dep-lbl pred">Predecessors</span>
-      <button id="btn-pred-all-on" onclick="setAllDep('pred', true)">All on</button>
-      <button id="btn-pred-all-off" onclick="setAllDep('pred', false)">All off</button>
-    </div>
-    <div class="dep-sub-row" style="margin-top:4px">
-      <span class="dep-lbl succ">Dependencies</span>
-      <button id="btn-succ-all-on" onclick="setAllDep('succ', true)">All on</button>
-      <button id="btn-succ-all-off" onclick="setAllDep('succ', false)">All off</button>
-    </div>
-    <div class="cv-field-row" style="margin-top:8px">
-      <label>Line thickness: <span id="line-thickness-val">1.6</span></label>
-      <input type="range" id="line-thickness" min="0.6" max="4" step="0.2" value="1.6" oninput="onThicknessChange(this.value)">
-    </div>
-    <div class="toggle-switch-row">
-      <span class="tsw-label">Show dependency counts</span>
-      <label class="toggle-switch"><input type="checkbox" id="toggle-counts" onchange="onCountsToggle()"><span class="tsw-slider"></span></label>
-    </div>
-    <div class="cv-field-row">
-      <label>Zero-count filter</label>
-      <span class="fb-inline-group" style="margin-left:0;padding-left:0;border-left:none">
-        <button class="toggle-btn active" id="btn-zerofilter-all" onclick="setZeroFilter('all')" title="Show everything — the neutral state">All</button>
-        <button class="toggle-btn" id="btn-zerofilter-hide" onclick="setZeroFilter('hide-zero')" title="Hide milestones with zero predecessors/dependencies">Hide zero</button>
-        <button class="toggle-btn" id="btn-zerofilter-only" onclick="setZeroFilter('only-zero')" title="Show only milestones with zero predecessors/dependencies">Only zero</button>
-      </span>
-    </div>
-  </div>
-
-  <!-- The Baseline section moved to the report heading, beside the View toggle
-       it depends on: the overlay only means anything in the Update view, so the
-       control belongs next to the thing that selects the view. It was NOT
-       duplicated here, because two controls for one flag is the shape this file
-       has drifted on before. Its explanatory note became the control's tooltip,
-       written by the same updateViewToggleUI(). TD-148. -->
-
-  <div class="cv-sect">
-    <div class="cv-sect-title">Sorting <span class="cv-future-tag">Future</span></div>
-    <div class="sd-note">Custom band and row ordering &mdash; planned, not yet available.</div>
-  </div>
-
-  <div class="cv-sect">
-    <div class="cv-sect-title">Icons <span class="cv-future-tag">Future</span></div>
-    <div class="sd-note">Per-type icon customisation &mdash; planned, not yet available.</div>
-  </div>
-</div>
 
 <div id="dep-tooltip" class="dep-tooltip" hidden></div>
 
@@ -3216,7 +3378,7 @@ textarea:focus-visible,[tabindex]:focus-visible{
 // label, and embedded in exported JSON — bump this one place, everything else
 // reads from it, so the three copies can't silently drift apart the way the
 // title/label/export payload just had for a long stretch of unversioned work.
-const APP_VERSION='3.1.0-P55';
+const APP_VERSION='3.1.0-P56';
 // ============================================================
 // TIMELINE
 // ============================================================
@@ -6650,8 +6812,8 @@ document.addEventListener('blur',e=>{
   });
 })();
 
-function resetChanges(){
-  if(!confirm('Reset all edits to health indicators and remarks? This cannot be undone.')) return;
+function resetChanges(skipConfirm){
+  if(!skipConfirm&&!confirm('Reset all edits to health indicators and remarks? This cannot be undone.')) return;
   document.querySelectorAll('.health-dot[data-orig-health]').forEach(el=>{
     const orig=el.getAttribute('data-orig-health');
     el.className='health-dot h-'+orig;
@@ -6672,15 +6834,35 @@ function resetChanges(){
 // ============================================================
 // SETTINGS + FILTER + COL TOGGLES
 // ============================================================
+// P56 (D-20b): #settings-drawer is the Data & view panel. It docks and pushes
+// the board above 1024px (body.dv-open), and overlays with the scrim below
+// that. Called bare from the gear, it opens at the last settings section, or
+// Sources if the last one was View controls: the gear means data, not view.
 function toggleSettingsDrawer(force){
   const dr=document.getElementById('settings-drawer');
   const scrim=document.getElementById('settings-scrim');
-  const btn=document.getElementById('btn-settings-icon');
-  const open=typeof force==='boolean'?force:!dr.classList.contains('open');
+  const open=typeof force==='boolean'?force:!(dr.classList.contains('open')&&SETTINGS_TAB!=='view');
+  if(open&&force===undefined&&SETTINGS_TAB==='view') setSettingsTab(SETTINGS_LAST_DATA_TAB||'sources');
   dr.classList.toggle('open',open);
-  scrim.classList.toggle('open',open);
-  btn.classList.toggle('on',open);
+  const docked=window.matchMedia('(min-width:1025px)').matches;
+  if(scrim) scrim.classList.toggle('open',open&&!docked);
+  document.body.classList.toggle('dv-open',open);
+  syncDataViewButtons();
   if(open){ syncDiagTab(); syncImportSteps(); }
+}
+// The two header buttons that open this panel each show "on" only while the
+// panel is showing their own section, so the gear and the palette never both
+// read as pressed. #filter-bar keeps its .open class for anything that reads it.
+function syncDataViewButtons(){
+  const dr=document.getElementById('settings-drawer');
+  const open=!!dr&&dr.classList.contains('open');
+  const onView=open&&SETTINGS_TAB==='view';
+  const bs=document.getElementById('btn-settings-icon');
+  const bv=document.getElementById('btn-style-icon');
+  if(bs) bs.classList.toggle('on',open&&!onView);
+  if(bv) bv.classList.toggle('on',onView);
+  const fb=document.getElementById('filter-bar');
+  if(fb) fb.classList.toggle('open',onView);
 }
 
 // ---- Settings drawer tabs ----
@@ -6688,7 +6870,9 @@ function toggleSettingsDrawer(force){
 // schedule data. Switching tabs is a visibility change only: nothing is
 // rebuilt, so a control keeps whatever the user typed into it.
 let SETTINGS_TAB='sources';
-const SETTINGS_TABS=['sources','import','defaults','diag'];
+let SETTINGS_LAST_DATA_TAB='sources';
+const SETTINGS_TABS=['view','sources','import','defaults','diag','help','about'];
+const SETTINGS_TAB_TITLES={view:'View controls',sources:'Sources',import:'Import',defaults:'Data settings',diag:'Diagnostics',help:'Help',about:'About'};
 function setSettingsTab(tab){
   if(SETTINGS_TABS.indexOf(tab)<0) tab='sources';
   // Diagnostics only exists while there is something to report. Asking for it
@@ -6705,8 +6889,12 @@ function setSettingsTab(tab){
     btn.classList.toggle('is-active',on);
     btn.setAttribute('aria-selected',on?'true':'false');
   });
-  const dr=document.getElementById('settings-drawer');
-  if(dr) dr.scrollTop=0;
+  if(tab!=='view') SETTINGS_LAST_DATA_TAB=tab;
+  const ttl=document.getElementById('sd-hd-title');
+  if(ttl) ttl.textContent=SETTINGS_TAB_TITLES[tab]||'';
+  const main=document.querySelector('#settings-drawer .sd-main');
+  if(main) main.scrollTop=0;
+  syncDataViewButtons();
   if(tab==='import') syncImportSteps();
   try{ localStorage.setItem('sret-settings-tab',tab); }catch(e){}
 }
@@ -6742,14 +6930,106 @@ function syncImportSteps(){
     el.classList.toggle('is-waiting',i>current);
   });
 }
+// P56 (D-20b): View controls is the first section of Data & view, so this
+// opens that panel at that section (the header's Colour & theme button), and
+// closes the panel only if View controls is what it is showing.
 function toggleFilterBar(force){
-  const bar=document.getElementById('filter-bar');
-  const btn=document.getElementById('btn-style-icon');
-  const open=typeof force==='boolean'?force:!bar.classList.contains('open');
-  bar.classList.toggle('open',open);
-  document.body.classList.toggle('cv-open',open);
-  if(btn) btn.classList.toggle('on',open);
+  const dr=document.getElementById('settings-drawer');
+  const showing=!!dr&&dr.classList.contains('open')&&SETTINGS_TAB==='view';
+  const open=typeof force==='boolean'?force:!showing;
+  if(open){ setSettingsTab('view'); toggleSettingsDrawer(true); }
+  else if(showing) toggleSettingsDrawer(false);
+  syncDataViewButtons();
 }
+
+// ===== P56 (D-20b): Workspace (left), the annotation layer =====
+// Display state only. The rail is always on screen; this opens and closes
+// its panel. Clicking the active section's icon again closes the panel.
+let WS_SECTION='comments';
+const WS_SECTIONS=['comments','userms'];
+const WS_TITLES={comments:'Comments & markups',userms:'User milestones'};
+(function fbNarrowWatch(){
+  const bar=document.getElementById('top-filter-bar');
+  if(!bar||typeof ResizeObserver==='undefined') return;
+  new ResizeObserver(function(entries){
+    const w=entries[0].contentRect.width;
+    bar.classList.toggle('fb-narrow',w<1235);
+  }).observe(bar);
+})();
+function toggleWorkspace(force){
+  const pan=document.getElementById('ws-panel');
+  if(!pan) return;
+  const open=typeof force==='boolean'?force:!pan.classList.contains('open');
+  pan.classList.toggle('open',open);
+  document.body.classList.toggle('ws-open',open);
+  syncWorkspaceRail();
+}
+function setWorkspaceSection(sec,keepOpen){
+  if(WS_SECTIONS.indexOf(sec)<0) sec='comments';
+  const pan=document.getElementById('ws-panel');
+  const wasOpen=!!pan&&pan.classList.contains('open');
+  if(wasOpen&&sec===WS_SECTION&&!keepOpen){ toggleWorkspace(false); return; }
+  WS_SECTION=sec;
+  document.querySelectorAll('#ws-panel .ws-sec').forEach(function(el){
+    el.hidden=(el.getAttribute('data-sec')!==sec);
+  });
+  const ttl=document.getElementById('ws-hd-title');
+  if(ttl) ttl.textContent=WS_TITLES[sec];
+  if(pan) pan.scrollTop=0;
+  toggleWorkspace(true);
+  try{ localStorage.setItem('sret-ws-section',sec); }catch(e){}
+}
+function syncWorkspaceRail(){
+  const pan=document.getElementById('ws-panel');
+  const open=!!pan&&pan.classList.contains('open');
+  WS_SECTIONS.forEach(function(sec){
+    const b=document.getElementById('ws-tab-'+sec);
+    if(!b) return;
+    const on=open&&sec===WS_SECTION;
+    b.classList.toggle('is-active',on);
+    b.setAttribute('aria-pressed',on?'true':'false');
+  });
+}
+// Reset row marks, with the design standard's inline confirmation (message
+// full width, Cancel bottom-left, the action bottom-right, Esc cancels) in
+// place of the browser confirm() it used from the old More actions menu.
+let RESET_MARKS_CONFIRM=false;
+function renderResetMarksRow(){
+  const row=document.getElementById('ws-reset-row');
+  if(!row) return;
+  row.innerHTML=RESET_MARKS_CONFIRM
+    ? '<div class="sd-confirm"><span class="sd-confirm-txt">Reset every row\u2019s health indicator and remarks to their original values? This cannot be undone. Card comments and edits are kept.</span>'+
+      '<div class="sd-confirm-actions"><button class="toggle-btn" onclick="cancelResetRowMarks()">Cancel</button>'+
+      '<button class="toggle-btn sd-btn-danger" onclick="confirmResetRowMarks()">Reset</button></div></div>'
+    : '<div class="sd-row-ctrl"><button class="toggle-btn sd-btn-danger" id="btn-reset-row-marks" onclick="askResetRowMarks()" title="Resets every row\u2019s health indicator and remarks text back to their original values. Does not touch card comments.">Reset row marks</button></div>';
+}
+function askResetRowMarks(){ RESET_MARKS_CONFIRM=true; renderResetMarksRow(); }
+function cancelResetRowMarks(){ RESET_MARKS_CONFIRM=false; renderResetMarksRow(); }
+function confirmResetRowMarks(){ RESET_MARKS_CONFIRM=false; resetChanges(true); renderResetMarksRow(); }
+// Import confirmation (D-20): show the entry where it landed, then let the
+// highlight fade. Reduced motion gets a static outline for 2s instead.
+function flashLanded(el){
+  if(!el) return;
+  el.classList.remove('is-landed');
+  void el.offsetWidth;
+  el.classList.add('is-landed');
+  try{ el.scrollIntoView({block:'nearest'}); }catch(e){}
+  setTimeout(function(){ el.classList.remove('is-landed'); },2000);
+}
+// Esc closes the topmost side panel: Data & view first, then the Workspace.
+// The card, menus and popovers have their own Esc handlers and take priority.
+document.addEventListener('keydown',function(e){
+  if(e.key!=='Escape') return;
+  const dlg=document.getElementById('ms-dialog');
+  if(dlg&&!dlg.hidden) return;
+  const ad=document.getElementById('annot-dialog');
+  if(ad&&!ad.hidden) return;
+  if(RESET_MARKS_CONFIRM){ cancelResetRowMarks(); return; }
+  const dr=document.getElementById('settings-drawer');
+  if(dr&&dr.classList.contains('open')){ toggleSettingsDrawer(false); return; }
+  const wp=document.getElementById('ws-panel');
+  if(wp&&wp.classList.contains('open')) toggleWorkspace(false);
+});
 function toggleTopFilterBar(force){
   const bar=document.getElementById('top-filter-bar');
   // In the header, NOT in the bar. The old button lived inside #top-filter-bar,
@@ -8008,7 +8288,7 @@ function clearFilter(){
   // empty when nothing is filtered (health dots already carry their own
   // hover tooltips) and the CSS below collapses the row's height.
   document.getElementById('filter-info').textContent='';
-  document.getElementById('filter-dot').classList.remove('show');
+  { const fd=document.getElementById('filter-dot'); if(fd) fd.classList.remove('show'); }
   document.getElementById('print-filter-note').classList.remove('show');
   updateSubtotals();
   // clearFilter() un-hides every row and column itself rather than routing
@@ -8344,7 +8624,7 @@ function applyFilter(){
   const infoText='Showing '+visibleRowCount+' of '+rows.length+' '+noun+
     (summary?' \u00B7 '+summary:'');
   document.getElementById('filter-info').textContent=infoText;
-  document.getElementById('filter-dot').classList.add('show');
+  { const fd=document.getElementById('filter-dot'); if(fd) fd.classList.add('show'); }
   document.getElementById('print-filter-note-text').textContent=infoText+'.';
   document.getElementById('print-filter-note').classList.add('show');
   updateSubtotals();
@@ -9595,6 +9875,10 @@ function runIngest(){
     if(oob) msg+=' '+oob+' outside horizon.';
     if(userRestoredCount) msg+=' '+userRestoredCount+' user-defined milestone(s) restored.';
     setIngestStatus(msg,'ok');
+    // D-20 import confirmation: land on Sources and show the new schedule's row.
+    setSettingsTab('sources');
+    const rows=document.querySelectorAll('#mount-body .src-row');
+    flashLanded(rows.length?rows[rows.length-1]:null);
   }catch(err){
     setIngestStatus('Ingest failed: '+err.message,'err');
     diag('pipeline','err',err.message,'');
@@ -9991,7 +10275,14 @@ function renderMounts(){
       lines:['Comments, health overrides and short titles are whatever you have entered this session.'],
       actions:'<button class="toggle-btn mnt-btn" onclick="remountAnnotations()">Mount…</button>'}));
   }
-  body.innerHTML=slots.join('');
+  // P56 (D-20b): Schedules stay in Data & view > Sources; the User-defined and
+  // Annotations groups belong to the annotation layer and render into the
+  // Workspace's User milestones and Comments & markups sections.
+  body.innerHTML=slots[0];
+  const um=document.getElementById('ws-userms-body'); if(um) um.innerHTML=slots[1];
+  const an=document.getElementById('ws-annot-body'); if(an) an.innerHTML=slots[2];
+  const cnt=document.getElementById('ws-userms-count');
+  if(cnt) cnt.textContent=USER_MILESTONES.length?String(USER_MILESTONES.length):'';
 }
 
 // ---- schedule slots ---------------------------------------------------
@@ -10252,6 +10543,10 @@ function applyAnnotSelection(){
   scheduleRerender(true);
   renderMounts();
   setIngestStatus('Mounted '+ANNOT_MOUNT.file+' — imported '+names.join(', ')+'.','ok');
+  // D-20 import confirmation: open the Workspace at Comments & markups and
+  // show the mounted layer.
+  setWorkspaceSection('comments',true);
+  flashLanded(document.querySelector('#ws-annot-body .sd-card, #ws-annot-body .sd-group, #ws-annot-body > *'));
 }
 
 
@@ -12382,6 +12677,10 @@ function watchStickyHeights(){
   try{ savedTab=localStorage.getItem('sret-settings-tab')||'sources'; }catch(e){}
   setSettingsTab(savedTab);
   syncImportSteps();
+  renderResetMarksRow();
+  try{ const ws=localStorage.getItem('sret-ws-section'); if(ws&&WS_SECTIONS.indexOf(ws)>=0) WS_SECTION=ws; }catch(e){}
+  document.querySelectorAll('#ws-panel .ws-sec').forEach(function(el){ el.hidden=(el.getAttribute('data-sec')!==WS_SECTION); });
+  const wt=document.getElementById('ws-hd-title'); if(wt) wt.textContent=WS_TITLES[WS_SECTION];
 })();
 // ===== Theme toggle — functional light/dark switch, architecture ready for a future
 // full dark-mode pass. Light is the approved default; dark preserves the prior palette. =====
@@ -13115,6 +13414,7 @@ document.addEventListener('keydown',function(e){ if(e.key==='Escape') toggleMore
 (function(){
   const lbl=document.getElementById('ib-label');
   if(lbl) lbl.innerHTML='Schedule Reporting and Evaluation Tool &nbsp;|&nbsp; v'+APP_VERSION;
+  const av=document.getElementById('about-version'); if(av) av.textContent='v'+APP_VERSION;
   document.title=document.title.replace(/\s*\bv\d[\w.-]*$/,'')+' v'+APP_VERSION;
 })();
 (function(){
