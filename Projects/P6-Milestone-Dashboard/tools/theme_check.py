@@ -198,10 +198,12 @@ const PROBES = [
   // --- Board: rows, columns, marker labels, icons, status ---
   // Marker label backings were plain white before v3.1.0-P3, so a white pill
   // sat on the dark board in dark theme.
-  ['.m-lbl',                     'toggle',   () => mk('<div class="m-lbl">x</div>')],
-  ['.m-short-title',             'toggle',   () => mk('<div class="m-short-title">x</div>')],
-  ['.m-hrs',                     'toggle',   () => mk('<div class="m-hrs">x</div>')],
-  ['alt row .m-lbl',             'toggle',   () => {
+  // P55: marker label stickers are constant by design (--pal-sticker*), and so
+  // is the ink on them, which is chosen against the sticker, not the page.
+  ['.m-lbl',                     'constant',   () => mk('<div class="m-lbl">x</div>')],
+  ['.m-short-title',             'constant',   () => mk('<div class="m-short-title">x</div>')],
+  ['.m-hrs',                     'constant',   () => mk('<div class="m-hrs">x</div>')],
+  ['alt row .m-lbl',             'constant',   () => {
       const tr = mk('<tr class="data alt"><td><div class="m-lbl">x</div></td></tr>', tbody);
       return tr.querySelector('.m-lbl');
   }],

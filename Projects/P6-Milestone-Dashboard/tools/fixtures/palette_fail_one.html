@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<title>Palette-swap fail-one fixture</title>
+<style>
+html[data-theme="light"]{--pal-a:#111111;--pal-b:#eeeeee}
+html[data-theme="dark"]{--pal-a:#eeeeee;--pal-b:#111111}
+:root{--color-text:var(--pal-a);--color-bg:var(--pal-b)}
+body{color:var(--color-text);background:var(--color-bg);margin:0}
+.box{border:2px solid var(--color-text);padding:8px}
+/* The one hardcoded rule: this background never moves with the palette. */
+.hardcoded{background:#ff0000}
+</style>
+</head>
+<body>
+<div class="box">Derives from --pal-*.</div>
+<div class="hardcoded">Escapes the palette.</div>
+</body>
+</html>

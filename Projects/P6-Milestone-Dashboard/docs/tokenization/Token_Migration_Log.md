@@ -235,6 +235,12 @@ The log is a record of readings, not of changes, so a gap between two rows belon
 | 2026-09-26 | Audit script v3, after v3.1.0-P54 | Hardcoded font-size declarations (px) | 138 (+3: `.hist-label-text`, `.hist-seg button`; the app's existing convention keeps caption-sized text as raw px rather than the coarser `--text-*` scale, matching every other 8-11px label already in this row) |
 | 2026-09-26 | `tools/spacing_audit.py`, after v3.1.0-P54 — the new label-cell layout (`.hist-label-cell`, `.hist-ctl-row`) uses `var(--space-1)`/`var(--space-3)`, and `tr.hist-row td.c-name`'s own padding moved from a raw `4px 6px` onto `var(--space-2) var(--space-3)` (same values); no new raw px | Raw px in padding/margin/gap declarations, ceiling | 152 (unchanged, at ceiling) |
 | 2026-09-26 | `tools/theme_check.py`, after v3.1.0-P54 (D-21: two new probes, `.hist-bar` and `.hist-lbl`, plus the pre-existing `tr.hist-row td.c-name` probe re-verified against its corrected tokens) | Probes toggling / frozen | 79 toggling / 0 frozen |
+| 2026-09-26 12:04 | Audit script v3, after v3.1.0-P55 (D-22 central palette) | Hardcoded colour occurrences | 0 |
+| 2026-09-26 12:04 | Audit script v3, after v3.1.0-P55 | Distinct hardcoded colour values | 0 |
+| 2026-09-26 12:04 | `tools/colour_audit.py --strict` (new: tier rule across CSS, markup, JS, data, `var()` fallbacks; ceiling 0), v3.1.0-P55 | Strict tier violations | 0 |
+| 2026-09-26 12:04 | `tools/colour_audit.py --strict` against `releases/v3.1.0-P54_histogram.html` (proof the gate bites) | Strict tier violations | 229 |
+| 2026-09-26 12:04 | `tools/palette_swap_check.py` (new: two sentinel palettes, every rendered colour must move), v3.1.0-P55, light and dark | Palette escapes | 0 |
+| 2026-09-26 12:04 | `tools/theme_check.py`, after v3.1.0-P55 (sticker probes now expect constant) | Frozen probes expected to toggle | 0 |
 
 **Re-running the audit:** run `python3 tools/colour_audit.py` from the project root. It regenerates `Hardcoded_Colour_Audit.csv` and prints every metric above.
 

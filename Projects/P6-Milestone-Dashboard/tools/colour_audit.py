@@ -29,6 +29,7 @@ docs/tokenization/Hardcoded_Colour_Audit.csv relative to the project root.
 
 import argparse
 import csv
+import json
 import pathlib
 import re
 import sys
@@ -339,13 +340,425 @@ def _complement(spans, total):
     return out
 
 
+## =========================================================================
+## Strict tier-rule mode (P55 central-token rule)
+##
+## Tier 1: --pal-* / --shadow-color / --pal-*-rgb, ONLY inside
+##         html[data-theme="light"]{} / html[data-theme="dark"]{}. These are
+##         the only declarations allowed to hold a literal colour.
+## Tier 2/3: --color-* in :root, and every component alias. Values must be
+##         var(...)/color-mix(...)/transparent/currentColor/inherit/none.
+## Everywhere else: no literal colour at all (CSS, markup, JS).
+##
+## This does NOT reuse the non-strict scan above (which deliberately excludes
+## var() fallbacks and only looks at the <style> block plus inline style=).
+## Strict mode is a different, wider question, so it is a separate pass with
+## its own parser, kept beside the original rather than reusing its
+## exclusions, which would silently hide fallback and JS/markup violations.
+## =========================================================================
+
+STRICT_HEX_RE = re.compile(r"(?<!&)#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b")
+HSL_RE = re.compile(
+    r"hsla?\(\s*[\d.]+\s*(?:deg)?\s*,\s*[\d.]+%\s*,\s*[\d.]+%\s*(?:,\s*[\d.]+\s*)?\)"
+)
+COLOR_CONTEXT_RE = re.compile(r"color|background|border|fill|stroke|outline|shadow", re.I)
+
+# A working subset of CSS named colours. Not exhaustive by spec, but covers
+# every named colour actually reachable in this file's context.
+NAMED_COLORS = {
+    "aliceblue", "antiquewhite", "aqua", "aquamarine", "azure", "beige", "bisque",
+    "black", "blanchedalmond", "blue", "blueviolet", "brown", "burlywood",
+    "cadetblue", "chartreuse", "chocolate", "coral", "cornflowerblue", "cornsilk",
+    "crimson", "cyan", "darkblue", "darkcyan", "darkgoldenrod", "darkgray",
+    "darkgreen", "darkgrey", "darkkhaki", "darkmagenta", "darkolivegreen",
+    "darkorange", "darkorchid", "darkred", "darksalmon", "darkseagreen",
+    "darkslateblue", "darkslategray", "darkslategrey", "darkturquoise",
+    "darkviolet", "deeppink", "deepskyblue", "dimgray", "dimgrey", "dodgerblue",
+    "firebrick", "floralwhite", "forestgreen", "fuchsia", "gainsboro",
+    "ghostwhite", "gold", "goldenrod", "gray", "green", "greenyellow", "grey",
+    "honeydew", "hotpink", "indianred", "indigo", "ivory", "khaki", "lavender",
+    "lavenderblush", "lawngreen", "lemonchiffon", "lightblue", "lightcoral",
+    "lightcyan", "lightgoldenrodyellow", "lightgray", "lightgreen", "lightgrey",
+    "lightpink", "lightsalmon", "lightseagreen", "lightskyblue",
+    "lightslategray", "lightslategrey", "lightsteelblue", "lightyellow", "lime",
+    "limegreen", "linen", "magenta", "maroon", "mediumaquamarine", "mediumblue",
+    "mediumorchid", "mediumpurple", "mediumseagreen", "mediumslateblue",
+    "mediumspringgreen", "mediumturquoise", "mediumvioletred", "midnightblue",
+    "mintcream", "mistyrose", "moccasin", "navajowhite", "navy", "oldlace",
+    "olive", "olivedrab", "orange", "orangered", "orchid", "palegoldenrod",
+    "palegreen", "paleturquoise", "palevioletred", "papayawhip", "peachpuff",
+    "peru", "pink", "plum", "powderblue", "purple", "rebeccapurple", "red",
+    "rosybrown", "royalblue", "saddlebrown", "salmon", "sandybrown", "seagreen",
+    "seashell", "sienna", "silver", "skyblue", "slateblue", "slategray",
+    "slategrey", "snow", "springgreen", "steelblue", "tan", "teal", "thistle",
+    "tomato", "turquoise", "violet", "wheat", "white", "whitesmoke", "yellow",
+    "yellowgreen",
+}
+
+# Words that are colour-shaped but explicitly not literals under the P55 rule.
+NON_LITERAL_COLOR_WORDS = {"transparent", "currentcolor", "inherit", "none"}
+
+
+def _mask_span_keep_newlines(text: str, pattern: str, flags=0) -> str:
+    """Replace every match of `pattern` with spaces, preserving newlines and
+    length, so line numbers computed against the ORIGINAL text still line up
+    against this masked copy."""
+    def repl(m):
+        return "".join(ch if ch == "\n" else " " for ch in m.group(0))
+    return re.sub(pattern, repl, text, flags=flags)
+
+
+def mask_block_comments(text: str) -> str:
+    return _mask_span_keep_newlines(text, r"/\*.*?\*/", re.S)
+
+
+def mask_line_comments(text: str) -> str:
+    # Guard against "http://" etc. by requiring the // not be preceded by ':'.
+    return _mask_span_keep_newlines(text, r"(?<!:)//[^\n]*")
+
+
+def mask_html_comments(text: str) -> str:
+    return _mask_span_keep_newlines(text, r"<!--.*?-->", re.S)
+
+
+def find_literals(value: str, prop: str) -> list[str]:
+    """Every literal colour token in `value`. Hex/rgb()/hsl() always count;
+    a bare named colour counts only when `prop` is a colour-bearing property,
+    per the false-positive rule (named words only count in a colour context).
+    """
+    lits: list[str] = []
+    for regex in (STRICT_HEX_RE, RGB_RE, HSL_RE):
+        lits.extend(m.group(0) for m in regex.finditer(value))
+    if COLOR_CONTEXT_RE.search(prop or ""):
+        # Strip custom-property identifiers first: "var(--pal-navy)" contains
+        # the substring "navy", which is a real named colour word but is not
+        # a literal here, it is a token reference. Without this a --pal-*
+        # token whose name happens to embed a colour word (navy, teal, ...)
+        # is misread as a literal on every rule that merely consumes it.
+        scrubbed = re.sub(r"--[\w-]+", " ", value)
+        for wm in re.finditer(r"\b[a-zA-Z]{3,}\b", scrubbed):
+            w = wm.group(0).lower()
+            if w in NAMED_COLORS:
+                lits.append(w)
+    return lits
+
+
+def is_color_literal(val: str) -> bool:
+    v = val.strip()
+    if not v or v.lower() in NON_LITERAL_COLOR_WORDS or v.startswith("url("):
+        return False
+    if STRICT_HEX_RE.fullmatch(v) or RGB_RE.fullmatch(v) or HSL_RE.fullmatch(v):
+        return True
+    return v.lower() in NAMED_COLORS
+
+
+def parse_css_rules(text: str, base_offset: int = 0) -> list[dict]:
+    """Flatten every LEAF rule (selector with a declaration body, no nested
+    braces) out of `text`, recursing into @media/@supports wrappers. Returns
+    dicts with selector, body, and body's absolute offset into the ORIGINAL
+    (unmasked-length-preserved) text `base_offset` was measured against.
+    """
+    rules: list[dict] = []
+    i, n = 0, len(text)
+    while i < n:
+        brace = text.find("{", i)
+        if brace == -1:
+            break
+        selector = text[i:brace].strip()
+        depth, j = 1, brace + 1
+        while j < n and depth > 0:
+            if text[j] == "{":
+                depth += 1
+            elif text[j] == "}":
+                depth -= 1
+            j += 1
+        body = text[brace + 1: j - 1]
+        body_start = brace + 1
+        if selector.startswith("@"):
+            rules.extend(parse_css_rules(body, base_offset + body_start))
+        elif selector:
+            rules.append({"selector": selector, "body": body,
+                          "body_start": base_offset + body_start})
+        i = j
+    return rules
+
+
+def _is_pal_decl(prop: str) -> bool:
+    p = prop.strip().lower()
+    return p.startswith("--pal-") or p == "--shadow-color"
+
+
+def strict_audit(html_path: pathlib.Path) -> dict:
+    html = html_path.read_text(encoding="utf-8", errors="replace")
+    html_lines = html.split("\n")
+
+    def line_snippet(abs_pos: int) -> tuple[int, str]:
+        line = html.count("\n", 0, abs_pos) + 1
+        snippet = html_lines[line - 1].strip() if 0 <= line - 1 < len(html_lines) else ""
+        return line, snippet
+
+    style_m = re.search(r"<style[^>]*>(.*?)</style>", html, re.S | re.I)
+    if not style_m:
+        sys.exit("No <style> block found.")
+    style_text = style_m.group(1)
+    style_offset = style_m.start(1)
+    style_masked = mask_block_comments(style_text)
+
+    script_m = re.search(r'<script\s+id=["\']app-script["\'][^>]*>', html, re.I)
+    if not script_m:
+        sys.exit('No <script id="app-script"> block found.')
+    js_start = script_m.end()
+    js_close = html.find("</script>", js_start)
+    if js_close == -1:
+        js_close = len(html)
+    js_text = html[js_start:js_close]
+    js_masked = mask_line_comments(mask_block_comments(js_text))
+
+    markup_start = style_m.end()
+    markup_text = html[markup_start:script_m.start()]
+    markup_masked = mask_html_comments(markup_text)
+
+    violations: list[dict] = []
+    warnings: list[dict] = []
+    # token -> {theme: line}
+    pal_defs: dict[str, dict[str, int]] = {}
+
+    # ---------------- CSS zone ----------------
+    for rule in parse_css_rules(style_masked):
+        selector = rule["selector"]
+        theme_m = re.match(r'html\s*\[\s*data-theme\s*=\s*["\']?(\w+)', selector)
+        theme = theme_m.group(1) if theme_m else None
+        for decl_m in re.finditer(r"([^:;]+):([^;]+);?", rule["body"]):
+            prop = decl_m.group(1).strip()
+            value = decl_m.group(2).strip()
+            if not prop:
+                continue
+            abs_pos = style_offset + rule["body_start"] + decl_m.start(2)
+            line, snippet = line_snippet(abs_pos)
+            is_pal = _is_pal_decl(prop)
+            lits = find_literals(value, prop)
+            if theme is not None:
+                if is_pal:
+                    pal_defs.setdefault(prop.lower(), {})[theme] = line
+                else:
+                    for lit in lits:
+                        violations.append({
+                            "zone": "css", "line": line, "literal": lit, "snippet": snippet,
+                            "kind": "tier1-misuse",
+                            "detail": f'{prop} inside html[data-theme="{theme}"] is not '
+                                      f'--pal-*/--shadow-color but holds a literal',
+                        })
+            else:
+                if is_pal:
+                    violations.append({
+                        "zone": "css", "line": line, "literal": lits[0] if lits else prop,
+                        "snippet": snippet, "kind": "pal-outside-theme",
+                        "detail": f"{prop} defined outside the theme blocks",
+                    })
+                else:
+                    for lit in lits:
+                        violations.append({
+                            "zone": "css", "line": line, "literal": lit, "snippet": snippet,
+                            "kind": "literal-in-css", "detail": f"{prop}:{value}",
+                        })
+                if selector != ":root":
+                    for vm in re.finditer(r"var\(\s*(--pal-[\w-]+)", value):
+                        warnings.append({
+                            "zone": "css", "line": line, "literal": vm.group(1),
+                            "snippet": snippet, "kind": "pal-var-outside-tier2",
+                            "detail": f'"{selector}" consumes {vm.group(1)} directly; '
+                                      f'rules should consume roles, not palette',
+                        })
+
+    for token, themes in pal_defs.items():
+        if set(themes) != {"light", "dark"}:
+            any_line = next(iter(themes.values()))
+            violations.append({
+                "zone": "css", "line": any_line, "literal": token, "snippet": "",
+                "kind": "pal-missing-theme",
+                "detail": f"{token} defined in {sorted(themes)} only, missing from the other theme",
+            })
+
+    # ---------------- Markup zone ----------------
+    for m in re.finditer(r'style\s*=\s*"([^"]*)"', markup_masked):
+        base = markup_start + m.start(1)
+        line, snippet = line_snippet(base)
+        for part in m.group(1).split(";"):
+            if ":" not in part:
+                continue
+            prop, _, value = part.partition(":")
+            for lit in find_literals(value.strip(), prop.strip()):
+                violations.append({
+                    "zone": "markup", "line": line, "literal": lit, "snippet": snippet,
+                    "kind": "literal-inline-style", "detail": part.strip(),
+                })
+
+    for m in re.finditer(r'\b(fill|stroke)\s*=\s*"([^"]*)"', markup_masked):
+        val = m.group(2)
+        if is_color_literal(val):
+            base = markup_start + m.start(2)
+            line, snippet = line_snippet(base)
+            violations.append({
+                "zone": "markup", "line": line, "literal": val.strip(), "snippet": snippet,
+                "kind": "literal-svg-attr", "detail": f"{m.group(1)}={val!r}",
+            })
+
+    # ---------------- JS zone ----------------
+    def scan_markup_fragment(frag: str, frag_offset: int, kind_suffix: str):
+        for fm in re.finditer(r'style\s*=\s*"([^"]*)"', frag):
+            base = frag_offset + fm.start(1)
+            line, snippet = line_snippet(base)
+            for part in fm.group(1).split(";"):
+                if ":" not in part:
+                    continue
+                prop, _, value = part.partition(":")
+                for lit in find_literals(value.strip(), prop.strip()):
+                    violations.append({
+                        "zone": "js", "line": line, "literal": lit, "snippet": snippet,
+                        "kind": f"literal-js-{kind_suffix}", "detail": part.strip(),
+                    })
+        for fm in re.finditer(r'\b(fill|stroke)\s*=\s*"([^"]*)"', frag):
+            val = fm.group(2)
+            if is_color_literal(val):
+                base = frag_offset + fm.start(2)
+                line, snippet = line_snippet(base)
+                violations.append({
+                    "zone": "js", "line": line, "literal": val.strip(), "snippet": snippet,
+                    "kind": f"literal-js-{kind_suffix}", "detail": f"{fm.group(1)}={val!r}",
+                })
+
+    # .style.cssText = '...'
+    for m in re.finditer(r"\.style\.cssText\s*=\s*(['\"`])(.*?)\1", js_masked, re.S):
+        base = js_start + m.start(2)
+        for part in m.group(2).split(";"):
+            if ":" not in part:
+                continue
+            prop, _, value = part.partition(":")
+            local_line, local_snip = line_snippet(base)
+            for lit in find_literals(value.strip(), prop.strip()):
+                violations.append({
+                    "zone": "js", "line": local_line, "literal": lit, "snippet": local_snip,
+                    "kind": "literal-js-style", "detail": part.strip(),
+                })
+
+    # .style.<prop> = '...' (and any other .style.x = "literal")
+    for m in re.finditer(r"\.style\.([A-Za-z]+)\s*=\s*(['\"`])(.*?)\2", js_masked):
+        propname = m.group(1)
+        if not COLOR_CONTEXT_RE.search(propname):
+            continue
+        value = m.group(3)
+        base = js_start + m.start(3)
+        line, snippet = line_snippet(base)
+        lits = find_literals(value, "color")
+        if not lits and value.strip().lower() in NAMED_COLORS:
+            lits = [value.strip().lower()]
+        for lit in dict.fromkeys(lits):
+            violations.append({
+                "zone": "js", "line": line, "literal": lit, "snippet": snippet,
+                "kind": "literal-js-style", "detail": f".style.{propname}={value!r}",
+            })
+
+    # canvas fillStyle / strokeStyle
+    for m in re.finditer(r"\.(fillStyle|strokeStyle)\s*=\s*(['\"`])(.*?)\2", js_masked):
+        value = m.group(3)
+        base = js_start + m.start(3)
+        line, snippet = line_snippet(base)
+        lits = find_literals(value, "color")
+        if not lits and value.strip().lower() in NAMED_COLORS:
+            lits = [value.strip().lower()]
+        for lit in dict.fromkeys(lits):
+            violations.append({
+                "zone": "js", "line": line, "literal": lit, "snippet": snippet,
+                "kind": "literal-js-canvas", "detail": f".{m.group(1)}={value!r}",
+            })
+
+    # JSON-shaped object keys: "bg": "#1D4D3A", fill: 'red', etc.
+    for m in re.finditer(
+        r'["\']?\b(bg|color|fill|stroke|background|border\w*|outline|shadow\w*)\b["\']?'
+        r'\s*:\s*(["\'])((?:(?!\2).)*)\2',
+        js_masked,
+    ):
+        key, value = m.group(1), m.group(3)
+        base = js_start + m.start(3)
+        line, snippet = line_snippet(base)
+        lits = find_literals(value, key)
+        if not lits and value.strip().lower() in NAMED_COLORS:
+            lits = [value.strip().lower()]
+        for lit in dict.fromkeys(lits):
+            violations.append({
+                "zone": "js", "line": line, "literal": lit, "snippet": snippet,
+                "kind": "literal-js-object", "detail": f'"{key}": {value!r}',
+            })
+
+    # Template-literal HTML: scan backtick strings the same way as markup.
+    for m in re.finditer(r"`([^`]*)`", js_masked, re.S):
+        scan_markup_fragment(m.group(1), js_start + m.start(1), "template")
+
+    return {"violations": violations, "warnings": warnings}
+
+
+def load_exceptions(path: pathlib.Path) -> list[dict]:
+    if not path.exists():
+        return []
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def apply_exceptions(violations: list[dict], exceptions: list[dict]) -> tuple[list[dict], list[dict]]:
+    kept, excepted = [], []
+    for v in violations:
+        matched = False
+        for exc in exceptions:
+            if (exc.get("line_contains", "") in (v.get("snippet") or "")
+                    and str(exc.get("literal", "")).lower() == str(v["literal"]).lower()):
+                matched = True
+                break
+        (excepted if matched else kept).append(v)
+    return kept, excepted
+
+
+def run_strict(html_path: pathlib.Path, ceiling: int, exceptions_path: pathlib.Path) -> int:
+    result = strict_audit(html_path)
+    exceptions = load_exceptions(exceptions_path)
+    kept, excepted = apply_exceptions(result["violations"], exceptions)
+
+    print(f"Strict tokenization audit: {html_path}")
+    print(f"Violations: {len(kept)} (ceiling {ceiling}); "
+          f"excepted: {len(excepted)}; warnings: {len(result['warnings'])}")
+    print()
+    for v in kept:
+        print(f"{v['zone']} {v['line']} {v['literal']} | {v['snippet']}")
+
+    if result["warnings"]:
+        print()
+        print(f"Warnings (not counted against the ceiling): {len(result['warnings'])}")
+        for w in result["warnings"]:
+            print(f"  {w['zone']} {w['line']} {w['literal']} | {w['snippet']}")
+
+    print()
+    if len(kept) > ceiling:
+        print(f"FAIL: {len(kept)} violation(s) exceed ceiling {ceiling}.")
+        return 1
+    print(f"PASS: {len(kept)} violation(s) at or under ceiling {ceiling}.")
+    return 0
+
+
 def main():
     root = pathlib.Path(__file__).resolve().parent.parent
     ap = argparse.ArgumentParser()
     ap.add_argument("html", nargs="?", default=root / "src" / "milestone-dashboard.html")
     ap.add_argument("-o", "--out",
                     default=root / "docs" / "tokenization" / "Hardcoded_Colour_Audit.csv")
+    ap.add_argument("--strict", action="store_true",
+                    help="Apply the P55 tier rule across CSS, markup and JS "
+                         "instead of the legacy <style>-block-only scan.")
+    ap.add_argument("--ceiling", type=int, default=None,
+                    help="Max violations allowed before exiting 1. Defaults to 0 under --strict.")
+    ap.add_argument("--exceptions", default=root / "tools" / "colour_exceptions.json")
     args = ap.parse_args()
+
+    if args.strict:
+        ceiling = args.ceiling if args.ceiling is not None else 0
+        sys.exit(run_strict(pathlib.Path(args.html), ceiling, pathlib.Path(args.exceptions)))
 
     r = audit(pathlib.Path(args.html), pathlib.Path(args.out))
 
