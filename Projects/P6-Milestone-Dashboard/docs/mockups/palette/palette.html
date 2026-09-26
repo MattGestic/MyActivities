@@ -38,11 +38,11 @@ p{margin:0;max-width:68ch;color:var(--pg-muted)}
 
 /* ===== The proposed app palette, as it would live in the app ===== */
 .app{--hd:#2b4a7a;--hd-ink:#ffffff;--hd-muted:#c6d2e6;--page:#f3f4f7;--surface:#ffffff;--ink:#1b2230;--muted:#667085;--line:#dde1e8;
-  --ws:#4a3f78;--accent:var(--acc);--accent-ink:var(--acc-ink);--accent-tint:var(--acc-tint);
+  --ws:#3d4b66;--accent:var(--acc);--accent-ink:var(--acc-ink);--accent-tint:var(--acc-tint);
   --st-done:#2e8b57;--st-track:#2f6fdb;--st-risk:#c98a0b;--st-issue:#c2413a;--st-future:#a3aab5;--st-crit:#c2413a;
   border-radius:10px;overflow:hidden;border:1px solid var(--line);background:var(--page);color:var(--ink);font-size:12px}
 .app.dark{--hd:#1b2a47;--hd-ink:#eef2f8;--hd-muted:#9fb0cc;--page:#121724;--surface:#1a2133;--ink:#e6eaf2;--muted:#9aa3b5;--line:#2c3549;
-  --ws:#352d57;--accent:var(--acc-d);--accent-ink:var(--acc-ink-d);--accent-tint:var(--acc-tint-d);
+  --ws:#252f45;--accent:var(--acc-d);--accent-ink:var(--acc-ink-d);--accent-tint:var(--acc-tint-d);
   --st-done:#3fa56d;--st-track:#5b8ff0;--st-risk:#e0a52a;--st-issue:#e0625a;--st-future:#6f7889;--st-crit:#e0625a}
 .optA{--acc:#0e7c86;--acc-ink:#0b6570;--acc-tint:#e1f1f2;--acc-d:#2fa3ac;--acc-ink-d:#6cc6cd;--acc-tint-d:#16353b}
 .optB{--acc:#a8772b;--acc-ink:#8a6020;--acc-tint:#f5ecdc;--acc-d:#c99a4f;--acc-ink-d:#e2bd80;--acc-tint-d:#3a2f1c}
@@ -94,7 +94,7 @@ p{margin:0;max-width:68ch;color:var(--pg-muted)}
   <header style="display:flex;flex-direction:column;gap:6px">
     <span class="eyebrow">Schedule Reporting and Evaluation Tool · palette proposal for approval</span>
     <h1>A calmer, business-grade palette that keeps your grey page and blue header</h1>
-    <p>What stays: the light cool-grey page and the navy header, refined a touch deeper. What changes: the bright lavender accent is retired. Selection, focus and "now" markers move to one confident accent, with two options below. A deep plum marks only the annotation workspace. Status colours are re-tuned so they stay distinct on white and on dark, and each carries its contrast rating.</p>
+    <p>What stays: the light cool-grey page and the navy header, refined a touch deeper. What changes: the bright lavender accent is retired. Selection, focus and "now" markers move to one confident accent, with two options below. A greyer slate, related to the navy, marks the annotation workspace. Status colours are re-tuned so they stay distinct on white and on dark, and each carries its contrast rating.</p>
   </header>
 
   <section class="sect">
@@ -165,7 +165,7 @@ fill('found',[
  {name:'Ink',hex:'#1b2230',dark:'#e6eaf2',role:'Body text. Blue-black, never pure black.',vs:['#1b2230','#ffffff']},
  {name:'Muted ink',hex:'#667085',dark:'#9aa3b5',role:'Labels, meta lines, captions.',vs:['#667085','#ffffff']},
  {name:'Line',hex:'#dde1e8',dark:'#2c3549',role:'Borders, grid, dividers.'},
- {name:'Workspace plum',hex:'#4a3f78',dark:'#352d57',role:'Annotation workspace header only. Replaces the lavender.',chip:'Workspace',vs:['#ffffff','#4a3f78']}
+ {name:'Workspace slate',hex:'#3d4b66',dark:'#252f45',role:'Annotation workspace rail and header. A greyer cousin of the navy, so the two zones read apart without a new hue.',chip:'Workspace',vs:['#ffffff','#3d4b66']}
 ]);
 fill('accA',[
  {name:'Accent',hex:'#0e7c86',dark:'#2fa3ac',role:'Selected chip fill, focus ring.',chip:'Selected',vs:['#ffffff','#0e7c86']},
