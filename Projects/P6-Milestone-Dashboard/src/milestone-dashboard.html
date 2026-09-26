@@ -7,271 +7,273 @@
 <style>
 /* ===== THEME TOKENS — light (default, approved) and dark (preserves prior look, ready for future toggle) ===== */
 html[data-theme="light"]{
-  /* Backgrounds */
-  /* Darkened from #a6bbdc so the requested #f4f5f8 chrome text is legible on it
-     (1.79:1 there, 7.53:1 here). See TD-50. Darkening moved every text colour
-     on this surface, so the header now has its own text tokens rather than
-     borrowing the panel's. */
-  --color-bg-header:#2e4f82;
-  --color-bg-panel:#f4f5f8;
-  --color-bg-subtle:#f4f5f8;
-  --color-bg-canvas:#fdfdfc;
-  --color-bg-elevated:#ffffff;
-  --color-row-selected:#f0ecf9;
-  --color-dialog-bg:rgba(253,253,252,0.92);
-  --color-dialog-elev:#ffffff;
-
-  /* Borders */
-  --color-border-panel:#e3e2de;
-  --color-line-hairline:#eeede9;
-  --color-line-default:#e3e2de;
-
-  /* Text */
-  --color-text-primary:#17191c;
-  --color-text-ink:#17191c;
-  --color-text-muted:#6f7480;
-  --color-text-label:#8a8f99;
-  --color-text-mono:#848994;
-  --color-text-on-panel:#17191c;
-  /* Muted secondary text on the PANEL only. It used to serve the header as
-     well, which is what TD-46 named as a latent trap and TD-50 then proved:
-     darkening the header dropped this pairing to 1.22:1. Header surfaces now
-     use --color-text-on-header-muted, and this one is single-surface again.
-     6.15:1 on the panel. */
-  --color-text-on-panel-muted:#575c67;
-  /* Bold emphasis inside panel text. It borrowed --color-bg-header, which
-     happened to read as blue emphasis in light and was a dark navy on a dark
-     panel in dark (1.31:1). A background token is not a text token. */
-  --color-text-emphasis:#2e4f82;
-  --color-text-small:#4c515c;
-  --color-text-faint:#8a8f99;
-  --color-text-note:#767b85;
-
-  /* Status — green now included for Done, per approval */
-  --color-status-track:#2f6fed;
-  --color-status-risk:#a2690a;
-  --color-status-risk-fill:#b8770c;
-  --color-status-done:#1f9d55;
-  --color-status-crit:#c0392b;
-  --color-status-future:#b9bdc4;
-  --color-status-track-bg:#e6e5e1;
-  --color-crit:#c0392b;
-
-  /* Interactive */
-  --color-accent-purple:#8b64c7;
-  --color-purple-dark:#6f4fa3;
-  --color-purple-deep:#8b64c7;
-  --color-btn-active-bg:#17191c;
-  --color-btn-active-text:#fdfdfc;
-  --color-btn-inactive-bg:#ffffff;
-  --color-btn-inactive-border:#e3e2de;
-  --color-btn-inactive-text:#6f7480;
-  --color-btn-hover-bg:#f4f5f8;
-  --color-comment-indicator:#8b64c7;
-
-  /* Filter bar + buttons — off-white steel background, navy active/inactive states */
-  --color-filter-bg:#e4e9ed;
-  --color-filter-border:#c9d2d8;
-  /* Consolidation additions — replacing hand-picked near-duplicate tints/greys
-     found across the file with two real, named, role-specific tokens. */
-  --color-text-on-accent:#ffffff;         /* text sitting on a saturated/coloured background — buttons, tags, badges */
-  --color-accent-tint-bg:#efe6f9;         /* the pale lavender "very light accent" background — only the genuine duplicates (now-week highlight, hover, modified-field marking), not every pale tint in the file */
-  --color-crit-tint-bg:#fdecec;           /* pale red tint for error/critical states — a distinct role from the accent tint above, not a shade of it */
-  --color-badge-neutral-bg:#889;          /* neutral grey badge background (Optional/Future tags) — same hex as --color-text-note but a genuinely different role (fill vs. text), kept as its own token deliberately */
-  --color-label-neutral-bg:#e8eaf2;       /* verified duplicate: discipline-band row bg + "Weighted" type-tag bg — same value, same neutral-label role */
-  --color-row-alt-bg:#fafbfc;             /* alternating data-row shading */
-  --color-row-gate-bg:#eef0fa;            /* Gate-type row background — distinct from alt-row shading */
-  --color-row-alt-muted-bg:#f2f2f6;       /* alt-row Alloc/%Prog column shading */
-  --color-col-past-bg:#e6e6e6;            /* past-week column shading on alt rows */
-  --color-col-filtered-bg:#e0c8f6;        /* filtered week column, base rows */
-  --color-row-hover-bg:#f0f4ff;
-  --color-subtotal-accent:#a2690a;
-  --color-col-filtered-alt-bg:#d4b8ed;    /* filtered-week + alt-row combination highlight */
-  --color-ready-tint-bg:#e8f2ec;          /* pale green "ready to import" section background */
-  --color-crit-text:#7a1a1a;              /* dark red text for Gate-type tag, paired with --color-crit-tint-bg */
-  --color-ok-text:#1a6b3a;                /* success ink, the counterpart to --color-crit-text. NOT --color-health-good, which is a constant fill. */
-  --color-accent-ink:#6f46ad;             /* accent-coloured TEXT on a themed panel. Distinct from --color-purple-deep, which is also used as a fill and as ink on a light tint. */
-  --color-input-border:#b8c0d8;           /* border on text/date input fields and info boxes — verified same role across all 3 occurrences */
-  --color-row-default-bg:#ffffff;         /* data-row background, split out from --color-bg-elevated so row shading can be tuned per theme without touching dialogs/inputs */
-  --color-vt-divider:#b8c0d8;             /* divider between View: Baseline/Update segments */
-
-  /* Button state system — primary (navy, general "selected" treatment) and
-     secondary (neutral, default/unpressed) each get outline + hover + pressed.
-     Hover/pressed are NEW — .toggle-btn and .vt-btn had no hover feedback at
-     all before this; .icon-btn/.filter-btn had hover but hardcoded, inconsistent
-     hex values. This makes every button family use the same real state system. */
-  --color-btn-outline:#9fb0bd;                 /* generic neutral outline = existing unpressed-border value */
-  --color-btn-primary-bg:#1c3a63;
-  --color-btn-primary-text:#ffffff;
-  --color-btn-primary-outline:#1c3a63;
-  --color-btn-primary-hover-bg:#2a4a7a;        /* lighter navy — hover feedback before a click commits */
-  --color-btn-primary-pressed-bg:#14294a;      /* darker navy — mousedown/active feedback */
-  --color-btn-secondary-bg:#ffffff;
-  --color-btn-secondary-text:#1c3a63;
-  --color-btn-secondary-outline:#9fb0bd;
-  --color-btn-secondary-hover-bg:#eef1f7;      /* subtle tint — enough to register on hover, not enough to look selected */
-  --color-btn-secondary-pressed-bg:#dde6f5;    /* a bit more saturated — mousedown feedback, still clearly not primary */
-  --color-btn-icon-hover-bg:#dde1ea;            /* icon-btn sits on --color-bg-panel, which is light grey in this theme — hover needs to darken, not lighten */
-  --color-btn-icon-pressed-bg:#ccd2de;
+  /* ===== Tier 1: palette (P55, D-22). The ONLY place a colour value is written. =====
+     Option A, approved 2026-09-26 (docs/mockups/palette/palette.html). Every role
+     token below :root points here; change a theme by editing these two blocks.
+     Every --pal-* name must exist in both theme blocks. colour_audit.py --strict
+     fails on a literal colour anywhere else in the file. */
+  /* Brand and chrome */
+  --pal-navy:#2b4a7a;
+  --pal-navy-strong:#1f3a63;
+  --pal-navy-ink:#2b4a7a;
+  --pal-slate:#3d4b66;
+  --pal-on-header:#f4f5f8;
+  --pal-on-header-muted:#c6d2e6;
+  --pal-on-strong:#ffffff;
+  /* Neutrals */
+  --pal-page:#f3f4f7;
+  --pal-surface:#ffffff;
+  --pal-surface-2:#fafbfc;
+  --pal-ink:#1b2230;
+  --pal-ink-2:#475063;
+  --pal-muted:#667085;
+  --pal-faint:#8a93a3;
+  --pal-line:#dde1e8;
+  --pal-line-soft:#e9ecf1;
+  --pal-line-strong:#b8c0d0;
+  /* Accent: petrol teal */
+  --pal-teal:#0e7c86;
+  --pal-teal-deep:#0b6570;
+  --pal-teal-ink:#0b6570;
+  --pal-teal-tint:#e1f1f2;
+  /* Status (fill = state, outline = health) */
+  --pal-done:#2e8b57;
+  --pal-track:#2f6fdb;
+  --pal-risk:#c98a0b;
+  --pal-crit:#c2413a;
+  --pal-future:#a3aab5;
+  --pal-done-ink:#1f6b43;
+  --pal-risk-ink:#7a5306;
+  --pal-crit-ink:#8f2a24;
+  --pal-done-tint:#e6f2eb;
+  --pal-risk-tint:#fbf1dc;
+  --pal-crit-tint:#fbeceb;
+  /* Milestone groups (ordered, never status hues) and month headers. Palette sheet 3b. */
+  --pal-band-1:#4a5568;
+  --pal-band-2:#3f4c85;
+  --pal-band-3:#1f6b70;
+  --pal-band-4:#6b5c50;
+  --pal-band-5:#2f3645;
+  --pal-month-a:#2f4468;
+  --pal-month-b:#3e5680;
+  /* Board stickers: marker label backings that sit over any week cell. Same in
+     both themes on purpose; their ink is chosen against the sticker, not the page. */
+  --pal-sticker:#ffffff;
+  --pal-sticker-alt:#fafbfc;
+  --pal-sticker-accent:#e1f1f2;
+  --pal-sticker-ink:#1b2230;
+  --pal-sticker-muted:#667085;
+  --pal-sticker-accent-ink:#0b6570;
+  /* Overlays: shadows, scrims, the milestone tooltip glass. Alpha comes from the role layer. */
+  --shadow-color:#0f172a;
+  --pal-scrim:#0a0c1e;
+  --pal-tooltip:#151a2e;
 }
 html[data-theme="dark"]{
-  /* This is the EXACT prior palette, preserved as-is so the toggle has a real, correct
-     destination — dark theme wasn't part of this redesign, just kept functional. */
-  --color-bg-header:#15182F;
-  --color-bg-panel:#1e2240;
-  --color-bg-subtle:#232f4a;
-  --color-bg-subtle:#f4f5f8;
-  --color-bg-canvas:#1c2942;
-  --color-bg-elevated:#232f4a;
-  --color-row-selected:#2a2d5a;
-  --color-dialog-bg:rgba(28,41,66,0.92);
-  --color-dialog-elev:#232f4a;
-
-  --color-border-panel:rgba(160,184,230,.2);
-  --color-line-hairline:rgba(160,184,230,.14);
-  --color-line-default:rgba(160,184,230,.2);
-
-  --color-text-primary:#e8eef8;
-  --color-text-ink:#e8eef8;
-  --color-text-muted:#8b9bb8;
-  --color-text-label:#8b9bb8;
-  --color-text-mono:#b7c6e0;
-  --color-text-on-panel:#cde;
-  --color-text-on-panel-muted:#8ab;
-  --color-text-emphasis:#c4d2e8;
-  --color-text-small:#334;
-  --color-text-faint:#556;
-  --color-text-note:#889;
-
-  --color-status-track:#1355c4;
-  --color-status-risk:#c07500;
-  --color-status-risk-fill:#c07500;
-  --color-status-done:#1f9d55;
-  --color-status-crit:#c00000;
-  --color-status-future:#c8c8c8;
-  --color-status-track-bg:#24324d;
-  --color-crit:#c00000;
-
-  --color-accent-purple:#8b64c7;
-  --color-purple-dark:#4a2f7a;
-  --color-purple-deep:#5a3a8e;
-  --color-btn-active-bg:#8b64c7;
-  --color-btn-active-text:#fff;
-  --color-btn-inactive-bg:#1e2240;
-  --color-btn-inactive-border:var(--color-border-panel);
-  --color-btn-inactive-text:#b7c6e0;
-  --color-btn-hover-bg:#2a2e50;
-  --color-comment-indicator:#8b64c7;
-
-  /* Filter bar + buttons — dark-theme equivalents, kept ready for the future toggle */
-  --color-filter-bg:#1e2240;
-  --color-filter-border:var(--color-border-panel);
-  --color-text-on-accent:#ffffff;
-  --color-accent-tint-bg:#2a2440;         /* dark-theme equivalent — a subtle desaturated purple surface, same role */
-  --color-crit-tint-bg:#3a1a1a;           /* dark-theme equivalent — a subtle desaturated red surface, same role */
-  --color-badge-neutral-bg:#5a6478;       /* dark-theme equivalent — mid blue-grey, readable on the dark panel background */
-  --color-label-neutral-bg:#2a2e50;
-  --color-row-alt-bg:#202a45;             /* alternating row — the "blue" half of the grey/blue pair, distinct from both the grey default row and the header's richer navy */
-  --color-row-gate-bg:#20264a;
-  --color-row-alt-muted-bg:#232748;
-  --color-col-past-bg:#2a2d38;
-  --color-col-filtered-bg:#5a3a8e;
-  --color-row-hover-bg:#2a2d5a;
-  --color-subtotal-accent:#e8d050;
-  --color-col-filtered-alt-bg:#3a2d5c;
-  --color-ready-tint-bg:#1a3324;
-  --color-crit-text:#e88888;
-  --color-ok-text:#7fd6a0;
-  --color-accent-ink:#a98ad8;
-  --color-input-border:#3a3e60;
-  --color-row-default-bg:#262931;         /* neutral dark grey — deliberately desaturated vs. the header's saturated navy, so header/row contrast is real, not just brightness */
-  --color-vt-divider:#4a5580;
-
-  --color-btn-outline:#3a3e60;
-  --color-btn-primary-bg:#3a6ea8;
-  --color-btn-primary-text:#ffffff;
-  --color-btn-primary-outline:#3a6ea8;
-  --color-btn-primary-hover-bg:#4a80ba;
-  --color-btn-primary-pressed-bg:#2a5a8e;
-  --color-btn-secondary-bg:#1e2240;
-  --color-btn-secondary-text:#9cbcff;
-  --color-btn-secondary-outline:#3a3e60;
-  --color-btn-secondary-hover-bg:#2a2e50;
-  --color-btn-secondary-pressed-bg:#343a5e;
-  --color-btn-icon-hover-bg:#2a2e50;            /* icon-btn sits on --color-bg-panel, dark navy here — hover needs to lighten */
-  --color-btn-icon-pressed-bg:#141830;
+  /* Tier 1 palette, dark theme. Same names as the light block, one for one. */
+  /* Brand and chrome */
+  --pal-navy:#1b2a47;
+  --pal-navy-strong:#35609a;
+  --pal-navy-ink:#aebfdc;
+  --pal-slate:#252f45;
+  --pal-on-header:#f4f5f8;
+  --pal-on-header-muted:#9fb0cc;
+  --pal-on-strong:#ffffff;
+  /* Neutrals */
+  --pal-page:#121724;
+  --pal-surface:#1a2133;
+  --pal-surface-2:#1e2638;
+  --pal-ink:#e6eaf2;
+  --pal-ink-2:#b8c1d1;
+  --pal-muted:#9aa3b5;
+  --pal-faint:#6f7889;
+  --pal-line:#2c3549;
+  --pal-line-soft:#242c3e;
+  --pal-line-strong:#3a4560;
+  /* Accent: petrol teal */
+  --pal-teal:#2fa3ac;
+  --pal-teal-deep:#1d6f76;
+  --pal-teal-ink:#6cc6cd;
+  --pal-teal-tint:#16353b;
+  /* Status (fill = state, outline = health) */
+  --pal-done:#3fa56d;
+  --pal-track:#5b8ff0;
+  --pal-risk:#e0a52a;
+  --pal-crit:#e0625a;
+  --pal-future:#6f7889;
+  --pal-done-ink:#7fd6a0;
+  --pal-risk-ink:#f0c870;
+  --pal-crit-ink:#f0a39d;
+  --pal-done-tint:#17301f;
+  --pal-risk-tint:#3a2e14;
+  --pal-crit-tint:#3a1f22;
+  /* Milestone groups (ordered, never status hues) and month headers. Palette sheet 3b. */
+  --pal-band-1:#56627a;
+  --pal-band-2:#4f5c98;
+  --pal-band-3:#2b7a7f;
+  --pal-band-4:#7a6a5d;
+  --pal-band-5:#454d5e;
+  --pal-month-a:#1f2b43;
+  --pal-month-b:#2a3857;
+  /* Board stickers: marker label backings that sit over any week cell. Same in
+     both themes on purpose; their ink is chosen against the sticker, not the page. */
+  --pal-sticker:#ffffff;
+  --pal-sticker-alt:#fafbfc;
+  --pal-sticker-accent:#e1f1f2;
+  --pal-sticker-ink:#1b2230;
+  --pal-sticker-muted:#667085;
+  --pal-sticker-accent-ink:#0b6570;
+  /* Overlays: shadows, scrims, the milestone tooltip glass. Alpha comes from the role layer. */
+  --shadow-color:#000000;
+  --pal-scrim:#05070f;
+  --pal-tooltip:#151a2e;
 }
 :root{
-  /* Non-themed tokens — same in light and dark, kept flat */
-
-  /* ===== Board: constant-by-design colours =====
-     These carry meaning through saturation, not through theme. A phase band
-     or a health dot must read as the same category in light and dark, and the
-     text or border sitting on it is chosen for contrast against the fill
-     rather than against the page, so theme-scoping them would break the
-     pairing rather than fix it. */
-
-  /* Phase band categorical fills. Ordered, not semantic: pb0..pb4. */
-  --color-band-1:#5B6472;
-  --color-band-2:#4154A6;
-  --color-band-3:#1D9E75;
-  --color-band-4:#B56500;
-  --color-band-5:#A00000;
-  --color-band-divider:rgba(255,255,255,.2);
-
-  /* Accent washes. Alpha over whatever surface is beneath, so one value is
-     correct in both themes. */
-  --color-accent-wash-weak:rgba(139,100,199,.05);
-  --color-accent-wash:rgba(139,100,199,.10);
-  --color-accent-wash-strong:rgba(139,100,199,.6);
-
-  /* Health dot fills and their darker rims. */
-  --color-health-none-fill:#fff;
-  --color-health-none-border:#bbb;
-  --color-health-good:#158a28;
-  --color-health-good-border:#0e6a1c;
-  --color-health-watch:#e8b520;
-  --color-health-watch-border:#a0800f;
-  --color-health-info:#2e6fd9;
-  --color-health-info-border:#1e4f9c;
-  --color-health-rim:rgba(0,0,0,.15);
-
-  /* Shadows. */
-  --color-shadow-soft:rgba(0,0,0,.18);
-  /* Modal scrim. Lifted verbatim from #settings-scrim when the annotations
-     dialog became a second consumer; a translucent wash over whatever is
-     beneath, so it is correct as a non-themed constant. */
-  --color-scrim:rgba(10,12,30,.35);
-  /* Chrome text sitting on --color-bg-header: the icon-bar version label and the
-     report subtitle. Requested value. Non-themed because the dark header is
-     already dark and takes the same near-white treatment. See TD-50 for the
-     measured contrast against the light header. */
-  --color-text-on-header:#f4f5f8;
-  /* Secondary text on the same surface: the report detail fields, the sticky
-     search placeholder and icons, and the history rows. Non-themed for the same
-     reason as the line above, and measured on both headers (5.37:1 light,
-     11.41:1 dark). */
-  --color-text-on-header-muted:#c4d2e8;
-  /* Hover and focus wash for editable chrome ON the header. A near-white
-     background there would hide the light text it sits under, so these are
-     translucent lifts of the header itself rather than panel colours. */
-  --color-bg-header-hover:rgba(255,255,255,.12);
-  --color-bg-header-focus:rgba(255,255,255,.18);
+  /* ===== Tier 2: roles. Every value is var(--pal-*) or a color-mix() of one.
+     No literal colours below this line. Consumers use these, never --pal-*. ===== */
+  /* Backgrounds */
+  --color-bg-header:var(--pal-navy);
+  --color-bg-workspace:var(--pal-slate);
+  --color-bg-panel:var(--pal-page);
+  --color-bg-subtle:var(--pal-surface-2);
+  --color-bg-canvas:var(--pal-surface);
+  --color-bg-elevated:var(--pal-surface);
+  --color-row-selected:var(--pal-teal-tint);
+  --color-dialog-bg:color-mix(in srgb,var(--pal-surface) 92%,transparent);
+  --color-dialog-elev:var(--pal-surface);
+  /* Borders */
+  --color-border-panel:var(--pal-line);
+  --color-line-hairline:var(--pal-line-soft);
+  --color-line-default:var(--pal-line);
+  --color-line-strong:var(--pal-line-strong);
+  /* Text */
+  --color-text-primary:var(--pal-ink);
+  --color-text-ink:var(--pal-ink);
+  --color-text-muted:var(--pal-muted);
+  --color-text-label:var(--pal-faint);
+  --color-text-mono:var(--pal-muted);
+  --color-text-on-panel:var(--pal-ink);
+  --color-text-on-panel-muted:var(--pal-ink-2);
+  --color-text-emphasis:var(--pal-navy-ink);
+  /* Themed now (was near-black in dark, TD-28). Sticker text uses --color-sticker-* instead. */
+  --color-text-small:var(--pal-ink-2);
+  --color-text-faint:var(--pal-faint);
+  --color-text-note:var(--pal-muted);
+  --color-text-on-header:var(--pal-on-header);
+  --color-text-on-header-muted:var(--pal-on-header-muted);
+  --color-text-on-header-accent:color-mix(in srgb,var(--pal-risk) 55%,var(--pal-on-header));
+  --color-text-on-accent:var(--pal-on-strong);
+  /* Status */
+  --color-status-track:var(--pal-track);
+  --color-status-risk:var(--pal-risk);
+  --color-status-risk-fill:var(--pal-risk);
+  --color-status-done:var(--pal-done);
+  --color-status-crit:var(--pal-crit);
+  --color-status-future:var(--pal-future);
+  --color-status-track-bg:var(--pal-line-soft);
+  --color-crit:var(--pal-crit);
+  --color-crit-tint-bg:var(--pal-crit-tint);
+  --color-crit-text:var(--pal-crit-ink);
+  --color-crit-border:color-mix(in srgb,var(--pal-crit) 60%,var(--shadow-color));
+  --color-ok-text:var(--pal-done-ink);
+  --color-ready-tint-bg:var(--pal-done-tint);
+  --color-subtotal-accent:var(--pal-risk-ink);
+  /* Health dots share the status palette (decision 2026-09-26): one green means done. */
+  --color-health-none-fill:var(--pal-sticker);
+  --color-health-none-border:var(--pal-faint);
+  --color-health-good:var(--pal-done);
+  --color-health-good-border:color-mix(in srgb,var(--pal-done) 75%,var(--shadow-color));
+  --color-health-watch:var(--pal-risk);
+  --color-health-watch-border:color-mix(in srgb,var(--pal-risk) 70%,var(--shadow-color));
+  --color-health-info:var(--pal-track);
+  --color-health-info-border:color-mix(in srgb,var(--pal-track) 70%,var(--shadow-color));
+  --color-health-rim:color-mix(in srgb,var(--shadow-color) 15%,transparent);
+  --color-chip-attention-bg:var(--pal-risk);
+  --color-chip-attention-ink:var(--pal-sticker-ink);
+  /* Notices: print filter note, diagnostics panel */
+  --color-notice-bg:var(--pal-risk-tint);
+  --color-notice-border:color-mix(in srgb,var(--pal-risk) 55%,var(--pal-surface));
+  --color-notice-ink:var(--pal-risk-ink);
+  --color-notice-head-bg:color-mix(in srgb,var(--pal-risk) 22%,var(--pal-surface));
+  /* Accent */
+  --color-accent:var(--pal-teal);
+  --color-accent-strong:var(--pal-teal-ink);
+  --color-accent-deep:var(--pal-teal-deep);
+  --color-accent-ink:var(--pal-teal-ink);
+  --color-accent-tint-bg:var(--pal-teal-tint);
+  --color-comment-indicator:var(--color-accent);
+  --color-accent-wash-weak:color-mix(in srgb,var(--pal-teal) 5%,transparent);
+  --color-accent-wash:color-mix(in srgb,var(--pal-teal) 10%,transparent);
+  --color-accent-wash-strong:color-mix(in srgb,var(--pal-teal) 60%,transparent);
+  /* Buttons and controls */
+  --color-btn-active-bg:var(--pal-teal);
+  --color-btn-active-text:var(--pal-on-strong);
+  --color-btn-inactive-bg:var(--pal-surface);
+  --color-btn-inactive-border:var(--pal-line);
+  --color-btn-inactive-text:var(--pal-muted);
+  --color-btn-hover-bg:var(--pal-page);
+  --color-filter-bg:var(--pal-page);
+  --color-filter-border:var(--pal-line);
+  --color-btn-outline:var(--pal-line-strong);
+  --color-btn-primary-bg:var(--pal-navy-strong);
+  --color-btn-primary-text:var(--pal-on-strong);
+  --color-btn-primary-outline:var(--pal-navy-strong);
+  --color-btn-primary-hover-bg:color-mix(in srgb,var(--pal-navy-strong) 85%,var(--pal-on-strong));
+  --color-btn-primary-pressed-bg:color-mix(in srgb,var(--pal-navy-strong) 80%,var(--shadow-color));
+  --color-btn-secondary-bg:var(--pal-surface);
+  --color-btn-secondary-text:var(--pal-navy-ink);
+  --color-btn-secondary-outline:var(--pal-line-strong);
+  --color-btn-secondary-hover-bg:color-mix(in srgb,var(--pal-navy-ink) 7%,var(--pal-surface));
+  --color-btn-secondary-pressed-bg:color-mix(in srgb,var(--pal-navy-ink) 14%,var(--pal-surface));
+  --color-btn-icon-hover-bg:color-mix(in srgb,var(--pal-ink) 8%,transparent);
+  --color-btn-icon-pressed-bg:color-mix(in srgb,var(--pal-ink) 14%,transparent);
+  --color-input-border:var(--pal-line-strong);
+  --color-vt-divider:var(--pal-line-strong);
+  /* Board rows and columns */
+  --color-badge-neutral-bg:var(--pal-faint);
+  --color-label-neutral-bg:var(--pal-line-soft);
+  --color-row-default-bg:var(--pal-surface);
+  --color-row-alt-bg:var(--pal-surface-2);
+  --color-row-gate-bg:color-mix(in srgb,var(--pal-navy-ink) 6%,var(--pal-surface));
+  --color-row-alt-muted-bg:color-mix(in srgb,var(--pal-ink) 4%,var(--pal-surface-2));
+  --color-row-hover-bg:color-mix(in srgb,var(--pal-navy-ink) 7%,var(--pal-surface));
+  --color-col-past-bg:color-mix(in srgb,var(--pal-ink) 7%,var(--pal-surface));
+  --color-col-past-hover-bg:color-mix(in srgb,var(--pal-ink) 11%,var(--pal-surface));
+  --color-col-filtered-bg:color-mix(in srgb,var(--pal-teal) 20%,var(--pal-surface));
+  --color-col-filtered-alt-bg:color-mix(in srgb,var(--pal-teal) 26%,var(--pal-surface-2));
+  --color-hist-bar-top:color-mix(in srgb,var(--pal-teal) 45%,var(--pal-surface));
+  /* Groups and months (theme-scoped, decision 2026-09-26) */
+  --color-band-1:var(--pal-band-1);
+  --color-band-2:var(--pal-band-2);
+  --color-band-3:var(--pal-band-3);
+  --color-band-4:var(--pal-band-4);
+  --color-band-5:var(--pal-band-5);
+  --color-text-on-band:var(--pal-on-strong);
+  --color-band-divider:color-mix(in srgb,var(--pal-on-strong) 20%,transparent);
+  --color-month-a:var(--pal-month-a);
+  --color-month-b:var(--pal-month-b);
+  /* Board stickers */
+  --color-label-backing:color-mix(in srgb,var(--pal-sticker) 90%,transparent);
+  --color-label-backing-alt:color-mix(in srgb,var(--pal-sticker-alt) 90%,transparent);
+  --color-label-hrs-backing:color-mix(in srgb,var(--pal-sticker-accent) 90%,transparent);
+  --color-label-hrs-backing-soft:color-mix(in srgb,var(--pal-sticker-accent) 85%,transparent);
+  --color-sticker-ink:var(--pal-sticker-ink);
+  --color-sticker-muted:var(--pal-sticker-muted);
+  --color-sticker-accent-ink:var(--pal-sticker-accent-ink);
+  /* Header chrome washes */
+  --color-bg-header-hover:color-mix(in srgb,var(--pal-on-header) 12%,transparent);
+  --color-bg-header-focus:color-mix(in srgb,var(--pal-on-header) 18%,transparent);
+  /* Elevation, scrim, tooltip. Components pick a level; see design-standard.md. */
+  --shadow-1:0 1px 3px color-mix(in srgb,var(--shadow-color) 15%,transparent);
+  --shadow-2:0 4px 12px color-mix(in srgb,var(--shadow-color) 22%,transparent);
+  --shadow-3:-4px 0 24px color-mix(in srgb,var(--shadow-color) 25%,transparent);
+  --color-shadow-soft:color-mix(in srgb,var(--shadow-color) 18%,transparent);
   --color-shadow-dialog-near:var(--color-shadow-soft);
   --color-shadow-dialog-far:var(--color-shadow-soft);
+  --color-scrim:color-mix(in srgb,var(--pal-scrim) 35%,transparent);
+  --color-tooltip-bg:color-mix(in srgb,var(--pal-tooltip) 92%,transparent);
+  --color-tooltip-border:color-mix(in srgb,var(--pal-on-header) 14%,transparent);
 
-  /* Marker label backings. Constant on purpose, and measured: these are
-     stickers that sit over the board so a label stays readable against any
-     week cell, and the label text colour is chosen against the sticker rather
-     than against the page. Theme-scoping them dropped dark-theme contrast to
-     between 1.16:1 and 1.97:1, so they were moved back here. */
-  --color-label-backing:rgba(255,255,255,.9);
-  --color-label-backing-alt:rgba(250,251,252,.9);
-  --color-label-hrs-backing:rgba(239,230,249,.9);
-  --color-label-hrs-backing-soft:rgba(239,230,249,.85);
-
-  /* History bar gradient stop. */
-  --color-hist-bar-top:#c8b5e6;
 
   /* ===== Milestone icon default states =====
      One token per icon state, aliased to the status palette. Icons paint from
@@ -291,13 +293,6 @@ html[data-theme="dark"]{
   --color-icon-future:var(--color-status-future);
   --color-icon-baseline:var(--color-text-note);
   --color-icon-na:var(--color-text-ink);
-  /* Attention chip and critical-fill border. Constant in both themes on
-     purpose: the saturated fill carries the meaning and the ink or border
-     must stay dark against it, so theme-scoping these would break
-     legibility in one theme rather than fix it. */
-  --color-chip-attention-bg:#ffb454;
-  --color-chip-attention-ink:#15182F;
-  --color-crit-border:#800;
   --font-sans:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
   --font-mono:"IBM Plex Mono",ui-monospace,monospace;
 
@@ -453,7 +448,7 @@ body.cv-open{margin-right:300px}
 .icon-btn{width:26px;height:26px;border-radius:5px;border:1px solid var(--color-border-panel);background:var(--color-bg-panel);color:var(--color-text-on-panel);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:13px;position:relative}
 .icon-btn:hover{background:var(--color-btn-icon-hover-bg)}
 .icon-btn:active{background:var(--color-btn-icon-pressed-bg)}
-.icon-btn.on{background:var(--color-accent-purple);border-color:var(--color-accent-purple);color:var(--color-text-on-accent)}
+.icon-btn.on{background:var(--color-accent);border-color:var(--color-accent);color:var(--color-text-on-accent)}
 /* Two glyphs in a 26px button wrapped onto a second line and pushed the arrow
    outside the border. The arrow is now a positioned mark on the bubble, so the
    button holds a single inline box whatever the font. */
@@ -486,12 +481,12 @@ body.cv-open{margin-right:300px}
 .icon-btn.ib-mi{width:100%;height:auto;min-height:24px;justify-content:flex-start;
   gap:var(--space-2);padding:4px 7px;border:1px solid transparent;background:transparent;
   border-radius:4px;font-size:10.5px;color:var(--color-text-on-panel);text-align:left;white-space:nowrap}
-.icon-btn.ib-mi:hover{background:var(--color-accent-tint-bg);color:var(--color-purple-dark)}
+.icon-btn.ib-mi:hover{background:var(--color-accent-tint-bg);color:var(--color-accent-strong)}
 /* Restated, not inherited. .icon-btn.on and .icon-btn.ib-mi have equal
    specificity, so the later rule wins on source order alone and the active
    state would have silently disappeared. This file has lost a cycle to exactly
    that before. */
-.icon-btn.ib-mi.on{background:var(--color-accent-purple);border-color:var(--color-accent-purple);color:var(--color-text-on-accent)}
+.icon-btn.ib-mi.on{background:var(--color-accent);border-color:var(--color-accent);color:var(--color-text-on-accent)}
 .ib-mi-ico{flex:0 0 16px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;line-height:1}
 .ib-mi-lbl{flex:1 1 auto;min-width:0}
 /* Inline in the row, not pinned to a 26px square's corner. */
@@ -524,9 +519,9 @@ body:has(.ib-menu-panel .dot.show) #pm-more-dot{display:block}
    "clear the filter before issuing the full report" is the thing that
    actually matters. .show alone no longer shows it outside those two
    contexts. */
-#print-filter-note{display:none;background:#fff3cd;border-bottom:1px solid #e0b84a;color:#6b5000;font-size:9.5px;padding:3px 26px 3px 10px;font-weight:600;position:relative;z-index:20}
-.pfn-close{position:absolute;top:1px;right:6px;background:none;border:none;font-size:11px;color:#6b5000;cursor:pointer;padding:3px;border-radius:3px}
-.pfn-close:hover{background:rgba(107,80,0,.15)}
+#print-filter-note{display:none;background:var(--color-notice-bg);border-bottom:1px solid var(--color-notice-border);color:var(--color-notice-ink);font-size:9.5px;padding:3px 26px 3px 10px;font-weight:600;position:relative;z-index:20}
+.pfn-close{position:absolute;top:1px;right:6px;background:none;border:none;font-size:11px;color:var(--color-notice-ink);cursor:pointer;padding:3px;border-radius:3px}
+.pfn-close:hover{background:color-mix(in srgb,var(--color-notice-ink) 15%,transparent)}
 body.print-mode #print-filter-note.show{display:block}
 @media print{ #print-filter-note.show{display:block} }
 
@@ -543,7 +538,7 @@ body.print-mode #print-filter-note.show{display:block}
    tabs, so nothing holds the bottom of the scroll open any more and the last
    group ended flush against the edge. It is set on the drawer itself, which is
    the one element the no-inline-spacing rule is about the INSIDE of. */
-#settings-drawer{position:fixed;top:0;right:0;bottom:0;width:360px;max-width:88vw;background:var(--color-bg-panel);border-left:1px solid var(--color-line-default);box-shadow:-2px 0 14px rgba(0,0,0,.25);transform:translateX(100%);transition:transform .18s ease;z-index:900;overflow-y:auto;padding:0 0 var(--space-6);display:flex;flex-direction:column;
+#settings-drawer{position:fixed;top:0;right:0;bottom:0;width:360px;max-width:88vw;background:var(--color-bg-panel);border-left:1px solid var(--color-line-default);box-shadow:var(--shadow-3);transform:translateX(100%);transition:transform .18s ease;z-index:900;overflow-y:auto;padding:0 0 var(--space-6);display:flex;flex-direction:column;
   --sd-gutter:var(--space-6);     /* 16px  every left and right edge */
   --sd-group-pad:var(--space-6);  /* 16px  group top and bottom */
   --sd-row-y:var(--space-5);      /* 12px  row top and bottom */
@@ -598,7 +593,7 @@ input[type=range]{width:110px;cursor:pointer}
   padding:var(--space-2) var(--space-4);border:1px solid transparent;border-radius:var(--radius-pill);
   background:transparent;color:var(--color-text-muted);cursor:pointer;white-space:nowrap;line-height:1.4}
 .sd-tab:hover:not(.is-active){background:var(--color-accent-wash-weak);color:var(--color-text-primary)}
-.sd-tab.is-active{background:var(--color-accent-purple);color:var(--color-text-on-accent);border-color:var(--color-accent-purple)}
+.sd-tab.is-active{background:var(--color-accent);color:var(--color-text-on-accent);border-color:var(--color-accent)}
 .sd-tab .sd-badge{margin-left:var(--space-2)}
 .sd-tab.is-active .sd-badge{box-shadow:0 0 0 1px var(--color-text-on-accent)}
 .sd-tabpanel{flex:1 1 auto}
@@ -659,23 +654,23 @@ input[type=range]{width:110px;cursor:pointer}
    card shows its body, which is what stops five mounted sources becoming a wall
    of buttons. */
 .sd-card--pick{cursor:pointer;transition:border-color .12s,background .12s}
-.sd-card--pick:hover:not(.is-selected){border-color:var(--color-accent-purple);background:var(--color-accent-wash-weak)}
-.sd-card--pick.is-selected{border-color:var(--color-accent-purple);background:var(--color-accent-wash)}
+.sd-card--pick:hover:not(.is-selected){border-color:var(--color-accent);background:var(--color-accent-wash-weak)}
+.sd-card--pick.is-selected{border-color:var(--color-accent);background:var(--color-accent-wash)}
 .sd-mark{flex:0 0 auto;width:13px;height:13px;border-radius:50%;
   border:1px solid var(--color-input-border);background:var(--color-bg-elevated);position:relative}
-.sd-card--pick.is-selected .sd-mark{border-color:var(--color-accent-purple)}
+.sd-card--pick.is-selected .sd-mark{border-color:var(--color-accent)}
 .sd-card--pick.is-selected .sd-mark::after{content:'';position:absolute;inset:3px;
-  border-radius:50%;background:var(--color-accent-purple)}
+  border-radius:50%;background:var(--color-accent)}
 
 /* ---- Badge: one pill, five roles ---- */
 .sd-badge{flex:0 0 auto;font-size:8px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
   padding:var(--space-1) var(--space-3);border-radius:var(--radius-pill);
   color:var(--color-text-on-accent);background:var(--color-badge-neutral-bg);line-height:1.5;white-space:nowrap}
 .sd-badge--req{background:var(--color-crit)}
-.sd-badge--cond{background:var(--color-status-risk,#c07500)}
+.sd-badge--cond{background:var(--color-status-risk);color:var(--color-chip-attention-ink)}
 .sd-badge--opt{background:var(--color-badge-neutral-bg)}
-.sd-badge--role{background:var(--color-accent-purple)}
-.sd-badge--done{background:var(--color-health-good,#3f8f5f)}
+.sd-badge--role{background:var(--color-accent)}
+.sd-badge--done{background:var(--color-health-good)}
 .sd-badge--future{background:var(--color-badge-neutral-bg)}
 
 /* ---- Stats: label over value, in a row ---- */
@@ -699,8 +694,8 @@ input[type=range]{width:110px;cursor:pointer}
 .sd-step-name{flex:1 1 auto;font-size:var(--text-sm);font-weight:600;color:var(--color-text-primary);min-width:0}
 .sd-step-body{margin-top:var(--sd-stack)}
 .sd-step-body[hidden]{display:none}
-.sd-step.is-done .sd-step-num{background:var(--color-accent-purple);color:var(--color-text-on-accent);box-shadow:none}
-.sd-step.is-current .sd-step-num{background:var(--color-accent-wash);color:var(--color-accent-ink);box-shadow:inset 0 0 0 1px var(--color-accent-purple)}
+.sd-step.is-done .sd-step-num{background:var(--color-accent);color:var(--color-text-on-accent);box-shadow:none}
+.sd-step.is-current .sd-step-num{background:var(--color-accent-wash);color:var(--color-accent-ink);box-shadow:inset 0 0 0 1px var(--color-accent)}
 .sd-step.is-current .sd-step-name{color:var(--color-text-primary)}
 .sd-step.is-waiting .sd-step-name{color:var(--color-text-note)}
 
@@ -709,7 +704,7 @@ input[type=range]{width:110px;cursor:pointer}
 .sd-choice:first-child{padding-top:0}
 .sd-choice+.sd-choice{border-top:1px solid var(--color-line-default)}
 .sd-choice-hd{display:flex;align-items:flex-start;gap:var(--sd-inline)}
-.sd-choice input[type=radio]{flex:0 0 auto;margin-top:2px;accent-color:var(--color-accent-purple)}
+.sd-choice input[type=radio]{flex:0 0 auto;margin-top:2px;accent-color:var(--color-accent)}
 .sd-choice-label{font-size:var(--text-sm);font-weight:600;color:var(--color-text-primary);line-height:1.4}
 .sd-choice-help{font-size:var(--text-xs);color:var(--color-text-note);line-height:1.5;margin-top:var(--space-1)}
 .sd-choice-body{margin-top:var(--sd-stack);padding:var(--sd-card-pad);
@@ -721,8 +716,8 @@ input[type=range]{width:110px;cursor:pointer}
 .sd-icon-opt{width:26px;height:26px;padding:0;display:flex;align-items:center;justify-content:center;
   border:1px solid var(--color-input-border);border-radius:var(--radius-sm);
   background:var(--color-bg-elevated);cursor:pointer}
-.sd-icon-opt:hover:not(.is-active){border-color:var(--color-accent-purple)}
-.sd-icon-opt.is-active{border-color:var(--color-accent-purple);background:var(--color-accent-wash);box-shadow:inset 0 0 0 1px var(--color-accent-purple)}
+.sd-icon-opt:hover:not(.is-active){border-color:var(--color-accent)}
+.sd-icon-opt.is-active{border-color:var(--color-accent);background:var(--color-accent-wash);box-shadow:inset 0 0 0 1px var(--color-accent)}
 .sd-icon-opt svg{width:14px;height:14px;display:block}
 
 /* ---- Sticky action footer ----
@@ -763,7 +758,7 @@ input[type=range]{width:110px;cursor:pointer}
 .toggle-switch{position:relative;display:inline-block;width:36px;height:19px;flex-shrink:0}
 .toggle-switch input{opacity:0;width:0;height:0;position:absolute}
 .toggle-switch .tsw-slider{position:absolute;cursor:pointer;inset:0;background:var(--color-line-default);border-radius:19px;transition:.15s}
-.toggle-switch .tsw-slider:before{content:'';position:absolute;height:15px;width:15px;left:2px;top:2px;background:var(--color-bg-elevated);border-radius:50%;transition:.15s;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.toggle-switch .tsw-slider:before{content:'';position:absolute;height:15px;width:15px;left:2px;top:2px;background:var(--color-bg-elevated);border-radius:50%;transition:.15s;box-shadow:var(--shadow-1)}
 .toggle-switch input:checked+.tsw-slider{background:var(--color-btn-primary-bg)}
 .toggle-switch input:checked+.tsw-slider:before{transform:translateX(17px)}
 /* A disabled switch has to look disabled, or the only feedback for clicking it
@@ -783,13 +778,13 @@ input[type=range]{width:110px;cursor:pointer}
 /* Style/Customize View sidebar sections */
 .cv-sect{padding:var(--space-section-gap) var(--space-5);border-bottom:1px solid var(--color-filter-border)}
 .cv-sect:last-child{border-bottom:none}
-.cv-sect-title{font-size:9.5px;font-weight:700;color:var(--color-purple-deep);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.cv-sect-title{font-size:9.5px;font-weight:700;color:var(--color-accent-deep);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;display:flex;align-items:center;gap:6px}
 .cv-sect-title .cv-future-tag{background:var(--color-badge-neutral-bg);color:var(--color-text-on-accent);font-size:7.5px;font-weight:700;padding:1px 5px;border-radius:8px;text-transform:none;letter-spacing:.02em}
 .cv-field-row{display:flex;flex-direction:column;gap:var(--space-2);margin-bottom:var(--space-3)}
 .cv-field-row:last-child{margin-bottom:0}
 .cv-field-row label{font-size:9.5px;color:var(--color-text-small);display:flex;justify-content:space-between}
 .cv-cols-expander{margin-top:8px}
-.cv-cols-expander summary{cursor:pointer;font-size:9.5px;font-weight:600;color:var(--color-purple-deep);list-style:none}
+.cv-cols-expander summary{cursor:pointer;font-size:9.5px;font-weight:600;color:var(--color-accent-deep);list-style:none}
 .cv-cols-expander summary::-webkit-details-marker{display:none}
 .cv-cols-expander summary::before{content:'\25B8';display:inline-block;margin-right:4px;transition:transform .12s}
 .cv-cols-expander[open] summary::before{transform:rotate(90deg)}
@@ -803,9 +798,9 @@ input[type=range]{width:110px;cursor:pointer}
 .sd-src-text b{color:var(--color-text-emphasis)}
 
 /* ---- Filter panel: horizontal strip below title, above meta row (filter/sort row + display controls row) ---- */
-#filter-bar{position:fixed;top:0;right:0;bottom:0;width:300px;max-width:88vw;background:var(--color-filter-bg);border-left:1px solid var(--color-filter-border);box-shadow:-2px 0 14px rgba(0,0,0,.18);display:flex;flex-direction:column;gap:0;font-size:10px;padding:var(--space-2) 0 var(--space-6);transform:translateX(100%);transition:transform .18s ease;z-index:700;overflow-y:auto}
+#filter-bar{position:fixed;top:0;right:0;bottom:0;width:300px;max-width:88vw;background:var(--color-filter-bg);border-left:1px solid var(--color-filter-border);box-shadow:var(--shadow-3);display:flex;flex-direction:column;gap:0;font-size:10px;padding:var(--space-2) 0 var(--space-6);transform:translateX(100%);transition:transform .18s ease;z-index:700;overflow-y:auto}
 #filter-bar.open{transform:translateX(0)}
-#filter-bar .fb-hd{padding:0 12px 10px;font-size:11px;font-weight:700;color:var(--color-purple-deep);display:flex;align-items:center;gap:6px}
+#filter-bar .fb-hd{padding:0 12px 10px;font-size:11px;font-weight:700;color:var(--color-accent-deep);display:flex;align-items:center;gap:6px}
 /* max-width:100vw + box-sizing:border-box: without a hard ceiling tied to the
    actual viewport, a too-wide field (D-15a: two quick-action buttons grouped
    so they wrap as a pair, see .tfb-week-quick) has nothing to wrap AGAINST.
@@ -915,7 +910,7 @@ select.ds-select{cursor:pointer}
 .ds-fwrap .clr{position:absolute;right:2px;top:50%;transform:translateY(-50%);width:20px;height:20px;border:0;background:transparent;color:var(--color-text-muted);border-radius:var(--radius-ctl);cursor:pointer;font-size:11px;display:inline-flex;align-items:center;justify-content:center}
 .ds-fwrap .clr:hover{background:var(--color-btn-icon-hover-bg)}
 .ds-fwrap.has-clr .ds-field{padding-right:var(--space-7)}
-.ds-field:focus-visible,.ds-select:focus-visible,.wr-field:focus-visible,.ds-seg button:focus-visible,.ds-ico:focus-visible,.ds-btn:focus-visible{outline:var(--focus-ring) solid var(--color-accent-purple);outline-offset:1px}
+.ds-field:focus-visible,.ds-select:focus-visible,.wr-field:focus-visible,.ds-seg button:focus-visible,.ds-ico:focus-visible,.ds-btn:focus-visible{outline:var(--focus-ring) solid var(--color-accent);outline-offset:1px}
 
 .ds-ico{box-sizing:border-box;width:var(--icon-btn);height:var(--icon-btn);border:0;background:transparent;color:var(--color-text-muted);border-radius:var(--radius-ctl);font-size:13px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;position:relative;flex:0 0 auto}
 .ds-ico:hover{background:var(--color-btn-icon-hover-bg)}
@@ -925,7 +920,7 @@ select.ds-select{cursor:pointer}
 .ds-seg button{box-sizing:border-box;height:var(--ctl-h);padding:0 var(--ctl-pad-x);border:0;border-radius:0;background:var(--color-bg-elevated);color:var(--color-text-primary);font:inherit;font-size:var(--text-md);cursor:pointer;white-space:nowrap}
 .ds-seg:not(.chips) button+button{border-left:var(--stroke-ctl) solid var(--color-btn-secondary-outline)}
 .ds-seg.chips button{border:var(--stroke-ctl) solid var(--color-btn-secondary-outline);border-radius:999px}
-.ds-seg button[aria-pressed="true"]{background:var(--color-accent-purple);border-color:var(--color-accent-purple);color:var(--color-text-on-accent);font-weight:600}
+.ds-seg button[aria-pressed="true"]{background:var(--color-accent);border-color:var(--color-accent);color:var(--color-text-on-accent);font-weight:600}
 /* Status chips keep their own state colour when pressed, so the filter reads
    in the same vocabulary as the board it filters. */
 #top-filter-bar .st-chip[aria-pressed="true"].st-crit{background:var(--color-status-crit);border-color:var(--color-status-crit)}
@@ -975,7 +970,7 @@ select.ds-select{cursor:pointer}
 .wr-wk{position:relative;height:var(--ctl-h);display:flex;align-items:center;justify-content:center;font-size:var(--text-md);cursor:pointer;color:var(--color-text-primary);border-radius:var(--radius-ctl)}
 .wr-wk:hover{background:var(--color-btn-icon-hover-bg)}
 .wr-wk.in{background:var(--color-accent-tint-bg)}
-.wr-wk.end{background:var(--color-accent-purple);color:var(--color-text-on-accent);font-weight:600}
+.wr-wk.end{background:var(--color-accent);color:var(--color-text-on-accent);font-weight:600}
 .wr-wk.preview{background:repeating-linear-gradient(135deg,var(--color-accent-tint-bg) 0 4px,transparent 4px 8px)}
 .wr-wk.dd{box-shadow:inset 0 0 0 1.5px var(--color-accent-ink)}
 .wr-wk.ps::before,.wr-wk.pe::after{content:"";position:absolute;top:1px;bottom:1px;width:4px;border:2px solid var(--color-text-primary);pointer-events:none}
@@ -1044,7 +1039,7 @@ select.ds-select{cursor:pointer}
 #top-filter-bar .fb-foot{display:flex;align-items:center;gap:var(--ctl-gap);
   border-top:1px solid var(--color-filter-border);padding-top:var(--space-3);margin-top:0}
 #top-filter-bar .filter-info{flex:1 1 auto;min-width:0;font-size:11px;color:var(--color-text-muted)}
-.fb-sect-title{font-size:9.5px;font-weight:700;color:var(--color-purple-deep);text-transform:uppercase;letter-spacing:.04em;margin:10px 0 4px;padding-top:8px;border-top:1px solid var(--color-filter-border)}
+.fb-sect-title{font-size:9.5px;font-weight:700;color:var(--color-accent-deep);text-transform:uppercase;letter-spacing:.04em;margin:10px 0 4px;padding-top:8px;border-top:1px solid var(--color-filter-border)}
 .fb-sect-title:first-child{margin-top:0;padding-top:0;border-top:none}
 .fb-close{position:absolute;top:8px;right:8px;background:none;border:none;font-size:15px;color:var(--color-text-muted);cursor:pointer;padding:4px;border-radius:4px}
 .fb-close:hover{background:var(--color-btn-hover-bg);color:var(--color-status-crit)}
@@ -1062,7 +1057,7 @@ select.ds-select{cursor:pointer}
    with max-height:0/overflow:hidden, so that overflow cannot be removed, and it
    clipped this list to 36px of its 200px while a table cell painted over what
    was left. z-index alone could not fix it: the clip is the larger half. */
-.id-suggest-dropdown{position:fixed;top:0;left:0;max-height:200px;overflow-y:auto;background:var(--color-bg-elevated);border:1px solid var(--color-btn-secondary-outline);border-radius:4px;box-shadow:0 4px 10px rgba(0,0,0,.15);z-index:2147483000}
+.id-suggest-dropdown{position:fixed;top:0;left:0;max-height:200px;overflow-y:auto;background:var(--color-bg-elevated);border:1px solid var(--color-btn-secondary-outline);border-radius:4px;box-shadow:var(--shadow-2);z-index:2147483000}
 .id-suggest-item{padding:var(--space-2) var(--space-3);font-size:var(--text-sm);cursor:pointer;color:var(--color-text-small)}
 .id-suggest-item:hover{background:var(--color-btn-secondary-hover-bg)}
 .fb-input-clear-row input{display:block;width:100%;box-sizing:border-box;font-size:var(--text-sm);padding:var(--space-2) 24px var(--space-2) var(--space-3);border-radius:4px;border:1px solid var(--color-btn-secondary-outline);background:var(--color-bg-elevated);color:var(--color-text-small)}
@@ -1101,7 +1096,7 @@ select.ds-select{cursor:pointer}
 .dep-sub-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .dep-lbl{font-size:9.5px;font-weight:700;min-width:78px}
 .dep-lbl.pred{color:var(--color-status-track)}
-.dep-lbl.succ{color:var(--color-accent-purple)}
+.dep-lbl.succ{color:var(--color-accent)}
 .dep-sub-row button{font-size:9px;font-weight:600;padding:2px 6px;border:1px solid var(--color-btn-secondary-outline);background:var(--color-btn-secondary-bg);color:var(--color-btn-secondary-text);border-radius:3px;cursor:pointer}
 .dep-sub-row button:hover{background:var(--color-btn-primary-bg);color:var(--color-btn-primary-text);border-color:var(--color-btn-primary-outline)}
 .dep-sub-row button.active{background:var(--color-btn-primary-bg);color:var(--color-btn-primary-text);border-color:var(--color-btn-primary-outline)}
@@ -1171,7 +1166,7 @@ body.print-mode #scroll-wrap{max-height:none;overflow-x:auto;overflow-y:visible}
    preview that would shift the page frame off centre, so the panel is closed
    on the way in and the margin released. */
 body.print-mode{margin-right:0}
-#btn-print-mode.on{background:var(--color-accent-purple);border-color:var(--color-accent-purple);color:var(--color-text-on-accent)}
+#btn-print-mode.on{background:var(--color-accent);border-color:var(--color-accent);color:var(--color-text-on-accent)}
 /* The two heading bars belong to the SHEET, not the viewport. They sit outside
    #page-frame and so took the body's width, which is the viewport's: measured
    on the build before this one, the bar and banner rendered 390px wide at phone
@@ -1217,7 +1212,7 @@ body.print-mode .pm-banner{display:block}
    container that only claims the space it needs gives us without a breakpoint.
    The subtitle sits under the whole bar rather than under the title, so the two
    containers can align to a single baseline. */
-.rpt-hd{background:var(--color-bg-header);color:var(--color-text-on-header);padding:6px 10px 4px;display:flex;flex-direction:column;gap:3px;position:relative;z-index:30;border-bottom:1px solid var(--color-line-default,#e3e2de)}
+.rpt-hd{background:var(--color-bg-header);color:var(--color-text-on-header);padding:6px 10px 4px;display:flex;flex-direction:column;gap:3px;position:relative;z-index:30;border-bottom:1px solid var(--color-line-default)}
 .rpt-hd-bar{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px;width:100%}
 .rpt-hd-left{flex:1 1 260px;min-width:0}
 /* The report detail fields moved out of the heading bar to their own line
@@ -1234,10 +1229,10 @@ body.print-mode .pm-banner{display:block}
   border-radius:3px;padding:1px 3px;margin:-1px 0 -1px -3px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46%;flex:0 1 auto}
 #icon-bar .title:hover{background:var(--color-bg-header-hover)}
-#icon-bar .title:focus{outline:1.5px solid var(--color-status-track,#2f6fed);background:var(--color-bg-header-focus);
+#icon-bar .title:focus{outline:1.5px solid var(--color-status-track);background:var(--color-bg-header-focus);
   white-space:normal;overflow:visible;max-width:none}
 .rpt-hd .subtitle{font-size:10px;font-weight:400;color:var(--color-text-on-header);font-style:italic}
-.rpt-hd .vtag{background:var(--color-accent-purple);color:var(--color-text-on-accent);font-size:8.5px;padding:1px 6px;border-radius:3px;margin-left:6px;font-weight:600;letter-spacing:.03em}
+.rpt-hd .vtag{background:var(--color-accent);color:var(--color-text-on-accent);font-size:8.5px;padding:1px 6px;border-radius:3px;margin-left:6px;font-weight:600;letter-spacing:.03em}
 /* Was its own full-width bar under the title; it is now the right-hand
    container of the heading bar, so it brings the field typography and drops the
    background, padding and stacking context. */
@@ -1268,10 +1263,10 @@ body.print-mode .pm-banner{display:block}
 .vt-btn{font-size:9px;padding:var(--space-1) var(--ctl-pad-x);border:none;background:var(--color-bg-panel);color:var(--color-text-on-panel-muted);cursor:pointer;font-weight:600}
 .vt-btn:hover:not(:disabled):not(.active){background:var(--color-btn-icon-hover-bg)}
 .vt-btn+.vt-btn{border-left:1px solid var(--color-vt-divider)}
-.vt-btn.active{background:var(--color-accent-purple);color:var(--color-text-on-accent)}
+.vt-btn.active{background:var(--color-accent);color:var(--color-text-on-accent)}
 .vt-btn:disabled{opacity:.4;cursor:not-allowed}
 .rpt-sub b{color:var(--color-text-on-header)}
-.rpt-sub .today{color:var(--color-subtotal-accent)}
+.rpt-sub .today{color:var(--color-text-on-header-accent)}
 
 #scroll-wrap{overflow-x:auto;overflow-y:auto;max-height:calc(100vh - 150px);position:relative}
 table{border-collapse:separate;border-spacing:0;table-layout:fixed;width:max-content}
@@ -1299,26 +1294,28 @@ thead tr th.sticky{z-index:20}
    bar) and its --hdr-search-h token went with it: declared 0px and never
    written by anything, it was two variables with no writer where one variable
    with one writer was wanted. */
-tr.hdr-phase th{font-size:9px;font-weight:500;color:var(--color-text-on-accent);padding:3px 4px;text-align:center;border-right:0.5px solid rgba(255,255,255,.15);white-space:nowrap;position:sticky;top:0;z-index:25}
+tr.hdr-phase th{font-size:9px;font-weight:500;color:var(--color-text-on-accent);padding:3px 4px;text-align:center;border-right:0.5px solid var(--color-band-divider);white-space:nowrap;position:sticky;top:0;z-index:25}
 /* P53 (item 12/13): month headings are clickable too, same hover affordance
    as week headings. A subtle overlay rather than a background swap, since
    the month band's own background is set inline per month and a plain
    background hover would fight it. */
 tr.hdr-phase th.mo-band{cursor:pointer}
+tr.hdr-phase th.mo-a{background:var(--color-month-a)}
+tr.hdr-phase th.mo-b{background:var(--color-month-b)}
 tr.hdr-phase th.mo-band:hover{box-shadow:inset 0 0 0 999px var(--color-bg-header-hover)}
-tr.hdr-wk th{font-size:8px;color:var(--color-text-small);padding:2px 2px;text-align:center;border-right:0.5px solid var(--color-line-default);border-bottom:1.5px solid #99a;white-space:nowrap;line-height:1.2;background:var(--color-bg-subtle);cursor:pointer;user-select:none;position:sticky;top:var(--hdr-phase-h,19.5px);z-index:24}
+tr.hdr-wk th{font-size:8px;color:var(--color-text-small);padding:2px 2px;text-align:center;border-right:0.5px solid var(--color-line-default);border-bottom:1.5px solid var(--color-line-strong);white-space:nowrap;line-height:1.2;background:var(--color-bg-subtle);cursor:pointer;user-select:none;position:sticky;top:var(--hdr-phase-h,19.5px);z-index:24}
 tr.hdr-wk th.sticky{z-index:26}
 tr.hdr-wk th:hover{background:var(--color-accent-tint-bg)}
-tr.hdr-wk th.past-wk{background:#e8e8e8;color:var(--color-text-small)}
-tr.hdr-wk th.past-wk:hover{background:#dcdcdc}
-tr.hdr-wk th.now-wk{background:var(--color-accent-tint-bg);color:var(--color-purple-deep);font-weight:600;border-left:1.5px solid var(--color-accent-purple);border-right:1.5px solid var(--color-accent-purple)}
-tr.hdr-wk th.filter-wk{background:var(--color-accent-purple) !important;color:var(--color-text-on-accent) !important;font-weight:600}
+tr.hdr-wk th.past-wk{background:var(--color-col-past-bg);color:var(--color-text-small)}
+tr.hdr-wk th.past-wk:hover{background:var(--color-col-past-hover-bg)}
+tr.hdr-wk th.now-wk{background:var(--color-accent-tint-bg);color:var(--color-accent-deep);font-weight:600;border-left:1.5px solid var(--color-accent);border-right:1.5px solid var(--color-accent)}
+tr.hdr-wk th.filter-wk{background:var(--color-accent) !important;color:var(--color-text-on-accent) !important;font-weight:600}
 /* The month band sets its background inline per month, so the highlight has
    to win on specificity AND restate the text colour: the month's own colour
    is unrelated to the accent and the label has to stay white on it. */
-tr.hdr-phase th.filter-mo{background:var(--color-accent-purple) !important;color:var(--color-text-on-accent) !important;font-weight:700}
+tr.hdr-phase th.filter-mo{background:var(--color-accent) !important;color:var(--color-text-on-accent) !important;font-weight:700}
 .wk-lbl{font-size:7px;color:var(--color-text-small);display:block}
-.today-dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--color-accent-purple);vertical-align:middle;margin-bottom:1px}
+.today-dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--color-accent);vertical-align:middle;margin-bottom:1px}
 th.c-name,th.c-ref,th.c-hrs,th.c-alloc,th.c-prog,th.c-type,th.c-doc,th.c-task,th.c-src,th.c-srcsch{background:var(--color-bg-panel);color:var(--color-text-on-panel);font-size:9px;font-weight:500;padding:4px 5px;border-right:1px solid var(--color-line-default);border-bottom:1.5px solid var(--color-border-panel);vertical-align:bottom}
 
 tr.phase-band td{font-size:9px;font-weight:600;color:var(--color-text-on-accent);padding:3px 8px;border-bottom:0.5px solid var(--color-band-divider);position:relative;z-index:5}
@@ -1369,7 +1366,7 @@ tr.data:hover td{background:var(--color-row-hover-bg)!important}
   transform:translate(-50%,-50%);opacity:.9;filter:drop-shadow(0 2px 4px var(--color-shadow-soft))}
 #ms-drag-ghost[hidden]{display:none}
 tr.data.ms-drop-target td{background:var(--color-accent-wash)!important;
-  box-shadow:inset 0 0 0 1px var(--color-accent-purple)}
+  box-shadow:inset 0 0 0 1px var(--color-accent)}
 body.ms-dragging{cursor:grabbing;user-select:none;-webkit-user-select:none}
 /* ---- Import failure ------------------------------------------------
    A failed load used to be reported only by the 9.5px status line, while
@@ -1393,7 +1390,7 @@ body.ms-dragging{cursor:grabbing;user-select:none;-webkit-user-select:none}
    mounted source keep their own rules. The box itself, its radius, padding and
    empty state all come from the shared card. */
 .mnt-dot{width:7px;height:7px;border-radius:50%;flex:0 0 auto}
-.mnt-dot-active{background:var(--color-accent-purple)}
+.mnt-dot-active{background:var(--color-accent)}
 .mnt-dot-locked{background:var(--color-text-faint)}
 .mnt-dot-empty{background:transparent;box-shadow:inset 0 0 0 1px var(--color-text-faint)}
 
@@ -1412,11 +1409,11 @@ body.ms-dragging{cursor:grabbing;user-select:none;-webkit-user-select:none}
   border-radius:var(--radius-ctl);padding:var(--space-2) var(--sd-inline);margin-top:var(--space-2);
   font-size:var(--text-xs);color:var(--color-text-primary);line-height:1.5}
 .sd-warn b{color:var(--color-status-risk)}
-/* --color-text-muted, not --color-text-small: small is #334 in dark and
+/* --color-text-muted, not --color-text-small: small was near-black in dark before P55 and
    measures 1.18:1 on a card, the exposure TD-28 named. Walked into anyway on
    the first pass; caught by the probe, not by reading. */
 .sd-card-eyebrow{font-size:8px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--color-text-muted);flex:1 1 auto;min-width:0}
-/* A solid accent chip rather than ink on a 10% wash. --color-purple-dark is a
+/* A solid accent chip rather than ink on a 10% wash. --color-accent-strong is a
    light-theme ink and goes DARKER in dark mode, so on the wash it measured
    1.13:1. The fill carries the meaning here and the text is chosen against the
    fill, so this is deliberately constant across themes. */
@@ -1462,9 +1459,9 @@ td.c-name{padding:3px 6px;vertical-align:top;overflow:visible;white-space:normal
 body.dname-wrap-on .dname{white-space:normal;overflow:visible;text-overflow:clip}
 .remarks{display:block;font-size:8.5px;color:var(--color-text-muted);font-style:italic;margin-top:2px;line-height:1.3;cursor:text;outline:none;min-height:11px;transition:background .12s;padding:0 3px;margin-left:calc(var(--row-gutter-w) + 1px);border-radius:2px}
 .remarks:hover{background:var(--color-accent-wash-weak)}
-.remarks:focus{background:var(--color-accent-wash);color:var(--color-purple-dark)}
-.remarks.changed{background:var(--color-accent-wash);color:var(--color-purple-dark)}
-.remarks.changed::before{content:'\u25CF ';color:var(--color-accent-purple);font-style:normal;font-size:7px;vertical-align:middle;letter-spacing:1px}
+.remarks:focus{background:var(--color-accent-wash);color:var(--color-accent-strong)}
+.remarks.changed{background:var(--color-accent-wash);color:var(--color-accent-strong)}
+.remarks.changed::before{content:'\u25CF ';color:var(--color-accent);font-style:normal;font-size:7px;vertical-align:middle;letter-spacing:1px}
 .remarks:empty::before{content:'\a0';color:var(--color-text-faint)}
 
 .health-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle;border:1.2px solid var(--color-health-rim);cursor:pointer;transition:box-shadow .12s,transform .12s}
@@ -1481,20 +1478,20 @@ body.dname-wrap-on .dname{white-space:normal;overflow:visible;text-overflow:clip
 .health-picker{position:absolute;background:var(--color-bg-elevated);border:1px solid var(--color-line-default);border-radius:5px;padding:3px;box-shadow:0 3px 10px var(--color-shadow-soft);z-index:9999;font-size:10px;min-width:135px;display:none}
 .health-picker.open{display:block}
 .health-picker-item{display:flex;align-items:center;gap:8px;padding:9px 10px;cursor:pointer;border-radius:3px;color:var(--color-text-small);min-height:22px}
-.health-picker-item:hover{background:var(--color-accent-tint-bg);color:var(--color-purple-dark)}
+.health-picker-item:hover{background:var(--color-accent-tint-bg);color:var(--color-accent-strong)}
 .health-picker-item .health-dot{width:11px;height:11px;margin-right:0;cursor:default}
 .health-picker-item .health-dot:hover{transform:none}
 
 td.c-ref{padding:2px 3px;text-align:center;vertical-align:top;font-size:9px;color:var(--color-text-muted);white-space:nowrap}
 td.c-hrs{padding:2px 4px;text-align:right;vertical-align:top;font-size:9.5px;color:var(--color-text-small);white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:500}
 td.c-hrs.hrs-incl{color:var(--color-text-note);font-style:italic;font-weight:400;font-size:8.5px}
-.hrs-loe-tag{display:inline-block;font-size:7px;background:var(--color-accent-tint-bg);color:var(--color-purple-dark);padding:0 3px;border-radius:2px;margin-right:4px;font-weight:600;vertical-align:middle;letter-spacing:.03em}
-td.c-alloc,td.c-prog{padding:2px 4px;text-align:right;vertical-align:top;font-size:9px;color:var(--color-text-faint);white-space:nowrap;font-variant-numeric:tabular-nums;background:#f7f7fa}
+.hrs-loe-tag{display:inline-block;font-size:7px;background:var(--color-accent-tint-bg);color:var(--color-accent-strong);padding:0 3px;border-radius:2px;margin-right:4px;font-weight:600;vertical-align:middle;letter-spacing:.03em}
+td.c-alloc,td.c-prog{padding:2px 4px;text-align:right;vertical-align:top;font-size:9px;color:var(--color-text-faint);white-space:nowrap;font-variant-numeric:tabular-nums;background:var(--color-row-alt-muted-bg)}
 tr.data.alt td.c-alloc,tr.data.alt td.c-prog{background:var(--color-row-alt-muted-bg)}
 td.c-type{padding:2px 4px;vertical-align:top;font-size:8.5px;color:var(--color-text-faint);white-space:nowrap;text-align:center}
 td.c-type .type-pill{display:inline-block;padding:1px 5px;border-radius:2px;font-size:8px;font-weight:600;letter-spacing:.03em}
 td.c-type .type-Weighted{background:var(--color-label-neutral-bg);color:var(--color-text-small)}
-td.c-type .type-LoE{background:var(--color-accent-tint-bg);color:var(--color-purple-dark)}
+td.c-type .type-LoE{background:var(--color-accent-tint-bg);color:var(--color-accent-strong)}
 td.c-type .type-Gate{background:var(--color-crit-tint-bg);color:var(--color-crit-text)}
 td.c-doc{padding:2px 4px;vertical-align:top;font-size:8px;color:var(--color-text-faint);white-space:nowrap;font-family:'SF Mono',Menlo,Consolas,monospace}
 td.c-task{padding:2px 4px;vertical-align:top;font-size:8px;color:var(--color-text-small);white-space:nowrap;font-family:'SF Mono',Menlo,Consolas,monospace;overflow:visible}
@@ -1510,7 +1507,7 @@ td.c-srcsch{padding:2px 4px;vertical-align:top;font-size:8px;color:var(--color-t
 td.c-wk{text-align:center;padding:1px 0;position:relative;overflow:visible;vertical-align:middle}
 td.c-wk.past-col{background:var(--color-col-past-bg) !important}
 tr.data.alt td.c-wk.past-col{background:var(--color-col-past-bg) !important}
-td.c-wk.now-col{background:var(--color-accent-tint-bg) !important;border-left:1.5px solid var(--color-accent-purple);border-right:1.5px solid var(--color-accent-purple)}
+td.c-wk.now-col{background:var(--color-accent-tint-bg) !important;border-left:1.5px solid var(--color-accent);border-right:1.5px solid var(--color-accent)}
 tr.data.alt td.c-wk.now-col{background:var(--color-accent-tint-bg) !important}
 /* .filter-col still marks which columns the week filter covers, because
    fit-to-screen reads it to know which columns are in play. It no longer
@@ -1608,14 +1605,14 @@ td.c-wk.loe-span{background-image:linear-gradient(90deg,var(--color-accent-wash)
 .m-title-label-row .m-lbl{flex-shrink:0}
 .m-short-title{display:block;white-space:normal;overflow-wrap:break-word;word-break:break-word;width:max-content;max-width:calc(var(--colw) * 6);
   text-align:left;padding:2px 3px;border-radius:2px;box-sizing:border-box;letter-spacing:.02em;min-width:0}
-.m-lbl{font-size:clamp(calc(6px * var(--label-scale)),calc(var(--colw) * 0.22 * var(--label-scale)),calc(11px * var(--label-scale)));color:var(--color-text-faint);font-weight:500;
+.m-lbl{font-size:clamp(calc(6px * var(--label-scale)),calc(var(--colw) * 0.22 * var(--label-scale)),calc(11px * var(--label-scale)));color:var(--color-sticker-muted);font-weight:500;
   background:var(--color-label-backing)}
-.m-short-title{margin-bottom:1px;font-size:clamp(calc(6px * var(--title-scale)),calc(var(--colw) * 0.23 * var(--title-scale)),calc(11px * var(--title-scale)));color:var(--color-text-small);font-weight:600;
+.m-short-title{margin-bottom:1px;font-size:clamp(calc(6px * var(--title-scale)),calc(var(--colw) * 0.23 * var(--title-scale)),calc(11px * var(--title-scale)));color:var(--color-sticker-ink);font-weight:600;
   background:var(--color-label-backing)}
-.m-hrs{margin-top:1px;font-size:clamp(calc(6px * var(--hrs-scale)),calc(var(--colw) * 0.19 * var(--hrs-scale)),calc(10px * var(--hrs-scale)));color:var(--color-purple-dark);font-weight:500;
+.m-hrs{margin-top:1px;font-size:clamp(calc(6px * var(--hrs-scale)),calc(var(--colw) * 0.19 * var(--hrs-scale)),calc(10px * var(--hrs-scale)));color:var(--color-sticker-accent-ink);font-weight:500;
   background:var(--color-label-hrs-backing);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 tr.data.alt .m-lbl{background:var(--color-label-backing-alt)}
-.m-hrs-loe{display:inline-block;font-size:7px;color:var(--color-purple-dark);font-weight:500;white-space:nowrap;background:var(--color-label-hrs-backing-soft);padding:0 3px;border-radius:2px;font-variant-numeric:tabular-nums;line-height:1.2}
+.m-hrs-loe{display:inline-block;font-size:7px;color:var(--color-sticker-accent-ink);font-weight:500;white-space:nowrap;background:var(--color-label-hrs-backing-soft);padding:0 3px;border-radius:2px;font-variant-numeric:tabular-nums;line-height:1.2}
 
 .s-done{color:var(--color-text-ink)}
 .s-doneuser{color:var(--color-status-done)}
@@ -1640,7 +1637,7 @@ tr.subtotal-row td.c-hrs{text-align:right;font-size:11px;font-weight:700;color:v
 tr.subtotal-row td.c-ref,tr.subtotal-row td.c-alloc,tr.subtotal-row td.c-prog,tr.subtotal-row td.c-type,tr.subtotal-row td.c-doc,tr.subtotal-row td.c-task,tr.subtotal-row td.c-src,tr.subtotal-row td.c-srcsch{color:var(--color-text-on-panel-muted);font-size:8px}
 tr.subtotal-row td.c-wk{text-align:center;font-size:9px;font-variant-numeric:tabular-nums;padding:4px 0;color:var(--color-subtotal-accent);font-weight:600}
 tr.subtotal-row td.c-wk.past-col{background:var(--color-col-past-bg) !important;color:var(--color-text-note)}
-tr.subtotal-row td.c-wk.now-col{background:var(--color-purple-deep) !important;color:var(--color-text-on-accent)}
+tr.subtotal-row td.c-wk.now-col{background:var(--color-accent-deep) !important;color:var(--color-text-on-accent)}
 tr.subtotal-row td.c-wk.empty-wk{color:var(--color-text-faint);font-weight:400}
 
 tr.hist-row td{background:var(--color-bg-panel) !important;padding:0;border-top:1px solid var(--color-row-selected);border-bottom:1px solid var(--color-row-selected)}
@@ -1674,7 +1671,7 @@ tr.hist-row td.c-name{color:var(--color-text-primary);font-size:9px;text-align:l
 tr.hist-row td.c-wk{height:56px;position:relative;padding:0;border-right:0.5px solid var(--color-border-panel) !important;background:var(--color-bg-panel) !important}
 tr.hist-row td.c-wk.past-col{background:var(--color-col-past-bg) !important}
 tr.hist-row td.c-wk.now-col{background:var(--color-col-filtered-alt-bg) !important}
-.hist-bar{position:absolute;bottom:0;left:20%;right:20%;background:linear-gradient(180deg,var(--color-hist-bar-top) 0%,var(--color-accent-purple) 60%,var(--color-purple-deep) 100%);border-radius:2px 2px 0 0;min-height:1px;transition:height .2s}
+.hist-bar{position:absolute;bottom:0;left:20%;right:20%;background:linear-gradient(180deg,var(--color-hist-bar-top) 0%,var(--color-accent) 60%,var(--color-accent-deep) 100%);border-radius:2px 2px 0 0;min-height:1px;transition:height .2s}
 .hist-lbl{position:absolute;top:2px;left:0;right:0;text-align:center;font-size:7px;color:var(--color-text-on-panel);font-variant-numeric:tabular-nums;font-weight:500;line-height:1}
 
 /* P54 (D-21): histogram label-cell controls. Reuses the .view-toggle/.vt-btn
@@ -1689,7 +1686,7 @@ tr.hist-row td.c-wk.now-col{background:var(--color-col-filtered-alt-bg) !importa
 .hist-seg button{height:100%;padding:0 var(--ctl-pad-x);border:none;background:var(--color-bg-panel);color:var(--color-text-on-panel-muted);font-size:9px;font-weight:600;cursor:pointer}
 .hist-seg button:hover:not(:disabled):not(.active){background:var(--color-btn-icon-hover-bg)}
 .hist-seg button+button{border-left:1px solid var(--color-vt-divider)}
-.hist-seg button.active{background:var(--color-accent-purple);color:var(--color-text-on-accent)}
+.hist-seg button.active{background:var(--color-accent);color:var(--color-text-on-accent)}
 .hist-seg button:disabled{opacity:.4;cursor:not-allowed}
 /* One arrow button moves the histogram: up when it sits at the bottom, down when it sits at the top. */
 .hist-move{width:var(--ctl-h);height:var(--ctl-h);flex-shrink:0;border:1px solid var(--color-vt-divider);border-radius:var(--radius-ctl);background:var(--color-bg-panel);color:var(--color-text-on-panel-muted);font-size:12px;font-weight:700;line-height:1;cursor:pointer;padding:0}
@@ -1716,44 +1713,44 @@ tr.hist-row td.c-wk.now-col{background:var(--color-col-filtered-alt-bg) !importa
 #paste-wrap[hidden]{display:none}
 #paste-box{width:100%;height:90px;font-family:var(--font-mono);font-size:var(--text-sm);border:1px solid var(--color-input-border);border-radius:var(--radius-sm);padding:var(--space-3);background:var(--color-bg-elevated);color:var(--color-text-primary)}
 #map-wrap{display:none;background:var(--color-bg-elevated);border:1px solid var(--color-line-default);border-radius:var(--radius-md);padding:var(--space-4)}
-.map-hd{font-size:10px;color:#245;margin-bottom:6px}
-.map-hd .req,.map-cell .req{color:#b00020;font-weight:700}
+.map-hd{font-size:10px;color:var(--color-text-emphasis);margin-bottom:6px}
+.map-hd .req,.map-cell .req{color:var(--color-crit-text);font-weight:700}
 .map-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:6px}
 .map-cell{display:flex;flex-direction:column;gap:2px;font-size:9.5px;color:var(--color-text-small)}
-.map-cell select{font-size:10px;padding:2px 4px;border:1px solid #b8c8c0;border-radius:3px;max-width:100%}
+.map-cell select{font-size:10px;padding:2px 4px;border:1px solid var(--color-input-border);border-radius:3px;max-width:100%}
 .map-actions{margin-top:8px;display:flex;gap:8px}
 .import-summary{margin-top:10px;padding-top:8px;border-top:1px dashed var(--color-line-default)}
 .import-summary-row{margin-bottom:4px}
 .import-summary-row:last-child{margin-bottom:0}
 .import-pass{font-size:10.5px;font-weight:700}
-.import-pass.ok{color:#1a6b3a}
-.import-pass.err{color:#b00020}
-#diag-panel{display:none;background:#fff8f0;border-bottom:1px solid #e0cdb8;padding:6px 10px;max-height:220px;overflow:auto}
+.import-pass.ok{color:var(--color-ok-text)}
+.import-pass.err{color:var(--color-crit-text)}
+#diag-panel{display:none;background:var(--color-notice-bg);border-bottom:1px solid var(--color-notice-border);padding:6px 10px;max-height:220px;overflow:auto}
 .diag-tbl{border-collapse:collapse;width:100%;font-size:9.5px;table-layout:auto}
 .diag-onscreen-marker{color:var(--color-status-risk);font-size:10px;margin-left:4px;cursor:default}
-.diag-tbl th{background:#f0e2d2;text-align:left;padding:3px 6px;border:1px solid #e0cdb8;color:#5a3a1a}
-.diag-tbl td{padding:2px 6px;border:1px solid #eee0d0;color:#443}
-.diag-tbl tr.dsev-err td{background:var(--color-crit-tint-bg);color:#8a0018}
-.diag-tbl tr.dsev-warn td{background:#fff6e5}
-.diag-none{font-size:9.5px;color:#786;font-style:italic}
-.toggle-btn.diag-warn{background:#e8a020;color:var(--color-text-on-accent);border-color:#c88000}
-.toggle-btn.diag-err{background:var(--color-crit);color:var(--color-text-on-accent);border-color:#900}
+.diag-tbl th{background:var(--color-notice-head-bg);text-align:left;padding:3px 6px;border:1px solid var(--color-notice-border);color:var(--color-notice-ink)}
+.diag-tbl td{padding:2px 6px;border:1px solid var(--color-notice-border);color:var(--color-text-primary)}
+.diag-tbl tr.dsev-err td{background:var(--color-crit-tint-bg);color:var(--color-crit-text)}
+.diag-tbl tr.dsev-warn td{background:var(--color-notice-bg)}
+.diag-none{font-size:9.5px;color:var(--color-text-muted);font-style:italic}
+.toggle-btn.diag-warn{background:var(--color-status-risk);color:var(--color-chip-attention-ink);border-color:var(--color-health-watch-border)}
+.toggle-btn.diag-err{background:var(--color-crit);color:var(--color-text-on-accent);border-color:var(--color-crit-border)}
 
 /* ===== Dependency lines — integrated from the standalone predecessor/successor prototype ===== */
 #dep-line-layer{position:absolute;top:0;left:0;pointer-events:none;z-index:1;overflow:visible}
 .dep-line{fill:none;stroke-width:var(--dep-line-width,1.6)}
 .dep-line.pred{stroke:var(--color-status-track)}
-.dep-line.succ{stroke:var(--color-accent-purple)}
+.dep-line.succ{stroke:var(--color-accent)}
 .dep-line.muted{stroke:var(--color-status-future);opacity:.55}
 .dep-line.zero-stub{stroke-dasharray:2.4 1.8;opacity:.75}
 .dep-hit{fill:none;stroke:transparent;stroke-width:12;pointer-events:stroke;cursor:pointer}
 .dep-outline{fill:none;stroke-width:calc(var(--dep-line-width,1.6) * 3);opacity:.28}
 .dep-outline.pred{stroke:var(--color-status-track)}
-.dep-outline.succ{stroke:var(--color-accent-purple)}
+.dep-outline.succ{stroke:var(--color-accent)}
 .dep-outline.muted{stroke:var(--color-status-future)}
 .dep-edge-label{font-size:9px;font-weight:600}
 .dep-edge-label.pred{fill:var(--color-status-track)}
-.dep-edge-label.succ{fill:var(--color-accent-purple)}
+.dep-edge-label.succ{fill:var(--color-accent)}
 .dep-edge-label.muted{fill:var(--color-status-future)}
 
 /* One line per activity, so pre-line no longer carries the layout: the rows
@@ -1770,7 +1767,7 @@ tr.hist-row td.c-wk.now-col{background:var(--color-col-filtered-alt-bg) !importa
 .dep-tooltip[hidden]{display:none}
 .dep-tooltip .copied{color:var(--color-status-done);margin-left:6px;font-weight:700}
 
-.dep-comment-panel{position:fixed;z-index:2147483647;width:230px;background:var(--color-dialog-bg);color:var(--color-text-primary);border-radius:var(--radius-overlay);border:1px solid var(--color-line-default);box-shadow:0 4px 16px rgba(0,0,0,.3);padding:6px 8px 8px}
+.dep-comment-panel{position:fixed;z-index:2147483647;width:230px;background:var(--color-dialog-bg);color:var(--color-text-primary);border-radius:var(--radius-overlay);border:1px solid var(--color-line-default);box-shadow:var(--shadow-2);padding:6px 8px 8px}
 .dep-comment-panel[hidden]{display:none}
 .dep-comment-head{margin-bottom:6px}
 .dep-comment-close{background:none;border:none;font-size:14px;line-height:1;color:var(--color-text-muted);cursor:pointer;padding:4px;border-radius:4px}
@@ -1797,7 +1794,7 @@ tr.hist-row td.c-wk.now-col{background:var(--color-col-filtered-alt-bg) !importa
   padding:1.5px 2px;border-radius:2px;background:var(--color-label-backing);
   font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 .ms-count.pred{left:0;transform:translate(-100%,-50%);margin-left:-3px;color:var(--color-status-track)}
-.ms-count.succ{right:0;transform:translate(100%,-50%);margin-right:-3px;color:var(--color-accent-purple)}
+.ms-count.succ{right:0;transform:translate(100%,-50%);margin-right:-3px;color:var(--color-accent)}
 /* The stack anchors at left:50% (the icon's centre) so it can unfurl from
    behind the icon. That means clearing the right-hand count chip costs half an
    icon MORE than it did when the anchor was left:100%; without the --ico-half
@@ -1884,15 +1881,15 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 .ms-icon-btn{display:inline-flex;align-items:center;justify-content:center;
   width:19px;height:19px;padding:var(--space-0);border:1px solid transparent;border-radius:5px;
   background:none;cursor:pointer;transition:background .12s,border-color .12s;flex:0 0 auto}
-.ms-icon-btn:hover{background:var(--color-accent-wash-weak);border-color:var(--color-accent-purple)}
-.ms-icon-btn[aria-expanded="true"]{background:var(--color-accent-wash);border-color:var(--color-accent-purple)}
+.ms-icon-btn:hover{background:var(--color-accent-wash-weak);border-color:var(--color-accent)}
+.ms-icon-btn[aria-expanded="true"]{background:var(--color-accent-wash);border-color:var(--color-accent)}
 .ms-icon-btn .ms-icon{width:13px;height:13px}
 /* A field whose stored value differs from the schedule's own. Distinct from
    .ms-dirty-field, which means "typed but not saved yet": this one survives the
    save and is how a reader tells, later, which figures on the card are the
    schedule's and which are somebody's. Its tooltip carries the original. */
 .ms-edited-mark{display:inline-block;width:5px;height:5px;margin-left:4px;border-radius:99px;
-  background:var(--color-accent-purple);vertical-align:middle;cursor:help;flex:0 0 auto}
+  background:var(--color-accent);vertical-align:middle;cursor:help;flex:0 0 auto}
 .ms-edited-mark[hidden]{display:none}
 .ms-shorttitle-row .ms-edited-mark,.ms-heading .ms-edited-mark{align-self:center}
 /* D-18: the same mark, on the board. Repositioned to the icon's own
@@ -1904,7 +1901,7 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
    themes without a second colour token. Never collides with .m-lbl-stack:
    the stack starts at the wrap's horizontal centre and this mark sits at
    the wrap's own top-right, which is the icon's half-width to its left. */
-/* --color-accent-purple (the card mark's own background) is deliberately the
+/* --color-accent (the card mark's own background) is deliberately the
    SAME hex in both themes — it is the constant brand accent everywhere else
    it is used (theme_check.py already carries other accent-purple UI as
    `constant` probes). On the board, this mark has to read against a filled
@@ -2040,7 +2037,7 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 .ms-prog-edit.is-zero .ms-prog-input{color:var(--color-text-label)}
 .ms-prog-edit.changed{background:var(--color-accent-wash)}
 .ms-prog-edit.changed .ms-prog-input,.ms-prog-edit.changed .ms-prog-pct{color:var(--color-accent-ink)}
-.ms-prog-edit.changed::before{content:'\25CF';color:var(--color-accent-purple);font-size:7px;line-height:1;align-self:center;letter-spacing:1px}
+.ms-prog-edit.changed::before{content:'\25CF';color:var(--color-accent);font-size:7px;line-height:1;align-self:center;letter-spacing:1px}
 /* Weight and the two hours figures are reference values, not things read at a
    glance, so they fold away. Collapsed by default, same as the ID lists. */
 .ms-metrics-fold{margin-top:10px;border-top:1px solid var(--color-line-hairline);padding-top:5px}
@@ -2074,7 +2071,7 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
   font-size:8.5px;line-height:1.35;font-family:var(--font-mono,monospace);
   color:var(--color-text-on-panel);background:var(--color-bg-elevated);
   border:1px solid var(--color-input-border);border-radius:3px;padding:3px 4px}
-.ms-health-dots .health-dot.selected{box-shadow:0 0 0 2px var(--color-accent-purple)}
+.ms-health-dots .health-dot.selected{box-shadow:0 0 0 2px var(--color-accent)}
 .health-dot.mh-0{background:var(--color-health-none-fill)}
 .health-dot.mh-1{background:var(--color-health-info);border-color:var(--color-health-info-border)}
 .health-dot.mh-2{background:var(--color-health-good);border-color:var(--color-health-good-border)}
@@ -2094,7 +2091,7 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
    selection and active state elsewhere; no new colour. */
 a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,
 textarea:focus-visible,[tabindex]:focus-visible{
-  outline:var(--focus-ring) solid var(--color-accent-purple);outline-offset:1px}
+  outline:var(--focus-ring) solid var(--color-accent);outline-offset:1px}
 /* Minimum hit target for every STANDALONE icon-only button (a panel or
    dialog's own close control), without enlarging the glyph inside it:
    min-width/min-height only, so padding and font-size are untouched. One
@@ -3164,7 +3161,7 @@ textarea:focus-visible,[tabindex]:focus-visible{
       <path d="M0,0 L10,5 L0,10 Z" fill="var(--color-status-track)"/>
     </marker>
     <marker id="arrow-succ" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 Z" fill="var(--color-accent-purple)"/>
+      <path d="M0,0 L10,5 L0,10 Z" fill="var(--color-accent)"/>
     </marker>
     <marker id="arrow-muted" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 Z" fill="var(--color-status-future)"/>
@@ -3209,7 +3206,7 @@ textarea:focus-visible,[tabindex]:focus-visible{
 // label, and embedded in exported JSON — bump this one place, everything else
 // reads from it, so the three copies can't silently drift apart the way the
 // title/label/export payload just had for a long stretch of unversioned work.
-const APP_VERSION='3.1.0-P54';
+const APP_VERSION='3.1.0-P55';
 // ============================================================
 // TIMELINE
 // ============================================================
@@ -3226,7 +3223,7 @@ let WE_DATES=WE_LABELS.map(lbl=>{
   const yr=mi>=4?2026:2027;
   return new Date(yr,mi,parseInt(d,10));
 });
-let MONTHS=[{"label": "May 2026", "span": 2, "bg": "#1D4D3A"}, {"label": "Jun 2026", "span": 4, "bg": "#1D4D3A"}, {"label": "Jul 2026", "span": 4, "bg": "#2a2d0a"}, {"label": "Aug 2026", "span": 5, "bg": "#1D4D3A"}, {"label": "Sep 2026", "span": 4, "bg": "#5a3010"}, {"label": "Oct 2026", "span": 4, "bg": "#5a3010"}, {"label": "Nov 2026", "span": 5, "bg": "#5a1010"}, {"label": "Dec 2026", "span": 4, "bg": "#5a1010"}, {"label": "Jan 2027", "span": 5, "bg": "#2a2d5a"}, {"label": "Feb 2027", "span": 2, "bg": "#2a2d5a"}];
+let MONTHS=[{"label": "May 2026", "span": 2}, {"label": "Jun 2026", "span": 4}, {"label": "Jul 2026", "span": 4}, {"label": "Aug 2026", "span": 5}, {"label": "Sep 2026", "span": 4}, {"label": "Oct 2026", "span": 4}, {"label": "Nov 2026", "span": 5}, {"label": "Dec 2026", "span": 4}, {"label": "Jan 2027", "span": 5}, {"label": "Feb 2027", "span": 2}];
 const SEED_TIMELINE={labels:WE_LABELS.slice(),dates:WE_DATES.slice(),months:MONTHS.slice(),nowCol:12};
 
 // ============================================================
@@ -3948,10 +3945,6 @@ function parseHierarchy(rows,idColIdx){
   return {paths:paths,isLeaf:isLeaf,detected:detected};
 }
 
-const MONTH_BG={
-  0:'#2a2d5a',1:'#2a2d5a',2:'#1D4D3A',3:'#1D4D3A',4:'#1D4D3A',5:'#1D4D3A',
-  6:'#2a2d0a',7:'#1D4D3A',8:'#5a3010',9:'#5a3010',10:'#5a1010',11:'#5a1010'
-};
 const MONTH_NAMES=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 // ---------- diagnostics channel ----------
@@ -4846,7 +4839,7 @@ function timelineFromWeekDates(dates,nowCol){
   dates.forEach(function(d){
     const lbl=MONTH_NAMES[d.getMonth()]+' '+d.getFullYear();
     if(months.length&&months[months.length-1].label===lbl) months[months.length-1].span++;
-    else months.push({label:lbl,span:1,bg:MONTH_BG[d.getMonth()]||'#1e2240'});
+    else months.push({label:lbl,span:1});
   });
   return {labels:labels,dates:dates,months:months,
           nowCol:Math.max(0,Math.min(dates.length-1,nowCol))};
@@ -5190,11 +5183,11 @@ function ensureMsTipEl(){
   if(msTipEl) return msTipEl;
   msTipEl=document.createElement('div');
   msTipEl.id='ms-tooltip';
-  msTipEl.style.cssText='position:fixed;z-index:2147483647;display:none;background:rgba(21,24,47,.92);'
-    +'backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);border:1px solid rgba(255,255,255,.14);'
+  msTipEl.style.cssText='position:fixed;z-index:2147483647;display:none;background:var(--color-tooltip-bg);'
+    +'backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);border:1px solid var(--color-tooltip-border);'
     +'color:var(--color-text-on-accent);font-size:9px;padding:6px 10px;border-radius:4px;white-space:pre;text-align:left;'
     +'pointer-events:none;font-family:\'SF Mono\',Menlo,Consolas,monospace;line-height:1.5;'
-    +'box-shadow:0 4px 12px rgba(0,0,0,.25);letter-spacing:.02em;max-width:min(92vw,440px)';
+    +'box-shadow:var(--shadow-2);letter-spacing:.02em;max-width:min(92vw,440px)';
   document.body.appendChild(msTipEl);
   return msTipEl;
 }
@@ -5673,10 +5666,12 @@ function renderPhaseHdr(){
   const phaseHdr=document.getElementById('phase-hdr');
   MONTHS.forEach((mo,moIdx)=>{
     const th=document.createElement('th');
-    th.colSpan=mo.span;th.textContent=mo.label;th.style.background=mo.bg;
+    th.colSpan=mo.span;th.textContent=mo.label;
     // Marks the real month cells apart from the static metadata headers that
     // share this row, so the filter can find them by index.
-    th.className='mo-band';
+    // P55: month colour comes from the theme, alternating A/B by band position,
+    // never from the data. Older files still carry a `bg` per month; it is ignored.
+    th.className='mo-band '+(moIdx%2?'mo-b':'mo-a');
     // P53 (item 13): a month heading filters to that month's weeks, the same
     // way picking that range in the Date range picker would.
     th.title='Filter to '+mo.label+' (click)';
@@ -7813,7 +7808,7 @@ function renderWeekRangePopover(){
   pop.innerHTML='<div class="wr-quick">'+q+'</div><div class="wr-main">'+
     '<div class="wr-head">'+headHtml+'</div>'+
     '<div class="wr-grid">'+g+'</div>'+
-    '<div class="wr-legend"><span><i style="background:var(--color-accent-purple)"></i>Selected start / end</span><span><i style="box-shadow:inset 0 0 0 1.5px var(--color-accent-ink)"></i>Data date</span><span><i class="brk" aria-hidden="true"></i><i class="brk e" aria-hidden="true"></i>Programme start / end</span></div>'+
+    '<div class="wr-legend"><span><i style="background:var(--color-accent)"></i>Selected start / end</span><span><i style="box-shadow:inset 0 0 0 1.5px var(--color-accent-ink)"></i>Data date</span><span><i class="brk" aria-hidden="true"></i><i class="brk e" aria-hidden="true"></i>Programme start / end</span></div>'+
     '<div class="wr-foot">'+
       '<div class="wr-range-edit">'+
         '<span class="fb-inline"><label for="wr-range-start">Range start</label><input type="date" class="ds-field" id="wr-range-start" value="'+rbFrom+'" onchange="wrRangeBoundChange()" aria-label="Range start, the board\'s own lower bound"></span>'+

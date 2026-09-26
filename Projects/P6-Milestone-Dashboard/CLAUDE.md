@@ -103,7 +103,12 @@ python3 tools/theme_check.py
 
 It flips `data-theme` and compares computed styles in both themes, exiting non-zero if anything expected to toggle is frozen. A colour hardcoded to one theme's value looks perfectly correct in that theme, so reading the CSS does not catch this class. It found seven frozen elements at v3.1.0-P2, including a comment panel that was near-white text on a near-white background in light mode.
 
-Note that `var(--token, #fallback)` fallbacks are **not** defects. They resolve only when the token is undefined, so they still toggle. The audit reports them separately, and treating them as defects would mean changing working code.
+**Central palette rule (P55, directed by Matt 2026-09-26): a theme change is one edit in one place.** Literal colours live only in the `--pal-*` tokens inside the two `html[data-theme]` blocks. Everything else consumes `--color-*` roles, and tints, washes and shadows derive via `color-mix()`. `var(--token, #fallback)` literal fallbacks are now violations: they were harmless at runtime but left stale colour copies outside the palette. Tiers and elevation levels are in `docs/ux/design-standard.md`. Before merging any colour change, run:
+
+```
+python3 tools/colour_audit.py --strict
+python3 tools/palette_swap_check.py
+```
 
 **Never write a count into prose**, here or in any doc. Prose says what a metric means and where to find it. The number lives only in the Measurement Log. This rule exists because the tracking docs previously drifted 3-4x out of date with no trigger to revisit them.
 
