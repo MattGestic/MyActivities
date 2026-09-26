@@ -518,14 +518,16 @@ body:has(.ib-menu-panel .dot.show) #pm-more-dot{display:block}
    trigger returns and the panel is the dropdown above, labels shown. */
 @media (min-width:1025px){
   #btn-more-actions{display:none}
-  #icon-bar .ib-menu-panel{position:static;display:flex;flex-direction:row;align-items:center;gap:var(--space-2);
+  /* :not(.open) because the print preview's banner still opens this panel as
+     a dropdown from its own trigger; opened, it is the menu again at any width. */
+  #icon-bar .ib-menu-panel:not(.open){position:static;display:flex;flex-direction:row;align-items:center;gap:var(--space-2);
     min-width:0;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;overflow:visible;z-index:auto}
-  #icon-bar .icon-btn.ib-mi{width:var(--icon-btn);height:var(--icon-btn);min-height:0;padding:0;justify-content:center;
+  #icon-bar .ib-menu-panel:not(.open) .icon-btn.ib-mi{width:var(--icon-btn);height:var(--icon-btn);min-height:0;padding:0;justify-content:center;
     color:var(--color-text-on-header);position:relative}
-  #icon-bar .icon-btn.ib-mi:hover{background:var(--color-bg-header-hover);color:var(--color-text-on-header)}
-  #icon-bar .icon-btn.ib-mi.on{background:var(--color-bg-header-focus);border-color:transparent;color:var(--color-text-on-header)}
-  #icon-bar .ib-mi-lbl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-  #icon-bar .icon-btn.ib-mi .dot{position:absolute;top:2px;right:2px}
+  #icon-bar .ib-menu-panel:not(.open) .icon-btn.ib-mi:hover{background:var(--color-bg-header-hover);color:var(--color-text-on-header)}
+  #icon-bar .ib-menu-panel:not(.open) .icon-btn.ib-mi.on{background:var(--color-bg-header-focus);border-color:transparent;color:var(--color-text-on-header)}
+  #icon-bar .ib-menu-panel:not(.open) .ib-mi-lbl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  #icon-bar .ib-menu-panel:not(.open) .icon-btn.ib-mi .dot{position:absolute;top:2px;right:2px}
 }
 /* Moved to the right of the icon bar, so it no longer acts as the flexible
    filler that pushed the icons over. The spacer before it does that now. */
@@ -569,7 +571,7 @@ body{margin-left:var(--ws-rail-w);transition:margin-left .18s ease,margin-right 
 .ws-ri.is-active::before{content:'';position:absolute;left:-6px;top:6px;bottom:6px;width:3px;
   border-radius:2px;background:var(--color-accent)}
 .ws-ri:focus-visible{outline:var(--focus-ring) solid var(--color-accent);outline-offset:1px}
-.ws-bd{position:absolute;top:0;right:0;min-width:14px;height:14px;padding:0 3px;border-radius:7px;
+.ws-bd{position:absolute;top:0;right:0;min-width:14px;height:14px;padding:0 var(--space-1);border-radius:7px;
   background:var(--color-accent);color:var(--color-text-on-accent);font-size:9px;font-weight:700;
   line-height:14px;text-align:center}
 .ws-bd:empty{display:none}
@@ -652,7 +654,6 @@ body.print-mode{margin-left:0}
 #settings-scrim{position:fixed;inset:0;background:var(--color-scrim);display:none;z-index:850}
 #settings-scrim.open{display:block}
 /* .sd-hd: see the shared .ws-hd,.sd-hd rule (P56). */
-.sd-hd-sub{font-size:var(--text-xs);color:var(--color-text-on-header-muted);line-height:1.4}
 .sd-close{background:none;border:none;color:var(--color-text-on-panel);font-size:16px;cursor:pointer;line-height:1}
 .file-picker-wrap{display:inline-block;opacity:.55;filter:grayscale(.4);transition:opacity .15s,filter .15s}
 .file-picker-wrap.active{opacity:1;filter:none}
@@ -7231,7 +7232,7 @@ function togglePrintMode(force){
     // Remember the week width so leaving the preview puts the board back the
     // way it was found, rather than leaving it at page scale.
     PRINT_MODE_PREV={wkWidth:document.getElementById('wk-width').value,
-                     cvOpen:document.body.classList.contains('cv-open')};
+                     cvOpen:(function(){ const fb=document.getElementById('filter-bar'); return !!fb&&fb.classList.contains('open'); })()};
     // The view-controls panel reserves a 300px right margin on <body>, which
     // would push the page frame off centre. Settings is a scrim drawer over
     // the top of everything, so it goes too.
