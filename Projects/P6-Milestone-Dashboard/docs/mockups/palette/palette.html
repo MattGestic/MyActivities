@@ -1,0 +1,209 @@
+<title>SRET Colour Palette</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:light;
+  /* page chrome for this review sheet */
+  --pg:#eef0f4; --pg-card:#ffffff; --pg-ink:#1b2230; --pg-muted:#5d6678; --pg-line:#d9dde5;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--pg:#10131c;--pg-card:#171b27;--pg-ink:#e6eaf2;--pg-muted:#9aa3b5;--pg-line:#2a3142}}
+:root[data-theme="dark"]{color-scheme:dark;--pg:#10131c;--pg-card:#171b27;--pg-ink:#e6eaf2;--pg-muted:#9aa3b5;--pg-line:#2a3142}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--pg);color:var(--pg-ink);font:14px/1.5 'IBM Plex Sans','Segoe UI',system-ui,sans-serif;padding-inline:16px;padding-block:28px 56px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+h1{font-size:24px;line-height:1.25;margin:0;text-wrap:balance}
+h2{font-size:15px;margin:0 0 4px;text-wrap:balance}
+p{margin:0;max-width:68ch;color:var(--pg-muted)}
+.eyebrow{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--pg-muted);font-weight:600}
+.sect{background:var(--pg-card);border:1px solid var(--pg-line);border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:14px}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:12px;font-variant-numeric:tabular-nums}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+.sw{border:1px solid var(--pg-line);border-radius:8px;overflow:hidden;display:flex;flex-direction:column}
+.sw .chip{height:64px;display:flex;align-items:flex-end;padding:6px 8px;font-size:11px;font-weight:600}
+.sw .meta{padding:8px 10px;display:flex;flex-direction:column;gap:2px}
+.sw .nm{font-weight:600;font-size:13px}
+.sw .role{font-size:12px;color:var(--pg-muted);line-height:1.35}
+.sw .hex{display:flex;justify-content:space-between;gap:8px}
+.aa{font-size:10px;font-weight:700;padding:0 5px;border-radius:3px;background:var(--pg-line);color:var(--pg-ink)}
+.aa.fail{background:#f6d7d4;color:#8a1f16}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:760px){.pair{grid-template-columns:1fr}}
+.tag{display:inline-flex;gap:6px;align-items:center;font-size:12px;font-weight:600;color:var(--pg-ink)}
+.tag .k{font-size:10px;padding:1px 6px;border-radius:99px;background:var(--pg-line)}
+.rec{background:#dff0ee;color:#0b5c63}
+.decide{display:flex;flex-wrap:wrap;gap:8px}
+.decide label{display:flex;align-items:center;gap:6px;border:1px solid var(--pg-line);border-radius:6px;padding:6px 10px;cursor:pointer}
+
+/* ===== The proposed app palette, as it would live in the app ===== */
+.app{--hd:#2b4a7a;--hd-ink:#ffffff;--hd-muted:#c6d2e6;--page:#f3f4f7;--surface:#ffffff;--ink:#1b2230;--muted:#667085;--line:#dde1e8;
+  --ws:#4a3f78;--accent:var(--acc);--accent-ink:var(--acc-ink);--accent-tint:var(--acc-tint);
+  --st-done:#2e8b57;--st-track:#2f6fdb;--st-risk:#c98a0b;--st-issue:#c2413a;--st-future:#a3aab5;--st-crit:#c2413a;
+  border-radius:10px;overflow:hidden;border:1px solid var(--line);background:var(--page);color:var(--ink);font-size:12px}
+.app.dark{--hd:#1b2a47;--hd-ink:#eef2f8;--hd-muted:#9fb0cc;--page:#121724;--surface:#1a2133;--ink:#e6eaf2;--muted:#9aa3b5;--line:#2c3549;
+  --ws:#352d57;--accent:var(--acc-d);--accent-ink:var(--acc-ink-d);--accent-tint:var(--acc-tint-d);
+  --st-done:#3fa56d;--st-track:#5b8ff0;--st-risk:#e0a52a;--st-issue:#e0625a;--st-future:#6f7889;--st-crit:#e0625a}
+.optA{--acc:#0e7c86;--acc-ink:#0b6570;--acc-tint:#e1f1f2;--acc-d:#2fa3ac;--acc-ink-d:#6cc6cd;--acc-tint-d:#16353b}
+.optB{--acc:#a8772b;--acc-ink:#8a6020;--acc-tint:#f5ecdc;--acc-d:#c99a4f;--acc-ink-d:#e2bd80;--acc-tint-d:#3a2f1c}
+.app .hdr{background:var(--hd);color:var(--hd-ink);padding:10px 14px;display:flex;align-items:center;gap:8px;flex-wrap:nowrap}
+.app .hdr>div{min-width:0;flex:1 1 auto}.app .hdr b,.app .hdr .sub{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.app .hdr .ws-btn,.app .hdr .icn{flex:0 0 auto}
+.app .hdr b{font-size:13px}
+.app .hdr .sub{color:var(--hd-muted);font-size:11px}
+.app .ws-btn{background:var(--ws);color:#fff;border:0;border-radius:4px;height:24px;padding:0 10px;font:inherit;font-weight:600}
+.app .grow{flex:1}
+.app .icn{width:24px;height:24px;border-radius:4px;display:grid;place-items:center;color:var(--hd-ink);opacity:.9}
+.app .body{display:grid;grid-template-columns:200px 1fr;gap:0}
+@media (max-width:620px){.app .body{grid-template-columns:1fr}}
+.app .ws{background:var(--surface);border-right:1px solid var(--line)}
+.app .ws .wh{background:var(--ws);color:#fff;padding:8px 10px;font-weight:600}
+.app .ws .note{margin:8px;border:1px solid var(--line);border-radius:6px;padding:8px;display:flex;flex-direction:column;gap:6px;background:var(--surface)}
+.app .pill{display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:99px;font-size:11px;font-weight:600;border:1px solid var(--line);color:var(--ink);width:max-content}
+.app .pill.sent{background:var(--accent-tint);color:var(--accent-ink);border-color:transparent}
+.app .idchip{font-size:10px;font-weight:700;color:var(--accent-ink);background:var(--accent-tint);border-radius:99px;padding:1px 6px;width:max-content}
+.app .main{padding:10px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.app .fbox{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.app .lbl{font-weight:600;margin-right:4px}
+.app .c{height:24px;padding:0 10px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;display:inline-flex;align-items:center}
+.app .c.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.app .btn{height:24px;padding:0 10px;border-radius:4px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit}
+.app .btn.pri{background:var(--hd);border-color:var(--hd);color:#fff;font-weight:600}
+.app .focus{outline:2px solid var(--accent);outline-offset:1px}
+.app .board{background:var(--surface);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.app .wk{display:grid;grid-template-columns:120px repeat(6,1fr);font-size:10px}
+.app .wk>div{padding:5px 4px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);text-align:center;min-width:0}
+.app .wk .mh{background:var(--hd);color:var(--hd-ink);font-weight:600}
+.app .wk .now{background:var(--accent-tint);color:var(--accent-ink);font-weight:700}
+.app .wk .rl{text-align:left;font-weight:600}
+.app .mk{display:inline-block;width:12px;height:12px;transform:rotate(45deg);border:2.5px solid var(--st-track);vertical-align:middle}
+.app .mk.fill{background:var(--st-done);border-color:var(--st-done)}
+.app .mk.crit{background:var(--st-crit)}
+.app .mk.risk{border-color:var(--st-risk)}
+.app .mk.issue{border-color:var(--st-issue)}
+.app .mk.fut{border-color:var(--st-future)}
+.app .mk.base{border-style:dashed;border-color:var(--st-future)}
+.app .edit{color:var(--accent-ink);font-weight:700;margin-left:2px}
+.app .sum{color:var(--muted);font-size:11px}
+.legend{display:flex;flex-wrap:wrap;gap:10px 16px;font-size:12px;align-items:center}
+.legend .it{display:flex;align-items:center;gap:6px}
+.legend .d{width:14px;height:14px;transform:rotate(45deg);border:2.5px solid;display:inline-block}
+.note-box{border-left:3px solid var(--pg-line);padding-left:10px}
+</style>
+
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:6px">
+    <span class="eyebrow">Schedule Reporting and Evaluation Tool · palette proposal for approval</span>
+    <h1>A calmer, business-grade palette that keeps your grey page and blue header</h1>
+    <p>What stays: the light cool-grey page and the navy header, refined a touch deeper. What changes: the bright lavender accent is retired. Selection, focus and "now" markers move to one confident accent, with two options below. A deep plum marks only the annotation workspace. Status colours are re-tuned so they stay distinct on white and on dark, and each carries its contrast rating.</p>
+  </header>
+
+  <section class="sect">
+    <h2>1. Foundation: neutrals and brand</h2>
+    <p>These carry 90% of the screen. Hex values are light theme, then dark theme.</p>
+    <div class="grid" id="found"></div>
+  </section>
+
+  <section class="sect">
+    <h2>2. Accent: choose one</h2>
+    <p>The accent is used sparingly: selected chips, focus rings, the current week, #ID chips and the edited mark. Both options work on white and on the dark surface.</p>
+    <div class="pair">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <span class="tag">Option A · Petrol teal <span class="k rec">Recommended</span></span>
+        <div class="grid" id="accA"></div>
+        <p class="note-box">Fresh without being loud. It sits next to navy the way a firm's secondary colour does, and it stays clearly separate from the status blue and green.</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <span class="tag">Option B · Brass</span>
+        <div class="grid" id="accB"></div>
+        <p class="note-box">Warmer and more "annual report". Classy on navy, but it sits close to the amber "at risk" status, so risk has to lean redder to stay distinct.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sect">
+    <h2>3. Status and health</h2>
+    <p>Mapped to the state-and-health scheme under discussion: fill shows state, and the outline colour shows health. These are semantic colours and stay separate from the accent.</p>
+    <div class="grid" id="stat"></div>
+  </section>
+
+  <section class="sect">
+    <h2>4. In context: Option A</h2>
+    <p>A slice of the app: the Workspace on the left, filter chips, a board strip with markers, light and dark.</p>
+    <div class="pair">
+      <div class="app optA" id="ctxA1"></div>
+      <div class="app optA dark" id="ctxA2"></div>
+    </div>
+  </section>
+
+  <section class="sect">
+    <h2>5. In context: Option B</h2>
+    <div class="pair">
+      <div class="app optB" id="ctxB1"></div>
+      <div class="app optB dark" id="ctxB2"></div>
+    </div>
+  </section>
+
+  <section class="sect">
+    <h2>Before and after, at a glance</h2>
+    <div class="grid" id="ba"></div>
+  </section>
+</div>
+
+<script>
+function lum(h){h=h.replace('#','');var r=[0,2,4].map(function(i){var c=parseInt(h.substr(i,2),16)/255;return c<=.03928?c/12.92:Math.pow((c+.055)/1.055,2.4)});return .2126*r[0]+.7152*r[1]+.0722*r[2]}
+function cr(a,b){var x=lum(a),y=lum(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05)}
+function badge(fg,bg){var r=cr(fg,bg);var ok=r>=4.5,mid=r>=3;return '<span class="aa'+(mid?'':' fail')+'">'+(ok?'AA ':mid?'AA large ':'low ')+r.toFixed(1)+'</span>'}
+function sw(o){var txt=o.on||(lum(o.hex)>.35?'#1b2230':'#ffffff');
+  return '<div class="sw"><div class="chip" style="background:'+o.hex+';color:'+txt+'">'+(o.chip||'Aa')+'</div><div class="meta"><span class="nm">'+o.name+'</span><span class="role">'+o.role+'</span>'+
+  '<span class="hex mono"><span>'+o.hex+(o.dark?' / '+o.dark:'')+'</span>'+(o.vs?badge(o.vs[0],o.vs[1]):'')+'</span></div></div>'}
+function fill(id,arr){document.getElementById(id).innerHTML=arr.map(sw).join('')}
+
+fill('found',[
+ {name:'Header navy',hex:'#2b4a7a',dark:'#1b2a47',role:'App header, month bands, primary buttons. Kept, a shade deeper.',chip:'Header',vs:['#ffffff','#2b4a7a']},
+ {name:'Page grey',hex:'#f3f4f7',dark:'#121724',role:'Page background. Kept.',vs:['#1b2230','#f3f4f7']},
+ {name:'Surface',hex:'#ffffff',dark:'#1a2133',role:'Cards, panels, board cells.',vs:['#1b2230','#ffffff']},
+ {name:'Ink',hex:'#1b2230',dark:'#e6eaf2',role:'Body text. Blue-black, never pure black.',vs:['#1b2230','#ffffff']},
+ {name:'Muted ink',hex:'#667085',dark:'#9aa3b5',role:'Labels, meta lines, captions.',vs:['#667085','#ffffff']},
+ {name:'Line',hex:'#dde1e8',dark:'#2c3549',role:'Borders, grid, dividers.'},
+ {name:'Workspace plum',hex:'#4a3f78',dark:'#352d57',role:'Annotation workspace header only. Replaces the lavender.',chip:'Workspace',vs:['#ffffff','#4a3f78']}
+]);
+fill('accA',[
+ {name:'Accent',hex:'#0e7c86',dark:'#2fa3ac',role:'Selected chip fill, focus ring.',chip:'Selected',vs:['#ffffff','#0e7c86']},
+ {name:'Accent ink',hex:'#0b6570',dark:'#6cc6cd',role:'Accent text on white or tint.',vs:['#0b6570','#ffffff']},
+ {name:'Accent tint',hex:'#e1f1f2',dark:'#16353b',role:'Current week, #ID chips, "Sent".',vs:['#0b6570','#e1f1f2']}
+]);
+fill('accB',[
+ {name:'Accent',hex:'#a8772b',dark:'#c99a4f',role:'Selected chip fill, focus ring.',chip:'Selected',vs:['#ffffff','#a8772b']},
+ {name:'Accent ink',hex:'#8a6020',dark:'#e2bd80',role:'Accent text on white or tint.',vs:['#8a6020','#ffffff']},
+ {name:'Accent tint',hex:'#f5ecdc',dark:'#3a2f1c',role:'Current week, #ID chips, "Sent".',vs:['#8a6020','#f5ecdc']}
+]);
+fill('stat',[
+ {name:'Complete',hex:'#2e8b57',dark:'#3fa56d',role:'Health green; done milestones are filled.',vs:['#ffffff','#2e8b57']},
+ {name:'On track',hex:'#2f6fdb',dark:'#5b8ff0',role:'Health blue outline.',vs:['#2f6fdb','#ffffff']},
+ {name:'At risk',hex:'#c98a0b',dark:'#e0a52a',role:'Health amber outline.',vs:['#1b2230','#c98a0b']},
+ {name:'Issue / delayed',hex:'#c2413a',dark:'#e0625a',role:'Health red outline; also critical-path infill.',vs:['#ffffff','#c2413a']},
+ {name:'Future',hex:'#a3aab5',dark:'#6f7889',role:'Grey, not yet started.'},
+ {name:'Clear / N/A',hex:'#1b2230',dark:'#e6eaf2',role:'Black outline, no health set.'}
+]);
+fill('ba',[
+ {name:'Accent, before',hex:'#8b64c7',role:'Bright lavender: reads playful and clashes with navy.',chip:'Before'},
+ {name:'Accent, after',hex:'#0e7c86',role:'Petrol teal (Option A).',chip:'After'},
+ {name:'Text, before',hex:'#17191c',role:'Near-black.'},
+ {name:'Text, after',hex:'#1b2230',role:'Blue-black, softer against the grey page.'},
+ {name:'Risk, before',hex:'#a2690a',role:'Brown-orange.'},
+ {name:'Risk, after',hex:'#c98a0b',role:'Clearer amber, with dark text on fills.'}
+]);
+
+function ctx(el){el.innerHTML=
+ '<div class="hdr"><button class="ws-btn">Workspace 3</button><div style="display:flex;flex-direction:column"><b>Eskay | Snip PFS &amp; Technical Report 2026</b><span class="sub">Report date 25-Sep-26 · Data date 25-Sep-26</span></div><span class="icn">⎙</span><span class="icn">◐</span><span class="icn">⋮</span><span class="icn">⚙</span></div>'+
+ '<div class="body"><div class="ws"><div class="wh">Notes</div>'+
+ '<div class="note"><span class="pill">Open</span><span>Geotech report slipping 1 wk, owner to confirm.</span><span class="idchip">#SNIP-102</span></div>'+
+ '<div class="note"><span class="pill sent">Sent</span><span>Tie-in sequence revised, markup issued to process.</span><span class="idchip">#SNIP-140</span></div></div>'+
+ '<div class="main"><div class="fbox"><span class="lbl">Status</span><button class="c">Critical</button><button class="c on">At risk</button><button class="c">On track</button><span style="width:10px"></span><span class="lbl">Total float</span><button class="c">Any</button><button class="c on focus">&lt; 10d</button><span class="grow"></span><button class="btn">Clear</button><button class="btn pri">Apply</button></div>'+
+ '<div class="sum">Showing 12 of 159 deliverables · between W/E 04 Oct 26 and W/E 25 Oct 26 · total float less than 10 days</div>'+
+ '<div class="board"><div class="wk"><div class="rl mh">Sep / Oct 26</div><div class="mh">27</div><div class="mh">04</div><div class="mh">11</div><div class="mh">18</div><div class="mh">25</div><div class="mh">01</div>'+
+ '<div class="rl">Process design criteria</div><div><span class="mk fill"></span></div><div></div><div class="now"><span class="mk"></span><span class="edit">*</span></div><div></div><div><span class="mk risk"></span></div><div></div>'+
+ '<div class="rl">Geotech report</div><div></div><div><span class="mk crit issue"></span></div><div class="now"></div><div><span class="mk fut"></span></div><div></div><div><span class="mk base"></span></div></div></div>'+
+ '</div></div>'}
+['ctxA1','ctxA2','ctxB1','ctxB2'].forEach(function(id){ctx(document.getElementById(id))});
+</script>
