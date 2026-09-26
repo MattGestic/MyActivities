@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<title>Tokens pass fixture</title>
+<style>
+/* Hex in a comment should never be scanned: #ff0000 rgba(1,2,3,0.5) */
+html[data-theme="light"]{
+  --pal-navy:#1c3a63;
+  --pal-teal:#0b6570;
+  --shadow-color:#000000;
+  --pal-surface:#ffffff;
+}
+html[data-theme="dark"]{
+  --pal-navy:#8fb3ff;
+  --pal-teal:#5fd0dd;
+  --shadow-color:#000000;
+  --pal-surface:#101322;
+}
+:root{
+  --color-bg-header:var(--pal-navy);
+  --color-accent:var(--pal-teal);
+  --color-shadow-dialog:color-mix(in srgb,var(--shadow-color) 20%,transparent);
+  --color-bg-panel:var(--pal-surface);
+}
+/* An ID selector that happens to look hex-shaped must never be read as a colour. */
+#diag-panel{ background:var(--color-bg-panel); }
+.header{ background:var(--color-bg-header); color:var(--color-accent); }
+.dialog{ box-shadow:0 2px 8px var(--color-shadow-dialog); }
+.transparent-ok{ border-color:transparent; outline-color:currentColor; }
+</style>
+</head>
+<body>
+<!-- Hex in an HTML comment must never be scanned: #00ff00 -->
+<div class="header">
+  <span>Search &#128269;</span>
+</div>
+<div class="dialog" style="padding:8px">Fine, no colour literal here.</div>
+<svg width="10" height="10"><rect fill="var(--color-accent)" stroke="none"/></svg>
+
+<script id="app-script">
+// Hex in a JS line comment must never be scanned: #ff00ff
+/* Same for a block comment: rgba(10,20,30,0.4) */
+const el = document.querySelector('.header');
+el.style.background = 'var(--color-bg-header)';
+el.style.cssText = 'color:var(--color-accent);border-color:var(--color-bg-panel)';
+const MONTHS = [
+  { label: 'Jan', bg: 'var(--color-bg-panel)' },
+  { label: 'Feb', bg: 'var(--color-accent)' },
+];
+</script>
+</body>
+</html>

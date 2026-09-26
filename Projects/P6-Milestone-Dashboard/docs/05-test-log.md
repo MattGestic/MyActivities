@@ -2524,3 +2524,74 @@ inline, with no measure/position state and no controls at all.
   static assertion checked by reading the rule rather than a print capture.
 
 **Published:** `releases/v3.1.0-P53_date-range.html`
+
+## TEST-55: D-22 central palette and full tokenisation (v3.1.0-P55)
+
+Palette Option A (petrol teal, approved 2026-09-26) applied as a three-tier
+token system. Every colour value in the file sits in a `--pal-*` token inside
+the two theme blocks. Everything else consumes `--color-*` roles that are a
+`var()` or `color-mix()` of a palette token. Full detail: `docs/03-todo.md`
+TD-210; gap inventory: `docs/tokenization/P55_Token_Gap_Inventory.md`;
+tiers and elevation levels: `docs/ux/design-standard.md`.
+
+**Decisions applied (Matt, 2026-09-26, "Go"):** palette sheet 3b group and
+month tones; `var()` literal fallbacks removed; group bands theme-scoped;
+health dots share the status palette; `color-mix()` used without an
+old-browser fallback.
+
+**New gates:**
+- `tools/colour_audit.py --strict` enforces the tier rule across CSS rules,
+  every `:root` block, inline styles, JS style writes, JSON data blocks, SVG
+  attributes and `var()` fallbacks, with ceiling 0. Fixtures
+  `tools/fixtures/tokens_pass.html` / `tokens_fail.html` cover each rule and
+  the false-positive traps (HTML entities, `#id` selectors, comments).
+- `tools/palette_swap_check.py` sets every `--pal-*` to one sentinel set,
+  then to a second, in light and dark, and fails on any rendered colour
+  that is identical in both runs. It covers the board, the milestone dialog
+  (light) and every Settings drawer tab. Fixtures `palette_pass.html` (0) and
+  `palette_fail_one.html` (1 per theme). Transitions are frozen for the probe,
+  since a mid-transition colour otherwise reads as an escape.
+
+**Results at v3.1.0-P55:**
+
+| Check | Result |
+|---|---|
+| `colour_audit.py --strict` | 0 violations (P54: 229) |
+| `palette_swap_check.py` | 0 escapes (P54: fails, no palette tier) |
+| `colour_audit.py` | 0 hardcoded colour occurrences |
+| `theme_check.py` | 0 frozen, 0 low-contrast pairs |
+| `ds_check.py` | 128/128 |
+| `d15_check.py` / `d15a_check.py` / `d16_check.py` / `d18_check.py` | 11/11, 32/32, 2/2 sheets, 27/27 |
+| `p53_check.py`, `p54_check.py` | exit 0, 82/82 |
+| `persist_check.py`, `order_check.py`, `import_check.py` | 22/22, exit 0, exit 0 |
+| every `pNN_check.py` p27 to p46 | all green (p42 25/25 after the change below) |
+| `spacing_audit.py` | at ceiling |
+| version grep | 1 |
+
+**Found by the new probe and fixed:** native inputs, selects and options that
+had no colour rule painted browser black and grey, and stayed light in dark
+theme. Fixed centrally with a zero-specificity `:where()` base rule plus
+`color-scheme` per theme and `accent-color` from the accent role.
+
+**Check expectations changed, with reasons:**
+- `theme_check.py`: `.m-lbl`, `.m-short-title`, `.m-hrs` and the alt-row label
+  now expect constant. They are board stickers, constant by design, with
+  ink chosen against the sticker.
+- `d15_check.py`: the focus-ring source rule follows the rename
+  `--color-accent-purple` to `--color-accent`.
+- `p42_check.py`: the person-marked marker must stay green in dark, not be
+  byte-identical, because the approved palette lifts the dark green for
+  contrast on the dark surface.
+
+**Found, not changed (TD-211):** in dark theme a done milestone's light marker
+merges into its white label sticker. Unchanged from P54, compared side by
+side; it belongs to the marker redesign.
+
+**Coverage limits:** the milestone dialog is only opened in light for the
+palette probe. A hardcoded colour is identical in both runs whichever theme
+is active, so the light run still catches it. Hover, focus, drag and print
+states are not exercised by the probe; the strict audit reads those rules
+at source.
+
+**Published:** `releases/v3.1.0-P55_palette-tokens.html`
+
