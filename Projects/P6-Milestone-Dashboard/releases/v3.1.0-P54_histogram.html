@@ -1691,6 +1691,9 @@ tr.hist-row td.c-wk.now-col{background:var(--color-col-filtered-alt-bg) !importa
 .hist-seg button+button{border-left:1px solid var(--color-vt-divider)}
 .hist-seg button.active{background:var(--color-accent-purple);color:var(--color-text-on-accent)}
 .hist-seg button:disabled{opacity:.4;cursor:not-allowed}
+/* One arrow button moves the histogram: up when it sits at the bottom, down when it sits at the top. */
+.hist-move{width:var(--ctl-h);height:var(--ctl-h);flex-shrink:0;border:1px solid var(--color-vt-divider);border-radius:var(--radius-ctl);background:var(--color-bg-panel);color:var(--color-text-on-panel-muted);font-size:12px;font-weight:700;line-height:1;cursor:pointer;padding:0}
+.hist-move:hover{background:var(--color-btn-icon-hover-bg)}
 
 .legend{padding:8px 10px;background:var(--color-bg-subtle);border-top:1px solid var(--color-line-default);font-size:9px;color:var(--color-text-faint);position:relative;z-index:20}
 .legend-row{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:4px;align-items:center}
@@ -6390,18 +6393,13 @@ function renderHistogram(measure, position){
     '<div class="hist-label-cell">'+
       '<span class="hist-label-text">Histogram</span>'+
       '<span class="hist-ctl-row">'+
+        (function(){var toTop=position!=='top';var lbl=toTop?'Move histogram to the top, under the week headers':'Move histogram to the bottom of the report';return '<button type="button" class="hist-move" data-pos-target="'+(toTop?'top':'bottom')+'" title="'+lbl+'" aria-label="'+lbl+'" onclick="setHistPos(\''+(toTop?'top':'bottom')+'\')">'+(toTop?'&#8593;':'&#8595;')+'</button>';})()+
         '<span class="hist-seg" role="group" aria-label="Histogram measure">'+
           '<button type="button" data-measure="hours" class="'+(effMeasure==='hours'?'active':'')+'"'+
             (noHrs?' disabled title="No hours in the loaded schedules"':'')+
             ' onclick="setHistMeasure(\'hours\')">Hours</button>'+
           '<button type="button" data-measure="tasks" class="'+(effMeasure==='tasks'?'active':'')+'"'+
             ' onclick="setHistMeasure(\'tasks\')">Tasks</button>'+
-        '</span>'+
-        '<span class="hist-seg" role="group" aria-label="Histogram position">'+
-          '<button type="button" data-pos="top" class="'+(position==='top'?'active':'')+'"'+
-            ' onclick="setHistPos(\'top\')">Top</button>'+
-          '<button type="button" data-pos="bottom" class="'+(position==='bottom'?'active':'')+'"'+
-            ' onclick="setHistPos(\'bottom\')">Bottom</button>'+
         '</span>'+
       '</span>'+
     '</div>';

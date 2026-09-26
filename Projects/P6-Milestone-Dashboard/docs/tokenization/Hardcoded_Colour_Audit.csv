@@ -18,22 +18,22 @@ line,selector,property,raw_value,normalised_value,declaration,matches_existing_t
 1313,tr.hdr-wk th.past-wk:hover,background,#dcdcdc,#dcdcdc,#dcdcdc,,,,style-block
 1415,.sd-warn b,color,#334,#333344,var(--color-status-risk),--color-text-small,dark,theme-blind (dark-only),style-block
 1492,"td.c-alloc,td.c-prog",background,#f7f7fa,#f7f7fa,#f7f7fa,,,,style-block
-1716,.map-hd,color,#245,#224455,#245,,,,style-block
-1717,".map-hd .req,.map-cell .req",color,#b00020,#b00020,#b00020,,,,style-block
-1720,.map-cell select,border,#b8c8c0,#b8c8c0,1px solid #b8c8c0,,,,style-block
-1726,.import-pass.ok,color,#1a6b3a,#1a6b3a,#1a6b3a,--color-ok-text,light,theme-blind (light-only),style-block
-1727,.import-pass.err,color,#b00020,#b00020,#b00020,,,,style-block
-1728,#diag-panel,background,#fff8f0,#fff8f0,#fff8f0,,,,style-block
-1728,#diag-panel,border-bottom,#e0cdb8,#e0cdb8,1px solid #e0cdb8,,,,style-block
-1731,.diag-tbl th,background,#f0e2d2,#f0e2d2,#f0e2d2,,,,style-block
-1731,.diag-tbl th,border,#e0cdb8,#e0cdb8,1px solid #e0cdb8,,,,style-block
-1731,.diag-tbl th,color,#5a3a1a,#5a3a1a,#5a3a1a,,,,style-block
-1732,.diag-tbl td,border,#eee0d0,#eee0d0,1px solid #eee0d0,,,,style-block
-1732,.diag-tbl td,color,#443,#444433,#443,,,,style-block
-1733,.diag-tbl tr.dsev-err td,color,#8a0018,#8a0018,#8a0018,,,,style-block
-1734,.diag-tbl tr.dsev-warn td,background,#fff6e5,#fff6e5,#fff6e5,,,,style-block
-1735,.diag-none,color,#786,#778866,#786,,,,style-block
-1736,.toggle-btn.diag-warn,background,#e8a020,#e8a020,#e8a020,,,,style-block
-1736,.toggle-btn.diag-warn,border-color,#c88000,#c88000,#c88000,,,,style-block
-1737,.toggle-btn.diag-err,border-color,#900,#990000,#900,,,,style-block
-1770,.dep-comment-panel,box-shadow,"rgba(0,0,0,.3)","rgba(0,0,0,.3)","0 4px 16px rgba(0,0,0,.3)",,,,style-block
+1719,.map-hd,color,#245,#224455,#245,,,,style-block
+1720,".map-hd .req,.map-cell .req",color,#b00020,#b00020,#b00020,,,,style-block
+1723,.map-cell select,border,#b8c8c0,#b8c8c0,1px solid #b8c8c0,,,,style-block
+1729,.import-pass.ok,color,#1a6b3a,#1a6b3a,#1a6b3a,--color-ok-text,light,theme-blind (light-only),style-block
+1730,.import-pass.err,color,#b00020,#b00020,#b00020,,,,style-block
+1731,#diag-panel,background,#fff8f0,#fff8f0,#fff8f0,,,,style-block
+1731,#diag-panel,border-bottom,#e0cdb8,#e0cdb8,1px solid #e0cdb8,,,,style-block
+1734,.diag-tbl th,background,#f0e2d2,#f0e2d2,#f0e2d2,,,,style-block
+1734,.diag-tbl th,border,#e0cdb8,#e0cdb8,1px solid #e0cdb8,,,,style-block
+1734,.diag-tbl th,color,#5a3a1a,#5a3a1a,#5a3a1a,,,,style-block
+1735,.diag-tbl td,border,#eee0d0,#eee0d0,1px solid #eee0d0,,,,style-block
+1735,.diag-tbl td,color,#443,#444433,#443,,,,style-block
+1736,.diag-tbl tr.dsev-err td,color,#8a0018,#8a0018,#8a0018,,,,style-block
+1737,.diag-tbl tr.dsev-warn td,background,#fff6e5,#fff6e5,#fff6e5,,,,style-block
+1738,.diag-none,color,#786,#778866,#786,,,,style-block
+1739,.toggle-btn.diag-warn,background,#e8a020,#e8a020,#e8a020,,,,style-block
+1739,.toggle-btn.diag-warn,border-color,#c88000,#c88000,#c88000,,,,style-block
+1740,.toggle-btn.diag-err,border-color,#900,#990000,#900,,,,style-block
+1773,.dep-comment-panel,box-shadow,"rgba(0,0,0,.3)","rgba(0,0,0,.3)","0 4px 16px rgba(0,0,0,.3)",,,,style-block

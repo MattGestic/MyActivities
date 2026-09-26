@@ -297,6 +297,16 @@ LAYOUT = r"""
     if(ARGS.theme) document.documentElement.setAttribute('data-theme',ARGS.theme);
     const segs=document.querySelectorAll('.hist-seg');
     assert('at least one .hist-seg control is present', segs.length>0, segs.length);
+    // Position is one arrow button, first in the control row, pointing where it will move the histogram.
+    const mv=document.querySelector('.hist-move');
+    assert('position arrow button present', !!mv, null);
+    if(mv){
+      assert('arrow is the first control, before Hours/Tasks', mv.parentElement.firstElementChild===mv, mv.parentElement.firstElementChild&&mv.parentElement.firstElementChild.className);
+      const exp=(HIST_POS==='top')?'\u2193':'\u2191';
+      assert('arrow glyph matches position ('+HIST_POS+')', mv.textContent===exp, mv.textContent);
+      assert('arrow height ~= 24px', Math.abs(mv.getBoundingClientRect().height-24)<=1.5, mv.getBoundingClientRect().height);
+      assert('no Top/Bottom text buttons remain in the row', !document.querySelector('.hist-seg [data-pos]'), null);
+    }
     segs.forEach(function(seg,i){
       const h=seg.getBoundingClientRect().height;
       assert('seg '+i+' height ~= 24px (D-16 --ctl-h)', Math.abs(h-24)<=1.5, h);
