@@ -77,15 +77,16 @@ MUTATIONS = {
     "temp-duplicates": ("if(store.temp.indexOf(r)>=0) already++; else", "if(false) already++; else"),
     "single-list-setting-ignored": ("      if(single(store)) listsOf(store,r)", "      if(false) listsOf(store,r)"),
     "multi-list-broken": ("settings:{singleList:!!(opts&&opts.singleList)}", "settings:{singleList:true}"),
-    "step2-takes-whole-temp": ("      var refs=pickedRefs(), r;", "      var refs=M().temp(s.lists.store), r;"),
-    # The layout Matt rejected: status text inside the toolbar, which wrapped the actions onto a second row.
-    "toolbar-wraps": [("tmpAdd,tmpBtn,tmpOnly,exp,add,del])", "msg,tmpAdd,tmpBtn,tmpOnly,exp,add,del])"),
-                      ("[bar,confirm,tmpPanel,gridEl,msg]);", "[bar,confirm,tmpPanel,gridEl]);"),
-                      (".sg-bar-tools{display:flex;flex-wrap:nowrap;", ".sg-bar-tools{display:flex;flex-wrap:wrap;"),
-                      (".sg-bar{display:flex;flex-wrap:nowrap;", ".sg-bar{display:flex;flex-wrap:wrap;"),
-                      (".sg-msg{position:absolute;", ".sg-msg{position:static;")],
+    "step2-takes-whole-temp": ("listsDone(M().addFromTemp(st,c.id,pickedRefs()));", "listsDone(M().addFromTemp(st,c.id,M().temp(st)));"),
+    # Header anchors (Matt, 2026-09-27): Export right in the title row, Add row right in the search row.
+    "export-not-in-title-row": [("h('span',{'class':'sg-spacer'}),exp]);", "]);"),
+                                ("h('span',{'class':'sg-spacer'}),add]);", "h('span',{'class':'sg-spacer'}),add,exp]);")],
+    "add-row-not-anchored": ("h('span',{'class':'sg-spacer'}),add]);", "add]);"),
+    "panel-open-by-default": ("'aria-label':'My temp list','data-sg':'temp-panel',hidden:true}", "'aria-label':'My temp list','data-sg':'temp-panel'}"),
+    "menu-stays-open": ("b.addEventListener('click',function(e){ e.stopPropagation(); close(true); it.onSelect(); });",
+                        "b.addEventListener('click',function(e){ e.stopPropagation(); it.onSelect(); });"),
     "temp-only-ignored": ("    if(s.tempOnly && item[L_TMP]!=='Yes') return false;\n", ""),
-    "state-not-shown": ("    s.tmpOnlyBtn.setAttribute('aria-pressed',String(!!s.tempOnly));\n", ""),
+    "filter-state-not-shown": ("    s.tmpOnlyPill.hidden=!s.tempOnly;\n", ""),
     "resize-kills-edit": ("if(grid.getEditorLock().isActive()){ pending=true; return; }", ""),
     "mutates-caller": ("dv.setItems((opts.rows||[]).map(function(r){ return Object.assign({},r); }),rowKey);",
                        "dv.setItems((opts.rows||[]),rowKey);"),
@@ -191,6 +192,12 @@ async function tryOpenEditor(row,k){
 function rowCheckbox(row){ const n=eng().grid.getCellNode(row,0); return n&&n.querySelector('input[type=checkbox]'); }
 function selCount(){ return eng().grid.getSelectedRows().length; }
 function h(el){ return el?Math.round(el.getBoundingClientRect().height*10)/10:null; }
+// Dropdown menus: items only exist while the menu is open.
+async function menuItem(menu,item){ const b=$('[data-sg='+menu+']'); if(b.getAttribute('aria-expanded')!=='true'){ b.click(); await sleep(10); }
+  return $('[data-sg='+menu+'-menu] [data-sg='+item+']'); }
+async function menuClose(menu){ const b=$('[data-sg='+menu+']'); if(b&&b.getAttribute('aria-expanded')==='true'){ b.click(); await sleep(10); } }
+async function menuPick(menu,item){ const it=await menuItem(menu,item); it.click(); await sleep(20); return it; }
+async function delEnabled(){ const d=await menuItem('tools','delete'); const on=!!d&&!d.disabled; await menuClose('tools'); return on; }
 
 // ---- palette swap on the open screen (same method as palette_swap_check.py, scoped) ----
 function palNames(){
@@ -233,7 +240,8 @@ try{
   ok('userms: title', $('.sg-title').textContent==='User milestones', $('.sg-title').textContent);
   ok('userms: row count', visibleCount()===F.userms.length && $('[data-sg=count]').textContent===F.userms.length+' rows',
      $('[data-sg=count]').textContent);
-  ok('userms: Add and Delete present', !!$('[data-sg=add]') && !!$('[data-sg=delete]'));
+  ok('userms: My temp list panel collapsed on open; rail shows collapsed', $('[data-sg=temp-panel]').hidden && $('[data-sg=temp-open]').getAttribute('aria-expanded')==='false');
+  ok('userms: Add row present; Delete in the Tools menu', !!$('[data-sg=add]') && !!(await menuItem('tools','delete'))); await menuClose('tools');
 
   // keyboard navigation
   { const g=eng().grid; g.setActiveCell(0,1); await sleep(10);
@@ -295,14 +303,17 @@ try{
     rowCheckbox(3).click(); await sleep(10); const s2=selCount();
     rowCheckbox(5).click(); await sleep(10); const s3=selCount(), t3=$('[data-sg=selcount]').textContent;
     const n=F.userms.length;
-    ok('select all selects every row', s0===n && t0===n+' selected', [s0,t0]);
-    ok('deselect one at a time (N=3)', s1===n-1&&s2===n-2&&s3===n-3 && t3===(n-3)+' selected', [s1,s2,s3,t3]);
-    ok('Delete enabled with a selection', !$('[data-sg=delete]').disabled);
+    ok('select all selects every row', s0===n && t0==='('+n+' selected)', [s0,t0]);
+    ok('deselect one at a time (N=3)', s1===n-1&&s2===n-2&&s3===n-3 && t3==='('+(n-3)+' selected)', [s1,s2,s3,t3]);
+    ok('Tools > Delete enabled with a selection', await delEnabled());
     all().click(); await sleep(10);
     const sAll=selCount(), checkedAll=all().checked;
     all().click(); await sleep(10);
     ok('select-all after a partial selection selects all again, and shows checked', sAll===n && checkedAll, [sAll,checkedAll]);
-    ok('select-all toggles off', selCount()===0 && $('[data-sg=selcount]').textContent==='' && $('[data-sg=delete]').disabled, selCount()); }
+    ok('select-all toggles off; Tools > Delete disabled', selCount()===0 && $('[data-sg=selcount]').textContent==='' && !(await delEnabled()), selCount());
+    const link=$('[data-sg=select-all]'); link.click(); await sleep(10);
+    const a1=selCount(), lbl1=link.textContent; link.click(); await sleep(10);
+    ok('Select all link selects every visible row, then reads Clear selection and clears', a1===n && lbl1==='Clear selection' && selCount()===0 && link.textContent==='Select all', [a1,lbl1]); }
 
   // restore a known order: sort by ID ascending
   header('id').click(); await sleep(20);
@@ -375,45 +386,59 @@ try{
   { rowCheckbox(0).click(); rowCheckbox(2).click(); await sleep(10);
     const keys=eng().grid.getSelectedRows().map(r=>eng().dataView.getItem(r).id).sort();
     const d0=count('onDelete'), n0=visibleCount();
-    $('[data-sg=delete]').click(); await sleep(10);
+    await menuPick('tools','delete');
+    ok('Tools menu closes after choosing', $('[data-sg=tools]').getAttribute('aria-expanded')==='false' && $('[data-sg=tools-menu]').hidden);
     const cf=$('[data-sg=confirm]'); const btns=$$('button',cf).map(b=>b.textContent);
     ok('Delete shows inline confirmation with count', !cf.hidden && /^Remove 2 rows\?/.test($('.sg-confirm-msg').textContent), $('.sg-confirm-msg').textContent);
     ok('confirmation: Cancel left, Remove right (danger)', btns.join('|')==='Cancel|Remove' && $$('button',cf)[1].classList.contains('sg-btn--danger'), btns);
     R.notes.swap_confirm=swapEscapes('light/confirm');
     key(document.activeElement,'Escape'); await sleep(10);
     ok('Esc cancels the confirmation, nothing deleted', cf.hidden && count('onDelete')===d0 && visibleCount()===n0);
-    $('[data-sg=delete]').click(); await sleep(10); $('[data-sg=confirm-remove]').click(); await sleep(20);
+    await menuPick('tools','delete'); $('[data-sg=confirm-remove]').click(); await sleep(20);
     const e=lastLog('onDelete');
     ok('Remove calls onDelete with the selected keys', count('onDelete')===d0+1 && JSON.stringify(e.args[0].slice().sort())===JSON.stringify(keys), [e&&e.args,keys]);
     ok('deleted rows leave the grid', visibleCount()===n0-2 && keys.every(k=>!eng().dataView.getItemById(k))); }
 
-  // Toolbar: one row with the title (Matt, 2026-09-27), measured while a long status message shows.
-  function oneRow(){
-    const t=$('.sg-title').getBoundingClientRect(), cy=t.top+t.height/2;
-    const ctl=$$('.sg-bar button, .sg-bar input, .sg-bar select').filter(e=>e.offsetParent);
-    const off=ctl.map(e=>{ const r=e.getBoundingClientRect(); return [e.dataset.sg||e.className, Math.round(r.top+r.height/2-cy)]; });
-    return {barH:Math.round($('.sg-bar').getBoundingClientRect().height), off:off.filter(o=>Math.abs(o[1])>3)};
+  // Header (Matt, 2026-09-27, after the Aconex register): row 1 is the title with Export
+  // anchored right; row 2 is search, counts and actions with Add row anchored right.
+  function headerLayout(){
+    const box=e=>e.getBoundingClientRect(), mid=r=>r.top+r.height/2, bad=[];
+    const scr=box($('.sg-screen')), t=box($('.sg-title')), ex=box($('[data-sg=export]')), se=box($('[data-sg=search]'));
+    const padR=parseFloat(getComputedStyle($('.sg-bar')).paddingRight);
+    if(Math.abs(mid(ex)-mid(t))>3) bad.push(['export not in the title row',Math.round(mid(ex)-mid(t))]);
+    if(Math.abs(scr.right-padR-ex.right)>1) bad.push(['export not anchored right',Math.round(scr.right-padR-ex.right)]);
+    const add=$('[data-sg=add]');
+    if(add){ const a=box(add);
+      if(Math.abs(mid(a)-mid(se))>3) bad.push(['add row not in the search row',Math.round(mid(a)-mid(se))]);
+      if(Math.abs(scr.right-padR-a.right)>1) bad.push(['add row not anchored right',Math.round(scr.right-padR-a.right)]); }
+    $$('.sg-bar2 > *').filter(e=>e.offsetParent&&!e.classList.contains('sg-spacer')).forEach(e=>{
+      if(Math.abs(mid(box(e))-mid(se))>3) bad.push(['row 2 wrapped',e.dataset.sg||e.className]); });
+    if(mid(se)<=mid(t)+8) bad.push(['search not below the title']);
+    return {bad:bad,rows:[Math.round(mid(t)),Math.round(mid(se))]};
   }
 
   // My temp list workflow (Matt, 2026-09-27):
-  //   1 select and add to the temp list, 2 expand, select temp items, add to a saved list,
+  //   1 select and add to the temp list, 2 open the panel, select temp items, add to a saved list,
   //   3 remove selected items from the temp list, 4 clear the temp list
+  // Layout: a vertical panel docked left, opened from the rail; core buttons only, the rest in menus.
   { const L=window.DEMO_LISTS, M=SRETCollections, btn=n=>$('[data-sg='+n+']');
     const msg=()=>$('[data-sg=msg]').textContent, n=visibleCount(), sorted=a=>a.slice().sort();
     const itemsIn=v=>eng().dataView.getItems().filter(i=>i._tmp===v);
-    const listedIds=name=>eng().dataView.getItems().filter(i=>(i._list||'').split(', ').indexOf(name)>=0).map(i=>i.id).sort();
     const boxes=()=>$$('[data-sg=temp-items] input[type=checkbox]');
     const pick=async idx=>{ for(const b of boxes()) if(b.checked) b.click(); for(const i of idx) boxes()[i].click(); await sleep(10); };
+    const labels=m=>$$('[data-sg='+m+'-menu] .sg-menu-item').map(b=>b.textContent.replace(/^✓/,''));
     eng().grid.setSelectedRows([]); await sleep(10);
-    ok('1: Add to temp list disabled with nothing selected; count badge 0', btn('temp-add').disabled && btn('temp-count').textContent==='0');
+    ok('panel collapsed; rail button shows collapsed; badge hidden at 0', btn('temp-panel').hidden &&
+       btn('temp-open').getAttribute('aria-expanded')==='false' && btn('temp-count').hidden);
+    ok('1: Add to temp list disabled with nothing selected', btn('temp-add').disabled);
     await setFilter('type','INT'); const intKeys=[0,1].map(r=>eng().dataView.getItem(r).id);
     eng().grid.setSelectedRows([0,1]); await sleep(10);
     const c0=count('onListsChange'); btn('temp-add').click(); await sleep(20);
     ok('1: Add to temp list takes exactly the selected rows (filter state 1)', JSON.stringify(sorted(M.temp(L)))===JSON.stringify(sorted(intKeys.map(k=>'activity:'+k))) && count('onListsChange')===c0+1, M.temp(L));
-    const lay=oneRow();
-    ok('toolbar: title, search, counts and every action on one row at 1440px, with a status message showing', lay.off.length===0 && lay.barH<=48, lay);
-    ok('status message is a toast over the grid, not in the toolbar', !$('.sg-bar [data-sg=msg]') && btn('msg').classList.contains('is-shown') &&
-       getComputedStyle(btn('msg')).position==='absolute' && msg().indexOf('Added 2 items to My temp list')===0, msg());
+    const lay=headerLayout();
+    ok('header: Export anchored right in the title row; Add row anchored right in the search row; row 2 on one line (1440px, message showing)', lay.bad.length===0, lay);
+    ok('status message is a toast over the grid, not in the header', !$('.sg-bar [data-sg=msg]') && !$('.sg-bar2 [data-sg=msg]') &&
+       btn('msg').classList.contains('is-shown') && getComputedStyle(btn('msg')).position==='absolute' && msg().indexOf('Added 2 items to My temp list')===0, msg());
     await setFilter('type','CLI'); const cliKey=eng().dataView.getItem(0).id;
     eng().grid.setSelectedRows([0]); await sleep(10); btn('temp-add').click(); await sleep(20);
     await setFilter('type','INT'); eng().grid.setSelectedRows([0]); await sleep(10); btn('temp-add').click(); await sleep(20);
@@ -421,48 +446,69 @@ try{
     const picked=intKeys.concat([cliKey]);
     ok('1: builds across three filter states, no duplicates', M.temp(L).length===3 && new Set(M.temp(L)).size===3 &&
        againMsg==='No new items added to My temp list. 1 item was already on it. It now holds 3 items.', [M.temp(L),againMsg]);
-    ok('1: badge shows 3; Temp column marks exactly the picked rows', btn('temp-count').textContent==='3' &&
+    ok('1: rail badge shows 3; Temp column marks exactly the picked rows', btn('temp-count').textContent==='3' && !btn('temp-count').hidden &&
        JSON.stringify(itemsIn('Yes').map(i=>i.id).sort())===JSON.stringify(sorted(picked)));
-    btn('temp-only').click(); await sleep(20);
-    ok('Temp list only: exactly the 3 picked rows; chip shows pressed', visibleCount()===3 && btn('temp-only').getAttribute('aria-pressed')==='true' && btn('temp-only').classList.contains('is-on'), visibleCount());
-    btn('temp-only').click(); await sleep(20);
-    ok('Temp list only off: all rows back; chip not pressed', visibleCount()===n && btn('temp-only').getAttribute('aria-pressed')==='false');
-    // 2: expand to view the items
-    btn('temp-open').click(); await sleep(10);
+    // Tools menu: the secondary actions
+    const tFirst=await menuItem('tools','temp-only'), tl=labels('tools');
+    ok('Tools menu: Show only rows on My temp list, Remove selected rows from My temp list, Delete selected rows', tl.join('|')===
+       'Show only rows on My temp list|Remove selected rows from My temp list|Delete selected rows…' && tFirst.getAttribute('aria-checked')==='false', tl);
+    const focused=document.activeElement===tFirst; key(tFirst,'Escape'); await sleep(10);
+    ok('Tools menu: focus on the first item; Esc closes it and returns focus to Tools', focused && $('[data-sg=tools-menu]').hidden && document.activeElement===btn('tools'));
+    await menuPick('tools','temp-only');
+    const chk=(await menuItem('tools','temp-only')).getAttribute('aria-checked'); await menuClose('tools');
+    ok('Temp list only: exactly the 3 picked rows; a pill shows the filter is on; the menu item shows checked', visibleCount()===3 &&
+       !btn('temp-only-pill').hidden && chk==='true', [visibleCount(),chk]);
+    btn('temp-only-pill').click(); await sleep(20);
+    ok('clicking the pill turns the filter off; all rows back', visibleCount()===n && btn('temp-only-pill').hidden);
+    // 2: open the vertical panel from the rail
+    btn('temp-open').click(); await sleep(30);
     const refs=boxes().map(b=>b.getAttribute('data-sg-temp-item'));
-    ok('2: expanding shows the temp items, expanded state shown', !btn('temp-panel').hidden && btn('temp-open').getAttribute('aria-expanded')==='true' &&
-       btn('temp-open').classList.contains('is-open') && JSON.stringify(sorted(refs))===JSON.stringify(sorted(M.temp(L))) &&
-       btn('temp-summary').textContent==='3 items, 3 on this screen', [refs,btn('temp-summary').textContent]);
+    const pr=btn('temp-panel').getBoundingClientRect(), gr=$('.sg-grid').getBoundingClientRect();
+    ok('2: the rail opens a vertical panel docked left of the grid, listing the temp items', !btn('temp-panel').hidden &&
+       btn('temp-open').getAttribute('aria-expanded')==='true' && btn('temp-open').classList.contains('is-open') &&
+       pr.height>pr.width && Math.abs(pr.right-gr.left)<=1 && JSON.stringify(sorted(refs))===JSON.stringify(sorted(M.temp(L))) &&
+       btn('temp-summary').textContent==='3 items, 3 on this screen', [pr.width,pr.height,pr.right,gr.left,btn('temp-summary').textContent]);
+    eng().requestResize(); await sleep(30);
+    ok('2: grid resizes to sit beside the panel', Math.abs($('.sg-grid .slick-viewport').clientWidth-$('.sg-grid').clientWidth)<=20,
+       [$('.sg-grid .slick-viewport').clientWidth,$('.sg-grid').clientWidth]);
+    const foot=$$('.sg-temp-foot > *').map(e=>e.classList.contains('sg-spacer')?'spacer':(e.dataset.sg||e.querySelector('[data-sg]').dataset.sg));
+    ok('2: only the core buttons show: Add to list, Remove, and a More menu', JSON.stringify(foot)===JSON.stringify(['temp-addto','temp-remove','spacer','temp-more']), foot);
     ok('2: items are named (ID and name), with their lists', $$('.sg-temp-item-name').every(e=>/^(USR|SNIP)-\d+\s+\S/.test(e.textContent)) &&
        $$('.sg-temp-item-lists').every(e=>e.textContent==='No list'), $$('.sg-temp-item-name').map(e=>e.textContent));
     ok('2: Add to list and Remove disabled until temp items are selected', btn('temp-addto').disabled && btn('temp-remove').disabled);
     R.notes.swap_temp=swapEscapes('light/temp-panel');
     await pick([0,1]); const two=refs.slice(0,2);
-    ok('2: selecting temp items shows the count and a partial select-all', btn('temp-picked').textContent==='2 selected' && btn('temp-all').indeterminate);
-    ok('2: target defaults to the first saved list', btn('temp-target').value==='UL-001' && btn('temp-namewrap')===null && !$('.sg-temp-namewrap').offsetParent, btn('temp-target').value);
-    btn('temp-addto').click(); await sleep(20);
+    ok('2: selecting temp items shows the count and a partial select-all', btn('temp-picked').textContent==='(2 selected)' && btn('temp-all').indeterminate);
+    btn('temp-addto').click(); await sleep(10);
+    const al=labels('temp-addto');
+    ok('2: Add to list menu lists the saved lists and New list…', al.join('|')==='Site walk 3-Oct (0)|Owner review items (0)|New list…', al);
+    R.notes.swap_menu=swapEscapes('light/add-to-list-menu');
+    $('[data-sg=temp-addto-menu] [data-sg-list="UL-001"]').click(); await sleep(20);
     const sw=L.list.find(c=>c.id==='UL-001');
-    ok('2: adds only the selected temp items to the saved list; temp list unchanged', JSON.stringify(sorted(sw.items))===JSON.stringify(sorted(two)) &&
-       M.temp(L).length===3 && msg()==='Added 2 items to "Site walk 3-Oct".', [msg(),sw.items]);
+    ok('2: adds only the selected temp items to the saved list; temp list unchanged; menu closed', JSON.stringify(sorted(sw.items))===JSON.stringify(sorted(two)) &&
+       M.temp(L).length===3 && msg()==='Added 2 items to "Site walk 3-Oct".' && btn('temp-addto-menu').hidden, [msg(),sw.items]);
     // 2 (new list), and one item in two lists
     await pick([1,2]);
-    btn('temp-target').value='__new__'; btn('temp-target').dispatchEvent(new Event('change',{bubbles:true})); await sleep(10);
+    await menuPick('temp-addto','temp-newlist');
     const nm=btn('temp-name');
-    ok('2: New list shows the name field and focuses it; Add disabled until named', !!$('.sg-temp-namewrap').offsetParent && document.activeElement===nm && btn('temp-addto').disabled);
+    ok('2: New list… opens the name form (footer hidden) with the name field focused', !btn('temp-newlist-form').hidden && document.activeElement===nm &&
+       !$('.sg-temp-foot').offsetParent);
     const errs=[];
-    for(const v of ['site WALK 3-oct','My temp list']){ nm.value=v; nm.dispatchEvent(new Event('input')); key(nm,'Enter'); await sleep(10); errs.push(btn('temp-err').textContent); }
-    ok('2: duplicate and reserved names refused; nothing changes', /already exists/.test(errs[0]) && /used by the temp list/.test(errs[1]) && M.list(L).length===2, errs);
-    nm.value='Punch list'; nm.dispatchEvent(new Event('input')); btn('temp-addto').click(); await sleep(20);
+    for(const v of ['  ','site WALK 3-oct','My temp list']){ nm.value=v; key(nm,'Enter'); await sleep(10); errs.push(btn('temp-err').textContent); }
+    ok('2: empty, duplicate and reserved names refused; nothing changes', errs[0]==='Enter a name for the list.' && /already exists/.test(errs[1]) &&
+       /used by the temp list/.test(errs[2]) && M.list(L).length===2, errs);
+    nm.value='Punch list'; btn('temp-newlist-save').click(); await sleep(20);
     const pl=L.list.find(c=>c.name==='Punch list');
-    ok('2: new list made from the selected temp items', !!pl && JSON.stringify(sorted(pl.items))===JSON.stringify(sorted(refs.slice(1,3))) &&
-       msg()==='Saved 2 items as the new list "Punch list".' && btn('temp-target').value===pl.id && !$('.sg-temp-namewrap').offsetParent, [msg(),pl&&pl.items]);
+    ok('2: new list made from the selected temp items; form closes', !!pl && JSON.stringify(sorted(pl.items))===JSON.stringify(sorted(refs.slice(1,3))) &&
+       msg()==='Saved 2 items as the new list "Punch list".' && btn('temp-newlist-form').hidden && !!$('.sg-temp-foot').offsetParent, [msg(),pl&&pl.items]);
     const both=refs[1], bothId=both.replace('activity:','');
     ok('multiple lists per item (default): one item in both lists, List column and panel show both',
        JSON.stringify(M.membership(L,both))===JSON.stringify(['Site walk 3-Oct','Punch list']) &&
        cellText(eng().dataView.getIdxById(bothId),'_list')==='Site walk 3-Oct, Punch list' &&
        $$('.sg-temp-item').some(li=>li.querySelector('input').getAttribute('data-sg-temp-item')===both && li.querySelector('.sg-temp-item-lists').textContent==='Site walk 3-Oct, Punch list'),
        M.membership(L,both));
-    btn('temp-all').click(); await sleep(10); btn('temp-target').value='UL-001'; btn('temp-target').dispatchEvent(new Event('change')); btn('temp-addto').click(); await sleep(20);
+    btn('temp-all').click(); await sleep(10);
+    btn('temp-addto').click(); await sleep(10); $('[data-sg=temp-addto-menu] [data-sg-list="UL-001"]').click(); await sleep(20);
     ok('2: re-adding is idempotent', sw.items.length===3 && msg()==='Added 1 item to "Site walk 3-Oct". 2 items were already in it.', msg());
     // 3: remove selected items from the temp list
     const lists0=JSON.stringify(L.list);
@@ -470,19 +516,22 @@ try{
     btn('temp-remove').click(); await sleep(20);
     ok('3: Remove takes only the selected items off the temp list; saved lists unchanged', M.temp(L).length===2 && !M.inTemp(L,gone) &&
        boxes().length===2 && JSON.stringify(L.list)===lists0 && btn('temp-count').textContent==='2', M.temp(L));
+    // More menu: the table filter and Clear
+    await menuItem('temp-more','temp-clear'); const ml=labels('temp-more'); await menuClose('temp-more');
+    ok('More menu: Show only these rows in the table, Clear temp list', ml.join('|')==='Show only these rows in the table|Clear temp list…', ml);
     // 4: clear, with inline confirmation
-    btn('temp-clear').click(); await sleep(10);
+    await menuPick('temp-more','temp-clear');
     const cf=btn('temp-confirm'), cb=$$('button',cf).map(b=>b.textContent);
     ok('4: Clear asks first, with the count; Cancel left, Clear right (danger)', !cf.hidden &&
        $('.sg-temp-confirm .sg-confirm-msg').textContent==='Clear My temp list (2 items)? Saved lists are not changed.' &&
        cb.join('|')==='Cancel|Clear' && $$('button',cf)[1].classList.contains('sg-btn--danger'), cb);
     key(document.activeElement,'Escape'); await sleep(10);
     ok('4: Esc cancels the clear; panel stays open', cf.hidden && !btn('temp-panel').hidden && M.temp(L).length===2);
-    btn('temp-clear').click(); await sleep(10); btn('temp-clear-confirm').click(); await sleep(20);
+    await menuPick('temp-more','temp-clear'); btn('temp-clear-confirm').click(); await sleep(20);
     ok('4: Clear empties the temp list and leaves saved lists unchanged', M.temp(L).length===0 && JSON.stringify(L.list)===lists0 &&
-       msg()==='Cleared My temp list (2 items).' && itemsIn('Yes').length===0 && btn('temp-count').textContent==='0' && $$('.sg-temp-empty').length===1, msg());
+       msg()==='Cleared My temp list (2 items).' && itemsIn('Yes').length===0 && btn('temp-count').hidden && $$('.sg-temp-empty').length===1, msg());
     key(btn('temp-all'),'Escape'); await sleep(10);
-    ok('panel: Esc collapses it, shows collapsed, focus back on the button', btn('temp-panel').hidden && btn('temp-open').getAttribute('aria-expanded')==='false' &&
+    ok('panel: Esc collapses it, rail shows collapsed, focus back on the rail button', btn('temp-panel').hidden && btn('temp-open').getAttribute('aria-expanded')==='false' &&
        !btn('temp-open').classList.contains('is-open') && document.activeElement===btn('temp-open'));
     eng().grid.setSelectedRows([]); await sleep(10); }
 
@@ -494,8 +543,8 @@ try{
     const bgD=getComputedStyle($('.sg-grid .slick-row')).backgroundColor, hdD=getComputedStyle($('.sg-bar')).backgroundColor, txD=getComputedStyle($('.sg-grid .slick-cell')).color;
     document.documentElement.setAttribute('data-theme','light'); await sleep(10);
     ok('light and dark both themed (row, toolbar, text differ)', bgL!==bgD && hdL!==hdD && txL!==txD, {bgL,bgD,hdL,hdD,txL,txD});
-    const esc=[].concat(R.notes.swap_idle_light,R.notes.swap_idle_dark,R.notes.swap_edit_light,R.notes.swap_edit_dark,R.notes.swap_confirm,R.notes.swap_temp);
-    ok('palette swap: every painted colour in the screen moves with --pal-* (idle, editing, confirm, temp list panel; both themes)', esc.length===0, esc.slice(0,12)); }
+    const esc=[].concat(R.notes.swap_idle_light,R.notes.swap_idle_dark,R.notes.swap_edit_light,R.notes.swap_edit_dark,R.notes.swap_confirm,R.notes.swap_temp,R.notes.swap_menu);
+    ok('palette swap: every painted colour in the screen moves with --pal-* (idle, editing, confirm, temp list panel, open menu; both themes)', esc.length===0, esc.slice(0,12)); }
 
   // back
   { const b0=count('onBack'); const launcher=$('#go-userms'); launcher.focus();
@@ -508,7 +557,7 @@ try{
   // ============ Annotations ============
   { DEMO_OPEN('annot'); await sleep(20);
     ok('annot: title and row count', $('.sg-title').textContent==='Annotations: W/E 27-Sep-26' && visibleCount()===F.annot.length);
-    ok('annot: no Add (no onAdd), Delete present', !$('[data-sg=add]') && !!$('[data-sg=delete]'));
+    ok('annot: no Add (no onAdd); Delete in Tools', !$('[data-sg=add]') && !!(await menuItem('tools','delete'))); await menuClose('tools');
     const rk=eng().dataView.getItem(2).aid; await editCell(2,'value','Revised comment text'); const e=lastLog('onEdit');
     ok('annot: comment edit reaches onEdit', e.args[0]===rk && e.args[1]==='value' && e.args[2]==='Revised comment text', e.args);
     await editCell(3,'status','done'); const e2=lastLog('onEdit');
@@ -521,7 +570,8 @@ try{
   { DEMO_OPEN('sched'); await sleep(20);
     ok('sched: title and row count', $('.sg-title').textContent==='Schedule activities' && visibleCount()===F.sched.length && F.sched.length>100,
        [visibleCount(),F.sched.length]);
-    ok('sched: no Add, no Delete (read-only schedule)', !$('[data-sg=add]') && !$('[data-sg=delete]'));
+    ok('sched: My temp list panel collapsed on open', $('[data-sg=temp-panel]').hidden);
+    ok('sched: no Add, no Delete (read-only schedule)', !$('[data-sg=add]') && !(await menuItem('tools','delete'))); await menuClose('tools');
     const res=[]; for(const k of ['id','name','start','finish','float']) res.push(await tryOpenEditor(1,k));
     ok('sched: schedule columns refuse edits (N=5)', res.every(x=>x===false), res);
     const rk=eng().dataView.getItem(1).id; await editCell(1,'health','2'); const e=lastLog('onEdit');
@@ -562,8 +612,8 @@ try{
     ok('scroll: per-step render cost p95 under 8 ms (half a 60 Hz frame)', SC.p95Ms<8, SC.p95Ms);
     SRETGrid.close(); DEMO_OPEN('stress'); await sleep(20);
     ok('stress: 2,000 rows loaded', visibleCount()===2000);
-    const lay2=oneRow();
-    ok('toolbar: still one row with a long title (title truncates, actions stay)', lay2.off.length===0 && $('.sg-title').scrollWidth>=$('.sg-title').clientWidth, lay2);
+    const lay2=headerLayout();
+    ok('header: layout holds with a long title (title truncates, anchors stay)', lay2.bad.length===0, lay2);
     const domRows=$$('.sg-grid .slick-row').length; R.notes.dom_rows_2000=domRows;
     ok('stress: virtual rendering (DOM rows far below 2,000)', domRows>0 && domRows<150, domRows);
     eng().grid.scrollRowIntoView(1999); await sleep(50);

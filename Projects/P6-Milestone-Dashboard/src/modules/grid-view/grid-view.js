@@ -199,6 +199,69 @@
   var BACK_SVG='<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">'+
                '<path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
+  // ---------- dropdown menu (as the Aconex register's "Tools" menu) ----------
+  // Secondary actions live in menus so only the core buttons show by default.
+  // Items are drawn when the menu opens, so their enabled and checked states
+  // are always current. Keyboard: ArrowDown opens, arrows move, Esc closes.
+  var CHEVRON='<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true" focusable="false">'+
+              '<path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  function makeMenu(label,sg,getItems,extraClass){
+    var btn=h('button',{type:'button','class':'sg-btn sg-btn--menu'+(extraClass?' '+extraClass:''),'aria-haspopup':'menu',
+                        'aria-expanded':'false','data-sg':sg},[h('span',{text:label})]);
+    var chev=h('span',{'class':'sg-chev'}); chev.innerHTML=CHEVRON; btn.appendChild(chev);
+    var pop=h('div',{'class':'sg-menu-pop',role:'menu','aria-label':label,'data-sg':sg+'-menu',hidden:true});
+    var wrap=h('span',{'class':'sg-menu'},[btn,pop]);
+    var m={btn:btn,pop:pop,wrap:wrap};
+    function enabled(){ return Array.prototype.slice.call(pop.querySelectorAll('.sg-menu-item:not([disabled])')); }
+    function render(){
+      pop.innerHTML='';
+      getItems().forEach(function(it){
+        if(!it) return;
+        if(it.sep){ pop.appendChild(h('div',{'class':'sg-menu-sep',role:'separator'})); return; }
+        var box=it.checked!=null;
+        var b=h('button',{type:'button','class':'sg-menu-item',role:box?'menuitemcheckbox':'menuitem',tabindex:'-1',
+                          'data-sg':it.sg||null,'data-sg-list':it.list||null,disabled:!!it.disabled},
+                [h('span',{'class':'sg-menu-check','aria-hidden':'true',text:it.checked?'✓':''}),h('span',{text:it.label})]);
+        if(box) b.setAttribute('aria-checked',String(!!it.checked));
+        // Hides the menu, never rebuilds it, before running the action.
+        b.addEventListener('click',function(e){ e.stopPropagation(); close(true); it.onSelect(); });
+        pop.appendChild(b);
+      });
+    }
+    function onDoc(e){ if(!wrap.contains(e.target)) close(false); }
+    function open(){
+      if(S&&S.openMenu&&S.openMenu!==m) S.openMenu.close(false);
+      render(); pop.hidden=false; btn.setAttribute('aria-expanded','true'); btn.classList.add('is-open');
+      if(S) S.openMenu=m;
+      document.addEventListener('mousedown',onDoc,true);
+      var f=enabled()[0]; if(f) f.focus();
+    }
+    function close(refocus){
+      if(pop.hidden) return;
+      pop.hidden=true; btn.setAttribute('aria-expanded','false'); btn.classList.remove('is-open');
+      if(S&&S.openMenu===m) S.openMenu=null;
+      document.removeEventListener('mousedown',onDoc,true);
+      if(refocus) btn.focus();
+    }
+    btn.addEventListener('click',function(){ if(pop.hidden) open(); else close(true); });
+    btn.addEventListener('keydown',function(e){ if(e.key==='ArrowDown'){ e.preventDefault(); open(); } });
+    pop.addEventListener('keydown',function(e){
+      var its=enabled(), i=its.indexOf(document.activeElement);
+      if(!its.length) return;
+      if(e.key==='ArrowDown'){ e.preventDefault(); its[(i+1)%its.length].focus(); }
+      else if(e.key==='ArrowUp'){ e.preventDefault(); its[(i-1+its.length)%its.length].focus(); }
+      else if(e.key==='Home'){ e.preventDefault(); its[0].focus(); }
+      else if(e.key==='End'){ e.preventDefault(); its[its.length-1].focus(); }
+      else if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); close(true); }
+      else if(e.key==='Tab') close(false);
+    });
+    m.open=open; m.close=close; m.isOpen=function(){ return !pop.hidden; };
+    return m;
+  }
+  var LIST_SVG='<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">'+
+    '<path d="M5 4h8M5 8h8M5 12h8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>'+
+    '<circle cx="2.5" cy="4" r="1" fill="currentColor"/><circle cx="2.5" cy="8" r="1" fill="currentColor"/><circle cx="2.5" cy="12" r="1" fill="currentColor"/></svg>';
+
   // Status messages show as a toast over the grid, so they never push the
   // toolbar onto a second row. The text stays readable after it fades.
   function say(text){
@@ -218,8 +281,9 @@
     var s=S; if(!s) return;
     var shown=s.dv.getLength(), total=s.dv.getItems().length, sel=s.grid.getSelectedRows().length;
     s.countEl.textContent=shown===total?(total+(total===1?' row':' rows')):(shown+' of '+total+' rows');
-    s.selEl.textContent=sel?(sel+' selected'):'';
-    if(s.delBtn) s.delBtn.disabled=!sel;
+    s.selEl.textContent=sel?('('+sel+' selected)'):'';
+    s.selAllBtn.textContent=shown&&sel===shown?'Clear selection':'Select all';
+    s.selAllBtn.disabled=!shown;
     if(s.lists) updateLists();
   }
   function selectedKeys(){
@@ -235,7 +299,7 @@
     var s=S, keys=selectedKeys(); if(!keys.length) return;
     var n=keys.length;
     s.confirmEl.innerHTML='';
-    var cancel=h('button',{type:'button','class':'sg-btn',text:'Cancel',on:{click:function(){ hideConfirm(); s.delBtn.focus(); }}});
+    var cancel=h('button',{type:'button','class':'sg-btn',text:'Cancel',on:{click:function(){ hideConfirm(); if(s.tools) s.tools.btn.focus(); }}});
     var go=h('button',{type:'button','class':'sg-btn sg-btn--danger','data-sg':'confirm-remove',text:'Remove',
       on:{click:function(){ doDelete(keys); }}});
     s.confirmEl.appendChild(h('p',{'class':'sg-confirm-msg',
@@ -292,10 +356,12 @@
   // The rules live in SRETCollections. This section draws the controls and
   // calls it. Workflow (Matt, 2026-09-27):
   //   1. select rows, Add to temp list
-  //   2. expand My temp list, select items in it, add them to a saved list
-  //   3. remove selected items from the temp list
-  //   4. clear the temp list
-  var L_TMP='_tmp', L_LIST='_list', NEW_LIST='__new__';
+  //   2. open the My temp list panel, select items in it, Add to list
+  //   3. Remove selected items from the temp list
+  //   4. Clear the temp list (More menu)
+  // Layout (Matt, 2026-09-27, after the Aconex register): a vertical panel
+  // docked left, opened from the rail, with only the core buttons showing.
+  var L_TMP='_tmp', L_LIST='_list';
   function M(){ return root.SRETCollections; }
   function listFields(item){
     var s=S, ref=s.lists.refOf(item[s.rowKey]);
@@ -334,19 +400,20 @@
     refreshLists();
     return r;
   }
+  function setTempOnly(on){
+    var s=S; s.tempOnly=!!on; s.dv.refresh(); updateStatus();
+  }
   // Button states only; never rebuilds the item list, so it is safe to call
   // from a checkbox's own change handler.
   function updateTempButtons(){
     var s=S; if(!s||!s.lists) return;
-    var tmp=M().temp(s.lists.store), picked=pickedRefs().length, isNew=s.tmpTarget.value===NEW_LIST;
+    var tmp=M().temp(s.lists.store), picked=pickedRefs().length;
     s.tmpAllBox.checked=!!tmp.length&&picked===tmp.length;
     s.tmpAllBox.indeterminate=picked>0&&picked<tmp.length;
     s.tmpAllBox.disabled=!tmp.length;
-    s.tmpPickedEl.textContent=picked?picked+' selected':'';
-    s.tmpNameWrap.hidden=!isNew;
-    s.tmpAddTo.disabled=!picked||(isNew&&!s.tmpName.value.trim());
+    s.tmpPickedEl.textContent=picked?'('+picked+' selected)':'';
+    s.tmpAddMenu.btn.disabled=!picked;
     s.tmpRemove.disabled=!picked;
-    s.tmpClear.disabled=!tmp.length;
   }
   function renderTempItems(){
     var s=S, st=s.lists.store, tmp=M().temp(st);
@@ -361,109 +428,123 @@
       box.addEventListener('change',function(){ if(box.checked) s.tmpPicked[r]=1; else delete s.tmpPicked[r]; updateTempButtons(); });
       var ls=M().membership(st,r);
       s.tmpItems.appendChild(h('li',{'class':'sg-temp-item'},[
-        h('label',{'class':'sg-temp-item-lbl'},[box,h('span',{'class':'sg-temp-item-name',text:labelOf(r)})]),
-        h('span',{'class':'sg-temp-item-lists',text:ls.length?ls.join(', '):'No list'})
+        h('label',{'class':'sg-temp-item-lbl'},[box,h('span',{'class':'sg-temp-item-text'},[
+          h('span',{'class':'sg-temp-item-name',text:labelOf(r)}),
+          h('span',{'class':'sg-temp-item-lists',text:ls.length?ls.join(', '):'No list'})])])
       ]));
     });
     var here=s.dv.getItems().filter(function(it){ return it[L_TMP]==='Yes'; }).length;
     s.tmpSummary.textContent=tmp.length+(tmp.length===1?' item':' items')+(tmp.length?', '+here+' on this screen':'');
-    var cur=s.tmpTarget.value;
-    s.tmpTarget.innerHTML='';
-    var saved=M().list(st);
-    saved.forEach(function(c){ s.tmpTarget.appendChild(h('option',{value:c.id,text:c.label+' ('+c.count+')'})); });
-    s.tmpTarget.appendChild(h('option',{value:NEW_LIST,text:'New list…'}));
-    s.tmpTarget.value=(cur&&(cur===NEW_LIST||saved.some(function(c){ return c.id===cur; })))?cur:(saved.length?saved[0].id:NEW_LIST);
     updateTempButtons();
   }
-  // A control that sets state also shows it: count, expanded and pressed
-  // states and enabled buttons all follow the store on every change.
+  // A control that sets state also shows it: badge, expanded state, the
+  // filter pill and enabled buttons all follow the store on every change.
   function updateLists(){
     var s=S; if(!s||!s.lists) return;
     var n=M().temp(s.lists.store).length, sel=s.grid.getSelectedRows().length;
     s.tmpAddBtn.disabled=!sel;
     s.tmpBtnCount.textContent=String(n);
+    s.tmpBtnCount.hidden=!n;
     s.tmpBtn.setAttribute('aria-expanded',String(!s.tmpPanel.hidden));
     s.tmpBtn.classList.toggle('is-open',!s.tmpPanel.hidden);
-    s.tmpOnlyBtn.setAttribute('aria-pressed',String(!!s.tempOnly));
-    s.tmpOnlyBtn.classList.toggle('is-on',!!s.tempOnly);
+    s.tmpOnlyPill.hidden=!s.tempOnly;
     if(!s.tmpPanel.hidden) renderTempItems();
   }
   function toggleTempPanel(show){
     var s=S; if(show==null) show=s.tmpPanel.hidden;
     if(show) hideConfirm();
-    hideTempConfirm();
+    hideTempForms();
     s.tmpPanel.hidden=!show; s.tmpErr.textContent='';
     updateLists();
     if(show) s.tmpAllBox.focus(); else s.tmpBtn.focus();
   }
-  function hideTempConfirm(){ var s=S; s.tmpConfirm.hidden=true; s.tmpConfirm.innerHTML=''; s.tmpActions.hidden=false; }
+  function hideTempForms(){
+    var s=S;
+    s.tmpConfirm.hidden=true; s.tmpConfirm.innerHTML='';
+    s.tmpNewForm.hidden=true; s.tmpName.value='';
+    s.tmpFoot.hidden=false;
+  }
+  function showNewList(){
+    var s=S; if(!pickedRefs().length) return;
+    hideTempForms(); s.tmpFoot.hidden=true; s.tmpNewForm.hidden=false; s.tmpErr.textContent='';
+    s.tmpName.focus();
+  }
+  function saveNewList(){
+    var s=S, r=listsDone(M().saveFromTemp(s.lists.store,s.tmpName.value,pickedRefs()));
+    if(r.error){ s.tmpName.focus(); return; }
+    hideTempForms(); s.tmpAddMenu.btn.focus();
+  }
   function showTempConfirm(){
     var s=S, n=M().temp(s.lists.store).length; if(!n) return;
-    s.tmpConfirm.innerHTML='';
-    var cancel=h('button',{type:'button','class':'sg-btn',text:'Cancel',on:{click:function(){ hideTempConfirm(); s.tmpClear.focus(); }}});
+    hideTempForms();
+    var cancel=h('button',{type:'button','class':'sg-btn',text:'Cancel',on:{click:function(){ hideTempForms(); s.tmpMore.btn.focus(); }}});
     var go=h('button',{type:'button','class':'sg-btn sg-btn--danger','data-sg':'temp-clear-confirm',text:'Clear',
-      on:{click:function(){ hideTempConfirm(); listsDone(M().tempClear(s.lists.store)); s.tmpAllBox.focus(); }}});
+      on:{click:function(){ hideTempForms(); listsDone(M().tempClear(s.lists.store)); s.tmpAllBox.focus(); }}});
     s.tmpConfirm.appendChild(h('p',{'class':'sg-confirm-msg',
       text:'Clear My temp list ('+n+(n===1?' item':' items')+')? Saved lists are not changed.'}));
     s.tmpConfirm.appendChild(h('div',{'class':'sg-confirm-btns'},[cancel,go]));
-    s.tmpActions.hidden=true; s.tmpConfirm.hidden=false;
+    s.tmpFoot.hidden=true; s.tmpConfirm.hidden=false;
     cancel.focus();
   }
   function buildTempPanel(){
     var s=S;
     s.tmpPicked={};
-    s.tmpSummary=h('span',{'class':'sg-temp-summary','data-sg':'temp-summary'});
     s.tmpAllBox=h('input',{type:'checkbox','data-sg':'temp-all','aria-label':'Select all items on My temp list'});
+    s.tmpSummary=h('span',{'class':'sg-temp-summary','data-sg':'temp-summary'});
     s.tmpPickedEl=h('span',{'class':'sg-selcount','data-sg':'temp-picked'});
     s.tmpItems=h('ul',{'class':'sg-temp-items','data-sg':'temp-items','aria-label':'Items on My temp list'});
-    s.tmpTarget=h('select',{'class':'sg-select','aria-label':'Saved list to add the selected items to','data-sg':'temp-target'});
-    s.tmpName=h('input',{type:'text','class':'sg-search sg-temp-name','aria-label':'Name for the new list',
-                         placeholder:'New list name','data-sg':'temp-name',maxlength:'60'});
-    s.tmpNameWrap=h('span',{'class':'sg-temp-namewrap'},[s.tmpName]);
-    s.tmpAddTo=h('button',{type:'button','class':'sg-btn sg-btn--primary','data-sg':'temp-addto',text:'Add to list'});
-    s.tmpRemove=h('button',{type:'button','class':'sg-btn','data-sg':'temp-remove',text:'Remove from temp list'});
-    s.tmpClear=h('button',{type:'button','class':'sg-btn','data-sg':'temp-clear',text:'Clear temp list'});
     s.tmpErr=h('p',{'class':'sg-temp-err',role:'alert','data-sg':'temp-err'});
     s.tmpConfirm=h('div',{'class':'sg-temp-confirm','data-sg':'temp-confirm',hidden:true});
+    // New list: a small inline form, same layout as the inline confirmation.
+    s.tmpName=h('input',{type:'text','class':'sg-search sg-temp-name','aria-label':'Name for the new list',
+                         placeholder:'New list name','data-sg':'temp-name',maxlength:'60'});
+    var nCancel=h('button',{type:'button','class':'sg-btn',text:'Cancel',on:{click:function(){ hideTempForms(); s.tmpAddMenu.btn.focus(); }}});
+    var nSave=h('button',{type:'button','class':'sg-btn sg-btn--primary','data-sg':'temp-newlist-save',text:'Save list',on:{click:saveNewList}});
+    s.tmpNewForm=h('div',{'class':'sg-temp-form','data-sg':'temp-newlist-form',hidden:true},[
+      h('p',{'class':'sg-temp-form-lbl',text:'Save the selected items as a new list'}),s.tmpName,
+      h('div',{'class':'sg-confirm-btns'},[nCancel,nSave])]);
+    s.tmpName.addEventListener('keydown',function(e){
+      if(e.key==='Enter'){ e.preventDefault(); saveNewList(); }
+      else if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); hideTempForms(); s.tmpAddMenu.btn.focus(); }
+    });
+    // Core buttons: Add to list, Remove. Everything else is under More.
+    s.tmpAddMenu=makeMenu('Add to list','temp-addto',function(){
+      var st=s.lists.store, none=!pickedRefs().length;
+      return M().list(st).map(function(c){
+        return {label:c.label+' ('+c.count+')',list:c.id,disabled:none,
+                onSelect:function(){ listsDone(M().addFromTemp(st,c.id,pickedRefs())); }};
+      }).concat([{sep:1},{label:'New list…',sg:'temp-newlist',disabled:none,onSelect:showNewList}]);
+    },'sg-btn--primary');
+    s.tmpRemove=h('button',{type:'button','class':'sg-btn','data-sg':'temp-remove',text:'Remove',
+                            title:'Remove the selected items from My temp list'});
+    s.tmpMore=makeMenu('More','temp-more',function(){
+      return [{label:'Show only these rows in the table',sg:'temp-only-panel',checked:!!s.tempOnly,onSelect:function(){ setTempOnly(!s.tempOnly); }},
+              {sep:1},
+              {label:'Clear temp list…',sg:'temp-clear',disabled:!M().temp(s.lists.store).length,onSelect:showTempConfirm}];
+    });
+    s.tmpFoot=h('div',{'class':'sg-temp-foot'},[s.tmpAddMenu.wrap,s.tmpRemove,h('span',{'class':'sg-spacer'}),s.tmpMore.wrap]);
     var close=h('button',{type:'button','class':'sg-iconbtn','aria-label':'Collapse My temp list',title:'Collapse','data-sg':'temp-close',text:'✕'});
-    s.tmpActions=h('div',{'class':'sg-temp-actions'},[
-      h('span',{'class':'sg-temp-lbl',text:'Selected items'}),
-      h('span',{'class':'sg-temp-group'},[h('span',{text:'Add to'}),s.tmpTarget,s.tmpNameWrap,s.tmpAddTo]),
-      s.tmpRemove,
-      h('span',{'class':'sg-temp-spacer'}),
-      s.tmpClear
-    ]);
     s.tmpPanel.appendChild(h('div',{'class':'sg-temp-head'},[
-      h('label',{'class':'sg-temp-all'},[s.tmpAllBox,h('span',{'class':'sg-temp-title',text:'My temp list'})]),
-      s.tmpSummary,s.tmpPickedEl,h('span',{'class':'sg-temp-spacer'}),close]));
+      h('h3',{'class':'sg-temp-title',text:'My temp list'}),h('span',{'class':'sg-spacer'}),close]));
+    s.tmpPanel.appendChild(h('div',{'class':'sg-temp-sub'},[
+      h('label',{'class':'sg-temp-all'},[s.tmpAllBox,s.tmpSummary]),s.tmpPickedEl]));
     s.tmpPanel.appendChild(s.tmpItems);
-    s.tmpPanel.appendChild(s.tmpActions);
+    s.tmpPanel.appendChild(s.tmpNewForm);
     s.tmpPanel.appendChild(s.tmpConfirm);
     s.tmpPanel.appendChild(s.tmpErr);
+    s.tmpPanel.appendChild(s.tmpFoot);
     s.tmpAllBox.addEventListener('change',function(){
       var on=s.tmpAllBox.checked;
       s.tmpPicked={}; if(on) M().temp(s.lists.store).forEach(function(r){ s.tmpPicked[r]=1; });
       s.tmpItems.querySelectorAll('input[type=checkbox]').forEach(function(b){ b.checked=on; });
       updateTempButtons();
     });
-    s.tmpTarget.addEventListener('change',function(){ updateTempButtons(); if(s.tmpTarget.value===NEW_LIST) s.tmpName.focus(); });
-    s.tmpName.addEventListener('input',updateTempButtons);
-    var addTo=function(){
-      var refs=pickedRefs(), r;
-      if(s.tmpTarget.value===NEW_LIST){
-        r=listsDone(M().saveFromTemp(s.lists.store,s.tmpName.value,refs));
-        if(!r.error){ s.tmpName.value=''; s.tmpTarget.value=r.collection.id; updateTempButtons(); } else s.tmpName.focus();
-      } else listsDone(M().addFromTemp(s.lists.store,s.tmpTarget.value,refs));
-    };
-    s.tmpAddTo.addEventListener('click',addTo);
-    s.tmpName.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); if(!s.tmpAddTo.disabled) addTo(); } });
     s.tmpRemove.addEventListener('click',function(){ listsDone(M().tempRemove(s.lists.store,pickedRefs())); });
-    s.tmpClear.addEventListener('click',showTempConfirm);
     close.addEventListener('click',function(){ toggleTempPanel(false); });
     s.tmpPanel.addEventListener('keydown',function(e){
       if(e.key!=='Escape') return;
       e.preventDefault(); e.stopPropagation();
-      if(!s.tmpConfirm.hidden){ hideTempConfirm(); s.tmpClear.focus(); } else toggleTempPanel(false);
+      if(!s.tmpConfirm.hidden||!s.tmpNewForm.hidden){ hideTempForms(); s.tmpAddMenu.btn.focus(); } else toggleTempPanel(false);
     });
   }
 
@@ -530,25 +611,47 @@
     var selc=h('span',{'class':'sg-selcount','data-sg':'selcount'});
     var exp=h('button',{type:'button','class':'sg-btn','data-sg':'export',text:'Export .xlsx'});
     var add=canAdd?h('button',{type:'button','class':'sg-btn sg-btn--primary','data-sg':'add',text:'Add row'}):null;
-    var del=canDel?h('button',{type:'button','class':'sg-btn','data-sg':'delete',text:'Delete selected',disabled:true}):null;
+    var selAll=h('button',{type:'button','class':'sg-link','data-sg':'select-all',text:'Select all'});
     var tmpAdd=lists?h('button',{type:'button','class':'sg-btn','data-sg':'temp-add',text:'Add to temp list',disabled:true,
                                  title:'Add the selected rows to My temp list'}):null;
-    var tmpBtnCount=lists?h('span',{'class':'sg-badge','data-sg':'temp-count',text:'0'}):null;
-    var tmpBtn=lists?h('button',{type:'button','class':'sg-btn sg-btn--expander','data-sg':'temp-open','aria-expanded':'false',
-                                 'aria-controls':'sg-temp-panel',title:'Show the items on My temp list'},
-                                [h('span',{text:'My temp list'}),tmpBtnCount]):null;
-    var tmpOnly=lists?h('button',{type:'button','class':'sg-chip','data-sg':'temp-only','aria-pressed':'false',
-                                  text:'Temp list only',title:'Show only rows on My temp list'}):null;
+    var tmpOnlyPill=lists?h('button',{type:'button','class':'sg-pill','data-sg':'temp-only-pill',hidden:true,
+                                      title:'Showing only rows on My temp list. Click to show all rows.'},
+                                     [h('span',{text:'Temp list only'}),h('span',{'aria-hidden':'true',text:' ✕'})]):null;
+    var toolsItems=function(){
+      var st=lists&&lists.store, sel=S?S.grid.getSelectedRows().length:0;
+      var selTemp=lists&&S?selectedRefs().filter(function(r){ return M().inTemp(st,r); }).length:0;
+      var it=[];
+      if(lists){
+        it.push({label:'Show only rows on My temp list',sg:'temp-only',checked:!!(S&&S.tempOnly),onSelect:function(){ setTempOnly(!S.tempOnly); }});
+        it.push({label:'Remove selected rows from My temp list',sg:'temp-remove-rows',disabled:!selTemp,
+                 onSelect:function(){ listsDone(M().tempRemove(st,selectedRefs())); }});
+      }
+      if(canDel){
+        if(it.length) it.push({sep:1});
+        it.push({label:'Delete selected rows…',sg:'delete',disabled:!sel,onSelect:function(){ if(lists) toggleTempPanel(false); showConfirm(); }});
+      }
+      return it;
+    };
+    var tools=(lists||canDel)?makeMenu('Tools','tools',toolsItems):null;
     var msg=h('span',{'class':'sg-msg',role:'status','aria-live':'polite','data-sg':'msg'});
+    // Row 1: back, title; Export anchored right. Row 2: search, counts, core
+    // actions and Tools; Add row anchored right (Matt, 2026-09-27).
     var bar=h('div',{'class':'sg-bar'},[
-      h('div',{'class':'sg-bar-lead'},[back,title]),
-      h('div',{'class':'sg-bar-tools'},[search,h('span',{'class':'sg-counts'},[count,selc]),tmpAdd,tmpBtn,tmpOnly,exp,add,del])
-    ]);
+      h('div',{'class':'sg-bar-lead'},[back,title]),h('span',{'class':'sg-spacer'}),exp]);
+    var bar2=h('div',{'class':'sg-bar2'},[
+      search,h('span',{'class':'sg-counts'},[count,selc]),selAll,tmpAdd,tools&&tools.wrap,tmpOnlyPill,
+      h('span',{'class':'sg-spacer'}),add]);
     var confirm=h('div',{'class':'sg-confirm',role:'alertdialog','aria-label':'Confirm remove','data-sg':'confirm',hidden:true});
-    var tmpPanel=h('div',{'class':'sg-temp',id:'sg-temp-panel',role:'region','aria-label':'My temp list','data-sg':'temp-panel',hidden:true});
+    var tmpBtnCount=lists?h('span',{'class':'sg-badge sg-rail-badge','data-sg':'temp-count',text:'0',hidden:true}):null;
+    var tmpBtn=lists?h('button',{type:'button','class':'sg-rail-btn','data-sg':'temp-open','aria-expanded':'false',
+                                 'aria-controls':'sg-temp-panel','aria-label':'My temp list',title:'My temp list'}):null;
+    if(tmpBtn){ tmpBtn.innerHTML=LIST_SVG; tmpBtn.appendChild(tmpBtnCount); }
+    var rail=lists?h('nav',{'class':'sg-rail','aria-label':'Panels'},[tmpBtn]):null;
+    var tmpPanel=lists?h('aside',{'class':'sg-temp',id:'sg-temp-panel','aria-label':'My temp list','data-sg':'temp-panel',hidden:true}):null;
     var gridEl=h('div',{'class':'sg-grid','data-sg':'grid'});
+    var body=h('div',{'class':'sg-body'},[rail,tmpPanel,gridEl]);
     var screen=h('section',{'class':'sg-screen'+(fixed?' sg-screen--fixed':''),role:'region','aria-label':opts.title||'Table'},
-                 [bar,confirm,tmpPanel,gridEl,msg]);
+                 [bar,bar2,confirm,body,msg]);
     host.appendChild(screen);
 
     var rowH=ctlHeight(screen);
@@ -581,9 +684,9 @@
     grid.registerPlugin(check);
 
     S={opts:opts,rowKey:rowKey,cols:cols,colByKey:colByKey,filters:{},quick:'',grid:grid,dv:dv,
-       screen:screen,host:host,countEl:count,selEl:selc,msgEl:msg,delBtn:del,expBtn:exp,searchEl:search,
+       screen:screen,host:host,countEl:count,selEl:selc,msgEl:msg,expBtn:exp,searchEl:search,selAllBtn:selAll,tools:tools,openMenu:null,
        confirmEl:confirm,prev:null,returnFocus:document.activeElement,ro:null,
-       lists:lists,tempOnly:false,tmpAddBtn:tmpAdd,tmpBtn:tmpBtn,tmpBtnCount:tmpBtnCount,tmpOnlyBtn:tmpOnly,tmpPanel:tmpPanel,msgTimer:0};
+       lists:lists,tempOnly:false,tmpAddBtn:tmpAdd,tmpBtn:tmpBtn,tmpBtnCount:tmpBtnCount,tmpOnlyPill:tmpOnlyPill,tmpPanel:tmpPanel,msgTimer:0};
     if(lists) buildTempPanel();
     cols.forEach(function(c){ S.filters[c.key]=''; });
 
@@ -638,14 +741,18 @@
     search.addEventListener('input',function(){ S.quick=search.value; dv.refresh(); });
     exp.addEventListener('click',exportRows);
     if(add) add.addEventListener('click',doAdd);
-    if(del) del.addEventListener('click',function(){ if(lists) toggleTempPanel(false); showConfirm(); });
+    selAll.addEventListener('click',function(){
+      var n=dv.getLength(), all=n&&grid.getSelectedRows().length===n, rows=[];
+      if(!all) for(var i=0;i<n;i++) rows.push(i);
+      grid.setSelectedRows(rows);
+    });
     if(lists){
       tmpAdd.addEventListener('click',function(){ listsDone(M().tempAdd(lists.store,selectedRefs())); });
       tmpBtn.addEventListener('click',function(){ toggleTempPanel(); });
-      tmpOnly.addEventListener('click',function(){ S.tempOnly=!S.tempOnly; dv.refresh(); updateStatus(); });
+      tmpOnlyPill.addEventListener('click',function(){ setTempOnly(false); });
     }
     screen.addEventListener('keydown',function(e){
-      if(e.key==='Escape' && !confirm.hidden){ e.stopPropagation(); hideConfirm(); if(del) del.focus(); }
+      if(e.key==='Escape' && !confirm.hidden){ e.stopPropagation(); hideConfirm(); if(tools) tools.btn.focus(); }
     });
     if(root.ResizeObserver){
       // Resize on the next frame and only when the box really changed. Calling
@@ -681,6 +788,7 @@
 
   function close(silent){
     var s=S; if(!s) return;
+    if(s.openMenu) s.openMenu.close(false);
     S=null;
     if(s.ro) s.ro.disconnect();
     if(s.grid.getEditorLock().isActive()) s.grid.getEditorLock().cancelCurrentEdit();
