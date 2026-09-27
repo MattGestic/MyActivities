@@ -1,0 +1,100 @@
+/* =====================================================================
+   SRET grid view (D-09). Tier 3 component styles: every colour is a
+   --color-* role, every size a D-16 token. No literal colours here.
+   The vendored engine stylesheet (vendor/slickgrid/dist/slick.grid.css)
+   carries structural rules plus a handful of its own greys; every rule of
+   it that paints is overridden below under .sg-grid, and
+   tools/grid_view_check.py proves it with a palette swap on the open grid.
+   ===================================================================== */
+.sg-screen{position:absolute;inset:0;z-index:60;display:flex;flex-direction:column;min-width:0;min-height:0;
+  background:var(--color-bg-panel);color:var(--color-text-primary);font-family:var(--font-sans);
+  font-size:var(--text-md);line-height:16px}
+.sg-screen--fixed{position:fixed}
+.sg-screen *,.sg-screen *::before,.sg-screen *::after{box-sizing:border-box}
+
+/* ---- toolbar ---- */
+.sg-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--ctl-gap) var(--group-gap);
+  padding:var(--space-4) var(--group-gap);background:var(--color-bg-elevated);border-bottom:1px solid var(--color-border-panel)}
+.sg-bar-lead{display:flex;align-items:center;gap:var(--ctl-gap);min-width:0}
+.sg-bar-tools{display:flex;flex-wrap:wrap;align-items:center;gap:var(--ctl-gap);min-width:0}
+.sg-title{margin:0;font-size:20px;line-height:28px;font-weight:600;min-width:0;overflow-wrap:anywhere;color:var(--color-text-primary)}
+.sg-counts{display:inline-flex;gap:var(--ctl-gap-tight);color:var(--color-text-muted);white-space:nowrap}
+.sg-selcount:not(:empty){color:var(--color-accent-ink);font-weight:600}
+.sg-msg{color:var(--color-text-muted);min-width:0}
+.sg-msg:empty{display:none}
+
+.sg-iconbtn{display:inline-flex;align-items:center;justify-content:center;width:var(--icon-btn);height:var(--icon-btn);
+  padding:0;border:0;border-radius:var(--radius-ctl);background:transparent;color:var(--color-text-primary);cursor:pointer}
+.sg-iconbtn:hover{background:var(--color-btn-icon-hover-bg)}
+.sg-iconbtn:active{background:var(--color-btn-icon-pressed-bg)}
+
+.sg-search,.sg-hfilter{height:var(--ctl-h);padding:0 var(--ctl-pad-x);font:inherit;font-size:var(--text-md);
+  border:var(--stroke-ctl) solid var(--color-input-border);border-radius:var(--radius-ctl);
+  background:var(--color-bg-elevated);color:var(--color-text-primary)}
+.sg-search{width:200px;min-width:120px}
+.sg-search::placeholder,.sg-hfilter::placeholder{color:var(--color-text-label)}
+
+.sg-btn{height:var(--ctl-h);padding:0 var(--ctl-pad-x);font:inherit;font-size:var(--text-md);white-space:nowrap;cursor:pointer;
+  border:var(--stroke-ctl) solid var(--color-btn-secondary-outline);border-radius:var(--radius-ctl);
+  background:var(--color-btn-secondary-bg);color:var(--color-btn-secondary-text)}
+.sg-btn:hover:not(:disabled){background:var(--color-btn-secondary-hover-bg)}
+.sg-btn:active:not(:disabled){background:var(--color-btn-secondary-pressed-bg)}
+.sg-btn--primary{font-weight:600;border-color:var(--color-btn-primary-outline);background:var(--color-btn-primary-bg);color:var(--color-btn-primary-text)}
+.sg-btn--primary:hover:not(:disabled){background:var(--color-btn-primary-hover-bg)}
+.sg-btn--primary:active:not(:disabled){background:var(--color-btn-primary-pressed-bg)}
+.sg-btn--danger{font-weight:600;border-color:var(--color-status-crit);background:var(--color-status-crit);color:var(--color-text-on-accent)}
+.sg-btn--danger:hover:not(:disabled){background:var(--color-crit-border)}
+.sg-btn:disabled{opacity:.5;cursor:default}
+
+.sg-screen :focus-visible{outline:var(--focus-ring) solid var(--color-accent);outline-offset:1px}
+
+/* ---- inline confirmation (design-standard.md, Inline confirmation) ---- */
+.sg-confirm{padding:var(--space-4) var(--group-gap);background:var(--color-crit-tint-bg);color:var(--color-crit-text);
+  border-bottom:1px solid var(--color-border-panel)}
+.sg-confirm[hidden]{display:none}
+.sg-confirm-msg{margin:0 0 var(--ctl-gap);font-size:var(--text-lg);line-height:20px}
+.sg-confirm-btns{display:flex;justify-content:space-between;gap:var(--ctl-gap)}
+
+/* ---- grid engine skin ---- */
+.sg-grid{flex:1 1 auto;min-height:0;position:relative;background:var(--color-bg-canvas);color:var(--color-text-primary)}
+.sg-grid .slick-pane,.sg-grid .slick-viewport{background:var(--color-bg-canvas)}
+.sg-grid .slick-header.ui-state-default,.sg-grid .slick-headerrow.ui-state-default{
+  background:var(--color-bg-subtle);border-top:0;border-bottom:1px solid var(--color-line-default)}
+.sg-grid .slick-header-column.ui-state-default{height:calc(var(--ctl-h) + var(--space-2));line-height:calc(var(--ctl-h) + var(--space-2));
+  padding:0 var(--space-4);box-sizing:border-box!important;font-weight:600;
+  background:var(--color-bg-subtle);color:var(--color-text-primary);border-right:1px solid var(--color-line-hairline);cursor:pointer}
+.sg-grid .slick-header-column.ui-state-default:hover{background:var(--color-row-hover-bg)}
+.sg-grid .slick-header-column.sg-h-edit .slick-column-name{text-decoration:underline dotted var(--color-accent);text-underline-offset:3px}
+.sg-grid .slick-header-column-sorted{font-style:normal;color:var(--color-accent-ink)}
+.sg-grid .slick-sort-indicator{margin-top:0;float:right;height:100%;display:inline-flex;align-items:center}
+.sg-grid .slick-sort-indicator-asc,.sg-grid .slick-sort-indicator-desc{color:var(--color-accent-ink);margin-top:0;align-self:center}
+.sg-grid .slick-resizable-handle:hover{background:var(--color-accent-wash-strong)}
+.sg-grid .slick-headerrow-column.ui-state-default{padding:var(--space-2);background:var(--color-bg-subtle);
+  border-right:1px solid var(--color-line-hairline);border-bottom-color:var(--color-line-default)}
+.sg-grid .sg-hfilter{width:100%;min-width:0}
+
+.sg-grid .slick-row{background:var(--color-row-default-bg)}
+.sg-grid .slick-row.odd{background:var(--color-row-alt-bg)}
+.sg-grid .slick-row:hover{background:var(--color-row-hover-bg)}
+.sg-grid .slick-cell{padding:0 var(--space-4);line-height:calc(var(--ctl-h) - 2px);color:var(--color-text-primary);
+  border-top-color:transparent;border-left-color:transparent;
+  border-right:1px solid var(--color-line-hairline);border-bottom-color:var(--color-line-hairline)}
+.sg-grid .slick-cell.selected{background:var(--color-row-selected)}
+.sg-grid .slick-cell.active{box-shadow:inset 0 0 0 var(--focus-ring) var(--color-accent)}
+.sg-grid .slick-cell.editable{padding:0;background:var(--color-bg-elevated);border-color:var(--color-accent);border-style:solid}
+.sg-grid .slick-cell.invalid{box-shadow:inset 0 0 0 var(--focus-ring) var(--color-status-crit)}
+.sg-grid .slick-cell.highlighted{background:var(--color-accent-wash)}
+.sg-grid .slick-cell.flashing{border-color:var(--color-status-crit)!important}
+.sg-grid .slick-selection{border-color:var(--color-accent)}
+.sg-grid .sg-check,.sg-grid .slick-header-column.sg-check-h{display:flex;align-items:center;justify-content:center;padding:0;text-overflow:clip}
+.sg-grid .slick-header-column .slick-column-name input[type=checkbox],.sg-grid .sg-check input[type=checkbox]{
+  width:16px;height:16px;margin:0;vertical-align:middle;color:inherit;accent-color:var(--color-accent)}
+
+.sg-editor{width:100%;height:100%;margin:0;padding:0 var(--space-4);font:inherit;border:0;outline:0;
+  background:var(--color-bg-elevated);color:var(--color-text-primary)}
+
+@media (max-width:767px){
+  .sg-bar{padding:var(--space-4)}
+  .sg-bar-tools{width:100%}
+  .sg-search{flex:1 1 100%;width:auto}
+}
