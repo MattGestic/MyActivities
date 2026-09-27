@@ -363,7 +363,9 @@ PROBE = r"""
     // the preview puts the bar back to viewport width MINUS the rail, not the
     // bare viewport. Read the rail's own token rather than hardcoding 44, so
     // this does not need editing if the rail widens.
-    const railW=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ws-rail-w'))||0;
+    // P59 (B-01): a collapsed rail (the phone default) takes no width.
+    const railW=document.body.classList.contains('rail-collapsed')?0:
+      (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ws-rail-w'))||0);
     ck('print: the icon bar goes back to viewport width (less the Workspace rail), leaving no sheet sizing behind',
        Math.abs(barOut.w-(window.innerWidth-railW))<=1.0,
        barOut.w+' against viewport '+window.innerWidth+' minus rail '+railW);

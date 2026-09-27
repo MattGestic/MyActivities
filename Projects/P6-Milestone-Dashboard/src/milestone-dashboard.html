@@ -1250,7 +1250,7 @@ select.ds-select{cursor:pointer}
   #top-filter-bar .fb-box.find,#top-filter-bar .fb-box.when{gap:var(--space-2)}
   #top-filter-bar .fb-box>.fb-line.fb-lbl{min-height:0;justify-self:auto}
   #top-filter-bar .fb-box>.fb-line:not(.fb-lbl):not(.fb-title)+.fb-line.fb-lbl{margin-top:var(--space-4)}
-  #top-filter-bar #tfb-find .fb-row-1,#top-filter-bar #tfb-find .fb-row-1.has-source{display:flex;gap:var(--space-4)}
+  #top-filter-bar #tfb-find .fb-row-1,#top-filter-bar #tfb-find .fb-row-1.has-source{display:flex;align-items:stretch;gap:var(--space-4)}
   #top-filter-bar .fb-inline{gap:var(--space-2)}
   /* P59 (C-05): the Mode toggle keeps its natural width rather than
      stretching across the card; the Fit button sits beside it. */
@@ -2101,7 +2101,7 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 .ms-dialog-head{display:flex;align-items:center;gap:var(--space-3);min-height:19px}
 /* The heading. Sits inside the title column, so it ends where the float
    column begins and runs the whole width up to it. */
-.ms-heading{display:flex;align-items:center;gap:var(--space-2);min-width:0;margin:var(--space-2) 0 0 calc(-1 * var(--space-2));
+.ms-heading{display:flex;align-items:center;gap:var(--space-2);min-width:0;margin:var(--space-2) 0 0 calc(-1 * var(--space-1));
   padding-bottom:var(--space-3);border-bottom:1px solid var(--color-line-hairline)}
 .ms-heading .ms-code{white-space:nowrap}
 /* P59 (D-04): status right-aligned, anchored by the heading's underline. */

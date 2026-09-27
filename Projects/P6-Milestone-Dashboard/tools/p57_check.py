@@ -57,7 +57,8 @@ STAGE1 = r"""
     ck('the board has at least three milestone ids to link', !!(A&&B&&C), ids.length);
 
     // ---- rail and section ----
-    const rail=qa('#ws-rail .ws-ri').map(function(b){ return b.id; });
+    // P59: the rail's first button is the collapse control, not a section.
+    const rail=qa('#ws-rail .ws-ri:not(.ws-ri-collapse)').map(function(b){ return b.id; });
     ck('Notes is the first Workspace rail icon', rail[0]==='ws-tab-notes', rail.join(','));
     setWorkspaceSection('notes',true);
     ck('the Notes section is showing', !$('ws-sec-notes').hidden&&$('ws-panel').classList.contains('open')&&

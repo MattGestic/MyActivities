@@ -56,6 +56,9 @@ PROBE = r"""
 (function(){
   const ARGS=__ARGS__;
   try{ localStorage.clear(); }catch(e){}
+  // Geometry is read straight after state changes; the body's margin
+  // transition would otherwise be caught mid-slide on a loaded machine.
+  document.head.insertAdjacentHTML('beforeend','<style>*,*::before,*::after{transition:none!important}</style>');
   const R={checks:[],notes:{}};
   function ck(n,p,d){ R.checks.push({name:'['+ARGS.tag+'] '+n,pass:!!p,detail:d===undefined?'':String(d)}); }
   function emit(){ const o=document.createElement('pre'); o.id='p59-out';

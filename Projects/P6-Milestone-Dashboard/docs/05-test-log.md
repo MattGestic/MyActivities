@@ -2740,3 +2740,56 @@ in light and dark at 1440.
 
 **Published:** `releases/v3.1.0-P58_note-collections.html`
 
+
+## TEST-60: P59 layout and consistency (v3.1.0-P59)
+
+Matt's P59 feedback, collated into items A, B, C, D and X and approved on
+2026-09-27. Scope and detail: `docs/03-todo.md` TD-218. Numbered TEST-60
+because TEST-59 is the scale baseline on PR #21.
+
+**`tools/p59_check.py` (new).** It reads geometry and computed style at 1920,
+1440 and 390 wide, plus a forced-coarse pass at 900, never a screenshot.
+- **Header:** the pill sits on the subtitle line, right-aligned and level
+  with it. The header controls are `--ctl-h` tall and the shadow switch is
+  32x16. On touch, the More actions trigger stays 32px visible with a 40px
+  pseudo-element hit area and no tile background.
+- **Rail:**
+  - Collapsing hides the rail and puts the toggle at the header's left slot.
+  - The board takes the rail width back.
+  - The report title and subtitle move by less than 1px, and the toggle does
+    not overlap the title.
+  - The state persists, a phone starts collapsed, and opening a section from
+    collapsed shows the rail and the panel.
+  - The rail's own collapse button and the toggle both work.
+- **Badge:** it sits offset up and right of its icon.
+- **Filter bar:**
+  - Activity name takes about half of Find's first row, with Source inside
+    the card and Banding unclipped.
+  - Fit is a labelled `--ctl-h` button.
+  - On a phone, each label sits within 6px above its field, and the Mode
+    toggle keeps its natural width.
+- **Card:**
+  - It is 340px wide and opaque, and an actualised date fits its field.
+  - The icon is 15px in an `--icon-btn` button, placed left of the padding
+    edge and close to the ID.
+  - The float sits between the ID and the status, with a "-" placeholder. A
+    completed milestone's float reads a read-only "-".
+  - The status is right-aligned on an underlined heading.
+  - The Save buttons are 11px.
+  - The title is full width with a background, and "Display label:" sits
+    above it.
+
+**Changed assertions (behaviour deliberately changed by P59):**
+
+| Check | Old assertion | New assertion |
+|---|---|---|
+| p35 | The 306px card cap and the "narrower than P34" comparisons | The 340px cap (D-01 restores it) |
+| p43 | Three equal schedule columns | Start and Finish equal, Progress narrower, positions still fixed |
+| p43 | Every field, the float included, is always writable | The float is exempt on a completed milestone (D-03) |
+| p44 | The heading runs up to a float column | The heading runs the full width with the float inside it |
+| p38 | Width after leaving print is the viewport less the rail | The rail is counted only when it is showing (phones start collapsed) |
+| p57 | Notes is the first rail button | Notes is the first rail section; the collapse control comes before it |
+
+**`ds_check` regression, found and fixed:** at 390, the Banding select did
+not fill its row. The desktop grid's `align-items:center` was carrying into
+the phone column. The phone rule now sets `align-items:stretch`.
