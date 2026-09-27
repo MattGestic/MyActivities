@@ -61,15 +61,32 @@
 .sg-confirm-msg{margin:0 0 var(--ctl-gap);font-size:var(--text-lg);line-height:20px}
 .sg-confirm-btns{display:flex;justify-content:space-between;gap:var(--ctl-gap)}
 
-/* ---- new collection panel (same layout as the inline confirmation, neutral) ---- */
-.sg-newcoll{padding:var(--space-4) var(--group-gap);background:var(--color-bg-subtle);color:var(--color-text-primary);
+/* ---- My temp list panel (design-standard.md field row pattern) ---- */
+.sg-temp{padding:var(--space-4) var(--group-gap);background:var(--color-bg-subtle);color:var(--color-text-primary);
   border-bottom:1px solid var(--color-border-panel)}
-.sg-newcoll[hidden]{display:none}
-.sg-newcoll-row{display:flex;margin-bottom:var(--ctl-gap)}
-.sg-newcoll-name{flex:1 1 auto;width:auto;max-width:360px}
-.sg-newcoll-err{margin:0 0 var(--ctl-gap);color:var(--color-crit-text)}
-.sg-newcoll-err:empty{display:none}
-.sg-newcoll .sg-confirm-btns{max-width:360px}
+.sg-temp[hidden]{display:none}
+.sg-temp-head{display:flex;align-items:center;justify-content:space-between;gap:var(--ctl-gap)}
+.sg-temp-title{margin:0;font-size:var(--text-lg);line-height:20px;font-weight:600}
+.sg-temp-summary{margin:var(--ctl-gap-tight) 0 var(--ctl-gap);color:var(--color-text-muted)}
+.sg-temp-row{display:flex;flex-wrap:wrap;align-items:center;gap:var(--ctl-gap);margin-bottom:var(--ctl-gap)}
+.sg-temp-lbl{flex:0 0 140px;font-weight:600}
+.sg-temp-name{width:240px}
+.sg-temp .sg-select{min-width:200px}
+.sg-temp-err{margin:0;color:var(--color-crit-text)}
+.sg-temp-err:empty{display:none}
+.sg-temp-confirm{max-width:560px}
+.sg-temp-confirm[hidden],.sg-temp-actions[hidden]{display:none}
+@media (max-width:767px){
+  .sg-temp-lbl{flex-basis:100%}
+  .sg-temp-name,.sg-temp .sg-select{flex:1 1 auto;width:auto;min-width:0}
+}
+
+/* Toggle chip (design-standard.md: pill, accent fill with on-accent text when on, aria-pressed). */
+.sg-chip{height:var(--ctl-h);padding:0 var(--ctl-pad-x);font:inherit;font-size:var(--text-md);white-space:nowrap;cursor:pointer;
+  border:var(--stroke-ctl) solid var(--color-btn-secondary-outline);border-radius:var(--radius-pill);
+  background:var(--color-btn-secondary-bg);color:var(--color-btn-secondary-text)}
+.sg-chip:hover{background:var(--color-btn-secondary-hover-bg)}
+.sg-chip.is-on{background:var(--color-accent);border-color:var(--color-accent);color:var(--color-text-on-accent)}
 
 /* ---- grid engine skin ---- */
 .sg-grid{flex:1 1 auto;min-height:0;position:relative;background:var(--color-bg-canvas);color:var(--color-text-primary)}

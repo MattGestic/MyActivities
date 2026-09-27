@@ -162,7 +162,6 @@ def fixtures():
             {"key": "succ", "label": "Successor", "type": "text", "editable": True, "width": 100},
             {"key": "progress", "label": "% complete", "type": "number", "editable": True, "width": 90},
             {"key": "comment", "label": "Comment", "type": "text", "editable": True, "width": 220},
-            {"key": "colls", "label": "Collections", "type": "text", "width": 180},
         ],
         "annot": [
             {"key": "aid", "label": "Entry", "type": "text", "width": 70},
@@ -173,7 +172,6 @@ def fixtures():
             {"key": "status", "label": "Status", "type": "select", "editable": True, "options": nstat},
             {"key": "author", "label": "By", "type": "text", "width": 50},
             {"key": "date", "label": "Entered", "type": "date"},
-            {"key": "colls", "label": "Collections", "type": "text", "width": 180},
         ],
         "sched": [
             {"key": "id", "label": "Activity ID", "type": "text", "width": 100},
@@ -189,7 +187,6 @@ def fixtures():
             {"key": "short", "label": "Short title", "type": "text", "editable": True, "width": 140},
             {"key": "health", "label": "Health", "type": "select", "editable": True, "options": health, "width": 90},
             {"key": "comment", "label": "Comment", "type": "text", "editable": True, "width": 220},
-            {"key": "colls", "label": "Collections", "type": "text", "width": 180},
         ],
     }
     data = {"sched": sched, "userms": userms, "annot": annot, "cols": cols}

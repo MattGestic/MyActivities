@@ -7,18 +7,20 @@
        title, columns:[{key,label,type,editable,options,width}], rows, rowKey,
        editable, onEdit(rowKey,key,value), onAdd(), onDelete(rowKeys),
        onBack(), exportName, ensureXLSX, host, canEdit(rowKey,key),
-       collections:{ list(), onAssign(rowKeys,id), onCreate(name) }
+       lists:{ store, refOf(rowKey), onChange(result) }
      })
-     SRETGrid.close()   SRETGrid.setRows(rows)   SRETGrid.isOpen()
+     SRETGrid.close()   SRETGrid.setRows(rows)   SRETGrid.patchRows(rows)   SRETGrid.isOpen()
    Return false from onEdit to refuse a value (the cell reverts), from
    onDelete to keep the rows. onAdd returns the new row object (with its
    rowKey) or nothing to add no row. canEdit, optional, refuses an edit on
    one row where the column is otherwise editable.
-   collections, optional, adds "Add to collection" for the selected rows.
-   list() returns [{id,label,count}]; onAssign returns a message string or
-   {message, rows} (rows are patched in place, selection kept); onCreate,
-   optional, returns {id} or {error}. The rules live in the caller's shared
-   SRETCollections module (src/modules/collections/), never here.
+   lists, optional, adds My temp list: "Add to temp list" for the selected
+   rows, a "Temp list only" filter, and a panel with A. Save new list,
+   B. Add to existing, C. Clear, plus remove-selected. It also adds read-only
+   List and Temp columns. store is the caller's SRETCollections store (data
+   in); refOf maps a rowKey to the store's item ref; onChange(result) runs
+   after every change so the caller can persist. All rules live in the
+   shared SRETCollections module (src/modules/collections/), never here.
 
    Data in, callbacks out. This module never reads or writes an app global.
    Rows are copied on open, so an edit reaches the caller only through
@@ -157,6 +159,7 @@
   }
   function rowPasses(item){
     var s=S; if(!s) return true;
+    if(s.tempOnly && item[L_TMP]!=='Yes') return false;
     for(var k in s.filters){
       var f=s.filters[k].trim(); if(!f) continue;
       if(!matchCol(s.colByKey[k],item[k],f)) return false;
@@ -206,7 +209,7 @@
     s.countEl.textContent=shown===total?(total+(total===1?' row':' rows')):(shown+' of '+total+' rows');
     s.selEl.textContent=sel?(sel+' selected'):'';
     if(s.delBtn) s.delBtn.disabled=!sel;
-    if(s.collSel) s.collSel.disabled=!sel;
+    if(s.lists) updateLists();
   }
   function selectedKeys(){
     var s=S;
@@ -274,64 +277,121 @@
     s.dv.refresh();
   }
 
-  // ---------- collections ----------
-  function fillCollections(){
-    var s=S, sel=s.collSel; if(!sel) return;
-    sel.innerHTML='';
-    sel.appendChild(h('option',{value:'',text:'Add to collection'}));
-    (s.coll.list()||[]).forEach(function(c){
-      sel.appendChild(h('option',{value:c.id,text:c.label+(c.count!=null?' ('+c.count+')':'')}));
-    });
-    if(typeof s.coll.onCreate==='function') sel.appendChild(h('option',{value:'__new__',text:'New collection…'}));
-    sel.value='';
+  // ---------- lists: My temp list and saved lists ----------
+  // The rules (temp list, one list per item, save / add / clear) live in
+  // SRETCollections. This section only draws the controls and calls it.
+  var L_TMP='_tmp', L_LIST='_list';
+  function M(){ return root.SRETCollections; }
+  function listFields(item){
+    var s=S, ref=s.lists.refOf(item[s.rowKey]);
+    item[L_TMP]=M().inTemp(s.lists.store,ref)?'Yes':'';
+    item[L_LIST]=M().membership(s.lists.store,ref);
+  }
+  // Items are the grid's own copies, so the two derived fields are written
+  // straight onto them; the caller's rows are untouched.
+  function refreshLists(){
+    var s=S; if(!s||!s.lists) return;
+    s.dv.getItems().forEach(listFields);
+    s.dv.refresh(); s.grid.invalidate();
+    updateStatus();
   }
   function patchRows(rows){
     var s=S; if(!s) return;
     s.dv.beginUpdate();
     (rows||[]).forEach(function(r){
       var k=r&&r[s.rowKey], cur=k!=null&&s.dv.getItemById(k);
-      if(cur) s.dv.updateItem(k,Object.assign({},cur,r));
+      if(cur){ var it=Object.assign({},cur,r); if(s.lists) listFields(it); s.dv.updateItem(k,it); }
     });
     s.dv.endUpdate();
   }
-  function doAssign(id){
-    var s=S, keys=selectedKeys(); if(!keys.length||!id) return;
-    var r=s.coll.onAssign(keys.slice(),id);
-    if(r&&typeof r==='object'){ if(r.rows) patchRows(r.rows); r=r.message; }
-    s.msgEl.textContent=typeof r==='string'?r:'';
-    fillCollections();
-    updateStatus();
+  function selectedRefs(){ var s=S; return selectedKeys().map(function(k){ return s.lists.refOf(k); }); }
+  function listsDone(r){
+    var s=S;
+    s.msgEl.textContent=M().describe(r);
+    s.tmpErr.textContent=r.error?M().describe(r):'';
+    if(!r.error && typeof s.lists.onChange==='function') s.lists.onChange(r);
+    refreshLists();
+    return r;
   }
-  function hideNewColl(){
-    var s=S; if(!s) return;
-    s.newCollEl.hidden=true; s.newCollEl.innerHTML='';
+  // A control that sets state also shows it: counts, pressed and expanded
+  // states and enabled buttons all follow the store on every change.
+  function updateLists(){
+    var s=S; if(!s||!s.lists) return;
+    var st=s.lists.store, tmp=M().temp(st), n=tmp.length, sel=s.grid.getSelectedRows().length;
+    var here=s.dv.getItems().filter(function(it){ return it[L_TMP]==='Yes'; }).length;
+    s.tmpAddBtn.disabled=!sel;
+    s.tmpBtn.textContent='My temp list ('+n+')';
+    s.tmpBtn.setAttribute('aria-expanded',String(!s.tmpPanel.hidden));
+    s.tmpOnlyBtn.setAttribute('aria-pressed',String(!!s.tempOnly));
+    s.tmpOnlyBtn.classList.toggle('is-on',!!s.tempOnly);
+    s.tmpSummary.textContent='My temp list holds '+n+(n===1?' item':' items')+
+      (n?', '+here+' of them on this screen.':'. Select rows and use Add to temp list.');
+    var cur=s.tmpTarget.value;
+    s.tmpTarget.innerHTML='';
+    var ls=M().list(st);
+    if(!ls.length) s.tmpTarget.appendChild(h('option',{value:'',text:'No saved lists yet'}));
+    ls.forEach(function(c){ s.tmpTarget.appendChild(h('option',{value:c.id,text:c.label+' ('+c.count+')'})); });
+    if(ls.some(function(c){ return c.id===cur; })) s.tmpTarget.value=cur;
+    s.tmpSave.disabled=!n; s.tmpAddTo.disabled=!n||!ls.length; s.tmpTarget.disabled=!ls.length;
+    s.tmpClear.disabled=!n;
+    s.tmpRemove.disabled=!selectedKeys().some(function(k){ return M().inTemp(st,s.lists.refOf(k)); });
   }
-  function showNewColl(){
-    var s=S; if(!selectedKeys().length) return;
-    hideConfirm();
-    var el=s.newCollEl; el.innerHTML='';
-    var inp=h('input',{type:'text','class':'sg-search sg-newcoll-name','aria-label':'New collection name',
-                       placeholder:'Collection name','data-sg':'newcoll-name',maxlength:'60'});
-    var err=h('p',{'class':'sg-newcoll-err',role:'alert','data-sg':'newcoll-err'});
-    var cancel=h('button',{type:'button','class':'sg-btn',text:'Cancel',on:{click:function(){ hideNewColl(); s.collSel.focus(); }}});
-    var go=h('button',{type:'button','class':'sg-btn sg-btn--primary','data-sg':'newcoll-create',text:'Create and add',
-      on:{click:create}});
-    function create(){
-      var r=s.coll.onCreate(inp.value)||{};
-      if(r.error||!r.id){ err.textContent=r.error||'The collection could not be created.'; inp.focus(); return; }
-      hideNewColl(); fillCollections(); doAssign(r.id); s.collSel.focus();
-    }
-    inp.addEventListener('keydown',function(e){
-      if(e.key==='Enter'){ e.preventDefault(); create(); }
-      else if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); hideNewColl(); s.collSel.focus(); }
+  function toggleTempPanel(show){
+    var s=S; if(show==null) show=s.tmpPanel.hidden;
+    if(show) hideConfirm();
+    hideTempConfirm();
+    s.tmpPanel.hidden=!show; s.tmpErr.textContent='';
+    updateLists();
+    if(show) s.tmpName.focus(); else s.tmpBtn.focus();
+  }
+  function hideTempConfirm(){ var s=S; s.tmpConfirm.hidden=true; s.tmpConfirm.innerHTML=''; s.tmpActions.hidden=false; }
+  function showTempConfirm(){
+    var s=S, n=M().temp(s.lists.store).length; if(!n) return;
+    s.tmpConfirm.innerHTML='';
+    var cancel=h('button',{type:'button','class':'sg-btn',text:'Cancel',on:{click:function(){ hideTempConfirm(); s.tmpClear.focus(); }}});
+    var go=h('button',{type:'button','class':'sg-btn sg-btn--danger','data-sg':'temp-clear-confirm',text:'Clear',
+      on:{click:function(){ hideTempConfirm(); listsDone(M().tempClear(s.lists.store)); s.tmpName.focus(); }}});
+    s.tmpConfirm.appendChild(h('p',{'class':'sg-confirm-msg',
+      text:'Clear My temp list ('+n+(n===1?' item':' items')+')? Saved lists are not changed.'}));
+    s.tmpConfirm.appendChild(h('div',{'class':'sg-confirm-btns'},[cancel,go]));
+    s.tmpActions.hidden=true; s.tmpConfirm.hidden=false;
+    cancel.focus();
+  }
+  function buildTempPanel(){
+    var s=S;
+    s.tmpSummary=h('p',{'class':'sg-temp-summary','data-sg':'temp-summary'});
+    s.tmpName=h('input',{type:'text','class':'sg-search sg-temp-name','aria-label':'Name for the new list',
+                         placeholder:'List name','data-sg':'temp-name',maxlength:'60'});
+    s.tmpSave=h('button',{type:'button','class':'sg-btn sg-btn--primary','data-sg':'temp-save',text:'Save new list'});
+    s.tmpTarget=h('select',{'class':'sg-select','aria-label':'Saved list to add to','data-sg':'temp-target'});
+    s.tmpAddTo=h('button',{type:'button','class':'sg-btn','data-sg':'temp-addto',text:'Add to list'});
+    s.tmpRemove=h('button',{type:'button','class':'sg-btn','data-sg':'temp-remove',text:'Remove selected from temp list'});
+    s.tmpClear=h('button',{type:'button','class':'sg-btn','data-sg':'temp-clear',text:'Clear temp list'});
+    s.tmpErr=h('p',{'class':'sg-temp-err',role:'alert','data-sg':'temp-err'});
+    s.tmpConfirm=h('div',{'class':'sg-temp-confirm','data-sg':'temp-confirm',hidden:true});
+    var close=h('button',{type:'button','class':'sg-iconbtn','aria-label':'Close My temp list',title:'Close','data-sg':'temp-close',text:'✕'});
+    s.tmpActions=h('div',{'class':'sg-temp-actions'},[
+      h('div',{'class':'sg-temp-row'},[h('span',{'class':'sg-temp-lbl',text:'A. Save new list'}),s.tmpName,s.tmpSave]),
+      h('div',{'class':'sg-temp-row'},[h('span',{'class':'sg-temp-lbl',text:'B. Add to existing'}),s.tmpTarget,s.tmpAddTo]),
+      h('div',{'class':'sg-temp-row'},[h('span',{'class':'sg-temp-lbl',text:'C. Clear'}),s.tmpClear,s.tmpRemove])
+    ]);
+    s.tmpPanel.appendChild(h('div',{'class':'sg-temp-head'},[h('h3',{'class':'sg-temp-title',text:'My temp list'}),close]));
+    s.tmpPanel.appendChild(s.tmpSummary);
+    s.tmpPanel.appendChild(s.tmpActions);
+    s.tmpPanel.appendChild(s.tmpConfirm);
+    s.tmpPanel.appendChild(s.tmpErr);
+    var save=function(){ var r=listsDone(M().saveTemp(s.lists.store,s.tmpName.value)); if(!r.error) s.tmpName.value=''; else s.tmpName.focus(); };
+    s.tmpSave.addEventListener('click',save);
+    s.tmpName.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); save(); } });
+    s.tmpAddTo.addEventListener('click',function(){ listsDone(M().addTempTo(s.lists.store,s.tmpTarget.value)); });
+    s.tmpRemove.addEventListener('click',function(){ listsDone(M().tempRemove(s.lists.store,selectedRefs())); });
+    s.tmpClear.addEventListener('click',showTempConfirm);
+    close.addEventListener('click',function(){ toggleTempPanel(false); });
+    s.tmpPanel.addEventListener('keydown',function(e){
+      if(e.key!=='Escape') return;
+      e.preventDefault(); e.stopPropagation();
+      if(!s.tmpConfirm.hidden){ hideTempConfirm(); s.tmpClear.focus(); } else toggleTempPanel(false);
     });
-    var n=selectedKeys().length;
-    el.appendChild(h('p',{'class':'sg-confirm-msg',text:'Add '+n+(n===1?' selected row':' selected rows')+' to a new collection.'}));
-    el.appendChild(h('div',{'class':'sg-newcoll-row'},[inp]));
-    el.appendChild(err);
-    el.appendChild(h('div',{'class':'sg-confirm-btns'},[cancel,go]));
-    el.hidden=false;
-    inp.focus();
   }
 
   // ---------- export ----------
@@ -378,12 +438,14 @@
       return {key:c.key,label:c.label==null?c.key:String(c.label),type:type,editable:!!c.editable,
               opts:normOptions(c.options),width:c.width||DEFAULT_WIDTH[type]};
     });
-    var colByKey={}; cols.forEach(function(c){ colByKey[c.key]=c; });
     var gridEditable=!!opts.editable;
     var canAdd=gridEditable&&typeof opts.onAdd==='function';
     var canDel=gridEditable&&typeof opts.onDelete==='function';
-    var coll=opts.collections&&typeof opts.collections.list==='function'&&typeof opts.collections.onAssign==='function'
-             ?opts.collections:null;
+    var lists=opts.lists&&opts.lists.store&&typeof opts.lists.refOf==='function'?opts.lists:null;
+    if(lists&&!root.SRETCollections) throw new Error('SRETGrid.open: lists needs the SRETCollections module.');
+    if(lists) cols=[{key:L_LIST,label:'List',type:'text',editable:false,opts:[],width:140},
+                    {key:L_TMP,label:'Temp',type:'text',editable:false,opts:[],width:64}].concat(cols);
+    var colByKey={}; cols.forEach(function(c){ colByKey[c.key]=c; });
 
     var host=opts.host||document.body;
     var fixed=host===document.body;
@@ -396,18 +458,22 @@
     var exp=h('button',{type:'button','class':'sg-btn','data-sg':'export',text:'Export .xlsx'});
     var add=canAdd?h('button',{type:'button','class':'sg-btn sg-btn--primary','data-sg':'add',text:'Add row'}):null;
     var del=canDel?h('button',{type:'button','class':'sg-btn','data-sg':'delete',text:'Delete selected',disabled:true}):null;
-    var collSel=coll?h('select',{'class':'sg-select','data-sg':'collection','aria-label':'Add the selected rows to a collection',
-                                  title:'Add the selected rows to a collection',disabled:true}):null;
+    var tmpAdd=lists?h('button',{type:'button','class':'sg-btn','data-sg':'temp-add',text:'Add to temp list',disabled:true,
+                                 title:'Add the selected rows to My temp list'}):null;
+    var tmpBtn=lists?h('button',{type:'button','class':'sg-btn','data-sg':'temp-open','aria-expanded':'false',
+                                 'aria-controls':'sg-temp-panel',text:'My temp list (0)'}):null;
+    var tmpOnly=lists?h('button',{type:'button','class':'sg-chip','data-sg':'temp-only','aria-pressed':'false',
+                                  text:'Temp list only',title:'Show only rows on My temp list'}):null;
     var msg=h('span',{'class':'sg-msg',role:'status','aria-live':'polite','data-sg':'msg'});
     var bar=h('div',{'class':'sg-bar'},[
       h('div',{'class':'sg-bar-lead'},[back,title]),
-      h('div',{'class':'sg-bar-tools'},[search,h('span',{'class':'sg-counts'},[count,selc]),msg,collSel,exp,add,del])
+      h('div',{'class':'sg-bar-tools'},[search,h('span',{'class':'sg-counts'},[count,selc]),msg,tmpAdd,tmpBtn,tmpOnly,exp,add,del])
     ]);
     var confirm=h('div',{'class':'sg-confirm',role:'alertdialog','aria-label':'Confirm remove','data-sg':'confirm',hidden:true});
-    var newColl=h('div',{'class':'sg-newcoll',role:'group','aria-label':'New collection','data-sg':'newcoll',hidden:true});
+    var tmpPanel=h('div',{'class':'sg-temp',id:'sg-temp-panel',role:'region','aria-label':'My temp list','data-sg':'temp-panel',hidden:true});
     var gridEl=h('div',{'class':'sg-grid','data-sg':'grid'});
     var screen=h('section',{'class':'sg-screen'+(fixed?' sg-screen--fixed':''),role:'region','aria-label':opts.title||'Table'},
-                 [bar,confirm,newColl,gridEl]);
+                 [bar,confirm,tmpPanel,gridEl]);
     host.appendChild(screen);
 
     var rowH=ctlHeight(screen);
@@ -442,7 +508,8 @@
     S={opts:opts,rowKey:rowKey,cols:cols,colByKey:colByKey,filters:{},quick:'',grid:grid,dv:dv,
        screen:screen,host:host,countEl:count,selEl:selc,msgEl:msg,delBtn:del,expBtn:exp,searchEl:search,
        confirmEl:confirm,prev:null,returnFocus:document.activeElement,ro:null,
-       coll:coll,collSel:collSel,newCollEl:newColl};
+       lists:lists,tempOnly:false,tmpAddBtn:tmpAdd,tmpBtn:tmpBtn,tmpOnlyBtn:tmpOnly,tmpPanel:tmpPanel};
+    if(lists) buildTempPanel();
     cols.forEach(function(c){ S.filters[c.key]=''; });
 
     grid.onHeaderRowCellRendered.subscribe(function(e,args){
@@ -490,18 +557,17 @@
     dv.setFilter(rowPasses);
     dv.endUpdate();
     dv.syncGridSelection(grid,false);
+    if(lists) refreshLists();
 
     back.addEventListener('click',function(){ var cb=opts.onBack; close(); if(typeof cb==='function') cb(); });
     search.addEventListener('input',function(){ S.quick=search.value; dv.refresh(); });
     exp.addEventListener('click',exportRows);
     if(add) add.addEventListener('click',doAdd);
-    if(del) del.addEventListener('click',function(){ hideNewColl(); showConfirm(); });
-    if(collSel){
-      fillCollections();
-      collSel.addEventListener('change',function(){
-        var v=collSel.value; collSel.value='';
-        if(v==='__new__') showNewColl(); else if(v) doAssign(v);
-      });
+    if(del) del.addEventListener('click',function(){ if(lists) toggleTempPanel(false); showConfirm(); });
+    if(lists){
+      tmpAdd.addEventListener('click',function(){ listsDone(M().tempAdd(lists.store,selectedRefs())); });
+      tmpBtn.addEventListener('click',function(){ toggleTempPanel(); });
+      tmpOnly.addEventListener('click',function(){ S.tempOnly=!S.tempOnly; dv.refresh(); updateStatus(); });
     }
     screen.addEventListener('keydown',function(e){
       if(e.key==='Escape' && !confirm.hidden){ e.stopPropagation(); hideConfirm(); if(del) del.focus(); }
@@ -553,7 +619,7 @@
     var s=S; if(!s) return;
     s.grid.setSelectedRows([]);
     s.dv.setItems((rows||[]).map(function(r){ return Object.assign({},r); }),s.rowKey);
-    s.grid.invalidate(); updateStatus();
+    if(s.lists) refreshLists(); else { s.grid.invalidate(); updateStatus(); }
   }
 
   var api={

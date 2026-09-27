@@ -64,16 +64,21 @@ MUTATIONS = {
     # covered by the other and correctly still passes.
     "readonly-ignored": [("if(!gridEditable||!c||!c.editable) return false;", "if(!gridEditable||!c) return false;"),
                          ("editor:ed?Editor:null", "editor:gridEditable?Editor:null")],
-    "esc-commits": ("el.addEventListener('keydown',function(e){",
-                    "el.addEventListener('keydown',function(e){ if(e.key==='Escape'){ args.grid.getEditorLock().commitCurrentEdit(); return; }"),
+    "esc-commits": ("    el.addEventListener('keydown',function(e){\n      if((e.key==='ArrowLeft'",
+                    "    el.addEventListener('keydown',function(e){ if(e.key==='Escape'){ args.grid.getEditorLock().commitCurrentEdit(); return; }\n      if((e.key==='ArrowLeft'"),
     "no-selection-count": ("grid.onSelectedRowsChanged.subscribe(updateStatus);", ""),
     "literal-colour": (".sg-grid .slick-row{background:var(--color-row-default-bg)}", ".sg-grid .slick-row{background:#ffffff}"),
     # Scroll: the engine defaults that caused the reported stutter.
     "scroll-defaults": ("enableMouseWheelScrollHandler:false,forceSyncScrolling:true,\n      rowTopOffsetRenderType:'transform',minRowBuffer:10",
                         "enableMouseWheelScrollHandler:true,forceSyncScrolling:false,\n      rowTopOffsetRenderType:'top',minRowBuffer:3"),
     # Collections: the shared rule (no duplicates) and the grid handing over the right keys.
-    "coll-duplicates": ("if(c.items.indexOf(r)>=0) already++;", "if(false) already++;"),
-    "coll-wrong-keys": ("var r=s.coll.onAssign(keys.slice(),id);", "var r=s.coll.onAssign(keys.slice(1),id);"),
+    # Lists: each rule the temp list flow depends on.
+    "temp-wrong-keys": ("listsDone(M().tempAdd(lists.store,selectedRefs()));", "listsDone(M().tempAdd(lists.store,selectedRefs().slice(1)));"),
+    "temp-duplicates": ("if(store.temp.indexOf(r)>=0) already++; else", "if(false) already++; else"),
+    "list-not-single": ("      if(other){\n        other.items.splice", "      if(false){\n        other.items.splice"),
+    "temp-kept-after-save": ("    tempClear(store); r.kind='saveTemp'; r.total=0;", "    r.kind='saveTemp'; r.total=0;"),
+    "temp-only-ignored": ("    if(s.tempOnly && item[L_TMP]!=='Yes') return false;\n", ""),
+    "state-not-shown": ("    s.tmpOnlyBtn.setAttribute('aria-pressed',String(!!s.tempOnly));\n", ""),
     "resize-kills-edit": ("if(grid.getEditorLock().isActive()){ pending=true; return; }", ""),
     "mutates-caller": ("dv.setItems((opts.rows||[]).map(function(r){ return Object.assign({},r); }),rowKey);",
                        "dv.setItems((opts.rows||[]),rowKey);"),
@@ -375,46 +380,85 @@ try{
     ok('Remove calls onDelete with the selected keys', count('onDelete')===d0+1 && JSON.stringify(e.args[0].slice().sort())===JSON.stringify(keys), [e&&e.args,keys]);
     ok('deleted rows leave the grid', visibleCount()===n0-2 && keys.every(k=>!eng().dataView.getItemById(k))); }
 
-  // collections: assign selected rows through the shared module
-  { const C=window.DEMO_COLL, sel=()=>$('[data-sg=collection]');
+  // My temp list: build a pick set across filter states, then A / B / C
+  { const L=window.DEMO_LISTS, M=SRETCollections, btn=n=>$('[data-sg='+n+']');
+    const msg=()=>$('[data-sg=msg]').textContent, n=visibleCount();
+    const itemsIn=v=>eng().dataView.getItems().filter(i=>i._tmp===v);
+    const listed=name=>eng().dataView.getItems().filter(i=>i._list===name).map(i=>i.id).sort();
+    const sorted=a=>a.slice().sort();
     eng().grid.setSelectedRows([]); await sleep(10);
-    ok('collections: control disabled with nothing selected', !!sel() && sel().disabled);
-    const pick=async v=>{ sel().value=v; sel().dispatchEvent(new Event('change',{bubbles:true})); await sleep(20); };
-    const keyAt=r=>eng().dataView.getItem(r).id;
-    rowCheckbox(0).click(); rowCheckbox(1).click(); rowCheckbox(2).click(); await sleep(10);
-    const k3=[0,1,2].map(keyAt);
-    const opts=Array.from(sel().options).map(o=>o.textContent);
-    ok('collections: enabled with a selection; lists collections and New collection', !sel().disabled &&
-       opts.join('|')==='Add to collection|Site walk 3-Oct (0)|Owner review items (0)|New collection…', opts);
-    const a0=count('onAssign'); await pick('UC-001'); const e=lastLog('onAssign');
-    ok('collections: onAssign(selected keys, id) exact', count('onAssign')===a0+1 && JSON.stringify(e.args[0].slice().sort())===JSON.stringify(k3.slice().sort()) && e.args[1]==='UC-001', e&&e.args);
-    ok('collections: message from the shared describe()', $('[data-sg=msg]').textContent==='Added 3 items to "Site walk 3-Oct".', $('[data-sg=msg]').textContent);
-    ok('collections: Collections column updates in place for those rows (N=3)', [0,1,2].every(r=>cellText(r,'colls')==='Site walk 3-Oct') && cellText(3,'colls')==='',
-       [0,1,2,3].map(r=>cellText(r,'colls')));
-    ok('collections: selection kept after assigning', selCount()===3, selCount());
-    rowCheckbox(2).click(); rowCheckbox(3).click(); await sleep(10);
-    await pick('UC-001');
-    const uc1=C.list.find(c=>c.id==='UC-001');
-    ok('collections: re-assigning is idempotent (2 already in, 1 new, no duplicates)', $('[data-sg=msg]').textContent==='Added 1 item to "Site walk 3-Oct". 2 items were already in it.' &&
-       uc1.items.length===4 && new Set(uc1.items).size===4, [$('[data-sg=msg]').textContent,uc1.items]);
-    // new collection panel
-    await pick('__new__'); const panel=$('[data-sg=newcoll]'), nm=()=>$('[data-sg=newcoll-name]');
-    ok('new collection: panel opens with the name field focused', !panel.hidden && document.activeElement===nm());
-    const c0=C.list.length;
-    nm().value='  '; key(nm(),'Enter'); await sleep(10);
-    const errEmpty=$('[data-sg=newcoll-err]').textContent;
-    nm().value='site WALK 3-oct'; key(nm(),'Enter'); await sleep(10);
-    const errDup=$('[data-sg=newcoll-err]').textContent;
-    ok('new collection: empty and duplicate (case-insensitive) names refused, panel stays open', errEmpty==='Enter a name for the collection.' &&
-       /already exists/.test(errDup) && !panel.hidden && C.list.length===c0, [errEmpty,errDup]);
-    key(nm(),'Escape'); await sleep(10);
-    ok('new collection: Esc cancels, nothing created', panel.hidden && C.list.length===c0);
-    await pick('__new__'); nm().value='Punch list'; $('[data-sg=newcoll-create]').click(); await sleep(20);
-    const pl=C.list.find(c=>c.name==='Punch list');
-    ok('new collection: Create makes it and adds the selected rows', panel.hidden && !!pl && pl.items.length===3 &&
-       Array.from(sel().options).some(o=>o.textContent==='Punch list (3)'), pl&&pl.items);
-    ok('collections: a row in two collections shows both', cellText(0,'colls')==='Site walk 3-Oct, Punch list', cellText(0,'colls'));
-    R.notes.swap_newcoll=(await (async()=>{ await pick('__new__'); const x=swapEscapes('light/new-collection'); key(nm(),'Escape'); await sleep(10); return x; })());
+    ok('temp: Add to temp list disabled with nothing selected; button shows the count', btn('temp-add').disabled && btn('temp-open').textContent==='My temp list (0)');
+    await setFilter('type','INT'); const intKeys=[0,1].map(r=>eng().dataView.getItem(r).id);
+    eng().grid.setSelectedRows([0,1]); await sleep(10);
+    const c0=count('onListsChange'); btn('temp-add').click(); await sleep(20);
+    ok('temp: Add to temp list takes exactly the selected rows (filter state 1)', JSON.stringify(sorted(M.temp(L)))===JSON.stringify(sorted(intKeys.map(k=>'activity:'+k))) && count('onListsChange')===c0+1, M.temp(L));
+    await setFilter('type','CLI'); const cliKey=eng().dataView.getItem(0).id;
+    eng().grid.setSelectedRows([0]); await sleep(10); btn('temp-add').click(); await sleep(20);
+    await setFilter('type','INT'); eng().grid.setSelectedRows([0]); await sleep(10); btn('temp-add').click(); await sleep(20);
+    const againMsg=msg(); await setFilter('type','');
+    const picked=intKeys.concat([cliKey]);
+    ok('temp: builds across three filter states, no duplicates', M.temp(L).length===3 && new Set(M.temp(L)).size===3 &&
+       againMsg==='No new items added to My temp list. 1 item was already on it. It now holds 3 items.', [M.temp(L),againMsg]);
+    ok('temp: button shows 3; Temp column marks exactly the picked rows', btn('temp-open').textContent==='My temp list (3)' &&
+       JSON.stringify(itemsIn('Yes').map(i=>i.id).sort())===JSON.stringify(sorted(picked)) &&
+       cellText(eng().dataView.getIdxById(cliKey),'_tmp')==='Yes');
+    // Temp list only: the pick set, pulled together for a bulk action
+    btn('temp-only').click(); await sleep(20);
+    ok('Temp list only: exactly the 3 picked rows; chip shows pressed', visibleCount()===3 && btn('temp-only').getAttribute('aria-pressed')==='true' && btn('temp-only').classList.contains('is-on'), visibleCount());
+    $('.sg-check-h input[type=checkbox]').click(); await sleep(10);
+    ok('Temp list only: select all selects the pick set for a bulk action', selCount()===3, selCount());
+    $('.sg-check-h input[type=checkbox]').click(); await sleep(10);
+    btn('temp-only').click(); await sleep(20);
+    ok('Temp list only off: all rows back; chip not pressed', visibleCount()===n && btn('temp-only').getAttribute('aria-pressed')==='false' && !btn('temp-only').classList.contains('is-on'));
+    // panel
+    btn('temp-open').click(); await sleep(10);
+    ok('panel: opens with expanded state, name focused, summary', !btn('temp-panel').hidden && btn('temp-open').getAttribute('aria-expanded')==='true' &&
+       document.activeElement===btn('temp-name') && btn('temp-summary').textContent==='My temp list holds 3 items, 3 of them on this screen.', btn('temp-summary').textContent);
+    const labels=$$('.sg-temp-lbl').map(e=>e.textContent);
+    ok('panel: actions in order A. Save new list, B. Add to existing, C. Clear', labels.join('|')==='A. Save new list|B. Add to existing|C. Clear', labels);
+    R.notes.swap_temp=swapEscapes('light/temp-panel');
+    // A. Save new list
+    const nm=btn('temp-name'), errs=[];
+    for(const v of ['  ','site WALK 3-oct','My temp list']){ nm.value=v; key(nm,'Enter'); await sleep(10); errs.push(btn('temp-err').textContent); }
+    ok('A: empty, duplicate and reserved names refused; nothing changes', errs[0]==='Enter a name for the list.' && /already exists/.test(errs[1]) &&
+       /used by the temp list/.test(errs[2]) && M.temp(L).length===3 && M.list(L).length===2, errs);
+    nm.value='Punch list'; btn('temp-save').click(); await sleep(20);
+    const pl=L.list.find(c=>c.name==='Punch list');
+    ok('A: Save new list holds the 3 items and empties the temp list', !!pl && pl.items.length===3 && M.temp(L).length===0 && btn('temp-err').textContent==='' &&
+       msg()==='Saved 3 items as the new list "Punch list". My temp list is now empty.' && btn('temp-open').textContent==='My temp list (0)', [msg(),pl&&pl.items]);
+    ok('A: List column shows the new list for exactly those rows; Temp column cleared', JSON.stringify(listed('Punch list'))===JSON.stringify(sorted(picked)) && itemsIn('Yes').length===0);
+    ok('A, B, C disabled while the temp list is empty', btn('temp-save').disabled && btn('temp-addto').disabled && btn('temp-clear').disabled);
+    // B. Add to existing: one list per item, so two move out of Punch list
+    const newKey=eng().dataView.getItems().find(i=>picked.indexOf(i.id)<0 && !i._list).id;
+    const rowsOf=keys=>keys.map(k=>eng().dataView.getIdxById(k));
+    eng().grid.setSelectedRows(rowsOf([intKeys[0],cliKey,newKey])); await sleep(10); btn('temp-add').click(); await sleep(20);
+    btn('temp-target').value='UL-001'; btn('temp-addto').click(); await sleep(20);
+    const sw=L.list.find(c=>c.id==='UL-001');
+    ok('B: Add to existing moves items between lists (one list per item)', sw.items.length===3 && pl.items.length===1 && M.temp(L).length===0 &&
+       msg()==='Added 3 items to "Site walk 3-Oct". Moved from "Punch list" (2). My temp list is now empty.', [msg(),sw.items,pl.items]);
+    ok('B: List column follows the move', JSON.stringify(listed('Site walk 3-Oct'))===JSON.stringify(sorted([intKeys[0],cliKey,newKey])) &&
+       JSON.stringify(listed('Punch list'))===JSON.stringify([intKeys[1]]));
+    btn('temp-add').click(); await sleep(20); btn('temp-target').value='UL-001'; btn('temp-addto').click(); await sleep(20);
+    ok('B: adding the same items again is idempotent', sw.items.length===3 && msg()==='No new items added to "Site walk 3-Oct". 3 items were already in it. My temp list is now empty.', msg());
+    // remove selected from the temp list
+    btn('temp-add').click(); await sleep(20);
+    eng().grid.setSelectedRows(rowsOf([newKey])); await sleep(10); btn('temp-remove').click(); await sleep(20);
+    ok('temp: Remove selected takes only those rows off the temp list', M.temp(L).length===2 && !M.inTemp(L,'activity:'+newKey), M.temp(L));
+    // C. Clear, with inline confirmation
+    btn('temp-clear').click(); await sleep(10);
+    const cf=btn('temp-confirm'), cb=$$('button',cf).map(b=>b.textContent);
+    ok('C: Clear asks first, with the count; Cancel left, Clear right (danger)', !cf.hidden &&
+       $('.sg-temp-confirm .sg-confirm-msg').textContent==='Clear My temp list (2 items)? Saved lists are not changed.' &&
+       cb.join('|')==='Cancel|Clear' && $$('button',cf)[1].classList.contains('sg-btn--danger'), cb);
+    key(document.activeElement,'Escape'); await sleep(10);
+    ok('C: Esc cancels the clear; panel stays open', cf.hidden && !btn('temp-panel').hidden && M.temp(L).length===2);
+    const before=JSON.stringify(L.list);
+    btn('temp-clear').click(); await sleep(10); btn('temp-clear-confirm').click(); await sleep(20);
+    ok('C: Clear empties the temp list and leaves saved lists unchanged', M.temp(L).length===0 && JSON.stringify(L.list)===before &&
+       msg()==='Cleared My temp list (2 items).' && itemsIn('Yes').length===0, msg());
+    key(btn('temp-name'),'Escape'); await sleep(10);
+    ok('panel: Esc closes it, shows collapsed, focus back on the button', btn('temp-panel').hidden && btn('temp-open').getAttribute('aria-expanded')==='false' &&
+       document.activeElement===btn('temp-open'));
     eng().grid.setSelectedRows([]); await sleep(10); }
 
   // idle palette swap, both themes, and theming differs between themes
@@ -425,8 +469,8 @@ try{
     const bgD=getComputedStyle($('.sg-grid .slick-row')).backgroundColor, hdD=getComputedStyle($('.sg-bar')).backgroundColor, txD=getComputedStyle($('.sg-grid .slick-cell')).color;
     document.documentElement.setAttribute('data-theme','light'); await sleep(10);
     ok('light and dark both themed (row, toolbar, text differ)', bgL!==bgD && hdL!==hdD && txL!==txD, {bgL,bgD,hdL,hdD,txL,txD});
-    const esc=[].concat(R.notes.swap_idle_light,R.notes.swap_idle_dark,R.notes.swap_edit_light,R.notes.swap_edit_dark,R.notes.swap_confirm,R.notes.swap_newcoll);
-    ok('palette swap: every painted colour in the screen moves with --pal-* (idle, editing, confirm, new collection; both themes)', esc.length===0, esc.slice(0,12)); }
+    const esc=[].concat(R.notes.swap_idle_light,R.notes.swap_idle_dark,R.notes.swap_edit_light,R.notes.swap_edit_dark,R.notes.swap_confirm,R.notes.swap_temp);
+    ok('palette swap: every painted colour in the screen moves with --pal-* (idle, editing, confirm, temp list panel; both themes)', esc.length===0, esc.slice(0,12)); }
 
   // back
   { const b0=count('onBack'); const launcher=$('#go-userms'); launcher.focus();
@@ -458,25 +502,24 @@ try{
     const rk=eng().dataView.getItem(1).id; await editCell(1,'health','2'); const e=lastLog('onEdit');
     ok('sched: annotation column (health) edits, numeric option value kept', e.args[0]===rk && e.args[1]==='health' && e.args[2]===2, e.args);
     ok('sched: health shows its label', cellText(1,'health')==='At risk', cellText(1,'health'));
-    // the same store serves this screen: add two schedule rows to the collection made on User milestones
-    eng().grid.setSelectedRows([0,1]); await sleep(10);
-    const s1=$('[data-sg=collection]'); const pl0=window.DEMO_COLL.list.find(c=>c.name==='Punch list');
-    const plId=pl0.id, before=pl0.items.length;
-    s1.value=plId; s1.dispatchEvent(new Event('change',{bubbles:true})); await sleep(20);
-    ok('collections: shared store across screens (schedule rows join the collection made on User milestones)',
-       pl0.items.length===before+2 && pl0.items.indexOf('activity:'+eng().dataView.getItem(0).id)>=0 &&
-       Array.from(s1.options).some(o=>o.textContent==='Punch list ('+(before+2)+')'), pl0.items);
-    eng().grid.setSelectedRows([]); await sleep(10);
+    // the temp list is shared across screens: pick here, see it on User milestones
+    { const L=window.DEMO_LISTS, k=[0,1].map(r=>eng().dataView.getItem(r).id);
+      eng().grid.setSelectedRows([0,1]); await sleep(10); $('[data-sg=temp-add]').click(); await sleep(20);
+      eng().grid.setSelectedRows([]); SRETGrid.close(); DEMO_OPEN('userms'); await sleep(20);
+      ok('temp list carries across screens (2 schedule rows picked, then seen on User milestones)',
+         $('[data-sg=temp-open]').textContent==='My temp list (2)' && k.every(x=>SRETCollections.inTemp(L,'activity:'+x)),
+         $('[data-sg=temp-open]').textContent);
+      SRETCollections.tempClear(L); SRETGrid.close(); DEMO_OPEN('sched'); await sleep(20); }
     // export visible rows after a filter and a sort
     await setFilter('wbs','Key'); header('finish').click(); await sleep(20);
     const vis=visibleCount();
     await SRETGrid.exportVisible();
     const aoa=window.__xlsx.aoa||[];
     ok('export: header row plus exactly the visible rows', aoa.length===vis+1 && vis>0 && vis<F.sched.length, [aoa.length,vis]);
-    ok('export: headers are the column labels', JSON.stringify(aoa[0])===JSON.stringify(F.cols.sched.map(c=>c.label)));
-    const fi=F.cols.sched.findIndex(c=>c.key==='finish');
+    ok('export: headers are List, Temp, then the column labels', JSON.stringify(aoa[0])===JSON.stringify(['List','Temp'].concat(F.cols.sched.map(c=>c.label))), aoa[0]);
+    const fi=aoa[0].indexOf('Finish'), ii=aoa[0].indexOf('Activity ID');
     const firstId=eng().dataView.getItem(0).id;
-    ok('export: row order follows the sort', aoa[1][0]===firstId, [aoa[1]&&aoa[1][0],firstId]);
+    ok('export: row order follows the sort', aoa[1][ii]===firstId, [aoa[1]&&aoa[1][ii],firstId]);
     ok('export: dates are Date cells', aoa.slice(1).some(r=>r[fi] instanceof Date));
     ok('export: file name', window.__xlsx.name==='Schedule activities.xlsx', window.__xlsx.name);
     SRETGrid.close(); }
@@ -498,20 +541,24 @@ try{
     ok('stress: virtual rendering (DOM rows far below 2,000)', domRows>0 && domRows<150, domRows);
     eng().grid.scrollRowIntoView(1999); await sleep(50);
     const lastId=eng().dataView.getItem(1999).id;
-    ok('stress: last row reachable by scrolling', $$('.sg-grid .slick-cell.l1').some(c=>c.textContent===lastId), lastId);
+    ok('stress: last row reachable by scrolling', $$('.sg-grid .slick-cell.l'+colIdx('id')).some(c=>c.textContent===lastId), lastId);
     SRETGrid.close(); }
   // shared module, direct
   { const M=SRETCollections, st=M.newStore();
     const a=M.create(st,'  Weekly   review ','2026-09-27T00:00:00Z');
-    ok('module: name trimmed and spaces collapsed; ids sequential', a.collection.name==='Weekly review' && a.collection.id==='UC-001');
+    ok('module: name trimmed and spaces collapsed; ids sequential', a.collection.name==='Weekly review' && a.collection.id==='UL-001');
     ok('module: 61-character name refused', !!M.create(st,'x'.repeat(61)).error);
-    const r=M.assign(st,'UC-001',['a','a','b']);
-    ok('module: duplicate refs in one call count once', r.added===2 && r.already===0 && st.list[0].items.length===2, r);
-    const u=M.unassign(st,'UC-001',['a','zz']);
-    ok('module: unassign removes only members', u.removed===1 && st.list[0].items.join()==='b', u);
-    ok('module: unknown collection is an error, not a throw', !!M.assign(st,'UC-999',['c']).error);
-    const msgs=[M.describe(r),M.describe(u),M.describe(M.assign(st,'UC-001',['b']))];
-    ok('module: user-facing sentences have no em or en dashes', msgs.every(m=>!/[\u2013\u2014]/.test(m)), msgs); }
+    const t=M.tempAdd(st,['a','a','b']);
+    ok('module: duplicate refs in one temp add count once', t.added===2 && t.total===2, t);
+    ok('module: A and B refuse an empty temp list', (M.tempClear(st),!!M.saveTemp(st,'X').error && !!M.addTempTo(st,'UL-001').error));
+    M.tempAdd(st,['a','b']); const s1=M.saveTemp(st,'Scope 1');
+    M.tempAdd(st,['b','c']); const s2=M.addTempTo(st,'UL-001');
+    ok('module: one list per item (b moves from Scope 1 to Weekly review)', st.list[0].items.join()==='b,c' && st.list[1].items.join()==='a' && s2.movedFrom['Scope 1']===1, st.list);
+    ok('module: unknown list is an error, not a throw', !!M.assign(st,'UL-999',['c']).error && !!M.addTempTo(st,'UL-999').error);
+    const u=M.unassign(st,['a','zz']);
+    ok('module: unassign removes only members', u.removed===1 && M.membership(st,'a')==='', u);
+    const msgs=[M.describe(s1),M.describe(s2),M.describe(u),M.describe(M.tempAdd(st,['q'])),M.describe(M.tempClear(st))];
+    ok('module: user-facing sentences have no em or en dashes', msgs.every(m=>!/[–—]/.test(m)), msgs); }
 }catch(err){ ok('probe ran without throwing', false, String(err&&err.stack||err)); }
 ok('no uncaught page errors', window.__errs.length===0, window.__errs);
 const pre=document.createElement('pre'); pre.id='grid-view-out'; pre.textContent=JSON.stringify(R); document.body.appendChild(pre);

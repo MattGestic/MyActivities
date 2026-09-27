@@ -77,30 +77,19 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
     for(var i=0;i<list.length;i++) if(list[i][keyName]===key){ list[i]=Object.assign({},list[i]); list[i][field]=value; return; }
   }
   var host=document.getElementById('demo-board');
-  // One collection store for every screen, as the app will hold one in its
-  // annotation layer. The same activity reached from two grids is one member.
-  var cstore=window.DEMO_COLL=SRETCollections.newStore();
-  SRETCollections.create(cstore,'Site walk 3-Oct','2026-09-27T00:00:00Z');
-  SRETCollections.create(cstore,'Owner review items','2026-09-27T00:00:00Z');
-  var REF={userms:function(k){ return 'activity:'+k; },sched:function(k){ return 'activity:'+k; },
-           annot:function(k){ return 'annot:'+k; }};
-  function withColls(rows,keyName,refOf){
-    return rows.map(function(r){ var o=Object.assign({},r); o.colls=SRETCollections.membership(cstore,refOf(r[keyName])).join(', '); return o; });
-  }
-  function collOpt(keyName,refOf){ return {
-    list:function(){ return SRETCollections.list(cstore); },
-    onCreate:function(name){ var r=SRETCollections.create(cstore,name); log('onCreate',[name,r.error||r.collection.id]);
-      return r.error?{error:r.error}:{id:r.collection.id}; },
-    onAssign:function(keys,id){ var r=SRETCollections.assign(cstore,id,keys.map(refOf)); log('onAssign',[keys,id]);
-      return {message:SRETCollections.describe(r),rows:keys.map(function(k){ var o={}; o[keyName]=k;
-        o.colls=SRETCollections.membership(cstore,refOf(k)).join(', '); return o; })}; }
-  }; }
+  // One lists store for every screen, as the app will hold one: saved lists
+  // in the annotation layer, My temp list as session working state.
+  // The same activity reached from two screens is one item.
+  var lstore=window.DEMO_LISTS=SRETCollections.newStore();
+  SRETCollections.create(lstore,'Site walk 3-Oct','2026-09-27T00:00:00Z');
+  SRETCollections.create(lstore,'Owner review items','2026-09-27T00:00:00Z');
+  function listsOpt(refOf){ return {store:lstore,refOf:refOf,onChange:function(r){ log('onListsChange',[r.kind||'create']); }}; }
+  var ACT=function(k){ return 'activity:'+k; }, ANN=function(k){ return 'annot:'+k; };
   var back=function(){ log('onBack',[]); };
-
   var CONFIGS={
     userms:function(){ return {
       title:'User milestones',rowKey:'id',editable:true,exportName:'User milestones',
-      columns:F.cols.userms,rows:withColls(store.userms,'id',REF.userms),collections:collOpt('id',REF.userms),
+      columns:F.cols.userms,rows:store.userms.slice(),lists:listsOpt(ACT),
       onEdit:function(k,f,v){ log('onEdit',[k,f,v]);
         if(f==='progress' && v!=null && (v<0||v>100)) return false;   // app-side rule: 0 to 100
         patch(store.userms,'id',k,f,v); },
@@ -111,18 +100,18 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
       onBack:back,ensureXLSX:ensureXLSX,host:host}; },
     annot:function(){ return {
       title:'Annotations: W/E 27-Sep-26',rowKey:'aid',editable:true,exportName:'Annotations W-E 27-Sep-26',
-      columns:F.cols.annot,rows:withColls(store.annot,'aid',REF.annot),collections:collOpt('aid',REF.annot),
+      columns:F.cols.annot,rows:store.annot.slice(),lists:listsOpt(ANN),
       onEdit:function(k,f,v){ log('onEdit',[k,f,v]); patch(store.annot,'aid',k,f,v); },
       onDelete:function(keys){ log('onDelete',[keys]); store.annot=store.annot.filter(function(r){ return keys.indexOf(r.aid)<0; }); },
       onBack:back,ensureXLSX:ensureXLSX,host:host}; },
     sched:function(){ return {
       title:'Schedule activities',rowKey:'id',editable:true,exportName:'Schedule activities',
-      columns:F.cols.sched,rows:withColls(store.sched,'id',REF.sched),collections:collOpt('id',REF.sched),
+      columns:F.cols.sched,rows:store.sched.slice(),lists:listsOpt(ACT),
       onEdit:function(k,f,v){ log('onEdit',[k,f,v]); patch(store.sched,'id',k,f,v); },
       onBack:back,ensureXLSX:ensureXLSX,host:host}; },
     stress:function(){ return {
       title:'Schedule activities (2,000 row stress set)',rowKey:'id',editable:true,exportName:'Stress',
-      columns:F.cols.sched,rows:window.SRET_STRESS(2000),
+      columns:F.cols.sched,rows:window.SRET_STRESS(2000),lists:listsOpt(ACT),
       onEdit:function(k,f,v){ log('onEdit',[k,f,v]); },
       onBack:back,ensureXLSX:ensureXLSX,host:host}; }
   };

@@ -54,8 +54,8 @@ Assumption flagged: accessibility and capability rows come from the shipped sour
 |---|---|---|
 | App today (`src/milestone-dashboard.html`, base `81cfd7a`) | 878,041 | 236,950 |
 | Added: vendored engine (min JS + structural CSS) | 221,778 | 54,817 |
-| Added: our wrapper and the shared collections module (`grid-view.js`, `grid-view.css`, `collections.js`) | 39,550 | 12,319 |
-| **Total added (before app adapters)** | **261,328 (about 30% of today's file)** | 67,136 |
+| Added: our wrapper and the shared lists module (`grid-view.js`, `grid-view.css`, `collections.js`) | 50,429 | 14,966 |
+| **Total added (before app adapters)** | **272,207 (about 31% of today's file)** | 69,783 |
 
 Tabulator for comparison would add about 477 KB plus a smaller wrapper, roughly 57%.
 
