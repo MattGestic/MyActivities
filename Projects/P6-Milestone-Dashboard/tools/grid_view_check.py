@@ -110,6 +110,7 @@ MUTATIONS = {
     "open-on-any-column": ("if(c&&c.id===opts.openColumn&&it&&", "if(c&&it&&"),
     "health-dot-no-edit": ("var ret=typeof s.opts.onEdit==='function'?s.opts.onEdit(rowKey,key,value):undefined;", "var ret;"),
     "collapsed-list-filter": ("if(!c||(c.key===L_LIST&&!S.listExpanded)) return;", "if(!c) return;"),
+    "add-menu-no-separators": ("return [canDel?deleteItem():null, canDel?{sep:1}:null,", "return [canDel?deleteItem():null,"),
     "health-shown-in-grid": ("if(lists) cols=[{key:L_LIST", "cols=cols.filter(function(c){ return c.key!=='health'; }).concat(cols.filter(function(c){ return c.key==='health'; }).map(function(c){ return Object.assign({},c,{hidden:false}); }));\n    if(lists) cols=[{key:L_LIST"),
 }
 
@@ -467,6 +468,10 @@ try{
     R.notes.swap_confirm=swapEscapes('light/confirm');
     key(document.activeElement,'Escape'); await sleep(10);
     ok('Esc cancels the confirmation, nothing deleted', cf.hidden && count('onDelete')===d0 && visibleCount()===n0);
+    await menuPick('add-more','delete');
+    ok('Add row menu > Delete selected rows opens the same confirmation', !cf.hidden && /^Remove 2 rows\?/.test($('.sg-confirm-msg').textContent) &&
+       $('[data-sg=add-more-menu]').hidden, $('.sg-confirm-msg').textContent);
+    key(document.activeElement,'Escape'); await sleep(10);
     await menuPick('tools','delete'); $('[data-sg=confirm-remove]').click(); await sleep(20);
     const e=lastLog('onDelete');
     ok('Remove calls onDelete with the selected keys', count('onDelete')===d0+1 && JSON.stringify(e.args[0].slice().sort())===JSON.stringify(keys), [e&&e.args,keys]);
@@ -501,9 +506,14 @@ try{
        btn('temp-open').getAttribute('aria-expanded')==='false' && btn('lists-open').getAttribute('aria-expanded')==='false' && btn('temp-count').hidden);
     ok('Temp column dropped; List column left of the checkbox', colIdx('_tmp')===-1 && colIdx('_list')===0 && CK()===1);
     // Add row split button and its menu
-    const am=await menuItem('add-more','import'); const aml=labels('add-more'); await menuClose('add-more');
-    ok('Add row is a split button; its menu: Import milestones, Import log, Export .xlsx, Download import template', !!btn('add') && !!am &&
-       aml.join('|')==='Import milestones…|Import log|Export .xlsx|Download import template' && btn('add').parentNode===btn('add-more').parentNode, aml);
+    const am=await menuItem('add-more','import');
+    const aml=$$('[data-sg=add-more-menu] > *').map(e=>e.classList.contains('sg-menu-sep')?'---':e.textContent.replace(/^✓/,''));
+    const delOff=$('[data-sg=add-more-menu] [data-sg=delete]').disabled, sepH=$$('[data-sg=add-more-menu] .sg-menu-sep').map(e=>e.getBoundingClientRect().height);
+    await menuClose('add-more');
+    ok('Add row menu (Matt, 2026-09-28): Delete selected rows first, separator, Export .xlsx, Download import template, separator, Import milestones, Import log',
+       !!btn('add') && !!am && aml.join('|')==='Delete selected rows…|---|Export .xlsx|Download import template|---|Import milestones…|Import log' &&
+       btn('add').parentNode===btn('add-more').parentNode, aml);
+    ok('Add row menu: Delete is disabled with nothing selected; separators are 1px hairlines', delOff && sepH.length===2 && sepH.every(v=>v===1), [delOff,sepH]);
     window.__xlsx={}; await menuPick('add-more','export'); await sleep(20);
     ok('Add row menu > Export .xlsx writes the visible rows', window.__xlsx.name==='User milestones.xlsx' && (window.__xlsx.aoa||[]).length===n+1, window.__xlsx.name);
     window.__xlsx={}; await menuPick('add-more','template'); await sleep(20);

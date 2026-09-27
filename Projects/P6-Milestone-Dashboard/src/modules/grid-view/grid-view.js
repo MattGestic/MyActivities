@@ -947,13 +947,22 @@
     var count=h('span',{'class':'sg-count','data-sg':'count'});
     var selc=h('span',{'class':'sg-selcount','data-sg':'selcount'});
     var add=canAdd?h('button',{type:'button','class':'sg-btn sg-btn--primary','data-sg':'add',text:'Add row'}):null;
-    // Add row is a split button; its menu holds import, export and the template.
-    // Screens that cannot add rows keep a plain Export button in the same place.
+    // Delete selected rows: the same item in the Add row menu and in Tools.
+    var deleteItem=function(){
+      var sel=S?S.grid.getSelectedRows().length:0;
+      return {label:'Delete selected rows…',sg:'delete',disabled:!sel,onSelect:function(){ if(lists&&S.panelMode) openPanel(S.panelMode); showConfirm(); }};
+    };
+    // Add row is a split button (Matt, 2026-09-28): Delete selected rows,
+    // then export and the template, then import, each group set apart by a
+    // separator. Screens that cannot add rows keep a plain Export button.
     var addMenu=canAdd?makeMenu('More add options','add-more',function(){
-      return [(opts.importer||typeof opts.onImport==='function')?{label:'Import milestones…',sg:'import',onSelect:openImport}:null,
-              opts.importer?{label:'Import log',sg:'import-log',onSelect:openImportLog}:null,
+      var imp=opts.importer||typeof opts.onImport==='function';
+      return [canDel?deleteItem():null, canDel?{sep:1}:null,
               {label:'Export .xlsx',sg:'export',onSelect:exportRows},
-              {label:'Download import template',sg:'template',onSelect:downloadTemplate}];
+              {label:'Download import template',sg:'template',onSelect:downloadTemplate},
+              imp?{sep:1}:null,
+              imp?{label:'Import milestones…',sg:'import',onSelect:openImport}:null,
+              opts.importer?{label:'Import log',sg:'import-log',onSelect:openImportLog}:null];
     },'sg-btn--primary',add):null;
     var exp=canAdd?null:h('button',{type:'button','class':'sg-btn','data-sg':'export',text:'Export .xlsx'});
     var selAll=h('button',{type:'button','class':'sg-link','data-sg':'select-all',text:'Select all'});
@@ -977,11 +986,11 @@
     var pill=lists?h('button',{type:'button','class':'sg-pill','data-sg':'scope-pill',hidden:true,
                                title:'Click to show all rows'},[pillText,h('span',{'aria-hidden':'true',text:' ✕'})]):null;
     var toolsItems=function(){
-      var sel=S?S.grid.getSelectedRows().length:0, it=[];
+      var it=[];
       if(lists) it.push({label:'Expand the List column',sg:'list-col',checked:!!(S&&S.listExpanded),onSelect:toggleListCol});
       if(canDel){
         if(it.length) it.push({sep:1});
-        it.push({label:'Delete selected rows…',sg:'delete',disabled:!sel,onSelect:function(){ if(lists&&S.panelMode) openPanel(S.panelMode); showConfirm(); }});
+        it.push(deleteItem());
       }
       return it;
     };

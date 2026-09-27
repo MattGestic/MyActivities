@@ -173,7 +173,7 @@ While a filter is on, a pill in row 3 names it ("My temp list only" or "List: <n
 **Screen layout (Matt, 2026-09-27).**
 - **Row 1:** back arrow and title.
 - **Row 2:** search, **Add row ▾**, **Tools ▾**, **Add to temp list ▾**. It starts in line with the title text, so the strip above the rail stays clear up to the back arrow.
-  - **Add row ▾** is a split button. Its menu holds Import milestones…, Import log, Export .xlsx and Download import template.
+  - **Add row ▾** is a split button. Its menu, in groups split by a hairline: Delete selected rows…; Export .xlsx, Download import template; Import milestones…, Import log. Delete is also in Tools.
   - Screens without Add row, such as the read-only schedule, show a plain Export .xlsx button in the same place.
   - **Tools ▾** holds Expand the List column and Delete selected rows….
   - **Add to temp list ▾** is also a split button.
