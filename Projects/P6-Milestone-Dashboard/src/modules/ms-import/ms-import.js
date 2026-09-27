@@ -14,6 +14,9 @@
        separated, and the user is asked whether to continue.
      - Other fields are checked the same way: a date, number or choice that
        cannot be read is left blank, listed, and the user is asked.
+     - Dates: the order (day, month or year first) is worked out from every
+       date in the file by the shared SRETDates engine. When the file cannot
+       settle it and some dates would read differently, the user is asked.
      - If the user continues, every issue goes to the Import log with the
        import time, file, user and note.
 
@@ -24,39 +27,14 @@
      logEntries(result, meta)   -> [{time,file,user,id,field,note}]
      summary(result, assigned)  -> [sentences]
    cfg: { columns:[{key,label,type,options,min,max}], idKey, depKeys:{pred:'Predecessors',...},
-          existingIds:[...], knownIds:[...] }
+          existingIds:[...], knownIds:[...], dateOrder:'auto'|'DMY'|'MDY'|'YMD' }
+   result.dates: {order, chosen, confirmed, reason, numeric, ambiguous, ask}
    ===================================================================== */
 (function(root){
   'use strict';
-  var MONTHS=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
 
   function norm(v){ return v==null?'':String(v).replace(/\s+/g,' ').trim(); }
   function idNorm(v){ return norm(v).toUpperCase(); }
-  function pad(n){ return String(n).padStart(2,'0'); }
-  function validYmd(y,m,d){
-    var dt=new Date(Date.UTC(y,m-1,d));
-    return dt.getUTCFullYear()===y && dt.getUTCMonth()===m-1 && dt.getUTCDate()===d;
-  }
-  // ISO, d-Mmm-yy(yy), d/m/yyyy (day first), Excel serial, or a Date.
-  function toIso(v){
-    if(v==null||v==='') return {ok:true,value:null};
-    if(v instanceof Date && !isNaN(v)) return {ok:true,value:v.getUTCFullYear()+'-'+pad(v.getUTCMonth()+1)+'-'+pad(v.getUTCDate())};
-    var s=norm(v), m;
-    if((m=/^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(s))&&validYmd(+m[1],+m[2],+m[3])) return {ok:true,value:m[1]+'-'+pad(m[2])+'-'+pad(m[3])};
-    if((m=/^(\d{1,2})[-\s]([A-Za-z]{3})[A-Za-z]*[-\s](\d{2}|\d{4})$/.exec(s))){
-      var mi=MONTHS.indexOf(m[2].toLowerCase()), y=m[3].length===2?2000+(+m[3]):+m[3];
-      if(mi>=0&&validYmd(y,mi+1,+m[1])) return {ok:true,value:y+'-'+pad(mi+1)+'-'+pad(m[1])};
-    }
-    if((m=/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/.exec(s))){
-      var yy=m[3].length===2?2000+(+m[3]):+m[3];
-      if(validYmd(yy,+m[2],+m[1])) return {ok:true,value:yy+'-'+pad(m[2])+'-'+pad(m[1])};
-    }
-    if(/^\d{5}(\.\d+)?$/.test(s)){
-      var d=new Date(Date.UTC(1899,11,30)+Math.floor(+s)*86400000);
-      return {ok:true,value:d.getUTCFullYear()+'-'+pad(d.getUTCMonth()+1)+'-'+pad(d.getUTCDate())};
-    }
-    return {ok:false};
-  }
   function toNumber(v,col){
     if(v==null||norm(v)==='') return {ok:true,value:null};
     var n=Number(norm(v).replace(/%$/,''));
@@ -133,6 +111,12 @@
         '. Only unique IDs, or blank IDs, can be imported.';
       res.duplicates=dup; return res;
     }
+    // Date order, from every date cell in the file together.
+    var D=root.SRETDates, dateCols=Object.keys(map).filter(function(i){ return map[i].type==='date'; }), dv=[];
+    data.forEach(function(d){ dateCols.forEach(function(i){ dv.push(d.cells[i]); }); });
+    var chosen=cfg.dateOrder&&cfg.dateOrder!=='auto'?cfg.dateOrder:null, det=D.detect(dv);
+    res.dates={order:chosen||det.order,chosen:chosen?'user':'auto',confirmed:chosen?true:det.confirmed,reason:chosen?'Chosen in the dialog.':det.reason,
+               numeric:det.numeric,ambiguous:det.ambiguous,ask:!chosen&&!det.confirmed};
     var existing={}; (cfg.existingIds||[]).forEach(function(id){ existing[idNorm(id)]=1; });
     var valid={}; Object.keys(existing).forEach(function(id){ valid[id]=1; });
     (cfg.knownIds||[]).forEach(function(id){ valid[idNorm(id)]=1; });
@@ -144,7 +128,7 @@
       Object.keys(map).forEach(function(i){
         var c=map[i], v=d.cells[i], out;
         if(c.key===cfg.idKey){ row[c.key]=idRaw||null; return; }
-        if(c.type==='date') out=toIso(v);
+        if(c.type==='date'){ out=D.parse(v,res.dates.order); if(!out.ok) out.why='is not a valid date'+(/^\s*\d{1,2}\D+\d{1,2}\D+\d{2,4}\s*$/.test(norm(v))?' (read as '+D.orderLabel(res.dates.order)+')':''); }
         else if(c.type==='number') out=toNumber(v,c);
         else if(c.type==='select') out=toOption(v,c);
         else out={ok:true,value:norm(v)};
@@ -179,11 +163,12 @@
   function summary(res,assigned){
     var ids=Object.keys(assigned||{}).map(function(k){ return assigned[k]; });
     var out=['Imported '+plural(res.rows.length,'milestone')+'.'];
+    if(res.dates&&res.dates.numeric) out.push('Dates read as '+root.SRETDates.orderLabel(res.dates.order)+'. '+res.dates.reason);
     if(ids.length) out.push('IDs assigned to '+plural(ids.length,'row')+' with a blank ID: '+ids.join(', ')+'.');
     if(res.skipped.length) out.push('Skipped '+plural(res.skipped.length,'row')+' already in the table: '+res.skipped.map(function(s){ return s.id; }).join(', ')+'.');
     if(res.issues.length) out.push(plural(res.issues.length,'issue')+' recorded in the Import log.');
     return out;
   }
 
-  root.SRETMsImport={parseFile:parseFile,parseCsv:parseCsv,check:check,logEntries:logEntries,summary:summary,_toIso:toIso};
+  root.SRETMsImport={parseFile:parseFile,parseCsv:parseCsv,check:check,logEntries:logEntries,summary:summary};
 })(window);

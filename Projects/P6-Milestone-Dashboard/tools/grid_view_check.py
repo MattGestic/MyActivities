@@ -102,7 +102,7 @@ MUTATIONS = {
     "import-blank-id-kept": ("if(!d[idKey]){ d[idKey]=im.nextId(taken);", "if(false){ d[idKey]=im.nextId(taken);"),
     "import-same-id-twice": ("d[idKey]=im.nextId(taken); taken.push(d[idKey]);", "d[idKey]=im.nextId([]);"),
     "import-deps-unchecked": ("if(missing.length){ dep=true;", "if(false){ dep=true;"),
-    "import-no-question": ("    if(!res.issues.length){ commitImport(res,fileName,ui); return res; }", "    commitImport(res,fileName,ui); return res;"),
+    "import-no-question": ("    if(!res.issues.length&&!dt.ask){ commitImport(res,fileName,ui); return res; }", "    commitImport(res,fileName,ui); return res;"),
     "import-log-not-written": ("if(im.log) Array.prototype.push.apply(im.log,entries);", ""),
     "import-bad-date-kept": ("row[c.key]=null; return;\n        }", "row[c.key]=norm(v); return;\n        }"),
     "import-silent-fail": ("importPanel(ui,'error',[h('p',{'class':'sg-import-head',text:'Import failed'}),h('p',{'data-sg':'import-error',text:res.fatal})]);", ""),
@@ -111,6 +111,16 @@ MUTATIONS = {
     "health-dot-no-edit": ("var ret=typeof s.opts.onEdit==='function'?s.opts.onEdit(rowKey,key,value):undefined;", "var ret;"),
     "collapsed-list-filter": ("if(!c||(c.key===L_LIST&&!S.listExpanded)) return;", "if(!c) return;"),
     "add-menu-no-separators": ("return [canDel?deleteItem():null, canDel?{sep:1}:null,", "return [canDel?deleteItem():null,"),
+    # Round 8 (Matt, 2026-09-28): shared date engine, user name
+    "dates-order-fixed": ("var chosen=cfg.dateOrder&&cfg.dateOrder!=='auto'?cfg.dateOrder:null, det=D.detect(dv);",
+                          "var chosen=cfg.dateOrder&&cfg.dateOrder!=='auto'?cfg.dateOrder:'DMY', det=D.detect(dv);"),
+    "dates-no-year-stability": ("if(yearFirst&&yearLast&&nums.length>=3&&distinct[0]!==distinct[2]){", "if(false){"),
+    "dates-never-ask": ("numeric:det.numeric,ambiguous:det.ambiguous,ask:!chosen&&!det.confirmed};", "numeric:det.numeric,ambiguous:det.ambiguous,ask:false};"),
+    "dates-iso-votes": ("if(s.kind==='num'&&s.p[0].length!==4) nums.push(s.p);", "if(s.kind==='num') nums.push(s.p);"),
+    "user-not-remembered": ("try{ store.setItem(key,n); }catch(e){", "try{ }catch(e){"),
+    "save-not-attributed": ("var e={at:meta.at||new Date().toISOString(),by:read(),", "var e={at:meta.at||new Date().toISOString(),by:savedBy,"),
+    "shared-file-adopts-author": ("var n=read(), st=!n?'unset'", "var n=read()||savedBy, st=!n?'unset'"),
+    "no-first-use-prompt": ("if(USERS.status().state==='unset') openSettings('Who is using this file?');", ""),
     "health-shown-in-grid": ("if(lists) cols=[{key:L_LIST", "cols=cols.filter(function(c){ return c.key!=='health'; }).concat(cols.filter(function(c){ return c.key==='health'; }).map(function(c){ return Object.assign({},c,{hidden:false}); }));\n    if(lists) cols=[{key:L_LIST"),
 }
 
@@ -134,6 +144,11 @@ window.XLSX={utils:{
 TIMING = r"""
 <script>
 (function(){
+  // What the page showed on load, before the timing run closes the screen.
+  var d=document.querySelector('[data-sg=dialog]');
+  window.__onLoad={dialog:d?d.querySelector('.sg-dialog-title').textContent:null,
+                   nameValue:d&&d.querySelector('[data-sg=user-name]')?d.querySelector('[data-sg=user-name]').value:null,
+                   state:d&&d.querySelector('[data-sg=user-status]')?d.querySelector('[data-sg=user-status]').getAttribute('data-state'):null};
   SRETGrid.close();
   var t0=performance.now();
   DEMO_OPEN('stress');
@@ -260,6 +275,43 @@ function swapEscapes(label){
 
 try{
   const F=window.SRET_FIXTURES;
+  // ============ Who is using the file (SRETUser, Matt 2026-09-28) ============
+  { const btn=n=>$('[data-sg='+n+']'), U=window.DEMO_USER;
+    const L0=window.__onLoad;
+    ok('user: first use on this computer asks for the name on load (a browser cannot read the login name); the file says who saved it last',
+       L0.dialog==='Who is using this file?' && L0.nameValue==='' && L0.state==='unset' && U.status().savedBy==='J. Ruiz' && btn('demo-user').textContent==='Name not set', L0);
+    // The timing run closed that screen; reopen Data settings from the header, the path a user takes later.
+    btn('demo-settings').click(); await sleep(10);
+    ok('user: header Data settings opens the same field', !!btn('dialog') && $('.sg-dialog-title').textContent==='Data settings' && btn('user-name').value==='');
+    const hRows=$$('[data-sg=user-history] tbody tr').map(tr=>Array.from(tr.children).map(td=>td.textContent));
+    ok('user: the save history from the file is shown, newest first', hRows.length===2 && hRows[0][1]==='J. Ruiz' && hRows[1][1]==='M. Garrett' && hRows[0][2]==='3.1.0-P58', hRows);
+    btn('user-name').value='   '; btn('user-confirm').click(); await sleep(10);
+    ok('user: a blank name is refused with a message; nothing stored', !btn('user-error').hidden && btn('user-error').textContent==='Enter a name.' && U.name()==='');
+    btn('user-name').value='  Demo   user '; key(btn('user-name'),'Enter'); await sleep(10);
+    ok('user: Enter confirms; the name is tidied, remembered on this computer, and compared with the file: "You are working as Demo user. This file was last saved by J. Ruiz."',
+       U.name()==='Demo user' && localStorage.getItem('sret-user-name')==='Demo user' && btn('user-error').hidden &&
+       btn('user-status').textContent==='You are working as Demo user. This file was last saved by J. Ruiz.' && btn('user-status').getAttribute('data-state')==='other' &&
+       btn('demo-user').textContent==='Working as Demo user, last saved by J. Ruiz', [U.name(),btn('user-status').textContent]);
+    const ns=getComputedStyle(btn('user-status')).color, dc=getComputedStyle(btn('dialog')).color;
+    ok('user: the status text keeps the dialog colour (host p rules do not leak)', ns===dc, [ns,dc]);
+    btn('demo-save').click(); await sleep(10);
+    const h3=U.history();
+    ok('user: a save is recorded against this user and becomes the file\'s last saver; history kept (3 entries)', h3.length===3 && h3[2].by==='Demo user' &&
+       U.fileState().savedBy==='Demo user' && btn('user-status').textContent==='You are working as Demo user.' &&
+       $$('[data-sg=user-history] tbody tr')[0].children[1].textContent==='Demo user' && lastLog('onSave').args[0]==='Demo user', h3);
+    // The same file opened on another computer: its user, not the author, is who works on it now.
+    const other=SRETUser._memory(); other.setItem('sret-user-name','A. Lee');
+    const u2=SRETUser.create({storage:other,file:U.fileState()});
+    ok('user: shared file opened elsewhere: "You are working as A. Lee. This file was last saved by Demo user."',
+       u2.status().state==='other' && u2.status().message==='You are working as A. Lee. This file was last saved by Demo user.');
+    u2.recordSave({version:'x'});
+    ok('user: their save updates the last saver and keeps the whole history', u2.fileState().savedBy==='A. Lee' && u2.history().map(e=>e.by).join('|')==='M. Garrett|J. Ruiz|Demo user|A. Lee');
+    const fresh=SRETUser.create({storage:SRETUser._memory(),file:{}});
+    ok('user: a new computer with no name is unset even when the file has a last saver; a name over 60 characters is refused',
+       fresh.status().state==='unset' && !fresh.setName('x'.repeat(61)).ok && fresh.setName('x'.repeat(60)).ok);
+    key(btn('dialog'),'Escape'); await sleep(10);
+    ok('user: the prompt closes; the grid is usable', !btn('dialog') && SRETGrid.isOpen()); }
+
   // ============ User milestones (opened on load) ============
   ok('userms: screen open on load', SRETGrid.isOpen() && !!$('.sg-screen'));
   ok('userms: title', $('.sg-title').textContent==='User milestones', $('.sg-title').textContent);
@@ -504,6 +556,8 @@ try{
     eng().grid.setSelectedRows([]); await sleep(10);
     ok('panel collapsed; rail buttons show collapsed; badge hidden at 0', btn('panel').hidden &&
        btn('temp-open').getAttribute('aria-expanded')==='false' && btn('lists-open').getAttribute('aria-expanded')==='false' && btn('temp-count').hidden);
+    ok('temp list: hover on the title and the rail button says it is session only', btn('temp-title').title==='My temp list is for this session only. It clears when the file is closed or reloaded. Add items to a saved list to keep them.' &&
+       btn('temp-open').title==='My temp list (this session only)', [btn('temp-title').title,btn('temp-open').title]);
     ok('Temp column dropped; List column left of the checkbox', colIdx('_tmp')===-1 && colIdx('_list')===0 && CK()===1);
     // Add row split button and its menu
     const am=await menuItem('add-more','import');
@@ -557,7 +611,8 @@ try{
       ',First blank,CLI,,9-Oct-26,,,,USR-050,,\n,Second blank,MS,,10/10/2026,,,RISK,,SNIP-118,\n');
     const sum=$$('[data-sg=import-summary] li').map(l=>l.textContent);
     const it50=eng().dataView.getItemById('USR-050'), itA=eng().dataView.getItemById(nx(1)), itB=eng().dataView.getItemById(nx(2));
-    ok('clean import: summary lists imported, assigned and skipped', JSON.stringify(sum)===JSON.stringify(['Imported 3 milestones.',
+    ok('clean import: summary lists imported, the date order used, assigned and skipped', JSON.stringify(sum)===JSON.stringify(['Imported 3 milestones.',
+       'Dates read as day/month/year. Every date reads the same either way.',
        'IDs assigned to 2 rows with a blank ID: '+nx(1)+', '+nx(2)+'.','Skipped 1 row already in the table: '+have+'.']) && msg()==='Imported 3 milestones.', sum);
     ok('clean import: rows added with assigned IDs, values read (ISO, d-Mmm-yy, d/m/yyyy dates; labels to values), created by and date set',
        nRows()===n0+3 && !!it50&&it50.finish==='2026-10-09'&&it50.type==='INT'&&it50.progress===40&&it50.state==='TRACK' &&
@@ -604,6 +659,44 @@ try{
        btn('import-question').textContent==='Some values could not be read. Do you wish to continue with import?');
     $$('[data-sg=import-status] button').find(b=>b.textContent==='Cancel').click(); await sleep(10); await closeDlg();
     ok('dialog: Esc closes and focus returns to the menu button', !btn('dialog') && document.activeElement===btn('add-more'));
+    // Date order (Matt, 2026-09-28): worked out from every date in the file by the shared SRETDates engine
+    { const DT=window.SRETDates, det=v=>{ const r=DT.detect(v); return r.order+(r.confirmed?'':'?'); };
+      const cases=[[['13/10/26','05/11/26','01-12-2026'],'DMY'],[['10/13/26','11/05/26','12 01 2026'],'MDY'],
+                   [['26-10-09','26-11-05','26-12-01','26-09-30'],'YMD'],[['31.10.2026','01.11.2026'],'DMY'],
+                   [['05/06/26','07/08/26','09/10/26'],'DMY?'],[['2026-10-09','9-Oct-26','10/10/2026'],'DMY'],[['13/10/26','10/13/26'],'DMY?']];
+      const got=cases.map(c=>det(c[0]));
+      ok('SRETDates.detect: day above 12 first = day first; above 12 in the middle = month first; a repeated first part = year first; any break (- / . space); undecided = day first, not confirmed',
+         got.join('|')===cases.map(c=>c[1]).join('|'), got);
+      const pv=['9-Oct-26','Oct 9, 2026','9 October 2026','2026-10-09','20261009','46304','09/10/26','09-Oct-26 08:00','2026-10-09T08:00:00Z'].map(v=>DT.parse(v,'DMY').value);
+      ok('SRETDates.parse: month names in any position, ISO, compact, Excel serial, trailing time: all 9-Oct-26', pv.every(v=>v==='2026-10-09'), pv);
+      ok('SRETDates.parse: impossible dates fail on both bounds (31-Feb, 32nd, month 13); 29-Feb only in a leap year',
+         !DT.parse('31/02/26','DMY').ok && !DT.parse('32/01/26','DMY').ok && !DT.parse('01/13/26','DMY').ok && DT.parse('31/01/26','DMY').ok &&
+         DT.parse('29/02/28','DMY').value==='2028-02-29' && !DT.parse('29/02/26','DMY').ok); }
+    const DH='ID,Name,Type,Start,Finish';
+    await importCsv('us.csv',DH+'\nUSR-201,US one,MS,10/13/26,10/20/26\nUSR-202,US two,MS,11/5/26,11/12/26\n');
+    const us=eng().dataView.getItemById('USR-202'), sumUS=$$('[data-sg=import-summary] li').map(l=>l.textContent);
+    ok('import: a file with a middle part above 12 is read month first, with no question; the summary says so',
+       !!us && us.start==='2026-11-05' && us.finish==='2026-11-12' && sumUS[1]==='Dates read as month/day/year. A middle part above 12 is a day.', [us&&us.start,sumUS]);
+    await closeDlg();
+    await importCsv('ymd.csv',DH+'\nUSR-203,Y one,MS,26-10-09,26 10 20\nUSR-204,Y two,MS,26.11.05,26/11/12\n');
+    const ym=eng().dataView.getItemById('USR-204');
+    ok('import: year first when the first part barely changes (26 on every row), across - . / and space breaks',
+       !!ym && ym.start==='2026-11-05' && ym.finish==='2026-11-12' && eng().dataView.getItemById('USR-203').finish==='2026-10-20', ym&&[ym.start,ym.finish]);
+    await closeDlg();
+    const nD=nRows();
+    await importCsv('amb.csv',DH+'\nUSR-205,A one,MS,05/06/26,07/08/26\nUSR-206,A two,MS,09/10/26,11/12/26\n');
+    ok('import: dates that could be read either way ask first: "The date order could not be confirmed from the file. Do you wish to continue with import?"',
+       !!btn('import-question') && btn('import-question').textContent==='The date order could not be confirmed from the file. Do you wish to continue with import?' &&
+       /^Dates will be read as day\/month\/year \(9\/10\/26 is 9-Oct-26\)\. 4 dates would read differently in another order; if that is wrong, choose the order in Date order\.$/.test(btn('import-date-note').textContent) &&
+       !$('[data-sg=import-issues]') && nRows()===nD, btn('import-date-note')&&btn('import-date-note').textContent);
+    const sel=btn('import-date-order'); sel.value='MDY'; sel.dispatchEvent(new Event('change')); await sleep(20);
+    const a5=eng().dataView.getItemById('USR-205');
+    ok('import: choosing Month first re-runs the checks and imports with that order; the summary says it was chosen',
+       !!a5 && a5.start==='2026-05-06' && a5.finish==='2026-07-08' && $$('[data-sg=import-summary] li')[1].textContent==='Dates read as month/day/year. Chosen in the dialog.', a5&&[a5.start,a5.finish]);
+    await closeDlg();
+    await importCsv('amb2.csv',DH+'\nUSR-207,B one,MS,05/06/26,\nUSR-208,B two,MS,09/10/26,\n'); btn('import-continue').click(); await sleep(20);
+    ok('import: continuing reads the undecided dates day first (the default)', eng().dataView.getItemById('USR-207').start==='2026-06-05');
+    await closeDlg();
     // The app's own import form hands in the parsed sheet: same checks, question, log and summary
     const nA=nRows();
     ok('importAoa: same question; the text keeps the dialog colour (host p rules do not leak)', SRETGrid.importAoa([['ID','Name','Predecessor'],['USR-090','From app','NOPE-9']],'app.xlsx')===true &&

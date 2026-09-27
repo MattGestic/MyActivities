@@ -220,6 +220,8 @@
               '<path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   // split: an existing main button; the menu then becomes the arrow half of a
   // split button (main action on the left, its options on the right).
+  // Matt, 2026-09-28: the temp list is session only; saved lists are kept.
+  var TEMP_HINT='My temp list is for this session only. It clears when the file is closed or reloaded. Add items to a saved list to keep them.';
   function makeMenu(label,sg,getItems,extraClass,split){
     var btn=split
       ?h('button',{type:'button','class':'sg-btn sg-split-chev'+(extraClass?' '+extraClass:''),'aria-haspopup':'menu',
@@ -551,7 +553,7 @@
     var s=S;
     s.picked={}; s.panelMode=null; s.listId=null;
     var close=h('button',{type:'button','class':'sg-iconbtn','aria-label':'Collapse the panel',title:'Collapse','data-sg':'panel-close',text:'✕'});
-    s.pnlTempHead=h('h3',{'class':'sg-temp-title','data-sg':'temp-title'},[h('span',{'class':'sg-tempmark','aria-hidden':'true'}),h('span',{text:'My temp list'})]);
+    s.pnlTempHead=h('h3',{'class':'sg-temp-title','data-sg':'temp-title',title:TEMP_HINT,'aria-description':TEMP_HINT},[h('span',{'class':'sg-tempmark','aria-hidden':'true'}),h('span',{text:'My temp list'})]);
     s.lstPick=h('select',{'class':'sg-select sg-list-pick','data-sg':'list-pick','aria-label':'Saved list to show'});
     s.pnlListHead=h('span',{'class':'sg-list-head'},[s.lstPick]);
     // Temp mode actions: Add to list (saved lists, New list...), Remove, More.
@@ -746,7 +748,20 @@
     return {columns:s.cols.filter(function(c){ return c.key.charAt(0)!=='_'; }),
             idKey:im.idKey||s.rowKey, depKeys:im.depKeys||{},
             existingIds:s.dv.getItems().map(function(it){ return it[s.rowKey]; }),
-            knownIds:typeof im.knownIds==='function'?im.knownIds():[]};
+            knownIds:typeof im.knownIds==='function'?im.knownIds():[],
+            dateOrder:S.importUi&&S.importUi.dateSel?S.importUi.dateSel.value:'auto'};
+  }
+  // Date order for the file: detected from all its dates (SRETDates), or
+  // chosen here. Changing it re-runs the checks on the same sheet.
+  function dateSelect(ui){
+    var sel=h('select',{'class':'sg-select sg-date-order','data-sg':'import-date-order','aria-label':'Date order'},
+      [['auto','Detect from the file'],['DMY','Day first (9/10/26 is 9-Oct-26)'],['MDY','Month first (10/9/26 is 9-Oct-26)'],['YMD','Year first (26/10/9 is 9-Oct-26)']]
+        .map(function(o){ return h('option',{value:o[0],text:o[1]}); }));
+    sel.addEventListener('change',function(){
+      if(ui.lastAoa&&ui.status.getAttribute('data-kind')!=='done') runImport(ui.lastAoa,ui.lastFile,ui);
+    });
+    ui.dateSel=sel;
+    return h('label',{'class':'sg-import-date'},[h('span',{text:'Date order'}),sel]);
   }
   function importPanel(ui,kind,children){
     ui.status.innerHTML=''; ui.status.setAttribute('data-kind',kind);
@@ -761,6 +776,7 @@
     return h('div',{'class':'sg-itable-wrap'},[t,issues.length>50?h('p',{'class':'sg-muted',text:'And '+(issues.length-50)+' more.'}):null]);
   }
   function runImport(aoa,fileName,ui){
+    ui.lastAoa=aoa; ui.lastFile=fileName; S.importUi=ui;
     var s=S, res=root.SRETMsImport.check(aoa,importCfg());
     if(res.fatal){
       say('Import failed. '+res.fatal);
@@ -768,18 +784,23 @@
       ui.status.setAttribute('role','alert');
       return res;
     }
-    if(!res.issues.length){ commitImport(res,fileName,ui); return res; }
+    var dt=res.dates||{}, D=root.SRETDates;
+    if(!res.issues.length&&!dt.ask){ commitImport(res,fileName,ui); return res; }
     var q=res.depIssueRows?'Some dependencies or predecessors are not found. Do you wish to continue with import?'
-                          :'Some values could not be read. Do you wish to continue with import?';
+         :res.issues.length?'Some values could not be read. Do you wish to continue with import?'
+         :'The date order could not be confirmed from the file. Do you wish to continue with import?';
+    var dateNote=dt.ask?h('p',{'data-sg':'import-date-note',text:'Dates will be read as '+D.orderLabel(dt.order)+' ('+D.example(dt.order)+'). '+
+      dt.ambiguous+(dt.ambiguous===1?' date would':' dates would')+' read differently in another order; if that is wrong, choose the order in Date order.'}):null;
     var cancel=h('button',{type:'button','class':'sg-btn',text:'Cancel',on:{click:function(){ if(ui.onCancel) return ui.onCancel(); importPanel(ui,'',[]); ui.go.focus(); }}});
     var go=h('button',{type:'button','class':'sg-btn sg-btn--primary','data-sg':'import-continue',text:'Continue import',
       on:{click:function(){ commitImport(res,fileName,ui); }}});
     importPanel(ui,'confirm',[
       h('p',{'class':'sg-import-head','data-sg':'import-question',text:q}),
       res.depIssueRows&&res.fieldIssueRows?h('p',{text:'Some other values could not be read and will be left blank.'}):null,
+      dateNote,
       h('p',{'class':'sg-muted',text:res.rows.length+(res.rows.length===1?' row':' rows')+' will be imported'+
-        (res.skipped.length?', '+res.skipped.length+' skipped (ID already in the table)':'')+'. Each issue below goes to the Import log.'}),
-      issueTable(res.issues),
+        (res.skipped.length?', '+res.skipped.length+' skipped (ID already in the table)':'')+'.'+(res.issues.length?' Each issue below goes to the Import log.':'')}),
+      res.issues.length?issueTable(res.issues):null,
       h('div',{'class':'sg-confirm-btns'},[cancel,go])]);
     ui.status.removeAttribute('role');
     go.focus();
@@ -796,7 +817,7 @@
     s.dv.beginUpdate();
     added.forEach(function(r){ var c=Object.assign({},r); if(s.lists) listFields(c); s.dv.addItem(c); });
     s.dv.endUpdate();
-    var entries=root.SRETMsImport.logEntries(res,{time:new Date().toISOString(),file:fileName,user:im.user||'',assigned:assigned});
+    var entries=root.SRETMsImport.logEntries(res,{time:new Date().toISOString(),file:fileName,user:(typeof im.user==='function'?im.user():im.user)||'(not set)',assigned:assigned});
     if(im.log) Array.prototype.push.apply(im.log,entries);
     if(entries.length&&typeof im.onLog==='function') im.onLog(entries);
     if(s.lists) refreshLists(); else { s.grid.invalidate(); updateStatus(); }
@@ -818,10 +839,12 @@
     var tpl=h('button',{type:'button','class':'sg-link','data-sg':'import-template',text:'Download import template',on:{click:downloadTemplate}});
     var pick=h('div',{'class':'sg-import-pick'},[
       h('p',{text:'Choose a file made from the import template (.xlsx or .csv). Rows whose ID is already in the table are skipped; a blank ID is assigned for you.'}),
-      h('div',{'class':'sg-import-row'},[file,go]),h('div',{},[tpl])]);
+      h('div',{'class':'sg-import-row'},[file,go])]);
     var status=h('div',{'class':'sg-import-status','data-sg':'import-status'});
     body.appendChild(pick); body.appendChild(status);
     var ui={pick:pick,status:status,go:go,close:close};
+    pick.appendChild(h('div',{'class':'sg-import-row'},[dateSelect(ui)]));
+    pick.appendChild(h('div',{},[tpl]));
     s.importUi=ui;
     file.addEventListener('change',function(){ go.disabled=!file.files.length; importPanel(ui,'',[]); });
     go.addEventListener('click',function(){
@@ -1004,7 +1027,7 @@
     var confirm=h('div',{'class':'sg-confirm',role:'alertdialog','aria-label':'Confirm remove','data-sg':'confirm',hidden:true});
     var tmpCount=lists?h('span',{'class':'sg-badge sg-rail-badge','data-sg':'temp-count',text:'0',hidden:true}):null;
     var railTemp=lists?h('button',{type:'button','class':'sg-rail-btn','data-sg':'temp-open','aria-expanded':'false',
-                                   'aria-controls':'sg-panel','aria-label':'My temp list',title:'My temp list'},
+                                   'aria-controls':'sg-panel','aria-label':'My temp list',title:'My temp list (this session only)'},
                                   [h('span',{'class':'sg-tempmark sg-tempmark--rail','aria-hidden':'true'}),tmpCount]):null;
     var railLists=lists?h('button',{type:'button','class':'sg-rail-btn','data-sg':'lists-open','aria-expanded':'false',
                                     'aria-controls':'sg-panel','aria-label':'Saved lists',title:'Saved lists'}):null;
@@ -1220,7 +1243,8 @@
       if(!S||!S.opts.importer) return null;
       openDialog('Import milestones',function(body,close){
         var ui={pick:h('div'),status:h('div',{'class':'sg-import-status','data-sg':'import-status'}),go:h('button'),close:close,onCancel:close};
-        body.appendChild(ui.status); runImport(aoa,fileName||'Imported sheet',ui);
+        body.appendChild(h('div',{'class':'sg-import-row'},[dateSelect(ui)])); body.appendChild(ui.status);
+        runImport(aoa,fileName||'Imported sheet',ui);
       });
       return true;
     },

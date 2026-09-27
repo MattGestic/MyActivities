@@ -16,6 +16,8 @@ The app keeps one `<style>` (scanned by `colour_audit.py --strict`) and one `<sc
 | 4 | `src/modules/grid-view/grid-view.js` | Top of `<script id="app-script">`, before the app's own code, as one commented section | Self-contained IIFE; defines `window.SRETGrid` only |
 | 4b | `src/modules/collections/collections.js` | Directly after #4, same script | Self-contained IIFE; defines `window.SRETCollections` only (My temp list and saved lists). Shared by the grid and the dashboard, so it must load before either calls it |
 | 4c | `src/modules/ms-import/ms-import.js` | Directly after #4b, same script | Self-contained IIFE; defines `window.SRETMsImport` only (the milestone import rules). The grid's import dialog calls it; the app's own import form can too |
+| 4d | `src/modules/dates/dates.js` | Directly after #4b, before #4c | `window.SRETDates`: the one date reader for every import (grid and dashboard). #4c needs it |
+| 4e | `src/modules/user/user.js`, `src/modules/user/user.css` | JS after #4d; CSS in the main `<style>` after #1 | `window.SRETUser`: the user name and save history, and the Data settings field |
 | 5 | The adapters below | In `app-script`, beside the Workspace code (`setWorkspaceSection()`) | The only code that knows both the app's stores and the grid contract |
 
 Check before pasting: neither vendor file contains `</script` or `</style` (`tools/grid_view_assemble.py` asserts this for the demo and would fail the same way).
@@ -52,7 +54,7 @@ SRETGrid.open({
   onBack(),                    // after the screen has closed
   importer: {                  // optional: Add row menu > Import milestones and Import log
     idKey, depKeys,            //   e.g. 'id', { pred:'Predecessors', succ:'Successors' }
-    user,                      //   name written to the Import log
+    user,                      //   name for the Import log: a string, or a function read at commit (USER.name)
     log,                       //   the app's array; entries {time,file,user,id,row,field,note} are pushed
     nextId(taken),             //   next free ID; taken = IDs already given out in this import
     knownIds(),                //   every ID a dependency may name (schedule and user milestones)
@@ -91,7 +93,23 @@ SRETGrid.importAoa(aoa, fileName);    // run the import checks on a sheet the ap
 | Continue | Rows added; every issue written to the Import log (time, file, user, ID, note). Cancel adds and logs nothing |
 | Success | **Import complete** summary: imported, IDs assigned, skipped, issues logged; View Import log button when issues were logged |
 
-Dates read: ISO, `d-Mmm-yy`, `d/m/yyyy` (**day first**) and Excel serials. `.xls`/`.xlsm` go through SheetJS like `.xlsx`.
+Dates: see **Date reading** below. `.xls`/`.xlsm` go through SheetJS like `.xlsx`.
+
+### Date reading (`SRETDates`, Matt 2026-09-28)
+
+One engine for every import. The order of a file's numeric dates is worked out from all of them together, before any value is read:
+
+| Evidence in the file | Order |
+|---|---|
+| A first part above 12 (13/10/26) | Day first |
+| A middle part above 12 (10/13/26) | Month first |
+| The first part barely changes across rows (26-10-09, 26-11-05, ...) | Year first |
+| A four-digit first part (2026-10-09, 20261009) | Always year first; does not vote |
+| Nothing decides | Day first (the default). If any date would read differently another way, the dialog asks first and offers **Date order** |
+
+Breaks: `-` `/` `.` space or comma. Month names in any position (`9 Oct 26`, `Oct 9, 2026`, `2026-Oct-09`), Excel serials and a trailing time are read directly. Impossible dates (31-Feb, month 13) fail and are logged. Two-digit years are 20yy, as today.
+
+**Dashboard import at merge.** `parseLooseDate()` today reads `10/09/2026` as 10-Sep but `10-09-2026`, `10.09.2026` and `10 09 2026` as 9-Oct, because those fall through to `Date.parse`, which is month first (measured in Chromium). At merge: strip the P6 `A` and `*` suffixes as today, run `SRETDates.detect()` over the file's date columns once per import, then `SRETDates.parse(value, order)` per cell, and drop the `Date.parse` fallback. `parseMsDate()` (typed dates in the milestone card) uses `SRETDates.parse(value, 'DMY')`.
 
 Types: dates are ISO `YYYY-MM-DD` strings in and out (shown `d-Mmm-yy`, the board format). Numbers are numbers; an empty number cell is `null`. Select values keep the option's own type (e.g. the numeric health codes stay numbers).
 
@@ -128,8 +146,18 @@ Adapter outline (field names from the `USER_MILESTONES.push` in the add-mileston
 | `created`, `createdBy` | set when the milestone is added or imported; the far-right columns | No |
 | `health` | the milestone health annotation; shown as the dot before the ID (tap to change) and a hidden column exported last | Via the dot |
 
-`state` carries `tones` so the Status cell is shaded per status. `openColumn:'id'` with `onOpenItem:id=>openMsDialog(id)` opens the existing milestone form on double-click. The importer's `user` needs a username source: the app has none today. **[CONFIRM WITH MATT]** (options: a Data settings field, or the OS name is not reachable from a file:// page).
+### User name and save history (`SRETUser`, Matt 2026-09-28)
 
+A page opened from disk cannot read the computer's login name (browsers block it; there is no `environ` equivalent), so:
+
+- **First use on a computer:** the app asks "Who is using this file?" with the name field. The name is remembered on that computer (`localStorage` key `sret-user-name`, like the theme) and never travels with the file.
+- **Data settings > Your name:** confirm or change it any time. The field shows the comparison with the file: "You are working as A. Lee. This file was last saved by J. Ruiz."
+- **Shared file:** the file keeps `savedBy` and its save history. Opened on another computer, everything done there (imports, new milestones, saves) is recorded against that computer's user, and their save becomes the file's last saver.
+- **Save history:** every save appends `{at, by, version}`; nothing is removed.
+
+Wiring: `let USER=SRETUser.create({file:{savedBy:PUBLISHED.savedBy, history:PUBLISH_CHAIN}})` at load. `publishStatePayload()` calls `USER.recordSave({at, version:APP_VERSION})` and writes `savedBy` plus the chain; `PUBLISH_CHAIN` entries gain `by` (older entries without it show "(not set)"). The importer passes `user:()=>USER.name()`, and Created by uses the same. Call `SRETUser.buildField()` in the Data settings tab. On load, if `USER.status().state==='unset'`, open the prompt.
+
+`state` carries `tones` so the Status cell is shaded per status. `openColumn:'id'` with `onOpenItem:id=>openMsDialog(id)` opens the existing milestone form on double-click. 
 `onAdd` calls the same code path as the Add milestone dialog (so ID numbering via `nextUserMsId()` and the collision check stay single-sourced) and returns the new row. `onDelete` calls the existing per-item removal. Every callback ends with `noteMarkup()` and the persistence the existing handlers already do.
 
 ### 2. Workspace > Comments & markups: a collection row
@@ -187,7 +215,7 @@ While a filter is on, a pill in row 3 names it ("My temp list only" or "List: <n
 - **Verification:** `tools/grid_view_check.py` measures the header alignment and the row order at 1440 px.
 
 **Wiring at merge:**
-- **Store.** One app global, e.g. `let USER_LISTS=SRETCollections.newStore();`. Persist `USER_LISTS.list` wherever `NOTE_COLLECTIONS` is persisted: publish state, the model and annotations `.json` export, and the mount path. `USER_LISTS.temp` is not persisted. **[CONFIRM WITH MATT]** whether the temp list should survive a reload.
+- **Store.** One app global, e.g. `let USER_LISTS=SRETCollections.newStore();`. Persist `USER_LISTS.list` wherever `NOTE_COLLECTIONS` is persisted: publish state, the model and annotations `.json` export, and the mount path. `USER_LISTS.temp` is not persisted: session only (Matt, 2026-09-28). The panel title and rail button say so on hover.
 - **Item refs.** Use `'activity:'+activityId` for schedule activities and user milestones, so the same activity from the board or either grid is one item. Use `'note:'+nid` for notes and `'annot:'+entryId` for other annotation entries. Activity IDs are the key the annotation stores already use, so refs survive a re-import.
 - **Grid.** Every `SRETGrid.open()` config passes `lists:{store:USER_LISTS, refOf:toRef, labelOf:refLabel, onChange:()=>noteMarkup()}`, where `refLabel` returns `'SNIP-118  Name'` from the app's own stores. The grid calls `SRETCollections` itself on that store, and adds the read-only **List** column (sortable, filterable when expanded, exported) and the temp row mark.
 - **Dashboard.** The same functions are called on the same store:

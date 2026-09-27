@@ -192,6 +192,8 @@ button.sg-hdot:hover{transform:scale(1.25)}
 .sg-import-pick p{margin:0 0 var(--ctl-gap);color:var(--color-text-muted)}
 .sg-import-pick[hidden]{display:none}
 .sg-import-row{display:flex;flex-wrap:wrap;align-items:center;gap:var(--ctl-gap);margin-bottom:var(--ctl-gap)}
+.sg-import-date{display:inline-flex;align-items:center;gap:var(--ctl-gap);color:var(--color-text-label)}
+.sg-select.sg-date-order{max-width:none}
 .sg-import-status:not(:empty){margin-top:var(--group-gap);padding-top:var(--group-gap);border-top:1px solid var(--color-line-default)}
 .sg-import-status:first-child{margin-top:0;padding-top:0;border-top:0}
 .sg-import-status[data-kind=error]{color:var(--color-crit-text)}

@@ -9,6 +9,7 @@
 <style>
 /*@TOKENS@*/
 /*@GRID_CSS@*/
+/*@USER_CSS@*/
 /* ---- demo page only: stands in for the app header and board ---- */
 body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--color-bg-panel);color:var(--color-text-primary);
   height:100vh;display:flex;flex-direction:column}
@@ -18,6 +19,9 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
 .demo-hd button{height:var(--ctl-h);padding:0 var(--ctl-pad-x);font:inherit;cursor:pointer;border-radius:var(--radius-ctl);
   border:var(--stroke-ctl) solid var(--color-text-on-header-muted);background:transparent;color:var(--color-text-on-header)}
 .demo-hd button:hover{background:var(--color-bg-header-hover)}
+.demo-hd-r{display:flex;align-items:center;gap:var(--ctl-gap)}
+.demo-user{color:var(--color-text-on-header-muted);font-size:var(--text-sm)}
+.demo-settings{max-width:720px;margin-bottom:var(--group-gap)}
 .demo-board{position:relative;flex:1 1 auto;min-height:0;overflow:auto;padding:var(--group-gap)}
 .demo-board h1{font-size:20px;line-height:28px;margin-bottom:var(--space-4)}
 .demo-board p{color:var(--color-text-muted);margin-bottom:var(--group-gap);max-width:720px;line-height:20px;font-size:var(--text-lg)}
@@ -35,7 +39,9 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
 </head>
 <body>
 <header class="demo-hd"><b>SRET grid view prototype</b>
-  <button type="button" id="demo-theme" aria-pressed="false">Dark theme</button></header>
+  <span class="demo-hd-r"><span class="demo-user" id="demo-user" data-sg="demo-user"></span>
+  <button type="button" id="demo-settings" data-sg="demo-settings">Data settings</button>
+  <button type="button" id="demo-theme" aria-pressed="false">Dark theme</button></span></header>
 <main class="demo-board" id="demo-board">
   <h1>Grid view (D-09)</h1>
   <p>Stand-in for the board area. In the app each button below is an entry point: Workspace, User milestones, View items; Workspace, Comments and markups, a collection row; Data and view, Schedule activities.</p>
@@ -45,6 +51,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
     <button type="button" class="sg-btn" id="go-sched">Schedule activities</button>
     <button type="button" class="sg-btn" id="go-stress">Stress test: 2,000 rows</button>
   </div>
+  <section class="demo-settings" id="demo-settings-box" aria-label="Data settings (stand-in)"></section>
   <div class="demo-log" id="demo-log" aria-label="Callback log"></div>
 </main>
 <script id="vendor-slickgrid">
@@ -53,6 +60,8 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
 <script id="app-script">
 /*@GRID_JS@*/
 /*@COLLECTIONS_JS@*/
+/*@DATES_JS@*/
+/*@USER_JS@*/
 /*@MSIMPORT_JS@*/
 /*@FIXTURES@*/
 (function(){
@@ -101,7 +110,26 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
     var max=0; store.userms.map(function(r){ return r.id; }).concat(taken||[]).forEach(function(id){ var m=/^USR-(\d+)$/.exec(id); if(m) max=Math.max(max,+m[1]); });
     return 'USR-'+String(max+1).padStart(3,'0');
   }
-  var TODAY=new Date().toISOString().slice(0,10), USER='Demo user';
+  var TODAY=new Date().toISOString().slice(0,10);
+  // Who is using the file (SRETUser). The fixture file was last saved by
+  // someone else, as when a published file is shared and opened elsewhere.
+  var USERS=window.DEMO_USER=SRETUser.create({file:F.fileState});
+  function userName(){ return USERS.name(); }
+  function showUser(){ var st=USERS.status(); var c=document.getElementById('demo-user');
+    c.textContent=st.state==='unset'?'Name not set':'Working as '+st.name+(st.state==='other'?', last saved by '+st.savedBy:''); c.title=st.message; }
+  USERS.onChange(showUser);
+  // Stand-in for Data and view > Data settings: the name field, the save history and a Save.
+  function settingsInto(body){
+    var f=SRETUser.buildField(body,USERS);
+    var save=document.createElement('button'); save.type='button'; save.className='sg-btn'; save.textContent='Save file (demo)';
+    save.setAttribute('data-sg','demo-save'); save.addEventListener('click',function(){ var e=USERS.recordSave({version:'grid demo'}); log('onSave',[e.by]); });
+    body.appendChild(save);
+    return f.destroy;
+  }
+  function openSettings(title){
+    if(SRETGrid.isOpen()) return SRETGrid.dialog(title||'Data settings',settingsInto);
+    var box=document.getElementById('demo-settings-box'); box.innerHTML=''; settingsInto(box); box.querySelector('input').focus();
+  }
   var IMPORT_LOG=window.DEMO_IMPORT_LOG=[];
   // Stand-in for the app's milestone dialog (openMsDialog), opened by double-clicking an ID.
   function openMilestone(id){
@@ -129,16 +157,16 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
         if(f==='progress' && v!=null && (v<0||v>100)) return false;   // app-side rule: 0 to 100
         patch(store.userms,'id',k,f,v); },
       onAdd:function(){ var id=nextUsr(); var r={id:id,name:'New milestone',type:'MS',state:'FUTURE',progress:0,
-          start:null,finish:null,band:'User Defined Milestones',wbs:'',pred:'',succ:'',comment:'',created:TODAY,createdBy:USER,health:0};
+          start:null,finish:null,band:'User Defined Milestones',wbs:'',pred:'',succ:'',comment:'',created:TODAY,createdBy:userName(),health:0};
         store.userms.push(r); log('onAdd',[id]); return r; },
       onDelete:function(keys){ log('onDelete',[keys]); store.userms=store.userms.filter(function(r){ return keys.indexOf(r.id)<0; }); },
       openColumn:'id',onOpenItem:openMilestone,
-      importer:{idKey:'id',depKeys:{pred:'Predecessors',succ:'Successors'},user:USER,log:IMPORT_LOG,nextId:nextUsr,
+      importer:{idKey:'id',depKeys:{pred:'Predecessors',succ:'Successors'},user:userName,log:IMPORT_LOG,nextId:nextUsr,
         // IDs a dependency may name: every schedule activity and user milestone the app knows.
         knownIds:function(){ return F.sched.map(function(r){ return r.id; }).concat(store.userms.map(function(r){ return r.id; })); },
         onCommit:function(rows){
           var out=rows.map(function(r){ var o=Object.assign({name:'',type:'MS',state:'FUTURE',progress:0,band:'User Defined Milestones',
-            wbs:'',pred:'',succ:'',comment:'',health:0},r); o.created=TODAY; o.createdBy=USER; if(o.health==null) o.health=0;
+            wbs:'',pred:'',succ:'',comment:'',health:0},r); o.created=TODAY; o.createdBy=userName(); if(o.health==null) o.health=0;
             if(!o.band) o.band='User Defined Milestones'; return o; });
           out.forEach(function(o){ store.userms.push(o); });
           log('onImportCommit',[out.map(function(o){ return o.id; })]);
@@ -175,7 +203,11 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
   });
   // Opens on User milestones so a reviewer (and the palette swap check) sees
   // the grid at load; #home opens the launcher instead.
+  document.getElementById('demo-settings').addEventListener('click',function(){ openSettings(); });
+  showUser();
   if(location.hash!=='#home') window.DEMO_OPEN('userms');
+  // First use on this computer: ask for the name (confirm or change it later in Data settings).
+  if(USERS.status().state==='unset') openSettings('Who is using this file?');
 })();
 </script>
 </body>

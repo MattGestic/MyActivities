@@ -1,0 +1,10 @@
+/* SRET user name field (Data settings) and save history. Roles and D-16 tokens only. */
+.su-field{display:flex;flex-wrap:wrap;align-items:flex-end;gap:var(--ctl-gap)}
+.su-label{display:flex;flex-direction:column;gap:var(--space-2);color:var(--color-text-label);font-size:var(--text-sm)}
+.su-name{width:260px;max-width:100%}
+.su-box p.su-note{margin:var(--ctl-gap) 0 0;color:var(--color-text-primary)}
+.su-box p.su-note[data-state=unset]{color:var(--color-crit-text)}
+.su-box p.su-error{margin:var(--ctl-gap) 0 0;color:var(--color-crit-text)}
+.su-error[hidden]{display:none}
+.su-box p.su-help{margin:var(--space-2) 0 0;color:var(--color-text-muted);font-size:var(--text-sm)}
+.su-h{margin:var(--group-gap) 0 var(--ctl-gap);font-size:var(--text-lg);font-weight:600}

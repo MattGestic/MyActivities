@@ -199,7 +199,11 @@ def fixtures():
             {"key": "comment", "label": "Comment", "type": "text", "editable": True, "width": 220},
         ],
     }
-    data = {"sched": sched, "userms": userms, "annot": annot, "cols": cols}
+    # The file as shared: last saved by someone else, with its save history.
+    file_state = {"savedBy": "J. Ruiz", "history": [
+        {"at": "2026-09-14T08:05:00Z", "by": "M. Garrett", "version": "3.1.0-P57"},
+        {"at": "2026-09-20T09:12:00Z", "by": "J. Ruiz", "version": "3.1.0-P58"}]}
+    data = {"sched": sched, "userms": userms, "annot": annot, "cols": cols, "fileState": file_state}
     js = "window.SRET_FIXTURES=" + json.dumps(data, separators=(",", ":"), ensure_ascii=False) + ";\n"
     js += ("// Stress set: the reference schedule repeated to n rows with unique IDs.\n"
            "window.SRET_STRESS=function(n){var s=window.SRET_FIXTURES.sched,out=[];"
@@ -225,10 +229,13 @@ def build() -> str:
     parts = {
         "/*@TOKENS@*/": token_blocks(),
         "/*@GRID_CSS@*/": (MOD / "grid-view.css").read_text(encoding="utf-8"),
+        "/*@USER_CSS@*/": (ROOT / "src" / "modules" / "user" / "user.css").read_text(encoding="utf-8"),
         "/*@VENDOR_CSS@*/": safe_inline(vendor_css, "</style", "vendor CSS"),
         "/*@VENDOR_JS@*/": safe_inline(vendor_js, "</script", "vendor JS"),
         "/*@GRID_JS@*/": safe_inline((MOD / "grid-view.js").read_text(encoding="utf-8"), "</script", "grid-view.js"),
         "/*@COLLECTIONS_JS@*/": safe_inline((COLL / "collections.js").read_text(encoding="utf-8"), "</script", "collections.js"),
+        "/*@DATES_JS@*/": safe_inline((ROOT / "src" / "modules" / "dates" / "dates.js").read_text(encoding="utf-8"), "</script", "dates.js"),
+        "/*@USER_JS@*/": safe_inline((ROOT / "src" / "modules" / "user" / "user.js").read_text(encoding="utf-8"), "</script", "user.js"),
         "/*@MSIMPORT_JS@*/": safe_inline((ROOT / "src" / "modules" / "ms-import" / "ms-import.js").read_text(encoding="utf-8"), "</script", "ms-import.js"),
         "/*@FIXTURES@*/": safe_inline(fixtures(), "</script", "fixtures"),
     }
