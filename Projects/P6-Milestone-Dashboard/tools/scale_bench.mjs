@@ -99,7 +99,8 @@ for (const n of SIZES) {
   const themeMs = await p.evaluate(() => new Promise(r => { const t = performance.now(); toggleTheme(); document.body.offsetHeight; requestAnimationFrame(() => requestAnimationFrame(() => r(Math.round(performance.now() - t)))); }));
   const rec = { date: new Date().toISOString().slice(0, 10), build: await p.evaluate(() => APP_VERSION), source: 'synthetic', cpu: CPU + 'x', rows: gen.rows, activities: gen.activities, links: gen.links, importMs, rebuildMs, filterMs, depOnMs, depPaths, rebuildWithDepsMs, themeMs, layoutS, styleS, ...board, errors: errs.length };
   console.log(JSON.stringify(rec)); out.push(rec);
+  // written per size, so a run stopped part way keeps what it measured
+  if (args.json) fs.writeFileSync(args.json, JSON.stringify(out, null, 2));
   await ctx.close(); fs.unlinkSync(f);
 }
 await browser.close();
-if (args.json) fs.writeFileSync(args.json, JSON.stringify(out, null, 2));
