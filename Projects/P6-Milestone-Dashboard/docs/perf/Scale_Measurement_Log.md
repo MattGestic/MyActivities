@@ -85,3 +85,29 @@ All browser timings: headless Chromium in the cloud session container, CPU unthr
 
 | Date | Build | Source | Metric | Value | Method |
 |---|---|---|---|---|---|
+| 2026-09-27 | P58 | synthetic-2857 | board_rows / activities / links | 2925 / 2857 / 4390 | `tools/scale_bench.mjs`, default seed |
+| 2026-09-27 | P58 | synthetic-2857 | import_ms | 32622 | `tools/scale_bench.mjs`, default seed |
+| 2026-09-27 | P58 | synthetic-2857 | rebuild_ms (3 runs) | 28392, 25532, 33405 | `tools/scale_bench.mjs`, default seed |
+| 2026-09-27 | P58 | synthetic-2857 | filter_0d_ms | 9006 | `tools/scale_bench.mjs`, default seed |
+| 2026-09-27 | P58 | synthetic-2857 | dep_all_on_ms | 89768 | `tools/scale_bench.mjs`, default seed |
+| 2026-09-27 | P58 | synthetic-2857 | dep_paths | 5714 | `tools/scale_bench.mjs`, default seed |
+| 2026-09-27 | P58 | synthetic-2857 | rebuild_with_deps_ms | 98168 | `tools/scale_bench.mjs`, default seed |
+| 2026-09-27 | P58 | synthetic-2857 | theme_toggle_ms | 12267 | `tools/scale_bench.mjs`, default seed |
+| 2026-09-27 | P58 | synthetic-2857 | dom_elements | 666424 | `tools/scale_bench.mjs`, default seed |
+| 2026-09-27 | P58 | synthetic-2857 | td_cells | 603315 | `tools/scale_bench.mjs`, default seed |
+| 2026-09-27 | P58 | synthetic-2857 | import_layout_s / import_style_s | 4.49 / 8.37 | `tools/scale_bench.mjs`, default seed |
+| 2026-09-27 | P58 | synthetic-2857 | heap_mb | 25 | `tools/scale_bench.mjs`, default seed |
+| 2026-09-27 | P58 | synthetic-2857 | page_errors | 0 | `tools/scale_bench.mjs`, default seed |
+| 2026-09-27 | P58 | synthetic-5714 | board_rows / activities / links | 5782 / 5714 / 8606 | `tools/scale_bench.mjs`, default seed |
+| 2026-09-27 | P58 | synthetic-5714 | import_ms | 65215 | `tools/scale_bench.mjs`, default seed |
+| 2026-09-27 | P58 | synthetic-5714 | rebuild_ms (3 runs) | 81452, 64647, 62427 | `tools/scale_bench.mjs`, default seed |
+| 2026-09-27 | P58 | synthetic-5714 | filter_0d_ms | 19470 | `tools/scale_bench.mjs`, default seed |
+| 2026-09-27 | P58 | synthetic-5714 | dep_all_on_ms | 282224 | `tools/scale_bench.mjs`, default seed |
+| 2026-09-27 | P58 | synthetic-5714 | dep_paths | 11428 | `tools/scale_bench.mjs`, default seed |
+| 2026-09-27 | P58 | synthetic-5714 | rebuild_with_deps_ms | 420722 | `tools/scale_bench.mjs`, default seed |
+| 2026-09-27 | P58 | synthetic-5714 | theme_toggle_ms | 24735 | `tools/scale_bench.mjs`, default seed |
+| 2026-09-27 | P58 | synthetic-5714 | dom_elements | 1329248 | `tools/scale_bench.mjs`, default seed |
+| 2026-09-27 | P58 | synthetic-5714 | td_cells | 1206142 | `tools/scale_bench.mjs`, default seed |
+| 2026-09-27 | P58 | synthetic-5714 | import_layout_s / import_style_s | 6.75 / 18.37 | `tools/scale_bench.mjs`, default seed |
+| 2026-09-27 | P58 | synthetic-5714 | heap_mb | 35 | `tools/scale_bench.mjs`, default seed |
+| 2026-09-27 | P58 | synthetic-5714 | page_errors | 0 | `tools/scale_bench.mjs`, default seed |

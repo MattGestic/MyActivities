@@ -2774,8 +2774,15 @@ reproducibility.
 **Not a pass/fail test.** It is the baseline each D-26 stage is re-measured
 against with `tools/scale_bench.mjs`, appending synthetic rows to the log.
 
-**Caveat recorded with the result.** The synthetic generator's WBS is
-shallower than the client schedule's (fewer headings per activity), so its
-absolute figures differ from the client rows. It is used for the scaling
-shape and for before/after comparison, not as a substitute for the client
-figures.
+**Synthetic series.** `tools/scale_bench.mjs` at the client's activity
+count and at twice it, rows in the log under `synthetic-*`. It reproduces the
+client finding's shape: every interaction far outside interactive limits, and
+`dep_all_on_ms` and `rebuild_with_deps_ms` growing several times faster than
+the row count, as on the client schedule. Its absolute figures are higher
+than the client rows because it builds more cells per row (`td_cells`) and has
+a shallower WBS, so the two series are compared by shape only. Later D-26
+stages compare synthetic against synthetic.
+
+**First synthetic run lost.** The first run was stopped by a session time
+limit during the 2x size, and the script wrote its JSON only at the end, so
+nothing was kept. The script now writes after each size (commit `409a7f9`).
