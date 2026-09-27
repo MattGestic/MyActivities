@@ -15,6 +15,7 @@ The app keeps one `<style>` (scanned by `colour_audit.py --strict`) and one `<sc
 | 3 | `vendor/slickgrid/slickgrid.subset.min.js` | New `<script id="vendor-slickgrid">` immediately **before** `<script id="app-script">`, preceded by a `/* */` comment holding the full text of `vendor/slickgrid/LICENSE` and the version line from `SOURCE.md` | Must define `window.Slick` before the app script runs; MIT notice travels with the code |
 | 4 | `src/modules/grid-view/grid-view.js` | Top of `<script id="app-script">`, before the app's own code, as one commented section | Self-contained IIFE; defines `window.SRETGrid` only |
 | 4b | `src/modules/collections/collections.js` | Directly after #4, same script | Self-contained IIFE; defines `window.SRETCollections` only (My temp list and saved lists). Shared by the grid and the dashboard, so it must load before either calls it |
+| 4c | `src/modules/ms-import/ms-import.js` | Directly after #4b, same script | Self-contained IIFE; defines `window.SRETMsImport` only (the milestone import rules). The grid's import dialog calls it; the app's own import form can too |
 | 5 | The adapters below | In `app-script`, beside the Workspace code (`setWorkspaceSection()`) | The only code that knows both the app's stores and the grid contract |
 
 Check before pasting: neither vendor file contains `</script` or `</style` (`tools/grid_view_assemble.py` asserts this for the demo and would fail the same way).
@@ -25,18 +26,22 @@ Check before pasting: neither vendor file contains `</script` or `</style` (`too
 |---|---|---|
 | App at base `81cfd7a` | 878,041 | 236,950 |
 | #2 + #3 vendored engine | 221,778 | 54,817 |
-| #1 + #4 + #4b wrapper and shared lists module | 50,429 | 14,966 |
-| Adapters (#5), estimate | about 6,000 | about 2,000 |
-| **Total added** | **about 278,000 (about 32%)** | about 72,000 |
+| #1 + #4 + #4b + #4c wrapper, shared lists module and import rules | 109,648 | 30,174 |
+| Adapters (#5), estimate | about 8,000 | about 2,500 |
+| **Total added** | **about 339,000 (about 39%)** | about 87,000 |
 
-If Matt chooses the unminified vendor files (D-09 decision 2), #3 grows from 217,423 to 458,011 bytes and the total becomes about 519,000 (about 59%).
+If Matt chooses the unminified vendor files (D-09 decision 2), #3 grows from 217,423 to 458,011 bytes and the total becomes about 580,000 (about 66%).
 
 ## The contract the app calls
 
 ```js
 SRETGrid.open({
   title,                       // shown beside the back arrow
-  columns: [{ key, label, type: 'text'|'date'|'number'|'select', editable, options, width }],
+  columns: [{ key, label, type: 'text'|'date'|'number'|'select', editable, options, width,
+               min, max,               // numbers: import rejects values outside
+               hidden,                 // not shown; kept in export and the import template
+               tones,                  // { value: 'future'|'track'|'risk'|'crit'|'done' } shades the cell
+               icon }],                // { key, label, options }: tap-to-edit dot before the value
   rows,                        // plain objects; copied on open, never mutated
   rowKey,                      // property holding a unique id
   editable,                    // grid-level switch; false = read-only screen
@@ -45,9 +50,17 @@ SRETGrid.open({
   onDelete(rowKeys),           // optional; shows "Delete selected"; return false to keep
   canEdit(rowKey, key),        // optional per-row refusal
   onBack(),                    // after the screen has closed
-  onImport(body, close),       // optional: Add row menu > Import milestones. The grid opens a centred
-                               //   modal dialog; mount the app's import form into body; return a
-                               //   cleanup that puts the form back. close() closes the dialog.
+  importer: {                  // optional: Add row menu > Import milestones and Import log
+    idKey, depKeys,            //   e.g. 'id', { pred:'Predecessors', succ:'Successors' }
+    user,                      //   name written to the Import log
+    log,                       //   the app's array; entries {time,file,user,id,row,field,note} are pushed
+    nextId(taken),             //   next free ID; taken = IDs already given out in this import
+    knownIds(),                //   every ID a dependency may name (schedule and user milestones)
+    onCommit(rows),            //   add rows to the app store; return the rows as stored
+    onLog(entries)             //   optional, after entries are pushed, so the app persists
+  },
+  onImport(body, close),       // fallback when there is no importer: mount a form into the dialog
+  openColumn, onOpenItem(key), // double-click in openColumn calls onOpenItem (the milestone form)
   onTemplate(),                // optional: Download import template; default is an .xlsx of the
                                //   column headers (derived List column excluded)
   exportName,                  // .xlsx file name, no extension
@@ -61,7 +74,24 @@ SRETGrid.open({
   }
 });
 SRETGrid.close(); SRETGrid.setRows(rows); SRETGrid.patchRows(rows); SRETGrid.isOpen();
+SRETGrid.dialog(title, build);        // the grid's centred modal, for the app's own content
+SRETGrid.importAoa(aoa, fileName);    // run the import checks on a sheet the app already parsed
 ```
+
+### Milestone import rules (`SRETMsImport`, Matt 2026-09-27)
+
+| Case | Result |
+|---|---|
+| File empty, no ID column, no rows, not .xlsx/.csv, unreadable | **Import failed** panel (role=alert) and toast; nothing added |
+| Duplicate IDs within the file | Fails: "There are duplicate activity IDs within the list: X (rows a, b). Only unique IDs, or blank IDs, can be imported." |
+| ID already in the table | Row skipped, listed in the summary |
+| Blank ID | Assigned by `nextId(taken)` on commit; unique within the import |
+| Predecessor or successor not in the table, `knownIds()` or the file | Asks "Some dependencies or predecessors are not found. Do you wish to continue with import?" and lists "Predecessors not found: A, B" per row |
+| Date, number or choice that cannot be read | Left blank; asks "Some values could not be read. Do you wish to continue with import?" when there are no dependency issues |
+| Continue | Rows added; every issue written to the Import log (time, file, user, ID, note). Cancel adds and logs nothing |
+| Success | **Import complete** summary: imported, IDs assigned, skipped, issues logged; View Import log button when issues were logged |
+
+Dates read: ISO, `d-Mmm-yy`, `d/m/yyyy` (**day first**) and Excel serials. `.xls`/`.xlsm` go through SheetJS like `.xlsx`.
 
 Types: dates are ISO `YYYY-MM-DD` strings in and out (shown `d-Mmm-yy`, the board format). Numbers are numbers; an empty number cell is `null`. Select values keep the option's own type (e.g. the numeric health codes stay numbers).
 
@@ -90,10 +120,15 @@ Adapter outline (field names from the `USER_MILESTONES.push` in the add-mileston
 | `type` | `m.type` (MS / INT / CLI / RTN, the `#add-ms-type` options) | Yes |
 | `start`, `finish` | the record's start and `m.date` | Yes; refuse a date outside the week range the same way the add dialog does (`dateToCol(date)<0`) |
 | `band` | the owning row's band (`USER_ROWS` `notes`) | Yes |
+| `wbs` | the WBS of the linked schedule row | Yes |
 | `state` | `m.state`, options from `STATE_LABELS` | Yes |
 | `pred`, `succ` | the milestone's dependency annotations | Yes |
 | `progress` | `m.progress`, 0 to 100 | Yes; refuse outside 0 to 100 (the demo shows the `return false` pattern) |
 | `comment` | the milestone comment annotation | Yes |
+| `created`, `createdBy` | set when the milestone is added or imported; the far-right columns | No |
+| `health` | the milestone health annotation; shown as the dot before the ID (tap to change) and a hidden column exported last | Via the dot |
+
+`state` carries `tones` so the Status cell is shaded per status. `openColumn:'id'` with `onOpenItem:id=>openMsDialog(id)` opens the existing milestone form on double-click. The importer's `user` needs a username source: the app has none today. **[CONFIRM WITH MATT]** (options: a Data settings field, or the OS name is not reachable from a file:// page).
 
 `onAdd` calls the same code path as the Add milestone dialog (so ID numbering via `nextUserMsId()` and the collision check stay single-sourced) and returns the new row. `onDelete` calls the existing per-item removal. Every callback ends with `noteMarkup()` and the persistence the existing handlers already do.
 
@@ -138,7 +173,7 @@ While a filter is on, a pill in row 3 names it ("My temp list only" or "List: <n
 **Screen layout (Matt, 2026-09-27).**
 - **Row 1:** back arrow and title.
 - **Row 2:** search, **Add row ▾**, **Tools ▾**, **Add to temp list ▾**. It starts in line with the title text, so the strip above the rail stays clear up to the back arrow.
-  - **Add row ▾** is a split button. Its menu holds Import milestones…, Export .xlsx and Download import template.
+  - **Add row ▾** is a split button. Its menu holds Import milestones…, Import log, Export .xlsx and Download import template.
   - Screens without Add row, such as the read-only schedule, show a plain Export .xlsx button in the same place.
   - **Tools ▾** holds Expand the List column and Delete selected rows….
   - **Add to temp list ▾** is also a split button.
@@ -147,14 +182,14 @@ While a filter is on, a pill in row 3 names it ("My temp list only" or "List: <n
 - **Import milestones** opens a centred modal dialog, not a side panel:
   - Esc, the close button or a click on the backdrop closes it.
   - Tab stays inside it, and focus returns to the menu button afterwards.
-  - At merge, `onImport(body, close)` moves the app's existing import form (Data & view > Import) into `body` and returns a cleanup that moves it back, so both places use one form.
+  - The dialog runs the checks in `SRETMsImport` itself when `importer` is passed. If the app's own import form (Data & view > Import) also imports milestones, it parses the sheet as today and calls `SRETGrid.importAoa(aoa, file.name)`, so both places apply one set of rules.
 - **Messages:** status messages are a toast over the grid.
 - **Verification:** `tools/grid_view_check.py` measures the header alignment and the row order at 1440 px.
 
 **Wiring at merge:**
 - **Store.** One app global, e.g. `let USER_LISTS=SRETCollections.newStore();`. Persist `USER_LISTS.list` wherever `NOTE_COLLECTIONS` is persisted: publish state, the model and annotations `.json` export, and the mount path. `USER_LISTS.temp` is not persisted. **[CONFIRM WITH MATT]** whether the temp list should survive a reload.
 - **Item refs.** Use `'activity:'+activityId` for schedule activities and user milestones, so the same activity from the board or either grid is one item. Use `'note:'+nid` for notes and `'annot:'+entryId` for other annotation entries. Activity IDs are the key the annotation stores already use, so refs survive a re-import.
-- **Grid.** Every `SRETGrid.open()` config passes `lists:{store:USER_LISTS, refOf:toRef, labelOf:refLabel, onChange:()=>noteMarkup()}`, where `refLabel` returns `'SNIP-118  Name'` from the app's own stores. The grid calls `SRETCollections` itself on that store, and adds read-only **List** and **Temp** columns (sortable, filterable, exported).
+- **Grid.** Every `SRETGrid.open()` config passes `lists:{store:USER_LISTS, refOf:toRef, labelOf:refLabel, onChange:()=>noteMarkup()}`, where `refLabel` returns `'SNIP-118  Name'` from the app's own stores. The grid calls `SRETCollections` itself on that store, and adds the read-only **List** column (sortable, filterable when expanded, exported) and the temp row mark.
 - **Dashboard.** The same functions are called on the same store:
   - The Notes list bulk bar (beside the status action in `renderNotes()`) gets "Add to temp list", which calls `SRETCollections.tempAdd(USER_LISTS, NOTES_SELECTED.map(n=>'note:'+n))`.
   - A board selection, if P59 adds one, calls the same function with `'activity:'` refs.
@@ -170,7 +205,7 @@ Where exactly the button goes in Data & view (Sources, or View controls) is a la
 
 ## Verification at merge
 
-1. `python3 tools/grid_view_check.py` still passes on `prototypes/grid-view/demo.html` (unchanged modules). It covers scroll smoothness on 2,000 rows (every visible row present on fast scrolls, no engine wheel handling, transform positioning, per-step cost) the three-row header aligned to the title, the Add row / Tools / Add to temp list menus, the import dialog, the collapsible List column and the temp row mark, both panel modes, and the four-step lists workflow (temp list built across three filter states, Temp list only, ticked temp items into existing and new lists, one item in two lists, remove, clear with confirmation, the temp list carried across screens, and the single-list setting).
+1. `python3 tools/grid_view_check.py` still passes on `prototypes/grid-view/demo.html` (unchanged modules). It covers scroll smoothness on 2,000 rows (every visible row present on fast scrolls, no engine wheel handling, transform positioning, per-step cost) the three-row header aligned to the title, the Add row / Tools / Add to temp list menus, the import dialog, the collapsible List column (left of the checkbox, no filter when collapsed) and the temp row mark, the milestone import rules end to end (failures, duplicate IDs, skipped and assigned IDs, the continue question, Cancel, the Import log, `importAoa`), Band and WBS as separate columns, Date created and Created by far right, Health exported last, status tones, the health dot picker, double-click to open, both panel modes, and the four-step lists workflow (temp list built across three filter states, Temp list only, ticked temp items into existing and new lists, one item in two lists, remove, clear with confirmation, the temp list carried across screens, and the single-list setting).
 2. `python3 tools/colour_audit.py --strict` and `python3 tools/palette_swap_check.py` on the app, with a grid open for the swap (add the open to the swap check's setup the way it opens the milestone dialog).
 3. `python3 tools/theme_check.py` on the app.
 4. A merge-stage probe that clicks each of the three real entry points, edits one value per entry point and asserts the value lands in the right store and survives `scheduleRerender(true)` and a publish round trip. That probe does not exist yet: it can only be written against the merged file.

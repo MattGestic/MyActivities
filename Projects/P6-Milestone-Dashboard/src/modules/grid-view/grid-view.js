@@ -7,9 +7,14 @@
        title, columns:[{key,label,type,editable,options,width}], rows, rowKey,
        editable, onEdit(rowKey,key,value), onAdd(), onDelete(rowKeys),
        onBack(), exportName, ensureXLSX, host, canEdit(rowKey,key),
-       lists:{ store, refOf(rowKey), labelOf(ref), onChange(result) }
+       lists:{ store, refOf(rowKey), labelOf(ref), onChange(result) },
+       openColumn, onOpenItem(rowKey), importer:{...}
      })
      SRETGrid.close()   SRETGrid.setRows(rows)   SRETGrid.patchRows(rows)   SRETGrid.isOpen()
+     SRETGrid.dialog(title, build)   SRETGrid.importAoa(aoa, fileName)
+   Column extras: min/max (numbers), hidden (kept for export and the
+   import template, not shown), tones {value: tone} (shaded cell),
+   icon {key,label,options} (a tap-to-edit dot before the value).
    Return false from onEdit to refuse a value (the cell reverts), from
    onDelete to keep the rows. onAdd returns the new row object (with its
    rowKey) or nothing to add no row. canEdit, optional, refuses an edit on
@@ -18,7 +23,7 @@
    rows, a "Temp list only" filter, and an expandable panel listing the temp
    items, where selected items are added to a saved list (existing or new),
    removed from the temp list, or the temp list is cleared. It also adds
-   read-only List and Temp columns. store is the caller's SRETCollections
+   a read-only List column (left of the checkbox) and a mark on temp rows. store is the caller's SRETCollections
    store (data in); refOf maps a rowKey to the store's item ref; labelOf(ref),
    optional, names an item in the panel; onChange(result) runs after every
    change so the caller can persist. All rules live in the shared
@@ -83,6 +88,14 @@
     if(col.type==='date') return fmtDate(v);
     if(col.type==='select') return optLabel(col,v);
     return String(v);
+  }
+
+  // Cell text, with the optional health icon prefix and status shading.
+  function cellFormatter(r,cell,v,colDef,item){
+    var c=colDef.sg, txt=esc(display(c,v));
+    if(c.icon) txt=hdot(c.icon,item?item[c.icon.key]:null)+'<span class="sg-cell-txt">'+txt+'</span>';
+    if(c.tones&&v!=null&&c.tones[v]) return {text:txt,addClasses:'sg-tone sg-tone-'+c.tones[v]};
+    return txt;
   }
 
   // ---------- editors (SlickGrid editor interface) ----------
@@ -344,6 +357,11 @@
       var first=firstEditableCell();
       if(first>=0){ s.grid.setActiveCell(idx,first); s.grid.editActiveCell(); }
     }
+  }
+  function firstDataCell(){
+    var cols=S.grid.getColumns();
+    for(var i=0;i<cols.length;i++) if(cols[i].sg && cols[i].id!==L_LIST) return i;
+    return 0;
   }
   function firstEditableCell(){
     var cols=S.grid.getColumns();
@@ -617,12 +635,12 @@
   }
 
   // ----- the List column: collapsed to an indicator, or expanded to names -----
-  var LIST_COL_W={collapsed:56,expanded:180};
+  var LIST_COL_W={collapsed:36,expanded:180};
   function listColName(){
     var ex=S&&S.listExpanded;
     return '<button type="button" class="sg-lcol-toggle" data-sg="list-col-toggle" aria-expanded="'+(ex?'true':'false')+
       '" aria-label="'+(ex?'Collapse':'Expand')+' the List column" title="'+(ex?'Collapse':'Expand')+' the List column">'+
-      '<span>List</span><span class="sg-lcol-arrow" aria-hidden="true">'+(ex?'◂':'▸')+'</span></button>';
+      (ex?'<span>List</span>':'')+'<span class="sg-lcol-arrow" aria-hidden="true">'+(ex?'◂':'▸')+'</span></button>';
   }
   function listColFormatter(r,cell,v){
     var s=S; if(!v) return '';
@@ -633,7 +651,10 @@
   function toggleListCol(){
     var s=S; s.listExpanded=!s.listExpanded;
     var cols=s.grid.getColumns();
-    cols.forEach(function(c){ if(c.id===L_LIST){ c.width=s.listExpanded?LIST_COL_W.expanded:LIST_COL_W.collapsed; c.name=listColName(); } });
+    cols.forEach(function(c){ if(c.id===L_LIST){ c.width=s.listExpanded?LIST_COL_W.expanded:LIST_COL_W.collapsed; c.name=listColName();
+      c.minWidth=s.listExpanded?44:LIST_COL_W.collapsed; } });
+    // Collapsed, the column has no filter box; any filter on it is cleared.
+    if(!s.listExpanded&&s.filters[L_LIST]){ s.filters[L_LIST]=''; s.dv.refresh(); }
     s.grid.setColumns(cols);
     s.grid.invalidate();
     var b=s.screen.querySelector('[data-sg=list-col-toggle]'); if(b) b.focus();
@@ -711,8 +732,172 @@
   }
   function openImport(){
     var s=S;
+    if(s.opts.importer) return openDialog('Import milestones',function(body,close){ return buildImport(body,close); });
     openDialog('Import milestones',function(body,close){ return s.opts.onImport(body,close); });
   }
+
+  // ---------- milestone import (rules in SRETMsImport) ----------
+  // Steps in the dialog: choose a file, run the checks, then either a
+  // failure notice, a "continue?" question listing what was found, or the
+  // summary. Everything found is written to the Import log if the user
+  // continues. Rows are added through importer.onCommit, never directly.
+  function importCfg(){
+    var s=S, im=s.opts.importer;
+    return {columns:s.cols.filter(function(c){ return c.key.charAt(0)!=='_'; }),
+            idKey:im.idKey||s.rowKey, depKeys:im.depKeys||{},
+            existingIds:s.dv.getItems().map(function(it){ return it[s.rowKey]; }),
+            knownIds:typeof im.knownIds==='function'?im.knownIds():[]};
+  }
+  function importPanel(ui,kind,children){
+    ui.status.innerHTML=''; ui.status.setAttribute('data-kind',kind);
+    children.forEach(function(c){ if(c) ui.status.appendChild(c); });
+  }
+  function issueTable(issues){
+    var t=h('table',{'class':'sg-itable','data-sg':'import-issues'});
+    t.appendChild(h('thead',{},[h('tr',{},[h('th',{text:'Row'}),h('th',{text:'ID'}),h('th',{text:'Issue'})])]));
+    var b=h('tbody');
+    issues.slice(0,50).forEach(function(i){ b.appendChild(h('tr',{},[h('td',{text:String(i.rowNum)}),h('td',{text:i.id||'(new)'}),h('td',{text:i.note})])); });
+    t.appendChild(b);
+    return h('div',{'class':'sg-itable-wrap'},[t,issues.length>50?h('p',{'class':'sg-muted',text:'And '+(issues.length-50)+' more.'}):null]);
+  }
+  function runImport(aoa,fileName,ui){
+    var s=S, res=root.SRETMsImport.check(aoa,importCfg());
+    if(res.fatal){
+      say('Import failed. '+res.fatal);
+      importPanel(ui,'error',[h('p',{'class':'sg-import-head',text:'Import failed'}),h('p',{'data-sg':'import-error',text:res.fatal})]);
+      ui.status.setAttribute('role','alert');
+      return res;
+    }
+    if(!res.issues.length){ commitImport(res,fileName,ui); return res; }
+    var q=res.depIssueRows?'Some dependencies or predecessors are not found. Do you wish to continue with import?'
+                          :'Some values could not be read. Do you wish to continue with import?';
+    var cancel=h('button',{type:'button','class':'sg-btn',text:'Cancel',on:{click:function(){ if(ui.onCancel) return ui.onCancel(); importPanel(ui,'',[]); ui.go.focus(); }}});
+    var go=h('button',{type:'button','class':'sg-btn sg-btn--primary','data-sg':'import-continue',text:'Continue import',
+      on:{click:function(){ commitImport(res,fileName,ui); }}});
+    importPanel(ui,'confirm',[
+      h('p',{'class':'sg-import-head','data-sg':'import-question',text:q}),
+      res.depIssueRows&&res.fieldIssueRows?h('p',{text:'Some other values could not be read and will be left blank.'}):null,
+      h('p',{'class':'sg-muted',text:res.rows.length+(res.rows.length===1?' row':' rows')+' will be imported'+
+        (res.skipped.length?', '+res.skipped.length+' skipped (ID already in the table)':'')+'. Each issue below goes to the Import log.'}),
+      issueTable(res.issues),
+      h('div',{'class':'sg-confirm-btns'},[cancel,go])]);
+    ui.status.removeAttribute('role');
+    go.focus();
+    return res;
+  }
+  function commitImport(res,fileName,ui){
+    var s=S, im=s.opts.importer, idKey=im.idKey||s.rowKey, assigned={}, taken=[];
+    var rows=res.rows.map(function(r){
+      var d=Object.assign({},r.data);
+      if(!d[idKey]){ d[idKey]=im.nextId(taken); taken.push(d[idKey]); assigned[r.rowNum]=d[idKey]; }
+      return d;
+    });
+    var added=typeof im.onCommit==='function'?(im.onCommit(rows)||rows):rows;
+    s.dv.beginUpdate();
+    added.forEach(function(r){ var c=Object.assign({},r); if(s.lists) listFields(c); s.dv.addItem(c); });
+    s.dv.endUpdate();
+    var entries=root.SRETMsImport.logEntries(res,{time:new Date().toISOString(),file:fileName,user:im.user||'',assigned:assigned});
+    if(im.log) Array.prototype.push.apply(im.log,entries);
+    if(entries.length&&typeof im.onLog==='function') im.onLog(entries);
+    if(s.lists) refreshLists(); else { s.grid.invalidate(); updateStatus(); }
+    var lines=root.SRETMsImport.summary(res,assigned);
+    say(lines[0]);
+    var ul=h('ul',{'class':'sg-import-summary','data-sg':'import-summary'});
+    lines.forEach(function(l){ ul.appendChild(h('li',{text:l})); });
+    var done=h('button',{type:'button','class':'sg-btn sg-btn--primary','data-sg':'import-done',text:'Done',on:{click:function(){ ui.close(); }}});
+    var logBtn=entries.length?h('button',{type:'button','class':'sg-btn','data-sg':'import-view-log',text:'View Import log',
+      on:{click:function(){ ui.close(); openImportLog(); }}}):h('span');
+    ui.pick.hidden=true;
+    importPanel(ui,'done',[h('p',{'class':'sg-import-head',text:'Import complete'}),ul,h('div',{'class':'sg-confirm-btns'},[logBtn,done])]);
+    done.focus();
+  }
+  function buildImport(body,close){
+    var s=S, o=s.opts;
+    var file=h('input',{type:'file',accept:'.xlsx,.xls,.csv','aria-label':'File to import','data-sg':'import-file'});
+    var go=h('button',{type:'button','class':'sg-btn sg-btn--primary','data-sg':'import-go',text:'Import',disabled:true});
+    var tpl=h('button',{type:'button','class':'sg-link','data-sg':'import-template',text:'Download import template',on:{click:downloadTemplate}});
+    var pick=h('div',{'class':'sg-import-pick'},[
+      h('p',{text:'Choose a file made from the import template (.xlsx or .csv). Rows whose ID is already in the table are skipped; a blank ID is assigned for you.'}),
+      h('div',{'class':'sg-import-row'},[file,go]),h('div',{},[tpl])]);
+    var status=h('div',{'class':'sg-import-status','data-sg':'import-status'});
+    body.appendChild(pick); body.appendChild(status);
+    var ui={pick:pick,status:status,go:go,close:close};
+    s.importUi=ui;
+    file.addEventListener('change',function(){ go.disabled=!file.files.length; importPanel(ui,'',[]); });
+    go.addEventListener('click',function(){
+      var f=file.files[0]; go.disabled=true;
+      root.SRETMsImport.parseFile(f,o.ensureXLSX).then(function(aoa){ if(S===s) runImport(aoa,f.name,ui); })
+        .catch(function(err){
+          if(S!==s) return;
+          var m=err&&err.message?err.message:'The file could not be read.';
+          say('Import failed. '+m);
+          importPanel(ui,'error',[h('p',{'class':'sg-import-head',text:'Import failed'}),h('p',{'data-sg':'import-error',text:m})]);
+          ui.status.setAttribute('role','alert');
+        }).then(function(){ if(S===s) go.disabled=!file.files.length; });
+    });
+    return function(){ if(s.importUi===ui) s.importUi=null; };
+  }
+  function fmtStamp(iso){
+    var d=new Date(iso); if(isNaN(d)) return String(iso||'');
+    var m=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()];
+    return d.getDate()+'-'+m+'-'+String(d.getFullYear()).slice(2)+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  }
+  function openImportLog(){
+    var s=S, log=(s.opts.importer&&s.opts.importer.log)||[];
+    openDialog('Import log',function(body){
+      if(!log.length){ body.appendChild(h('p',{'data-sg':'import-log-empty',text:'No import issues logged yet.'})); return; }
+      var t=h('table',{'class':'sg-itable','data-sg':'import-log-table'});
+      t.appendChild(h('thead',{},[h('tr',{},['Time','File','User','ID','Note'].map(function(x){ return h('th',{text:x}); }))]));
+      var b=h('tbody');
+      log.slice().reverse().forEach(function(e){
+        b.appendChild(h('tr',{},[fmtStamp(e.time),e.file,e.user,e.id,e.note].map(function(x){ return h('td',{text:x==null?'':String(x)}); })));
+      });
+      t.appendChild(b);
+      body.appendChild(h('div',{'class':'sg-itable-wrap'},[t]));
+    });
+  }
+
+  // ---------- health icon prefix, tap to edit (as the dashboard) ----------
+  function hdot(icon,v){
+    var o=(icon.options||[]).filter(function(x){ return String(x.value)===String(v==null?0:v); })[0]||{label:'N/A'};
+    return '<button type="button" class="sg-hdot sg-h-'+esc(v==null?0:v)+'" tabindex="-1" data-sg-hdot="1" aria-label="'+
+      esc(icon.label+': '+o.label+'. Change')+'" title="'+esc(icon.label+': '+o.label)+'"></button>';
+  }
+  function closeHealthPicker(){ var s=S; if(s&&s.hpick){ s.hpick.remove(); s.hpick=null; document.removeEventListener('mousedown',s.hpickOff,true); } }
+  function openHealthPicker(btn,rowKey,col){
+    var s=S; closeHealthPicker();
+    var icon=col.icon, it=s.dv.getItemById(rowKey), cur=it?it[icon.key]:null;
+    var pop=h('div',{'class':'sg-menu-pop sg-hpick',role:'menu','aria-label':icon.label,'data-sg':'health-picker'});
+    (icon.options||[]).forEach(function(o){
+      var b=h('button',{type:'button','class':'sg-menu-item',role:'menuitemradio','aria-checked':String(String(o.value)===String(cur==null?0:cur)),
+                        tabindex:'-1','data-sg-health':String(o.value)},
+              [h('span',{'class':'sg-hdot sg-h-'+o.value,'aria-hidden':'true'}),h('span',{text:o.label})]);
+      b.addEventListener('click',function(e){ e.stopPropagation(); closeHealthPicker(); setIconValue(rowKey,icon.key,o.value); });
+      pop.appendChild(b);
+    });
+    var r=btn.getBoundingClientRect(), sr=s.screen.getBoundingClientRect();
+    pop.style.left=(r.left-sr.left)+'px'; pop.style.top=(r.bottom-sr.top+4)+'px';
+    s.screen.appendChild(pop); s.hpick=pop;
+    s.hpickOff=function(e){ if(!pop.contains(e.target)) closeHealthPicker(); };
+    document.addEventListener('mousedown',s.hpickOff,true);
+    pop.addEventListener('keydown',function(e){
+      var its=Array.prototype.slice.call(pop.querySelectorAll('.sg-menu-item')), i=its.indexOf(document.activeElement);
+      if(e.key==='ArrowDown'){ e.preventDefault(); its[(i+1)%its.length].focus(); }
+      else if(e.key==='ArrowUp'){ e.preventDefault(); its[(i-1+its.length)%its.length].focus(); }
+      else if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); closeHealthPicker(); s.grid.focus(); }
+    });
+    (pop.querySelector('[aria-checked=true]')||pop.firstChild).focus();
+  }
+  function setIconValue(rowKey,key,value){
+    var s=S, it=s.dv.getItemById(rowKey); if(!it) return;
+    var prev=it[key];
+    var ret=typeof s.opts.onEdit==='function'?s.opts.onEdit(rowKey,key,value):undefined;
+    if(ret===false){ say('That change was not accepted.'); return; }
+    var c=Object.assign({},it); c[key]=value; if(s.lists) listFields(c);
+    s.dv.updateItem(rowKey,c);
+    if(prev!==value) say((s.colByKey[key]||{label:key}).label+' set to '+optLabel(s.colByKey[key]||{opts:[]},value)+' for '+rowKey+'.');
+  }
+
   // Import template: the column headers the importer expects, no rows.
   function downloadTemplate(){
     var s=S, o=s.opts;
@@ -741,7 +926,9 @@
     var cols=(opts.columns||[]).map(function(c){
       var type=TYPES[c.type]?c.type:'text';
       return {key:c.key,label:c.label==null?c.key:String(c.label),type:type,editable:!!c.editable,
-              opts:normOptions(c.options),width:c.width||DEFAULT_WIDTH[type]};
+              opts:normOptions(c.options),width:c.width||DEFAULT_WIDTH[type],min:c.min,max:c.max,options:c.options,
+              hidden:!!c.hidden,tones:c.tones||null,
+              icon:c.icon?{key:c.icon.key,label:c.icon.label||c.icon.key,options:normOptions(c.icon.options)}:null};
     });
     var gridEditable=!!opts.editable;
     var canAdd=gridEditable&&typeof opts.onAdd==='function';
@@ -763,7 +950,8 @@
     // Add row is a split button; its menu holds import, export and the template.
     // Screens that cannot add rows keep a plain Export button in the same place.
     var addMenu=canAdd?makeMenu('More add options','add-more',function(){
-      return [typeof opts.onImport==='function'?{label:'Import milestones…',sg:'import',onSelect:openImport}:null,
+      return [(opts.importer||typeof opts.onImport==='function')?{label:'Import milestones…',sg:'import',onSelect:openImport}:null,
+              opts.importer?{label:'Import log',sg:'import-log',onSelect:openImportLog}:null,
               {label:'Export .xlsx',sg:'export',onSelect:exportRows},
               {label:'Download import template',sg:'template',onSelect:downloadTemplate}];
     },'sg-btn--primary',add):null;
@@ -825,14 +1013,17 @@
     var check=new root.Slick.CheckboxSelectColumn({cssClass:'sg-check',width:32,hideInFilterHeaderRow:true});
     var checkDef=check.getColumnDefinition();
     checkDef.headerCssClass='sg-check-h';
-    var slickCols=[checkDef].concat(cols.map(function(c){
+    var colDefs=cols.filter(function(c){ return !c.hidden; }).map(function(c){
       var ed=gridEditable&&c.editable;
-      if(c.key===L_LIST) return {id:c.key,field:c.key,name:listColName(),toolTip:'Saved lists this row is in',width:c.width,minWidth:44,
+      if(c.key===L_LIST) return {id:c.key,field:c.key,name:listColName(),toolTip:'Saved lists this row is in',width:c.width,minWidth:c.width,
               sortable:true,resizable:true,sg:c,editor:null,cssClass:'sg-cell-ro sg-lcol',headerCssClass:'sg-lcol-h',formatter:listColFormatter};
-      return {id:c.key,field:c.key,name:esc(c.label),toolTip:c.label,width:c.width,minWidth:48,sortable:true,resizable:true,
-              sg:c,editor:ed?Editor:null,cssClass:ed?'sg-cell-edit':'sg-cell-ro',headerCssClass:ed?'sg-h-edit':null,
-              formatter:function(r,cell,v,colDef){ return esc(display(colDef.sg,v)); }};
-    }));
+      var cls=(ed?'sg-cell-edit':'sg-cell-ro')+(c.key===opts.openColumn?' sg-cell-open':'');
+      return {id:c.key,field:c.key,name:esc(c.label),toolTip:c.key===opts.openColumn?c.label+' (double-click to open)':c.label,
+              width:c.width,minWidth:48,sortable:true,resizable:true,
+              sg:c,editor:ed?Editor:null,cssClass:cls,headerCssClass:ed?'sg-h-edit':null,formatter:cellFormatter};
+    });
+    // The List column sits left of the checkbox (Matt, 2026-09-27).
+    var slickCols=colDefs.filter(function(d){ return d.id===L_LIST; }).concat([checkDef],colDefs.filter(function(d){ return d.id!==L_LIST; }));
     var grid=new root.Slick.Grid(gridEl,dv,slickCols,{
       editable:gridEditable,autoEdit:false,enableCellNavigation:true,asyncEditorLoading:false,
       enableColumnReorder:false,rowHeight:rowH,headerRowHeight:rowH+8,showHeaderRow:true,
@@ -861,7 +1052,7 @@
 
     grid.onHeaderRowCellRendered.subscribe(function(e,args){
       var c=args.column.sg; args.node.innerHTML='';
-      if(!c) return;
+      if(!c||(c.key===L_LIST&&!S.listExpanded)) return;
       var ops=c.type==='number'||c.type==='date';
       var inp=h('input',{type:'text','class':'sg-hfilter',placeholder:'Filter','aria-label':'Filter '+c.label,'data-sg-filter':c.key,
         title:ops?'Contains, or compare with >, <, >=, <=, = (e.g. >=75'+(c.type==='date'?' or <1-Oct-26':'')+')':'Contains'});
@@ -899,6 +1090,19 @@
       }
       dv.updateItem(it[rowKey],it);
       S.prev=null;
+    });
+    grid.onClick.subscribe(function(e,args){
+      var ne=e&&e.getNativeEvent?e.getNativeEvent():e, t=ne&&ne.target;
+      var b=t&&t.closest&&t.closest('[data-sg-hdot]'); if(!b) return;
+      var c=grid.getColumns()[args.cell], it=dv.getItem(args.row);
+      if(!c||!c.sg||!c.sg.icon||!it) return;
+      if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+      if(!gridEditable){ say('This view is read only.'); return; }
+      openHealthPicker(b,it[rowKey],c.sg);
+    });
+    grid.onDblClick.subscribe(function(e,args){
+      var c=grid.getColumns()[args.cell], it=dv.getItem(args.row);
+      if(c&&c.id===opts.openColumn&&it&&typeof opts.onOpenItem==='function') opts.onOpenItem(it[rowKey]);
     });
     grid.onSelectedRowsChanged.subscribe(updateStatus);
     dv.onRowCountChanged.subscribe(function(){ grid.updateRowCount(); grid.render(); updateStatus(); });
@@ -967,7 +1171,7 @@
       S.ro.observe(gridEl);
     }
     updateStatus();
-    if(dv.getLength()) grid.setActiveCell(0,1);
+    if(dv.getLength()) grid.setActiveCell(0,firstDataCell());
     return api;
   }
 
@@ -975,6 +1179,7 @@
     var s=S; if(!s) return;
     if(s.openMenu) s.openMenu.close(false);
     if(s.dialog) s.dialog.close();
+    if(s.hpick){ s.hpick.remove(); document.removeEventListener('mousedown',s.hpickOff,true); }
     S=null;
     if(s.ro) s.ro.disconnect();
     if(s.grid.getEditorLock().isActive()) s.grid.getEditorLock().cancelCurrentEdit();
@@ -998,6 +1203,18 @@
     setRows:setRows,
     patchRows:patchRows,
     exportVisible:function(){ return S?exportRows():Promise.resolve(null); },
+    // A centred modal dialog on the open screen; build(body, close) may return a cleanup.
+    dialog:function(title,build){ return S?openDialog(title,build):null; },
+    // For the app's own import form: hand in the parsed sheet, and the grid
+    // runs the same checks, question, log and summary in its dialog.
+    importAoa:function(aoa,fileName){
+      if(!S||!S.opts.importer) return null;
+      openDialog('Import milestones',function(body,close){
+        var ui={pick:h('div'),status:h('div',{'class':'sg-import-status','data-sg':'import-status'}),go:h('button'),close:close,onCancel:close};
+        body.appendChild(ui.status); runImport(aoa,fileName||'Imported sheet',ui);
+      });
+      return true;
+    },
     // Test hook only: the engine objects of the open screen.
     // requestResize is the exact path a ResizeObserver report takes.
     _engine:function(){ return S?{grid:S.grid,dataView:S.dv,requestResize:S.requestResize}:null; },

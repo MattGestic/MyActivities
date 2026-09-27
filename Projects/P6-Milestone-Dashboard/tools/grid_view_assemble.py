@@ -114,10 +114,12 @@ def fixtures():
         d = datetime.date.fromisoformat(fin) + datetime.timedelta(days=7 * (i % 4))
         userms.append({"id": f"USR-{i + 1:03d}", "name": name, "type": types[i % 4], "state": states[i % 5],
                        "start": None if i % 3 else (d - datetime.timedelta(days=14)).isoformat(),
-                       "finish": d.isoformat(), "band": "User Defined Milestones",
+                       "finish": d.isoformat(), "band": "User Defined Milestones", "wbs": a["wbs"],
                        "pred": a["id"], "succ": b["id"] if i % 2 else "",
                        "progress": [0, 25, 50, 75, 100][i % 5],
-                       "comment": "" if i % 3 else "Added at the weekly review."})
+                       "comment": "" if i % 3 else "Added at the weekly review.",
+                       "created": (datetime.date(2026, 9, 1) + datetime.timedelta(days=i)).isoformat(),
+                       "createdBy": ["MG", "JR", "AK"][i % 3], "health": [1, 2, 3, 4, 0][i % 5]})
     kinds = [("Milestone comment", "comment"), ("Row remark", "remark"), ("Dependency comment", "dep"),
              ("Note", "note"), ("Health override", "health"), ("Progress override", "progress"),
              ("Date override", "date")]
@@ -151,17 +153,25 @@ def fixtures():
              {"value": "done", "label": "Done"}, {"value": "closed", "label": "Closed"}]
     cols = {
         "userms": [
-            {"key": "id", "label": "ID", "type": "text", "width": 90},
+            # ID carries the health icon (tap to change, as the dashboard); Health itself is a
+            # hidden column so it exports last and appears last in the import template.
+            {"key": "id", "label": "ID", "type": "text", "width": 104,
+             "icon": {"key": "health", "label": "Health", "options": health}},
             {"key": "name", "label": "Name", "type": "text", "editable": True, "width": 240},
             {"key": "type", "label": "Type", "type": "select", "editable": True, "options": types, "width": 70},
             {"key": "start", "label": "Start", "type": "date", "editable": True},
             {"key": "finish", "label": "Finish", "type": "date", "editable": True},
-            {"key": "band", "label": "Band / WBS", "type": "text", "editable": True, "width": 170},
-            {"key": "state", "label": "Status", "type": "select", "editable": True, "options": state},
-            {"key": "pred", "label": "Predecessor", "type": "text", "editable": True, "width": 100},
-            {"key": "succ", "label": "Successor", "type": "text", "editable": True, "width": 100},
-            {"key": "progress", "label": "% complete", "type": "number", "editable": True, "width": 90},
+            {"key": "band", "label": "Band", "type": "text", "editable": True, "width": 170},
+            {"key": "wbs", "label": "WBS", "type": "text", "editable": True, "width": 150},
+            {"key": "state", "label": "Status", "type": "select", "editable": True, "options": state,
+             "tones": {"FUTURE": "future", "TRACK": "track", "RISK": "risk", "CRIT": "crit", "DONEUSER": "done"}},
+            {"key": "pred", "label": "Predecessor", "type": "text", "editable": True, "width": 110},
+            {"key": "succ", "label": "Successor", "type": "text", "editable": True, "width": 110},
+            {"key": "progress", "label": "% complete", "type": "number", "editable": True, "width": 90, "min": 0, "max": 100},
             {"key": "comment", "label": "Comment", "type": "text", "editable": True, "width": 220},
+            {"key": "created", "label": "Date created", "type": "date", "width": 100},
+            {"key": "createdBy", "label": "Created by", "type": "text", "width": 90},
+            {"key": "health", "label": "Health", "type": "select", "editable": True, "options": health, "hidden": True},
         ],
         "annot": [
             {"key": "aid", "label": "Entry", "type": "text", "width": 70},
@@ -219,6 +229,7 @@ def build() -> str:
         "/*@VENDOR_JS@*/": safe_inline(vendor_js, "</script", "vendor JS"),
         "/*@GRID_JS@*/": safe_inline((MOD / "grid-view.js").read_text(encoding="utf-8"), "</script", "grid-view.js"),
         "/*@COLLECTIONS_JS@*/": safe_inline((COLL / "collections.js").read_text(encoding="utf-8"), "</script", "collections.js"),
+        "/*@MSIMPORT_JS@*/": safe_inline((ROOT / "src" / "modules" / "ms-import" / "ms-import.js").read_text(encoding="utf-8"), "</script", "ms-import.js"),
         "/*@FIXTURES@*/": safe_inline(fixtures(), "</script", "fixtures"),
     }
     for k, v in parts.items():

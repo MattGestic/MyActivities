@@ -156,7 +156,8 @@
 .sg-temp-err:empty{display:none}
 
 /* ---- List column: collapsed indicator, or expanded names ---- */
-.sg-grid .slick-header-column.sg-lcol-h{padding:0 var(--space-2)}
+.sg-grid .slick-header-column.sg-lcol-h{padding:0 var(--space-1)}
+.sg-grid .slick-cell.sg-lcol{padding:0 var(--space-2)}
 .sg-lcol-toggle{display:inline-flex;align-items:center;gap:var(--space-1);height:100%;padding:0 var(--space-1);border:0;
   background:transparent;font:inherit;font-weight:600;color:inherit;cursor:pointer;border-radius:var(--radius-ctl)}
 .sg-lcol-toggle:hover{background:var(--color-btn-icon-hover-bg)}
@@ -165,6 +166,46 @@
 .sg-inlist-mark{display:inline-block;width:8px;height:8px;border-radius:var(--radius-pill);background:var(--color-accent)}
 /* Rows on My temp list: a vertical line to the left of the checkbox. */
 .sg-grid .slick-row.sg-in-temp .slick-cell.sg-check{box-shadow:inset 3px 0 0 var(--color-accent)}
+
+/* ---- status shading (conditional formatting on a column's value) ---- */
+.sg-grid .slick-cell.sg-tone{font-weight:600}
+.sg-grid .slick-cell.sg-tone-future{background:var(--color-status-track-bg);color:var(--color-text-muted)}
+.sg-grid .slick-cell.sg-tone-track{background:color-mix(in srgb,var(--color-status-track) 16%,var(--color-bg-canvas));color:var(--color-text-primary)}
+.sg-grid .slick-cell.sg-tone-risk{background:var(--color-notice-bg);color:var(--color-notice-ink)}
+.sg-grid .slick-cell.sg-tone-crit{background:var(--color-crit-tint-bg);color:var(--color-crit-text)}
+.sg-grid .slick-cell.sg-tone-done{background:var(--color-ready-tint-bg);color:var(--color-ok-text)}
+
+/* ---- health icon (same states and roles as the dashboard's health dot) ---- */
+.sg-hdot{display:inline-block;color:var(--color-text-primary);flex:0 0 auto;width:10px;height:10px;margin:0 var(--space-3) 0 0;padding:0;vertical-align:middle;
+  border-radius:var(--radius-pill);border:1.2px solid var(--color-health-rim);background:transparent;cursor:pointer}
+button.sg-hdot:hover{transform:scale(1.25)}
+.sg-hdot.sg-h-0{background:transparent;border-color:var(--color-health-none-border)}
+.sg-hdot.sg-h-1{background:var(--color-health-good);border-color:var(--color-health-good-border)}
+.sg-hdot.sg-h-2{background:var(--color-health-watch);border-color:var(--color-health-watch-border)}
+.sg-hdot.sg-h-3{background:var(--color-crit);border-color:var(--color-crit-border)}
+.sg-hdot.sg-h-4{background:var(--color-status-done);border-color:var(--color-health-good-border)}
+.sg-hpick{position:absolute;min-width:160px}
+.sg-hpick .sg-hdot{margin-right:var(--space-2);cursor:default}
+.sg-grid .slick-cell.sg-cell-open{cursor:pointer}
+
+/* ---- import and Import log ---- */
+.sg-import-pick p{margin:0 0 var(--ctl-gap);color:var(--color-text-muted)}
+.sg-import-pick[hidden]{display:none}
+.sg-import-row{display:flex;flex-wrap:wrap;align-items:center;gap:var(--ctl-gap);margin-bottom:var(--ctl-gap)}
+.sg-import-status:not(:empty){margin-top:var(--group-gap);padding-top:var(--group-gap);border-top:1px solid var(--color-line-default)}
+.sg-import-status:first-child{margin-top:0;padding-top:0;border-top:0}
+.sg-import-status[data-kind=error]{color:var(--color-crit-text)}
+.sg-import-head{margin:0 0 var(--ctl-gap);font-weight:600;font-size:var(--text-lg)}
+/* Host-page p rules must not recolour the import text. */
+.sg-dialog .sg-import-status p{margin:0 0 var(--ctl-gap);color:inherit}
+.sg-dialog .sg-import-status p.sg-muted{color:var(--color-text-muted)}
+.sg-import-summary{margin:0 0 var(--group-gap);padding-left:var(--group-gap)}
+.sg-muted{color:var(--color-text-muted)}
+.sg-itable-wrap{max-height:260px;overflow:auto;margin-bottom:var(--ctl-gap);border:1px solid var(--color-line-default);border-radius:var(--radius-ctl)}
+.sg-itable{width:100%;border-collapse:separate;border-spacing:0;font-size:var(--text-md);line-height:16px}
+.sg-itable th{position:sticky;top:0;text-align:left;font-weight:600;background:var(--color-bg-subtle);color:var(--color-text-primary)}
+.sg-itable th,.sg-itable td{padding:var(--space-2) var(--space-4);border-bottom:1px solid var(--color-line-hairline);vertical-align:top}
+.sg-itable td{color:var(--color-text-primary)}
 
 /* ---- dialog: centre screen, modal (Import milestones) ---- */
 .sg-scrim{position:absolute;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:var(--group-gap);

@@ -84,8 +84,8 @@ MUTATIONS = {
     "panel-open-by-default": ("'data-sg':'panel',hidden:true}", "'data-sg':'panel'}"),
     "menu-stays-open": ("b.addEventListener('click',function(e){ e.stopPropagation(); close(true); it.onSelect(); });",
                         "b.addEventListener('click',function(e){ e.stopPropagation(); it.onSelect(); });"),
-    "import-in-side-panel": ("openDialog('Import milestones',function(body,close){ return s.opts.onImport(body,close); });",
-                             "s.opts.onImport(s.screen.querySelector('.sg-body'),function(){});"),
+    "import-in-side-panel": ("if(s.opts.importer) return openDialog('Import milestones',function(body,close){ return buildImport(body,close); });",
+                             "if(s.opts.importer) return buildImport(s.screen.querySelector('.sg-body'),function(){});"),
     "list-toggle-sorts": ("if(b) b.addEventListener('click',function(ev){ ev.stopPropagation(); toggleListCol(); });",
                           "if(b) b.addEventListener('click',function(ev){ toggleListCol(); });"),
     "temp-row-mark-missing": ("m.cssClasses=((m.cssClasses||'')+' sg-in-temp').trim();", ""),
@@ -96,6 +96,21 @@ MUTATIONS = {
     "resize-kills-edit": ("if(grid.getEditorLock().isActive()){ pending=true; return; }", ""),
     "mutates-caller": ("dv.setItems((opts.rows||[]).map(function(r){ return Object.assign({},r); }),rowKey);",
                        "dv.setItems((opts.rows||[]),rowKey);"),
+    # Round 7 (Matt, 2026-09-27): import rules, table changes
+    "import-dup-ids-allowed": ("    if(dup.length){\n", "    if(false){\n"),
+    "import-existing-ids-imported": ("if(id&&existing[id]){ res.skipped.push", "if(false){ res.skipped.push"),
+    "import-blank-id-kept": ("if(!d[idKey]){ d[idKey]=im.nextId(taken);", "if(false){ d[idKey]=im.nextId(taken);"),
+    "import-same-id-twice": ("d[idKey]=im.nextId(taken); taken.push(d[idKey]);", "d[idKey]=im.nextId([]);"),
+    "import-deps-unchecked": ("if(missing.length){ dep=true;", "if(false){ dep=true;"),
+    "import-no-question": ("    if(!res.issues.length){ commitImport(res,fileName,ui); return res; }", "    commitImport(res,fileName,ui); return res;"),
+    "import-log-not-written": ("if(im.log) Array.prototype.push.apply(im.log,entries);", ""),
+    "import-bad-date-kept": ("row[c.key]=null; return;\n        }", "row[c.key]=norm(v); return;\n        }"),
+    "import-silent-fail": ("importPanel(ui,'error',[h('p',{'class':'sg-import-head',text:'Import failed'}),h('p',{'data-sg':'import-error',text:res.fatal})]);", ""),
+    "status-tone-missing": ("return {text:txt,addClasses:'sg-tone sg-tone-'+c.tones[v]};", "return txt;"),
+    "open-on-any-column": ("if(c&&c.id===opts.openColumn&&it&&", "if(c&&it&&"),
+    "health-dot-no-edit": ("var ret=typeof s.opts.onEdit==='function'?s.opts.onEdit(rowKey,key,value):undefined;", "var ret;"),
+    "collapsed-list-filter": ("if(!c||(c.key===L_LIST&&!S.listExpanded)) return;", "if(!c) return;"),
+    "health-shown-in-grid": ("if(lists) cols=[{key:L_LIST", "cols=cols.filter(function(c){ return c.key!=='health'; }).concat(cols.filter(function(c){ return c.key==='health'; }).map(function(c){ return Object.assign({},c,{hidden:false}); }));\n    if(lists) cols=[{key:L_LIST"),
 }
 
 STUB = r"""<script>
@@ -195,7 +210,10 @@ async function tryOpenEditor(row,k){
   if(opened||opened2){ const ed=$('.sg-editor'); if(ed) key(ed,'Escape'); await sleep(10); }
   return opened||opened2;
 }
-function rowCheckbox(row){ const n=eng().grid.getCellNode(row,0); return n&&n.querySelector('input[type=checkbox]'); }
+// Column positions by id: the List column sits left of the checkbox, so indexes are never assumed.
+function CK(){ return eng().grid.getColumns().findIndex(c=>c.id==='_checkbox_selector'); }
+function FD(){ return CK()+1; }
+function rowCheckbox(row){ const n=eng().grid.getCellNode(row,CK()); return n&&n.querySelector('input[type=checkbox]'); }
 function selCount(){ return eng().grid.getSelectedRows().length; }
 function h(el){ return el?Math.round(el.getBoundingClientRect().height*10)/10:null; }
 // Dropdown menus: items only exist while the menu is open.
@@ -250,11 +268,60 @@ try{
   ok('userms: Add row present; Delete in the Tools menu', !!$('[data-sg=add]') && !!(await menuItem('tools','delete'))); await menuClose('tools');
 
   // keyboard navigation
-  { const g=eng().grid; g.setActiveCell(0,1); await sleep(10);
+  { const g=eng().grid, f=FD(); g.setActiveCell(0,f); await sleep(10);
     key(g.getActiveCellNode(),'ArrowDown'); await sleep(10); const a=g.getActiveCell();
     key(g.getActiveCellNode(),'ArrowRight'); await sleep(10); const b=g.getActiveCell();
     key(g.getActiveCellNode(),'ArrowDown'); await sleep(10); const c=g.getActiveCell();
-    ok('keyboard: arrows move the active cell (N=3)', a.row===1&&a.cell===1 && b.row===1&&b.cell===2 && c.row===2&&c.cell===2, [a,b,c]); }
+    ok('keyboard: arrows move the active cell (N=3)', a.row===1&&a.cell===f && b.row===1&&b.cell===f+1 && c.row===2&&c.cell===f+1, [a,b,c]); }
+
+  // Round 7 (Matt, 2026-09-27): columns, status tones, health icon, open on double-click, narrow List column
+  { const btn=n=>$('[data-sg='+n+']'), ids=eng().grid.getColumns().map(c=>c.id), data=ids.filter(k=>k!=='_list'&&k!=='_checkbox_selector');
+    ok('columns: List, checkbox, then ID first; Band and WBS separate; Date created and Created by far right; Health not shown',
+       ids[0]==='_list' && ids[1]==='_checkbox_selector' && data[0]==='id' && data.indexOf('band')>=0 && data.indexOf('wbs')===data.indexOf('band')+1 &&
+       data.slice(-2).join('|')==='created|createdBy' && data.indexOf('health')<0 &&
+       header('band').textContent.trim().startsWith('Band') && !/WBS/.test(header('band').textContent) && header('wbs').textContent.trim().startsWith('WBS'), ids);
+    const r0=eng().dataView.getItem(0), ci=colIdx('created'), cb=colIdx('createdBy');
+    ok('Date created shows as a date; Created by shows the user; both read-only', /^\d{1,2}-[A-Z][a-z]{2}-\d\d$/.test(cellText(0,'created')) &&
+       cellText(0,'createdBy')===r0.createdBy && !(await tryOpenEditor(0,'created')) && !(await tryOpenEditor(0,'createdBy')), [cellText(0,'created'),cellText(0,'createdBy')]);
+    ok('List column collapsed by default: 40px or less, no filter box', eng().grid.getColumns()[0].width<=40 && !filterInput('_list') &&
+       !$('.slick-headerrow-column.l0 input'), eng().grid.getColumns()[0].width);
+    // status tones: one class and one background per status
+    const tone={FUTURE:'future',TRACK:'track',RISK:'risk',CRIT:'crit',DONEUSER:'done'}, si=colIdx('state'), seen={};
+    for(let r=0;r<eng().dataView.getLength();r++){ const st=eng().dataView.getItem(r).state; if(st in tone && !(st in seen)) seen[st]=eng().grid.getCellNode(r,si); }
+    const bgs=Object.keys(seen).map(st=>[st,seen[st].classList.contains('sg-tone-'+tone[st]),getComputedStyle(seen[st]).backgroundColor]);
+    ok('Status: every status has its own tone class and a distinct shaded background', bgs.length===5 && bgs.every(b=>b[1]) &&
+       new Set(bgs.map(b=>b[2])).size===5 && bgs.every(b=>b[2]!=='rgba(0, 0, 0, 0)'), bgs);
+    // health icon on the ID
+    const dots=[0,1,2].map(r=>eng().grid.getCellNode(r,colIdx('id')).querySelector('[data-sg-hdot]'));
+    ok('ID cell: a health dot before the ID, class follows the health value, labelled', dots.every((d,r)=>!!d && d.classList.contains('sg-h-'+(eng().dataView.getItem(r).health||0)) &&
+       /^Health: /.test(d.getAttribute('aria-label'))) && eng().grid.getCellNode(0,colIdx('id')).textContent===eng().dataView.getItem(0).id, dots.map(d=>d&&d.outerHTML));
+    const hk=eng().dataView.getItem(0).id, h0=eng().dataView.getItem(0).health||0, pick=h0===3?1:3;
+    dots[0].dispatchEvent(new MouseEvent('click',{bubbles:true})); await sleep(10);
+    const hp=btn('health-picker');
+    ok('tap the health dot: the picker opens with the health options, current one checked', !!hp && $$('[data-sg-health]',hp).length===5 &&
+       $('[data-sg-health="'+h0+'"]',hp).getAttribute('aria-checked')==='true', hp&&hp.outerHTML.slice(0,200));
+    $('[data-sg-health="'+pick+'"]',hp).click(); await sleep(20);
+    const he=lastLog('onEdit'), nd=eng().grid.getCellNode(eng().dataView.getRowById(hk),colIdx('id')).querySelector('[data-sg-hdot]');
+    ok('picking a health value calls onEdit(id, "health", value), the dot updates, the picker closes', !!he && he.args[0]===hk && he.args[1]==='health' && he.args[2]===pick &&
+       nd.classList.contains('sg-h-'+pick) && !btn('health-picker') && eng().dataView.getItemById(hk).health===pick, he&&he.args);
+    // double-click the ID opens the milestone form; elsewhere it does not
+    const o0=count('onOpenItem');
+    eng().grid.getCellNode(1,colIdx('name')).dispatchEvent(new MouseEvent('dblclick',{bubbles:true})); await sleep(10);
+    const ed=$('.sg-editor'); if(ed){ key(ed,'Escape'); await sleep(10); }
+    ok('double-click on a non-ID cell does not open the milestone form', count('onOpenItem')===o0 && !$('[data-sg=demo-ms-form]'));
+    const k1=eng().dataView.getItem(1).id;
+    eng().grid.getCellNode(1,colIdx('id')).dispatchEvent(new MouseEvent('dblclick',{bubbles:true})); await sleep(20);
+    ok('double-click on the ID opens the milestone form for that row', count('onOpenItem')===o0+1 && lastLog('onOpenItem').args[0]===k1 &&
+       !!$('[data-sg=demo-ms-form]') && !$('.sg-editor'), lastLog('onOpenItem'));
+    if(btn('dialog')){ key(btn('dialog'),'Escape'); await sleep(10); }
+    // export: Health appended as the last column
+    window.__xlsx={}; await menuPick('add-more','export'); await sleep(20);
+    const eh=(window.__xlsx.aoa||[[]])[0];
+    ok('export: Health is the last column, after Date created and Created by', eh.slice(-3).join('|')==='Date created|Created by|Health', eh);
+    window.__xlsx={}; await menuPick('add-more','template'); await sleep(20);
+    const th=(window.__xlsx.aoa||[[]])[0];
+    ok('import template: Health is the last column', th[th.length-1]==='Health' && th.indexOf('Band')>=0 && th.indexOf('WBS')>=0, th);
+  }
 
   // D-16 sizes
   { const ctl=parseFloat(getComputedStyle($('.sg-screen')).getPropertyValue('--ctl-h'));
@@ -432,32 +499,112 @@ try{
     eng().grid.setSelectedRows([]); await sleep(10);
     ok('panel collapsed; rail buttons show collapsed; badge hidden at 0', btn('panel').hidden &&
        btn('temp-open').getAttribute('aria-expanded')==='false' && btn('lists-open').getAttribute('aria-expanded')==='false' && btn('temp-count').hidden);
-    ok('Temp column dropped; List column present', colIdx('_tmp')===-1 && colIdx('_list')===1);
+    ok('Temp column dropped; List column left of the checkbox', colIdx('_tmp')===-1 && colIdx('_list')===0 && CK()===1);
     // Add row split button and its menu
     const am=await menuItem('add-more','import'); const aml=labels('add-more'); await menuClose('add-more');
-    ok('Add row is a split button; its menu: Import milestones, Export .xlsx, Download import template', !!btn('add') && !!am &&
-       aml.join('|')==='Import milestones…|Export .xlsx|Download import template' && btn('add').parentNode===btn('add-more').parentNode, aml);
+    ok('Add row is a split button; its menu: Import milestones, Import log, Export .xlsx, Download import template', !!btn('add') && !!am &&
+       aml.join('|')==='Import milestones…|Import log|Export .xlsx|Download import template' && btn('add').parentNode===btn('add-more').parentNode, aml);
     window.__xlsx={}; await menuPick('add-more','export'); await sleep(20);
     ok('Add row menu > Export .xlsx writes the visible rows', window.__xlsx.name==='User milestones.xlsx' && (window.__xlsx.aoa||[]).length===n+1, window.__xlsx.name);
     window.__xlsx={}; await menuPick('add-more','template'); await sleep(20);
     ok('Add row menu > Download import template: the column headers only, without derived columns', window.__xlsx.name==='User milestones import template.xlsx' &&
        JSON.stringify(window.__xlsx.aoa)===JSON.stringify([F.cols.userms.map(c=>c.label)]), [window.__xlsx.name,window.__xlsx.aoa]);
-    // Import milestones: centred modal dialog hosting the import form
+    // Import milestones: centred modal dialog, real checks (Matt, 2026-09-27)
+    const importCsv=async(name,text)=>{
+      if(!btn('dialog')) await menuPick('add-more','import');
+      const inp=btn('import-file'), dt=new DataTransfer(), fl=new File([text],name,{type:'text/csv'}); FILE_TEXT.set(fl,text); dt.items.add(fl);
+      inp.files=dt.files; inp.dispatchEvent(new Event('change')); btn('import-go').click(); await settled();
+    };
+    // Blob reads do not hold Chromium's virtual clock, so --dump-dom can fire mid-read. Only the byte
+    // read is served from memory; the file input, change event, Import button, parseFile and the checks are real.
+    const FILE_TEXT=new WeakMap(), fileText=File.prototype.text;
+    File.prototype.text=function(){ return FILE_TEXT.has(this)?Promise.resolve(FILE_TEXT.get(this)):fileText.call(this); };
+    // The file read is real I/O; virtual time can run past any timer, so wait on the DOM instead.
+    const settled=()=>new Promise(res=>{ const st=btn('import-status'), done=()=>!!st.getAttribute('data-kind');
+      if(done()) return res(); const mo=new MutationObserver(()=>{ if(done()){ mo.disconnect(); res(); } });
+      mo.observe(st,{attributes:true,attributeFilter:['data-kind']}); });
+    const closeDlg=async()=>{ if(btn('dialog')){ key(btn('dialog'),'Escape'); await sleep(10); } };
+    const nRows=()=>eng().dataView.getItems().length, HEAD='ID,Name,Type,Start,Finish,Band,WBS,Status,Predecessor,Successor,% complete,Comment';
     await menuPick('add-more','import');
     const dlg=btn('dialog'), dr=dlg&&dlg.getBoundingClientRect(), sr=$('.sg-screen').getBoundingClientRect();
-    ok('Import milestones opens a centred modal dialog (not a side panel)', !!dlg && dlg.getAttribute('role')==='dialog' && dlg.getAttribute('aria-modal')==='true' &&
-       Math.abs((dr.left+dr.right)/2-(sr.left+sr.right)/2)<=2 && Math.abs((dr.top+dr.bottom)/2-(sr.top+sr.bottom)/2)<=2 && $('.sg-dialog-title').textContent==='Import milestones',
-       dr&&[dr.left,dr.right,dr.top,dr.bottom]);
+    ok('Import milestones opens a centred modal dialog with a file picker', !!dlg && dlg.getAttribute('aria-modal')==='true' &&
+       Math.abs((dr.left+dr.right)/2-(sr.left+sr.right)/2)<=2 && Math.abs((dr.top+dr.bottom)/2-(sr.top+sr.bottom)/2)<=2 &&
+       !!btn('import-file') && btn('import-go').disabled && $('.sg-dialog-title').textContent==='Import milestones');
     R.notes.swap_dialog=swapEscapes('light/import-dialog');
-    ok('the dialog hosts the import form, focus inside', !!$('[data-sg=dialog-body] [data-sg=demo-import-file]') && dlg.contains(document.activeElement) &&
-       lastLog('onImport').args[0]==='open');
-    const f=Array.from(dlg.querySelectorAll('button,input')); f[f.length-1].focus();
-    key(document.activeElement,'Tab'); const wrapped=document.activeElement===f[0];
-    key(document.activeElement,'Escape'); await sleep(10);
-    ok('dialog: Tab stays inside; Esc closes, runs the cleanup, focus returns to the menu button', wrapped && !btn('dialog') &&
-       lastLog('onImport').args[0]==='closed' && document.activeElement===btn('add-more'), [wrapped,document.activeElement&&document.activeElement.dataset.sg]);
-    await menuPick('add-more','import'); btn('demo-import-go').click(); await sleep(10);
-    ok('dialog: the form closes it when done', !btn('dialog') && LOG().filter(e=>e.kind==='onImport').slice(-2).map(e=>e.args[0]).join()==='import,closed');
+    const n0=nRows(), fails=[];
+    for(const [nm,txt] of [['empty.csv',''],['noid.csv','Name,Finish\nA milestone,1-Oct-26\n'],['headonly.csv',HEAD+'\n'],
+                           ['dups.csv',HEAD+'\nUSR-050,One,MS\nUSR-050,Two,MS\n,Blank,MS\n'],['notes.txt','x']]){
+      await importCsv(nm,txt); const e=btn('import-error'); fails.push([nm,e?e.textContent:null,btn('import-status').getAttribute('role')]); }
+    ok('import fails with a clear notice: empty file, no ID column, no rows, wrong file type; nothing added', fails[0][1]==='The file is empty.' &&
+       /has no "ID" column/.test(fails[1][1]) && fails[2][1]==='The file has no rows to import.' && /Use an \.xlsx or \.csv file/.test(fails[4][1]) &&
+       fails.every(f=>f[2]==='alert') && nRows()===n0 && /^Import failed\./.test(msg()), fails);
+    ok('import fails on duplicate IDs within the file, naming them and their rows; blank IDs are fine', fails[3][1]===
+       'There are duplicate activity IDs within the list: USR-050 (rows 2, 3). Only unique IDs, or blank IDs, can be imported.' && nRows()===n0, fails[3][1]);
+    // clean import: one existing ID (skipped), one new ID, two blank IDs (assigned), valid dependencies
+    const maxUsr=Math.max(...eng().dataView.getItems().map(i=>+(/^USR-(\d+)$/.exec(i.id)||[0,0])[1]));
+    const nx=k=>'USR-'+String(maxUsr+k).padStart(3,'0'), have=eng().dataView.getItems()[0].id;
+    await importCsv('clean.csv',HEAD+'\n'+have+',Already here,MS\nUSR-050,New one,INT,,2026-10-09,,,TRACK,SNIP-101,,40\n'+
+      ',First blank,CLI,,9-Oct-26,,,,USR-050,,\n,Second blank,MS,,10/10/2026,,,RISK,,SNIP-118,\n');
+    const sum=$$('[data-sg=import-summary] li').map(l=>l.textContent);
+    const it50=eng().dataView.getItemById('USR-050'), itA=eng().dataView.getItemById(nx(1)), itB=eng().dataView.getItemById(nx(2));
+    ok('clean import: summary lists imported, assigned and skipped', JSON.stringify(sum)===JSON.stringify(['Imported 3 milestones.',
+       'IDs assigned to 2 rows with a blank ID: '+nx(1)+', '+nx(2)+'.','Skipped 1 row already in the table: '+have+'.']) && msg()==='Imported 3 milestones.', sum);
+    ok('clean import: rows added with assigned IDs, values read (ISO, d-Mmm-yy, d/m/yyyy dates; labels to values), created by and date set',
+       nRows()===n0+3 && !!it50&&it50.finish==='2026-10-09'&&it50.type==='INT'&&it50.progress===40&&it50.state==='TRACK' &&
+       !!itA&&itA.finish==='2026-10-09'&&itA.pred==='USR-050' && !!itB&&itB.finish==='2026-10-10'&&itB.state==='RISK' &&
+       [it50,itA,itB].every(i=>i.createdBy==='Demo user'&&/^\d{4}-\d\d-\d\d$/.test(i.created)) &&
+       eng().dataView.getItemById(have).name!=='Already here', [it50,itA,itB]);
+    ok('clean import: nothing logged, no View log button', window.DEMO_IMPORT_LOG.length===0 && !btn('import-view-log'));
+    btn('import-done').click(); await sleep(10);
+    ok('Done closes the dialog', !btn('dialog'));
+    // dependencies and other fields not found: ask first; Cancel imports nothing
+    const bad=HEAD+'\nUSR-060,Bad deps,MS,,1-Nov-26,,,,"NOPE-1, SNIP-101",ZZZ-9,\nUSR-061,Bad fields,XYZ,,31-Feb-26,,,,,,150\n';
+    await importCsv('bad.csv',bad);
+    const q=btn('import-question'), notes=$$('[data-sg=import-issues] tbody tr').map(tr=>Array.from(tr.children).map(td=>td.textContent));
+    ok('missing dependencies: the dialog asks "Some dependencies or predecessors are not found. Do you wish to continue with import?"',
+       !!q && q.textContent==='Some dependencies or predecessors are not found. Do you wish to continue with import?', q&&q.textContent);
+    ok('the question lists each issue by row and ID: predecessors and successors not found (comma separated), bad date, choice and number left blank',
+       JSON.stringify(notes)===JSON.stringify([['2','USR-060','Predecessors not found: NOPE-1'],['2','USR-060','Successors not found: ZZZ-9'],
+         ['3','USR-061','Type "XYZ" is not one of MS, INT, CLI, RTN. Left blank.'],['3','USR-061','Finish "31-Feb-26" is not a valid date. Left blank.'],
+         ['3','USR-061','% complete "150" is outside 0 to 100. Left blank.']]), notes);
+    $$('[data-sg=import-status] button').find(b=>b.textContent==='Cancel').click(); await sleep(10);
+    ok('Cancel imports nothing and logs nothing', nRows()===n0+3 && window.DEMO_IMPORT_LOG.length===0 && !eng().dataView.getItemById('USR-060'));
+    btn('import-go').click(); await settled(); btn('import-continue').click(); await sleep(20);
+    const i60=eng().dataView.getItemById('USR-060'), i61=eng().dataView.getItemById('USR-061'), L0=window.DEMO_IMPORT_LOG;
+    ok('Continue imports the rows; unreadable values left blank; dependencies kept as written', !!i60 && i60.pred==='NOPE-1, SNIP-101' && !!i61 &&
+       i61.type==null && i61.finish==null && i61.progress==null, [i60,i61]);
+    ok('Continue writes every issue to the Import log with time, file, user, ID and note', L0.length===5 &&
+       L0.every(e=>e.file==='bad.csv'&&e.user==='Demo user'&&/^\d{4}-/.test(e.time)) && L0[0].id==='USR-060' && L0[0].note==='Predecessors not found: NOPE-1', L0);
+    ok('the summary counts the logged issues', $$('[data-sg=import-summary] li').map(l=>l.textContent).indexOf('5 issues recorded in the Import log.')>=0);
+    btn('import-view-log').click(); await sleep(20);
+    const lh=$$('[data-sg=import-log-table] th').map(t=>t.textContent), lr=$$('[data-sg=import-log-table] tbody tr').map(tr=>Array.from(tr.children).map(td=>td.textContent));
+    ok('Import log table: Time, File, User, ID, Note; one row per issue', JSON.stringify(lh)===JSON.stringify(['Time','File','User','ID','Note']) &&
+       lr.length===5 && lr.every(r=>r[1]==='bad.csv'&&r[2]==='Demo user'&&/^\d{1,2}-[A-Z][a-z]{2}-\d\d \d\d:\d\d$/.test(r[0])), lr);
+    await closeDlg();
+    await menuPick('add-more','import-log');
+    ok('Add row menu > Import log opens the same table', $$('[data-sg=import-log-table] tbody tr').length===5); await closeDlg();
+    // a blank-ID row with an issue is logged under the ID it was given
+    await importCsv('blank.csv',HEAD+'\n,Blank with bad dep,MS,,,,,,QQQ-1,\n'); btn('import-continue').click(); await sleep(20);
+    const lastLog0=window.DEMO_IMPORT_LOG[window.DEMO_IMPORT_LOG.length-1], newId=eng().dataView.getItems().find(i=>i.name==='Blank with bad dep').id;
+    ok('a blank-ID row is logged under the ID the app assigned', lastLog0.id===newId && /^USR-\d{3}$/.test(newId), [lastLog0,newId]);
+    await closeDlg();
+    // only field issues: the other question
+    await importCsv('fields.csv',HEAD+'\nUSR-070,Only a bad date,MS,,not a date,,,,,,\n');
+    ok('only unreadable values: the dialog asks "Some values could not be read. Do you wish to continue with import?"',
+       btn('import-question').textContent==='Some values could not be read. Do you wish to continue with import?');
+    $$('[data-sg=import-status] button').find(b=>b.textContent==='Cancel').click(); await sleep(10); await closeDlg();
+    ok('dialog: Esc closes and focus returns to the menu button', !btn('dialog') && document.activeElement===btn('add-more'));
+    // The app's own import form hands in the parsed sheet: same checks, question, log and summary
+    const nA=nRows();
+    ok('importAoa: same question; the text keeps the dialog colour (host p rules do not leak)', SRETGrid.importAoa([['ID','Name','Predecessor'],['USR-090','From app','NOPE-9']],'app.xlsx')===true &&
+       !!btn('import-question') && getComputedStyle(btn('import-question')).color===getComputedStyle(btn('dialog')).color,
+       btn('import-question')&&[getComputedStyle(btn('import-question')).color,getComputedStyle(btn('dialog')).color]);
+    $$('[data-sg=import-status] button').find(b=>b.textContent==='Cancel').click(); await sleep(10);
+    ok('importAoa: Cancel closes the dialog; nothing added', !btn('dialog') && nRows()===nA);
+    SRETGrid.importAoa([['ID','Name'],['USR-091','From app']],'app.xlsx'); await sleep(10);
+    ok('importAoa: a clean sheet imports and shows the summary', nRows()===nA+1 && $$('[data-sg=import-summary] li')[0].textContent==='Imported 1 milestone.');
+    btn('import-done').click(); await sleep(10);
+    const nAll=eng().dataView.getItems().length;
     // 1: add to the temp list, across filter states
     ok('1: Add to temp list disabled with nothing selected', btn('temp-add').disabled);
     await setFilter('type','INT'); const intKeys=[0,1].map(r=>eng().dataView.getItem(r).id);
@@ -476,8 +623,8 @@ try{
     ok('1: builds across three filter states, no duplicates', M.temp(L).length===3 && new Set(M.temp(L)).size===3 &&
        againMsg==='No new items added to My temp list. 1 item was already on it. It now holds 3 items.', [M.temp(L),againMsg]);
     // the temp mark: a vertical line left of the checkbox, the same mark on the rail, title and button
-    const markRows=eng().dataView.getItems().filter(i=>{ const n0=eng().grid.getCellNode(rowIdx(i.id),0); return n0&&n0.parentNode.classList.contains('sg-in-temp'); }).map(i=>i.id).sort();
-    const cs=getComputedStyle(eng().grid.getCellNode(rowIdx(cliKey),0)), cs0=getComputedStyle(eng().grid.getCellNode(rowIdx(eng().dataView.getItems().find(i=>picked.indexOf(i.id)<0).id),0));
+    const markRows=eng().dataView.getItems().filter(i=>{ const n0=eng().grid.getCellNode(rowIdx(i.id),CK()); return n0&&n0.parentNode.classList.contains('sg-in-temp'); }).map(i=>i.id).sort();
+    const cs=getComputedStyle(eng().grid.getCellNode(rowIdx(cliKey),CK())), cs0=getComputedStyle(eng().grid.getCellNode(rowIdx(eng().dataView.getItems().find(i=>picked.indexOf(i.id)<0).id),CK()));
     const acc=getComputedStyle(btn('temp-open').querySelector('.sg-tempmark')).backgroundColor;
     ok('1: temp rows marked by a vertical line left of the checkbox (exactly the picked rows)', JSON.stringify(markRows)===JSON.stringify(sorted(picked)) &&
        /3px 0px 0px 0px inset/.test(cs.boxShadow) && cs.boxShadow.indexOf(acc)>=0 && !/3px 0px 0px 0px inset/.test(cs0.boxShadow), [markRows,cs.boxShadow]);
@@ -496,7 +643,7 @@ try{
     ok('Show only My temp list: exactly the 3 picked rows; the pill names the filter', visibleCount()===3 && !btn('scope-pill').hidden &&
        btn('scope-pill').textContent.indexOf('My temp list only')===0, visibleCount());
     btn('scope-pill').click(); await sleep(20);
-    ok('clicking the pill clears the filter; all rows back', visibleCount()===n && btn('scope-pill').hidden);
+    ok('clicking the pill clears the filter; all rows back', visibleCount()===nAll && btn('scope-pill').hidden);
     eng().grid.setSelectedRows([]); await sleep(10);
     // List column: collapsed indicator, expandable
     const li=colIdx('_list'), lcol=()=>eng().grid.getColumns()[li], cellL=()=>eng().grid.getCellNode(rowIdx(cliKey),li);
