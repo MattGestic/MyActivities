@@ -29,6 +29,7 @@ import import_check  # noqa: E402  (reuses its dependency-free .xlsx reader)
 
 APP = ROOT / "src" / "milestone-dashboard.html"
 MOD = ROOT / "src" / "modules" / "grid-view"
+COLL = ROOT / "src" / "modules" / "collections"
 VENDOR = ROOT / "vendor" / "slickgrid"
 PROTO = ROOT / "prototypes" / "grid-view"
 XLSX = ROOT / "data" / "schedules" / "103787-13_PFS_Weekly_Update_DD-2026-08-29.xlsx"
@@ -161,6 +162,7 @@ def fixtures():
             {"key": "succ", "label": "Successor", "type": "text", "editable": True, "width": 100},
             {"key": "progress", "label": "% complete", "type": "number", "editable": True, "width": 90},
             {"key": "comment", "label": "Comment", "type": "text", "editable": True, "width": 220},
+            {"key": "colls", "label": "Collections", "type": "text", "width": 180},
         ],
         "annot": [
             {"key": "aid", "label": "Entry", "type": "text", "width": 70},
@@ -171,6 +173,7 @@ def fixtures():
             {"key": "status", "label": "Status", "type": "select", "editable": True, "options": nstat},
             {"key": "author", "label": "By", "type": "text", "width": 50},
             {"key": "date", "label": "Entered", "type": "date"},
+            {"key": "colls", "label": "Collections", "type": "text", "width": 180},
         ],
         "sched": [
             {"key": "id", "label": "Activity ID", "type": "text", "width": 100},
@@ -186,6 +189,7 @@ def fixtures():
             {"key": "short", "label": "Short title", "type": "text", "editable": True, "width": 140},
             {"key": "health", "label": "Health", "type": "select", "editable": True, "options": health, "width": 90},
             {"key": "comment", "label": "Comment", "type": "text", "editable": True, "width": 220},
+            {"key": "colls", "label": "Collections", "type": "text", "width": 180},
         ],
     }
     data = {"sched": sched, "userms": userms, "annot": annot, "cols": cols}
@@ -217,6 +221,7 @@ def build() -> str:
         "/*@VENDOR_CSS@*/": safe_inline(vendor_css, "</style", "vendor CSS"),
         "/*@VENDOR_JS@*/": safe_inline(vendor_js, "</script", "vendor JS"),
         "/*@GRID_JS@*/": safe_inline((MOD / "grid-view.js").read_text(encoding="utf-8"), "</script", "grid-view.js"),
+        "/*@COLLECTIONS_JS@*/": safe_inline((COLL / "collections.js").read_text(encoding="utf-8"), "</script", "collections.js"),
         "/*@FIXTURES@*/": safe_inline(fixtures(), "</script", "fixtures"),
     }
     for k, v in parts.items():

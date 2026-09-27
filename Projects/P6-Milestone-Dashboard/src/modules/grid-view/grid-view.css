@@ -32,6 +32,12 @@
   border:var(--stroke-ctl) solid var(--color-input-border);border-radius:var(--radius-ctl);
   background:var(--color-bg-elevated);color:var(--color-text-primary)}
 .sg-search{width:200px;min-width:120px}
+.sg-select{height:var(--ctl-h);padding:0 var(--ctl-pad-x);font:inherit;font-size:var(--text-md);max-width:220px;cursor:pointer;
+  border:var(--stroke-ctl) solid var(--color-input-border);border-radius:var(--radius-ctl);
+  background:var(--color-bg-elevated);color:var(--color-text-primary)}
+.sg-select:disabled{opacity:.5;cursor:default}
+/* Options otherwise take the browser's grey when the select is disabled, which ignores the theme. */
+.sg-select option{color:var(--color-text-primary);background-color:var(--color-bg-elevated)}
 .sg-search::placeholder,.sg-hfilter::placeholder{color:var(--color-text-label)}
 
 .sg-btn{height:var(--ctl-h);padding:0 var(--ctl-pad-x);font:inherit;font-size:var(--text-md);white-space:nowrap;cursor:pointer;
@@ -55,9 +61,22 @@
 .sg-confirm-msg{margin:0 0 var(--ctl-gap);font-size:var(--text-lg);line-height:20px}
 .sg-confirm-btns{display:flex;justify-content:space-between;gap:var(--ctl-gap)}
 
+/* ---- new collection panel (same layout as the inline confirmation, neutral) ---- */
+.sg-newcoll{padding:var(--space-4) var(--group-gap);background:var(--color-bg-subtle);color:var(--color-text-primary);
+  border-bottom:1px solid var(--color-border-panel)}
+.sg-newcoll[hidden]{display:none}
+.sg-newcoll-row{display:flex;margin-bottom:var(--ctl-gap)}
+.sg-newcoll-name{flex:1 1 auto;width:auto;max-width:360px}
+.sg-newcoll-err{margin:0 0 var(--ctl-gap);color:var(--color-crit-text)}
+.sg-newcoll-err:empty{display:none}
+.sg-newcoll .sg-confirm-btns{max-width:360px}
+
 /* ---- grid engine skin ---- */
 .sg-grid{flex:1 1 auto;min-height:0;position:relative;background:var(--color-bg-canvas);color:var(--color-text-primary)}
 .sg-grid .slick-pane,.sg-grid .slick-viewport{background:var(--color-bg-canvas)}
+/* Scroll inside the grid never chains to the page, and row layout stays inside each row. */
+.sg-grid .slick-viewport{overscroll-behavior:contain}
+.sg-grid .slick-row{contain:layout style}
 .sg-grid .slick-header.ui-state-default,.sg-grid .slick-headerrow.ui-state-default{
   background:var(--color-bg-subtle);border-top:0;border-bottom:1px solid var(--color-line-default)}
 .sg-grid .slick-header-column.ui-state-default{height:calc(var(--ctl-h) + var(--space-2));line-height:calc(var(--ctl-h) + var(--space-2));

@@ -14,6 +14,7 @@ The app keeps one `<style>` (scanned by `colour_audit.py --strict`) and one `<sc
 | 2 | `vendor/slickgrid/dist/slick.grid.css` | New `<style id="vendor-slickgrid-css">` immediately after the main `</style>` | Unmodified vendor CSS; kept out of the audited block. Every colour it could paint is overridden by #1 (proven by the palette swap in `tools/grid_view_check.py`) |
 | 3 | `vendor/slickgrid/slickgrid.subset.min.js` | New `<script id="vendor-slickgrid">` immediately **before** `<script id="app-script">`, preceded by a `/* */` comment holding the full text of `vendor/slickgrid/LICENSE` and the version line from `SOURCE.md` | Must define `window.Slick` before the app script runs; MIT notice travels with the code |
 | 4 | `src/modules/grid-view/grid-view.js` | Top of `<script id="app-script">`, before the app's own code, as one commented section | Self-contained IIFE; defines `window.SRETGrid` only |
+| 4b | `src/modules/collections/collections.js` | Directly after #4, same script | Self-contained IIFE; defines `window.SRETCollections` only. Shared by the grid and the dashboard, so it must load before either calls it |
 | 5 | The adapters below | In `app-script`, beside the Workspace code (`setWorkspaceSection()`) | The only code that knows both the app's stores and the grid contract |
 
 Check before pasting: neither vendor file contains `</script` or `</style` (`tools/grid_view_assemble.py` asserts this for the demo and would fail the same way).
@@ -24,11 +25,11 @@ Check before pasting: neither vendor file contains `</script` or `</style` (`too
 |---|---|---|
 | App at base `81cfd7a` | 878,041 | 236,950 |
 | #2 + #3 vendored engine | 221,778 | 54,817 |
-| #1 + #4 wrapper | 28,376 | 9,232 |
-| Adapters (#5), estimate | about 6,000 | about 2,000 |
-| **Total added** | **about 256,000 (about 29%)** | about 65,000 |
+| #1 + #4 + #4b wrapper and shared collections | 39,550 | 12,319 |
+| Adapters (#5), estimate | about 8,000 | about 2,500 |
+| **Total added** | **about 269,000 (about 31%)** | about 69,500 |
 
-If Matt chooses the unminified vendor files (D-09 decision 2), #3 grows from 217,423 to 458,011 bytes and the total becomes about 497,000 (about 57%).
+If Matt chooses the unminified vendor files (D-09 decision 2), #3 grows from 217,423 to 458,011 bytes and the total becomes about 510,000 (about 58%).
 
 ## The contract the app calls
 
@@ -46,9 +47,14 @@ SRETGrid.open({
   onBack(),                    // after the screen has closed
   exportName,                  // .xlsx file name, no extension
   ensureXLSX,                  // pass the app's ensureXLSX
-  host                         // element the screen covers
+  host,                        // element the screen covers
+  collections: {               // optional: "Add to collection" for the selected rows
+    list(),                    //   [{id, label, count}]
+    onAssign(rowKeys, id),     //   message string, or {message, rows} to patch rows in place
+    onCreate(name)             //   optional: {id} or {error}; adds "New collection…"
+  }
 });
-SRETGrid.close(); SRETGrid.setRows(rows); SRETGrid.isOpen();
+SRETGrid.close(); SRETGrid.setRows(rows); SRETGrid.patchRows(rows); SRETGrid.isOpen();
 ```
 
 Types: dates are ISO `YYYY-MM-DD` strings in and out (shown `d-Mmm-yy`, the board format). Numbers are numbers; an empty number cell is `null`. Select values keep the option's own type (e.g. the numeric health codes stay numbers).
@@ -91,6 +97,24 @@ Today: `renderCollections()` (line ~7238) renders `.coll-row` buttons into `#col
 
 One row per annotation entry in that collection: milestone comment, row remark, dependency comment, note, and field edits (health, progress, date overrides). Columns as in the demo's annotation config: entry, kind, activity ID, activity name (read-only), comment or value and status (editable). `canEdit` refuses the value cell for entries whose value is not user-entered. Edits go back through the same setters the card and Notes panes use, so the annotation layer stays the only thing written.
 
+### Shared: add selected items to a user-defined collection
+
+One implementation, two callers. The rules (create a named collection, add items without duplicates, the user-facing sentence) live only in `SRETCollections` (`src/modules/collections/collections.js`). Neither the grid nor the dashboard re-implements them.
+
+- **Store.** One app global in the annotation layer, e.g. `let USER_COLLECTIONS=SRETCollections.newStore();`, persisted wherever `NOTE_COLLECTIONS` is: publish state, the model and annotations `.json` export, and the mount path. It never touches `TASKS` / `MILESTONES`.
+- **Item refs.** `'activity:'+activityId` for schedule activities and user milestones (so the same activity added from the board, the schedule grid or the user milestone grid is one member), `'note:'+nid` for notes, `'annot:'+entryId` for other annotation entries. Refs stay valid across re-imports because they are Activity IDs, the same key the annotation stores use.
+- **One app adapter**, called by both UIs:
+  ```js
+  function addToUserCollection(refs,id){
+    const r=SRETCollections.assign(USER_COLLECTIONS,id,refs);
+    if(!r.error) noteMarkup();              // same persistence path as other annotation edits
+    return SRETCollections.describe(r);     // the sentence both UIs show
+  }
+  ```
+- **Grid:** each `SRETGrid.open()` config passes `collections:{ list:()=>SRETCollections.list(USER_COLLECTIONS), onAssign:(keys,id)=>({message:addToUserCollection(keys.map(toRef),id), rows:...}), onCreate:name=>... }`, where `toRef` maps that grid's rowKey to the ref above. The prototype's `collOpt()` in `prototypes/grid-view/demo.template.html` is this adapter against a demo store.
+- **Dashboard:** the Notes list bulk bar (`#btn-notes-bulk-apply` and its status select, `renderNotes()`) gets the same "Add to collection" select beside the status action, calling `addToUserCollection(NOTES_SELECTED.map(n=>'note:'+n), id)`. A board-level selection, if P59 adds one, calls the same adapter with `'activity:'` refs.
+- **Relationship to week collections (P58, D-19a).** Today a note belongs to exactly one reporting-week collection (`note.period`). User-defined collections sit beside those and do not replace them: an item can be in any number of user collections and keeps its week. **[CONFIRM WITH MATT]** that this is the intended model, rather than moving notes between week collections.
+
 ### 3. Data & view: Schedule activities
 
 Add a "Schedule activities" row with a "View as table" button in the Data & view drawer's Sources tab (`setSettingsTab('sources')`), calling `openScheduleGrid()`. Schedule columns (ID, name, WBS, duration, dates, float, predecessors, successors, actual flag) are **read-only**; there is no `onAdd` and no `onDelete`, so those buttons do not render. Only annotation columns are editable (short title, health, comment), and their `onEdit` writes to the annotation stores, never to `TASKS` / `MILESTONES`. This keeps the three layers separate: schedule data is never mutated by the grid.
@@ -99,7 +123,7 @@ Where exactly the button goes in Data & view (Sources, or View controls) is a la
 
 ## Verification at merge
 
-1. `python3 tools/grid_view_check.py` still passes on `prototypes/grid-view/demo.html` (unchanged module).
+1. `python3 tools/grid_view_check.py` still passes on `prototypes/grid-view/demo.html` (unchanged modules). It covers scroll smoothness on 2,000 rows (every visible row present on fast scrolls, no engine wheel handling, transform positioning, per-step cost) and the collection flow (assign, idempotent re-assign, new collection, the same store across screens).
 2. `python3 tools/colour_audit.py --strict` and `python3 tools/palette_swap_check.py` on the app, with a grid open for the swap (add the open to the swap check's setup the way it opens the milestone dialog).
 3. `python3 tools/theme_check.py` on the app.
 4. A merge-stage probe that clicks each of the three real entry points, edits one value per entry point and asserts the value lands in the right store and survives `scheduleRerender(true)` and a publish round trip. That probe does not exist yet: it can only be written against the merged file.

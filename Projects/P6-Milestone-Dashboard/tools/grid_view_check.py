@@ -68,6 +68,13 @@ MUTATIONS = {
                     "el.addEventListener('keydown',function(e){ if(e.key==='Escape'){ args.grid.getEditorLock().commitCurrentEdit(); return; }"),
     "no-selection-count": ("grid.onSelectedRowsChanged.subscribe(updateStatus);", ""),
     "literal-colour": (".sg-grid .slick-row{background:var(--color-row-default-bg)}", ".sg-grid .slick-row{background:#ffffff}"),
+    # Scroll: the engine defaults that caused the reported stutter.
+    "scroll-defaults": ("enableMouseWheelScrollHandler:false,forceSyncScrolling:true,\n      rowTopOffsetRenderType:'transform',minRowBuffer:10",
+                        "enableMouseWheelScrollHandler:true,forceSyncScrolling:false,\n      rowTopOffsetRenderType:'top',minRowBuffer:3"),
+    # Collections: the shared rule (no duplicates) and the grid handing over the right keys.
+    "coll-duplicates": ("if(c.items.indexOf(r)>=0) already++;", "if(false) already++;"),
+    "coll-wrong-keys": ("var r=s.coll.onAssign(keys.slice(),id);", "var r=s.coll.onAssign(keys.slice(1),id);"),
+    "resize-kills-edit": ("if(grid.getEditorLock().isActive()){ pending=true; return; }", ""),
     "mutates-caller": ("dv.setItems((opts.rows||[]).map(function(r){ return Object.assign({},r); }),rowKey);",
                        "dv.setItems((opts.rows||[]),rowKey);"),
 }
@@ -103,6 +110,22 @@ TIMING = r"""
   document.body.offsetHeight;
   var filterMs=performance.now()-t1;
   window.__stress={openMs:openMs,filterMs:filterMs,filtered:SRETGrid._engine().dataView.getLength()};
+  // Scroll smoothness on the 2,000-row set (the reported stutter). Reopened unfiltered.
+  SRETGrid.close(); DEMO_OPEN('stress');
+  var g=SRETGrid._engine().grid, vp=document.querySelector('.sg-grid .slick-viewport');
+  var rh=g.getOptions().rowHeight, vh=vp.clientHeight;
+  function missing(){ var top=vp.scrollTop, a=Math.floor(top/rh), b=Math.min(1999,Math.floor((top+vh-1)/rh)), m=0;
+    for(var r=a;r<=b;r++) if(!g.getCellNode(r,1)) m++; return m; }
+  var steps=[], smallMiss=0;
+  for(var i=1;i<=150;i++){ vp.scrollTop=i*37; var t2=performance.now(); vp.dispatchEvent(new Event('scroll'));
+    document.body.offsetHeight; steps.push(performance.now()-t2); smallMiss+=missing(); }
+  steps.sort(function(x,y){ return x-y; });
+  var flingMiss=0; for(var j=1;j<=10;j++){ vp.scrollTop=j*vh*2.5; vp.dispatchEvent(new Event('scroll')); flingMiss+=missing(); }
+  vp.scrollTop=5000; vp.dispatchEvent(new Event('scroll'));
+  var before=vp.scrollTop; vp.dispatchEvent(new WheelEvent('wheel',{deltaY:53,deltaMode:0,bubbles:true,cancelable:true}));
+  var rowEl=(g.getCellNode(Math.floor(vp.scrollTop/rh),1)||{}).parentNode;
+  window.__scroll={p95Ms:steps[142],medianMs:steps[75],smallMiss:smallMiss,flingMiss:flingMiss,
+    wheelMoved:vp.scrollTop-before,transform:!!(rowEl&&rowEl.style.transform&&!rowEl.style.top)};
   SRETGrid.close();
   DEMO_OPEN('userms');
 })();
@@ -274,7 +297,7 @@ try{
   if(cellText(0,'id')!=='USR-001'){ header('id').click(); await sleep(20); }
 
   // inline edits N=3, one per value type
-  { const before=JSON.stringify(F.userms);
+  { const handed=window.DEMO_LAST_ROWS, before=JSON.stringify(handed);
     const cases=[[0,'name','Edited name one','Edited name one'],[1,'state','RISK','RISK'],[2,'progress','42',42],[3,'finish','2026-11-13','2026-11-13']];
     for(const [row,k,input,expect] of cases){
       const rk=eng().dataView.getItem(row).id;
@@ -285,7 +308,7 @@ try{
     }
     ok('edit: display updates (date shown d-Mmm-yy, select shows label)', cellText(3,'finish')==='13-Nov-26' && cellText(1,'state')==='At risk',
        [cellText(3,'finish'),cellText(1,'state')]);
-    ok('edit: caller row objects never mutated by the grid', JSON.stringify(F.userms)===before); }
+    ok('edit: caller row objects never mutated by the grid', JSON.stringify(handed)===before && handed.length===F.userms.length); }
 
   // Esc cancels N=3
   { const n0=count('onEdit'); const snaps=[];
@@ -301,6 +324,24 @@ try{
   // read-only column N=3
   { const res=[]; for(const r of [0,1,2]) res.push(await tryOpenEditor(r,'id'));
     ok('read-only column refuses edits (N=3)', res.every(x=>x===false), res); }
+
+  // a real resize (window or side panel) while a cell is being edited
+  // requestResize() is the observer's own path, called directly so the resize
+  // really lands mid-edit rather than by timing luck (headless frames are not reliable).
+  { const frames=async()=>{ eng().requestResize(); await sleep(30); };
+    const g=eng().grid, vp=$('.sg-grid .slick-viewport'), board=$('#demo-board'), res=[];
+    for(const [row,w] of [[8,'900px'],[9,''],[10,'700px']]){
+      g.setActiveCell(row,colIdx('comment')); key(g.getActiveCellNode(),'Enter'); await sleep(10);
+      const ed=$('.sg-editor'), txt='Kept through resize '+row, rk=eng().dataView.getItem(row).id;
+      ed.value=txt; board.style.width=w; await frames(); await sleep(20);
+      const same=$('.sg-editor')===ed;
+      if($('.sg-editor')) key($('.sg-editor'),'Enter'); await frames(); await sleep(20);
+      const e=lastLog('onEdit');
+      res.push({same:same,committed:!!e&&e.args[0]===rk&&e.args[2]===txt,
+                applied:Math.abs(vp.clientWidth-$('.sg-grid').clientWidth)<=20});
+    }
+    board.style.width=''; await frames(); await sleep(20);
+    ok('resize during an edit (N=3): editor and typed text kept, onEdit commits, resize applied after', res.every(x=>x.same&&x.committed&&x.applied), res); }
 
   // theme swap while editing
   { const g=eng().grid; g.setActiveCell(0,colIdx('name')); key(g.getActiveCellNode(),'Enter'); await sleep(10);
@@ -334,6 +375,48 @@ try{
     ok('Remove calls onDelete with the selected keys', count('onDelete')===d0+1 && JSON.stringify(e.args[0].slice().sort())===JSON.stringify(keys), [e&&e.args,keys]);
     ok('deleted rows leave the grid', visibleCount()===n0-2 && keys.every(k=>!eng().dataView.getItemById(k))); }
 
+  // collections: assign selected rows through the shared module
+  { const C=window.DEMO_COLL, sel=()=>$('[data-sg=collection]');
+    eng().grid.setSelectedRows([]); await sleep(10);
+    ok('collections: control disabled with nothing selected', !!sel() && sel().disabled);
+    const pick=async v=>{ sel().value=v; sel().dispatchEvent(new Event('change',{bubbles:true})); await sleep(20); };
+    const keyAt=r=>eng().dataView.getItem(r).id;
+    rowCheckbox(0).click(); rowCheckbox(1).click(); rowCheckbox(2).click(); await sleep(10);
+    const k3=[0,1,2].map(keyAt);
+    const opts=Array.from(sel().options).map(o=>o.textContent);
+    ok('collections: enabled with a selection; lists collections and New collection', !sel().disabled &&
+       opts.join('|')==='Add to collection|Site walk 3-Oct (0)|Owner review items (0)|New collection…', opts);
+    const a0=count('onAssign'); await pick('UC-001'); const e=lastLog('onAssign');
+    ok('collections: onAssign(selected keys, id) exact', count('onAssign')===a0+1 && JSON.stringify(e.args[0].slice().sort())===JSON.stringify(k3.slice().sort()) && e.args[1]==='UC-001', e&&e.args);
+    ok('collections: message from the shared describe()', $('[data-sg=msg]').textContent==='Added 3 items to "Site walk 3-Oct".', $('[data-sg=msg]').textContent);
+    ok('collections: Collections column updates in place for those rows (N=3)', [0,1,2].every(r=>cellText(r,'colls')==='Site walk 3-Oct') && cellText(3,'colls')==='',
+       [0,1,2,3].map(r=>cellText(r,'colls')));
+    ok('collections: selection kept after assigning', selCount()===3, selCount());
+    rowCheckbox(2).click(); rowCheckbox(3).click(); await sleep(10);
+    await pick('UC-001');
+    const uc1=C.list.find(c=>c.id==='UC-001');
+    ok('collections: re-assigning is idempotent (2 already in, 1 new, no duplicates)', $('[data-sg=msg]').textContent==='Added 1 item to "Site walk 3-Oct". 2 items were already in it.' &&
+       uc1.items.length===4 && new Set(uc1.items).size===4, [$('[data-sg=msg]').textContent,uc1.items]);
+    // new collection panel
+    await pick('__new__'); const panel=$('[data-sg=newcoll]'), nm=()=>$('[data-sg=newcoll-name]');
+    ok('new collection: panel opens with the name field focused', !panel.hidden && document.activeElement===nm());
+    const c0=C.list.length;
+    nm().value='  '; key(nm(),'Enter'); await sleep(10);
+    const errEmpty=$('[data-sg=newcoll-err]').textContent;
+    nm().value='site WALK 3-oct'; key(nm(),'Enter'); await sleep(10);
+    const errDup=$('[data-sg=newcoll-err]').textContent;
+    ok('new collection: empty and duplicate (case-insensitive) names refused, panel stays open', errEmpty==='Enter a name for the collection.' &&
+       /already exists/.test(errDup) && !panel.hidden && C.list.length===c0, [errEmpty,errDup]);
+    key(nm(),'Escape'); await sleep(10);
+    ok('new collection: Esc cancels, nothing created', panel.hidden && C.list.length===c0);
+    await pick('__new__'); nm().value='Punch list'; $('[data-sg=newcoll-create]').click(); await sleep(20);
+    const pl=C.list.find(c=>c.name==='Punch list');
+    ok('new collection: Create makes it and adds the selected rows', panel.hidden && !!pl && pl.items.length===3 &&
+       Array.from(sel().options).some(o=>o.textContent==='Punch list (3)'), pl&&pl.items);
+    ok('collections: a row in two collections shows both', cellText(0,'colls')==='Site walk 3-Oct, Punch list', cellText(0,'colls'));
+    R.notes.swap_newcoll=(await (async()=>{ await pick('__new__'); const x=swapEscapes('light/new-collection'); key(nm(),'Escape'); await sleep(10); return x; })());
+    eng().grid.setSelectedRows([]); await sleep(10); }
+
   // idle palette swap, both themes, and theming differs between themes
   { R.notes.swap_idle_light=swapEscapes('light/idle');
     const bgL=getComputedStyle($('.sg-grid .slick-row')).backgroundColor, hdL=getComputedStyle($('.sg-bar')).backgroundColor, txL=getComputedStyle($('.sg-grid .slick-cell')).color;
@@ -342,8 +425,8 @@ try{
     const bgD=getComputedStyle($('.sg-grid .slick-row')).backgroundColor, hdD=getComputedStyle($('.sg-bar')).backgroundColor, txD=getComputedStyle($('.sg-grid .slick-cell')).color;
     document.documentElement.setAttribute('data-theme','light'); await sleep(10);
     ok('light and dark both themed (row, toolbar, text differ)', bgL!==bgD && hdL!==hdD && txL!==txD, {bgL,bgD,hdL,hdD,txL,txD});
-    const esc=[].concat(R.notes.swap_idle_light,R.notes.swap_idle_dark,R.notes.swap_edit_light,R.notes.swap_edit_dark,R.notes.swap_confirm);
-    ok('palette swap: every painted colour in the screen moves with --pal-* (idle, editing, confirm; both themes)', esc.length===0, esc.slice(0,12)); }
+    const esc=[].concat(R.notes.swap_idle_light,R.notes.swap_idle_dark,R.notes.swap_edit_light,R.notes.swap_edit_dark,R.notes.swap_confirm,R.notes.swap_newcoll);
+    ok('palette swap: every painted colour in the screen moves with --pal-* (idle, editing, confirm, new collection; both themes)', esc.length===0, esc.slice(0,12)); }
 
   // back
   { const b0=count('onBack'); const launcher=$('#go-userms'); launcher.focus();
@@ -375,6 +458,15 @@ try{
     const rk=eng().dataView.getItem(1).id; await editCell(1,'health','2'); const e=lastLog('onEdit');
     ok('sched: annotation column (health) edits, numeric option value kept', e.args[0]===rk && e.args[1]==='health' && e.args[2]===2, e.args);
     ok('sched: health shows its label', cellText(1,'health')==='At risk', cellText(1,'health'));
+    // the same store serves this screen: add two schedule rows to the collection made on User milestones
+    eng().grid.setSelectedRows([0,1]); await sleep(10);
+    const s1=$('[data-sg=collection]'); const pl0=window.DEMO_COLL.list.find(c=>c.name==='Punch list');
+    const plId=pl0.id, before=pl0.items.length;
+    s1.value=plId; s1.dispatchEvent(new Event('change',{bubbles:true})); await sleep(20);
+    ok('collections: shared store across screens (schedule rows join the collection made on User milestones)',
+       pl0.items.length===before+2 && pl0.items.indexOf('activity:'+eng().dataView.getItem(0).id)>=0 &&
+       Array.from(s1.options).some(o=>o.textContent==='Punch list ('+(before+2)+')'), pl0.items);
+    eng().grid.setSelectedRows([]); await sleep(10);
     // export visible rows after a filter and a sort
     await setFilter('wbs','Key'); header('finish').click(); await sleep(20);
     const vis=visibleCount();
@@ -394,6 +486,12 @@ try{
     ok('stress: timing clock is real (advanced during the timed work)', T.openMs>0 && T.filterMs>0, T);
     ok('stress: opens under '+__OPEN__+' ms (real clock, parse-time run)', T.openMs<__OPEN__, Math.round(T.openMs));
     ok('stress: filter over 2,000 rows under '+__FILTER__+' ms', T.filterMs<__FILTER__ && T.filtered<2000 && T.filtered>0, T);
+    const SC=window.__scroll; R.notes.scroll_step_p95_ms=+SC.p95Ms.toFixed(2);
+    ok('scroll: fast scrolls (2.5 viewports per jump, N=10) show every visible row immediately', SC.flingMiss===0, SC.flingMiss);
+    ok('scroll: small steps (N=150) never leave a visible row blank', SC.smallMiss===0, SC.smallMiss);
+    ok('scroll: the grid does not move scrollTop itself on a wheel event (native scroll only)', SC.wheelMoved===0, SC.wheelMoved);
+    ok('scroll: rows positioned with transforms (compositor), not top', SC.transform);
+    ok('scroll: per-step render cost p95 under 8 ms (half a 60 Hz frame)', SC.p95Ms<8, SC.p95Ms);
     SRETGrid.close(); DEMO_OPEN('stress'); await sleep(20);
     ok('stress: 2,000 rows loaded', visibleCount()===2000);
     const domRows=$$('.sg-grid .slick-row').length; R.notes.dom_rows_2000=domRows;
@@ -402,6 +500,18 @@ try{
     const lastId=eng().dataView.getItem(1999).id;
     ok('stress: last row reachable by scrolling', $$('.sg-grid .slick-cell.l1').some(c=>c.textContent===lastId), lastId);
     SRETGrid.close(); }
+  // shared module, direct
+  { const M=SRETCollections, st=M.newStore();
+    const a=M.create(st,'  Weekly   review ','2026-09-27T00:00:00Z');
+    ok('module: name trimmed and spaces collapsed; ids sequential', a.collection.name==='Weekly review' && a.collection.id==='UC-001');
+    ok('module: 61-character name refused', !!M.create(st,'x'.repeat(61)).error);
+    const r=M.assign(st,'UC-001',['a','a','b']);
+    ok('module: duplicate refs in one call count once', r.added===2 && r.already===0 && st.list[0].items.length===2, r);
+    const u=M.unassign(st,'UC-001',['a','zz']);
+    ok('module: unassign removes only members', u.removed===1 && st.list[0].items.join()==='b', u);
+    ok('module: unknown collection is an error, not a throw', !!M.assign(st,'UC-999',['c']).error);
+    const msgs=[M.describe(r),M.describe(u),M.describe(M.assign(st,'UC-001',['b']))];
+    ok('module: user-facing sentences have no em or en dashes', msgs.every(m=>!/[\u2013\u2014]/.test(m)), msgs); }
 }catch(err){ ok('probe ran without throwing', false, String(err&&err.stack||err)); }
 ok('no uncaught page errors', window.__errs.length===0, window.__errs);
 const pre=document.createElement('pre'); pre.id='grid-view-out'; pre.textContent=JSON.stringify(R); document.body.appendChild(pre);

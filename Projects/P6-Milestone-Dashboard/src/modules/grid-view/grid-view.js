@@ -6,13 +6,19 @@
      SRETGrid.open({
        title, columns:[{key,label,type,editable,options,width}], rows, rowKey,
        editable, onEdit(rowKey,key,value), onAdd(), onDelete(rowKeys),
-       onBack(), exportName, ensureXLSX, host, canEdit(rowKey,key)
+       onBack(), exportName, ensureXLSX, host, canEdit(rowKey,key),
+       collections:{ list(), onAssign(rowKeys,id), onCreate(name) }
      })
      SRETGrid.close()   SRETGrid.setRows(rows)   SRETGrid.isOpen()
    Return false from onEdit to refuse a value (the cell reverts), from
    onDelete to keep the rows. onAdd returns the new row object (with its
    rowKey) or nothing to add no row. canEdit, optional, refuses an edit on
    one row where the column is otherwise editable.
+   collections, optional, adds "Add to collection" for the selected rows.
+   list() returns [{id,label,count}]; onAssign returns a message string or
+   {message, rows} (rows are patched in place, selection kept); onCreate,
+   optional, returns {id} or {error}. The rules live in the caller's shared
+   SRETCollections module (src/modules/collections/), never here.
 
    Data in, callbacks out. This module never reads or writes an app global.
    Rows are copied on open, so an edit reaches the caller only through
@@ -200,6 +206,7 @@
     s.countEl.textContent=shown===total?(total+(total===1?' row':' rows')):(shown+' of '+total+' rows');
     s.selEl.textContent=sel?(sel+' selected'):'';
     if(s.delBtn) s.delBtn.disabled=!sel;
+    if(s.collSel) s.collSel.disabled=!sel;
   }
   function selectedKeys(){
     var s=S;
@@ -267,6 +274,66 @@
     s.dv.refresh();
   }
 
+  // ---------- collections ----------
+  function fillCollections(){
+    var s=S, sel=s.collSel; if(!sel) return;
+    sel.innerHTML='';
+    sel.appendChild(h('option',{value:'',text:'Add to collection'}));
+    (s.coll.list()||[]).forEach(function(c){
+      sel.appendChild(h('option',{value:c.id,text:c.label+(c.count!=null?' ('+c.count+')':'')}));
+    });
+    if(typeof s.coll.onCreate==='function') sel.appendChild(h('option',{value:'__new__',text:'New collection…'}));
+    sel.value='';
+  }
+  function patchRows(rows){
+    var s=S; if(!s) return;
+    s.dv.beginUpdate();
+    (rows||[]).forEach(function(r){
+      var k=r&&r[s.rowKey], cur=k!=null&&s.dv.getItemById(k);
+      if(cur) s.dv.updateItem(k,Object.assign({},cur,r));
+    });
+    s.dv.endUpdate();
+  }
+  function doAssign(id){
+    var s=S, keys=selectedKeys(); if(!keys.length||!id) return;
+    var r=s.coll.onAssign(keys.slice(),id);
+    if(r&&typeof r==='object'){ if(r.rows) patchRows(r.rows); r=r.message; }
+    s.msgEl.textContent=typeof r==='string'?r:'';
+    fillCollections();
+    updateStatus();
+  }
+  function hideNewColl(){
+    var s=S; if(!s) return;
+    s.newCollEl.hidden=true; s.newCollEl.innerHTML='';
+  }
+  function showNewColl(){
+    var s=S; if(!selectedKeys().length) return;
+    hideConfirm();
+    var el=s.newCollEl; el.innerHTML='';
+    var inp=h('input',{type:'text','class':'sg-search sg-newcoll-name','aria-label':'New collection name',
+                       placeholder:'Collection name','data-sg':'newcoll-name',maxlength:'60'});
+    var err=h('p',{'class':'sg-newcoll-err',role:'alert','data-sg':'newcoll-err'});
+    var cancel=h('button',{type:'button','class':'sg-btn',text:'Cancel',on:{click:function(){ hideNewColl(); s.collSel.focus(); }}});
+    var go=h('button',{type:'button','class':'sg-btn sg-btn--primary','data-sg':'newcoll-create',text:'Create and add',
+      on:{click:create}});
+    function create(){
+      var r=s.coll.onCreate(inp.value)||{};
+      if(r.error||!r.id){ err.textContent=r.error||'The collection could not be created.'; inp.focus(); return; }
+      hideNewColl(); fillCollections(); doAssign(r.id); s.collSel.focus();
+    }
+    inp.addEventListener('keydown',function(e){
+      if(e.key==='Enter'){ e.preventDefault(); create(); }
+      else if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); hideNewColl(); s.collSel.focus(); }
+    });
+    var n=selectedKeys().length;
+    el.appendChild(h('p',{'class':'sg-confirm-msg',text:'Add '+n+(n===1?' selected row':' selected rows')+' to a new collection.'}));
+    el.appendChild(h('div',{'class':'sg-newcoll-row'},[inp]));
+    el.appendChild(err);
+    el.appendChild(h('div',{'class':'sg-confirm-btns'},[cancel,go]));
+    el.hidden=false;
+    inp.focus();
+  }
+
   // ---------- export ----------
   function exportRows(){
     var s=S, o=s.opts;
@@ -315,6 +382,8 @@
     var gridEditable=!!opts.editable;
     var canAdd=gridEditable&&typeof opts.onAdd==='function';
     var canDel=gridEditable&&typeof opts.onDelete==='function';
+    var coll=opts.collections&&typeof opts.collections.list==='function'&&typeof opts.collections.onAssign==='function'
+             ?opts.collections:null;
 
     var host=opts.host||document.body;
     var fixed=host===document.body;
@@ -327,15 +396,18 @@
     var exp=h('button',{type:'button','class':'sg-btn','data-sg':'export',text:'Export .xlsx'});
     var add=canAdd?h('button',{type:'button','class':'sg-btn sg-btn--primary','data-sg':'add',text:'Add row'}):null;
     var del=canDel?h('button',{type:'button','class':'sg-btn','data-sg':'delete',text:'Delete selected',disabled:true}):null;
+    var collSel=coll?h('select',{'class':'sg-select','data-sg':'collection','aria-label':'Add the selected rows to a collection',
+                                  title:'Add the selected rows to a collection',disabled:true}):null;
     var msg=h('span',{'class':'sg-msg',role:'status','aria-live':'polite','data-sg':'msg'});
     var bar=h('div',{'class':'sg-bar'},[
       h('div',{'class':'sg-bar-lead'},[back,title]),
-      h('div',{'class':'sg-bar-tools'},[search,h('span',{'class':'sg-counts'},[count,selc]),msg,exp,add,del])
+      h('div',{'class':'sg-bar-tools'},[search,h('span',{'class':'sg-counts'},[count,selc]),msg,collSel,exp,add,del])
     ]);
     var confirm=h('div',{'class':'sg-confirm',role:'alertdialog','aria-label':'Confirm remove','data-sg':'confirm',hidden:true});
+    var newColl=h('div',{'class':'sg-newcoll',role:'group','aria-label':'New collection','data-sg':'newcoll',hidden:true});
     var gridEl=h('div',{'class':'sg-grid','data-sg':'grid'});
     var screen=h('section',{'class':'sg-screen'+(fixed?' sg-screen--fixed':''),role:'region','aria-label':opts.title||'Table'},
-                 [bar,confirm,gridEl]);
+                 [bar,confirm,newColl,gridEl]);
     host.appendChild(screen);
 
     var rowH=ctlHeight(screen);
@@ -353,14 +425,24 @@
       editable:gridEditable,autoEdit:false,enableCellNavigation:true,asyncEditorLoading:false,
       enableColumnReorder:false,rowHeight:rowH,headerRowHeight:rowH+8,showHeaderRow:true,
       explicitInitialization:true,forceFitColumns:false,multiColumnSort:false,
-      editorCellNavOnLRKeys:false,enableTextSelectionOnCells:true
+      editorCellNavOnLRKeys:false,enableTextSelectionOnCells:true,
+      // Scroll smoothness (measured in tools/grid_view_check.py). The engine's
+      // own wheel handler exists for frozen columns, which we do not use; left
+      // on, it moves scrollTop in whole-row steps against the browser's native
+      // scroll, and the two fight on every wheel tick. Sync rendering stops a
+      // fast scroll showing blank rows for a frame while the throttle waits,
+      // transforms keep row moves on the compositor, and the larger buffer
+      // keeps rows ready just outside the viewport.
+      enableMouseWheelScrollHandler:false,forceSyncScrolling:true,
+      rowTopOffsetRenderType:'transform',minRowBuffer:10
     });
     grid.setSelectionModel(new root.Slick.RowSelectionModel({selectActiveRow:false}));
     grid.registerPlugin(check);
 
     S={opts:opts,rowKey:rowKey,cols:cols,colByKey:colByKey,filters:{},quick:'',grid:grid,dv:dv,
        screen:screen,host:host,countEl:count,selEl:selc,msgEl:msg,delBtn:del,expBtn:exp,searchEl:search,
-       confirmEl:confirm,prev:null,returnFocus:document.activeElement,ro:null};
+       confirmEl:confirm,prev:null,returnFocus:document.activeElement,ro:null,
+       coll:coll,collSel:collSel,newCollEl:newColl};
     cols.forEach(function(c){ S.filters[c.key]=''; });
 
     grid.onHeaderRowCellRendered.subscribe(function(e,args){
@@ -413,12 +495,42 @@
     search.addEventListener('input',function(){ S.quick=search.value; dv.refresh(); });
     exp.addEventListener('click',exportRows);
     if(add) add.addEventListener('click',doAdd);
-    if(del) del.addEventListener('click',showConfirm);
+    if(del) del.addEventListener('click',function(){ hideNewColl(); showConfirm(); });
+    if(collSel){
+      fillCollections();
+      collSel.addEventListener('change',function(){
+        var v=collSel.value; collSel.value='';
+        if(v==='__new__') showNewColl(); else if(v) doAssign(v);
+      });
+    }
     screen.addEventListener('keydown',function(e){
       if(e.key==='Escape' && !confirm.hidden){ e.stopPropagation(); hideConfirm(); if(del) del.focus(); }
     });
     if(root.ResizeObserver){
-      S.ro=new root.ResizeObserver(function(){ if(S) S.grid.resizeCanvas(); });
+      // Resize on the next frame and only when the box really changed. Calling
+      // resizeCanvas() inside the observer callback changes layout in the same
+      // pass, which loops the observer ("ResizeObserver loop completed").
+      // The observer always reports once on observe(); the grid was sized at
+      // init, so seed the last size and let that first report be a no-op.
+      var box=gridEl.getBoundingClientRect(), lastW=box.width, lastH=box.height, timer=0, pending=false;
+      // resizeCanvas() discards an open editor and the text typed into it
+      // (measured: in every direction). A resize that lands mid-edit waits
+      // until the editor closes, then runs.
+      var doResize=function(){
+        timer=0; if(!S||S.grid!==grid) return;
+        if(grid.getEditorLock().isActive()){ pending=true; return; }
+        pending=false; grid.resizeCanvas();
+      };
+      // A timer, not requestAnimationFrame: it still runs outside the observer
+      // callback, and it fires even when no frame is being drawn.
+      var schedule=function(){ if(timer) root.clearTimeout(timer); timer=root.setTimeout(doResize,0); };
+      grid.onBeforeCellEditorDestroy.subscribe(function(){ if(pending) schedule(); });
+      S.requestResize=schedule;
+      S.ro=new root.ResizeObserver(function(entries){
+        var r=entries[0]&&entries[0].contentRect; if(!r||(r.width===lastW&&r.height===lastH)) return;
+        lastW=r.width; lastH=r.height;
+        schedule();
+      });
       S.ro.observe(gridEl);
     }
     updateStatus();
@@ -449,9 +561,11 @@
     close:function(){ close(); },
     isOpen:function(){ return !!S; },
     setRows:setRows,
+    patchRows:patchRows,
     exportVisible:function(){ return S?exportRows():Promise.resolve(null); },
     // Test hook only: the engine objects of the open screen.
-    _engine:function(){ return S?{grid:S.grid,dataView:S.dv}:null; },
+    // requestResize is the exact path a ResizeObserver report takes.
+    _engine:function(){ return S?{grid:S.grid,dataView:S.dv,requestResize:S.requestResize}:null; },
     _fmtDate:fmtDate
   };
   root.SRETGrid=api;

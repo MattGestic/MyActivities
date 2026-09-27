@@ -46,14 +46,16 @@ Excluded on licence before measuring: **Handsontable** (registry licence field "
 
 Assumption flagged: accessibility and capability rows come from the shipped source (grep of roles, attributes, option names) plus the libraries' documented options, not from an assistive-technology test. A screen-reader pass on the prototype is still owed.
 
+**Scroll finding (Matt's review, 2026-09-27: "not smooth, stutters").** Two SlickGrid defaults caused it, both measured on the 2,000-row set before the fix. (1) `enableMouseWheelScrollHandler` (on by default, meant for frozen columns) moved `scrollTop` itself on each wheel tick, in whole-row steps and against the native scroll (one downward tick moved it -11 px). (2) The 10 ms scroll-render throttle left 285 visible rows blank across 10 fast scrolls. The wrapper now turns the handler off, renders synchronously, positions rows with transforms and keeps a larger row buffer: 0 blank rows, 0 wheel interference, p95 render cost under 2 ms per step. `tools/grid_view_check.py` asserts all four. Anyone switching to Tabulator should re-run the same scroll assertions, since they test behaviour, not SlickGrid options.
+
 ## Size and licence impact on the single file
 
 | | Bytes | Gzip |
 |---|---|---|
 | App today (`src/milestone-dashboard.html`, base `81cfd7a`) | 878,041 | 236,950 |
 | Added: vendored engine (min JS + structural CSS) | 221,778 | 54,817 |
-| Added: our wrapper (`grid-view.js` + `grid-view.css`) | 28,376 | 9,232 |
-| **Total added** | **250,154 (about 28% of today's file)** | 63,285 |
+| Added: our wrapper and the shared collections module (`grid-view.js`, `grid-view.css`, `collections.js`) | 39,550 | 12,319 |
+| **Total added (before app adapters)** | **261,328 (about 30% of today's file)** | 67,136 |
 
 Tabulator for comparison would add about 477 KB plus a smaller wrapper, roughly 57%.
 
