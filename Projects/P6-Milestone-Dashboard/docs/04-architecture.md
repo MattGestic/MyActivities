@@ -69,7 +69,7 @@ Two sides plus the filter bar, since P56 (D-20, directed by Matt 2026-09-25/26).
 
 | Side | Element | Opened from | Scope |
 |---|---|---|---|
-| Workspace (left): your annotations | `#ws-rail` (always visible, full height, slate) + `#ws-panel` | Rail icons; `setWorkspaceSection()` / `toggleWorkspace()` | Comments & markups (annotation layers, the three exports, Reset row marks), User milestones. Notes (D-19) and Lists (D-06) join the rail when built |
+| Workspace (left): your annotations | `#ws-rail` (always visible, full height, slate) + `#ws-panel` | Rail icons; `setWorkspaceSection()` / `toggleWorkspace()` | Notes (D-19/D-19a: `NOTES` with status and #ID links, grouped into collections by reporting period, `NOTE_COLLECTIONS` details, bulk status, collection export), Comments & markups (annotation layers, the three exports, Reset row marks), User milestones. Lists (D-06) joins the rail when built |
 | Data & view (right): schedule and format | `#settings-drawer` with a vertical rail `.sd-rail` | Header Colour & theme (`toggleFilterBar()`, opens View controls) and Import & settings (`toggleSettingsDrawer()`) | View controls (the former Customize sidebar, `#filter-bar` moved in), Sources (schedules only), Import, Data settings, Diagnostics, Help, About |
 | Top filter bar | `#top-filter-bar` | Always shown; collapsible from its own control | Row filtering |
 

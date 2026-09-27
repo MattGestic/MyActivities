@@ -41,7 +41,7 @@ Any proposal that breaks one of these conflicts with `docs/04-architecture.md`. 
 - The Activity ID autocomplete uses `onmousedown` + `event.preventDefault()`. Load-bearing. Removing it reintroduces a focus-stealing bug.
 - Call `scheduleRerender(true)`, not `rerender(true)`, after a user action needing a rebuild.
 - Sticky corner search and Top Filter Bar Title field are two-way synced.
-- Two sides plus the filter bar (P56, D-20, directed by Matt): **Workspace** (left rail `#ws-rail` + `#ws-panel`, the annotation layer: comments and markups, user milestones) and **Data & view** (right, `#settings-drawer`: View controls, Sources, Import, Data settings, Diagnostics, Help, About), plus the **Top filter bar**. Annotation content belongs on the left, schedule and format content on the right. Do not conflate them. `toggleFilterBar()` / `toggleSettingsDrawer()` / `setSettingsTab()` / `setWorkspaceSection()` are the entry points; old ids are kept.
+- Two sides plus the filter bar (P56, D-20, directed by Matt): **Workspace** (left rail `#ws-rail` + `#ws-panel`, the annotation layer: notes, comments and markups, user milestones) and **Data & view** (right, `#settings-drawer`: View controls, Sources, Import, Data settings, Diagnostics, Help, About), plus the **Top filter bar**. Annotation content belongs on the left, schedule and format content on the right. Do not conflate them. `toggleFilterBar()` / `toggleSettingsDrawer()` / `setSettingsTab()` / `setWorkspaceSection()` are the entry points; old ids are kept.
 
 ## Versioning
 

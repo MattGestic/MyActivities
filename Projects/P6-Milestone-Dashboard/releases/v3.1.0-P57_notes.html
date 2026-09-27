@@ -630,40 +630,31 @@ body.print-mode{margin-left:0}
   .is-landed{animation:none;outline-color:var(--color-accent)}
 }
 
-/* ===== D-19 Notes (Workspace section), revised at D-19a ===== */
-.note-tabs{display:flex;gap:var(--space-1);padding:var(--space-4) var(--space-6) 0;border-bottom:1px solid var(--color-line-default)}
-.note-tab{height:var(--ctl-h);padding:0 var(--space-5);border:0;border-bottom:2px solid transparent;background:none;font:inherit;font-size:var(--text-md);font-weight:600;color:var(--color-text-muted);cursor:pointer}
-.note-tab.is-on{color:var(--color-text-primary);border-bottom-color:var(--color-accent)}
+/* ===== D-19 Notes (Workspace section) ===== */
 .note-tools{display:flex;flex-direction:column;gap:var(--space-3);padding:var(--space-5) var(--space-6);border-bottom:1px solid var(--color-line-default)}
-.note-tool-row{display:flex;gap:var(--space-3);align-items:center;min-width:0}
-.note-sel{height:var(--ctl-h);padding:0 var(--space-3);border:1px solid var(--color-input-border);border-radius:var(--radius-ctl);font:inherit;font-size:var(--text-sm);min-width:0}
-.note-coll-sel{flex:1 1 auto}
-.note-coll-sel.is-dim{opacity:.55}
-.note-seg-btn{height:var(--ctl-h);padding:0 var(--ctl-pad-x);border:1px solid var(--color-btn-secondary-outline);border-radius:var(--radius-ctl);background:var(--color-btn-secondary-bg);color:var(--color-text-primary);font:inherit;font-size:var(--text-sm);cursor:pointer}
-.note-seg-btn.is-on{background:var(--color-accent);border-color:var(--color-accent);color:var(--color-text-on-accent)}
-.note-search{flex:1 1 auto;min-width:0;height:var(--ctl-h);padding:0 var(--ctl-pad-x);border:1px solid var(--color-input-border);border-radius:var(--radius-ctl);font:inherit;font-size:var(--text-sm)}
+.note-seg{display:inline-flex;align-self:flex-start;border:1px solid var(--color-btn-secondary-outline);border-radius:var(--radius-ctl);overflow:hidden}
+.note-seg-btn{height:var(--ctl-h);padding:0 var(--ctl-pad-x);border:0;background:var(--color-btn-secondary-bg);color:var(--color-text-primary);font:inherit;font-size:var(--text-sm);cursor:pointer}
+.note-seg-btn+.note-seg-btn{border-left:1px solid var(--color-btn-secondary-outline)}
+.note-seg-btn.is-on{background:var(--color-accent);color:var(--color-text-on-accent)}
+.note-chips{display:flex;flex-wrap:wrap;gap:var(--ctl-gap-tight)}
+.note-chip{height:var(--ctl-h);padding:0 var(--ctl-pad-x);border-radius:var(--radius-pill);border:1px solid var(--color-btn-secondary-outline);background:var(--color-btn-secondary-bg);color:var(--color-text-primary);font:inherit;font-size:var(--text-sm);cursor:pointer}
+.note-chip.is-on{background:var(--color-accent);border-color:var(--color-accent);color:var(--color-text-on-accent)}
+.note-search{height:var(--ctl-h);padding:0 var(--ctl-pad-x);border:1px solid var(--color-input-border);border-radius:var(--radius-ctl);font:inherit;font-size:var(--text-sm)}
 .note-composer{display:flex;flex-direction:column;gap:var(--space-3);padding:var(--space-5) var(--space-6);border-bottom:1px solid var(--color-line-default)}
-.note-composer textarea,.note-edit textarea,.coll-form textarea{width:100%;min-height:64px;resize:vertical;padding:var(--space-3) var(--space-4);border:1px solid var(--color-input-border);border-radius:var(--radius-ctl);font:inherit;font-size:var(--text-md);line-height:1.5}
+.note-composer textarea,.note-edit textarea{width:100%;min-height:64px;resize:vertical;padding:var(--space-3) var(--space-4);border:1px solid var(--color-input-border);border-radius:var(--radius-ctl);font:inherit;font-size:var(--text-md);line-height:1.5}
 .note-composer-foot,.note-edit-foot{display:flex;align-items:center;justify-content:space-between;gap:var(--space-3)}
 .note-hint{font-size:var(--text-xs);color:var(--color-text-muted)}
-.note-bulk{display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;padding:var(--space-4) var(--space-6);border-bottom:1px solid var(--color-line-default);background:var(--color-bg-subtle)}
-.note-bulk-all{display:flex;align-items:center;gap:var(--space-2);font-size:var(--text-sm);font-weight:600;color:var(--color-text-primary);cursor:pointer}
-.note-bulk-count{flex:1 1 auto;font-size:var(--text-xs);color:var(--color-text-muted)}
 .notes-list{display:flex;flex-direction:column;gap:var(--space-4);padding:var(--space-5) var(--space-6)}
 .notes-empty{font-size:var(--text-sm);color:var(--color-text-muted)}
 .note-card{border:1px solid var(--color-line-default);border-radius:var(--radius-md);background:var(--color-bg-elevated);padding:var(--space-4) var(--space-5);display:flex;flex-direction:column;gap:var(--space-3)}
-.note-card.is-selected{border-color:var(--color-accent);box-shadow:0 0 0 1px var(--color-accent)}
+.note-card.is-older{opacity:.85}
 .note-head{display:flex;align-items:center;gap:var(--space-3)}
-.note-pick{margin:0;flex:0 0 auto;cursor:pointer}
 .note-meta{font-size:var(--text-xs);color:var(--color-text-muted);flex:1 1 auto;min-width:0}
-.note-status{flex:0 0 auto;margin-left:auto;height:22px;padding:0 var(--space-4);border-radius:var(--radius-pill);border:1px solid transparent;font:inherit;font-size:var(--text-xs);font-weight:700;cursor:pointer}
-.st-note{background:transparent;color:var(--color-text-muted);border-color:var(--color-line-default)}
-.st-open{background:var(--color-label-neutral-bg);color:var(--color-text-primary);border-color:var(--color-line-default)}
-.st-sent{background:var(--color-accent-tint-bg);color:var(--color-accent-ink)}
-.st-review{background:color-mix(in srgb,var(--color-status-track) 14%,var(--color-bg-elevated));color:var(--color-text-emphasis)}
-.st-outstanding{background:var(--color-notice-bg);color:var(--color-notice-ink)}
-.st-done{background:var(--color-ready-tint-bg);color:var(--color-ok-text)}
-.st-closed{background:var(--color-bg-subtle);color:var(--color-text-muted);border-color:var(--color-line-default)}
+.note-status{height:22px;padding:0 var(--space-4);border-radius:var(--radius-pill);border:1px solid transparent;font:inherit;font-size:var(--text-xs);font-weight:700;cursor:pointer}
+.note-status.st-open{background:var(--color-label-neutral-bg);color:var(--color-text-primary);border-color:var(--color-line-default)}
+.note-status.st-sent{background:var(--color-accent-tint-bg);color:var(--color-accent-ink)}
+.note-status.st-pending{background:var(--color-notice-bg);color:var(--color-notice-ink)}
+.note-status.st-closed{background:var(--color-ready-tint-bg);color:var(--color-ok-text)}
 .note-body{font-size:var(--text-md);line-height:1.55;color:var(--color-text-primary);word-break:break-word}
 .note-body p{margin:0}
 .note-body ul{margin:0;padding-left:var(--space-6)}
@@ -675,22 +666,6 @@ body.print-mode{margin-left:0}
 .note-act:hover{color:var(--color-text-primary)}
 .note-act.is-danger:hover{color:var(--color-crit-text)}
 .note-edit{display:flex;flex-direction:column;gap:var(--space-3)}
-.coll-list{display:flex;flex-direction:column;padding:var(--space-4) var(--space-6);gap:var(--space-2);border-bottom:1px solid var(--color-line-default)}
-.coll-row{display:flex;flex-direction:column;gap:var(--space-1);width:100%;text-align:left;padding:var(--space-4) var(--space-5);border:1px solid var(--color-line-default);border-radius:var(--radius-md);background:var(--color-bg-elevated);font:inherit;color:var(--color-text-primary);cursor:pointer}
-.coll-row:hover{border-color:var(--color-btn-secondary-outline)}
-.coll-row.is-on{border-color:var(--color-accent);box-shadow:0 0 0 1px var(--color-accent)}
-.coll-row-name{font-size:var(--text-md);font-weight:600}
-.coll-row-sum{font-size:var(--text-xs);color:var(--color-text-muted)}
-.coll-tag{display:inline-block;margin-left:var(--space-2);padding:0 var(--space-3);border-radius:var(--radius-pill);background:var(--color-accent-tint-bg);color:var(--color-accent-ink);font-size:var(--text-xs);font-weight:700}
-.coll-detail{padding:var(--space-5) var(--space-6);display:flex;flex-direction:column;gap:var(--space-4)}
-.coll-form{display:grid;grid-template-columns:90px minmax(0,1fr);gap:var(--space-3) var(--space-4);align-items:center}
-.coll-form label{font-size:var(--text-sm);font-weight:600;color:var(--color-text-primary)}
-.coll-form input{height:var(--ctl-h);padding:0 var(--ctl-pad-x);border:1px solid var(--color-input-border);border-radius:var(--radius-ctl);font:inherit;font-size:var(--text-sm);min-width:0}
-.coll-form .coll-form-wide{grid-column:1 / -1}
-.coll-counts{display:flex;flex-wrap:wrap;gap:var(--space-2)}
-.coll-count{height:20px;display:inline-flex;align-items:center;padding:0 var(--space-3);border-radius:var(--radius-pill);font-size:var(--text-xs);font-weight:700}
-.coll-actions{display:flex;flex-wrap:wrap;gap:var(--space-3);align-items:center}
-.coll-opt{display:flex;align-items:center;gap:var(--space-2);font-size:var(--text-xs);color:var(--color-text-muted)}
 .ms-notes-ref{display:block;margin-top:var(--space-2);border:0;background:none;padding:0;font:inherit;font-size:var(--text-xs);font-weight:600;color:var(--color-accent-ink);cursor:pointer;text-decoration:underline}
 .ms-notes-ref[hidden]{display:none}
 /* ---- Settings drawer: full-height vertical panel sliding from left ---- */
@@ -2350,44 +2325,23 @@ textarea:focus-visible,[tabindex]:focus-visible{
        layer. Each carries a status, the reporting period it was written in,
        and #ID chips that link it to milestones. -->
   <div class="ws-sec" id="ws-sec-notes" data-sec="notes" hidden>
-    <div class="note-tabs" role="tablist" aria-label="Notes views">
-      <button type="button" class="note-tab is-on" id="notes-tab-list" role="tab" aria-selected="true" onclick="setNotesTab('list')">Notes</button>
-      <button type="button" class="note-tab" id="notes-tab-coll" role="tab" aria-selected="false" onclick="setNotesTab('coll')">Collections</button>
-    </div>
-    <!-- Notes: the notes themselves, filtered to one collection or all. -->
-    <div id="notes-pane-list">
-      <div class="note-tools">
-        <div class="note-tool-row">
-          <select class="note-sel note-coll-sel" id="notes-coll-sel" aria-label="Collection" onchange="setNotesCollection(this.value)"></select>
-          <button type="button" class="note-seg-btn note-all-btn" id="notes-per-all" aria-pressed="false" onclick="setNotesCollection('all')">All</button>
-        </div>
-        <div class="note-tool-row">
-          <select class="note-sel" id="notes-status-sel" aria-label="Status filter" onchange="setNotesStatus(this.value)"></select>
-          <input type="search" class="note-search" id="notes-search" placeholder="Search notes" aria-label="Search notes" oninput="setNotesSearch(this.value)">
-        </div>
+    <div class="note-tools">
+      <div class="note-seg" role="group" aria-label="Period">
+        <button type="button" class="note-seg-btn" id="notes-per-current" onclick="setNotesPeriod('current')"></button>
+        <button type="button" class="note-seg-btn" id="notes-per-all" onclick="setNotesPeriod('all')">All periods</button>
       </div>
-      <div class="note-composer">
-        <textarea id="note-input" rows="3" placeholder="Write a note. Type #SNIP-102 to link a milestone. Ctrl+Enter saves." onkeydown="onNoteInputKey(event)"></textarea>
-        <div class="note-composer-foot">
-          <span class="note-hint" id="note-input-hint"></span>
-          <button type="button" class="toggle-btn active" id="btn-note-save" onclick="saveNewNote()">Add note</button>
-        </div>
-      </div>
-      <div class="note-bulk" id="notes-bulk">
-        <label class="note-bulk-all"><input type="checkbox" id="notes-sel-all" onchange="toggleSelectAllNotes(this.checked)"> Select all</label>
-        <span class="note-bulk-count" id="notes-sel-count"></span>
-        <select class="note-sel" id="notes-bulk-status" aria-label="Set status of selected notes"></select>
-        <button type="button" class="toggle-btn" id="btn-notes-bulk-apply" onclick="applyBulkNoteStatus()">Apply</button>
-      </div>
-      <div id="notes-list" class="notes-list" aria-live="polite"></div>
-      <div class="sd-group" id="notes-clear-row"></div>
+      <div class="note-chips" role="group" aria-label="Status" id="notes-status-chips"></div>
+      <input type="search" class="note-search" id="notes-search" placeholder="Search notes" aria-label="Search notes" oninput="setNotesSearch(this.value)">
     </div>
-    <!-- Collections: one per reporting period. Notes are issued and reviewed
-         as a collection; each note keeps its own status. -->
-    <div id="notes-pane-coll" hidden>
-      <div id="coll-list" class="coll-list" role="listbox" aria-label="Note collections"></div>
-      <div id="coll-detail" class="coll-detail"></div>
+    <div class="note-composer">
+      <textarea id="note-input" rows="3" placeholder="Write a note. Type #SNIP-102 to link a milestone. Ctrl+Enter saves." onkeydown="onNoteInputKey(event)"></textarea>
+      <div class="note-composer-foot">
+        <span class="note-hint" id="note-input-hint"></span>
+        <button type="button" class="toggle-btn active" id="btn-note-save" onclick="saveNewNote()">Add note</button>
+      </div>
     </div>
+    <div id="notes-list" class="notes-list" aria-live="polite"></div>
+    <div class="sd-group" id="notes-clear-row"></div>
   </div>
   <div class="ws-sec" id="ws-sec-comments" data-sec="comments" hidden>
     <div class="sd-group">
@@ -3494,7 +3448,7 @@ textarea:focus-visible,[tabindex]:focus-visible{
 // label, and embedded in exported JSON — bump this one place, everything else
 // reads from it, so the three copies can't silently drift apart the way the
 // title/label/export payload just had for a long stretch of unversioned work.
-const APP_VERSION='3.1.0-P58';
+const APP_VERSION='3.1.0-P57';
 // ============================================================
 // TIMELINE
 // ============================================================
@@ -3967,18 +3921,9 @@ const USER_MILESTONES=[];   // milestone-shaped records
 // D-19 notes (annotation layer); functions live with the Workspace code.
 let NOTES=[];
 let NOTE_SEQ=0;
-// D-19a status set, in lifecycle order: write it (Open), issue it with its
-// collection (Sent), check the recipient's update (In review), then Done, or
-// Outstanding if not addressed. Note is a standing remark that needs no action;
-// Closed is withdrawn. 'pending' from P57 reads as In review.
-const NOTE_STATUSES=['note','open','sent','review','outstanding','done','closed'];
-const NOTE_STATUS_LABELS={note:'Note',open:'Open',sent:'Sent',review:'In review',outstanding:'Outstanding',done:'Done',closed:'Closed'};
-const NOTE_OPEN_SET=['open','sent','review','outstanding'];
-const NOTE_CLOSED_SET=['done','closed'];
-let NOTES_VIEW={coll:'current',status:'all',q:''};
-let NOTES_TAB='list', NOTES_SELECTED=[], COLL_SELECTED=null;
-// Collection details, keyed by reporting period (ISO week-ending date).
-let NOTE_COLLECTIONS={};
+const NOTE_STATUSES=['open','sent','pending','closed'];
+const NOTE_STATUS_LABELS={open:'Open',sent:'Sent',pending:'Pending',closed:'Closed'};
+let NOTES_VIEW={period:'current',status:'all',q:''};
 let NOTE_EDITING=null, NOTE_DELETE_CONFIRM=null, NOTES_CLEAR_CONFIRM=false;
 const NOTE_ID_RE=/#([A-Za-z][A-Za-z0-9]*-[A-Za-z0-9-]*[0-9][A-Za-z0-9-]*)/g;
 const USER_ROWS=[];         // the task rows created for header-button additions
@@ -7077,12 +7022,13 @@ function toggleFilterBar(force){
 }
 
 
-// ===== D-19 Notes (revised D-19a) =====
+// ===== D-19 Notes =====
 // Annotation layer: exported, published, mounted and merged with the other
 // annotations. A note is {nid, text, status, links:[id], period, at, updatedAt}.
-// period is the reporting week (the week ending on or after the Report date).
-// Notes are issued and reviewed as a COLLECTION, one per period; each note
-// still carries its own status. Collection details live in NOTE_COLLECTIONS.
+// period is the reporting week (the week ending on or after the Report date),
+// which is the D-17 addendum's definition of a period; links are the #IDs in
+// the text, re-derived on every save so they cannot disagree with it.
+// (state declared with the other annotation stores, near USER_MILESTONES)
 function reportPeriodISO(){
   const rd=(REPORT_META&&REPORT_META.reportDate)||new Date();
   return isoDay(weekEndOf(rd,INGEST_CONFIG.weekEndingDay||0));
@@ -7090,10 +7036,6 @@ function reportPeriodISO(){
 function fmtPeriod(iso){
   if(!iso) return '';
   return 'W/E '+fmtTipDate(new Date(iso+'T00:00:00'));
-}
-function normNoteStatus(st){
-  if(st==='pending') return 'review';
-  return NOTE_STATUSES.indexOf(st)>=0?st:'open';
 }
 function noteLinks(text){
   const out=[]; let m; NOTE_ID_RE.lastIndex=0;
@@ -7128,30 +7070,10 @@ function renderNoteText(text){
   if(inList) html+='</ul>';
   return html;
 }
-// ---- collections ----
-// Every period that has notes or saved details, plus the current one, newest first.
-function noteCollections(){
-  const set={}; set[reportPeriodISO()]=1;
-  NOTES.forEach(function(n){ if(n.period) set[n.period]=1; });
-  Object.keys(NOTE_COLLECTIONS).forEach(function(k){ set[k]=1; });
-  return Object.keys(set).sort().reverse();
-}
-function collectionInfo(period){
-  const d=NOTE_COLLECTIONS[period]||{};
-  const ns=NOTES.filter(function(n){ return n.period===period; });
-  const by={}; NOTE_STATUSES.forEach(function(st){ by[st]=0; });
-  ns.forEach(function(n){ by[n.status]=(by[n.status]||0)+1; });
-  return {period:period, name:d.name||fmtPeriod(period), issuedTo:d.issuedTo||'', issuedOn:d.issuedOn||'',
-          remarks:d.remarks||'', total:ns.length, byStatus:by,
-          open:ns.filter(function(n){ return NOTE_OPEN_SET.indexOf(n.status)>=0; }).length,
-          closed:ns.filter(function(n){ return NOTE_CLOSED_SET.indexOf(n.status)>=0; }).length,
-          current:period===reportPeriodISO()};
-}
-function viewCollectionPeriod(){ return NOTES_VIEW.coll==='current'?reportPeriodISO():NOTES_VIEW.coll; }
 function visibleNotes(){
-  const per=viewCollectionPeriod(), q=NOTES_VIEW.q.trim().toLowerCase();
+  const cur=reportPeriodISO(), q=NOTES_VIEW.q.trim().toLowerCase();
   return NOTES.filter(function(n){
-    if(NOTES_VIEW.coll!=='all'&&n.period!==per) return false;
+    if(NOTES_VIEW.period==='current'&&n.period!==cur) return false;
     if(NOTES_VIEW.status!=='all'&&n.status!==NOTES_VIEW.status) return false;
     if(q&&String(n.text).toLowerCase().indexOf(q)<0) return false;
     return true;
@@ -7159,40 +7081,18 @@ function visibleNotes(){
   // same millisecond carry the same timestamp.
   }).sort(function(a,b){ return String(b.at).localeCompare(String(a.at))||String(b.nid).localeCompare(String(a.nid)); });
 }
-function statusOptions(selected,withAll){
-  return (withAll?'<option value="all"'+(selected==='all'?' selected':'')+'>All statuses</option>':'')+
-    NOTE_STATUSES.map(function(st){ return '<option value="'+st+'"'+(st===selected?' selected':'')+'>'+NOTE_STATUS_LABELS[st]+'</option>'; }).join('');
-}
 function renderNotes(){
   const list=document.getElementById('notes-list');
   if(!list) return;
   const cur=reportPeriodISO();
-  // Tabs
-  const tl=document.getElementById('notes-tab-list'), tc=document.getElementById('notes-tab-coll');
-  if(tl){ tl.classList.toggle('is-on',NOTES_TAB==='list'); tl.setAttribute('aria-selected',String(NOTES_TAB==='list')); }
-  if(tc){ tc.classList.toggle('is-on',NOTES_TAB==='coll'); tc.setAttribute('aria-selected',String(NOTES_TAB==='coll')); }
-  const pl=document.getElementById('notes-pane-list'), pc=document.getElementById('notes-pane-coll');
-  if(pl) pl.hidden=NOTES_TAB!=='list';
-  if(pc) pc.hidden=NOTES_TAB!=='coll';
-  // Collection dropdown + All
-  const cs=document.getElementById('notes-coll-sel');
-  if(cs){
-    const sel=viewCollectionPeriod();
-    cs.innerHTML=noteCollections().map(function(p){
-      const ci=collectionInfo(p);
-      return '<option value="'+p+'"'+(NOTES_VIEW.coll!=='all'&&p===sel?' selected':'')+'>'+escapeHtml(ci.name)+(ci.current?' (current)':'')+' · '+ci.total+'</option>';
-    }).join('');
-    cs.classList.toggle('is-dim',NOTES_VIEW.coll==='all');
-  }
-  const pa=document.getElementById('notes-per-all');
-  if(pa){ pa.classList.toggle('is-on',NOTES_VIEW.coll==='all'); pa.setAttribute('aria-pressed',String(NOTES_VIEW.coll==='all')); }
-  const ss=document.getElementById('notes-status-sel'); if(ss) ss.innerHTML=statusOptions(NOTES_VIEW.status,true);
-  const bs=document.getElementById('notes-bulk-status');
-  if(bs&&!bs.options.length) bs.innerHTML='<option value="">Set status…</option>'+statusOptions('',false);
-  // List
+  const pc=document.getElementById('notes-per-current');
+  if(pc){ pc.textContent='This period ('+fmtPeriod(cur)+')'; pc.classList.toggle('is-on',NOTES_VIEW.period==='current'); }
+  const pa=document.getElementById('notes-per-all'); if(pa) pa.classList.toggle('is-on',NOTES_VIEW.period==='all');
+  const chips=document.getElementById('notes-status-chips');
+  if(chips) chips.innerHTML=['all'].concat(NOTE_STATUSES).map(function(st){
+    return '<button type="button" class="note-chip'+(NOTES_VIEW.status===st?' is-on':'')+'" aria-pressed="'+(NOTES_VIEW.status===st)+'" onclick="setNotesStatus(\''+st+'\')">'+(st==='all'?'All':NOTE_STATUS_LABELS[st])+'</button>';
+  }).join('');
   const rows=visibleNotes();
-  const vis=rows.map(function(n){ return n.nid; });
-  NOTES_SELECTED=NOTES_SELECTED.filter(function(id){ return vis.indexOf(id)>=0; });
   list.innerHTML=rows.length?rows.map(function(n){
     if(NOTE_EDITING===n.nid){
       return '<div class="note-card" data-nid="'+n.nid+'"><div class="note-edit">'+
@@ -7200,12 +7100,13 @@ function renderNotes(){
         '<div class="note-edit-foot"><button type="button" class="toggle-btn" onclick="cancelNoteEdit()">Cancel</button>'+
         '<button type="button" class="toggle-btn active" onclick="saveNoteEdit(\''+n.nid+'\')">Save</button></div></div></div>';
     }
-    const confirming=NOTE_DELETE_CONFIRM===n.nid, picked=NOTES_SELECTED.indexOf(n.nid)>=0;
-    return '<div class="note-card'+(picked?' is-selected':'')+'" data-nid="'+n.nid+'">'+
+    const confirming=NOTE_DELETE_CONFIRM===n.nid;
+    return '<div class="note-card'+(n.period!==cur?' is-older':'')+'" data-nid="'+n.nid+'">'+
       '<div class="note-head">'+
-        '<input type="checkbox" class="note-pick" aria-label="Select note '+n.nid+'"'+(picked?' checked':'')+' onchange="toggleNoteSelected(\''+n.nid+'\',this.checked)">'+
-        '<span class="note-meta">'+(NOTES_VIEW.coll==='all'?escapeHtml(collectionInfo(n.period).name)+' &middot; ':'')+fmtStamp(new Date(n.updatedAt||n.at))+'</span>'+
-        '<select class="note-status st-'+n.status+'" aria-label="Status of note '+n.nid+'" onchange="setNoteStatus(\''+n.nid+'\',this.value)">'+statusOptions(n.status,false)+'</select>'+
+        '<select class="note-status st-'+n.status+'" aria-label="Status of note '+n.nid+'" onchange="setNoteStatus(\''+n.nid+'\',this.value)">'+
+          NOTE_STATUSES.map(function(st){ return '<option value="'+st+'"'+(st===n.status?' selected':'')+'>'+NOTE_STATUS_LABELS[st]+'</option>'; }).join('')+
+        '</select>'+
+        '<span class="note-meta">'+fmtPeriod(n.period)+' &middot; '+fmtStamp(new Date(n.updatedAt||n.at))+'</span>'+
       '</div>'+
       '<div class="note-body">'+renderNoteText(n.text)+'</div>'+
       (confirming
@@ -7216,73 +7117,20 @@ function renderNotes(){
           '<button type="button" class="note-act is-danger" onclick="askDeleteNote(\''+n.nid+'\')">Delete</button></div>')+
     '</div>';
   }).join('') : '<div class="notes-empty">'+(NOTES.length?'No notes match this view.':'No notes yet. Write one above.')+'</div>';
-  // Bulk bar
-  const all=document.getElementById('notes-sel-all');
-  if(all){ all.checked=!!rows.length&&NOTES_SELECTED.length===rows.length; all.indeterminate=NOTES_SELECTED.length>0&&NOTES_SELECTED.length<rows.length; all.disabled=!rows.length; }
-  const cnt=document.getElementById('notes-sel-count'); if(cnt) cnt.textContent=NOTES_SELECTED.length?NOTES_SELECTED.length+' selected':'';
-  const ap=document.getElementById('btn-notes-bulk-apply'); if(ap) ap.disabled=!NOTES_SELECTED.length;
-  // Clear notes
   const clr=document.getElementById('notes-clear-row');
   if(clr) clr.innerHTML=!NOTES.length?'':(NOTES_CLEAR_CONFIRM
-    ? '<div class="sd-confirm"><span class="sd-confirm-txt">Delete all '+NOTES.length+' note'+(NOTES.length===1?'':'s')+', in every collection? This cannot be undone.</span>'+
+    ? '<div class="sd-confirm"><span class="sd-confirm-txt">Delete all '+NOTES.length+' note'+(NOTES.length===1?'':'s')+', across every period? This cannot be undone.</span>'+
       '<div class="sd-confirm-actions"><button class="toggle-btn" onclick="cancelClearNotes()">Cancel</button>'+
       '<button class="toggle-btn sd-btn-danger" onclick="clearAllNotes()">Delete all</button></div></div>'
     : '<div class="sd-row-ctrl"><button type="button" class="toggle-btn sd-btn-danger" id="btn-notes-clear" onclick="askClearNotes()">Clear notes</button></div>');
-  // Rail badge: notes in the current collection still needing action.
   const bd=document.getElementById('ws-notes-count');
-  if(bd){ const n=collectionInfo(cur).open; bd.textContent=n?String(n):''; }
+  if(bd){ const open=NOTES.filter(function(n){ return n.period===cur&&n.status!=='closed'; }).length; bd.textContent=open?String(open):''; }
   const hint=document.getElementById('note-input-hint');
-  if(hint) hint.textContent='Adds to '+collectionInfo(cur).name;
-  renderCollections();
+  if(hint) hint.textContent='Saves to '+fmtPeriod(cur);
 }
-function renderCollections(){
-  const box=document.getElementById('coll-list'), det=document.getElementById('coll-detail');
-  if(!box||!det) return;
-  const cols=noteCollections();
-  if(COLL_SELECTED&&cols.indexOf(COLL_SELECTED)<0) COLL_SELECTED=null;
-  box.innerHTML=cols.map(function(p){
-    const ci=collectionInfo(p);
-    return '<button type="button" class="coll-row'+(p===COLL_SELECTED?' is-on':'')+'" role="option" aria-selected="'+(p===COLL_SELECTED)+'" data-period="'+p+'" onclick="selectCollection(\''+p+'\')">'+
-      '<span class="coll-row-name">'+escapeHtml(ci.name)+(ci.current?'<span class="coll-tag">Current</span>':'')+'</span>'+
-      '<span class="coll-row-sum">'+ci.total+' note'+(ci.total===1?'':'s')+' · '+ci.open+' open · '+ci.closed+' closed'+(ci.issuedTo?' · to '+escapeHtml(ci.issuedTo):'')+'</span>'+
-    '</button>';
-  }).join('');
-  if(!COLL_SELECTED){ det.innerHTML='<div class="notes-empty">Select a collection to see its details.</div>'; return; }
-  const ci=collectionInfo(COLL_SELECTED);
-  det.innerHTML='<div class="sd-group-title">Collection details</div>'+
-    '<div class="coll-form">'+
-      '<label for="coll-name">Name</label><input id="coll-name" value="'+escapeHtml(ci.name)+'" onchange="saveCollectionField(\'name\',this.value)">'+
-      '<label>Period</label><span class="note-hint">'+fmtPeriod(ci.period)+'</span>'+
-      '<label for="coll-to">Issued to</label><input id="coll-to" value="'+escapeHtml(ci.issuedTo)+'" placeholder="Person or team" onchange="saveCollectionField(\'issuedTo\',this.value)">'+
-      '<label for="coll-on">Issued on</label><input id="coll-on" type="date" value="'+escapeHtml(ci.issuedOn)+'" onchange="saveCollectionField(\'issuedOn\',this.value)">'+
-      '<label class="coll-form-wide" for="coll-remarks">Remarks</label>'+
-      '<textarea class="coll-form-wide" id="coll-remarks" rows="2" placeholder="Short covering remark" onchange="saveCollectionField(\'remarks\',this.value)">'+escapeHtml(ci.remarks)+'</textarea>'+
-    '</div>'+
-    '<div class="coll-counts">'+NOTE_STATUSES.filter(function(st){ return ci.byStatus[st]; }).map(function(st){
-      return '<span class="coll-count st-'+st+'">'+ci.byStatus[st]+' '+NOTE_STATUS_LABELS[st]+'</span>'; }).join('')+
-      (ci.total?'':'<span class="note-hint">No notes in this collection yet.</span>')+'</div>'+
-    '<div class="coll-actions">'+
-      '<button type="button" class="toggle-btn active" id="btn-coll-view" onclick="viewCollectionNotes(\''+ci.period+'\')">View notes ('+ci.total+')</button>'+
-      '<button type="button" class="toggle-btn" id="btn-coll-export" onclick="exportNotesCollection(\''+ci.period+'\')"'+(ci.total?'':' disabled')+'>&#11015; Export collection</button>'+
-      '<label class="coll-opt"><input type="checkbox" id="coll-mark-sent"> Set Open notes to Sent on export</label>'+
-    '</div>';
-}
-function setNotesTab(t){ NOTES_TAB=t==='coll'?'coll':'list'; if(NOTES_TAB==='coll'&&!COLL_SELECTED) COLL_SELECTED=reportPeriodISO(); renderNotes(); }
-function setNotesCollection(v){ NOTES_VIEW.coll=v||'current'; NOTES_SELECTED=[]; renderNotes(); }
+function setNotesPeriod(p){ NOTES_VIEW.period=p; renderNotes(); }
 function setNotesStatus(s){ NOTES_VIEW.status=s; renderNotes(); }
 function setNotesSearch(q){ NOTES_VIEW.q=q||''; renderNotes(); }
-function selectCollection(p){ COLL_SELECTED=p; renderCollections(); }
-function viewCollectionNotes(p){
-  NOTES_VIEW={coll:p===reportPeriodISO()?'current':p,status:'all',q:''};
-  const s=document.getElementById('notes-search'); if(s) s.value='';
-  NOTES_TAB='list'; NOTES_SELECTED=[]; renderNotes();
-}
-function saveCollectionField(field,val){
-  if(!COLL_SELECTED) return;
-  const d=NOTE_COLLECTIONS[COLL_SELECTED]||(NOTE_COLLECTIONS[COLL_SELECTED]={});
-  d[field]=String(val||'').trim();
-  noteMarkup(); renderNotes();
-}
 function noteChanged(){ noteMarkup(); renderNotes(); syncMsNotesRef(); }
 function saveNewNote(){
   const ta=document.getElementById('note-input');
@@ -7301,24 +7149,6 @@ function setNoteStatus(nid,st){
   const n=noteById(nid); if(!n||NOTE_STATUSES.indexOf(st)<0) return;
   n.status=st; n.updatedAt=new Date().toISOString(); noteChanged();
 }
-// ---- bulk ----
-function toggleNoteSelected(nid,on){
-  const i=NOTES_SELECTED.indexOf(nid);
-  if(on&&i<0) NOTES_SELECTED.push(nid); else if(!on&&i>=0) NOTES_SELECTED.splice(i,1);
-  renderNotes();
-}
-function toggleSelectAllNotes(on){ NOTES_SELECTED=on?visibleNotes().map(function(n){ return n.nid; }):[]; renderNotes(); }
-function applyBulkNoteStatus(){
-  const sel=document.getElementById('notes-bulk-status');
-  const st=sel&&sel.value;
-  if(!st||NOTE_STATUSES.indexOf(st)<0||!NOTES_SELECTED.length) return;
-  const now=new Date().toISOString();
-  NOTES_SELECTED.forEach(function(id){ const n=noteById(id); if(n){ n.status=st; n.updatedAt=now; } });
-  const k=NOTES_SELECTED.length;
-  NOTES_SELECTED=[]; sel.value='';
-  noteChanged();
-  setIngestStatus('Set '+k+' note'+(k===1?'':'s')+' to '+NOTE_STATUS_LABELS[st]+'.','ok');
-}
 function editNote(nid){ NOTE_EDITING=nid; NOTE_DELETE_CONFIRM=null; renderNotes(); const t=document.getElementById('note-edit-text'); if(t) t.focus(); }
 function cancelNoteEdit(){ NOTE_EDITING=null; renderNotes(); }
 function saveNoteEdit(nid){
@@ -7336,7 +7166,7 @@ function cancelDeleteNote(){ NOTE_DELETE_CONFIRM=null; renderNotes(); }
 function deleteNote(nid){ NOTES=NOTES.filter(function(n){ return n.nid!==nid; }); NOTE_DELETE_CONFIRM=null; noteChanged(); }
 function askClearNotes(){ NOTES_CLEAR_CONFIRM=true; renderNotes(); }
 function cancelClearNotes(){ NOTES_CLEAR_CONFIRM=false; renderNotes(); }
-function clearAllNotes(){ NOTES=[]; NOTES_SELECTED=[]; NOTES_CLEAR_CONFIRM=false; noteChanged(); }
+function clearAllNotes(){ NOTES=[]; NOTES_CLEAR_CONFIRM=false; noteChanged(); }
 // A chip scrolls the board to its milestone and opens the card. stopPropagation
 // first: the document-level click-away handler would otherwise close the card
 // this has just opened.
@@ -7348,17 +7178,14 @@ function openNoteMilestone(e,id){
   setTimeout(function(){ w.click(); },0);
 }
 // Merge on apply: a note is a record, so the same nid replaces, a new one adds.
-// Collection details merge per period.
 function applyNotes(p){
   (p.notes||[]).forEach(function(n){
     if(!n||!n.nid||typeof n.text!=='string') return;
-    const rec={nid:String(n.nid),text:n.text,status:normNoteStatus(n.status),
+    const rec={nid:String(n.nid),text:n.text,status:NOTE_STATUSES.indexOf(n.status)>=0?n.status:'open',
                links:noteLinks(n.text),period:n.period||reportPeriodISO(),at:n.at||new Date().toISOString(),updatedAt:n.updatedAt||n.at||new Date().toISOString()};
     const i=NOTES.findIndex(function(x){ return x.nid===rec.nid; });
     if(i>=0) NOTES[i]=rec; else NOTES.push(rec);
   });
-  const c=p.noteCollections||{};
-  Object.keys(c).forEach(function(k){ NOTE_COLLECTIONS[k]=Object.assign({},NOTE_COLLECTIONS[k]||{},c[k]); });
   renderNotes();
 }
 function notesMentioning(id){ return NOTES.filter(function(n){ return (n.links||[]).indexOf(id)>=0; }); }
@@ -7376,55 +7203,19 @@ function syncMsNotesRef(){
 function showNotesForDialog(e){
   if(e) e.stopPropagation();
   const id=document.getElementById('ms-notes-ref').dataset.id;
-  NOTES_VIEW={coll:'all',status:'all',q:'#'+id};
-  NOTES_TAB='list';
+  NOTES_VIEW={period:'all',status:'all',q:'#'+id};
   const s=document.getElementById('notes-search'); if(s) s.value='#'+id;
   setWorkspaceSection('notes',true);
   renderNotes();
 }
-// Rows for the Notes sheet of the comments workbook (every collection).
+// Rows for the Notes sheet of the comments workbook.
 function collectNotesRows(){
-  const rows=[['Note','Status','Collection','Period','Created','Updated','Linked milestones','Note text']];
+  const rows=[['Note','Status','Period','Created','Updated','Linked milestones','Note text']];
   NOTES.slice().sort(function(a,b){ return String(a.at).localeCompare(String(b.at)); }).forEach(function(n){
-    rows.push([n.nid,NOTE_STATUS_LABELS[n.status]||n.status,collectionInfo(n.period).name,fmtPeriod(n.period),
+    rows.push([n.nid,NOTE_STATUS_LABELS[n.status]||n.status,fmtPeriod(n.period),
       fmtStamp(new Date(n.at)),fmtStamp(new Date(n.updatedAt||n.at)),(n.links||[]).join(', '),n.text]);
   });
   return rows;
-}
-// One collection, to send to the person actioning it. The details head the
-// sheet; each note is a row with two blank columns for the reply, so the
-// returned file can be checked against the notes one by one.
-function collectCollectionRows(period){
-  const ci=collectionInfo(period);
-  const rows=[
-    ['Collection',ci.name],['Period',fmtPeriod(period)],['Issued to',ci.issuedTo],['Issued on',ci.issuedOn],
-    ['Remarks',ci.remarks],['Notes',ci.total+' ('+ci.open+' open, '+ci.closed+' closed)'],[],
-    ['Note','Status','Linked milestones','Note text','Addressed (Y/N)','Response']
-  ];
-  NOTES.filter(function(n){ return n.period===period; })
-       .sort(function(a,b){ return String(a.at).localeCompare(String(b.at))||String(a.nid).localeCompare(String(b.nid)); })
-       .forEach(function(n){ rows.push([n.nid,NOTE_STATUS_LABELS[n.status]||n.status,(n.links||[]).join(', '),n.text,'','']); });
-  return rows;
-}
-function exportNotesCollection(period){
-  const ci=collectionInfo(period);
-  if(!ci.total) return;
-  const markSent=!!(document.getElementById('coll-mark-sent')||{}).checked;
-  ensureXLSX().then(function(){
-    if(markSent){
-      const now=new Date().toISOString();
-      NOTES.forEach(function(n){ if(n.period===period&&n.status==='open'){ n.status='sent'; n.updatedAt=now; } });
-      const d=NOTE_COLLECTIONS[period]||(NOTE_COLLECTIONS[period]={});
-      if(!d.issuedOn) d.issuedOn=isoDay(new Date());
-      noteChanged();
-    }
-    const wb=XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(collectCollectionRows(period)),'Notes');
-    const safe=String(ci.name).replace(/[^A-Za-z0-9 _-]+/g,'').trim().replace(/\s+/g,'_')||'Collection';
-    XLSX.writeFile(wb,'Notes_'+safe+'_'+period+'.xlsx');
-  }).catch(function(err){
-    alert('The collection export needs the workbook library used for .xlsx import, and it could not be loaded (offline?). '+err.message);
-  });
 }
 
 // ===== P56 (D-20b): Workspace (left), the annotation layer =====
@@ -10501,7 +10292,7 @@ const ANNOT_CATEGORIES=[
    count:function(p){ return Object.keys(p.milestoneComments||{}).length; },
    apply:function(p){ Object.assign(MS_COMMENTS,p.milestoneComments||{}); }},
   {key:'notes',       label:'Notes',
-   count:function(p){ return (p.notes||[]).length+Object.keys(p.noteCollections||{}).length; },
+   count:function(p){ return (p.notes||[]).length; },
    apply:function(p){ applyNotes(p); }},
   {key:'msHealth',    label:'Milestone health overrides',
    count:function(p){ return Object.keys(p.milestoneHealthOverrides||{}).length; },
@@ -11142,7 +10933,6 @@ function publishStatePayload(){
     overrides:snapshotOverrides(),
     milestoneComments:MS_COMMENTS,
     notes:NOTES,
-    noteCollections:NOTE_COLLECTIONS,
     milestoneHealthOverrides:MS_HEALTH_OVERRIDE,
     milestoneProgressOverrides:MS_PROGRESS_OVERRIDE,
     milestoneFieldOverrides:MS_FIELD_OVERRIDE,
@@ -11228,8 +11018,7 @@ function applyPublishedState(){
     if(p.reportDate)  REPORT_META.reportDate=new Date(p.reportDate+'T00:00:00');
 
     Object.assign(MS_COMMENTS,p.milestoneComments||{});
-    if(p.notes) NOTES=p.notes.map(function(n){ return Object.assign({},n,{status:normNoteStatus(n.status)}); });
-    if(p.noteCollections) NOTE_COLLECTIONS=Object.assign({},p.noteCollections);
+    if(p.notes) NOTES=p.notes.slice();
     Object.assign(MS_HEALTH_OVERRIDE,p.milestoneHealthOverrides||{});
     Object.assign(MS_PROGRESS_OVERRIDE,p.milestoneProgressOverrides||{});
     Object.assign(MS_FIELD_OVERRIDE,p.milestoneFieldOverrides||{});
@@ -11382,7 +11171,6 @@ function exportModel(){
                  milestoneFieldOverrides:MS_FIELD_OVERRIDE,
                  milestoneComments:MS_COMMENTS,
                  notes:NOTES,
-                 noteCollections:NOTE_COLLECTIONS,
                  milestoneShortTitles:MS_SHORT_TITLES,
                  userMilestones:USER_MILESTONES,
                  userRows:USER_ROWS,

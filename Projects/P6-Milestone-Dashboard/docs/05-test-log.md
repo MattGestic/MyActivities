@@ -2650,3 +2650,93 @@ p45 38/38, p46 37/37, p53, p54 82/82. Version grep 1.
 
 **Published:** `releases/v3.1.0-P56_workspace-shell.html`
 
+## TEST-57: D-19 Notes panel (v3.1.0-P57)
+
+Freeform notes in the Workspace, as the first rail section. Detail:
+`docs/03-todo.md` TD-214.
+
+**New check:** `tools/p57_check.py`, 39 assertions with N=3 notes. It covers:
+- adding notes by button and by Ctrl+Enter
+- link parsing (de-duplicated, upper-cased), period stamping against the
+  Report date, newest-first order, bullets
+- the badge count, status on the note, and each filter: status, search, and
+  period (moving the Report date a week on empties This period, and All
+  periods keeps the notes, marked as earlier)
+- #ID chips: opening the card, the struck-through chip for an id not on the
+  board, and the card's "Mentioned in N notes" opening Notes filtered to
+  that milestone
+- edit re-deriving links, escaping of note text
+- the export rows and the Notes sheet
+- Delete and Clear notes inline confirmations (Cancel first, danger second)
+- the selective-import category merging by id
+- the model export, and a publish round trip in which the published file
+  brings back every note with its status, period and links
+
+Against `releases/v3.1.0-P56_workspace-shell.html` it fails at the first
+Notes assertion.
+
+**Found and fixed during the stage:**
+- Notes saved in the same millisecond shared a timestamp, so newest-first fell
+  back to insertion order. The note number breaks the tie.
+- The card's "Mentioned in" button had no accessible name while hidden (d15).
+  It carries a fixed `aria-label`.
+- A raw 1px margin on the note chip (spacing_audit). Tokenised.
+- Find/Date range stacking used a ResizeObserver, which only reports on
+  rendered frames, so its class could lag the panel's margin transition and be
+  read stale (p39 at 1440 after opening and closing the Workspace). It is now
+  computed from layout state (viewport, rail, which panels are docked open) by
+  `syncFbNarrow()`, called from both panel toggles and on resize.
+
+**Results at v3.1.0-P57:** all 34 tools exit 0: p57 39/39, `colour_audit
+--strict` 0, `palette_swap_check` 0 escapes, `theme_check`, `ds_check`
+128/128, d15 11/11, d15a, d16, d17a, d18, order, import, persist 22/22,
+`spacing_audit` at ceiling, and p27 to p46, p53 and p54, all green. Version
+grep 1.
+
+**Visual check:** Notes at 1440 light and dark, and at 390, with three notes
+in three statuses and linked chips.
+
+**Not built:** "Link selected" in the composer waits for D-06 multi-select.
+
+**Published:** `releases/v3.1.0-P57_notes.html`
+
+## TEST-58: D-19a note collections (v3.1.0-P58)
+
+Matt's revision of the Notes panel: collections, a wider status set, bulk
+status update, and a per-collection export. Detail: `docs/03-todo.md` TD-215.
+
+**`tools/p57_check.py` extended for D-19a (56 assertions).** New assertions,
+using a second collection of three notes (N=3):
+- the seven-status set, in lifecycle order
+- the status select is the note header's last element and sits to the right
+- choosing a collection in the dropdown shows only its notes
+- Select all picks every visible note; deselecting one leaves the rest and
+  shows the mixed state; bulk Apply changes exactly the selected notes, and
+  the selection clears afterwards
+- the Collections tab lists one row per collection, current first, with notes,
+  open and closed counts
+- selecting a row shows the details form; editing Issued to saves to the
+  collection and appears in its row
+- the collection export rows are the details, then one row per note with the
+  Addressed (Y/N) and Response columns
+- Export collection writes one workbook (the library stubbed at its boundary),
+  and "Set Open notes to Sent" moves the open note to Sent
+- View notes opens that collection in the list
+- a P57 "pending" status reads as In review on import
+- collection details survive the publish round trip
+
+**Changed assertions:** the period toggle became the collection dropdown with
+All; the Notes sheet gained a Collection column; the P57 "earlier period"
+styling is replaced by the collection name in the All view.
+
+**Results at v3.1.0-P58:** all 34 tools exit 0: p57 56/56, the colour and
+palette gates at 0, `theme_check`, `ds_check` 128/128, d15, d15a, d16, d17a,
+d18, order, import, persist 22/22, `spacing_audit` at ceiling, and p27 to p46,
+p53 and p54, all green. Version grep 1. `tools/p57_check.py` fails against
+`releases/v3.1.0-P57_notes.html`.
+
+**Visual check:** Notes list with two selected, and Collections with details,
+in light and dark at 1440.
+
+**Published:** `releases/v3.1.0-P58_note-collections.html`
+
