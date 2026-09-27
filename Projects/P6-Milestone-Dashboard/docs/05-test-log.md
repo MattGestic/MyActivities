@@ -2793,3 +2793,20 @@ because TEST-59 is the scale baseline on PR #21.
 **`ds_check` regression, found and fixed:** at 390, the Banding select did
 not fill its row. The desktop grid's `align-items:center` was carrying into
 the phone column. The phone rule now sets `align-items:stretch`.
+
+**Results at v3.1.0-P59:**
+- All 35 tools exit 0. That is the 34 from P58 plus `p59_check`.
+- `p59_check`: 92/92.
+- `ds_check`: 128/128.
+- `p57_check`: 56/56.
+- `persist_check`: 22/22.
+- `colour_audit --strict`: 0 at ceiling 0.
+- `palette_swap_check`: 0 escapes.
+- `theme_check`: green.
+- `spacing_audit`: its ceiling tightened, 152 to 148.
+- The version grep returns 1.
+- Run against `releases/v3.1.0-P58_note-collections.html`, `tools/p59_check.py` fails (3/28), so it detects the change.
+
+**Run note:** the first full pass overlapped the edits made during it. The eight tools that failed there were re-run against the final file and all exit 0.
+
+**Published:** `releases/v3.1.0-P59_layout-consistency.html`
