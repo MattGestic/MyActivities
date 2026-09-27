@@ -2700,3 +2700,43 @@ in three statuses and linked chips.
 
 **Published:** `releases/v3.1.0-P57_notes.html`
 
+## TEST-58: D-19a note collections (v3.1.0-P58)
+
+Matt's revision of the Notes panel: collections, a wider status set, bulk
+status update, and a per-collection export. Detail: `docs/03-todo.md` TD-215.
+
+**`tools/p57_check.py` extended for D-19a (56 assertions).** New assertions,
+using a second collection of three notes (N=3):
+- the seven-status set, in lifecycle order
+- the status select is the note header's last element and sits to the right
+- choosing a collection in the dropdown shows only its notes
+- Select all picks every visible note; deselecting one leaves the rest and
+  shows the mixed state; bulk Apply changes exactly the selected notes, and
+  the selection clears afterwards
+- the Collections tab lists one row per collection, current first, with notes,
+  open and closed counts
+- selecting a row shows the details form; editing Issued to saves to the
+  collection and appears in its row
+- the collection export rows are the details, then one row per note with the
+  Addressed (Y/N) and Response columns
+- Export collection writes one workbook (the library stubbed at its boundary),
+  and "Set Open notes to Sent" moves the open note to Sent
+- View notes opens that collection in the list
+- a P57 "pending" status reads as In review on import
+- collection details survive the publish round trip
+
+**Changed assertions:** the period toggle became the collection dropdown with
+All; the Notes sheet gained a Collection column; the P57 "earlier period"
+styling is replaced by the collection name in the All view.
+
+**Results at v3.1.0-P58:** all 34 tools exit 0: p57 56/56, the colour and
+palette gates at 0, `theme_check`, `ds_check` 128/128, d15, d15a, d16, d17a,
+d18, order, import, persist 22/22, `spacing_audit` at ceiling, and p27 to p46,
+p53 and p54, all green. Version grep 1. `tools/p57_check.py` fails against
+`releases/v3.1.0-P57_notes.html`.
+
+**Visual check:** Notes list with two selected, and Collections with details,
+in light and dark at 1440.
+
+**Published:** `releases/v3.1.0-P58_note-collections.html`
+
