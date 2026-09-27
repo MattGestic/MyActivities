@@ -121,6 +121,9 @@ MUTATIONS = {
     "save-not-attributed": ("var e={at:meta.at||new Date().toISOString(),by:read(),", "var e={at:meta.at||new Date().toISOString(),by:savedBy,"),
     "shared-file-adopts-author": ("var n=read(), st=!n?'unset'", "var n=read()||savedBy, st=!n?'unset'"),
     "no-first-use-prompt": ("if(USERS.status().state==='unset') openSettings('Who is using this file?');", ""),
+    "view-switch-loses-back": ("var carried=S&&S.switching?S.returnFocus:null;", "var carried=null;"),
+    "view-title-clips-menu": (".sg-title--views{overflow:visible}", ""),
+    "view-no-current-mark": ("radio:true,checked:v.id===opts.view,", "radio:true,checked:false,"),
     "health-shown-in-grid": ("if(lists) cols=[{key:L_LIST", "cols=cols.filter(function(c){ return c.key!=='health'; }).concat(cols.filter(function(c){ return c.key==='health'; }).map(function(c){ return Object.assign({},c,{hidden:false}); }));\n    if(lists) cols=[{key:L_LIST"),
 }
 
@@ -873,6 +876,39 @@ try{
     const res=[]; for(const k of ['aid','kind','target']) res.push(await tryOpenEditor(0,k));
     ok('annot: read-only columns refuse edits (N=3)', res.every(x=>x===false), res);
     SRETGrid.close(); }
+
+  // ============ Views from the title (Matt, 2026-09-28) ============
+  { const btn=n=>$('[data-sg='+n+']'), launcher=$('#go-userms');
+    SRETGrid.close(); launcher.focus(); DEMO_OPEN('userms'); await sleep(20);
+    const nUms=eng().dataView.getItems().length, nMs=F.sched.filter(r=>r.dur===0).length, nUpd=F.sched.filter(r=>!!(r.short||r.comment||(r.health!=null&&r.health!==''))).length;
+    const vb=btn('view'), fs=getComputedStyle(vb).fontSize, tfs=getComputedStyle($('.sg-title')).fontSize;
+    ok('views: the title is a menu button in the heading\'s own size, labelled User milestones', !!vb && vb.textContent==='User milestones' &&
+       vb.getAttribute('aria-haspopup')==='menu' && fs===tfs && fs==='20px' && vb.title==='Switch view', [vb&&vb.textContent,fs,tfs]);
+    vb.click(); await sleep(10);
+    const items=$$('[data-sg=view-menu] .sg-menu-item'), pop=btn('view-menu'), pr=pop.getBoundingClientRect();
+    const hit=document.elementFromPoint(pr.left+pr.width/2,pr.top+pr.height/2);
+    ok('views: the menu lists User milestones, Schedule milestones, Schedule updates, All schedule activities with counts; the current one checked',
+       items.map(i=>i.textContent.replace(/^✓/,'')).join('|')==='User milestones ('+nUms+')|Schedule milestones ('+nMs+')|Schedule updates ('+nUpd+')|All schedule activities ('+F.sched.length+')' &&
+       items.every(i=>i.getAttribute('role')==='menuitemradio') && items[0].getAttribute('aria-checked')==='true' && items[1].getAttribute('aria-checked')==='false',
+       items.map(i=>i.textContent));
+    ok('views: the menu is not clipped by the heading (hit test lands inside it)', pr.height>40 && pop.contains(hit), [pr.height,hit&&hit.className]);
+    btn('view-schedms').click(); await sleep(20);
+    const focusAfter=document.activeElement===btn('view'), ms=eng().dataView.getItems();
+    ok('views: Schedule milestones shows only zero-duration schedule activities, read-only schedule columns kept', lastLog('onView').args[0]==='schedms' &&
+       btn('view').textContent==='Schedule milestones' && ms.length===nMs && nMs>0 && ms.every(r=>r.dur===0) && !(await tryOpenEditor(0,'finish')), [ms.length,nMs]);
+    ok('views: after a switch, focus is on the view button', focusAfter);
+    await menuPick('view','view-schedupd');
+    const up=eng().dataView.getItems();
+    ok('views: Schedule updates shows only schedule rows with an annotation (short title, health or comment)', btn('view').textContent==='Schedule updates' &&
+       up.length===nUpd && nUpd>0 && up.every(r=>!!(r.short||r.comment||(r.health!=null&&r.health!==''))), [up.length,nUpd]);
+    const rk=eng().dataView.getItem(0).id; await editCell(0,'comment','Checked at the site walk');
+    await menuPick('view','view-sched'); const all=eng().dataView.getItemById(rk);
+    ok('views: an annotation edited in one view is there in another (All schedule activities)', !!all && all.comment==='Checked at the site walk' && visibleCount()===F.sched.length);
+    btn('back').click(); await sleep(20);
+    ok('views: Back after switching views returns to where the grid was opened from', !SRETGrid.isOpen() && document.activeElement===launcher, document.activeElement&&document.activeElement.id);
+    DEMO_OPEN('annot'); await sleep(20);
+    ok('views: a screen without views keeps a plain title', !btn('view') && $('.sg-title').textContent.indexOf('Annotations')===0);
+    SRETGrid.close(); DEMO_OPEN('userms'); await sleep(20); }
 
   // ============ Schedule activities + export ============
   { DEMO_OPEN('sched'); await sleep(20);

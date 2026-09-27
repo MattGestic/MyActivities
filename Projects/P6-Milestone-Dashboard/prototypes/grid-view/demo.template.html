@@ -149,6 +149,23 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
     });
   }
   var back=function(){ log('onBack',[]); };
+  // Views reached from the title (Matt, 2026-09-28). Schedule milestones are
+  // zero-duration activities; Schedule updates are schedule rows carrying an
+  // annotation (short title, health or comment).
+  function isSchedMs(r){ return r.dur===0; }
+  function hasAnnot(r){ return !!(r.short||r.comment||(r.health!=null&&r.health!=='')); }
+  function viewsOpt(cur){
+    return {view:cur,onView:function(id){ log('onView',[id]); window.DEMO_OPEN(id); },
+      views:[{id:'userms',label:'User milestones',count:store.userms.length},
+             {id:'schedms',label:'Schedule milestones',count:store.sched.filter(isSchedMs).length},
+             {id:'schedupd',label:'Schedule updates',count:store.sched.filter(hasAnnot).length},
+             {id:'sched',label:'All schedule activities',count:store.sched.length}]};
+  }
+  function schedView(title,rows,cur){ return Object.assign({
+      title:title,rowKey:'id',editable:true,exportName:title,
+      columns:F.cols.sched,rows:rows,lists:listsOpt(ACT),
+      onEdit:function(k,f,v){ log('onEdit',[k,f,v]); patch(store.sched,'id',k,f,v); },
+      onBack:back,ensureXLSX:ensureXLSX,host:host},viewsOpt(cur)); }
   var CONFIGS={
     userms:function(){ return {
       title:'User milestones',rowKey:'id',editable:true,exportName:'User milestones',
@@ -160,7 +177,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
           start:null,finish:null,band:'User Defined Milestones',wbs:'',pred:'',succ:'',comment:'',created:TODAY,createdBy:userName(),health:0};
         store.userms.push(r); log('onAdd',[id]); return r; },
       onDelete:function(keys){ log('onDelete',[keys]); store.userms=store.userms.filter(function(r){ return keys.indexOf(r.id)<0; }); },
-      openColumn:'id',onOpenItem:openMilestone,
+      openColumn:'id',onOpenItem:openMilestone,view:'userms',views:viewsOpt('userms').views,onView:viewsOpt('userms').onView,
       importer:{idKey:'id',depKeys:{pred:'Predecessors',succ:'Successors'},user:userName,log:IMPORT_LOG,nextId:nextUsr,
         // IDs a dependency may name: every schedule activity and user milestone the app knows.
         knownIds:function(){ return F.sched.map(function(r){ return r.id; }).concat(store.userms.map(function(r){ return r.id; })); },
@@ -178,11 +195,9 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
       onEdit:function(k,f,v){ log('onEdit',[k,f,v]); patch(store.annot,'aid',k,f,v); },
       onDelete:function(keys){ log('onDelete',[keys]); store.annot=store.annot.filter(function(r){ return keys.indexOf(r.aid)<0; }); },
       onBack:back,ensureXLSX:ensureXLSX,host:host}; },
-    sched:function(){ return {
-      title:'Schedule activities',rowKey:'id',editable:true,exportName:'Schedule activities',
-      columns:F.cols.sched,rows:store.sched.slice(),lists:listsOpt(ACT),
-      onEdit:function(k,f,v){ log('onEdit',[k,f,v]); patch(store.sched,'id',k,f,v); },
-      onBack:back,ensureXLSX:ensureXLSX,host:host}; },
+    sched:function(){ return schedView('Schedule activities',store.sched.slice(),'sched'); },
+    schedms:function(){ return schedView('Schedule milestones',store.sched.filter(isSchedMs),'schedms'); },
+    schedupd:function(){ return schedView('Schedule updates',store.sched.filter(hasAnnot),'schedupd'); },
     stress:function(){ return {
       title:'Schedule activities (2,000 row stress set)',rowKey:'id',editable:true,exportName:'Stress',
       columns:F.cols.sched,rows:window.SRET_STRESS(2000),lists:listsOpt(ACT),

@@ -61,7 +61,7 @@ Tabulator for comparison would add about 477 KB plus a smaller wrapper, roughly 
 
 Licence obligation: MIT requires the copyright and permission notice to travel with the code. At merge the vendored block keeps the esbuild `--legal-comments=inline` banners and gains the full MIT text as a comment at the top of the vendor `<script>` (see `docs/grid-view-integration.md`). `vendor/slickgrid/LICENSE` is the source of that text.
 
-## Constraint change (proposed wording, NOT applied)
+## Constraint change (applied 2026-09-28, Matt)
 
 `CLAUDE.md`, Hard constraints, today:
 
@@ -83,4 +83,4 @@ The colour rules need no change: vendored CSS sits in its own `<style id="vendor
 
 1. SlickGrid (recommended) or Tabulator. **[CONFIRM WITH MATT]**
 2. Minified vendored block (222 KB) or unminified (462 KB). **[CONFIRM WITH MATT]**
-3. Apply the constraint wording above to `CLAUDE.md` and `docs/04-architecture.md`. **[CONFIRM WITH MATT]**
+3. ~~Apply the constraint wording~~ **Done 2026-09-28.** Matt widened it: third-party code only when permissively licensed and embedded in the file, never loaded from the internet, and SheetJS is to be embedded too (TD-216). The applied wording is in `CLAUDE.md`, Hard constraints; the proposal above is kept as history.

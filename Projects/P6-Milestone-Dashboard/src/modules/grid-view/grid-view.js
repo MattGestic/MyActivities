@@ -8,7 +8,8 @@
        editable, onEdit(rowKey,key,value), onAdd(), onDelete(rowKeys),
        onBack(), exportName, ensureXLSX, host, canEdit(rowKey,key),
        lists:{ store, refOf(rowKey), labelOf(ref), onChange(result) },
-       openColumn, onOpenItem(rowKey), importer:{...}
+       openColumn, onOpenItem(rowKey), importer:{...},
+       views:[{id,label,count}], view, onView(id)   (title becomes a view switcher)
      })
      SRETGrid.close()   SRETGrid.setRows(rows)   SRETGrid.patchRows(rows)   SRETGrid.isOpen()
      SRETGrid.dialog(title, build)   SRETGrid.importAoa(aoa, fileName)
@@ -240,7 +241,7 @@
         if(!it) return;
         if(it.sep){ pop.appendChild(h('div',{'class':'sg-menu-sep',role:'separator'})); return; }
         var box=it.checked!=null;
-        var b=h('button',{type:'button','class':'sg-menu-item',role:box?'menuitemcheckbox':'menuitem',tabindex:'-1',
+        var b=h('button',{type:'button','class':'sg-menu-item',role:box?(it.radio?'menuitemradio':'menuitemcheckbox'):'menuitem',tabindex:'-1',
                           'data-sg':it.sg||null,'data-sg-list':it.list||null,disabled:!!it.disabled},
                 [h('span',{'class':'sg-menu-check','aria-hidden':'true',text:it.checked?'✓':''}),h('span',{text:it.label})]);
         if(box) b.setAttribute('aria-checked',String(!!it.checked));
@@ -944,6 +945,8 @@
   function open(opts){
     if(!root.Slick||!root.Slick.Grid||!root.Slick.Data) throw new Error('SRETGrid: grid library not loaded.');
     if(!opts||!opts.rowKey) throw new Error('SRETGrid.open: rowKey is required.');
+    // A view switch replaces the screen but keeps where Back returns to.
+    var carried=S&&S.switching?S.returnFocus:null;
     if(S) close(true);
     var rowKey=opts.rowKey;
     var cols=(opts.columns||[]).map(function(c){
@@ -965,7 +968,16 @@
     var fixed=host===document.body;
     var back=h('button',{type:'button','class':'sg-iconbtn sg-back','aria-label':'Back',title:'Back','data-sg':'back'});
     back.innerHTML=BACK_SVG;
-    var title=h('h2',{'class':'sg-title',text:opts.title||'Table'});
+    // Views (Matt, 2026-09-28): with more than one, the title is a menu that
+    // switches between them (e.g. User milestones, Schedule milestones,
+    // Schedule updates). The caller reopens the grid in onView(id).
+    var views=(opts.views||[]).filter(function(v){ return v&&v.id; });
+    var viewMenu=views.length>1&&typeof opts.onView==='function'?makeMenu(opts.title||'Table','view',function(){
+      return views.map(function(v){ return {label:v.label+(v.count!=null?' ('+v.count+')':''),sg:'view-'+v.id,radio:true,checked:v.id===opts.view,
+        onSelect:function(){ if(v.id===opts.view) return; S.switching=true; opts.onView(v.id); if(S&&S.opts===opts) S.switching=false; }}; });
+    },'sg-title-btn'):null;
+    if(viewMenu){ viewMenu.btn.title='Switch view'; viewMenu.pop.setAttribute('aria-label','Views'); }
+    var title=viewMenu?h('h2',{'class':'sg-title sg-title--views'},[viewMenu.wrap]):h('h2',{'class':'sg-title',text:opts.title||'Table'});
     var search=h('input',{type:'search','class':'sg-search',placeholder:'Search','aria-label':'Search all columns','data-sg':'search'});
     var count=h('span',{'class':'sg-count','data-sg':'count'});
     var selc=h('span',{'class':'sg-selcount','data-sg':'selcount'});
@@ -1076,7 +1088,7 @@
 
     S={opts:opts,rowKey:rowKey,cols:cols,colByKey:colByKey,filters:{},quick:'',grid:grid,dv:dv,
        screen:screen,host:host,countEl:count,selEl:selc,msgEl:msg,expBtn:exp,searchEl:search,selAllBtn:selAll,tools:tools,openMenu:null,
-       confirmEl:confirm,prev:null,returnFocus:document.activeElement,ro:null,
+       confirmEl:confirm,prev:null,returnFocus:carried||document.activeElement,ro:null,viewMenu:viewMenu,
        lists:lists,scope:null,listExpanded:false,tmpAddBtn:tmpAdd,tmpCount:tmpCount,railTemp:railTemp,railLists:railLists,
        pill:pill,pillText:pillText,panel:panel,panelMode:null,dialog:null,msgTimer:0};
     if(lists) buildPanel();
@@ -1204,6 +1216,7 @@
     }
     updateStatus();
     if(dv.getLength()) grid.setActiveCell(0,firstDataCell());
+    if(carried&&viewMenu) viewMenu.btn.focus();
     return api;
   }
 

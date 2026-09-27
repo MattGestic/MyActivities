@@ -422,6 +422,12 @@ html[data-theme="dark"]{color-scheme:dark}
 .sg-bar-lead{display:flex;align-items:center;gap:var(--ctl-gap);min-width:0;flex:0 1 auto}
 .sg-spacer{flex:1 1 auto;min-width:0}
 .sg-title{margin:0;font-size:20px;line-height:28px;font-weight:600;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--color-text-primary)}
+/* Title as a view switcher: the heading's own size and weight, a chevron, no button chrome until hover. */
+.sg-title--views{overflow:visible}
+.sg-title .sg-btn.sg-title-btn{height:auto;padding:0 var(--space-3);margin-left:calc(-1 * var(--space-3));font-size:inherit;line-height:inherit;font-weight:inherit;
+  border-color:transparent;background:transparent;color:var(--color-text-primary)}
+.sg-title .sg-btn.sg-title-btn:hover,.sg-title .sg-btn.sg-title-btn.is-open{background:var(--color-btn-secondary-hover-bg);border-color:var(--color-line-default)}
+.sg-title .sg-menu-pop{font-size:var(--text-md);font-weight:400;line-height:normal}
 .sg-counts{display:inline-flex;gap:var(--ctl-gap-tight);color:var(--color-text-muted);white-space:nowrap}
 .sg-selcount:not(:empty){color:var(--color-text-primary);font-weight:600}
 .sg-link{height:var(--ctl-h);padding:0 var(--space-2);border:0;background:transparent;font:inherit;font-size:var(--text-md);
@@ -753,7 +759,8 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
        editable, onEdit(rowKey,key,value), onAdd(), onDelete(rowKeys),
        onBack(), exportName, ensureXLSX, host, canEdit(rowKey,key),
        lists:{ store, refOf(rowKey), labelOf(ref), onChange(result) },
-       openColumn, onOpenItem(rowKey), importer:{...}
+       openColumn, onOpenItem(rowKey), importer:{...},
+       views:[{id,label,count}], view, onView(id)   (title becomes a view switcher)
      })
      SRETGrid.close()   SRETGrid.setRows(rows)   SRETGrid.patchRows(rows)   SRETGrid.isOpen()
      SRETGrid.dialog(title, build)   SRETGrid.importAoa(aoa, fileName)
@@ -985,7 +992,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
         if(!it) return;
         if(it.sep){ pop.appendChild(h('div',{'class':'sg-menu-sep',role:'separator'})); return; }
         var box=it.checked!=null;
-        var b=h('button',{type:'button','class':'sg-menu-item',role:box?'menuitemcheckbox':'menuitem',tabindex:'-1',
+        var b=h('button',{type:'button','class':'sg-menu-item',role:box?(it.radio?'menuitemradio':'menuitemcheckbox'):'menuitem',tabindex:'-1',
                           'data-sg':it.sg||null,'data-sg-list':it.list||null,disabled:!!it.disabled},
                 [h('span',{'class':'sg-menu-check','aria-hidden':'true',text:it.checked?'✓':''}),h('span',{text:it.label})]);
         if(box) b.setAttribute('aria-checked',String(!!it.checked));
@@ -1689,6 +1696,8 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
   function open(opts){
     if(!root.Slick||!root.Slick.Grid||!root.Slick.Data) throw new Error('SRETGrid: grid library not loaded.');
     if(!opts||!opts.rowKey) throw new Error('SRETGrid.open: rowKey is required.');
+    // A view switch replaces the screen but keeps where Back returns to.
+    var carried=S&&S.switching?S.returnFocus:null;
     if(S) close(true);
     var rowKey=opts.rowKey;
     var cols=(opts.columns||[]).map(function(c){
@@ -1710,7 +1719,16 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
     var fixed=host===document.body;
     var back=h('button',{type:'button','class':'sg-iconbtn sg-back','aria-label':'Back',title:'Back','data-sg':'back'});
     back.innerHTML=BACK_SVG;
-    var title=h('h2',{'class':'sg-title',text:opts.title||'Table'});
+    // Views (Matt, 2026-09-28): with more than one, the title is a menu that
+    // switches between them (e.g. User milestones, Schedule milestones,
+    // Schedule updates). The caller reopens the grid in onView(id).
+    var views=(opts.views||[]).filter(function(v){ return v&&v.id; });
+    var viewMenu=views.length>1&&typeof opts.onView==='function'?makeMenu(opts.title||'Table','view',function(){
+      return views.map(function(v){ return {label:v.label+(v.count!=null?' ('+v.count+')':''),sg:'view-'+v.id,radio:true,checked:v.id===opts.view,
+        onSelect:function(){ if(v.id===opts.view) return; S.switching=true; opts.onView(v.id); if(S&&S.opts===opts) S.switching=false; }}; });
+    },'sg-title-btn'):null;
+    if(viewMenu){ viewMenu.btn.title='Switch view'; viewMenu.pop.setAttribute('aria-label','Views'); }
+    var title=viewMenu?h('h2',{'class':'sg-title sg-title--views'},[viewMenu.wrap]):h('h2',{'class':'sg-title',text:opts.title||'Table'});
     var search=h('input',{type:'search','class':'sg-search',placeholder:'Search','aria-label':'Search all columns','data-sg':'search'});
     var count=h('span',{'class':'sg-count','data-sg':'count'});
     var selc=h('span',{'class':'sg-selcount','data-sg':'selcount'});
@@ -1821,7 +1839,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
 
     S={opts:opts,rowKey:rowKey,cols:cols,colByKey:colByKey,filters:{},quick:'',grid:grid,dv:dv,
        screen:screen,host:host,countEl:count,selEl:selc,msgEl:msg,expBtn:exp,searchEl:search,selAllBtn:selAll,tools:tools,openMenu:null,
-       confirmEl:confirm,prev:null,returnFocus:document.activeElement,ro:null,
+       confirmEl:confirm,prev:null,returnFocus:carried||document.activeElement,ro:null,viewMenu:viewMenu,
        lists:lists,scope:null,listExpanded:false,tmpAddBtn:tmpAdd,tmpCount:tmpCount,railTemp:railTemp,railLists:railLists,
        pill:pill,pillText:pillText,panel:panel,panelMode:null,dialog:null,msgTimer:0};
     if(lists) buildPanel();
@@ -1949,6 +1967,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
     }
     updateStatus();
     if(dv.getLength()) grid.setActiveCell(0,firstDataCell());
+    if(carried&&viewMenu) viewMenu.btn.focus();
     return api;
   }
 
@@ -2774,6 +2793,23 @@ window.SRET_STRESS=function(n){var s=window.SRET_FIXTURES.sched,out=[];for(var i
     });
   }
   var back=function(){ log('onBack',[]); };
+  // Views reached from the title (Matt, 2026-09-28). Schedule milestones are
+  // zero-duration activities; Schedule updates are schedule rows carrying an
+  // annotation (short title, health or comment).
+  function isSchedMs(r){ return r.dur===0; }
+  function hasAnnot(r){ return !!(r.short||r.comment||(r.health!=null&&r.health!=='')); }
+  function viewsOpt(cur){
+    return {view:cur,onView:function(id){ log('onView',[id]); window.DEMO_OPEN(id); },
+      views:[{id:'userms',label:'User milestones',count:store.userms.length},
+             {id:'schedms',label:'Schedule milestones',count:store.sched.filter(isSchedMs).length},
+             {id:'schedupd',label:'Schedule updates',count:store.sched.filter(hasAnnot).length},
+             {id:'sched',label:'All schedule activities',count:store.sched.length}]};
+  }
+  function schedView(title,rows,cur){ return Object.assign({
+      title:title,rowKey:'id',editable:true,exportName:title,
+      columns:F.cols.sched,rows:rows,lists:listsOpt(ACT),
+      onEdit:function(k,f,v){ log('onEdit',[k,f,v]); patch(store.sched,'id',k,f,v); },
+      onBack:back,ensureXLSX:ensureXLSX,host:host},viewsOpt(cur)); }
   var CONFIGS={
     userms:function(){ return {
       title:'User milestones',rowKey:'id',editable:true,exportName:'User milestones',
@@ -2785,7 +2821,7 @@ window.SRET_STRESS=function(n){var s=window.SRET_FIXTURES.sched,out=[];for(var i
           start:null,finish:null,band:'User Defined Milestones',wbs:'',pred:'',succ:'',comment:'',created:TODAY,createdBy:userName(),health:0};
         store.userms.push(r); log('onAdd',[id]); return r; },
       onDelete:function(keys){ log('onDelete',[keys]); store.userms=store.userms.filter(function(r){ return keys.indexOf(r.id)<0; }); },
-      openColumn:'id',onOpenItem:openMilestone,
+      openColumn:'id',onOpenItem:openMilestone,view:'userms',views:viewsOpt('userms').views,onView:viewsOpt('userms').onView,
       importer:{idKey:'id',depKeys:{pred:'Predecessors',succ:'Successors'},user:userName,log:IMPORT_LOG,nextId:nextUsr,
         // IDs a dependency may name: every schedule activity and user milestone the app knows.
         knownIds:function(){ return F.sched.map(function(r){ return r.id; }).concat(store.userms.map(function(r){ return r.id; })); },
@@ -2803,11 +2839,9 @@ window.SRET_STRESS=function(n){var s=window.SRET_FIXTURES.sched,out=[];for(var i
       onEdit:function(k,f,v){ log('onEdit',[k,f,v]); patch(store.annot,'aid',k,f,v); },
       onDelete:function(keys){ log('onDelete',[keys]); store.annot=store.annot.filter(function(r){ return keys.indexOf(r.aid)<0; }); },
       onBack:back,ensureXLSX:ensureXLSX,host:host}; },
-    sched:function(){ return {
-      title:'Schedule activities',rowKey:'id',editable:true,exportName:'Schedule activities',
-      columns:F.cols.sched,rows:store.sched.slice(),lists:listsOpt(ACT),
-      onEdit:function(k,f,v){ log('onEdit',[k,f,v]); patch(store.sched,'id',k,f,v); },
-      onBack:back,ensureXLSX:ensureXLSX,host:host}; },
+    sched:function(){ return schedView('Schedule activities',store.sched.slice(),'sched'); },
+    schedms:function(){ return schedView('Schedule milestones',store.sched.filter(isSchedMs),'schedms'); },
+    schedupd:function(){ return schedView('Schedule updates',store.sched.filter(hasAnnot),'schedupd'); },
     stress:function(){ return {
       title:'Schedule activities (2,000 row stress set)',rowKey:'id',editable:true,exportName:'Stress',
       columns:F.cols.sched,rows:window.SRET_STRESS(2000),lists:listsOpt(ACT),

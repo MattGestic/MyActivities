@@ -225,11 +225,20 @@ While a filter is on, a pill in row 3 names it ("My temp list only" or "List: <n
   - "Limit items to a single list", when it becomes a setting, belongs in Data & view > Data settings and just sets `USER_LISTS.settings.singleList`.
 - **Relationship to week collections (P58, D-19a).** These are separate. A note keeps its reporting week; lists are the user's own working groups.
 
-### 3. Data & view: Schedule activities
+### 3. Views from the title: user milestones and the schedule (Matt, 2026-09-28)
 
-Add a "Schedule activities" row with a "View as table" button in the Data & view drawer's Sources tab (`setSettingsTab('sources')`), calling `openScheduleGrid()`. Schedule columns (ID, name, WBS, duration, dates, float, predecessors, successors, actual flag) are **read-only**; there is no `onAdd` and no `onDelete`, so those buttons do not render. Only annotation columns are editable (short title, health, comment), and their `onEdit` writes to the annotation stores, never to `TASKS` / `MILESTONES`. This keeps the three layers separate: schedule data is never mutated by the grid.
+The grid's title is a view switcher (`views`, `view`, `onView`). One grid screen, four views, each reopening the grid with its own config; Back returns to where the grid was first opened.
 
-Where exactly the button goes in Data & view (Sources, or View controls) is a layout call for the main thread. **[CONFIRM WITH MATT]**
+| View | Rows | Editable |
+|---|---|---|
+| User milestones | `USER_MILESTONES` | Yes (section 1) |
+| Schedule milestones | Schedule activities that are milestones (zero duration, the board's milestone rule) | Annotation columns only |
+| Schedule updates | Schedule activities carrying an annotation: short title, health or comment | Annotation columns only |
+| All schedule activities | Every schedule activity | Annotation columns only |
+
+Schedule columns (ID, name, WBS, duration, dates, float, predecessors, successors, actual flag) are **read-only**; there is no `onAdd` and no `onDelete` on schedule views. Annotation edits go through `onEdit` to the annotation stores, never to `TASKS` / `MILESTONES`, so schedule data is never mutated. Counts in the menu come from the app's stores at open.
+
+Entry: the existing "View items" button (section 1) opens User milestones; the other views are reached from the title, so no separate Data & view button is needed.
 
 ## Verification at merge
 
