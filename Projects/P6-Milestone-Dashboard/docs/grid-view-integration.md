@@ -18,6 +18,7 @@ The app keeps one `<style>` (scanned by `colour_audit.py --strict`) and one `<sc
 | 4c | `src/modules/ms-import/ms-import.js` | Directly after #4b, same script | Self-contained IIFE; defines `window.SRETMsImport` only (the milestone import rules). The grid's import dialog calls it; the app's own import form can too |
 | 4d | `src/modules/dates/dates.js` | Directly after #4b, before #4c | `window.SRETDates`: the one date reader for every import (grid and dashboard). #4c needs it |
 | 4e | `src/modules/user/user.js`, `src/modules/user/user.css` | JS after #4d; CSS in the main `<style>` after #1 | `window.SRETUser`: the user name and save history, and the Data settings field |
+| 4f | `src/modules/compare/compare.js` | After #4e | `window.SRETCompare`: snapshots and the Schedule changes comparison |
 | 5 | The adapters below | In `app-script`, beside the Workspace code (`setWorkspaceSection()`) | The only code that knows both the app's stores and the grid contract |
 
 Check before pasting: neither vendor file contains `</script` or `</style` (`tools/grid_view_assemble.py` asserts this for the demo and would fail the same way).
@@ -239,6 +240,26 @@ The grid's title is a view switcher (`views`, `view`, `onView`). One grid screen
 Schedule columns (ID, name, WBS, duration, dates, float, predecessors, successors, actual flag) are **read-only**; there is no `onAdd` and no `onDelete` on schedule views. Annotation edits go through `onEdit` to the annotation stores, never to `TASKS` / `MILESTONES`, so schedule data is never mutated. Counts in the menu come from the app's stores at open.
 
 Entry: the existing "View items" button (section 1) opens User milestones; the other views are reached from the title, so no separate Data & view button is needed.
+
+### 4. Schedule changes (`SRETCompare`, Matt 2026-09-28)
+
+A view in the title menu that lists what moved between the chosen schedule and a comparison basis: Later, Earlier, Completed, New, Removed, Float only, with the old and new start, finish and float, and the days moved (calendar days, positive is later). Biggest slips first; read-only; exportable; rows can go to the temp list.
+
+**Comparison basis.** Not every import is a project update, so each import is filed with a role:
+
+| Role at import | Examples | Compared with by default | Can also pick |
+|---|---|---|---|
+| Project update | The formal weekly or monthly P6 update | The previous project update | Any earlier project or interim update, the baseline |
+| Interim update | A mid-period cut of the project schedule | The latest project update before it (never another interim) | As above |
+| External schedule (named) | Vendor or contractor schedule, e.g. "Ocean Steel fabrication" | The previous import of the same named schedule | Its own earlier imports only; never the project schedule |
+
+Activities match by Activity ID within the same schedule line (project, or one named external schedule), so a vendor's IDs are never matched against the project's. The first import of any schedule shows "nothing to compare it with yet".
+
+**What the app must add at merge (it keeps no history today).** `PRIMARY_SOURCES` is replaced on a normal import, so earlier updates are lost.
+1. The Import step asks the role (Project update / Interim update / External schedule + its name). Append mode already covers adding an external schedule beside the project one.
+2. Each successful import stores `SRETCompare.snapshot(meta, rows)`: only ID, name, start, finish, float and the actual flag, about 40 bytes per activity. The embedded baseline becomes the one `role:'baseline'` snapshot.
+3. Snapshots persist with the annotations and publish state. **[CONFIRM WITH MATT]** how many to keep per schedule (proposed: every project update, and the last 3 interim and 3 per external schedule).
+4. Working days: differences are calendar days until the P6 calendar is imported. **[CONFIRM WITH MATT]** whether working days are needed.
 
 ## Verification at merge
 

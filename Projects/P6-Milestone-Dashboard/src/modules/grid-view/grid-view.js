@@ -10,6 +10,7 @@
        lists:{ store, refOf(rowKey), labelOf(ref), onChange(result) },
        openColumn, onOpenItem(rowKey), importer:{...},
        views:[{id,label,count}], view, onView(id)   (title becomes a view switcher)
+       pickers:[{sg,label,items:[{id,label,checked}],onSelect(id)}], note
      })
      SRETGrid.close()   SRETGrid.setRows(rows)   SRETGrid.patchRows(rows)   SRETGrid.isOpen()
      SRETGrid.dialog(title, build)   SRETGrid.importAoa(aoa, fileName)
@@ -1034,8 +1035,20 @@
     // Row 1: back, title. Row 2 (starts in line with the title): search, Add
     // row, Tools, Add to temp list. Row 3: counts, Select all, the filter pill.
     var bar=h('div',{'class':'sg-bar'},[h('div',{'class':'sg-bar-lead'},[back,title])]);
-    var bar2=h('div',{'class':'sg-bar2'},[search,addMenu?addMenu.wrap:exp,tools&&tools.wrap,tmpMenu&&tmpMenu.wrap]);
-    var bar3=h('div',{'class':'sg-bar3'},[h('span',{'class':'sg-counts'},[count,selc]),selAll,pill]);
+    // Pickers (e.g. Schedule changes: which schedule, compared with what):
+    // radio menus after the search; the caller reopens the grid in onSelect.
+    var pickers=(opts.pickers||[]).map(function(p){
+      var cur=(p.items||[]).filter(function(i){ return i.checked; })[0];
+      var m=makeMenu((p.label?p.label+': ':'')+(cur?cur.label:'None'),p.sg||'picker',function(){
+        return (p.items||[]).map(function(i){ return {label:i.label,sg:(p.sg||'picker')+'-'+i.id,radio:true,checked:!!i.checked,
+          onSelect:function(){ if(i.checked) return; S.switching=true; p.onSelect(i.id); if(S&&S.opts===opts) S.switching=false; }}; });
+      },'sg-picker');
+      if(!(p.items||[]).length) m.btn.disabled=true;
+      return m;
+    });
+    var note=opts.note?h('span',{'class':'sg-note','data-sg':'note',text:opts.note,title:opts.note}):null;
+    var bar2=h('div',{'class':'sg-bar2'},[search].concat(pickers.map(function(m){ return m.wrap; })).concat([addMenu?addMenu.wrap:exp,tools&&tools.wrap,tmpMenu&&tmpMenu.wrap]));
+    var bar3=h('div',{'class':'sg-bar3'},[h('span',{'class':'sg-counts'},[count,selc]),selAll,pill,note]);
     var confirm=h('div',{'class':'sg-confirm',role:'alertdialog','aria-label':'Confirm remove','data-sg':'confirm',hidden:true});
     var tmpCount=lists?h('span',{'class':'sg-badge sg-rail-badge','data-sg':'temp-count',text:'0',hidden:true}):null;
     var railTemp=lists?h('button',{type:'button','class':'sg-rail-btn','data-sg':'temp-open','aria-expanded':'false',

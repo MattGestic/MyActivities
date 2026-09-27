@@ -124,6 +124,11 @@ MUTATIONS = {
     "view-switch-loses-back": ("var carried=S&&S.switching?S.returnFocus:null;", "var carried=null;"),
     "view-title-clips-menu": (".sg-title--views{overflow:visible}", ""),
     "view-no-current-mark": ("radio:true,checked:v.id===opts.view,", "radio:true,checked:false,"),
+    "compare-vendor-with-project": ("function lineageOf(meta){ return meta.role==='external'?'ext:'+String(meta.name||'').trim().toLowerCase():'project'; }",
+                                    "function lineageOf(meta){ return 'project'; }"),
+    "compare-interim-as-default": ("return el.filter(function(s){ return s.role==='project'; })[0]||", "return el[0]||"),
+    "compare-removed-dropped": ("else if(!now){ row.change='Removed'; c.removed++; }", "else if(!now){ return; }"),
+    "compare-slip-sign": ("return Math.round((Date.UTC(+b.slice(0,4)", "return -Math.round((Date.UTC(+b.slice(0,4)"),
     "health-shown-in-grid": ("if(lists) cols=[{key:L_LIST", "cols=cols.filter(function(c){ return c.key!=='health'; }).concat(cols.filter(function(c){ return c.key==='health'; }).map(function(c){ return Object.assign({},c,{hidden:false}); }));\n    if(lists) cols=[{key:L_LIST"),
 }
 
@@ -867,7 +872,7 @@ try{
 
   // ============ Annotations ============
   { DEMO_OPEN('annot'); await sleep(20);
-    ok('annot: title and row count', $('.sg-title').textContent==='Annotations: W/E 27-Sep-26' && visibleCount()===F.annot.length);
+    ok('annot: title and row count', $('.sg-title').textContent==='Comments and markups: W/E 27-Sep-26' && visibleCount()===F.annot.length);
     ok('annot: no Add (no onAdd); Delete in Tools', !$('[data-sg=add]') && !!(await menuItem('tools','delete'))); await menuClose('tools');
     const rk=eng().dataView.getItem(2).aid; await editCell(2,'value','Revised comment text'); const e=lastLog('onEdit');
     ok('annot: comment edit reaches onEdit', e.args[0]===rk && e.args[1]==='value' && e.args[2]==='Revised comment text', e.args);
@@ -880,6 +885,9 @@ try{
   // ============ Views from the title (Matt, 2026-09-28) ============
   { const btn=n=>$('[data-sg='+n+']'), launcher=$('#go-userms');
     SRETGrid.close(); launcher.focus(); DEMO_OPEN('userms'); await sleep(20);
+    window.__nChanges=(()=>{ const C=window.SRETCompare, S=window.SRET_FIXTURES.snaps.map(x=>C.snapshot(x.meta,x.rows));
+      const cur=C.snapshot({id:'pu-0829',role:'project',dataDate:'2026-08-29',importedAt:'2026-08-31T08:00:00Z'},DEMO_STORE().sched);
+      return C.compare(C.defaultBasis(S.concat([cur]),cur),cur).rows.length; })();
     const nUms=eng().dataView.getItems().length, nMs=F.sched.filter(r=>r.dur===0).length, nUpd=F.sched.filter(r=>!!(r.short||r.comment||(r.health!=null&&r.health!==''))).length;
     const vb=btn('view'), fs=getComputedStyle(vb).fontSize, tfs=getComputedStyle($('.sg-title')).fontSize;
     ok('views: the title is a menu button in the heading\'s own size, labelled User milestones', !!vb && vb.textContent==='User milestones' &&
@@ -888,7 +896,7 @@ try{
     const items=$$('[data-sg=view-menu] .sg-menu-item'), pop=btn('view-menu'), pr=pop.getBoundingClientRect();
     const hit=document.elementFromPoint(pr.left+pr.width/2,pr.top+pr.height/2);
     ok('views: the menu lists User milestones, Schedule milestones, Schedule updates, All schedule activities with counts; the current one checked',
-       items.map(i=>i.textContent.replace(/^✓/,'')).join('|')==='User milestones ('+nUms+')|Schedule milestones ('+nMs+')|Schedule updates ('+nUpd+')|All schedule activities ('+F.sched.length+')' &&
+       items.map(i=>i.textContent.replace(/^✓/,'')).join('|')==='User milestones ('+nUms+')|Schedule milestones ('+nMs+')|Schedule updates ('+nUpd+')|All schedule activities ('+F.sched.length+')|Schedule changes ('+window.__nChanges+')|Comments and markups ('+F.annot.length+')' &&
        items.every(i=>i.getAttribute('role')==='menuitemradio') && items[0].getAttribute('aria-checked')==='true' && items[1].getAttribute('aria-checked')==='false',
        items.map(i=>i.textContent));
     ok('views: the menu is not clipped by the heading (hit test lands inside it)', pr.height>40 && pop.contains(hit), [pr.height,hit&&hit.className]);
@@ -906,9 +914,54 @@ try{
     ok('views: an annotation edited in one view is there in another (All schedule activities)', !!all && all.comment==='Checked at the site walk' && visibleCount()===F.sched.length);
     btn('back').click(); await sleep(20);
     ok('views: Back after switching views returns to where the grid was opened from', !SRETGrid.isOpen() && document.activeElement===launcher, document.activeElement&&document.activeElement.id);
-    DEMO_OPEN('annot'); await sleep(20);
-    ok('views: a screen without views keeps a plain title', !btn('view') && $('.sg-title').textContent.indexOf('Annotations')===0);
+    DEMO_OPEN('stress'); await sleep(20);
+    ok('views: a screen without views keeps a plain title', !btn('view') && $('.sg-title').textContent.indexOf('Schedule activities (2,000')===0);
     SRETGrid.close(); DEMO_OPEN('userms'); await sleep(20); }
+
+  // ============ Schedule changes (Matt, 2026-09-28) ============
+  { const btn=n=>$('[data-sg='+n+']'), launcher=$('#go-userms'), C=window.SRETCompare;
+    const labels=m=>$$('[data-sg='+m+'-menu] .sg-menu-item').map(b=>b.textContent.replace(/^✓/,''));
+    SRETGrid.close(); launcher.focus(); DEMO_OPEN('userms'); await sleep(20);
+    await menuPick('view','view-changes');
+    const rows=eng().dataView.getItems(), ids=rows.map(r=>r.id);
+    ok('changes: opens from the title; compares the current project update with the previous formal update by default',
+       btn('view').textContent==='Schedule changes' && btn('cmp-cur').textContent==='Schedule: Project update, DD 29-Aug-26' &&
+       btn('cmp-basis').textContent==='Compared with: Project update, DD 22-Aug-26 (default)', [btn('cmp-cur').textContent,btn('cmp-basis').textContent]);
+    const kinds=new Set(rows.map(r=>r.change));
+    ok('changes: only changed activities, each classed Later, Earlier, Completed, New, Removed or Float only; biggest slip first',
+       rows.length>0 && ['Later','Earlier','Completed','New','Removed','Float only'].every(k=>kinds.has(k)) && rows[0].finishSlip===7 &&
+       rows.every(r=>r.change!=='' ) && rows.filter(r=>r.change==='Later').every(r=>r.finishSlip>0||r.startSlip>0), Array.from(kinds));
+    const rem=rows.find(r=>r.id==='SNIP-901');
+    ok('changes: an activity removed since the basis is listed with its old dates and no new ones', !!rem && rem.change==='Removed' && rem.finishWas==='2026-09-18' && rem.finishNow==null);
+    const ci=colIdx('change'), later=rows.findIndex(r=>r.change==='Later'), early=rows.findIndex(r=>r.change==='Earlier');
+    const toneAt=async r=>{ eng().grid.scrollRowIntoView(r); await sleep(20); const n=eng().grid.getCellNode(r,ci); return n?n.className:null; };
+    const tl=await toneAt(later), te=await toneAt(early); eng().grid.scrollRowIntoView(0); await sleep(10);
+    ok('changes: Change is shaded (Later critical, Earlier on track)', /sg-tone-crit/.test(tl) && /sg-tone-track/.test(te), [tl,te]);
+    ok('changes: the note summarises the counts; read-only', /^\d+ later, \d+ earlier, \d+ completed, \d+ new, 2 removed, \d+ float only; \d+ unchanged\. Calendar days; positive is later\.$/.test(btn('note').textContent) &&
+       !(await tryOpenEditor(0,'name')), btn('note').textContent);
+    await menuItem('cmp-basis','cmp-basis-iu-0826'); const bl=labels('cmp-basis'); await menuClose('cmp-basis');
+    ok('changes: Compared with offers the earlier project snapshots newest first, the baseline last, the default marked; nothing from the vendor',
+       bl.join('|')==='Interim update, DD 26-Aug-26|Project update, DD 22-Aug-26 (default)|Baseline, DD 15-Aug-26', bl);
+    await menuPick('cmp-basis','cmp-basis-iu-0826');
+    const r2=eng().dataView.getItems();
+    ok('changes: comparing with the interim update re-runs it (moves since then are 3 days)', btn('cmp-basis').textContent==='Compared with: Interim update, DD 26-Aug-26' &&
+       r2.filter(r=>r.change==='Later').every(r=>r.finishSlip===3) && r2.some(r=>r.change==='Later'), r2.slice(0,3));
+    await menuPick('cmp-cur','cmp-cur-os-0827');
+    const v=eng().dataView.getItems(); await menuItem('cmp-basis','cmp-basis-os-0820'); const vb=labels('cmp-basis'); await menuClose('cmp-basis');
+    ok('changes: a vendor schedule is compared only with its own earlier import, never with the project schedule',
+       btn('cmp-cur').textContent==='Schedule: Ocean Steel fabrication, DD 27-Aug-26' && vb.join('|')==='Ocean Steel fabrication, DD 20-Aug-26 (default)' &&
+       v.length>0 && v.every(r=>/^OS-/.test(r.id)) && v.some(r=>r.finishSlip===9) && v.some(r=>r.change==='Completed'), [vb,v.length]);
+    await menuPick('cmp-cur','cmp-cur-os-0820');
+    ok('changes: the first import of a schedule says there is nothing to compare it with yet', visibleCount()===0 && btn('cmp-basis').disabled &&
+       btn('note').textContent==='This is the first import of this schedule, so there is nothing to compare it with yet.');
+    // An interim update defaults to the latest formal project update before it.
+    const S=window.SRET_FIXTURES.snaps.map(x=>C.snapshot(x.meta,x.rows)), it=S.find(s=>s.id==='iu-0826');
+    ok('changes: an interim update defaults to the latest formal project update, not to another interim', C.label(C.defaultBasis(S,it))==='Project update, DD 22-Aug-26');
+    await menuPick('view','view-annot');
+    ok('views: Comments and markups is in the same menu', btn('view').textContent==='Comments and markups: W/E 27-Sep-26' && eng().dataView.getItems().length===DEMO_STORE().annot.length, btn('view').textContent);
+    btn('back').click(); await sleep(20);
+    ok('changes: Back returns to where the grid was opened from', !SRETGrid.isOpen() && document.activeElement===launcher);
+    DEMO_OPEN('userms'); await sleep(20); }
 
   // ============ Schedule activities + export ============
   { DEMO_OPEN('sched'); await sleep(20);

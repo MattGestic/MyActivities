@@ -91,6 +91,64 @@ def schedule_rows():
     return rows
 
 
+def _shift(iso_d, n):
+    if not iso_d:
+        return iso_d
+    import datetime
+    d = datetime.date.fromisoformat(iso_d) + datetime.timedelta(days=n)
+    return d.isoformat()
+
+
+def comparison_snapshots(sched):
+    def row(r, **kw):
+        x = {"id": r["id"], "name": r["name"], "start": r["start"], "finish": r["finish"], "float": r["float"], "actual": r["actual"]}
+        x.update(kw)
+        return x
+    prev, interim, base = [], [], []
+    for i, r in enumerate(sched):
+        if i % 31 == 5:                      # new since the previous update
+            continue
+        p = row(r)
+        if i % 9 == 0:
+            p["finish"] = _shift(r["finish"], -7)      # now 7 days later
+        elif i % 13 == 0:
+            p["finish"] = _shift(r["finish"], 3)       # now 3 days earlier
+        elif i % 17 == 0 and r["float"] is not None:
+            p["float"] = r["float"] + 5                # float only
+        if r["actual"] == "Yes" and i % 4 == 0:
+            p["actual"] = "No"                         # completed since
+        prev.append(p)
+        q = row(r)
+        if i % 9 == 0:
+            q["finish"] = _shift(r["finish"], -3)
+        interim.append(q)
+        b = row(r)
+        if i % 5 == 0:
+            b["finish"] = _shift(r["finish"], -14)
+        base.append(b)
+    prev += [{"id": "SNIP-901", "name": "Superseded interface review", "start": "2026-09-07", "finish": "2026-09-18", "float": 4, "actual": "No"},
+             {"id": "SNIP-902", "name": "Deleted duplicate survey task", "start": "2026-09-14", "finish": "2026-09-16", "float": 10, "actual": "No"}]
+    names = ["Shop drawings issued", "Shop drawings approved", "Material order placed", "Mill certificates received",
+             "Fabrication start, grid A", "Fabrication complete, grid A", "Fabrication start, grid B", "Fabrication complete, grid B",
+             "Blast and paint", "Trial assembly", "Inspection and test", "Load-out", "Sea freight", "Arrive at port",
+             "Road transport to site", "Delivered to laydown"]
+    v1, v2 = [], []
+    for i, n in enumerate(names):
+        st = _shift("2026-09-01", i * 7)
+        fi = _shift(st, 6)
+        v1.append({"id": "OS-%d" % (100 + i * 10), "name": n, "start": st, "finish": fi, "float": 10 - (i % 5), "actual": "Yes" if i < 2 else "No"})
+        slip = 0 if i < 3 else (5 if i < 9 else 9)
+        v2.append({"id": "OS-%d" % (100 + i * 10), "name": n, "start": _shift(st, slip if i >= 4 else 0), "finish": _shift(fi, slip),
+                   "float": 10 - (i % 5) - (2 if i >= 9 else 0), "actual": "Yes" if i < 3 else "No"})
+    return [
+        {"meta": {"id": "bl", "role": "baseline", "name": "Baseline", "dataDate": "2026-08-15", "file": "Embedded baseline"}, "rows": base},
+        {"meta": {"id": "pu-0822", "role": "project", "name": "Project schedule", "dataDate": "2026-08-22", "file": "103787-13_PFS_Weekly_Update_DD-2026-08-22.xlsx", "importedAt": "2026-08-24T08:00:00Z"}, "rows": prev},
+        {"meta": {"id": "iu-0826", "role": "interim", "name": "Project schedule", "dataDate": "2026-08-26", "file": "PFS interim DD-2026-08-26.xlsx", "importedAt": "2026-08-26T15:00:00Z"}, "rows": interim},
+        {"meta": {"id": "os-0820", "role": "external", "name": "Ocean Steel fabrication", "dataDate": "2026-08-20", "file": "OceanSteel_P8010_2026-08-20.xlsx", "importedAt": "2026-08-21T09:00:00Z"}, "rows": v1},
+        {"meta": {"id": "os-0827", "role": "external", "name": "Ocean Steel fabrication", "dataDate": "2026-08-27", "file": "OceanSteel_P8010_2026-08-27.xlsx", "importedAt": "2026-08-28T09:00:00Z"}, "rows": v2},
+    ]
+
+
 def fixtures():
     sched = schedule_rows()
     # A few annotation values already present, as a mounted annotation file would give.
@@ -199,11 +257,16 @@ def fixtures():
             {"key": "comment", "label": "Comment", "type": "text", "editable": True, "width": 220},
         ],
     }
+    # Schedule changes (Matt, 2026-09-28): earlier imports kept as snapshots.
+    # Synthetic, derived from the reference export so the demo has something to
+    # compare: a baseline, the previous formal update, an interim cut, and a
+    # vendor schedule imported twice. The current project update is `sched`.
+    snaps = comparison_snapshots(sched)
     # The file as shared: last saved by someone else, with its save history.
     file_state = {"savedBy": "J. Ruiz", "history": [
         {"at": "2026-09-14T08:05:00Z", "by": "M. Garrett", "version": "3.1.0-P57"},
         {"at": "2026-09-20T09:12:00Z", "by": "J. Ruiz", "version": "3.1.0-P58"}]}
-    data = {"sched": sched, "userms": userms, "annot": annot, "cols": cols, "fileState": file_state}
+    data = {"sched": sched, "userms": userms, "annot": annot, "cols": cols, "fileState": file_state, "snaps": snaps}
     js = "window.SRET_FIXTURES=" + json.dumps(data, separators=(",", ":"), ensure_ascii=False) + ";\n"
     js += ("// Stress set: the reference schedule repeated to n rows with unique IDs.\n"
            "window.SRET_STRESS=function(n){var s=window.SRET_FIXTURES.sched,out=[];"
@@ -236,6 +299,7 @@ def build() -> str:
         "/*@COLLECTIONS_JS@*/": safe_inline((COLL / "collections.js").read_text(encoding="utf-8"), "</script", "collections.js"),
         "/*@DATES_JS@*/": safe_inline((ROOT / "src" / "modules" / "dates" / "dates.js").read_text(encoding="utf-8"), "</script", "dates.js"),
         "/*@USER_JS@*/": safe_inline((ROOT / "src" / "modules" / "user" / "user.js").read_text(encoding="utf-8"), "</script", "user.js"),
+        "/*@COMPARE_JS@*/": safe_inline((ROOT / "src" / "modules" / "compare" / "compare.js").read_text(encoding="utf-8"), "</script", "compare.js"),
         "/*@MSIMPORT_JS@*/": safe_inline((ROOT / "src" / "modules" / "ms-import" / "ms-import.js").read_text(encoding="utf-8"), "</script", "ms-import.js"),
         "/*@FIXTURES@*/": safe_inline(fixtures(), "</script", "fixtures"),
     }

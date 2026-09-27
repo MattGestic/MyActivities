@@ -29,6 +29,9 @@
 .sg-title{margin:0;font-size:20px;line-height:28px;font-weight:600;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--color-text-primary)}
 /* Title as a view switcher: the heading's own size and weight, a chevron, no button chrome until hover. */
 .sg-title--views{overflow:visible}
+.sg-note{color:var(--color-text-muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sg-picker{max-width:320px}
+.sg-picker > span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sg-title .sg-btn.sg-title-btn{height:auto;padding:0 var(--space-3);margin-left:calc(-1 * var(--space-3));font-size:inherit;line-height:inherit;font-weight:inherit;
   border-color:transparent;background:transparent;color:var(--color-text-primary)}
 .sg-title .sg-btn.sg-title-btn:hover,.sg-title .sg-btn.sg-title-btn.is-open{background:var(--color-btn-secondary-hover-bg);border-color:var(--color-line-default)}
