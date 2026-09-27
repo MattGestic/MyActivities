@@ -408,15 +408,23 @@ html[data-theme="dark"]{color-scheme:dark}
 .sg-screen *,.sg-screen *::before,.sg-screen *::after{box-sizing:border-box}
 
 /* ---- toolbar ---- */
-.sg-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--ctl-gap) var(--group-gap);
+/* One row: back, title, search, counts and every action (Matt, 2026-09-27).
+   The title gives way first (ellipsis); the tools only wrap below 768px. */
+.sg-bar{display:flex;flex-wrap:nowrap;align-items:center;justify-content:space-between;gap:var(--ctl-gap) var(--group-gap);
   padding:var(--space-4) var(--group-gap);background:var(--color-bg-elevated);border-bottom:1px solid var(--color-border-panel)}
-.sg-bar-lead{display:flex;align-items:center;gap:var(--ctl-gap);min-width:0}
-.sg-bar-tools{display:flex;flex-wrap:wrap;align-items:center;gap:var(--ctl-gap);min-width:0}
-.sg-title{margin:0;font-size:20px;line-height:28px;font-weight:600;min-width:0;overflow-wrap:anywhere;color:var(--color-text-primary)}
+.sg-bar-lead{display:flex;align-items:center;gap:var(--ctl-gap);min-width:0;flex:0 1 auto}
+.sg-bar-tools{display:flex;flex-wrap:nowrap;align-items:center;justify-content:flex-end;gap:var(--ctl-gap);min-width:0;flex:0 0 auto}
+.sg-title{margin:0;font-size:20px;line-height:28px;font-weight:600;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--color-text-primary)}
 .sg-counts{display:inline-flex;gap:var(--ctl-gap-tight);color:var(--color-text-muted);white-space:nowrap}
 .sg-selcount:not(:empty){color:var(--color-accent-ink);font-weight:600}
-.sg-msg{color:var(--color-text-muted);min-width:0}
-.sg-msg:empty{display:none}
+.sg-msg{position:absolute;left:50%;bottom:var(--group-gap);transform:translateX(-50%);z-index:5;max-width:min(640px,calc(100% - 2 * var(--group-gap)));
+  padding:var(--space-4) var(--space-5);border-radius:var(--radius-overlay);box-shadow:var(--shadow-2);pointer-events:none;
+  background:var(--color-tooltip-bg);color:var(--color-text-on-header);font-size:var(--text-md);line-height:16px;
+  opacity:0;transition:opacity .2s ease}
+.sg-msg.is-shown{opacity:1}
+.sg-badge{display:inline-block;min-width:16px;margin-left:var(--space-2);padding:0 var(--space-2);border-radius:var(--radius-pill);
+  background:var(--color-accent-tint-bg);color:var(--color-accent-ink);font-weight:600;line-height:16px;text-align:center}
+.sg-btn--expander.is-open{background:var(--color-btn-secondary-pressed-bg)}
 
 .sg-iconbtn{display:inline-flex;align-items:center;justify-content:center;width:var(--icon-btn);height:var(--icon-btn);
   padding:0;border:0;border-radius:var(--radius-ctl);background:transparent;color:var(--color-text-primary);cursor:pointer}
@@ -456,24 +464,36 @@ html[data-theme="dark"]{color-scheme:dark}
 .sg-confirm-msg{margin:0 0 var(--ctl-gap);font-size:var(--text-lg);line-height:20px}
 .sg-confirm-btns{display:flex;justify-content:space-between;gap:var(--ctl-gap)}
 
-/* ---- My temp list panel (design-standard.md field row pattern) ---- */
+/* ---- My temp list panel: expanded list of the temp items ---- */
 .sg-temp{padding:var(--space-4) var(--group-gap);background:var(--color-bg-subtle);color:var(--color-text-primary);
   border-bottom:1px solid var(--color-border-panel)}
 .sg-temp[hidden]{display:none}
-.sg-temp-head{display:flex;align-items:center;justify-content:space-between;gap:var(--ctl-gap)}
-.sg-temp-title{margin:0;font-size:var(--text-lg);line-height:20px;font-weight:600}
-.sg-temp-summary{margin:var(--ctl-gap-tight) 0 var(--ctl-gap);color:var(--color-text-muted)}
-.sg-temp-row{display:flex;flex-wrap:wrap;align-items:center;gap:var(--ctl-gap);margin-bottom:var(--ctl-gap)}
-.sg-temp-lbl{flex:0 0 140px;font-weight:600}
-.sg-temp-name{width:240px}
-.sg-temp .sg-select{min-width:200px}
-.sg-temp-err{margin:0;color:var(--color-crit-text)}
+.sg-temp-head{display:flex;flex-wrap:wrap;align-items:center;gap:var(--ctl-gap-tight) var(--ctl-gap);margin-bottom:var(--ctl-gap-tight)}
+.sg-temp-all{display:inline-flex;align-items:center;gap:var(--ctl-gap);cursor:pointer}
+.sg-temp-title{font-size:var(--text-lg);line-height:20px;font-weight:600;white-space:nowrap}
+.sg-temp-summary{color:var(--color-text-muted)}
+.sg-temp-spacer{flex:1 1 auto}
+.sg-temp-items{list-style:none;margin:0 0 var(--ctl-gap);padding:0;max-height:180px;overflow:auto;
+  border:1px solid var(--color-line-default);border-radius:var(--radius-ctl);background:var(--color-bg-elevated)}
+.sg-temp-item{display:flex;align-items:center;justify-content:space-between;gap:var(--ctl-gap);min-height:var(--ctl-h);
+  padding:0 var(--space-4);border-bottom:1px solid var(--color-line-hairline)}
+.sg-temp-item:last-child{border-bottom:0}
+.sg-temp-item-lbl{display:inline-flex;align-items:center;gap:var(--ctl-gap);min-width:0;cursor:pointer}
+.sg-temp-item-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sg-temp-item-lists{flex:0 1 auto;min-width:0;color:var(--color-text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sg-temp-empty{padding:var(--space-4);color:var(--color-text-muted)}
+.sg-temp input[type=checkbox]{width:16px;height:16px;margin:0;color:inherit;accent-color:var(--color-accent)}
+.sg-temp-actions{display:flex;flex-wrap:wrap;align-items:center;gap:var(--ctl-gap)}
+.sg-temp-actions[hidden],.sg-temp-confirm[hidden],.sg-temp-namewrap[hidden]{display:none}
+.sg-temp-lbl{font-weight:600}
+.sg-temp-group{display:inline-flex;flex-wrap:wrap;align-items:center;gap:var(--ctl-gap)}
+.sg-temp-name{width:200px}
+.sg-temp .sg-select{min-width:180px}
+.sg-temp-err{margin:var(--ctl-gap-tight) 0 0;color:var(--color-crit-text)}
 .sg-temp-err:empty{display:none}
 .sg-temp-confirm{max-width:560px}
-.sg-temp-confirm[hidden],.sg-temp-actions[hidden]{display:none}
 @media (max-width:767px){
-  .sg-temp-lbl{flex-basis:100%}
-  .sg-temp-name,.sg-temp .sg-select{flex:1 1 auto;width:auto;min-width:0}
+  .sg-temp-group,.sg-temp-name,.sg-temp .sg-select{flex:1 1 100%;width:auto;min-width:0}
 }
 
 /* Toggle chip (design-standard.md: pill, accent fill with on-accent text when on, aria-pressed). */
@@ -526,7 +546,8 @@ html[data-theme="dark"]{color-scheme:dark}
 
 @media (max-width:767px){
   .sg-bar{padding:var(--space-4)}
-  .sg-bar-tools{width:100%}
+  .sg-bar{flex-wrap:wrap}
+  .sg-bar-tools{width:100%;flex-wrap:wrap;justify-content:flex-start}
   .sg-search{flex:1 1 100%;width:auto}
 }
 
@@ -594,7 +615,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
        title, columns:[{key,label,type,editable,options,width}], rows, rowKey,
        editable, onEdit(rowKey,key,value), onAdd(), onDelete(rowKeys),
        onBack(), exportName, ensureXLSX, host, canEdit(rowKey,key),
-       lists:{ store, refOf(rowKey), onChange(result) }
+       lists:{ store, refOf(rowKey), labelOf(ref), onChange(result) }
      })
      SRETGrid.close()   SRETGrid.setRows(rows)   SRETGrid.patchRows(rows)   SRETGrid.isOpen()
    Return false from onEdit to refuse a value (the cell reverts), from
@@ -602,12 +623,14 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
    rowKey) or nothing to add no row. canEdit, optional, refuses an edit on
    one row where the column is otherwise editable.
    lists, optional, adds My temp list: "Add to temp list" for the selected
-   rows, a "Temp list only" filter, and a panel with A. Save new list,
-   B. Add to existing, C. Clear, plus remove-selected. It also adds read-only
-   List and Temp columns. store is the caller's SRETCollections store (data
-   in); refOf maps a rowKey to the store's item ref; onChange(result) runs
-   after every change so the caller can persist. All rules live in the
-   shared SRETCollections module (src/modules/collections/), never here.
+   rows, a "Temp list only" filter, and an expandable panel listing the temp
+   items, where selected items are added to a saved list (existing or new),
+   removed from the temp list, or the temp list is cleared. It also adds
+   read-only List and Temp columns. store is the caller's SRETCollections
+   store (data in); refOf maps a rowKey to the store's item ref; labelOf(ref),
+   optional, names an item in the panel; onChange(result) runs after every
+   change so the caller can persist. All rules live in the shared
+   SRETCollections module (src/modules/collections/), never here.
 
    Data in, callbacks out. This module never reads or writes an app global.
    Rows are copied on open, so an edit reaches the caller only through
@@ -784,6 +807,15 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
   var BACK_SVG='<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">'+
                '<path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
+  // Status messages show as a toast over the grid, so they never push the
+  // toolbar onto a second row. The text stays readable after it fades.
+  function say(text){
+    var s=S; if(!s) return;
+    s.msgEl.textContent=text||'';
+    s.msgEl.classList.toggle('is-shown',!!text);
+    if(s.msgTimer) root.clearTimeout(s.msgTimer);
+    if(text) s.msgTimer=root.setTimeout(function(){ if(S===s) s.msgEl.classList.remove('is-shown'); },6000);
+  }
   function ctlHeight(el){
     var v=parseFloat(getComputedStyle(el).getPropertyValue('--ctl-h'));
     return isFinite(v)&&v>0?v:24;
@@ -865,14 +897,18 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
   }
 
   // ---------- lists: My temp list and saved lists ----------
-  // The rules (temp list, one list per item, save / add / clear) live in
-  // SRETCollections. This section only draws the controls and calls it.
-  var L_TMP='_tmp', L_LIST='_list';
+  // The rules live in SRETCollections. This section draws the controls and
+  // calls it. Workflow (Matt, 2026-09-27):
+  //   1. select rows, Add to temp list
+  //   2. expand My temp list, select items in it, add them to a saved list
+  //   3. remove selected items from the temp list
+  //   4. clear the temp list
+  var L_TMP='_tmp', L_LIST='_list', NEW_LIST='__new__';
   function M(){ return root.SRETCollections; }
   function listFields(item){
     var s=S, ref=s.lists.refOf(item[s.rowKey]);
     item[L_TMP]=M().inTemp(s.lists.store,ref)?'Yes':'';
-    item[L_LIST]=M().membership(s.lists.store,ref);
+    item[L_LIST]=M().membership(s.lists.store,ref).join(', ');
   }
   // Items are the grid's own copies, so the two derived fields are written
   // straight onto them; the caller's rows are untouched.
@@ -892,36 +928,73 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
     s.dv.endUpdate();
   }
   function selectedRefs(){ var s=S; return selectedKeys().map(function(k){ return s.lists.refOf(k); }); }
+  function pickedRefs(){ var s=S; return M().temp(s.lists.store).filter(function(r){ return s.tmpPicked[r]; }); }
+  function labelOf(ref){
+    var s=S;
+    if(typeof s.lists.labelOf==='function'){ var l=s.lists.labelOf(ref); if(l) return String(l); }
+    return String(ref).replace(/^[^:]*:/,'');
+  }
   function listsDone(r){
     var s=S;
-    s.msgEl.textContent=M().describe(r);
+    say(M().describe(r));
     s.tmpErr.textContent=r.error?M().describe(r):'';
     if(!r.error && typeof s.lists.onChange==='function') s.lists.onChange(r);
     refreshLists();
     return r;
   }
-  // A control that sets state also shows it: counts, pressed and expanded
+  // Button states only; never rebuilds the item list, so it is safe to call
+  // from a checkbox's own change handler.
+  function updateTempButtons(){
+    var s=S; if(!s||!s.lists) return;
+    var tmp=M().temp(s.lists.store), picked=pickedRefs().length, isNew=s.tmpTarget.value===NEW_LIST;
+    s.tmpAllBox.checked=!!tmp.length&&picked===tmp.length;
+    s.tmpAllBox.indeterminate=picked>0&&picked<tmp.length;
+    s.tmpAllBox.disabled=!tmp.length;
+    s.tmpPickedEl.textContent=picked?picked+' selected':'';
+    s.tmpNameWrap.hidden=!isNew;
+    s.tmpAddTo.disabled=!picked||(isNew&&!s.tmpName.value.trim());
+    s.tmpRemove.disabled=!picked;
+    s.tmpClear.disabled=!tmp.length;
+  }
+  function renderTempItems(){
+    var s=S, st=s.lists.store, tmp=M().temp(st);
+    Object.keys(s.tmpPicked).forEach(function(r){ if(tmp.indexOf(r)<0) delete s.tmpPicked[r]; });
+    s.tmpItems.innerHTML='';
+    if(!tmp.length){
+      s.tmpItems.appendChild(h('li',{'class':'sg-temp-empty',text:'Empty. Select rows in the table and use Add to temp list.'}));
+    }
+    tmp.forEach(function(r){
+      var box=h('input',{type:'checkbox','data-sg-temp-item':r,'aria-label':'Select '+labelOf(r)});
+      box.checked=!!s.tmpPicked[r];
+      box.addEventListener('change',function(){ if(box.checked) s.tmpPicked[r]=1; else delete s.tmpPicked[r]; updateTempButtons(); });
+      var ls=M().membership(st,r);
+      s.tmpItems.appendChild(h('li',{'class':'sg-temp-item'},[
+        h('label',{'class':'sg-temp-item-lbl'},[box,h('span',{'class':'sg-temp-item-name',text:labelOf(r)})]),
+        h('span',{'class':'sg-temp-item-lists',text:ls.length?ls.join(', '):'No list'})
+      ]));
+    });
+    var here=s.dv.getItems().filter(function(it){ return it[L_TMP]==='Yes'; }).length;
+    s.tmpSummary.textContent=tmp.length+(tmp.length===1?' item':' items')+(tmp.length?', '+here+' on this screen':'');
+    var cur=s.tmpTarget.value;
+    s.tmpTarget.innerHTML='';
+    var saved=M().list(st);
+    saved.forEach(function(c){ s.tmpTarget.appendChild(h('option',{value:c.id,text:c.label+' ('+c.count+')'})); });
+    s.tmpTarget.appendChild(h('option',{value:NEW_LIST,text:'New list…'}));
+    s.tmpTarget.value=(cur&&(cur===NEW_LIST||saved.some(function(c){ return c.id===cur; })))?cur:(saved.length?saved[0].id:NEW_LIST);
+    updateTempButtons();
+  }
+  // A control that sets state also shows it: count, expanded and pressed
   // states and enabled buttons all follow the store on every change.
   function updateLists(){
     var s=S; if(!s||!s.lists) return;
-    var st=s.lists.store, tmp=M().temp(st), n=tmp.length, sel=s.grid.getSelectedRows().length;
-    var here=s.dv.getItems().filter(function(it){ return it[L_TMP]==='Yes'; }).length;
+    var n=M().temp(s.lists.store).length, sel=s.grid.getSelectedRows().length;
     s.tmpAddBtn.disabled=!sel;
-    s.tmpBtn.textContent='My temp list ('+n+')';
+    s.tmpBtnCount.textContent=String(n);
     s.tmpBtn.setAttribute('aria-expanded',String(!s.tmpPanel.hidden));
+    s.tmpBtn.classList.toggle('is-open',!s.tmpPanel.hidden);
     s.tmpOnlyBtn.setAttribute('aria-pressed',String(!!s.tempOnly));
     s.tmpOnlyBtn.classList.toggle('is-on',!!s.tempOnly);
-    s.tmpSummary.textContent='My temp list holds '+n+(n===1?' item':' items')+
-      (n?', '+here+' of them on this screen.':'. Select rows and use Add to temp list.');
-    var cur=s.tmpTarget.value;
-    s.tmpTarget.innerHTML='';
-    var ls=M().list(st);
-    if(!ls.length) s.tmpTarget.appendChild(h('option',{value:'',text:'No saved lists yet'}));
-    ls.forEach(function(c){ s.tmpTarget.appendChild(h('option',{value:c.id,text:c.label+' ('+c.count+')'})); });
-    if(ls.some(function(c){ return c.id===cur; })) s.tmpTarget.value=cur;
-    s.tmpSave.disabled=!n; s.tmpAddTo.disabled=!n||!ls.length; s.tmpTarget.disabled=!ls.length;
-    s.tmpClear.disabled=!n;
-    s.tmpRemove.disabled=!selectedKeys().some(function(k){ return M().inTemp(st,s.lists.refOf(k)); });
+    if(!s.tmpPanel.hidden) renderTempItems();
   }
   function toggleTempPanel(show){
     var s=S; if(show==null) show=s.tmpPanel.hidden;
@@ -929,7 +1002,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
     hideTempConfirm();
     s.tmpPanel.hidden=!show; s.tmpErr.textContent='';
     updateLists();
-    if(show) s.tmpName.focus(); else s.tmpBtn.focus();
+    if(show) s.tmpAllBox.focus(); else s.tmpBtn.focus();
   }
   function hideTempConfirm(){ var s=S; s.tmpConfirm.hidden=true; s.tmpConfirm.innerHTML=''; s.tmpActions.hidden=false; }
   function showTempConfirm(){
@@ -937,7 +1010,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
     s.tmpConfirm.innerHTML='';
     var cancel=h('button',{type:'button','class':'sg-btn',text:'Cancel',on:{click:function(){ hideTempConfirm(); s.tmpClear.focus(); }}});
     var go=h('button',{type:'button','class':'sg-btn sg-btn--danger','data-sg':'temp-clear-confirm',text:'Clear',
-      on:{click:function(){ hideTempConfirm(); listsDone(M().tempClear(s.lists.store)); s.tmpName.focus(); }}});
+      on:{click:function(){ hideTempConfirm(); listsDone(M().tempClear(s.lists.store)); s.tmpAllBox.focus(); }}});
     s.tmpConfirm.appendChild(h('p',{'class':'sg-confirm-msg',
       text:'Clear My temp list ('+n+(n===1?' item':' items')+')? Saved lists are not changed.'}));
     s.tmpConfirm.appendChild(h('div',{'class':'sg-confirm-btns'},[cancel,go]));
@@ -946,32 +1019,53 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
   }
   function buildTempPanel(){
     var s=S;
-    s.tmpSummary=h('p',{'class':'sg-temp-summary','data-sg':'temp-summary'});
+    s.tmpPicked={};
+    s.tmpSummary=h('span',{'class':'sg-temp-summary','data-sg':'temp-summary'});
+    s.tmpAllBox=h('input',{type:'checkbox','data-sg':'temp-all','aria-label':'Select all items on My temp list'});
+    s.tmpPickedEl=h('span',{'class':'sg-selcount','data-sg':'temp-picked'});
+    s.tmpItems=h('ul',{'class':'sg-temp-items','data-sg':'temp-items','aria-label':'Items on My temp list'});
+    s.tmpTarget=h('select',{'class':'sg-select','aria-label':'Saved list to add the selected items to','data-sg':'temp-target'});
     s.tmpName=h('input',{type:'text','class':'sg-search sg-temp-name','aria-label':'Name for the new list',
-                         placeholder:'List name','data-sg':'temp-name',maxlength:'60'});
-    s.tmpSave=h('button',{type:'button','class':'sg-btn sg-btn--primary','data-sg':'temp-save',text:'Save new list'});
-    s.tmpTarget=h('select',{'class':'sg-select','aria-label':'Saved list to add to','data-sg':'temp-target'});
-    s.tmpAddTo=h('button',{type:'button','class':'sg-btn','data-sg':'temp-addto',text:'Add to list'});
-    s.tmpRemove=h('button',{type:'button','class':'sg-btn','data-sg':'temp-remove',text:'Remove selected from temp list'});
+                         placeholder:'New list name','data-sg':'temp-name',maxlength:'60'});
+    s.tmpNameWrap=h('span',{'class':'sg-temp-namewrap'},[s.tmpName]);
+    s.tmpAddTo=h('button',{type:'button','class':'sg-btn sg-btn--primary','data-sg':'temp-addto',text:'Add to list'});
+    s.tmpRemove=h('button',{type:'button','class':'sg-btn','data-sg':'temp-remove',text:'Remove from temp list'});
     s.tmpClear=h('button',{type:'button','class':'sg-btn','data-sg':'temp-clear',text:'Clear temp list'});
     s.tmpErr=h('p',{'class':'sg-temp-err',role:'alert','data-sg':'temp-err'});
     s.tmpConfirm=h('div',{'class':'sg-temp-confirm','data-sg':'temp-confirm',hidden:true});
-    var close=h('button',{type:'button','class':'sg-iconbtn','aria-label':'Close My temp list',title:'Close','data-sg':'temp-close',text:'✕'});
+    var close=h('button',{type:'button','class':'sg-iconbtn','aria-label':'Collapse My temp list',title:'Collapse','data-sg':'temp-close',text:'✕'});
     s.tmpActions=h('div',{'class':'sg-temp-actions'},[
-      h('div',{'class':'sg-temp-row'},[h('span',{'class':'sg-temp-lbl',text:'A. Save new list'}),s.tmpName,s.tmpSave]),
-      h('div',{'class':'sg-temp-row'},[h('span',{'class':'sg-temp-lbl',text:'B. Add to existing'}),s.tmpTarget,s.tmpAddTo]),
-      h('div',{'class':'sg-temp-row'},[h('span',{'class':'sg-temp-lbl',text:'C. Clear'}),s.tmpClear,s.tmpRemove])
+      h('span',{'class':'sg-temp-lbl',text:'Selected items'}),
+      h('span',{'class':'sg-temp-group'},[h('span',{text:'Add to'}),s.tmpTarget,s.tmpNameWrap,s.tmpAddTo]),
+      s.tmpRemove,
+      h('span',{'class':'sg-temp-spacer'}),
+      s.tmpClear
     ]);
-    s.tmpPanel.appendChild(h('div',{'class':'sg-temp-head'},[h('h3',{'class':'sg-temp-title',text:'My temp list'}),close]));
-    s.tmpPanel.appendChild(s.tmpSummary);
+    s.tmpPanel.appendChild(h('div',{'class':'sg-temp-head'},[
+      h('label',{'class':'sg-temp-all'},[s.tmpAllBox,h('span',{'class':'sg-temp-title',text:'My temp list'})]),
+      s.tmpSummary,s.tmpPickedEl,h('span',{'class':'sg-temp-spacer'}),close]));
+    s.tmpPanel.appendChild(s.tmpItems);
     s.tmpPanel.appendChild(s.tmpActions);
     s.tmpPanel.appendChild(s.tmpConfirm);
     s.tmpPanel.appendChild(s.tmpErr);
-    var save=function(){ var r=listsDone(M().saveTemp(s.lists.store,s.tmpName.value)); if(!r.error) s.tmpName.value=''; else s.tmpName.focus(); };
-    s.tmpSave.addEventListener('click',save);
-    s.tmpName.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); save(); } });
-    s.tmpAddTo.addEventListener('click',function(){ listsDone(M().addTempTo(s.lists.store,s.tmpTarget.value)); });
-    s.tmpRemove.addEventListener('click',function(){ listsDone(M().tempRemove(s.lists.store,selectedRefs())); });
+    s.tmpAllBox.addEventListener('change',function(){
+      var on=s.tmpAllBox.checked;
+      s.tmpPicked={}; if(on) M().temp(s.lists.store).forEach(function(r){ s.tmpPicked[r]=1; });
+      s.tmpItems.querySelectorAll('input[type=checkbox]').forEach(function(b){ b.checked=on; });
+      updateTempButtons();
+    });
+    s.tmpTarget.addEventListener('change',function(){ updateTempButtons(); if(s.tmpTarget.value===NEW_LIST) s.tmpName.focus(); });
+    s.tmpName.addEventListener('input',updateTempButtons);
+    var addTo=function(){
+      var refs=pickedRefs(), r;
+      if(s.tmpTarget.value===NEW_LIST){
+        r=listsDone(M().saveFromTemp(s.lists.store,s.tmpName.value,refs));
+        if(!r.error){ s.tmpName.value=''; s.tmpTarget.value=r.collection.id; updateTempButtons(); } else s.tmpName.focus();
+      } else listsDone(M().addFromTemp(s.lists.store,s.tmpTarget.value,refs));
+    };
+    s.tmpAddTo.addEventListener('click',addTo);
+    s.tmpName.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); if(!s.tmpAddTo.disabled) addTo(); } });
+    s.tmpRemove.addEventListener('click',function(){ listsDone(M().tempRemove(s.lists.store,pickedRefs())); });
     s.tmpClear.addEventListener('click',showTempConfirm);
     close.addEventListener('click',function(){ toggleTempPanel(false); });
     s.tmpPanel.addEventListener('keydown',function(e){
@@ -1007,10 +1101,10 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
       X.utils.book_append_sheet(wb,ws,'Grid');
       var name=String(o.exportName||o.title||'Grid').replace(/[\\\/:*?"<>|]+/g,' ').trim()||'Grid';
       X.writeFile(wb,name+'.xlsx');
-      s.msgEl.textContent='Exported '+(aoa.length-1)+(aoa.length-1===1?' row':' rows')+'.';
+      say('Exported '+(aoa.length-1)+(aoa.length-1===1?' row':' rows')+'.');
       return aoa;
     }).catch(function(err){
-      if(S) S.msgEl.textContent=err&&err.message?err.message:'Export failed.';
+      if(S) say(err&&err.message?err.message:'Export failed.');
     }).then(function(r){ if(S) S.expBtn.disabled=false; return r; });
   }
 
@@ -1047,20 +1141,22 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
     var del=canDel?h('button',{type:'button','class':'sg-btn','data-sg':'delete',text:'Delete selected',disabled:true}):null;
     var tmpAdd=lists?h('button',{type:'button','class':'sg-btn','data-sg':'temp-add',text:'Add to temp list',disabled:true,
                                  title:'Add the selected rows to My temp list'}):null;
-    var tmpBtn=lists?h('button',{type:'button','class':'sg-btn','data-sg':'temp-open','aria-expanded':'false',
-                                 'aria-controls':'sg-temp-panel',text:'My temp list (0)'}):null;
+    var tmpBtnCount=lists?h('span',{'class':'sg-badge','data-sg':'temp-count',text:'0'}):null;
+    var tmpBtn=lists?h('button',{type:'button','class':'sg-btn sg-btn--expander','data-sg':'temp-open','aria-expanded':'false',
+                                 'aria-controls':'sg-temp-panel',title:'Show the items on My temp list'},
+                                [h('span',{text:'My temp list'}),tmpBtnCount]):null;
     var tmpOnly=lists?h('button',{type:'button','class':'sg-chip','data-sg':'temp-only','aria-pressed':'false',
                                   text:'Temp list only',title:'Show only rows on My temp list'}):null;
     var msg=h('span',{'class':'sg-msg',role:'status','aria-live':'polite','data-sg':'msg'});
     var bar=h('div',{'class':'sg-bar'},[
       h('div',{'class':'sg-bar-lead'},[back,title]),
-      h('div',{'class':'sg-bar-tools'},[search,h('span',{'class':'sg-counts'},[count,selc]),msg,tmpAdd,tmpBtn,tmpOnly,exp,add,del])
+      h('div',{'class':'sg-bar-tools'},[search,h('span',{'class':'sg-counts'},[count,selc]),tmpAdd,tmpBtn,tmpOnly,exp,add,del])
     ]);
     var confirm=h('div',{'class':'sg-confirm',role:'alertdialog','aria-label':'Confirm remove','data-sg':'confirm',hidden:true});
     var tmpPanel=h('div',{'class':'sg-temp',id:'sg-temp-panel',role:'region','aria-label':'My temp list','data-sg':'temp-panel',hidden:true});
     var gridEl=h('div',{'class':'sg-grid','data-sg':'grid'});
     var screen=h('section',{'class':'sg-screen'+(fixed?' sg-screen--fixed':''),role:'region','aria-label':opts.title||'Table'},
-                 [bar,confirm,tmpPanel,gridEl]);
+                 [bar,confirm,tmpPanel,gridEl,msg]);
     host.appendChild(screen);
 
     var rowH=ctlHeight(screen);
@@ -1095,7 +1191,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
     S={opts:opts,rowKey:rowKey,cols:cols,colByKey:colByKey,filters:{},quick:'',grid:grid,dv:dv,
        screen:screen,host:host,countEl:count,selEl:selc,msgEl:msg,delBtn:del,expBtn:exp,searchEl:search,
        confirmEl:confirm,prev:null,returnFocus:document.activeElement,ro:null,
-       lists:lists,tempOnly:false,tmpAddBtn:tmpAdd,tmpBtn:tmpBtn,tmpOnlyBtn:tmpOnly,tmpPanel:tmpPanel};
+       lists:lists,tempOnly:false,tmpAddBtn:tmpAdd,tmpBtn:tmpBtn,tmpBtnCount:tmpBtnCount,tmpOnlyBtn:tmpOnly,tmpPanel:tmpPanel,msgTimer:0};
     if(lists) buildTempPanel();
     cols.forEach(function(c){ S.filters[c.key]=''; });
 
@@ -1118,7 +1214,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
       var c=args.column&&args.column.sg;
       if(!gridEditable||!c||!c.editable) return false;
       if(typeof opts.canEdit==='function' && opts.canEdit(args.item[rowKey],c.key)===false){
-        S.msgEl.textContent='This value comes from the schedule and cannot be edited here.';
+        say('This value comes from the schedule and cannot be edited here.');
         return false;
       }
       S.prev={key:args.item[rowKey],field:c.key,value:args.item[c.key]};
@@ -1129,7 +1225,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
       var ret=typeof opts.onEdit==='function'?opts.onEdit(it[rowKey],c.key,it[c.key]):undefined;
       if(ret===false && prev && prev.key===it[rowKey] && prev.field===c.key){
         it[c.key]=prev.value;
-        S.msgEl.textContent='That change was not accepted.';
+        say('That change was not accepted.');
       }
       dv.updateItem(it[rowKey],it);
       S.prev=null;
@@ -1233,25 +1329,26 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
    activities in groups, aggregate them by a scope or reason, and build a
    selection set to bulk edit across several filtered states.
 
-   Flow:
-     1. My temp list: a quick pick list. Items are added from any screen and
-        any filter state, and removed the same way.
-     2. Then one of:
-        A. Save new list      the temp items become a new named list
-        B. Add to existing    the temp items join a saved list
-        C. Clear              the temp list is emptied
-     A and B empty the temp list afterwards (it has been fed).
+   Flow (Matt, 2026-09-27):
+     1. Select items and add them to My temp list (any screen, any filter state).
+     2. Expand the temp list to view its items; select some or all of them
+        and add them to a saved list (an existing one, or a new one).
+     3. Remove selected items from the temp list.
+     4. Clear the temp list.
+   Adding to a saved list leaves the temp list as it is: removing is step 3.
 
    Rules:
-     - An item is in at most one saved list. Adding it to another list moves
-       it, and the result says how many moved and from where.
-     - The temp list is independent of saved lists: an item can be picked
-       whether or not it is already in a list.
+     - An item can be in any number of saved lists (default).
+     - settings.singleList (a future setting, "Limit items to a single
+       list"): when true, adding an item to a list moves it out of any other
+       list, and the result says how many moved and from where.
+     - The temp list is independent of saved lists.
      - The temp list is working state for the session; saved lists belong to
        the annotation layer and are persisted by the caller.
 
    Store (owned and persisted by the caller):
-     { seq, temp: [ref], list: [ { id, name, items: [ref], createdAt, updatedAt } ] }
+     { seq, settings: { singleList: false }, temp: [ref],
+       list: [ { id, name, items: [ref], createdAt, updatedAt } ] }
    A ref is a caller-chosen stable string, e.g. 'activity:SNIP-118' (schedule
    activity or user milestone, so the same activity from any screen is one
    item) or 'annot:A-004'.
@@ -1261,8 +1358,12 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
 (function(root){
   'use strict';
 
-  function newStore(){ return {seq:0,temp:[],list:[]}; }
-  function ensure(store){ if(!store.temp) store.temp=[]; if(!store.list) store.list=[]; return store; }
+  function newStore(opts){ return {seq:0,settings:{singleList:!!(opts&&opts.singleList)},temp:[],list:[]}; }
+  function ensure(store){
+    if(!store.temp) store.temp=[]; if(!store.list) store.list=[]; if(!store.settings) store.settings={singleList:false};
+    return store;
+  }
+  function single(store){ return !!(store.settings&&store.settings.singleList); }
   function normName(n){ return String(n==null?'':n).replace(/\s+/g,' ').trim(); }
   function stamp(now){ return now||new Date().toISOString(); }
   function uniqueRefs(refs){
@@ -1279,9 +1380,8 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
     for(var i=0;i<store.list.length;i++) if(store.list[i].name.toLowerCase()===k) return store.list[i];
     return null;
   }
-  function listOf(store,ref){
-    for(var i=0;i<store.list.length;i++) if(store.list[i].items.indexOf(ref)>=0) return store.list[i];
-    return null;
+  function listsOf(store,ref){
+    return store.list.filter(function(c){ return c.items.indexOf(ref)>=0; });
   }
 
   // ---------- temp list ----------
@@ -1311,8 +1411,9 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
   function list(store){
     return ensure(store).list.map(function(c){ return {id:c.id,label:c.name,count:c.items.length}; });
   }
+  // Names of every saved list holding ref, in list order.
   function membership(store,ref){
-    var c=listOf(ensure(store),String(ref)); return c?c.name:'';
+    return listsOf(ensure(store),String(ref)).map(function(c){ return c.name; });
   }
   function create(store,name,now){
     ensure(store);
@@ -1326,8 +1427,8 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
     store.list.push(c);
     return {collection:c};
   }
-  // Adds refs to one list. An item already in another list moves; one already
-  // in this list is counted, never duplicated.
+  // Adds refs to one list. One already in this list is counted, never
+  // duplicated. With settings.singleList, one in another list moves.
   function assign(store,id,refs,now){
     ensure(store);
     var c=find(store,id);
@@ -1335,11 +1436,10 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
     var added=0, already=0, movedFrom={};
     uniqueRefs(refs).forEach(function(r){
       if(c.items.indexOf(r)>=0){ already++; return; }
-      var other=listOf(store,r);
-      if(other){
+      if(single(store)) listsOf(store,r).forEach(function(other){
         other.items.splice(other.items.indexOf(r),1); other.updatedAt=stamp(now);
         movedFrom[other.name]=(movedFrom[other.name]||0)+1;
-      }
+      });
       c.items.push(r); added++;
     });
     if(added) c.updatedAt=stamp(now);
@@ -1349,26 +1449,32 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
     ensure(store);
     var removed=0;
     uniqueRefs(refs).forEach(function(r){
-      var c=listOf(store,r); if(c){ c.items.splice(c.items.indexOf(r),1); c.updatedAt=stamp(now); removed++; }
+      var cs=listsOf(store,r); cs.forEach(function(c){ c.items.splice(c.items.indexOf(r),1); c.updatedAt=stamp(now); });
+      if(cs.length) removed++;
     });
     return {kind:'unassign',removed:removed};
   }
 
-  // ---------- A and B: feed the temp list into a list ----------
-  function saveTemp(store,name,now){
+  // ---------- step 2: selected temp items into a saved list ----------
+  // refs: the temp items the user selected; only refs on the temp list count.
+  // The temp list is left as it is.
+  function pickFromTemp(store,refs){
+    return uniqueRefs(refs).filter(function(r){ return store.temp.indexOf(r)>=0; });
+  }
+  function addFromTemp(store,id,refs,now){
     ensure(store);
-    if(!store.temp.length) return {error:'The temp list is empty. Add rows to it first.'};
-    var made=create(store,name,now); if(made.error) return made;
-    var r=assign(store,made.collection.id,store.temp,now);
-    tempClear(store); r.kind='saveTemp'; r.total=0;
+    var picked=pickFromTemp(store,refs);
+    if(!picked.length) return {error:'Select items on My temp list first.'};
+    if(!find(store,id)) return {error:'Choose a saved list to add to.'};
+    var r=assign(store,id,picked,now); r.kind='addFromTemp';
     return r;
   }
-  function addTempTo(store,id,now){
+  function saveFromTemp(store,name,refs,now){
     ensure(store);
-    if(!store.temp.length) return {error:'The temp list is empty. Add rows to it first.'};
-    if(!find(store,id)) return {error:'That list no longer exists.'};
-    var r=assign(store,id,store.temp,now);
-    tempClear(store); r.kind='addTempTo'; r.total=0;
+    var picked=pickFromTemp(store,refs);
+    if(!picked.length) return {error:'Select items on My temp list first.'};
+    var made=create(store,name,now); if(made.error) return made;
+    var r=assign(store,made.collection.id,picked,now); r.kind='saveFromTemp';
     return r;
   }
 
@@ -1387,18 +1493,17 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
       case 'unassign':   return 'Removed '+plural(r.removed,'item')+' from their lists.';
     }
     var name='"'+r.collection.name+'"';
-    var s=(r.kind==='saveTemp'?'Saved '+plural(r.added+r.already,'item')+' as the new list '+name+'.'
+    var s=(r.kind==='saveFromTemp'?'Saved '+plural(r.added+r.already,'item')+' as the new list '+name+'.'
           :(r.added?'Added '+plural(r.added,'item')+' to '+name+'.':'No new items added to '+name+'.'));
     if(r.already) s+=' '+plural(r.already,'item')+' '+(r.already===1?'was':'were')+' already in it.';
     var mv=Object.keys(r.movedFrom||{});
     if(mv.length) s+=' Moved from '+mv.map(function(k){ return '"'+k+'" ('+r.movedFrom[k]+')'; }).join(', ')+'.';
-    if(r.kind==='saveTemp'||r.kind==='addTempTo') s+=' My temp list is now empty.';
     return s;
   }
 
   root.SRETCollections={newStore:newStore,temp:temp,inTemp:inTemp,tempAdd:tempAdd,tempRemove:tempRemove,
                         tempClear:tempClear,list:list,membership:membership,create:create,assign:assign,
-                        unassign:unassign,saveTemp:saveTemp,addTempTo:addTempTo,describe:describe};
+                        unassign:unassign,addFromTemp:addFromTemp,saveFromTemp:saveFromTemp,describe:describe};
 })(window);
 
 window.SRET_FIXTURES={"sched":[{"id":"SNIP-101","name":"Study Award","wbs":"Key Milestones","dur":0,"start":"2026-05-01","finish":null,"float":null,"pred":"","succ":"SNIP-249: SF, SNIP-258: SF, SNIP-248: SF, SNIP-255: SF, SNIP-103: SS, SNIP-115: SS, SNIP-134: SS, SNIP-105: FS 2","actual":"Yes","short":"","health":1,"comment":"Confirm date with the owner's team at the weekly review."},{"id":"SNIP-104","name":"Receipt of Bronson Road Design","wbs":"Key Milestones","dur":0,"start":null,"finish":"2026-06-11","float":null,"pred":"","succ":"SNIP-159: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-102","name":"Receipt of Draft Mine Plan","wbs":"Key Milestones","dur":0,"start":null,"finish":"2026-06-15","float":null,"pred":"","succ":"SNIP-115: FS, SNIP-118: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-113","name":"Study implementation plan","wbs":"Key Milestones","dur":0,"start":null,"finish":"2026-07-03","float":null,"pred":"SNIP-111: FF","succ":"","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-103","name":"Receipt of Testwork results & MRE","wbs":"Key Milestones","dur":0,"start":null,"finish":"2026-07-06","float":null,"pred":"SNIP-101: SS","succ":"SNIP-118: SS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-110","name":"Set-up (Stage Gate No.1) Internal Approval","wbs":"Key Milestones","dur":0,"start":null,"finish":"2026-07-29","float":null,"pred":"SNIP-111: FS, SNIP-105: FS","succ":"SNIP-182: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-153","name":"Process (Stage Gate No.2) Internal Approval","wbs":"Key Milestones","dur":0,"start":null,"finish":"2026-08-20","float":null,"pred":"SNIP-154: FF, SNIP-133: FS","succ":"SNIP-234: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-182","name":"Layout (Stage Gate No.3) Internal Approval","wbs":"Key Milestones","dur":0,"start":null,"finish":"2026-09-09","float":26,"pred":"SNIP-166: FS 9, SNIP-110: FS, SNIP-220: FF -4","succ":"SNIP-234: FF","actual":"No","short":"","health":2,"comment":""},{"id":"SNIP-207","name":"Site Infrastructure Design Complete","wbs":"Key Milestones","dur":0,"start":null,"finish":"2026-09-09","float":53,"pred":"SNIP-166: FF 20","succ":"SNIP-261: FF","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-117","name":"Receipt of Final Mine Plan/Production Schedule","wbs":"Key Milestones","dur":0,"start":null,"finish":"2026-09-11","float":0,"pred":"","succ":"SNIP-242: FS","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-221","name":"Final Site Layout - Issued for Use","wbs":"Key Milestones","dur":0,"start":null,"finish":"2026-09-14","float":22,"pred":"SNIP-220: FF","succ":"SNIP-234: FF","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-233","name":"Priced Mechanical Equipment List - Issued for Estimating","wbs":"Key Milestones","dur":0,"start":null,"finish":"2026-09-23","float":43,"pred":"SNIP-231: FF","succ":"SNIP-261: FF","actual":"No","short":"","health":null,"comment":"Confirm date with the owner's team at the weekly review."},{"id":"SNIP-234","name":"Engineering (Stage Gate No.4) Internal Approval","wbs":"Key Milestones","dur":0,"start":null,"finish":"2026-09-24","float":14,"pred":"SNIP-221: FF, SNIP-182: FF, SNIP-161: FS -10, SNIP-215: FS -10, SNIP-230: FS -10, SNIP-223: FS, SNIP-153: FS, SNIP-237: FS -10, SNIP-220: FS, SNIP-105: FS, SNIP-166: FS, SNIP-133: SS, SNIP-115: SS, SNIP-229: FS","succ":"SNIP-255: FF 10, SNIP-235: FS","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-219","name":"Project Execution Plan (PEP) - Issued for Use","wbs":"Key Milestones","dur":0,"start":null,"finish":"2026-09-28","float":40,"pred":"SNIP-218: FF","succ":"SNIP-261: FF","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-238","name":"MTOs Complete - Issued for Estimating","wbs":"Key Milestones","dur":0,"start":null,"finish":"2026-10-08","float":33,"pred":"SNIP-239: FF, SNIP-237: FF, SNIP-220: FF, SNIP-105: FF, SNIP-166: FF, SNIP-133: SF, SNIP-115: SF, SNIP-229: FF, SNIP-230: FF","succ":"SNIP-261: FF","actual":"No","short":"","health":3,"comment":""},{"id":"SNIP-235","name":"CAPEX (Stage Gate No.5) Internal Approval","wbs":"Key Milestones","dur":0,"start":null,"finish":"2026-10-14","float":2,"pred":"SNIP-224: FS, SNIP-234: FS","succ":"SNIP-241: FS","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-226","name":"OPEX (Stage Gate No.6) Internal Approval","wbs":"Key Milestones","dur":0,"start":null,"finish":"2026-10-14","float":2,"pred":"SNIP-224: FS","succ":"SNIP-241: FS","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-245","name":"Draft Report (Stage Gate No.7) Internal Approval","wbs":"Key Milestones","dur":0,"start":null,"finish":"2026-10-29","float":10,"pred":"SNIP-255: FF -10","succ":"SNIP-256: FF","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-246","name":"CAPEX - Final","wbs":"Key Milestones","dur":0,"start":null,"finish":"2026-11-06","float":13,"pred":"SNIP-250: FF, SNIP-244: FF","succ":"SNIP-261: FF","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-247","name":"OPEX - Final","wbs":"Key Milestones","dur":0,"start":null,"finish":"2026-11-06","float":13,"pred":"SNIP-251: FF, SNIP-244: FF","succ":"SNIP-261: FF","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-248","name":"Financial Model - Draft","wbs":"Key Milestones","dur":0,"start":null,"finish":"2026-11-06","float":13,"pred":"SNIP-101: SF, SNIP-111: SF, SNIP-241: FF, SNIP-250: FF","succ":"SNIP-261: FF","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-249","name":"Financial Model - Final","wbs":"Key Milestones","dur":0,"start":null,"finish":"2026-11-06","float":13,"pred":"SNIP-101: SF, SNIP-111: SF, SNIP-241: FF, SNIP-250: FF, SNIP-244: FF","succ":"SNIP-261: FF","actual":"No","short":"","health":1,"comment":""},{"id":"SNIP-256","name":"Draft Report Issued for Client Review","wbs":"Key Milestones","dur":0,"start":null,"finish":"2026-11-12","float":0,"pred":"SNIP-245: FF, SNIP-255: FS","succ":"SNIP-258: FS","actual":"No","short":"","health":null,"comment":"Confirm date with the owner's team at the weekly review."},{"id":"SNIP-260","name":"Issue Final Technical Report","wbs":"Key Milestones","dur":0,"start":null,"finish":"2026-11-26","float":0,"pred":"SNIP-259: FS","succ":"SNIP-261: FF","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-261","name":"PFS Completion","wbs":"Key Milestones","dur":0,"start":null,"finish":"2026-11-26","float":0,"pred":"SNIP-207: FF, SNIP-238: FF, SNIP-219: FF, SNIP-233: FF, SNIP-249: FF, SNIP-248: FF, SNIP-247: FF, SNIP-246: FF, SNIP-260: FF","succ":"","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-136","name":"Bronson Connector Road Data","wbs":"Inputs From Others","dur":0,"start":"2026-06-11","finish":null,"float":null,"pred":"","succ":"SNIP-159: SS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-127","name":"Mine Operations Data (UG Input from SRK)","wbs":"Inputs From Others","dur":0,"start":"2026-06-30","finish":null,"float":null,"pred":"","succ":"SNIP-166: FS, SNIP-138: SS, SNIP-201: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-106","name":"Snip Design Inputs  (Infrastructure from SRK)","wbs":"Inputs From Others","dur":0,"start":null,"finish":"2026-07-07","float":null,"pred":"","succ":"SNIP-166: FS, SNIP-126: FS, SNIP-201: FS, SNIP-188: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-203","name":"TSF Model & Cost Estimate (Others: KP)","wbs":"Inputs From Others","dur":0,"start":"2026-09-11","finish":null,"float":8,"pred":"","succ":"SNIP-270: FS, SNIP-240: FF 20, SNIP-310: FS","actual":"No","short":"","health":2,"comment":""},{"id":"SNIP-204","name":"Eskay Creek Model & Cost Estimate (Others:SRK - Process)","wbs":"Inputs From Others","dur":0,"start":"2026-09-11","finish":null,"float":8,"pred":"","succ":"SNIP-240: FF 20, SNIP-270: FS","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-320","name":"Eskay Creek Model & Cost Estimate (Others:SRK - Mining)","wbs":"Inputs From Others","dur":0,"start":"2026-09-11","finish":null,"float":8,"pred":"","succ":"SNIP-240: FF 20, SNIP-270: FS","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-157","name":"Recovery Model/Method (3rd Parties)","wbs":"Inputs From Others","dur":8,"start":"2026-08-17","finish":"2026-09-11","float":14,"pred":"SNIP-156: FF","succ":"SNIP-242: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-105","name":"Project Kick-off Meeting","wbs":"Project Management","dur":1,"start":"2026-05-05","finish":"2026-05-05","float":null,"pred":"SNIP-101: FS 2","succ":"SNIP-158: FS 5, SNIP-183: FS 70, SNIP-120: FS, SNIP-116: FS, SNIP-115: FS, SNIP-124: FS, SNIP-166: FS, SNIP-111: FS, SNIP-110: FS, SNIP-142: FS 25, SNIP-112: FS, SNIP-128: FS 5, SNIP-237: FS, SNIP-240: FF, SNIP-238: FF, SNIP-234: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-111","name":"Develop Study Implementation Plan (SIP)","wbs":"Project Management","dur":15,"start":"2026-06-15","finish":"2026-07-03","float":null,"pred":"SNIP-105: FS, SNIP-112: FF","succ":"SNIP-249: SF, SNIP-258: SF, SNIP-248: SF, SNIP-255: SF, SNIP-115: SS, SNIP-110: FS, SNIP-113: FF","actual":"Yes","short":"","health":null,"comment":"Confirm date with the owner's team at the weekly review."},{"id":"SNIP-148","name":"Project Risk and Opportunity Register","wbs":"Project Management","dur":5,"start":"2026-08-03","finish":"2026-09-11","float":51,"pred":"SNIP-166: SF","succ":"","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-223","name":"Final Design Review","wbs":"Project Management","dur":1,"start":"2026-09-15","finish":"2026-09-15","float":21,"pred":"SNIP-220: FS","succ":"SNIP-234: FS","actual":"No","short":"","health":3,"comment":""},{"id":"SNIP-158","name":"QP Site-Visit","wbs":"Project Management","dur":3,"start":"2026-09-15","finish":"2026-09-17","float":47,"pred":"SNIP-105: FS 5","succ":"","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-191","name":"Project Risk Workshop","wbs":"Project Management","dur":1,"start":"2026-09-22","finish":"2026-09-22","float":44,"pred":"SNIP-133: FS, SNIP-166: FS 10, SNIP-214: FS","succ":"","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-112","name":"Finalize PFS Schedule - Issue for Internal Review","wbs":"PFS Baseline Schedule","dur":15,"start":"2026-05-06","finish":"2026-05-27","float":null,"pred":"SNIP-105: FS","succ":"SNIP-132: FS, SNIP-111: FF","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-132","name":"Finalize PFS Schedule-Internal Review,Update and Issue to Client","wbs":"PFS Baseline Schedule","dur":25,"start":"2026-05-28","finish":"2026-07-02","float":null,"pred":"SNIP-112: FS","succ":"","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-118","name":"Metallurigcal Testwork Advise by Client (3rd Parties)","wbs":"Metallurgical Testwork Review","dur":15,"start":"2026-07-06","finish":"2026-07-10","float":null,"pred":"SNIP-102: FS, SNIP-103: SS","succ":"SNIP-129: FF -7","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-115","name":"Process Design Criteria-Issue for Internal Review","wbs":"Design Criteria","dur":5,"start":"2026-06-15","finish":"2026-06-19","float":null,"pred":"SNIP-102: FS, SNIP-101: SS, SNIP-111: SS, SNIP-105: FS","succ":"SNIP-123: FS, SNIP-116: FS, SNIP-124: FS, SNIP-128: FS, SNIP-133: FS, SNIP-134: FS, SNIP-259: SS, SNIP-237: SS, SNIP-240: SF, SNIP-238: SF, SNIP-234: SS, SNIP-161: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-123","name":"Process Design Criteria-Internal Review,Update and Issue for Client Review","wbs":"Design Criteria","dur":10,"start":"2026-06-22","finish":"2026-07-13","float":null,"pred":"SNIP-115: FS","succ":"SNIP-133: FF, SNIP-129: FS, SNIP-128: SS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-129","name":"Process Design Criteria-Client Review","wbs":"Design Criteria","dur":5,"start":"2026-07-13","finish":"2026-08-07","float":null,"pred":"SNIP-118: FF -7, SNIP-123: FS","succ":"SNIP-134: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-134","name":"Process Design Criteria-Final Issue","wbs":"Design Criteria","dur":1,"start":"2026-08-17","finish":"2026-08-21","float":null,"pred":"SNIP-129: FS, SNIP-101: SS, SNIP-115: FS","succ":"SNIP-161: SS, SNIP-255: FF, SNIP-143: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-133","name":"PFD-Issue for internal Review","wbs":"PFD","dur":10,"start":"2026-06-26","finish":"2026-07-14","float":null,"pred":"SNIP-123: FF, SNIP-115: FS","succ":"SNIP-137: FS, SNIP-155: SS 5, SNIP-191: FS, SNIP-153: FS, SNIP-154: FS, SNIP-138: FF 3, SNIP-144: FS, SNIP-259: SS, SNIP-237: SS, SNIP-240: SF, SNIP-238: SF, SNIP-234: SS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-137","name":"PFD-Internal Review,Update and Issue for Client Review","wbs":"PFD","dur":5,"start":"2026-07-15","finish":"2026-08-07","float":null,"pred":"SNIP-133: FS","succ":"SNIP-145: FS, SNIP-271: FF -2","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-145","name":"PFD-Client Review (Not Received)","wbs":"PFD","dur":5,"start":"2026-08-10","finish":"2026-08-14","float":null,"pred":"SNIP-137: FS","succ":"SNIP-154: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-154","name":"PFD-Final Issue","wbs":"PFD","dur":10,"start":"2026-08-17","finish":"2026-08-21","float":null,"pred":"SNIP-145: FS, SNIP-133: FS","succ":"SNIP-255: FF, SNIP-153: FF, SNIP-227: FF","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-138","name":"Process Plant Mass and water Balances-Issue for Internal Review","wbs":"Mass  and Water Balance","dur":10,"start":"2026-07-06","finish":"2026-07-21","float":null,"pred":"SNIP-127: SS, SNIP-133: FF 3","succ":"SNIP-147: FS, SNIP-156: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-147","name":"Process Plant Mass and Water Balances- Internal Review,Update and Issue for Client Review","wbs":"Mass  and Water Balance","dur":3,"start":"2026-07-22","finish":"2026-08-07","float":null,"pred":"SNIP-138: FS","succ":"SNIP-144: FS, SNIP-155: SS 5, SNIP-150: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-150","name":"Process Plant Mass and Water  Balances-Client Review (Not Received)","wbs":"Mass  and Water Balance","dur":5,"start":"2026-08-10","finish":"2026-08-14","float":null,"pred":"SNIP-147: FS","succ":"SNIP-156: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-156","name":"Process Plant Mass and Water  Balances-Final Issue","wbs":"Mass  and Water Balance","dur":6,"start":"2026-08-17","finish":"2026-08-21","float":null,"pred":"SNIP-150: FS, SNIP-138: FS","succ":"SNIP-157: FF, SNIP-240: FF","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-155","name":"Equipment Sizing","wbs":"Equipment Sizing","dur":10,"start":"2026-07-27","finish":"2026-09-04","float":45,"pred":"SNIP-147: SS 5, SNIP-133: SS 5","succ":"SNIP-255: FF, SNIP-161: SS 2","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-128","name":"Mechanical & Piping Design Criteria- Adopt Eskay Creek","wbs":"Design Criteria","dur":1,"start":"2026-07-16","finish":"2026-07-16","float":null,"pred":"SNIP-115: FS, SNIP-105: FS 5, SNIP-123: SS","succ":"SNIP-161: SS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-201","name":"Snip MEL Inputs","wbs":"MEL","dur":5,"start":"2026-07-08","finish":"2026-07-14","float":null,"pred":"SNIP-106: FS, SNIP-127: FS","succ":"SNIP-281: FS, SNIP-190: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-271","name":"Eskay MEL Inputs (from PFDs)","wbs":"MEL","dur":2,"start":"2026-07-31","finish":"2026-08-04","float":null,"pred":"SNIP-137: FF -2","succ":"SNIP-281: FS, A1000: FS, SNIP-200: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-281","name":"Mechanical Equipment List-Issue for Internal Review","wbs":"MEL","dur":5,"start":"2026-08-04","finish":"2026-08-19","float":null,"pred":"SNIP-271: FS, SNIP-201: FS","succ":"SNIP-161: FS, A1000: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-161","name":"Mechanical Equipment List-Issue for Cilent  Review","wbs":"MEL","dur":5,"start":"2026-08-17","finish":"2026-08-21","float":null,"pred":"SNIP-134: SS, SNIP-128: SS, SNIP-155: SS 2, SNIP-115: FS, SNIP-281: FS","succ":"SNIP-144: SS, SNIP-143: FS, SNIP-167: FS, SNIP-186: FS, SNIP-234: FS -10, SNIP-165: FF 5, SNIP-236: SS, SNIP-259: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-143","name":"Mechanical Equipment List Finalized for Electrical Design","wbs":"MEL","dur":10,"start":"2026-08-17","finish":"2026-08-28","float":null,"pred":"SNIP-161: FS, SNIP-134: FS","succ":"SNIP-180: FF 1, SNIP-240: FF 10, SNIP-228: FF 5","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-167","name":"Mechanical Equipment List-Client Review","wbs":"MEL","dur":5,"start":"2026-08-24","finish":"2026-09-01","float":9,"pred":"SNIP-161: FS","succ":"SNIP-172: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-172","name":"Mechanical Equipment List-Final Issue","wbs":"MEL","dur":5,"start":"2026-09-02","finish":"2026-09-09","float":9,"pred":"SNIP-167: FS","succ":"SNIP-231: SS","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-231","name":"Priced Mechanical Equipment List","wbs":"MEL","dur":15,"start":"2026-09-02","finish":"2026-09-23","float":9,"pred":"SNIP-172: SS","succ":"SNIP-228: FF, SNIP-240: FF 10, SNIP-233: FF","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-195","name":"Off Plot Piping MTO","wbs":"MTO","dur":15,"start":"2026-08-11","finish":"2026-09-04","float":16,"pred":"SNIP-166: FS","succ":"SNIP-240: FF 15","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-144","name":"Mechanical Equipment Sizing Calculations","wbs":"Equipment Sizing","dur":10,"start":"2026-08-17","finish":"2026-09-04","float":0,"pred":"SNIP-173: FF, SNIP-147: FS, SNIP-161: SS, SNIP-133: FS","succ":"SNIP-200: FF","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-176","name":"Reciept of Verified Refrences From Client","wbs":"Overall Site Plan","dur":5,"start":"2026-07-03","finish":"2026-07-10","float":null,"pred":"","succ":"SNIP-300: FF 3","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-300","name":"Preliminary Overall Site Plan -Issue for Internal","wbs":"Overall Site Plan","dur":8,"start":"2026-06-30","finish":"2026-07-15","float":null,"pred":"SNIP-176: FF 3","succ":"SNIP-189: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-166","name":"Site Plan Confirmed to Release Other Discipline's Design-Issue for Internal Review","wbs":"Overall Site Plan","dur":25,"start":"2026-07-07","finish":"2026-08-11","float":null,"pred":"SNIP-106: FS, SNIP-127: FS, SNIP-105: FS","succ":"SNIP-202: FS, SNIP-178: FS, SNIP-179: FS, SNIP-148: SF, SNIP-159: SS, SNIP-168: FF, SNIP-217: FS, SNIP-173: FS, SNIP-215: FS, SNIP-207: FF 20, SNIP-237: FF, SNIP-191: FS 10, SNIP-182: FS 9, SNIP-220: FS, SNIP-195: FS, SNIP-237: FS, SNIP-240: FF, SNIP-238: FF, SNIP-234: FS, SNIP-239: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-173","name":"Site Plan -Internal Review,Update and Issue for Client Review","wbs":"Overall Site Plan","dur":5,"start":"2026-08-12","finish":"2026-08-31","float":null,"pred":"SNIP-166: FS","succ":"SNIP-144: FF, SNIP-189: FS, SNIP-330: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-189","name":"Site Plan -Client Review","wbs":"Overall Site Plan","dur":5,"start":"2026-08-31","finish":"2026-08-31","float":null,"pred":"SNIP-300: FS, SNIP-173: FS","succ":"SNIP-220: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-330","name":"Layout Review Workshop w Client","wbs":"Overall Site Plan","dur":1,"start":"2026-08-31","finish":"2026-08-31","float":59,"pred":"SNIP-173: FS","succ":"","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-220","name":"Site Plan / GA Confirmed to Finalize Other Discipline's Design-Final issue","wbs":"Overall Site Plan","dur":15,"start":"2026-08-31","finish":"2026-09-14","float":11,"pred":"SNIP-189: FS, SNIP-166: FS","succ":"SNIP-239: FS, SNIP-221: FF, SNIP-223: FS, SNIP-237: FS, SNIP-240: FF, SNIP-238: FF, SNIP-234: FS, SNIP-168: FF, SNIP-178: FF, SNIP-182: FF -4","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-168","name":"Snip Facility Detailed Roads and Access  layout","wbs":"NPI Facility Detailed Layout","dur":10,"start":"2026-08-05","finish":"2026-09-14","float":16,"pred":"SNIP-166: FF, SNIP-220: FF","succ":"SNIP-240: FF 10","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-178","name":"Snip Facility Detailed building layout","wbs":"NPI Facility Detailed Layout","dur":5,"start":"2026-08-10","finish":"2026-09-14","float":11,"pred":"SNIP-166: FS, SNIP-220: FF","succ":"SNIP-240: FF 15","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-146","name":"Waste Dump & Top-Soil design","wbs":"On-Site Waste Dump","dur":10,"start":"2026-09-08","finish":"2026-09-21","float":3,"pred":"SNIP-217: SS","succ":"SNIP-162: FS","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-162","name":"Waste Dump MTO","wbs":"On-Site Waste Dump","dur":8,"start":"2026-09-22","finish":"2026-10-02","float":3,"pred":"SNIP-146: FS","succ":"SNIP-240: FF 10","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-140","name":"SNIP water management & design (HOLD)","wbs":"SNIP Water Management","dur":10,"start":"2026-08-31","finish":"2026-09-14","float":6,"pred":"SNIP-217: SS","succ":"SNIP-160: FS","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-160","name":"SNIP water MTOs.","wbs":"SNIP Water Management","dur":10,"start":"2026-09-15","finish":"2026-09-28","float":6,"pred":"SNIP-140: FS","succ":"SNIP-240: FF 10","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-116","name":"Civil Design Criteria-Review & Validate Eskay Creek","wbs":"Design Criteria","dur":1,"start":"2026-07-06","finish":"2026-07-07","float":null,"pred":"SNIP-115: FS, SNIP-105: FS","succ":"SNIP-125: FS, SNIP-120: SS 3, SNIP-237: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-217","name":"Earthworks 3D Model (On-Site)","wbs":"3D Model","dur":25,"start":"2026-08-19","finish":"2026-09-23","float":4,"pred":"SNIP-166: FS","succ":"SNIP-237: FS, SNIP-146: SS, SNIP-140: SS, SNIP-222: FF -5","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-159","name":"Bronson Connector Road- Acceptance Review Memo-Issue for Internal Review","wbs":"Bronson Connector Road Design  Review Memo","dur":3,"start":"2026-06-30","finish":"2026-07-03","float":null,"pred":"SNIP-136: SS, SNIP-104: FS, SNIP-166: SS","succ":"SNIP-164: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-164","name":"Bronson Connector Road- Acceptance Review Memo-Internal Review, Update and Issue for Client Review","wbs":"Bronson Connector Road Design  Review Memo","dur":2,"start":"2026-07-06","finish":"2026-07-07","float":null,"pred":"SNIP-159: FS","succ":"SNIP-169: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-169","name":"Bronson Connector Road- Acceptance Review Memo-Client Review","wbs":"Bronson Connector Road Design  Review Memo","dur":5,"start":"2026-07-08","finish":"2026-07-14","float":null,"pred":"SNIP-164: FS","succ":"SNIP-174: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-174","name":"Bronson Connector Road- Update and issue  Memo-Final Issue","wbs":"Bronson Connector Road Design  Review Memo","dur":10,"start":"2026-07-15","finish":"2026-07-28","float":null,"pred":"SNIP-169: FS","succ":"SNIP-198: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-125","name":"Foundation Recomendations","wbs":"Foundation(NPI & Portals )","dur":10,"start":"2026-08-10","finish":"2026-09-04","float":55,"pred":"SNIP-215: SS, SNIP-116: FS","succ":"","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-198","name":"Bronson Connector Road -MTO and Model Review","wbs":"MTO","dur":5,"start":"2026-08-24","finish":"2026-09-01","float":19,"pred":"SNIP-174: FS","succ":"SNIP-240: FF 15","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-222","name":"Preliminary Earthworks MTO (Snip)","wbs":"MTO","dur":5,"start":"2026-09-10","finish":"2026-09-17","float":9,"pred":"SNIP-217: FF -5","succ":"SNIP-237: FS","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-237","name":"Earthworks  MTO (Snip)","wbs":"MTO","dur":5,"start":"2026-09-24","finish":"2026-10-01","float":4,"pred":"SNIP-217: FS, SNIP-222: FS, SNIP-116: FS, SNIP-166: FF, SNIP-220: FS, SNIP-105: FS, SNIP-166: FS, SNIP-133: SS, SNIP-115: SS","succ":"SNIP-240: FF 10, SNIP-238: FF, SNIP-234: FS -10","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-215","name":"Structural & concrete Design/Calc","wbs":"Structural & Concrete","dur":25,"start":"2026-08-10","finish":"2026-09-16","float":9,"pred":"SNIP-166: FS, SNIP-120: FS","succ":"SNIP-125: SS, SNIP-240: FF, SNIP-239: FS, SNIP-234: FS -10, SNIP-239: SS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-120","name":"Structural Design Criteria-Adopt Eskay Creek","wbs":"Structural Design Criteria","dur":1,"start":"2026-07-16","finish":"2026-07-16","float":null,"pred":"SNIP-116: SS 3, SNIP-105: FS","succ":"SNIP-215: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-188","name":"NPI Major Infrastructure Building List-Issue for Internal Review","wbs":"Snip Building List","dur":10,"start":"2026-07-15","finish":"2026-09-02","float":8,"pred":"SNIP-106: FS","succ":"SNIP-197: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-179","name":"Snip faciliy Building List","wbs":"Snip Building List","dur":10,"start":"2026-08-10","finish":"2026-09-02","float":18,"pred":"SNIP-166: FS","succ":"SNIP-240: FF 15","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-197","name":"NPI  Major Infrastructure Building List-Internal Review, Update and Issue for Client Review","wbs":"Snip Building List","dur":5,"start":"2026-09-03","finish":"2026-09-10","float":8,"pred":"SNIP-188: FS","succ":"SNIP-208: FS","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-208","name":"NPI Major Infrastructure  Building List-Client Review","wbs":"Snip Building List","dur":5,"start":"2026-09-11","finish":"2026-09-17","float":8,"pred":"SNIP-197: FS","succ":"SNIP-212: FS","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-212","name":"NPI Major Infrastructure  Building List-Final Issue","wbs":"Snip Building List","dur":5,"start":"2026-09-18","finish":"2026-09-24","float":8,"pred":"SNIP-208: FS","succ":"SNIP-240: FF 10","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-239","name":"Concrete MTO","wbs":"Concrete MTO","dur":5,"start":"2026-09-17","finish":"2026-09-23","float":9,"pred":"SNIP-220: FS, SNIP-215: FS, SNIP-215: SS, SNIP-166: FS","succ":"SNIP-238: FF, SNIP-240: FF 10","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-124","name":"Electrical & Instrumentation Design Criteria -Adopt  Eskay Creek","wbs":"Design Criteria","dur":1,"start":"2026-07-16","finish":"2026-07-16","float":null,"pred":"SNIP-115: FS, SNIP-105: FS","succ":"SNIP-165: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-165","name":"Snip Electrical Load List-Issue for Internal  Review","wbs":"Snip Load List","dur":10,"start":"2026-08-17","finish":"2026-08-28","float":null,"pred":"SNIP-124: FS, SNIP-161: FF 5","succ":"SNIP-126: SS, SNIP-171: FS, SNIP-186: FS, SNIP-170: FF 1","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-171","name":"Snip Electrical Load List -Internal Review, Update and issue for Client Review","wbs":"Snip Load List","dur":5,"start":"2026-08-31","finish":"2026-09-02","float":9,"pred":"SNIP-165: FS","succ":"SNIP-186: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-186","name":"Snip Electrical Load List - Client Review","wbs":"Snip Load List","dur":5,"start":"2026-09-03","finish":"2026-09-10","float":9,"pred":"SNIP-161: FS, SNIP-171: FS, SNIP-165: FS","succ":"SNIP-228: FS","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-228","name":"Snip Electrical Load List-Final Issue","wbs":"Snip Load List","dur":10,"start":"2026-09-11","finish":"2026-09-24","float":9,"pred":"SNIP-231: FF, SNIP-186: FS, SNIP-143: FF 5","succ":"SNIP-227: FF, SNIP-229: FF","actual":"No","short":"","health":null,"comment":""},{"id":"A1000","name":"Update Eskay  Electrical Load List-Issue for internal  Review","wbs":"Eskay  Load List","dur":5,"start":"2026-08-17","finish":"2026-08-27","float":null,"pred":"SNIP-271: FS, SNIP-281: FS","succ":"A1010: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"A1010","name":"Update Eskay Electrical Load List -Internal Review, Update and Issue for Client Review","wbs":"Eskay  Load List","dur":5,"start":"2026-08-28","finish":"2026-09-02","float":14,"pred":"A1000: FS","succ":"A1020: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"A1020","name":"Update Eskay  Electrical Load List - Client Review","wbs":"Eskay  Load List","dur":5,"start":"2026-09-03","finish":"2026-09-10","float":14,"pred":"A1010: FS","succ":"A1030: FS","actual":"No","short":"","health":null,"comment":""},{"id":"A1030","name":"Update Eskay Electrical Load List-Final Issue","wbs":"Eskay  Load List","dur":5,"start":"2026-09-11","finish":"2026-09-17","float":14,"pred":"A1020: FS","succ":"SNIP-229: FF","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-170","name":"Snip Single Line Diagrams-Issue for Internal Review","wbs":"Snip HV SLD","dur":10,"start":"2026-08-18","finish":"2026-09-01","float":8,"pred":"SNIP-165: FF 1, SNIP-190: FS","succ":"SNIP-181: FS, SNIP-180: FS -5, SNIP-229: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-181","name":"Snip Single Line Diagram- Internal Review, Update and Issue for Client Review","wbs":"Snip HV SLD","dur":5,"start":"2026-09-02","finish":"2026-09-09","float":10,"pred":"SNIP-170: FS","succ":"SNIP-192: FS","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-192","name":"Snip Single Line Diagrams-Client Review","wbs":"Snip HV SLD","dur":5,"start":"2026-09-10","finish":"2026-09-16","float":10,"pred":"SNIP-181: FS","succ":"SNIP-229: FS","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-229","name":"Snip Single Line Diagrams-final Issue-Final Issue","wbs":"Snip HV SLD","dur":5,"start":"2026-09-18","finish":"2026-09-24","float":9,"pred":"SNIP-192: FS, SNIP-228: FF, SNIP-170: FS, A1030: FF","succ":"SNIP-230: FF, SNIP-238: FF, SNIP-234: FS","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-190","name":"Snip EEL Inputs (Through Clarifiction)","wbs":"Equipment List","dur":5,"start":"2026-07-27","finish":"2026-08-17","float":null,"pred":"SNIP-201: FS","succ":"SNIP-180: FS, SNIP-170: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-200","name":"Eskay EEL Inputs","wbs":"Equipment List","dur":5,"start":"2026-08-31","finish":"2026-09-04","float":0,"pred":"SNIP-271: FS, SNIP-144: FF","succ":"SNIP-180: FS","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-180","name":"Electrical Equipment List-Issue for Internal Review","wbs":"Equipment List","dur":10,"start":"2026-09-08","finish":"2026-09-21","float":0,"pred":"SNIP-143: FF 1, SNIP-170: FS -5, SNIP-190: FS, SNIP-200: FS","succ":"SNIP-193: FS, SNIP-230: FS, SNIP-194: FS","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-193","name":"Electrical Equipment List-Internal Review, Update and Issue for Client Review","wbs":"Equipment List","dur":5,"start":"2026-09-22","finish":"2026-09-28","float":0,"pred":"SNIP-180: FS","succ":"SNIP-205: FS","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-205","name":"Electrical Equipment List-Client Review","wbs":"Equipment List","dur":2,"start":"2026-09-29","finish":"2026-10-01","float":0,"pred":"SNIP-193: FS","succ":"SNIP-230: FS","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-194","name":"Priced Electrical Equipment List","wbs":"Equipment List","dur":10,"start":"2026-09-22","finish":"2026-10-06","float":1,"pred":"SNIP-126: FS, SNIP-180: FS","succ":"SNIP-206: FS, SNIP-240: FF 10","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-230","name":"Electrical Equipment List-Final Issue","wbs":"Equipment List","dur":5,"start":"2026-10-02","finish":"2026-10-08","float":0,"pred":"SNIP-205: FS, SNIP-229: FF, SNIP-180: FS","succ":"SNIP-234: FS -10, SNIP-240: FF 9, SNIP-238: FF","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-126","name":"Generator Sizing Report-snip","wbs":"Generator Sizing Report","dur":15,"start":"2026-08-17","finish":"2026-09-04","float":11,"pred":"SNIP-165: SS, SNIP-106: FS","succ":"SNIP-206: FS, SNIP-194: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-206","name":"Factored Electrical Update- Eskay Creeck /Tailing Expansion","wbs":"Electrical Update","dur":5,"start":"2026-10-07","finish":"2026-10-14","float":2,"pred":"SNIP-126: FS, SNIP-194: FS","succ":"SNIP-224: FF","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-202","name":"Fire Detection and Protection Design (Internal)","wbs":"Site Services","dur":15,"start":"2026-08-31","finish":"2026-09-21","float":6,"pred":"SNIP-166: FS","succ":"SNIP-240: FF 15","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-214","name":"Construction Execution Plan","wbs":"Project Execution Plan / Schedule","dur":15,"start":"2026-08-31","finish":"2026-09-21","float":44,"pred":"SNIP-236: SS","succ":"SNIP-191: FS","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-218","name":"Project Execution Plan (PEP)","wbs":"Project Execution Plan / Schedule","dur":15,"start":"2026-09-08","finish":"2026-09-28","float":20,"pred":"SNIP-236: SS 5","succ":"SNIP-219: FF, SNIP-255: FF 10","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-236","name":"Project Execution Schedule","wbs":"Project Execution Plan / Schedule","dur":20,"start":"2026-08-31","finish":"2026-09-28","float":6,"pred":"SNIP-161: SS","succ":"SNIP-240: FF 10, SNIP-214: SS, SNIP-218: SS 5","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-152","name":"Estimate Development Plan and Material Take-off Template","wbs":"Capital and Operating Cost Estimate","dur":15,"start":"2026-07-20","finish":"2026-08-21","float":null,"pred":"SNIP-142: SS 5","succ":"SNIP-240: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-142","name":"Confirm WBS","wbs":"Capital and Operating Cost Estimate","dur":10,"start":"2026-07-14","finish":"2026-09-04","float":11,"pred":"SNIP-105: FS 25","succ":"SNIP-152: SS 5, SNIP-270: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-270","name":"3rd Party CAPEX Inputs","wbs":"Capital and Operating Cost Estimate","dur":0,"start":null,"finish":"2026-09-11","float":8,"pred":"SNIP-203: FS, SNIP-204: FS, SNIP-320: FS, SNIP-142: FS","succ":"SNIP-240: FF 20","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-310","name":"3rd Party OPEX Inputs (SRK)","wbs":"Capital and Operating Cost Estimate","dur":0,"start":null,"finish":"2026-09-11","float":9,"pred":"SNIP-203: FS","succ":"SNIP-227: FF 15","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-211","name":"Owners Cost Data Entry","wbs":"Capital and Operating Cost Estimate","dur":5,"start":"2026-09-09","finish":"2026-09-15","float":16,"pred":"SNIP-240: SS","succ":"SNIP-241: FS, SNIP-244: FS, SNIP-224: FF 5","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-227","name":"Draft OPEX Development","wbs":"Capital and Operating Cost Estimate","dur":20,"start":"2026-08-31","finish":"2026-10-02","float":9,"pred":"SNIP-228: FF, SNIP-154: FF, SNIP-310: FF 15","succ":"SNIP-224: FF","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-224","name":"CAPEX and OPEX Project Review","wbs":"Capital and Operating Cost Estimate","dur":5,"start":"2026-10-07","finish":"2026-10-14","float":2,"pred":"SNIP-206: FF, SNIP-227: FF, SNIP-211: FF 5","succ":"SNIP-226: FS, SNIP-235: FS, SNIP-241: FS, SNIP-232: FF","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-232","name":"Draft Basis of Estimate","wbs":"Capital and Operating Cost Estimate","dur":20,"start":"2026-09-15","finish":"2026-10-14","float":2,"pred":"SNIP-224: FF","succ":"SNIP-244: FF 10, SNIP-241: FF 5, SNIP-253: FS 5","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-240","name":"Draft CAPEX Development","wbs":"Capital and Operating Cost Estimate","dur":30,"start":"2026-09-09","finish":"2026-10-22","float":0,"pred":"SNIP-270: FF 20, SNIP-204: FF 20, SNIP-203: FF 20, SNIP-178: FF 15, SNIP-168: FF 10, SNIP-179: FF 15, SNIP-202: FF 15, SNIP-198: FF 15, SNIP-156: FF, SNIP-195: FF 15, SNIP-162: FF 10, SNIP-236: FF 10, SNIP-194: FF 10, SNIP-231: FF 10, SNIP-215: FF, SNIP-237: FF 10, SNIP-239: FF 10, SNIP-143: FF 10, SNIP-152: FS, SNIP-160: FF 10, SNIP-220: FF, SNIP-105: FF, SNIP-166: FF, SNIP-133: SF, SNIP-115: SF, SNIP-230: FF 9, SNIP-320: FF 20, SNIP-212: FF 10","succ":"SNIP-242: FF 2, SNIP-241: FF 1, SNIP-244: FS, SNIP-211: SS","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-241","name":"Ausenco Corporate Estimate Review and Updates","wbs":"Capital and Operating Cost Estimate","dur":5,"start":"2026-10-19","finish":"2026-10-23","float":0,"pred":"SNIP-211: FS, SNIP-240: FF 1, SNIP-224: FS, SNIP-235: FS, SNIP-226: FS, SNIP-232: FF 5","succ":"SNIP-249: FF, SNIP-258: FF, SNIP-248: FF, SNIP-255: FF 2, SNIP-244: FS","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-244","name":"Client CAPEX and OPEX Final Review","wbs":"Capital and Operating Cost Estimate","dur":5,"start":"2026-10-26","finish":"2026-10-30","float":0,"pred":"SNIP-211: FS, SNIP-240: FS, SNIP-241: FS, SNIP-232: FF 10","succ":"SNIP-280: FF 2, SNIP-252: FS, SNIP-249: FF, SNIP-255: FF, SNIP-251: FS, SNIP-250: FS, SNIP-247: FF, SNIP-246: FF, SNIP-258: FF 5","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-250","name":"CAPEX - Issued Final","wbs":"Capital and Operating Cost Estimate","dur":5,"start":"2026-11-02","finish":"2026-11-06","float":0,"pred":"SNIP-244: FS","succ":"SNIP-249: FF, SNIP-258: FF, SNIP-248: FF, SNIP-255: FF, SNIP-253: FF 3, SNIP-246: FF","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-251","name":"OPEX - Issued Final","wbs":"Capital and Operating Cost Estimate","dur":5,"start":"2026-11-02","finish":"2026-11-06","float":0,"pred":"SNIP-244: FS","succ":"SNIP-253: FF 3, SNIP-247: FF","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-253","name":"Final Basis of Estimate","wbs":"Capital and Operating Cost Estimate","dur":5,"start":"2026-11-05","finish":"2026-11-12","float":0,"pred":"SNIP-251: FF 3, SNIP-250: FF 3, SNIP-232: FS 5","succ":"SNIP-255: FF","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-290","name":"Client Input to Model (Offsite Charges & Tax)","wbs":"Financial Model","dur":0,"start":null,"finish":"2026-09-25","float":42,"pred":"SNIP-242: SF","succ":"","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-242","name":"Financial Model - Issue for Client Review","wbs":"Financial Model","dur":20,"start":"2026-09-25","finish":"2026-10-26","float":5,"pred":"SNIP-117: FS, SNIP-157: FS, SNIP-240: FF 2","succ":"SNIP-290: SF, SNIP-254: FF, SNIP-252: FS","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-254","name":"Sensitivity Analysis","wbs":"Financial Model","dur":3,"start":"2026-10-22","finish":"2026-10-26","float":10,"pred":"SNIP-242: FF","succ":"SNIP-257: FS","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-252","name":"Financial Model - Client Review","wbs":"Financial Model","dur":5,"start":"2026-11-02","finish":"2026-11-06","float":1,"pred":"SNIP-244: FS, SNIP-242: FS","succ":"SNIP-257: FS, SNIP-255: FF","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-257","name":"Financial Model & DCF Economic Metrics Report - Final Issue","wbs":"Financial Model","dur":2,"start":"2026-11-09","finish":"2026-11-10","float":1,"pred":"SNIP-252: FS, SNIP-254: FS","succ":"SNIP-280: FF, SNIP-255: FF","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-183","name":"Draft TOC for Client Review","wbs":"Technical Report","dur":10,"start":"2026-08-17","finish":"2026-09-11","float":1,"pred":"SNIP-105: FS 70","succ":"SNIP-255: FS","actual":"Yes","short":"","health":null,"comment":""},{"id":"SNIP-280","name":"News Release","wbs":"Technical Report","dur":0,"start":null,"finish":"2026-11-10","float":6,"pred":"SNIP-257: FF, SNIP-244: FF 2","succ":"SNIP-259: FS","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-255","name":"Draft Report","wbs":"Technical Report","dur":40,"start":"2026-09-15","finish":"2026-11-12","float":0,"pred":"SNIP-257: FF, SNIP-252: FF, SNIP-244: FF, SNIP-101: SF, SNIP-111: SF, SNIP-250: FF, SNIP-183: FS, SNIP-155: FF, SNIP-134: FF, SNIP-154: FF, SNIP-241: FF 2, SNIP-234: FF 10, SNIP-218: FF 10, SNIP-253: FF","succ":"SNIP-245: FF -10, SNIP-256: FS, SNIP-258: FS","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-258","name":"Draft Report Client Review","wbs":"Technical Report","dur":5,"start":"2026-11-13","finish":"2026-11-19","float":0,"pred":"SNIP-101: SF, SNIP-111: SF, SNIP-241: FF, SNIP-250: FF, SNIP-244: FF 5, SNIP-255: FS, SNIP-256: FS","succ":"SNIP-259: FS","actual":"No","short":"","health":null,"comment":""},{"id":"SNIP-259","name":"Report Update and Finalization","wbs":"Technical Report","dur":5,"start":"2026-11-20","finish":"2026-11-26","float":0,"pred":"SNIP-258: FS, SNIP-133: SS, SNIP-115: SS, SNIP-161: FS, SNIP-280: FS","succ":"SNIP-260: FS","actual":"No","short":"","health":null,"comment":""}],"userms":[{"id":"USR-001","name":"Client review of draft PFS","type":"MS","state":"FUTURE","start":"2026-04-17","finish":"2026-05-01","band":"User Defined Milestones","pred":"SNIP-101","succ":"","progress":0,"comment":"Added at the weekly review."},{"id":"USR-002","name":"Owner sign-off on design criteria","type":"INT","state":"TRACK","start":null,"finish":"2026-06-18","band":"User Defined Milestones","pred":"SNIP-104","succ":"SNIP-102","progress":25,"comment":""},{"id":"USR-003","name":"Vendor quote round 2 closed","type":"CLI","state":"RISK","start":null,"finish":"2026-06-29","band":"User Defined Milestones","pred":"SNIP-102","succ":"","progress":50,"comment":""},{"id":"USR-004","name":"Geotech report issued for review","type":"RTN","state":"CRIT","start":"2026-07-10","finish":"2026-07-24","band":"User Defined Milestones","pred":"SNIP-113","succ":"SNIP-103","progress":75,"comment":"Added at the weekly review."},{"id":"USR-005","name":"Permitting pre-application meeting","type":"MS","state":"DONEUSER","start":null,"finish":"2026-07-06","band":"User Defined Milestones","pred":"SNIP-103","succ":"","progress":100,"comment":""},{"id":"USR-006","name":"Cost estimate basis frozen","type":"INT","state":"FUTURE","start":null,"finish":"2026-08-05","band":"User Defined Milestones","pred":"SNIP-110","succ":"SNIP-153","progress":0,"comment":""},{"id":"USR-007","name":"Execution plan workshop","type":"CLI","state":"TRACK","start":"2026-08-20","finish":"2026-09-03","band":"User Defined Milestones","pred":"SNIP-153","succ":"","progress":25,"comment":"Added at the weekly review."},{"id":"USR-008","name":"Water balance model accepted","type":"RTN","state":"RISK","start":null,"finish":"2026-09-30","band":"User Defined Milestones","pred":"SNIP-182","succ":"SNIP-207","progress":50,"comment":""},{"id":"USR-009","name":"Power supply study received","type":"MS","state":"CRIT","start":null,"finish":"2026-09-09","band":"User Defined Milestones","pred":"SNIP-207","succ":"","progress":75,"comment":""},{"id":"USR-010","name":"Risk register refreshed","type":"INT","state":"DONEUSER","start":"2026-09-04","finish":"2026-09-18","band":"User Defined Milestones","pred":"SNIP-117","succ":"SNIP-221","progress":100,"comment":"Added at the weekly review."},{"id":"USR-011","name":"Board paper lodged","type":"CLI","state":"FUTURE","start":null,"finish":"2026-09-28","band":"User Defined Milestones","pred":"SNIP-221","succ":"","progress":0,"comment":""},{"id":"USR-012","name":"Final PFS issued","type":"RTN","state":"TRACK","start":null,"finish":"2026-10-14","band":"User Defined Milestones","pred":"SNIP-233","succ":"SNIP-101","progress":25,"comment":""}],"annot":[{"aid":"A-001","kind":"Milestone comment","target":"SNIP-101","targetName":"Study Award","value":"Awaiting vendor data.","status":"open","author":"MG","date":"2026-09-21"},{"aid":"A-002","kind":"Row remark","target":"SNIP-110","targetName":"Set-up (Stage Gate No.1) Internal Approval","value":"Moved per client request.","status":"sent","author":"JR","date":"2026-09-22"},{"aid":"A-003","kind":"Dependency comment","target":"SNIP-221","targetName":"Final Site Layout - Issued for Use","value":"Logic to SNIP-233 needs checking, lag looks short.","status":"review","author":"AK","date":"2026-09-23"},{"aid":"A-004","kind":"Note","target":"SNIP-235","targetName":"CAPEX (Stage Gate No.5) Internal Approval","value":"Raised at the coordination meeting.","status":"outstanding","author":"MG","date":"2026-09-24"},{"aid":"A-005","kind":"Health override","target":"SNIP-248","targetName":"Financial Model - Draft","value":"At risk","status":"done","author":"JR","date":"2026-09-25"},{"aid":"A-006","kind":"Progress override","target":"SNIP-136","targetName":"Bronson Connector Road Data","value":"40%","status":"note","author":"AK","date":"2026-09-26"},{"aid":"A-007","kind":"Date override","target":"SNIP-320","targetName":"Eskay Creek Model & Cost Estimate (Others:SRK - Mining)","value":"2026-10-08","status":"closed","author":"MG","date":"2026-09-27"},{"aid":"A-008","kind":"Milestone comment","target":"SNIP-223","targetName":"Final Design Review","value":"Raised at the coordination meeting.","status":"open","author":"JR","date":"2026-09-21"},{"aid":"A-009","kind":"Row remark","target":"SNIP-118","targetName":"Metallurigcal Testwork Advise by Client (3rd Parties)","value":"Awaiting vendor data.","status":"sent","author":"AK","date":"2026-09-22"},{"aid":"A-010","kind":"Dependency comment","target":"SNIP-133","targetName":"PFD-Issue for internal Review","value":"Logic to SNIP-137 needs checking, lag looks short.","status":"review","author":"MG","date":"2026-09-23"},{"aid":"A-011","kind":"Note","target":"SNIP-147","targetName":"Process Plant Mass and Water Balances- Internal Review,Update and Issue for Client Review","value":"Check against the baseline.","status":"outstanding","author":"JR","date":"2026-09-24"},{"aid":"A-012","kind":"Health override","target":"SNIP-201","targetName":"Snip MEL Inputs","value":"Critical","status":"done","author":"AK","date":"2026-09-25"},{"aid":"A-013","kind":"Progress override","target":"SNIP-167","targetName":"Mechanical Equipment List-Client Review","value":"10%","status":"note","author":"MG","date":"2026-09-26"},{"aid":"A-014","kind":"Date override","target":"SNIP-176","targetName":"Reciept of Verified Refrences From Client","value":"2026-10-15","status":"closed","author":"JR","date":"2026-09-27"},{"aid":"A-015","kind":"Milestone comment","target":"SNIP-330","targetName":"Layout Review Workshop w Client","value":"Check against the baseline.","status":"open","author":"AK","date":"2026-09-21"},{"aid":"A-016","kind":"Row remark","target":"SNIP-162","targetName":"Waste Dump MTO","value":"Raised at the coordination meeting.","status":"sent","author":"MG","date":"2026-09-22"},{"aid":"A-017","kind":"Dependency comment","target":"SNIP-159","targetName":"Bronson Connector Road- Acceptance Review Memo-Issue for Internal Review","value":"Logic to SNIP-164 needs checking, lag looks short.","status":"review","author":"JR","date":"2026-09-23"},{"aid":"A-018","kind":"Note","target":"SNIP-198","targetName":"Bronson Connector Road -MTO and Model Review","value":"Moved per client request.","status":"outstanding","author":"AK","date":"2026-09-24"},{"aid":"A-019","kind":"Health override","target":"SNIP-188","targetName":"NPI Major Infrastructure Building List-Issue for Internal Review","value":"On track","status":"done","author":"MG","date":"2026-09-25"},{"aid":"A-020","kind":"Progress override","target":"SNIP-239","targetName":"Concrete MTO","value":"90%","status":"note","author":"JR","date":"2026-09-26"},{"aid":"A-021","kind":"Date override","target":"SNIP-228","targetName":"Snip Electrical Load List-Final Issue","value":"2026-10-22","status":"closed","author":"AK","date":"2026-09-27"},{"aid":"A-022","kind":"Milestone comment","target":"SNIP-170","targetName":"Snip Single Line Diagrams-Issue for Internal Review","value":"Moved per client request.","status":"open","author":"MG","date":"2026-09-21"},{"aid":"A-023","kind":"Row remark","target":"SNIP-200","targetName":"Eskay EEL Inputs","value":"Check against the baseline.","status":"sent","author":"JR","date":"2026-09-22"},{"aid":"A-024","kind":"Dependency comment","target":"SNIP-230","targetName":"Electrical Equipment List-Final Issue","value":"Logic to SNIP-126 needs checking, lag looks short.","status":"review","author":"AK","date":"2026-09-23"},{"aid":"A-025","kind":"Note","target":"SNIP-218","targetName":"Project Execution Plan (PEP)","value":"Awaiting vendor data.","status":"outstanding","author":"MG","date":"2026-09-24"},{"aid":"A-026","kind":"Health override","target":"SNIP-310","targetName":"3rd Party OPEX Inputs (SRK)","value":"At risk","status":"done","author":"JR","date":"2026-09-25"},{"aid":"A-027","kind":"Progress override","target":"SNIP-240","targetName":"Draft CAPEX Development","value":"65%","status":"note","author":"AK","date":"2026-09-26"},{"aid":"A-028","kind":"Date override","target":"SNIP-253","targetName":"Final Basis of Estimate","value":"2026-10-29","status":"closed","author":"MG","date":"2026-09-27"}],"cols":{"userms":[{"key":"id","label":"ID","type":"text","width":90},{"key":"name","label":"Name","type":"text","editable":true,"width":240},{"key":"type","label":"Type","type":"select","editable":true,"options":["MS","INT","CLI","RTN"],"width":70},{"key":"start","label":"Start","type":"date","editable":true},{"key":"finish","label":"Finish","type":"date","editable":true},{"key":"band","label":"Band / WBS","type":"text","editable":true,"width":170},{"key":"state","label":"Status","type":"select","editable":true,"options":[{"value":"FUTURE","label":"Future"},{"value":"TRACK","label":"On track"},{"value":"RISK","label":"At risk"},{"value":"CRIT","label":"Critical"},{"value":"DONEUSER","label":"Done"}]},{"key":"pred","label":"Predecessor","type":"text","editable":true,"width":100},{"key":"succ","label":"Successor","type":"text","editable":true,"width":100},{"key":"progress","label":"% complete","type":"number","editable":true,"width":90},{"key":"comment","label":"Comment","type":"text","editable":true,"width":220}],"annot":[{"key":"aid","label":"Entry","type":"text","width":70},{"key":"kind","label":"Kind","type":"text","width":140},{"key":"target","label":"Activity ID","type":"text","width":100},{"key":"targetName","label":"Activity name","type":"text","width":220},{"key":"value","label":"Comment or value","type":"text","editable":true,"width":280},{"key":"status","label":"Status","type":"select","editable":true,"options":[{"value":"note","label":"Note"},{"value":"open","label":"Open"},{"value":"sent","label":"Sent"},{"value":"review","label":"In review"},{"value":"outstanding","label":"Outstanding"},{"value":"done","label":"Done"},{"value":"closed","label":"Closed"}]},{"key":"author","label":"By","type":"text","width":50},{"key":"date","label":"Entered","type":"date"}],"sched":[{"key":"id","label":"Activity ID","type":"text","width":100},{"key":"name","label":"Activity name","type":"text","width":260},{"key":"wbs","label":"WBS","type":"text","width":160},{"key":"dur","label":"Duration","type":"number","width":72},{"key":"start","label":"Start","type":"date"},{"key":"finish","label":"Finish","type":"date"},{"key":"actual","label":"Actual","type":"text","width":60},{"key":"float","label":"Total float","type":"number","width":80},{"key":"pred","label":"Predecessors","type":"text","width":160},{"key":"succ","label":"Successors","type":"text","width":160},{"key":"short","label":"Short title","type":"text","editable":true,"width":140},{"key":"health","label":"Health","type":"select","editable":true,"options":[{"value":0,"label":"N/A"},{"value":1,"label":"On track"},{"value":2,"label":"At risk"},{"value":3,"label":"Critical"},{"value":4,"label":"Done"}],"width":90},{"key":"comment","label":"Comment","type":"text","editable":true,"width":220}]}};
@@ -1438,7 +1543,12 @@ window.SRET_STRESS=function(n){var s=window.SRET_FIXTURES.sched,out=[];for(var i
   var lstore=window.DEMO_LISTS=SRETCollections.newStore();
   SRETCollections.create(lstore,'Site walk 3-Oct','2026-09-27T00:00:00Z');
   SRETCollections.create(lstore,'Owner review items','2026-09-27T00:00:00Z');
-  function listsOpt(refOf){ return {store:lstore,refOf:refOf,onChange:function(r){ log('onListsChange',[r.kind||'create']); }}; }
+  // Names for the temp list panel, from any screen's data (the app would read its stores).
+  var LABELS={};
+  F.sched.concat(F.userms).forEach(function(r){ LABELS['activity:'+r.id]=r.id+'  '+r.name; });
+  F.annot.forEach(function(r){ LABELS['annot:'+r.aid]=r.aid+'  '+r.kind+' on '+r.target; });
+  function labelOf(ref){ return LABELS[ref]||(/^activity:(.*)-\d\d$/.test(ref)?LABELS[ref.replace(/-\d\d$/,'')]+' (stress copy)':''); }
+  function listsOpt(refOf){ return {store:lstore,refOf:refOf,labelOf:labelOf,onChange:function(r){ log('onListsChange',[r.kind||'create']); }}; }
   var ACT=function(k){ return 'activity:'+k; }, ANN=function(k){ return 'annot:'+k; };
   var back=function(){ log('onBack',[]); };
   var CONFIGS={

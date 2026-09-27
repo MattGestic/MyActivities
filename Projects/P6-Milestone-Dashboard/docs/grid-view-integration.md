@@ -51,6 +51,7 @@ SRETGrid.open({
   lists: {                     // optional: My temp list and saved lists
     store,                     //   the app's SRETCollections store (data in)
     refOf(rowKey),             //   rowKey -> stable item ref, e.g. 'activity:SNIP-118'
+    labelOf(ref),              //   optional: name shown for an item in the temp list panel
     onChange(result)           //   after every change, so the app persists
   }
 });
@@ -101,21 +102,30 @@ One row per annotation entry in that collection: milestone comment, row remark, 
 
 Purpose (Matt, 2026-09-27): keep track of important activities in groups, aggregate them by a scope or reason, and build a selection set to bulk edit across several filtered states.
 
-**Flow.** 1. **My temp list** (quick pick list): add selected rows from any screen and any filter state; remove selected rows the same way. Then one of **A. Save new list**, **B. Add to existing**, **C. Clear** (with inline confirmation). A and B empty the temp list afterwards. **Temp list only** filters any grid down to the picked rows, so they can be selected together for a bulk action.
+**Workflow (Matt, 2026-09-27):**
+1. Select rows in any grid, under any filter, and click **Add to temp list**. The toolbar badge shows the count.
+2. Expand **My temp list** to see its items. Tick some or all of them and use **Add to** to put them in a saved list, either an existing one or **New list…** with a name. The temp list stays as it is.
+3. **Remove from temp list** takes the ticked items off it.
+4. **Clear temp list** empties it, after an inline confirmation.
+
+**Temp list only** filters any grid down to the picked rows, so they can be selected together for a bulk action.
 
 **Rules**, all in `SRETCollections` (`src/modules/collections/collections.js`) and nowhere else:
-- An item is in at most one saved list. Adding it to another list moves it, and the message names the list it came from.
-- The temp list is independent of saved lists: an item can be picked whether or not it is already in a list.
-- The temp list is working state for the session. Saved lists are annotation-layer data. Neither touches schedule data.
+- An item can be in any number of saved lists. That's the default.
+- `settings.singleList` implements the future setting **"Limit items to a single list"**. When it is on, adding an item to a list moves it out of the others, and the message names where it moved from. It is already implemented and tested, but has no UI yet: it's the one flag on the store (`SRETCollections.newStore({singleList:true})`, or set `store.settings.singleList`).
+- The temp list is independent of saved lists. It is working state for the session. Saved lists are annotation-layer data. Neither touches schedule data.
+
+**Toolbar layout.** The back arrow, title, search, row counts and every action sit on one row. The title truncates before anything wraps, and the tools only wrap below 768 px. Status messages show as a toast over the grid, never in the toolbar. `tools/grid_view_check.py` measures this at 1440 px while a message is showing.
 
 **Wiring at merge:**
 - **Store.** One app global, e.g. `let USER_LISTS=SRETCollections.newStore();`. Persist `USER_LISTS.list` wherever `NOTE_COLLECTIONS` is persisted: publish state, the model and annotations `.json` export, and the mount path. `USER_LISTS.temp` is not persisted. **[CONFIRM WITH MATT]** whether the temp list should survive a reload.
 - **Item refs.** Use `'activity:'+activityId` for schedule activities and user milestones, so the same activity from the board or either grid is one item. Use `'note:'+nid` for notes and `'annot:'+entryId` for other annotation entries. Activity IDs are the key the annotation stores already use, so refs survive a re-import.
-- **Grid.** Every `SRETGrid.open()` config passes `lists:{store:USER_LISTS, refOf:toRef, onChange:()=>noteMarkup()}`. The grid calls `SRETCollections` itself on that store, and adds read-only **List** and **Temp** columns (sortable, filterable, exported).
+- **Grid.** Every `SRETGrid.open()` config passes `lists:{store:USER_LISTS, refOf:toRef, labelOf:refLabel, onChange:()=>noteMarkup()}`, where `refLabel` returns `'SNIP-118  Name'` from the app's own stores. The grid calls `SRETCollections` itself on that store, and adds read-only **List** and **Temp** columns (sortable, filterable, exported).
 - **Dashboard.** The same functions are called on the same store:
   - The Notes list bulk bar (beside the status action in `renderNotes()`) gets "Add to temp list", which calls `SRETCollections.tempAdd(USER_LISTS, NOTES_SELECTED.map(n=>'note:'+n))`.
   - A board selection, if P59 adds one, calls the same function with `'activity:'` refs.
-  - The temp list panel belongs in the Workspace, beside Notes and Comments and markups (annotation side, per D-20), using the same A / B / C actions and the `describe()` sentence.
+  - The temp list panel belongs in the Workspace, beside Notes and Comments and markups (annotation side, per D-20). It uses the same four steps (`addFromTemp` / `saveFromTemp` on the ticked items, `tempRemove`, `tempClear`) and the same `describe()` sentence.
+  - "Limit items to a single list", when it becomes a setting, belongs in Data & view > Data settings and just sets `USER_LISTS.settings.singleList`.
 - **Relationship to week collections (P58, D-19a).** These are separate. A note keeps its reporting week; lists are the user's own working groups.
 
 ### 3. Data & view: Schedule activities
@@ -126,7 +136,7 @@ Where exactly the button goes in Data & view (Sources, or View controls) is a la
 
 ## Verification at merge
 
-1. `python3 tools/grid_view_check.py` still passes on `prototypes/grid-view/demo.html` (unchanged modules). It covers scroll smoothness on 2,000 rows (every visible row present on fast scrolls, no engine wheel handling, transform positioning, per-step cost) and the lists flow (temp list built across three filter states, Temp list only, A / B / C including the one-list move, clear confirmation, the temp list carried across screens).
+1. `python3 tools/grid_view_check.py` still passes on `prototypes/grid-view/demo.html` (unchanged modules). It covers scroll smoothness on 2,000 rows (every visible row present on fast scrolls, no engine wheel handling, transform positioning, per-step cost) the one-row toolbar, and the four-step lists workflow (temp list built across three filter states, Temp list only, ticked temp items into existing and new lists, one item in two lists, remove, clear with confirmation, the temp list carried across screens, and the single-list setting).
 2. `python3 tools/colour_audit.py --strict` and `python3 tools/palette_swap_check.py` on the app, with a grid open for the swap (add the open to the swap check's setup the way it opens the milestone dialog).
 3. `python3 tools/theme_check.py` on the app.
 4. A merge-stage probe that clicks each of the three real entry points, edits one value per entry point and asserts the value lands in the right store and survives `scheduleRerender(true)` and a publish round trip. That probe does not exist yet: it can only be written against the merged file.

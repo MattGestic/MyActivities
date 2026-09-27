@@ -7,7 +7,7 @@
        title, columns:[{key,label,type,editable,options,width}], rows, rowKey,
        editable, onEdit(rowKey,key,value), onAdd(), onDelete(rowKeys),
        onBack(), exportName, ensureXLSX, host, canEdit(rowKey,key),
-       lists:{ store, refOf(rowKey), onChange(result) }
+       lists:{ store, refOf(rowKey), labelOf(ref), onChange(result) }
      })
      SRETGrid.close()   SRETGrid.setRows(rows)   SRETGrid.patchRows(rows)   SRETGrid.isOpen()
    Return false from onEdit to refuse a value (the cell reverts), from
@@ -15,12 +15,14 @@
    rowKey) or nothing to add no row. canEdit, optional, refuses an edit on
    one row where the column is otherwise editable.
    lists, optional, adds My temp list: "Add to temp list" for the selected
-   rows, a "Temp list only" filter, and a panel with A. Save new list,
-   B. Add to existing, C. Clear, plus remove-selected. It also adds read-only
-   List and Temp columns. store is the caller's SRETCollections store (data
-   in); refOf maps a rowKey to the store's item ref; onChange(result) runs
-   after every change so the caller can persist. All rules live in the
-   shared SRETCollections module (src/modules/collections/), never here.
+   rows, a "Temp list only" filter, and an expandable panel listing the temp
+   items, where selected items are added to a saved list (existing or new),
+   removed from the temp list, or the temp list is cleared. It also adds
+   read-only List and Temp columns. store is the caller's SRETCollections
+   store (data in); refOf maps a rowKey to the store's item ref; labelOf(ref),
+   optional, names an item in the panel; onChange(result) runs after every
+   change so the caller can persist. All rules live in the shared
+   SRETCollections module (src/modules/collections/), never here.
 
    Data in, callbacks out. This module never reads or writes an app global.
    Rows are copied on open, so an edit reaches the caller only through
@@ -197,6 +199,15 @@
   var BACK_SVG='<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">'+
                '<path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
+  // Status messages show as a toast over the grid, so they never push the
+  // toolbar onto a second row. The text stays readable after it fades.
+  function say(text){
+    var s=S; if(!s) return;
+    s.msgEl.textContent=text||'';
+    s.msgEl.classList.toggle('is-shown',!!text);
+    if(s.msgTimer) root.clearTimeout(s.msgTimer);
+    if(text) s.msgTimer=root.setTimeout(function(){ if(S===s) s.msgEl.classList.remove('is-shown'); },6000);
+  }
   function ctlHeight(el){
     var v=parseFloat(getComputedStyle(el).getPropertyValue('--ctl-h'));
     return isFinite(v)&&v>0?v:24;
@@ -278,14 +289,18 @@
   }
 
   // ---------- lists: My temp list and saved lists ----------
-  // The rules (temp list, one list per item, save / add / clear) live in
-  // SRETCollections. This section only draws the controls and calls it.
-  var L_TMP='_tmp', L_LIST='_list';
+  // The rules live in SRETCollections. This section draws the controls and
+  // calls it. Workflow (Matt, 2026-09-27):
+  //   1. select rows, Add to temp list
+  //   2. expand My temp list, select items in it, add them to a saved list
+  //   3. remove selected items from the temp list
+  //   4. clear the temp list
+  var L_TMP='_tmp', L_LIST='_list', NEW_LIST='__new__';
   function M(){ return root.SRETCollections; }
   function listFields(item){
     var s=S, ref=s.lists.refOf(item[s.rowKey]);
     item[L_TMP]=M().inTemp(s.lists.store,ref)?'Yes':'';
-    item[L_LIST]=M().membership(s.lists.store,ref);
+    item[L_LIST]=M().membership(s.lists.store,ref).join(', ');
   }
   // Items are the grid's own copies, so the two derived fields are written
   // straight onto them; the caller's rows are untouched.
@@ -305,36 +320,73 @@
     s.dv.endUpdate();
   }
   function selectedRefs(){ var s=S; return selectedKeys().map(function(k){ return s.lists.refOf(k); }); }
+  function pickedRefs(){ var s=S; return M().temp(s.lists.store).filter(function(r){ return s.tmpPicked[r]; }); }
+  function labelOf(ref){
+    var s=S;
+    if(typeof s.lists.labelOf==='function'){ var l=s.lists.labelOf(ref); if(l) return String(l); }
+    return String(ref).replace(/^[^:]*:/,'');
+  }
   function listsDone(r){
     var s=S;
-    s.msgEl.textContent=M().describe(r);
+    say(M().describe(r));
     s.tmpErr.textContent=r.error?M().describe(r):'';
     if(!r.error && typeof s.lists.onChange==='function') s.lists.onChange(r);
     refreshLists();
     return r;
   }
-  // A control that sets state also shows it: counts, pressed and expanded
+  // Button states only; never rebuilds the item list, so it is safe to call
+  // from a checkbox's own change handler.
+  function updateTempButtons(){
+    var s=S; if(!s||!s.lists) return;
+    var tmp=M().temp(s.lists.store), picked=pickedRefs().length, isNew=s.tmpTarget.value===NEW_LIST;
+    s.tmpAllBox.checked=!!tmp.length&&picked===tmp.length;
+    s.tmpAllBox.indeterminate=picked>0&&picked<tmp.length;
+    s.tmpAllBox.disabled=!tmp.length;
+    s.tmpPickedEl.textContent=picked?picked+' selected':'';
+    s.tmpNameWrap.hidden=!isNew;
+    s.tmpAddTo.disabled=!picked||(isNew&&!s.tmpName.value.trim());
+    s.tmpRemove.disabled=!picked;
+    s.tmpClear.disabled=!tmp.length;
+  }
+  function renderTempItems(){
+    var s=S, st=s.lists.store, tmp=M().temp(st);
+    Object.keys(s.tmpPicked).forEach(function(r){ if(tmp.indexOf(r)<0) delete s.tmpPicked[r]; });
+    s.tmpItems.innerHTML='';
+    if(!tmp.length){
+      s.tmpItems.appendChild(h('li',{'class':'sg-temp-empty',text:'Empty. Select rows in the table and use Add to temp list.'}));
+    }
+    tmp.forEach(function(r){
+      var box=h('input',{type:'checkbox','data-sg-temp-item':r,'aria-label':'Select '+labelOf(r)});
+      box.checked=!!s.tmpPicked[r];
+      box.addEventListener('change',function(){ if(box.checked) s.tmpPicked[r]=1; else delete s.tmpPicked[r]; updateTempButtons(); });
+      var ls=M().membership(st,r);
+      s.tmpItems.appendChild(h('li',{'class':'sg-temp-item'},[
+        h('label',{'class':'sg-temp-item-lbl'},[box,h('span',{'class':'sg-temp-item-name',text:labelOf(r)})]),
+        h('span',{'class':'sg-temp-item-lists',text:ls.length?ls.join(', '):'No list'})
+      ]));
+    });
+    var here=s.dv.getItems().filter(function(it){ return it[L_TMP]==='Yes'; }).length;
+    s.tmpSummary.textContent=tmp.length+(tmp.length===1?' item':' items')+(tmp.length?', '+here+' on this screen':'');
+    var cur=s.tmpTarget.value;
+    s.tmpTarget.innerHTML='';
+    var saved=M().list(st);
+    saved.forEach(function(c){ s.tmpTarget.appendChild(h('option',{value:c.id,text:c.label+' ('+c.count+')'})); });
+    s.tmpTarget.appendChild(h('option',{value:NEW_LIST,text:'New list…'}));
+    s.tmpTarget.value=(cur&&(cur===NEW_LIST||saved.some(function(c){ return c.id===cur; })))?cur:(saved.length?saved[0].id:NEW_LIST);
+    updateTempButtons();
+  }
+  // A control that sets state also shows it: count, expanded and pressed
   // states and enabled buttons all follow the store on every change.
   function updateLists(){
     var s=S; if(!s||!s.lists) return;
-    var st=s.lists.store, tmp=M().temp(st), n=tmp.length, sel=s.grid.getSelectedRows().length;
-    var here=s.dv.getItems().filter(function(it){ return it[L_TMP]==='Yes'; }).length;
+    var n=M().temp(s.lists.store).length, sel=s.grid.getSelectedRows().length;
     s.tmpAddBtn.disabled=!sel;
-    s.tmpBtn.textContent='My temp list ('+n+')';
+    s.tmpBtnCount.textContent=String(n);
     s.tmpBtn.setAttribute('aria-expanded',String(!s.tmpPanel.hidden));
+    s.tmpBtn.classList.toggle('is-open',!s.tmpPanel.hidden);
     s.tmpOnlyBtn.setAttribute('aria-pressed',String(!!s.tempOnly));
     s.tmpOnlyBtn.classList.toggle('is-on',!!s.tempOnly);
-    s.tmpSummary.textContent='My temp list holds '+n+(n===1?' item':' items')+
-      (n?', '+here+' of them on this screen.':'. Select rows and use Add to temp list.');
-    var cur=s.tmpTarget.value;
-    s.tmpTarget.innerHTML='';
-    var ls=M().list(st);
-    if(!ls.length) s.tmpTarget.appendChild(h('option',{value:'',text:'No saved lists yet'}));
-    ls.forEach(function(c){ s.tmpTarget.appendChild(h('option',{value:c.id,text:c.label+' ('+c.count+')'})); });
-    if(ls.some(function(c){ return c.id===cur; })) s.tmpTarget.value=cur;
-    s.tmpSave.disabled=!n; s.tmpAddTo.disabled=!n||!ls.length; s.tmpTarget.disabled=!ls.length;
-    s.tmpClear.disabled=!n;
-    s.tmpRemove.disabled=!selectedKeys().some(function(k){ return M().inTemp(st,s.lists.refOf(k)); });
+    if(!s.tmpPanel.hidden) renderTempItems();
   }
   function toggleTempPanel(show){
     var s=S; if(show==null) show=s.tmpPanel.hidden;
@@ -342,7 +394,7 @@
     hideTempConfirm();
     s.tmpPanel.hidden=!show; s.tmpErr.textContent='';
     updateLists();
-    if(show) s.tmpName.focus(); else s.tmpBtn.focus();
+    if(show) s.tmpAllBox.focus(); else s.tmpBtn.focus();
   }
   function hideTempConfirm(){ var s=S; s.tmpConfirm.hidden=true; s.tmpConfirm.innerHTML=''; s.tmpActions.hidden=false; }
   function showTempConfirm(){
@@ -350,7 +402,7 @@
     s.tmpConfirm.innerHTML='';
     var cancel=h('button',{type:'button','class':'sg-btn',text:'Cancel',on:{click:function(){ hideTempConfirm(); s.tmpClear.focus(); }}});
     var go=h('button',{type:'button','class':'sg-btn sg-btn--danger','data-sg':'temp-clear-confirm',text:'Clear',
-      on:{click:function(){ hideTempConfirm(); listsDone(M().tempClear(s.lists.store)); s.tmpName.focus(); }}});
+      on:{click:function(){ hideTempConfirm(); listsDone(M().tempClear(s.lists.store)); s.tmpAllBox.focus(); }}});
     s.tmpConfirm.appendChild(h('p',{'class':'sg-confirm-msg',
       text:'Clear My temp list ('+n+(n===1?' item':' items')+')? Saved lists are not changed.'}));
     s.tmpConfirm.appendChild(h('div',{'class':'sg-confirm-btns'},[cancel,go]));
@@ -359,32 +411,53 @@
   }
   function buildTempPanel(){
     var s=S;
-    s.tmpSummary=h('p',{'class':'sg-temp-summary','data-sg':'temp-summary'});
+    s.tmpPicked={};
+    s.tmpSummary=h('span',{'class':'sg-temp-summary','data-sg':'temp-summary'});
+    s.tmpAllBox=h('input',{type:'checkbox','data-sg':'temp-all','aria-label':'Select all items on My temp list'});
+    s.tmpPickedEl=h('span',{'class':'sg-selcount','data-sg':'temp-picked'});
+    s.tmpItems=h('ul',{'class':'sg-temp-items','data-sg':'temp-items','aria-label':'Items on My temp list'});
+    s.tmpTarget=h('select',{'class':'sg-select','aria-label':'Saved list to add the selected items to','data-sg':'temp-target'});
     s.tmpName=h('input',{type:'text','class':'sg-search sg-temp-name','aria-label':'Name for the new list',
-                         placeholder:'List name','data-sg':'temp-name',maxlength:'60'});
-    s.tmpSave=h('button',{type:'button','class':'sg-btn sg-btn--primary','data-sg':'temp-save',text:'Save new list'});
-    s.tmpTarget=h('select',{'class':'sg-select','aria-label':'Saved list to add to','data-sg':'temp-target'});
-    s.tmpAddTo=h('button',{type:'button','class':'sg-btn','data-sg':'temp-addto',text:'Add to list'});
-    s.tmpRemove=h('button',{type:'button','class':'sg-btn','data-sg':'temp-remove',text:'Remove selected from temp list'});
+                         placeholder:'New list name','data-sg':'temp-name',maxlength:'60'});
+    s.tmpNameWrap=h('span',{'class':'sg-temp-namewrap'},[s.tmpName]);
+    s.tmpAddTo=h('button',{type:'button','class':'sg-btn sg-btn--primary','data-sg':'temp-addto',text:'Add to list'});
+    s.tmpRemove=h('button',{type:'button','class':'sg-btn','data-sg':'temp-remove',text:'Remove from temp list'});
     s.tmpClear=h('button',{type:'button','class':'sg-btn','data-sg':'temp-clear',text:'Clear temp list'});
     s.tmpErr=h('p',{'class':'sg-temp-err',role:'alert','data-sg':'temp-err'});
     s.tmpConfirm=h('div',{'class':'sg-temp-confirm','data-sg':'temp-confirm',hidden:true});
-    var close=h('button',{type:'button','class':'sg-iconbtn','aria-label':'Close My temp list',title:'Close','data-sg':'temp-close',text:'✕'});
+    var close=h('button',{type:'button','class':'sg-iconbtn','aria-label':'Collapse My temp list',title:'Collapse','data-sg':'temp-close',text:'✕'});
     s.tmpActions=h('div',{'class':'sg-temp-actions'},[
-      h('div',{'class':'sg-temp-row'},[h('span',{'class':'sg-temp-lbl',text:'A. Save new list'}),s.tmpName,s.tmpSave]),
-      h('div',{'class':'sg-temp-row'},[h('span',{'class':'sg-temp-lbl',text:'B. Add to existing'}),s.tmpTarget,s.tmpAddTo]),
-      h('div',{'class':'sg-temp-row'},[h('span',{'class':'sg-temp-lbl',text:'C. Clear'}),s.tmpClear,s.tmpRemove])
+      h('span',{'class':'sg-temp-lbl',text:'Selected items'}),
+      h('span',{'class':'sg-temp-group'},[h('span',{text:'Add to'}),s.tmpTarget,s.tmpNameWrap,s.tmpAddTo]),
+      s.tmpRemove,
+      h('span',{'class':'sg-temp-spacer'}),
+      s.tmpClear
     ]);
-    s.tmpPanel.appendChild(h('div',{'class':'sg-temp-head'},[h('h3',{'class':'sg-temp-title',text:'My temp list'}),close]));
-    s.tmpPanel.appendChild(s.tmpSummary);
+    s.tmpPanel.appendChild(h('div',{'class':'sg-temp-head'},[
+      h('label',{'class':'sg-temp-all'},[s.tmpAllBox,h('span',{'class':'sg-temp-title',text:'My temp list'})]),
+      s.tmpSummary,s.tmpPickedEl,h('span',{'class':'sg-temp-spacer'}),close]));
+    s.tmpPanel.appendChild(s.tmpItems);
     s.tmpPanel.appendChild(s.tmpActions);
     s.tmpPanel.appendChild(s.tmpConfirm);
     s.tmpPanel.appendChild(s.tmpErr);
-    var save=function(){ var r=listsDone(M().saveTemp(s.lists.store,s.tmpName.value)); if(!r.error) s.tmpName.value=''; else s.tmpName.focus(); };
-    s.tmpSave.addEventListener('click',save);
-    s.tmpName.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); save(); } });
-    s.tmpAddTo.addEventListener('click',function(){ listsDone(M().addTempTo(s.lists.store,s.tmpTarget.value)); });
-    s.tmpRemove.addEventListener('click',function(){ listsDone(M().tempRemove(s.lists.store,selectedRefs())); });
+    s.tmpAllBox.addEventListener('change',function(){
+      var on=s.tmpAllBox.checked;
+      s.tmpPicked={}; if(on) M().temp(s.lists.store).forEach(function(r){ s.tmpPicked[r]=1; });
+      s.tmpItems.querySelectorAll('input[type=checkbox]').forEach(function(b){ b.checked=on; });
+      updateTempButtons();
+    });
+    s.tmpTarget.addEventListener('change',function(){ updateTempButtons(); if(s.tmpTarget.value===NEW_LIST) s.tmpName.focus(); });
+    s.tmpName.addEventListener('input',updateTempButtons);
+    var addTo=function(){
+      var refs=pickedRefs(), r;
+      if(s.tmpTarget.value===NEW_LIST){
+        r=listsDone(M().saveFromTemp(s.lists.store,s.tmpName.value,refs));
+        if(!r.error){ s.tmpName.value=''; s.tmpTarget.value=r.collection.id; updateTempButtons(); } else s.tmpName.focus();
+      } else listsDone(M().addFromTemp(s.lists.store,s.tmpTarget.value,refs));
+    };
+    s.tmpAddTo.addEventListener('click',addTo);
+    s.tmpName.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); if(!s.tmpAddTo.disabled) addTo(); } });
+    s.tmpRemove.addEventListener('click',function(){ listsDone(M().tempRemove(s.lists.store,pickedRefs())); });
     s.tmpClear.addEventListener('click',showTempConfirm);
     close.addEventListener('click',function(){ toggleTempPanel(false); });
     s.tmpPanel.addEventListener('keydown',function(e){
@@ -420,10 +493,10 @@
       X.utils.book_append_sheet(wb,ws,'Grid');
       var name=String(o.exportName||o.title||'Grid').replace(/[\\\/:*?"<>|]+/g,' ').trim()||'Grid';
       X.writeFile(wb,name+'.xlsx');
-      s.msgEl.textContent='Exported '+(aoa.length-1)+(aoa.length-1===1?' row':' rows')+'.';
+      say('Exported '+(aoa.length-1)+(aoa.length-1===1?' row':' rows')+'.');
       return aoa;
     }).catch(function(err){
-      if(S) S.msgEl.textContent=err&&err.message?err.message:'Export failed.';
+      if(S) say(err&&err.message?err.message:'Export failed.');
     }).then(function(r){ if(S) S.expBtn.disabled=false; return r; });
   }
 
@@ -460,20 +533,22 @@
     var del=canDel?h('button',{type:'button','class':'sg-btn','data-sg':'delete',text:'Delete selected',disabled:true}):null;
     var tmpAdd=lists?h('button',{type:'button','class':'sg-btn','data-sg':'temp-add',text:'Add to temp list',disabled:true,
                                  title:'Add the selected rows to My temp list'}):null;
-    var tmpBtn=lists?h('button',{type:'button','class':'sg-btn','data-sg':'temp-open','aria-expanded':'false',
-                                 'aria-controls':'sg-temp-panel',text:'My temp list (0)'}):null;
+    var tmpBtnCount=lists?h('span',{'class':'sg-badge','data-sg':'temp-count',text:'0'}):null;
+    var tmpBtn=lists?h('button',{type:'button','class':'sg-btn sg-btn--expander','data-sg':'temp-open','aria-expanded':'false',
+                                 'aria-controls':'sg-temp-panel',title:'Show the items on My temp list'},
+                                [h('span',{text:'My temp list'}),tmpBtnCount]):null;
     var tmpOnly=lists?h('button',{type:'button','class':'sg-chip','data-sg':'temp-only','aria-pressed':'false',
                                   text:'Temp list only',title:'Show only rows on My temp list'}):null;
     var msg=h('span',{'class':'sg-msg',role:'status','aria-live':'polite','data-sg':'msg'});
     var bar=h('div',{'class':'sg-bar'},[
       h('div',{'class':'sg-bar-lead'},[back,title]),
-      h('div',{'class':'sg-bar-tools'},[search,h('span',{'class':'sg-counts'},[count,selc]),msg,tmpAdd,tmpBtn,tmpOnly,exp,add,del])
+      h('div',{'class':'sg-bar-tools'},[search,h('span',{'class':'sg-counts'},[count,selc]),tmpAdd,tmpBtn,tmpOnly,exp,add,del])
     ]);
     var confirm=h('div',{'class':'sg-confirm',role:'alertdialog','aria-label':'Confirm remove','data-sg':'confirm',hidden:true});
     var tmpPanel=h('div',{'class':'sg-temp',id:'sg-temp-panel',role:'region','aria-label':'My temp list','data-sg':'temp-panel',hidden:true});
     var gridEl=h('div',{'class':'sg-grid','data-sg':'grid'});
     var screen=h('section',{'class':'sg-screen'+(fixed?' sg-screen--fixed':''),role:'region','aria-label':opts.title||'Table'},
-                 [bar,confirm,tmpPanel,gridEl]);
+                 [bar,confirm,tmpPanel,gridEl,msg]);
     host.appendChild(screen);
 
     var rowH=ctlHeight(screen);
@@ -508,7 +583,7 @@
     S={opts:opts,rowKey:rowKey,cols:cols,colByKey:colByKey,filters:{},quick:'',grid:grid,dv:dv,
        screen:screen,host:host,countEl:count,selEl:selc,msgEl:msg,delBtn:del,expBtn:exp,searchEl:search,
        confirmEl:confirm,prev:null,returnFocus:document.activeElement,ro:null,
-       lists:lists,tempOnly:false,tmpAddBtn:tmpAdd,tmpBtn:tmpBtn,tmpOnlyBtn:tmpOnly,tmpPanel:tmpPanel};
+       lists:lists,tempOnly:false,tmpAddBtn:tmpAdd,tmpBtn:tmpBtn,tmpBtnCount:tmpBtnCount,tmpOnlyBtn:tmpOnly,tmpPanel:tmpPanel,msgTimer:0};
     if(lists) buildTempPanel();
     cols.forEach(function(c){ S.filters[c.key]=''; });
 
@@ -531,7 +606,7 @@
       var c=args.column&&args.column.sg;
       if(!gridEditable||!c||!c.editable) return false;
       if(typeof opts.canEdit==='function' && opts.canEdit(args.item[rowKey],c.key)===false){
-        S.msgEl.textContent='This value comes from the schedule and cannot be edited here.';
+        say('This value comes from the schedule and cannot be edited here.');
         return false;
       }
       S.prev={key:args.item[rowKey],field:c.key,value:args.item[c.key]};
@@ -542,7 +617,7 @@
       var ret=typeof opts.onEdit==='function'?opts.onEdit(it[rowKey],c.key,it[c.key]):undefined;
       if(ret===false && prev && prev.key===it[rowKey] && prev.field===c.key){
         it[c.key]=prev.value;
-        S.msgEl.textContent='That change was not accepted.';
+        say('That change was not accepted.');
       }
       dv.updateItem(it[rowKey],it);
       S.prev=null;

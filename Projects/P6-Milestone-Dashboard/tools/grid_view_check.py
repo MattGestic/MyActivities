@@ -75,8 +75,15 @@ MUTATIONS = {
     # Lists: each rule the temp list flow depends on.
     "temp-wrong-keys": ("listsDone(M().tempAdd(lists.store,selectedRefs()));", "listsDone(M().tempAdd(lists.store,selectedRefs().slice(1)));"),
     "temp-duplicates": ("if(store.temp.indexOf(r)>=0) already++; else", "if(false) already++; else"),
-    "list-not-single": ("      if(other){\n        other.items.splice", "      if(false){\n        other.items.splice"),
-    "temp-kept-after-save": ("    tempClear(store); r.kind='saveTemp'; r.total=0;", "    r.kind='saveTemp'; r.total=0;"),
+    "single-list-setting-ignored": ("      if(single(store)) listsOf(store,r)", "      if(false) listsOf(store,r)"),
+    "multi-list-broken": ("settings:{singleList:!!(opts&&opts.singleList)}", "settings:{singleList:true}"),
+    "step2-takes-whole-temp": ("      var refs=pickedRefs(), r;", "      var refs=M().temp(s.lists.store), r;"),
+    # The layout Matt rejected: status text inside the toolbar, which wrapped the actions onto a second row.
+    "toolbar-wraps": [("tmpAdd,tmpBtn,tmpOnly,exp,add,del])", "msg,tmpAdd,tmpBtn,tmpOnly,exp,add,del])"),
+                      ("[bar,confirm,tmpPanel,gridEl,msg]);", "[bar,confirm,tmpPanel,gridEl]);"),
+                      (".sg-bar-tools{display:flex;flex-wrap:nowrap;", ".sg-bar-tools{display:flex;flex-wrap:wrap;"),
+                      (".sg-bar{display:flex;flex-wrap:nowrap;", ".sg-bar{display:flex;flex-wrap:wrap;"),
+                      (".sg-msg{position:absolute;", ".sg-msg{position:static;")],
     "temp-only-ignored": ("    if(s.tempOnly && item[L_TMP]!=='Yes') return false;\n", ""),
     "state-not-shown": ("    s.tmpOnlyBtn.setAttribute('aria-pressed',String(!!s.tempOnly));\n", ""),
     "resize-kills-edit": ("if(grid.getEditorLock().isActive()){ pending=true; return; }", ""),
@@ -380,85 +387,103 @@ try{
     ok('Remove calls onDelete with the selected keys', count('onDelete')===d0+1 && JSON.stringify(e.args[0].slice().sort())===JSON.stringify(keys), [e&&e.args,keys]);
     ok('deleted rows leave the grid', visibleCount()===n0-2 && keys.every(k=>!eng().dataView.getItemById(k))); }
 
-  // My temp list: build a pick set across filter states, then A / B / C
+  // Toolbar: one row with the title (Matt, 2026-09-27), measured while a long status message shows.
+  function oneRow(){
+    const t=$('.sg-title').getBoundingClientRect(), cy=t.top+t.height/2;
+    const ctl=$$('.sg-bar button, .sg-bar input, .sg-bar select').filter(e=>e.offsetParent);
+    const off=ctl.map(e=>{ const r=e.getBoundingClientRect(); return [e.dataset.sg||e.className, Math.round(r.top+r.height/2-cy)]; });
+    return {barH:Math.round($('.sg-bar').getBoundingClientRect().height), off:off.filter(o=>Math.abs(o[1])>3)};
+  }
+
+  // My temp list workflow (Matt, 2026-09-27):
+  //   1 select and add to the temp list, 2 expand, select temp items, add to a saved list,
+  //   3 remove selected items from the temp list, 4 clear the temp list
   { const L=window.DEMO_LISTS, M=SRETCollections, btn=n=>$('[data-sg='+n+']');
-    const msg=()=>$('[data-sg=msg]').textContent, n=visibleCount();
+    const msg=()=>$('[data-sg=msg]').textContent, n=visibleCount(), sorted=a=>a.slice().sort();
     const itemsIn=v=>eng().dataView.getItems().filter(i=>i._tmp===v);
-    const listed=name=>eng().dataView.getItems().filter(i=>i._list===name).map(i=>i.id).sort();
-    const sorted=a=>a.slice().sort();
+    const listedIds=name=>eng().dataView.getItems().filter(i=>(i._list||'').split(', ').indexOf(name)>=0).map(i=>i.id).sort();
+    const boxes=()=>$$('[data-sg=temp-items] input[type=checkbox]');
+    const pick=async idx=>{ for(const b of boxes()) if(b.checked) b.click(); for(const i of idx) boxes()[i].click(); await sleep(10); };
     eng().grid.setSelectedRows([]); await sleep(10);
-    ok('temp: Add to temp list disabled with nothing selected; button shows the count', btn('temp-add').disabled && btn('temp-open').textContent==='My temp list (0)');
+    ok('1: Add to temp list disabled with nothing selected; count badge 0', btn('temp-add').disabled && btn('temp-count').textContent==='0');
     await setFilter('type','INT'); const intKeys=[0,1].map(r=>eng().dataView.getItem(r).id);
     eng().grid.setSelectedRows([0,1]); await sleep(10);
     const c0=count('onListsChange'); btn('temp-add').click(); await sleep(20);
-    ok('temp: Add to temp list takes exactly the selected rows (filter state 1)', JSON.stringify(sorted(M.temp(L)))===JSON.stringify(sorted(intKeys.map(k=>'activity:'+k))) && count('onListsChange')===c0+1, M.temp(L));
+    ok('1: Add to temp list takes exactly the selected rows (filter state 1)', JSON.stringify(sorted(M.temp(L)))===JSON.stringify(sorted(intKeys.map(k=>'activity:'+k))) && count('onListsChange')===c0+1, M.temp(L));
+    const lay=oneRow();
+    ok('toolbar: title, search, counts and every action on one row at 1440px, with a status message showing', lay.off.length===0 && lay.barH<=48, lay);
+    ok('status message is a toast over the grid, not in the toolbar', !$('.sg-bar [data-sg=msg]') && btn('msg').classList.contains('is-shown') &&
+       getComputedStyle(btn('msg')).position==='absolute' && msg().indexOf('Added 2 items to My temp list')===0, msg());
     await setFilter('type','CLI'); const cliKey=eng().dataView.getItem(0).id;
     eng().grid.setSelectedRows([0]); await sleep(10); btn('temp-add').click(); await sleep(20);
     await setFilter('type','INT'); eng().grid.setSelectedRows([0]); await sleep(10); btn('temp-add').click(); await sleep(20);
     const againMsg=msg(); await setFilter('type','');
     const picked=intKeys.concat([cliKey]);
-    ok('temp: builds across three filter states, no duplicates', M.temp(L).length===3 && new Set(M.temp(L)).size===3 &&
+    ok('1: builds across three filter states, no duplicates', M.temp(L).length===3 && new Set(M.temp(L)).size===3 &&
        againMsg==='No new items added to My temp list. 1 item was already on it. It now holds 3 items.', [M.temp(L),againMsg]);
-    ok('temp: button shows 3; Temp column marks exactly the picked rows', btn('temp-open').textContent==='My temp list (3)' &&
-       JSON.stringify(itemsIn('Yes').map(i=>i.id).sort())===JSON.stringify(sorted(picked)) &&
-       cellText(eng().dataView.getIdxById(cliKey),'_tmp')==='Yes');
-    // Temp list only: the pick set, pulled together for a bulk action
+    ok('1: badge shows 3; Temp column marks exactly the picked rows', btn('temp-count').textContent==='3' &&
+       JSON.stringify(itemsIn('Yes').map(i=>i.id).sort())===JSON.stringify(sorted(picked)));
     btn('temp-only').click(); await sleep(20);
     ok('Temp list only: exactly the 3 picked rows; chip shows pressed', visibleCount()===3 && btn('temp-only').getAttribute('aria-pressed')==='true' && btn('temp-only').classList.contains('is-on'), visibleCount());
-    $('.sg-check-h input[type=checkbox]').click(); await sleep(10);
-    ok('Temp list only: select all selects the pick set for a bulk action', selCount()===3, selCount());
-    $('.sg-check-h input[type=checkbox]').click(); await sleep(10);
     btn('temp-only').click(); await sleep(20);
-    ok('Temp list only off: all rows back; chip not pressed', visibleCount()===n && btn('temp-only').getAttribute('aria-pressed')==='false' && !btn('temp-only').classList.contains('is-on'));
-    // panel
+    ok('Temp list only off: all rows back; chip not pressed', visibleCount()===n && btn('temp-only').getAttribute('aria-pressed')==='false');
+    // 2: expand to view the items
     btn('temp-open').click(); await sleep(10);
-    ok('panel: opens with expanded state, name focused, summary', !btn('temp-panel').hidden && btn('temp-open').getAttribute('aria-expanded')==='true' &&
-       document.activeElement===btn('temp-name') && btn('temp-summary').textContent==='My temp list holds 3 items, 3 of them on this screen.', btn('temp-summary').textContent);
-    const labels=$$('.sg-temp-lbl').map(e=>e.textContent);
-    ok('panel: actions in order A. Save new list, B. Add to existing, C. Clear', labels.join('|')==='A. Save new list|B. Add to existing|C. Clear', labels);
+    const refs=boxes().map(b=>b.getAttribute('data-sg-temp-item'));
+    ok('2: expanding shows the temp items, expanded state shown', !btn('temp-panel').hidden && btn('temp-open').getAttribute('aria-expanded')==='true' &&
+       btn('temp-open').classList.contains('is-open') && JSON.stringify(sorted(refs))===JSON.stringify(sorted(M.temp(L))) &&
+       btn('temp-summary').textContent==='3 items, 3 on this screen', [refs,btn('temp-summary').textContent]);
+    ok('2: items are named (ID and name), with their lists', $$('.sg-temp-item-name').every(e=>/^(USR|SNIP)-\d+\s+\S/.test(e.textContent)) &&
+       $$('.sg-temp-item-lists').every(e=>e.textContent==='No list'), $$('.sg-temp-item-name').map(e=>e.textContent));
+    ok('2: Add to list and Remove disabled until temp items are selected', btn('temp-addto').disabled && btn('temp-remove').disabled);
     R.notes.swap_temp=swapEscapes('light/temp-panel');
-    // A. Save new list
-    const nm=btn('temp-name'), errs=[];
-    for(const v of ['  ','site WALK 3-oct','My temp list']){ nm.value=v; key(nm,'Enter'); await sleep(10); errs.push(btn('temp-err').textContent); }
-    ok('A: empty, duplicate and reserved names refused; nothing changes', errs[0]==='Enter a name for the list.' && /already exists/.test(errs[1]) &&
-       /used by the temp list/.test(errs[2]) && M.temp(L).length===3 && M.list(L).length===2, errs);
-    nm.value='Punch list'; btn('temp-save').click(); await sleep(20);
-    const pl=L.list.find(c=>c.name==='Punch list');
-    ok('A: Save new list holds the 3 items and empties the temp list', !!pl && pl.items.length===3 && M.temp(L).length===0 && btn('temp-err').textContent==='' &&
-       msg()==='Saved 3 items as the new list "Punch list". My temp list is now empty.' && btn('temp-open').textContent==='My temp list (0)', [msg(),pl&&pl.items]);
-    ok('A: List column shows the new list for exactly those rows; Temp column cleared', JSON.stringify(listed('Punch list'))===JSON.stringify(sorted(picked)) && itemsIn('Yes').length===0);
-    ok('A, B, C disabled while the temp list is empty', btn('temp-save').disabled && btn('temp-addto').disabled && btn('temp-clear').disabled);
-    // B. Add to existing: one list per item, so two move out of Punch list
-    const newKey=eng().dataView.getItems().find(i=>picked.indexOf(i.id)<0 && !i._list).id;
-    const rowsOf=keys=>keys.map(k=>eng().dataView.getIdxById(k));
-    eng().grid.setSelectedRows(rowsOf([intKeys[0],cliKey,newKey])); await sleep(10); btn('temp-add').click(); await sleep(20);
-    btn('temp-target').value='UL-001'; btn('temp-addto').click(); await sleep(20);
+    await pick([0,1]); const two=refs.slice(0,2);
+    ok('2: selecting temp items shows the count and a partial select-all', btn('temp-picked').textContent==='2 selected' && btn('temp-all').indeterminate);
+    ok('2: target defaults to the first saved list', btn('temp-target').value==='UL-001' && btn('temp-namewrap')===null && !$('.sg-temp-namewrap').offsetParent, btn('temp-target').value);
+    btn('temp-addto').click(); await sleep(20);
     const sw=L.list.find(c=>c.id==='UL-001');
-    ok('B: Add to existing moves items between lists (one list per item)', sw.items.length===3 && pl.items.length===1 && M.temp(L).length===0 &&
-       msg()==='Added 3 items to "Site walk 3-Oct". Moved from "Punch list" (2). My temp list is now empty.', [msg(),sw.items,pl.items]);
-    ok('B: List column follows the move', JSON.stringify(listed('Site walk 3-Oct'))===JSON.stringify(sorted([intKeys[0],cliKey,newKey])) &&
-       JSON.stringify(listed('Punch list'))===JSON.stringify([intKeys[1]]));
-    btn('temp-add').click(); await sleep(20); btn('temp-target').value='UL-001'; btn('temp-addto').click(); await sleep(20);
-    ok('B: adding the same items again is idempotent', sw.items.length===3 && msg()==='No new items added to "Site walk 3-Oct". 3 items were already in it. My temp list is now empty.', msg());
-    // remove selected from the temp list
-    btn('temp-add').click(); await sleep(20);
-    eng().grid.setSelectedRows(rowsOf([newKey])); await sleep(10); btn('temp-remove').click(); await sleep(20);
-    ok('temp: Remove selected takes only those rows off the temp list', M.temp(L).length===2 && !M.inTemp(L,'activity:'+newKey), M.temp(L));
-    // C. Clear, with inline confirmation
+    ok('2: adds only the selected temp items to the saved list; temp list unchanged', JSON.stringify(sorted(sw.items))===JSON.stringify(sorted(two)) &&
+       M.temp(L).length===3 && msg()==='Added 2 items to "Site walk 3-Oct".', [msg(),sw.items]);
+    // 2 (new list), and one item in two lists
+    await pick([1,2]);
+    btn('temp-target').value='__new__'; btn('temp-target').dispatchEvent(new Event('change',{bubbles:true})); await sleep(10);
+    const nm=btn('temp-name');
+    ok('2: New list shows the name field and focuses it; Add disabled until named', !!$('.sg-temp-namewrap').offsetParent && document.activeElement===nm && btn('temp-addto').disabled);
+    const errs=[];
+    for(const v of ['site WALK 3-oct','My temp list']){ nm.value=v; nm.dispatchEvent(new Event('input')); key(nm,'Enter'); await sleep(10); errs.push(btn('temp-err').textContent); }
+    ok('2: duplicate and reserved names refused; nothing changes', /already exists/.test(errs[0]) && /used by the temp list/.test(errs[1]) && M.list(L).length===2, errs);
+    nm.value='Punch list'; nm.dispatchEvent(new Event('input')); btn('temp-addto').click(); await sleep(20);
+    const pl=L.list.find(c=>c.name==='Punch list');
+    ok('2: new list made from the selected temp items', !!pl && JSON.stringify(sorted(pl.items))===JSON.stringify(sorted(refs.slice(1,3))) &&
+       msg()==='Saved 2 items as the new list "Punch list".' && btn('temp-target').value===pl.id && !$('.sg-temp-namewrap').offsetParent, [msg(),pl&&pl.items]);
+    const both=refs[1], bothId=both.replace('activity:','');
+    ok('multiple lists per item (default): one item in both lists, List column and panel show both',
+       JSON.stringify(M.membership(L,both))===JSON.stringify(['Site walk 3-Oct','Punch list']) &&
+       cellText(eng().dataView.getIdxById(bothId),'_list')==='Site walk 3-Oct, Punch list' &&
+       $$('.sg-temp-item').some(li=>li.querySelector('input').getAttribute('data-sg-temp-item')===both && li.querySelector('.sg-temp-item-lists').textContent==='Site walk 3-Oct, Punch list'),
+       M.membership(L,both));
+    btn('temp-all').click(); await sleep(10); btn('temp-target').value='UL-001'; btn('temp-target').dispatchEvent(new Event('change')); btn('temp-addto').click(); await sleep(20);
+    ok('2: re-adding is idempotent', sw.items.length===3 && msg()==='Added 1 item to "Site walk 3-Oct". 2 items were already in it.', msg());
+    // 3: remove selected items from the temp list
+    const lists0=JSON.stringify(L.list);
+    await pick([0]); const gone=boxes()[0].getAttribute('data-sg-temp-item');
+    btn('temp-remove').click(); await sleep(20);
+    ok('3: Remove takes only the selected items off the temp list; saved lists unchanged', M.temp(L).length===2 && !M.inTemp(L,gone) &&
+       boxes().length===2 && JSON.stringify(L.list)===lists0 && btn('temp-count').textContent==='2', M.temp(L));
+    // 4: clear, with inline confirmation
     btn('temp-clear').click(); await sleep(10);
     const cf=btn('temp-confirm'), cb=$$('button',cf).map(b=>b.textContent);
-    ok('C: Clear asks first, with the count; Cancel left, Clear right (danger)', !cf.hidden &&
+    ok('4: Clear asks first, with the count; Cancel left, Clear right (danger)', !cf.hidden &&
        $('.sg-temp-confirm .sg-confirm-msg').textContent==='Clear My temp list (2 items)? Saved lists are not changed.' &&
        cb.join('|')==='Cancel|Clear' && $$('button',cf)[1].classList.contains('sg-btn--danger'), cb);
     key(document.activeElement,'Escape'); await sleep(10);
-    ok('C: Esc cancels the clear; panel stays open', cf.hidden && !btn('temp-panel').hidden && M.temp(L).length===2);
-    const before=JSON.stringify(L.list);
+    ok('4: Esc cancels the clear; panel stays open', cf.hidden && !btn('temp-panel').hidden && M.temp(L).length===2);
     btn('temp-clear').click(); await sleep(10); btn('temp-clear-confirm').click(); await sleep(20);
-    ok('C: Clear empties the temp list and leaves saved lists unchanged', M.temp(L).length===0 && JSON.stringify(L.list)===before &&
-       msg()==='Cleared My temp list (2 items).' && itemsIn('Yes').length===0, msg());
-    key(btn('temp-name'),'Escape'); await sleep(10);
-    ok('panel: Esc closes it, shows collapsed, focus back on the button', btn('temp-panel').hidden && btn('temp-open').getAttribute('aria-expanded')==='false' &&
-       document.activeElement===btn('temp-open'));
+    ok('4: Clear empties the temp list and leaves saved lists unchanged', M.temp(L).length===0 && JSON.stringify(L.list)===lists0 &&
+       msg()==='Cleared My temp list (2 items).' && itemsIn('Yes').length===0 && btn('temp-count').textContent==='0' && $$('.sg-temp-empty').length===1, msg());
+    key(btn('temp-all'),'Escape'); await sleep(10);
+    ok('panel: Esc collapses it, shows collapsed, focus back on the button', btn('temp-panel').hidden && btn('temp-open').getAttribute('aria-expanded')==='false' &&
+       !btn('temp-open').classList.contains('is-open') && document.activeElement===btn('temp-open'));
     eng().grid.setSelectedRows([]); await sleep(10); }
 
   // idle palette swap, both themes, and theming differs between themes
@@ -507,8 +532,8 @@ try{
       eng().grid.setSelectedRows([0,1]); await sleep(10); $('[data-sg=temp-add]').click(); await sleep(20);
       eng().grid.setSelectedRows([]); SRETGrid.close(); DEMO_OPEN('userms'); await sleep(20);
       ok('temp list carries across screens (2 schedule rows picked, then seen on User milestones)',
-         $('[data-sg=temp-open]').textContent==='My temp list (2)' && k.every(x=>SRETCollections.inTemp(L,'activity:'+x)),
-         $('[data-sg=temp-open]').textContent);
+         $('[data-sg=temp-count]').textContent==='2' && k.every(x=>SRETCollections.inTemp(L,'activity:'+x)),
+         $('[data-sg=temp-count]').textContent);
       SRETCollections.tempClear(L); SRETGrid.close(); DEMO_OPEN('sched'); await sleep(20); }
     // export visible rows after a filter and a sort
     await setFilter('wbs','Key'); header('finish').click(); await sleep(20);
@@ -537,6 +562,8 @@ try{
     ok('scroll: per-step render cost p95 under 8 ms (half a 60 Hz frame)', SC.p95Ms<8, SC.p95Ms);
     SRETGrid.close(); DEMO_OPEN('stress'); await sleep(20);
     ok('stress: 2,000 rows loaded', visibleCount()===2000);
+    const lay2=oneRow();
+    ok('toolbar: still one row with a long title (title truncates, actions stay)', lay2.off.length===0 && $('.sg-title').scrollWidth>=$('.sg-title').clientWidth, lay2);
     const domRows=$$('.sg-grid .slick-row').length; R.notes.dom_rows_2000=domRows;
     ok('stress: virtual rendering (DOM rows far below 2,000)', domRows>0 && domRows<150, domRows);
     eng().grid.scrollRowIntoView(1999); await sleep(50);
@@ -548,16 +575,19 @@ try{
     const a=M.create(st,'  Weekly   review ','2026-09-27T00:00:00Z');
     ok('module: name trimmed and spaces collapsed; ids sequential', a.collection.name==='Weekly review' && a.collection.id==='UL-001');
     ok('module: 61-character name refused', !!M.create(st,'x'.repeat(61)).error);
-    const t=M.tempAdd(st,['a','a','b']);
-    ok('module: duplicate refs in one temp add count once', t.added===2 && t.total===2, t);
-    ok('module: A and B refuse an empty temp list', (M.tempClear(st),!!M.saveTemp(st,'X').error && !!M.addTempTo(st,'UL-001').error));
-    M.tempAdd(st,['a','b']); const s1=M.saveTemp(st,'Scope 1');
-    M.tempAdd(st,['b','c']); const s2=M.addTempTo(st,'UL-001');
-    ok('module: one list per item (b moves from Scope 1 to Weekly review)', st.list[0].items.join()==='b,c' && st.list[1].items.join()==='a' && s2.movedFrom['Scope 1']===1, st.list);
-    ok('module: unknown list is an error, not a throw', !!M.assign(st,'UL-999',['c']).error && !!M.addTempTo(st,'UL-999').error);
-    const u=M.unassign(st,['a','zz']);
-    ok('module: unassign removes only members', u.removed===1 && M.membership(st,'a')==='', u);
-    const msgs=[M.describe(s1),M.describe(s2),M.describe(u),M.describe(M.tempAdd(st,['q'])),M.describe(M.tempClear(st))];
+    const t=M.tempAdd(st,['a','a','b','c']);
+    ok('module: duplicate refs in one temp add count once', t.added===3 && t.total===3, t);
+    ok('module: step 2 needs selected temp items; refs not on the temp list are ignored', !!M.addFromTemp(st,'UL-001',[]).error && !!M.addFromTemp(st,'UL-001',['zz']).error);
+    M.saveFromTemp(st,'Scope 1',['a','b']); M.addFromTemp(st,'UL-001',['b','c']);
+    ok('module: default allows several lists per item; temp list untouched by step 2', JSON.stringify(M.membership(st,'b'))===JSON.stringify(['Weekly review','Scope 1']) && M.temp(st).length===3, st.list);
+    const one=M.newStore({singleList:true}); M.create(one,'X'); M.create(one,'Y'); M.tempAdd(one,['p','q']);
+    M.addFromTemp(one,'UL-001',['p','q']); const mv=M.addFromTemp(one,'UL-002',['p']);
+    ok('module: settings.singleList (future setting) moves the item and says from where', JSON.stringify(M.membership(one,'p'))===JSON.stringify(['Y']) &&
+       mv.movedFrom.X===1 && / Moved from "X" \(1\)\./.test(M.describe(mv)), M.describe(mv));
+    ok('module: unknown list is an error, not a throw', !!M.assign(st,'UL-999',['c']).error && !!M.addFromTemp(st,'UL-999',['a']).error);
+    const u=M.unassign(st,['b','zz']);
+    ok('module: unassign takes an item out of every list', u.removed===1 && M.membership(st,'b').length===0, u);
+    const msgs=[M.describe(mv),M.describe(u),M.describe(M.tempAdd(st,['q'])),M.describe(M.tempRemove(st,['q'])),M.describe(M.tempClear(st))];
     ok('module: user-facing sentences have no em or en dashes', msgs.every(m=>!/[–—]/.test(m)), msgs); }
 }catch(err){ ok('probe ran without throwing', false, String(err&&err.stack||err)); }
 ok('no uncaught page errors', window.__errs.length===0, window.__errs);

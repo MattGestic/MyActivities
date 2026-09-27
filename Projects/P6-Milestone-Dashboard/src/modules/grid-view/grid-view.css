@@ -13,15 +13,23 @@
 .sg-screen *,.sg-screen *::before,.sg-screen *::after{box-sizing:border-box}
 
 /* ---- toolbar ---- */
-.sg-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--ctl-gap) var(--group-gap);
+/* One row: back, title, search, counts and every action (Matt, 2026-09-27).
+   The title gives way first (ellipsis); the tools only wrap below 768px. */
+.sg-bar{display:flex;flex-wrap:nowrap;align-items:center;justify-content:space-between;gap:var(--ctl-gap) var(--group-gap);
   padding:var(--space-4) var(--group-gap);background:var(--color-bg-elevated);border-bottom:1px solid var(--color-border-panel)}
-.sg-bar-lead{display:flex;align-items:center;gap:var(--ctl-gap);min-width:0}
-.sg-bar-tools{display:flex;flex-wrap:wrap;align-items:center;gap:var(--ctl-gap);min-width:0}
-.sg-title{margin:0;font-size:20px;line-height:28px;font-weight:600;min-width:0;overflow-wrap:anywhere;color:var(--color-text-primary)}
+.sg-bar-lead{display:flex;align-items:center;gap:var(--ctl-gap);min-width:0;flex:0 1 auto}
+.sg-bar-tools{display:flex;flex-wrap:nowrap;align-items:center;justify-content:flex-end;gap:var(--ctl-gap);min-width:0;flex:0 0 auto}
+.sg-title{margin:0;font-size:20px;line-height:28px;font-weight:600;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--color-text-primary)}
 .sg-counts{display:inline-flex;gap:var(--ctl-gap-tight);color:var(--color-text-muted);white-space:nowrap}
 .sg-selcount:not(:empty){color:var(--color-accent-ink);font-weight:600}
-.sg-msg{color:var(--color-text-muted);min-width:0}
-.sg-msg:empty{display:none}
+.sg-msg{position:absolute;left:50%;bottom:var(--group-gap);transform:translateX(-50%);z-index:5;max-width:min(640px,calc(100% - 2 * var(--group-gap)));
+  padding:var(--space-4) var(--space-5);border-radius:var(--radius-overlay);box-shadow:var(--shadow-2);pointer-events:none;
+  background:var(--color-tooltip-bg);color:var(--color-text-on-header);font-size:var(--text-md);line-height:16px;
+  opacity:0;transition:opacity .2s ease}
+.sg-msg.is-shown{opacity:1}
+.sg-badge{display:inline-block;min-width:16px;margin-left:var(--space-2);padding:0 var(--space-2);border-radius:var(--radius-pill);
+  background:var(--color-accent-tint-bg);color:var(--color-accent-ink);font-weight:600;line-height:16px;text-align:center}
+.sg-btn--expander.is-open{background:var(--color-btn-secondary-pressed-bg)}
 
 .sg-iconbtn{display:inline-flex;align-items:center;justify-content:center;width:var(--icon-btn);height:var(--icon-btn);
   padding:0;border:0;border-radius:var(--radius-ctl);background:transparent;color:var(--color-text-primary);cursor:pointer}
@@ -61,24 +69,36 @@
 .sg-confirm-msg{margin:0 0 var(--ctl-gap);font-size:var(--text-lg);line-height:20px}
 .sg-confirm-btns{display:flex;justify-content:space-between;gap:var(--ctl-gap)}
 
-/* ---- My temp list panel (design-standard.md field row pattern) ---- */
+/* ---- My temp list panel: expanded list of the temp items ---- */
 .sg-temp{padding:var(--space-4) var(--group-gap);background:var(--color-bg-subtle);color:var(--color-text-primary);
   border-bottom:1px solid var(--color-border-panel)}
 .sg-temp[hidden]{display:none}
-.sg-temp-head{display:flex;align-items:center;justify-content:space-between;gap:var(--ctl-gap)}
-.sg-temp-title{margin:0;font-size:var(--text-lg);line-height:20px;font-weight:600}
-.sg-temp-summary{margin:var(--ctl-gap-tight) 0 var(--ctl-gap);color:var(--color-text-muted)}
-.sg-temp-row{display:flex;flex-wrap:wrap;align-items:center;gap:var(--ctl-gap);margin-bottom:var(--ctl-gap)}
-.sg-temp-lbl{flex:0 0 140px;font-weight:600}
-.sg-temp-name{width:240px}
-.sg-temp .sg-select{min-width:200px}
-.sg-temp-err{margin:0;color:var(--color-crit-text)}
+.sg-temp-head{display:flex;flex-wrap:wrap;align-items:center;gap:var(--ctl-gap-tight) var(--ctl-gap);margin-bottom:var(--ctl-gap-tight)}
+.sg-temp-all{display:inline-flex;align-items:center;gap:var(--ctl-gap);cursor:pointer}
+.sg-temp-title{font-size:var(--text-lg);line-height:20px;font-weight:600;white-space:nowrap}
+.sg-temp-summary{color:var(--color-text-muted)}
+.sg-temp-spacer{flex:1 1 auto}
+.sg-temp-items{list-style:none;margin:0 0 var(--ctl-gap);padding:0;max-height:180px;overflow:auto;
+  border:1px solid var(--color-line-default);border-radius:var(--radius-ctl);background:var(--color-bg-elevated)}
+.sg-temp-item{display:flex;align-items:center;justify-content:space-between;gap:var(--ctl-gap);min-height:var(--ctl-h);
+  padding:0 var(--space-4);border-bottom:1px solid var(--color-line-hairline)}
+.sg-temp-item:last-child{border-bottom:0}
+.sg-temp-item-lbl{display:inline-flex;align-items:center;gap:var(--ctl-gap);min-width:0;cursor:pointer}
+.sg-temp-item-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sg-temp-item-lists{flex:0 1 auto;min-width:0;color:var(--color-text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sg-temp-empty{padding:var(--space-4);color:var(--color-text-muted)}
+.sg-temp input[type=checkbox]{width:16px;height:16px;margin:0;color:inherit;accent-color:var(--color-accent)}
+.sg-temp-actions{display:flex;flex-wrap:wrap;align-items:center;gap:var(--ctl-gap)}
+.sg-temp-actions[hidden],.sg-temp-confirm[hidden],.sg-temp-namewrap[hidden]{display:none}
+.sg-temp-lbl{font-weight:600}
+.sg-temp-group{display:inline-flex;flex-wrap:wrap;align-items:center;gap:var(--ctl-gap)}
+.sg-temp-name{width:200px}
+.sg-temp .sg-select{min-width:180px}
+.sg-temp-err{margin:var(--ctl-gap-tight) 0 0;color:var(--color-crit-text)}
 .sg-temp-err:empty{display:none}
 .sg-temp-confirm{max-width:560px}
-.sg-temp-confirm[hidden],.sg-temp-actions[hidden]{display:none}
 @media (max-width:767px){
-  .sg-temp-lbl{flex-basis:100%}
-  .sg-temp-name,.sg-temp .sg-select{flex:1 1 auto;width:auto;min-width:0}
+  .sg-temp-group,.sg-temp-name,.sg-temp .sg-select{flex:1 1 100%;width:auto;min-width:0}
 }
 
 /* Toggle chip (design-standard.md: pill, accent fill with on-accent text when on, aria-pressed). */
@@ -131,6 +151,7 @@
 
 @media (max-width:767px){
   .sg-bar{padding:var(--space-4)}
-  .sg-bar-tools{width:100%}
+  .sg-bar{flex-wrap:wrap}
+  .sg-bar-tools{width:100%;flex-wrap:wrap;justify-content:flex-start}
   .sg-search{flex:1 1 100%;width:auto}
 }

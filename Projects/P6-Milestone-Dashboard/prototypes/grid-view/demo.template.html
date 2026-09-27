@@ -83,7 +83,12 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
   var lstore=window.DEMO_LISTS=SRETCollections.newStore();
   SRETCollections.create(lstore,'Site walk 3-Oct','2026-09-27T00:00:00Z');
   SRETCollections.create(lstore,'Owner review items','2026-09-27T00:00:00Z');
-  function listsOpt(refOf){ return {store:lstore,refOf:refOf,onChange:function(r){ log('onListsChange',[r.kind||'create']); }}; }
+  // Names for the temp list panel, from any screen's data (the app would read its stores).
+  var LABELS={};
+  F.sched.concat(F.userms).forEach(function(r){ LABELS['activity:'+r.id]=r.id+'  '+r.name; });
+  F.annot.forEach(function(r){ LABELS['annot:'+r.aid]=r.aid+'  '+r.kind+' on '+r.target; });
+  function labelOf(ref){ return LABELS[ref]||(/^activity:(.*)-\d\d$/.test(ref)?LABELS[ref.replace(/-\d\d$/,'')]+' (stress copy)':''); }
+  function listsOpt(refOf){ return {store:lstore,refOf:refOf,labelOf:labelOf,onChange:function(r){ log('onListsChange',[r.kind||'create']); }}; }
   var ACT=function(k){ return 'activity:'+k; }, ANN=function(k){ return 'annot:'+k; };
   var back=function(){ log('onBack',[]); };
   var CONFIGS={
