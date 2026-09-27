@@ -232,7 +232,7 @@ The grid's title is a view switcher (`views`, `view`, `onView`). One grid screen
 | View | Rows | Editable |
 |---|---|---|
 | User milestones | `USER_MILESTONES` | Yes (section 1) |
-| Schedule milestones | Schedule activities that are milestones (zero duration, the board's milestone rule) | Annotation columns only |
+| Schedule milestones | **[CONFIRM WITH MATT]** The demo uses zero-duration activities. The board plots every leaf activity as a milestone (`MILESTONES`, built in the ingest), so in the app this view is either those board milestones (then "All schedule activities" adds only the WBS-level rows) or P6 milestone-type activities only | Annotation columns only |
 | Schedule updates | Schedule activities carrying an annotation: short title, health or comment | Annotation columns only |
 | All schedule activities | Every schedule activity | Annotation columns only |
 
