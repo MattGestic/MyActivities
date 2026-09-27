@@ -139,7 +139,7 @@ html[data-theme="dark"]{
   --color-bg-canvas:var(--pal-surface);
   --color-bg-elevated:var(--pal-surface);
   --color-row-selected:var(--pal-teal-tint);
-  --color-dialog-bg:color-mix(in srgb,var(--pal-surface) 92%,transparent);
+  --color-dialog-bg:var(--pal-surface); /* P59 (X-01): opaque. At 92% the board showed through the card. */
   --color-dialog-elev:var(--pal-surface);
   /* Borders */
   --color-border-panel:var(--pal-line);
@@ -512,7 +512,11 @@ body{font-family:var(--font-sans);font-size:11px;background:var(--color-bg-eleva
    is not inside #ib-menu, so the derivation is taken from <body> instead. Still
    derived, still no new state. */
 body:has(.ib-menu-panel .dot.show) #pm-more-dot{display:block}
-#btn-more-actions{font-size:15px;line-height:1}
+/* P59 (A-02): the compact-mode trigger is a header icon button like the
+   others, not a white 44px tile. */
+#btn-more-actions{font-size:15px;line-height:1;width:var(--icon-btn);height:var(--icon-btn);min-width:0;min-height:0;
+  background:transparent;border-color:transparent;color:var(--color-text-on-header)}
+#btn-more-actions:hover{background:var(--color-bg-header-hover)}
 /* P56 (D-20b): above 1024px the menu panel IS the header's action row, icon
    buttons with tooltips, and the trigger is hidden. At 1024px and below the
    trigger returns and the panel is the dropdown above, labels shown. */
@@ -535,7 +539,7 @@ body:has(.ib-menu-panel .dot.show) #pm-more-dot{display:block}
    edge after it. It used to be the flexible filler on the left. */
 #icon-bar .ib-label{font-size:9px;color:var(--color-text-on-header);margin-left:auto;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:0 1 auto;text-align:right}
-#dirty-indicator{display:none;margin-left:auto;font-size:9px;color:var(--color-chip-attention-bg);font-weight:600;padding:2px 8px;border:1px solid var(--color-chip-attention-bg);border-radius:10px;white-space:nowrap}
+#dirty-indicator{display:none;margin-left:auto;flex:0 0 auto;font-size:9px;color:var(--color-chip-attention-bg);font-weight:600;padding:2px 8px;border:1px solid var(--color-chip-attention-bg);border-radius:10px;white-space:nowrap}
 #btn-remove-all-filters{font-size:9px;font-weight:600;color:var(--color-chip-attention-bg);background:none;padding:2px 8px;border:1px solid var(--color-chip-attention-bg);border-radius:10px;white-space:nowrap;cursor:pointer}
 #btn-remove-all-filters:hover{background:var(--color-chip-attention-bg);color:var(--color-chip-attention-ink)}
 #dirty-indicator.show{display:inline-block}
@@ -563,7 +567,7 @@ body{margin-left:var(--ws-rail-w);transition:margin-left .18s ease,margin-right 
 #ws-rail{position:fixed;left:0;top:0;bottom:0;width:var(--ws-rail-w);z-index:880;
   background:var(--color-bg-workspace);display:flex;flex-direction:column;align-items:center;
   gap:var(--space-2);padding:var(--space-4) 0}
-.ws-ri{position:relative;width:32px;height:32px;display:grid;place-items:center;padding:0;cursor:pointer;
+.ws-ri{position:relative;width:calc(var(--icon-btn) + var(--space-3));height:calc(var(--icon-btn) + var(--space-3));display:grid;place-items:center;padding:0;cursor:pointer;
   border:0;border-radius:var(--radius-md);background:transparent;font-size:15px;line-height:1;
   color:color-mix(in srgb,var(--color-text-on-header) 72%,transparent)}
 .ws-ri:hover{background:var(--color-bg-header-hover);color:var(--color-text-on-header)}
@@ -571,7 +575,7 @@ body{margin-left:var(--ws-rail-w);transition:margin-left .18s ease,margin-right 
 .ws-ri.is-active::before{content:'';position:absolute;left:-6px;top:6px;bottom:6px;width:3px;
   border-radius:2px;background:var(--color-accent)}
 .ws-ri:focus-visible{outline:var(--focus-ring) solid var(--color-accent);outline-offset:1px}
-.ws-bd{position:absolute;top:0;right:0;min-width:14px;height:14px;padding:0 var(--space-1);border-radius:7px;
+.ws-bd{position:absolute;top:calc(-1 * var(--space-2));right:calc(-1 * var(--space-3));min-width:14px;height:14px;padding:0 var(--space-1);border-radius:7px;
   background:var(--color-accent);color:var(--color-text-on-accent);font-size:9px;font-weight:700;
   line-height:14px;text-align:center}
 .ws-bd:empty{display:none}
@@ -601,7 +605,7 @@ body.ws-open #ws-panel{box-shadow:var(--shadow-2)}
   background:var(--color-bg-header);border-bottom:0;border-right:1px solid var(--color-line-default)}
 .sd-rail-grow{flex:1 1 auto}
 .sd-rail .sd-tab[hidden]{display:none}
-.sd-rail .sd-tab{position:relative;width:32px;height:32px;padding:0;display:grid;place-items:center;
+.sd-rail .sd-tab{position:relative;width:calc(var(--icon-btn) + var(--space-3));height:calc(var(--icon-btn) + var(--space-3));padding:0;display:grid;place-items:center;
   border-radius:var(--radius-md);font-size:14px;line-height:1;
   color:color-mix(in srgb,var(--color-text-on-header) 72%,transparent)}
 .sd-rail .sd-tab:hover:not(.is-active){background:var(--color-bg-header-hover);color:var(--color-text-on-header)}
@@ -609,7 +613,7 @@ body.ws-open #ws-panel{box-shadow:var(--shadow-2)}
 .sd-rail .sd-tab.is-active::before{content:'';position:absolute;left:-6px;top:6px;bottom:6px;width:3px;
   border-radius:2px;background:var(--color-accent)}
 .sd-tab-lbl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.sd-rail .sd-tab .sd-badge{position:absolute;top:-2px;right:-4px;margin:0}
+.sd-rail .sd-tab .sd-badge{position:absolute;top:calc(-1 * var(--space-2));right:calc(-1 * var(--space-3));margin:0}
 .sd-main{flex:1 1 auto;min-width:0;overflow-y:auto;display:flex;flex-direction:column;padding-bottom:var(--space-6)}
 @media (min-width:1025px){
   body.ws-open{margin-left:calc(var(--ws-rail-w) + var(--ws-panel-w))}
@@ -693,6 +697,22 @@ body.print-mode{margin-left:0}
 .coll-opt{display:flex;align-items:center;gap:var(--space-2);font-size:var(--text-xs);color:var(--color-text-muted)}
 .ms-notes-ref{display:block;margin-top:var(--space-2);border:0;background:none;padding:0;font:inherit;font-size:var(--text-xs);font-weight:600;color:var(--color-accent-ink);cursor:pointer;text-decoration:underline}
 .ms-notes-ref[hidden]{display:none}
+
+/* ===== P59 (B-01/B-02): Workspace rail states ===== */
+.ws-ri-collapse{margin-bottom:var(--space-3)}
+.ws-toggle{display:none;position:absolute;left:0;top:0;z-index:881;width:var(--ws-rail-w);height:var(--ws-rail-w);
+  border:0;background:var(--color-bg-workspace);color:var(--color-text-on-header);font-size:15px;cursor:pointer}
+.ws-toggle:hover{background:color-mix(in srgb,var(--color-bg-workspace) 80%,var(--color-text-on-header))}
+.ws-toggle:focus-visible{outline:var(--focus-ring) solid var(--color-accent);outline-offset:-3px}
+body.rail-collapsed{margin-left:0}
+body.rail-collapsed #ws-rail,body.rail-collapsed #ws-panel{display:none}
+body.rail-collapsed .ws-toggle{display:block}
+/* The header keeps its left edge where it is in every state: the slot the
+   rail leaves behind is padding, and the toggle sits in it. */
+body.rail-collapsed #icon-bar{padding-left:calc(var(--ws-rail-w) + var(--space-4))}
+body.rail-collapsed .rpt-hd{padding-left:calc(var(--ws-rail-w) + 10px)}
+body.print-mode .ws-toggle{display:none}
+@media print{ .ws-toggle{display:none!important} }
 /* ---- Settings drawer: full-height vertical panel sliding from left ---- */
 /* ---- Settings drawer ----
    Every horizontal edge inside this panel resolves to --sd-gutter and every
@@ -1071,6 +1091,19 @@ input[type=range]{width:110px;cursor:pointer;background-color:transparent}
 #top-filter-bar .fb-row-1 .grow.narrow{flex:1 1 90px;min-width:90px}
 #top-filter-bar .fb-row-1 .fb-fixed{flex:0 0 auto}
 #btn-fit-screen-inline{flex:0 0 auto}
+/* P59 (C-01/C-02): Find's first row is a grid, not a nowrap flex row. The
+   name field takes half the row and Banding and Source share the other half,
+   so on a wide screen the name no longer truncates and the Source select no
+   longer overflows the card. Each select shrinks inside its own cell (its
+   120px floor was what pushed Source past the card edge) while its label
+   keeps its full width ("Banding" was being clipped). */
+#top-filter-bar #tfb-find .fb-row-1{display:grid;grid-template-columns:2fr 1fr;align-items:center}
+#top-filter-bar #tfb-find .fb-row-1.has-source{grid-template-columns:2fr 1fr 1fr}
+#top-filter-bar #tfb-find .fb-row-1>*{min-width:0}
+#top-filter-bar #tfb-find .fb-row-1 .fb-inline>label{flex:0 0 auto}
+#top-filter-bar #tfb-find .fb-row-1 .ds-select{flex:1 1 auto;min-width:0;width:100%}
+/* P59 (C-04): Fit columns reads as a button, with a label, not a bare glyph. */
+#btn-fit-screen-inline.ds-btn{display:inline-flex;align-items:center;gap:var(--space-2)}
 
 /* Control primitives: one token-driven definition for every text field,
    select, chip, segmented toggle and button that uses the D-16 standard.
@@ -1210,6 +1243,19 @@ select.ds-select{cursor:pointer}
   #top-filter-bar .fb-row-1 .grow.narrow{flex:0 0 auto}
   #top-filter-bar .ds-fwrap,#top-filter-bar .ds-field,#top-filter-bar .ds-select,#top-filter-bar .wr-field{width:100%;min-width:0}
   #top-filter-bar .ds-seg.chips{width:100%}
+  /* P59 (C-03): a label sits just above its own field, and a clear gap
+     separates one field from the next label. The desktop label cell's
+     min-height (it levels the label with the first control) made each label
+     a full control tall here, pushing its field away from it. */
+  #top-filter-bar .fb-box.find,#top-filter-bar .fb-box.when{gap:var(--space-2)}
+  #top-filter-bar .fb-box>.fb-line.fb-lbl{min-height:0;justify-self:auto}
+  #top-filter-bar .fb-box>.fb-line:not(.fb-lbl):not(.fb-title)+.fb-line.fb-lbl{margin-top:var(--space-4)}
+  #top-filter-bar #tfb-find .fb-row-1,#top-filter-bar #tfb-find .fb-row-1.has-source{display:flex;gap:var(--space-4)}
+  #top-filter-bar .fb-inline{gap:var(--space-2)}
+  /* P59 (C-05): the Mode toggle keeps its natural width rather than
+     stretching across the card; the Fit button sits beside it. */
+  #top-filter-bar #wr-mode-seg{align-self:flex-start;width:auto;flex-wrap:nowrap}
+  #top-filter-bar #btn-fit-screen-inline{align-self:flex-start}
   #top-filter-bar .fb-box.crit .crit-clear{position:absolute;top:8px;right:8px;margin-left:0}
   .wr-pop{grid-template-columns:1fr;width:94vw}
   .wr-quick{flex-direction:row;flex-wrap:wrap;border-right:0;border-bottom:1px solid var(--color-line-default)}
@@ -1414,12 +1460,14 @@ body.print-mode .pm-banner{display:block}
 #icon-bar .title:hover{background:var(--color-bg-header-hover)}
 #icon-bar .title:focus{outline:1.5px solid var(--color-status-track);background:var(--color-bg-header-focus);
   white-space:normal;overflow:visible;max-width:none}
+.rpt-hd-top{display:flex;align-items:center;gap:var(--space-4);min-width:0}
+.rpt-hd-top .subtitle{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rpt-hd .subtitle{font-size:10px;font-weight:400;color:var(--color-text-on-header);font-style:italic}
 .rpt-hd .vtag{background:var(--color-accent);color:var(--color-text-on-accent);font-size:8.5px;padding:1px 6px;border-radius:3px;margin-left:6px;font-weight:600;letter-spacing:.03em}
 /* Was its own full-width bar under the title; it is now the right-hand
    container of the heading bar, so it brings the field typography and drops the
    background, padding and stacking context. */
-.rpt-sub{color:var(--color-text-on-header-muted);display:flex;flex-wrap:wrap;gap:4px 18px;font-size:9px;align-items:baseline}
+.rpt-sub{color:var(--color-text-on-header-muted);display:flex;flex-wrap:wrap;gap:4px 18px;font-size:9px;align-items:center}
 .rpt-sub-group{display:flex;flex-wrap:wrap;gap:16px;align-items:center}
 .rpt-sub-id{flex:0 0 auto}
 .rpt-sub-meta{flex:1 1 auto}
@@ -1428,22 +1476,24 @@ body.print-mode .pm-banner{display:block}
    switch is 36x19, which is nearly twice the height of this 9px heading row, so
    it is scaled down here rather than given a second set of geometry rules. */
 .bl-shadow{display:inline-flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap}
-.bl-shadow .toggle-switch{width:26px;height:14px;transform:none}
-.bl-shadow .tsw-slider:before{height:10px;width:10px;left:2px;top:2px}
-.bl-shadow .toggle-switch input:checked+.tsw-slider:before{transform:translateX(12px)}
+/* P59 (A-02): the design standard's 32x16 switch, not a shrunken one. */
+.bl-shadow{font-size:var(--text-sm)}
+.bl-shadow .toggle-switch{width:32px;height:16px;transform:none}
+.bl-shadow .tsw-slider:before{height:12px;width:12px;left:2px;top:2px}
+.bl-shadow .toggle-switch input:checked+.tsw-slider:before{transform:translateX(16px)}
 .bl-shadow.is-disabled{opacity:.5;cursor:not-allowed}
 /* Pinned to the right end of the project details row, which is where the
    request puts them and where the header's own icons already are. */
 .rpt-hd-actions{margin-left:auto;display:inline-flex;align-items:center;gap:6px;flex:0 0 auto}
-.rpt-hd-btn{font-size:9px;font-weight:600;white-space:nowrap;cursor:pointer;
+.rpt-hd-btn{font-size:var(--text-sm);font-weight:600;white-space:nowrap;cursor:pointer;height:var(--ctl-h);display:inline-flex;align-items:center;
   color:var(--color-text-on-header);background:none;
   border:1px solid var(--color-text-on-header-muted);border-radius:10px;
-  padding:var(--space-1) var(--ctl-pad-x);line-height:1.4}
+  padding:0 var(--ctl-pad-x);line-height:1}
 .rpt-hd-btn:hover{background:var(--color-bg-header-hover)}
 .rpt-hd-btn[hidden]{display:none}
 .rpt-sub-divider{color:var(--color-text-on-header-muted);opacity:.6;flex:0 0 auto}
 .view-toggle{display:inline-flex;border:1px solid var(--color-vt-divider);border-radius:var(--radius-ctl);overflow:hidden;vertical-align:middle;margin-left:2px}
-.vt-btn{font-size:9px;padding:var(--space-1) var(--ctl-pad-x);border:none;background:var(--color-bg-panel);color:var(--color-text-on-panel-muted);cursor:pointer;font-weight:600}
+.vt-btn{font-size:var(--text-sm);height:var(--ctl-h);display:inline-flex;align-items:center;padding:0 var(--ctl-pad-x);border:none;background:var(--color-bg-panel);color:var(--color-text-on-panel-muted);cursor:pointer;font-weight:600}
 .vt-btn:hover:not(:disabled):not(.active){background:var(--color-btn-icon-hover-bg)}
 .vt-btn+.vt-btn{border-left:1px solid var(--color-vt-divider)}
 .vt-btn.active{background:var(--color-accent);color:var(--color-text-on-accent)}
@@ -2040,7 +2090,7 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 .pdf-note{margin:var(--space-4) 0 0;font-size:10.5px;line-height:1.45;color:var(--color-text-muted)}
 .pdf-note-quiet{color:var(--color-text-label)}
 .pdf-actions{display:flex;justify-content:flex-end;gap:var(--space-3);margin-top:var(--space-5)}
-.ms-dialog{position:fixed;z-index:2147483647;box-sizing:border-box;width:min(306px,calc(100vw - 24px));padding:14px 16px 13px;background:var(--color-dialog-bg);color:var(--color-text-ink);border:1px solid var(--color-line-default);border-radius:12px;box-shadow:0 1px 2px var(--color-shadow-dialog-near),0 8px 24px var(--color-shadow-dialog-far);font-family:var(--font-sans)}
+.ms-dialog{position:fixed;z-index:2147483647;box-sizing:border-box;width:min(340px,calc(100vw - 24px));padding:var(--space-4) var(--space-5) var(--space-5);background:var(--color-dialog-bg);color:var(--color-text-ink);border:1px solid var(--color-line-default);border-radius:12px;box-shadow:0 1px 2px var(--color-shadow-dialog-near),0 8px 24px var(--color-shadow-dialog-far);font-family:var(--font-sans)}
 .ms-dialog[hidden]{display:none}
 .ms-dialog *,.ms-dialog *::before,.ms-dialog *::after{box-sizing:border-box}
 /* A controls-only row: close on the left, the save pair on the right. The
@@ -2051,9 +2101,14 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 .ms-dialog-head{display:flex;align-items:center;gap:var(--space-3);min-height:19px}
 /* The heading. Sits inside the title column, so it ends where the float
    column begins and runs the whole width up to it. */
-.ms-heading{display:flex;align-items:center;gap:var(--space-3);min-width:0}
+.ms-heading{display:flex;align-items:center;gap:var(--space-2);min-width:0;margin:var(--space-2) 0 0 calc(-1 * var(--space-2));
+  padding-bottom:var(--space-3);border-bottom:1px solid var(--color-line-hairline)}
 .ms-heading .ms-code{white-space:nowrap}
-.ms-heading .ms-status{white-space:nowrap;margin-left:auto}
+/* P59 (D-04): status right-aligned, anchored by the heading's underline. */
+.ms-heading .ms-status{white-space:nowrap;margin-left:auto;padding-left:var(--space-4)}
+/* P59 (D-03): float sits beside the ID, left of the status. */
+.ms-heading .ms-float-col{display:inline-flex;align-items:baseline;gap:var(--space-1);padding-left:var(--space-3);
+  border-left:1px solid var(--color-line-hairline)}
 .ms-head-spacer{flex:1 1 auto;min-width:0}
 .ms-close{background:none;border:none;font-size:13px;line-height:1;color:var(--color-text-muted);cursor:pointer;padding:3px;border-radius:4px;margin:-3px 0 0 -3px}
 .ms-close:hover{color:var(--color-status-crit);background:var(--color-btn-hover-bg)}
@@ -2062,11 +2117,14 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
    filled convention and the state colour without a second set of shapes here
    that could drift from the board's. */
 .ms-icon-btn{display:inline-flex;align-items:center;justify-content:center;
-  width:19px;height:19px;padding:var(--space-0);border:1px solid transparent;border-radius:5px;
+  width:var(--icon-btn);height:var(--icon-btn);min-width:0;min-height:0;padding:var(--space-0);border:1px solid transparent;border-radius:5px;
   background:none;cursor:pointer;transition:background .12s,border-color .12s;flex:0 0 auto}
 .ms-icon-btn:hover{background:var(--color-accent-wash-weak);border-color:var(--color-accent)}
 .ms-icon-btn[aria-expanded="true"]{background:var(--color-accent-wash);border-color:var(--color-accent)}
-.ms-icon-btn .ms-icon{width:13px;height:13px}
+.ms-icon-btn .ms-icon{width:15px;height:15px}
+/* The shared 28px hit minimum further down would grow this box past the
+   D-16 icon-button size; the card's mark is the icon button itself. */
+.ms-dialog .ms-icon-btn{min-width:0;min-height:0}
 /* A field whose stored value differs from the schedule's own. Distinct from
    .ms-dirty-field, which means "typed but not saved yet": this one survives the
    save and is how a reader tells, later, which figures on the card are the
@@ -2124,7 +2182,7 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 /* The two save controls. Present only while the form is dirty. */
 .ms-save-actions{display:inline-flex;align-items:center;gap:var(--space-2);flex:0 0 auto}
 .ms-save-actions[hidden]{display:none}
-.ms-act{font:650 10px var(--font-sans);padding:3px 7px;border-radius:5px;
+.ms-act{font:650 var(--text-base) var(--font-sans);padding:var(--space-2) var(--space-4);border-radius:5px;
   cursor:pointer;white-space:nowrap}
 .ms-act-secondary{border:1px solid var(--color-btn-secondary-outline);background:var(--color-btn-secondary-bg);color:var(--color-btn-secondary-text)}
 .ms-act-secondary:hover{background:var(--color-btn-secondary-hover-bg)}
@@ -2152,15 +2210,17 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
    two lines of text. */
 .ms-title-row{display:flex;gap:10px;align-items:stretch}
 .ms-title-col{flex:1 1 auto;min-width:0}
-.ms-float-col{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;text-align:center;padding:1px 2px 1px 9px;
-  border-left:1px solid var(--color-line-hairline)}
+.ms-float-col{flex:0 0 auto}
 .ms-float-val{font-weight:600;font-size:13px;line-height:1.3;white-space:nowrap;
   font-variant-numeric:tabular-nums;color:var(--color-text-primary)}
-.ms-float-lbl{font-size:11px;line-height:1.3;color:var(--color-text-muted);font-style:italic}
-.ms-shorttitle-block{margin-top:2px}
-.ms-shorttitle-row{display:flex;gap:6px}
-.ms-shorttitle-row input{flex:1;font-size:11px;padding:2px 4px;margin-left:-4px;border:none;border-radius:3px;background:transparent;color:var(--color-text-muted);font-family:inherit;font-style:italic;transition:background .12s}
+.ms-float-lbl{font-size:11px;line-height:1.3;color:var(--color-text-muted)}
+.ms-float-val::placeholder{color:var(--color-text-muted)}
+.ms-float-val[readonly]{cursor:default;background:transparent}
+.ms-shorttitle-block{margin-top:var(--space-2)}
+.ms-shorttitle-row{display:flex;gap:var(--space-2);align-items:center}
+/* P59 (D-07): the board label, named as such, above the title. */
+.ms-shorttitle-lbl{flex:0 0 auto;font-size:11px;font-weight:600;color:var(--color-text-label)}
+.ms-shorttitle-row input{flex:1;font-size:11px;padding:2px 4px;border:none;border-radius:3px;background:transparent;color:var(--color-text-muted);font-family:inherit;font-style:italic;transition:background .12s}
 .ms-shorttitle-row input:hover{background:var(--color-accent-wash-weak)}
 .ms-shorttitle-row input:focus{background:var(--color-accent-wash);color:var(--color-accent-ink);outline:none;font-style:normal}
 /* The short title's own Save button is gone. It saved on click without hiding
@@ -2176,7 +2236,9 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
    Progress sat. A grid of three equal tracks puts each label in the same place
    on every card, whatever it holds. */
 .ms-schedule{margin-top:12px;padding-top:10px;border-top:1px solid var(--color-line-hairline);
-  display:grid;grid-template-columns:1fr 1fr 1fr;align-items:stretch;gap:10px}
+  display:grid;grid-template-columns:1fr 1fr 76px;align-items:stretch;gap:10px}
+/* P59 (D-01): the two date tracks take the width Progress does not need, so
+   an actualised date ("04-Aug-26 A") fits. Positions stay fixed per card. */
 .ms-schedule .ms-field{display:flex;flex-direction:column;justify-content:flex-end;min-width:0}
 /* Progress keeps its divider and its right alignment, now as the third track
    rather than by being pushed there with margin-left:auto. */
@@ -2202,7 +2264,9 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
    accent wash the Progress field and the row remarks already use for exactly
    this meaning, so "changed but not saved" looks the same everywhere. */
 .ms-dirty-field{background:var(--color-accent-wash);color:var(--color-accent-ink)}
-.ms-title{padding:var(--space-0);margin:var(--space-0);display:block}
+/* P59 (D-06): the full card width, on a faint surface so it reads as the
+   field it is. */
+.ms-title{padding:var(--space-2) var(--space-3);margin:var(--space-1) 0 0;display:block;background:var(--color-bg-subtle);border-radius:var(--radius-ctl)}
 .ms-date{padding:var(--space-0) var(--space-1);margin-left:-2px}
 .ms-val-input{padding:var(--space-0) var(--space-1);margin-left:-2px;width:100%}
 .ms-float-val{padding:var(--space-0) var(--space-1);text-align:center;width:3.4em;min-width:0}
@@ -2296,10 +2360,17 @@ textarea:focus-visible,[tabindex]:focus-visible{
 .row-del,.sd-close,.tfb-hide,.pm-btn-ico{
   min-width:28px;min-height:28px;
   display:inline-flex;align-items:center;justify-content:center}
+/* P59 (A-02): touch follows D-16. The visible button is --ctl-h-touch (32px)
+   and the touch target reaches --ctl-hit-touch (40px) through an invisible
+   pseudo-element; the old 44px minimum grew the visible box instead, which is
+   what made the header's More actions trigger a large white tile. */
 @media (pointer:coarse){
   .icon-btn,.ms-close,.ms-icon-btn,.dep-comment-close,.fb-close,.pfn-close,
   .row-del,.sd-close,.tfb-hide,.pm-btn-ico{
-    min-width:44px;min-height:44px}
+    min-width:var(--ctl-h-touch);min-height:var(--ctl-h-touch);position:relative}
+  .icon-btn::after,.ms-close::after,.ms-icon-btn::after,.dep-comment-close::after,.fb-close::after,.pfn-close::after,
+  .row-del::after,.sd-close::after,.tfb-hide::after,.pm-btn-ico::after{
+    content:'';position:absolute;left:50%;top:50%;width:var(--ctl-hit-touch);height:var(--ctl-hit-touch);transform:translate(-50%,-50%)}
 }
 
 </style>
@@ -2333,7 +2404,13 @@ textarea:focus-visible,[tabindex]:focus-visible{
      The rail is always on screen; only its panel opens and closes. Notes
      (D-19) and Lists (D-06) join the rail when they are built; until then the
      rail carries only sections with real content. -->
+<!-- P59 (B-01): three states. Collapsed: the rail is hidden and this toggle
+     holds the header's left slot. Rail: the icon strip, its first button
+     collapses it again. Panel: a section open beside the rail. The header
+     keeps the same left offset in every state, so nothing in it moves. -->
+<button type="button" id="ws-toggle" class="ws-toggle" onclick="setRailState('rail')" title="Show the Workspace" aria-label="Show the Workspace" aria-expanded="false">&#9776;</button>
 <nav id="ws-rail" aria-label="Workspace: your annotations">
+  <button class="ws-ri ws-ri-collapse" id="ws-tab-collapse" onclick="setRailState('collapsed')" title="Hide the Workspace rail" aria-label="Hide the Workspace rail">&#9776;</button>
   <button class="ws-ri" id="ws-tab-notes" onclick="setWorkspaceSection('notes')" title="Notes" aria-label="Notes" aria-pressed="false">&#128221;<span class="ws-bd" id="ws-notes-count"></span></button>
   <button class="ws-ri" id="ws-tab-comments" onclick="setWorkspaceSection('comments')" title="Comments &amp; markups" aria-label="Comments and markups" aria-pressed="false">&#128172;</button>
   <button class="ws-ri" id="ws-tab-userms" onclick="setWorkspaceSection('userms')" title="User milestones" aria-label="User milestones" aria-pressed="false">&#9670;<span class="ws-bd" id="ws-userms-count"></span></button>
@@ -2435,7 +2512,6 @@ textarea:focus-visible,[tabindex]:focus-visible{
 
 <div id="icon-bar">
   <span class="title" id="rpt-title-text" contenteditable="true" spellcheck="false" title="Click to edit the report title">Eskay | Snip PFS &amp; Technical Report 2026 &middot; Deliverables Dashboard</span>
-  <span id="dirty-indicator" title="You have edits that haven't been exported">&#9679; Unsaved changes</span>
   <button id="btn-remove-all-filters" onclick="clearFilter()" title="A filter is currently active — click to remove all filters" style="display:none">&#10005; Remove all filters</button>
   <span class="ib-label" id="ib-label">Schedule Reporting and Evaluation Tool</span>
   <span class="ib-right-icons">
@@ -2958,7 +3034,12 @@ textarea:focus-visible,[tabindex]:focus-visible{
      for byte what it was; a block at page width while it is on. -->
 <div id="page-frame">
 <div class="rpt-hd">
-  <span class="subtitle">P6 Milestone Dashboard - Project Schedule Displayed by Activity End Dates</span>
+  <!-- P59 (A-01): the unsaved-changes pill sits at the right of the subtitle
+       line, under the header actions, instead of in the title row. -->
+  <div class="rpt-hd-top">
+    <span class="subtitle">P6 Milestone Dashboard - Project Schedule Displayed by Activity End Dates</span>
+    <span id="dirty-indicator" title="You have edits that haven't been exported">&#9679; Unsaved changes</span>
+  </div>
   <div class="rpt-sub rpt-sub-below">
       <div class="rpt-sub-group">
         <span>Project No.: <b>103787-13</b></span>
@@ -3080,7 +3161,7 @@ textarea:focus-visible,[tabindex]:focus-visible{
       <button type="button" aria-pressed="false" onclick="setWeekFilterModeUI('only')" title="Narrows the board to these weeks">Show only</button>
      </span>
     </span>
-    <button type="button" class="ds-ico" id="btn-fit-screen-inline" onclick="fitToScreen()" title="Fit visible week columns to the available screen width" aria-label="Fit columns to screen">&#8596;</button>
+    <button type="button" class="ds-btn" id="btn-fit-screen-inline" onclick="fitToScreen()" title="Fit visible week columns to the available screen width" aria-label="Fit columns to screen"><span aria-hidden="true">&#8596;</span> Fit</button>
    </div>
   </div>
  </div>
@@ -3311,31 +3392,32 @@ textarea:focus-visible,[tabindex]:focus-visible{
     </span>
   </div>
   <div class="ms-type-menu" id="ms-type-menu" hidden></div>
+  <!-- P59 (D-02..D-07): the heading carries the mark, the ID and the float on
+       the left and the status on the right, underlined. The parent band, the
+       board's display label and then the full-width title follow it. -->
   <div class="ms-title-row">
     <div class="ms-title-col">
-      <!-- The heading runs the full width of the column, which ends at the
-           float. The type name is gone from here and lives on the icon's
-           tooltip: it was three words of vocabulary competing with the ID and
-           the status for a line that had none to spare. -->
       <div class="ms-heading">
         <button type="button" class="ms-icon-btn" id="ms-icon-btn" onclick="toggleMsTypeMenu(event)" aria-haspopup="true" aria-expanded="false" aria-label="Milestone type and mark" title="Milestone type and mark"><svg class="ms-icon"><use href="#ico-diamond"/></svg></button>
         <span id="ms-code" class="ms-code"></span>
-        <span id="ms-status" class="ms-status"></span>
         <span class="ms-edited-mark" id="ms-mark-icon" data-field="marker" hidden></span>
+        <span class="ms-float-col" id="ms-float-col">
+          <span class="ms-float-lbl">Float</span>
+          <input type="text" id="ms-float-val" class="ms-float-val" inputmode="decimal" maxlength="6" autocomplete="off" placeholder="-" title="Total float in days" aria-label="Total float in days" oninput="onMsFieldInput()">
+          <span class="ms-edited-mark" id="ms-mark-floatD" data-field="floatD" hidden></span>
+        </span>
+        <span id="ms-status" class="ms-status"></span>
       </div>
       <p id="ms-sub" class="ms-sub"></p>
-      <input type="text" id="ms-title" class="ms-title" maxlength="200" placeholder="Milestone name&#8230;" title="Milestone name" oninput="onMsFieldInput()">
-      <span class="ms-edited-mark" id="ms-mark-actName" data-field="actName" hidden></span>
       <div class="ms-shorttitle-block">
         <div class="ms-shorttitle-row">
+          <label class="ms-shorttitle-lbl" for="ms-shorttitle-input">Display label:</label>
           <input type="text" id="ms-shorttitle-input" maxlength="100" placeholder="Short title&#8230;" title="Short title shown on the board" oninput="onMsFieldInput()">
           <span class="ms-edited-mark" id="ms-mark-shortTitle" data-field="shortTitle" hidden></span>
         </div>
       </div>
-    </div>
-    <div class="ms-float-col" id="ms-float-col">
-      <input type="text" id="ms-float-val" class="ms-float-val" inputmode="decimal" maxlength="6" autocomplete="off" title="Total float in days" oninput="onMsFieldInput()">
-      <span class="ms-float-lbl">float<span class="ms-edited-mark" id="ms-mark-floatD" data-field="floatD" hidden></span></span>
+      <input type="text" id="ms-title" class="ms-title" maxlength="200" placeholder="Milestone name&#8230;" title="Milestone name" oninput="onMsFieldInput()">
+      <span class="ms-edited-mark" id="ms-mark-actName" data-field="actName" hidden></span>
     </div>
   </div>
   <!-- Start, Finish and Progress are three equal columns that never move. A
@@ -3494,7 +3576,7 @@ textarea:focus-visible,[tabindex]:focus-visible{
 // label, and embedded in exported JSON — bump this one place, everything else
 // reads from it, so the three copies can't silently drift apart the way the
 // title/label/export payload just had for a long stretch of unversioned work.
-const APP_VERSION='3.1.0-P58';
+const APP_VERSION='3.1.0-P59';
 // ============================================================
 // TIMELINE
 // ============================================================
@@ -7443,7 +7525,7 @@ function syncFbNarrow(){
   if(!bar) return;
   const cs=getComputedStyle(document.documentElement);
   const px=function(v,d){ const n=parseFloat(cs.getPropertyValue(v)); return isNaN(n)?d:n; };
-  let w=window.innerWidth-px('--ws-rail-w',44);
+  let w=window.innerWidth-(document.body.classList.contains('rail-collapsed')?0:px('--ws-rail-w',44));
   if(window.matchMedia('(min-width:1025px)').matches){
     if(document.body.classList.contains('ws-open')) w-=px('--ws-panel-w',320);
     if(document.body.classList.contains('dv-open')) w-=px('--dv-w',404);
@@ -7451,6 +7533,24 @@ function syncFbNarrow(){
   bar.classList.toggle('fb-narrow',w<1235);
 }
 window.addEventListener('resize',syncFbNarrow);
+
+// ===== P59 (B-01): rail state, collapsed or shown =====
+// Display state, remembered per browser. Phones start collapsed; anything
+// that opens a Workspace section shows the rail first.
+function railCollapsed(){ return document.body.classList.contains('rail-collapsed'); }
+function setRailState(state){
+  const collapse=state==='collapsed';
+  if(collapse) toggleWorkspace(false);
+  document.body.classList.toggle('rail-collapsed',collapse);
+  const t=document.getElementById('ws-toggle'); if(t) t.setAttribute('aria-expanded',String(!collapse));
+  try{ localStorage.setItem('sret-rail',collapse?'collapsed':'rail'); }catch(e){}
+  syncFbNarrow();
+}
+(function initRailState(){
+  let st=null; try{ st=localStorage.getItem('sret-rail'); }catch(e){}
+  if(!st) st=window.matchMedia('(max-width:640px)').matches?'collapsed':'rail';
+  if(st==='collapsed'){ document.body.classList.add('rail-collapsed'); }
+})();
 function toggleWorkspace(force){
   const pan=document.getElementById('ws-panel');
   if(!pan) return;
@@ -7465,6 +7565,7 @@ function setWorkspaceSection(sec,keepOpen){
   const pan=document.getElementById('ws-panel');
   const wasOpen=!!pan&&pan.classList.contains('open');
   if(wasOpen&&sec===WS_SECTION&&!keepOpen){ toggleWorkspace(false); return; }
+  if(railCollapsed()) setRailState('rail');
   WS_SECTION=sec;
   document.querySelectorAll('#ws-panel .ws-sec').forEach(function(el){
     el.hidden=(el.getAttribute('data-sec')!==sec);
@@ -9448,7 +9549,7 @@ function rebuildSourceFilter(){
   // One source is the normal case and a filter that can only ever mean "all"
   // is noise, so the group hides itself until there is a real choice.
   const grp=sel.closest('.tfb-group');
-  if(grp) grp.style.display=(seen.size>1)?'':'none';
+  if(grp){ grp.style.display=(seen.size>1)?'':'none'; grp.parentElement.classList.toggle('has-source',seen.size>1); }
 }
 
 function applyTimeline(tl){
@@ -13243,7 +13344,12 @@ function openMsDialog(m, snipId, anchorEl, hd, task){
     // is a field a person can fill in now, and a field that is not on screen
     // cannot be filled in; a dash says "none recorded" in the same place.
     floatCol.style.display='';
-    document.getElementById('ms-float-val').value=hasFloat?String(Math.round(m.floatD)):'';
+    // P59 (D-03): a completed milestone has no float to speak of, so it reads
+    // "-" and is not editable; a blank one shows the same "-" placeholder.
+    const fEl=document.getElementById('ms-float-val');
+    const st=effectiveState(m), isDone=(st==='DONE'||st==='DONEUSER');
+    fEl.readOnly=isDone;
+    fEl.value=(hasFloat&&!isDone)?String(Math.round(m.floatD)):'';
   }
   // "Unassigned" tells the reader nothing they can act on — a real discipline name
   // is worth showing, an empty/unassigned one isn't, so the line just doesn't
@@ -13340,7 +13446,7 @@ function renderMsIcon(){
   const btn=document.getElementById('ms-icon-btn');
   if(!btn||!msDialogMs) return;
   const state=previewEffState(msDialogMs,msDialogFor,msFormHealth);
-  btn.innerHTML=renderIcon(msFormMarker(),state,13);
+  btn.innerHTML=renderIcon(msFormMarker(),state,15); // P59 (D-02): one step larger
   const svg=btn.querySelector('.ms-icon');
   if(svg) svg.id='ms-icon-glyph';
   // The type name moved off the heading and onto this tooltip, which is the
@@ -13650,8 +13756,13 @@ function saveMsDialog(alsoClose){
   if(now.date===''||fd) put('date','date',(now.date==='')?null:fd);
   const wt=(now.weight==='')?null:parseFloat(now.weight);
   put('weight','weight',(wt===null||isNaN(wt))?null:wt);
-  const fl=(now.floatD==='')?null:parseFloat(now.floatD);
-  put('floatD','floatD',(fl===null||isNaN(fl))?null:fl);
+  // A completed milestone's float field is a read-only "-": never a request
+  // to clear a stored float.
+  const flEl=document.getElementById('ms-float-val');
+  if(!(flEl&&flEl.readOnly)){
+    const fl=(now.floatD==='')?null:parseFloat(now.floatD);
+    put('floatD','floatD',(fl===null||isNaN(fl))?null:fl);
+  }
   if(Object.keys(ov).length) MS_FIELD_OVERRIDE[key]=ov;
   else delete MS_FIELD_OVERRIDE[key];
 
