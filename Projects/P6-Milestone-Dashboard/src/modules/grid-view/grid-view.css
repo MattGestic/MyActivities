@@ -12,14 +12,18 @@
 .sg-screen--fixed{position:fixed}
 .sg-screen *,.sg-screen *::before,.sg-screen *::after{box-sizing:border-box}
 
-/* ---- header: two rows, after the Aconex register (Matt, 2026-09-27) ----
-   Row 1: back, title; Export anchored right. Row 2: search, counts, Select all,
-   core actions and the Tools menu; Add row anchored right. The title gives
-   way first (ellipsis); row 2 only wraps below 768px. */
-.sg-bar,.sg-bar2{display:flex;flex-wrap:nowrap;align-items:center;gap:var(--ctl-gap);
+/* ---- header: three rows, after the Aconex register (Matt, 2026-09-27) ----
+   Row 1: back, title. Row 2: search, Add row (split), Tools, Add to temp list
+   (split). Row 3: counts, Select all, the filter pill. Rows 2 and 3 start in
+   line with the title text, leaving the strip above the rail clear up to the
+   back arrow. Row 2 only wraps below 768px. */
+.sg-screen{--sg-indent:calc(var(--group-gap) + var(--icon-btn) + var(--ctl-gap))}
+.sg-bar,.sg-bar2,.sg-bar3{display:flex;flex-wrap:nowrap;align-items:center;gap:var(--ctl-gap);
   padding:var(--space-4) var(--group-gap);background:var(--color-bg-elevated)}
 .sg-bar{padding-bottom:0}
-.sg-bar2{border-bottom:1px solid var(--color-border-panel)}
+.sg-bar2,.sg-bar3{padding-left:var(--sg-indent)}
+.sg-bar2{padding-bottom:0}
+.sg-bar3{padding-top:var(--space-3);padding-bottom:var(--space-3);border-bottom:1px solid var(--color-border-panel)}
 .sg-bar-lead{display:flex;align-items:center;gap:var(--ctl-gap);min-width:0;flex:0 1 auto}
 .sg-spacer{flex:1 1 auto;min-width:0}
 .sg-title{margin:0;font-size:20px;line-height:28px;font-weight:600;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--color-text-primary)}
@@ -52,8 +56,20 @@
   background:var(--color-bg-elevated);color:var(--color-text-primary);border:1px solid var(--color-border-panel);
   border-radius:var(--radius-overlay);box-shadow:var(--shadow-2)}
 .sg-menu-pop[hidden]{display:none}
-.sg-temp-foot .sg-menu-pop{top:auto;bottom:calc(100% + var(--space-1))}
-.sg-temp-foot .sg-menu:last-child .sg-menu-pop{left:auto;right:0}
+.sg-temp-actions .sg-menu:last-child .sg-menu-pop{left:auto;right:0}
+/* Split button: main action and its options arrow, joined. */
+.sg-split{display:inline-flex}
+.sg-split-main{border-top-right-radius:0;border-bottom-right-radius:0}
+.sg-split-chev{display:inline-flex;align-items:center;justify-content:center;padding:0 var(--space-2);margin-left:-1px;
+  border-top-left-radius:0;border-bottom-left-radius:0}
+.sg-btn--primary.sg-split-chev{border-left-color:var(--color-btn-primary-hover-bg)}
+.sg-split-chev.is-open{background:var(--color-btn-secondary-pressed-bg)}
+.sg-btn--primary.sg-split-chev.is-open{background:var(--color-btn-primary-pressed-bg)}
+.sg-split-main{display:inline-flex;align-items:center;gap:var(--space-3)}
+/* My temp list mark: one vertical line, used on rows, the rail, the panel title and the button. */
+.sg-tempmark{display:inline-block;flex:0 0 auto;width:3px;height:14px;border-radius:var(--radius-pill);background:var(--color-accent)}
+.sg-btn:disabled .sg-tempmark{background:var(--color-text-label)}
+.sg-tempmark--rail{height:18px;width:4px}
 .sg-menu-item{display:flex;align-items:center;gap:var(--space-2);width:100%;min-height:calc(var(--ctl-h) + var(--space-2));
   padding:0 var(--space-5) 0 var(--space-3);border:0;background:transparent;font:inherit;font-size:var(--text-lg);text-align:left;
   color:var(--color-text-primary);cursor:pointer;white-space:nowrap}
@@ -113,12 +129,18 @@
   background:var(--color-bg-subtle);color:var(--color-text-primary);border-right:1px solid var(--color-border-panel)}
 .sg-temp[hidden]{display:none}
 .sg-temp-head{display:flex;align-items:center;gap:var(--ctl-gap);padding:var(--space-4) var(--space-5) 0}
-.sg-temp-title{margin:0;font-size:var(--text-lg);line-height:20px;font-weight:600;white-space:nowrap}
+.sg-temp-head [hidden]{display:none}
+.sg-temp-title{display:inline-flex;align-items:center;gap:var(--ctl-gap);margin:0;font-size:var(--text-lg);line-height:20px;font-weight:600;white-space:nowrap}
+.sg-list-head{flex:1 1 auto;min-width:0;display:flex}
+.sg-list-pick{flex:1 1 auto;min-width:0;font-weight:600}
+.sg-temp-actions{display:flex;align-items:center;gap:var(--ctl-gap);padding:var(--space-4) var(--space-5) var(--space-2)}
+.sg-temp-actions[hidden]{display:none}
 .sg-temp-sub{display:flex;align-items:center;flex-wrap:wrap;gap:var(--ctl-gap-tight) var(--ctl-gap);
   padding:var(--space-3) var(--space-5);border-bottom:1px solid var(--color-line-default)}
 .sg-temp-all{display:inline-flex;align-items:center;gap:var(--ctl-gap);cursor:pointer;color:var(--color-text-muted)}
 .sg-temp-items{flex:1 1 auto;min-height:0;overflow:auto;list-style:none;margin:0;padding:0;background:var(--color-bg-elevated)}
 .sg-temp-item{border-bottom:1px solid var(--color-line-hairline)}
+.sg-temp-item.sg-in-temp .sg-temp-item-lbl{box-shadow:inset 3px 0 0 var(--color-accent)}
 .sg-temp-item-lbl{display:flex;align-items:flex-start;gap:var(--ctl-gap);padding:var(--space-3) var(--space-5);cursor:pointer}
 .sg-temp-item-lbl:hover{background:var(--color-row-hover-bg)}
 .sg-temp-item-text{display:flex;flex-direction:column;min-width:0}
@@ -126,14 +148,34 @@
 .sg-temp-item-lists{color:var(--color-text-muted);font-size:var(--text-sm);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sg-temp-empty{padding:var(--space-5);color:var(--color-text-muted)}
 .sg-temp input[type=checkbox]{flex:0 0 16px;width:16px;height:16px;margin:0;color:inherit;accent-color:var(--color-accent)}
-.sg-temp-form,.sg-temp-confirm{padding:var(--space-4) var(--space-5);border-top:1px solid var(--color-line-default)}
-.sg-temp-form[hidden],.sg-temp-confirm[hidden],.sg-temp-foot[hidden]{display:none}
+.sg-temp-form,.sg-temp-confirm{padding:var(--space-3) var(--space-5) var(--space-4)}
+.sg-temp-form[hidden],.sg-temp-confirm[hidden]{display:none}
 .sg-temp-form-lbl{margin:0 0 var(--ctl-gap-tight);font-weight:600}
 .sg-temp-name{width:100%;margin-bottom:var(--ctl-gap)}
 .sg-temp-err{margin:0;padding:0 var(--space-5) var(--space-3);color:var(--color-crit-text)}
 .sg-temp-err:empty{display:none}
-.sg-temp-foot{display:flex;align-items:center;gap:var(--ctl-gap);padding:var(--space-4) var(--space-5);
-  border-top:1px solid var(--color-line-default);background:var(--color-bg-subtle)}
+
+/* ---- List column: collapsed indicator, or expanded names ---- */
+.sg-grid .slick-header-column.sg-lcol-h{padding:0 var(--space-2)}
+.sg-lcol-toggle{display:inline-flex;align-items:center;gap:var(--space-1);height:100%;padding:0 var(--space-1);border:0;
+  background:transparent;font:inherit;font-weight:600;color:inherit;cursor:pointer;border-radius:var(--radius-ctl)}
+.sg-lcol-toggle:hover{background:var(--color-btn-icon-hover-bg)}
+.sg-lcol-arrow{color:var(--color-accent-ink)}
+.sg-inlist{display:inline-flex;align-items:center;gap:var(--space-2);color:var(--color-accent-ink);font-weight:600}
+.sg-inlist-mark{display:inline-block;width:8px;height:8px;border-radius:var(--radius-pill);background:var(--color-accent)}
+/* Rows on My temp list: a vertical line to the left of the checkbox. */
+.sg-grid .slick-row.sg-in-temp .slick-cell.sg-check{box-shadow:inset 3px 0 0 var(--color-accent)}
+
+/* ---- dialog: centre screen, modal (Import milestones) ---- */
+.sg-scrim{position:absolute;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:var(--group-gap);
+  background:var(--color-scrim)}
+.sg-dialog{width:min(640px,100%);max-height:calc(100% - 2 * var(--group-gap));display:flex;flex-direction:column;
+  background:var(--color-dialog-elev);color:var(--color-text-primary);border:1px solid var(--color-border-panel);
+  border-radius:var(--radius-overlay);box-shadow:var(--shadow-3)}
+.sg-dialog-head{display:flex;align-items:center;justify-content:space-between;gap:var(--ctl-gap);
+  padding:var(--space-5) var(--group-gap) var(--space-4);border-bottom:1px solid var(--color-line-default)}
+.sg-dialog-title{margin:0;font-size:20px;line-height:28px;font-weight:600}
+.sg-dialog-body{padding:var(--group-gap);overflow:auto;font-size:var(--text-lg);line-height:20px}
 @media (max-width:767px){
   .sg-temp{position:absolute;top:0;bottom:0;left:40px;z-index:10;width:min(300px,calc(100% - 40px));box-shadow:var(--shadow-3)}
   .sg-body{position:relative}
@@ -181,7 +223,7 @@
   background:var(--color-bg-elevated);color:var(--color-text-primary)}
 
 @media (max-width:767px){
-  .sg-bar,.sg-bar2{padding-left:var(--space-4);padding-right:var(--space-4)}
+  .sg-bar,.sg-bar2,.sg-bar3{padding-left:var(--space-4);padding-right:var(--space-4)}
   .sg-bar2{flex-wrap:wrap}
   .sg-bar2 .sg-spacer{display:none}
   .sg-search{flex:1 1 100%;width:auto}

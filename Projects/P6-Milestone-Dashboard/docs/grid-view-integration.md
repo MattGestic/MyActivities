@@ -45,6 +45,11 @@ SRETGrid.open({
   onDelete(rowKeys),           // optional; shows "Delete selected"; return false to keep
   canEdit(rowKey, key),        // optional per-row refusal
   onBack(),                    // after the screen has closed
+  onImport(body, close),       // optional: Add row menu > Import milestones. The grid opens a centred
+                               //   modal dialog; mount the app's import form into body; return a
+                               //   cleanup that puts the form back. close() closes the dialog.
+  onTemplate(),                // optional: Download import template; default is an .xlsx of the
+                               //   column headers (derived List column excluded)
   exportName,                  // .xlsx file name, no extension
   ensureXLSX,                  // pass the app's ensureXLSX
   host,                        // element the screen covers
@@ -104,26 +109,47 @@ Purpose (Matt, 2026-09-27): keep track of important activities in groups, aggreg
 
 **Workflow (Matt, 2026-09-27):**
 1. Select rows in any grid, under any filter, and click **Add to temp list**. The count appears as a badge on the rail button.
-2. Open **My temp list** from the rail. It's a vertical panel docked left of the grid, collapsed by default. Tick some or all of its items, then use **Add to list ▾** to pick a saved list, or **New list…** to name a new one. The temp list stays as it is.
+2. Open **My temp list** from the rail. It's a vertical panel docked left of the grid, collapsed by default. Its action buttons sit under the title, above the items. Tick items, then use **Add to list ▾** to pick a saved list, or **New list…** to name a new one. The temp list stays as it is.
 3. **Remove** takes the ticked items off the temp list.
 4. **More ▾ > Clear temp list…** empties it, after an inline confirmation.
 
-**Temp list only** filters any grid down to the picked rows, so they can be selected together for a bulk action. It is on in two places: **Tools ▾** in the header, and **More ▾** in the panel. While it's on, a removable pill in the header shows the filter is active.
+**Shortcuts from the Add to temp list ▾ menu:**
+- Remove selected from My temp list.
+- **Add to "<list>"**, one entry per saved list. It adds the selected rows straight to that list, without going through the temp list.
+- Show only My temp list.
+
+**Saved lists** is the second rail button. It opens the same panel style, with a dropdown in the header to choose the list:
+- **Remove from list** affects only that list.
+- **More ▾** holds Show only these rows in the table and **Delete list…**, which asks first. Deleting a list leaves the items themselves unchanged.
+
+While a filter is on, a pill in row 3 names it ("My temp list only" or "List: <name>"). Clicking the pill clears it.
+
+**Grid columns:**
+- **List** is collapsed by default: a narrow column with a dot and the number of lists the row is in.
+  - The arrow in its header, or **Tools ▾ > Expand the List column**, widens it to show the list names.
+  - Clicking the arrow never sorts.
+- **Rows on My temp list** carry a vertical accent line to the left of their checkbox. The same line is the temp list's icon on the rail button, the panel title and the Add to temp list button.
 
 **Rules**, all in `SRETCollections` (`src/modules/collections/collections.js`) and nowhere else:
 - An item can be in any number of saved lists. That's the default.
 - `settings.singleList` implements the future setting **"Limit items to a single list"**. When it is on, adding an item to a list moves it out of the others, and the message names where it moved from. It is already implemented and tested, but has no UI yet: it's the one flag on the store (`SRETCollections.newStore({singleList:true})`, or set `store.settings.singleList`).
 - The temp list is independent of saved lists. It is working state for the session. Saved lists are annotation-layer data. Neither touches schedule data.
 
-**Screen layout (Matt, 2026-09-27, modelled on the Aconex document register).**
-- **Row 1:** back arrow and title, with **Export .xlsx** anchored right.
-- **Row 2:** search, the counts as "12 rows (3 selected)", a **Select all** link, the core **Add to temp list** button and a **Tools ▾** menu, with **Add row** anchored right.
-  - Tools holds the secondary actions: temp list only, remove selected rows from the temp list, delete selected rows.
-- **Left of the grid:** a slim rail with the My temp list button and its count badge.
-- **Panel footer:** only the core buttons show, **Add to list ▾** and **Remove**. Everything else is under **More ▾**.
-- **Messages:** status messages appear as a toast over the grid.
-- **Menus:** they open with a click or ArrowDown, move with the arrow keys, close with Esc (focus goes back to the button) or an outside click, and redraw their items on each open so the enabled and checked states are always current.
-- **Verification:** `tools/grid_view_check.py` measures the anchors and the one-line second row at 1440 px while a message is showing.
+**Screen layout (Matt, 2026-09-27).**
+- **Row 1:** back arrow and title.
+- **Row 2:** search, **Add row ▾**, **Tools ▾**, **Add to temp list ▾**. It starts in line with the title text, so the strip above the rail stays clear up to the back arrow.
+  - **Add row ▾** is a split button. Its menu holds Import milestones…, Export .xlsx and Download import template.
+  - Screens without Add row, such as the read-only schedule, show a plain Export .xlsx button in the same place.
+  - **Tools ▾** holds Expand the List column and Delete selected rows….
+  - **Add to temp list ▾** is also a split button.
+- **Row 3**, under the buttons: "12 rows (3 selected)", **Select all**, and the filter pill.
+- **Left of the grid:** the rail, with the My temp list button (count badge) and the Saved lists button.
+- **Import milestones** opens a centred modal dialog, not a side panel:
+  - Esc, the close button or a click on the backdrop closes it.
+  - Tab stays inside it, and focus returns to the menu button afterwards.
+  - At merge, `onImport(body, close)` moves the app's existing import form (Data & view > Import) into `body` and returns a cleanup that moves it back, so both places use one form.
+- **Messages:** status messages are a toast over the grid.
+- **Verification:** `tools/grid_view_check.py` measures the header alignment and the row order at 1440 px.
 
 **Wiring at merge:**
 - **Store.** One app global, e.g. `let USER_LISTS=SRETCollections.newStore();`. Persist `USER_LISTS.list` wherever `NOTE_COLLECTIONS` is persisted: publish state, the model and annotations `.json` export, and the mount path. `USER_LISTS.temp` is not persisted. **[CONFIRM WITH MATT]** whether the temp list should survive a reload.
@@ -144,7 +170,7 @@ Where exactly the button goes in Data & view (Sources, or View controls) is a la
 
 ## Verification at merge
 
-1. `python3 tools/grid_view_check.py` still passes on `prototypes/grid-view/demo.html` (unchanged modules). It covers scroll smoothness on 2,000 rows (every visible row present on fast scrolls, no engine wheel handling, transform positioning, per-step cost) the header anchors (Export and Add row), the Tools / Add to list / More menus, the vertical temp list panel, and the four-step lists workflow (temp list built across three filter states, Temp list only, ticked temp items into existing and new lists, one item in two lists, remove, clear with confirmation, the temp list carried across screens, and the single-list setting).
+1. `python3 tools/grid_view_check.py` still passes on `prototypes/grid-view/demo.html` (unchanged modules). It covers scroll smoothness on 2,000 rows (every visible row present on fast scrolls, no engine wheel handling, transform positioning, per-step cost) the three-row header aligned to the title, the Add row / Tools / Add to temp list menus, the import dialog, the collapsible List column and the temp row mark, both panel modes, and the four-step lists workflow (temp list built across three filter states, Temp list only, ticked temp items into existing and new lists, one item in two lists, remove, clear with confirmation, the temp list carried across screens, and the single-list setting).
 2. `python3 tools/colour_audit.py --strict` and `python3 tools/palette_swap_check.py` on the app, with a grid open for the swap (add the open to the swap check's setup the way it opens the milestone dialog).
 3. `python3 tools/theme_check.py` on the app.
 4. A merge-stage probe that clicks each of the three real entry points, edits one value per entry point and asserts the value lands in the right store and survives `scheduleRerender(true)` and a publish round trip. That probe does not exist yet: it can only be written against the merged file.

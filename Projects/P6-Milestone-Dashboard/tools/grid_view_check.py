@@ -78,15 +78,21 @@ MUTATIONS = {
     "single-list-setting-ignored": ("      if(single(store)) listsOf(store,r)", "      if(false) listsOf(store,r)"),
     "multi-list-broken": ("settings:{singleList:!!(opts&&opts.singleList)}", "settings:{singleList:true}"),
     "step2-takes-whole-temp": ("listsDone(M().addFromTemp(st,c.id,pickedRefs()));", "listsDone(M().addFromTemp(st,c.id,M().temp(st)));"),
-    # Header anchors (Matt, 2026-09-27): Export right in the title row, Add row right in the search row.
-    "export-not-in-title-row": [("h('span',{'class':'sg-spacer'}),exp]);", "]);"),
-                                ("h('span',{'class':'sg-spacer'}),add]);", "h('span',{'class':'sg-spacer'}),add,exp]);")],
-    "add-row-not-anchored": ("h('span',{'class':'sg-spacer'}),add]);", "add]);"),
-    "panel-open-by-default": ("'aria-label':'My temp list','data-sg':'temp-panel',hidden:true}", "'aria-label':'My temp list','data-sg':'temp-panel'}"),
+    # Header (Matt, 2026-09-27): rows 2 and 3 start in line with the title; counts sit under the buttons.
+    "search-not-indented": (".sg-bar2,.sg-bar3{padding-left:var(--sg-indent)}", ""),
+    "counts-above-buttons": ("[bar,bar2,bar3,confirm,body,msg]", "[bar,bar3,bar2,confirm,body,msg]"),
+    "panel-open-by-default": ("'data-sg':'panel',hidden:true}", "'data-sg':'panel'}"),
     "menu-stays-open": ("b.addEventListener('click',function(e){ e.stopPropagation(); close(true); it.onSelect(); });",
                         "b.addEventListener('click',function(e){ e.stopPropagation(); it.onSelect(); });"),
-    "temp-only-ignored": ("    if(s.tempOnly && item[L_TMP]!=='Yes') return false;\n", ""),
-    "filter-state-not-shown": ("    s.tmpOnlyPill.hidden=!s.tempOnly;\n", ""),
+    "import-in-side-panel": ("openDialog('Import milestones',function(body,close){ return s.opts.onImport(body,close); });",
+                             "s.opts.onImport(s.screen.querySelector('.sg-body'),function(){});"),
+    "list-toggle-sorts": ("if(b) b.addEventListener('click',function(ev){ ev.stopPropagation(); toggleListCol(); });",
+                          "if(b) b.addEventListener('click',function(ev){ toggleListCol(); });"),
+    "temp-row-mark-missing": ("m.cssClasses=((m.cssClasses||'')+' sg-in-temp').trim();", ""),
+    "panel-actions-below-items": ("    s.panel.appendChild(s.pnlItems);\n", "    s.panel.appendChild(s.pnlItems); s.panel.appendChild(s.pnlTempActions); s.panel.appendChild(s.pnlListActions);\n"),
+    "remove-from-list-removes-everywhere": ("listsDone(M().removeFromList(s.lists.store,s.listId,pickedRefs()));", "listsDone(M().unassign(s.lists.store,pickedRefs()));"),
+    "temp-only-ignored": ("    if(s.scope && !inScope(item)) return false;\n", ""),
+    "filter-state-not-shown": ("    s.pill.hidden=!s.scope;\n", ""),
     "resize-kills-edit": ("if(grid.getEditorLock().isActive()){ pending=true; return; }", ""),
     "mutates-caller": ("dv.setItems((opts.rows||[]).map(function(r){ return Object.assign({},r); }),rowKey);",
                        "dv.setItems((opts.rows||[]),rowKey);"),
@@ -240,7 +246,7 @@ try{
   ok('userms: title', $('.sg-title').textContent==='User milestones', $('.sg-title').textContent);
   ok('userms: row count', visibleCount()===F.userms.length && $('[data-sg=count]').textContent===F.userms.length+' rows',
      $('[data-sg=count]').textContent);
-  ok('userms: My temp list panel collapsed on open; rail shows collapsed', $('[data-sg=temp-panel]').hidden && $('[data-sg=temp-open]').getAttribute('aria-expanded')==='false');
+  ok('userms: My temp list panel collapsed on open; rail shows collapsed', $('[data-sg=panel]').hidden && $('[data-sg=temp-open]').getAttribute('aria-expanded')==='false');
   ok('userms: Add row present; Delete in the Tools menu', !!$('[data-sg=add]') && !!(await menuItem('tools','delete'))); await menuClose('tools');
 
   // keyboard navigation
@@ -252,7 +258,7 @@ try{
 
   // D-16 sizes
   { const ctl=parseFloat(getComputedStyle($('.sg-screen')).getPropertyValue('--ctl-h'));
-    const hs=[h($('[data-sg=search]')),h($('[data-sg=export]')),h($('[data-sg=add]')),h($('.sg-hfilter'))];
+    const hs=['search','add','add-more','tools','temp-add','temp-add-more'].map(k=>h($('[data-sg='+k+']'))).concat([h($('.sg-hfilter'))]);
     const rowH=h(eng().grid.getCellNode(0,1).parentNode);
     ok('D-16: search, buttons and filters are --ctl-h tall', hs.every(x=>Math.abs(x-ctl)<=0.5), {ctl:ctl,hs:hs});
     ok('D-16: grid row is --ctl-h tall', Math.abs(rowH-ctl)<=0.5, rowH); }
@@ -399,45 +405,68 @@ try{
     ok('Remove calls onDelete with the selected keys', count('onDelete')===d0+1 && JSON.stringify(e.args[0].slice().sort())===JSON.stringify(keys), [e&&e.args,keys]);
     ok('deleted rows leave the grid', visibleCount()===n0-2 && keys.every(k=>!eng().dataView.getItemById(k))); }
 
-  // Header (Matt, 2026-09-27, after the Aconex register): row 1 is the title with Export
-  // anchored right; row 2 is search, counts and actions with Add row anchored right.
+  // Header (Matt, 2026-09-27): row 1 back and title; row 2 search, Add row (split), Tools,
+  // Add to temp list (split), starting in line with the title text; row 3 counts and Select all.
   function headerLayout(){
     const box=e=>e.getBoundingClientRect(), mid=r=>r.top+r.height/2, bad=[];
-    const scr=box($('.sg-screen')), t=box($('.sg-title')), ex=box($('[data-sg=export]')), se=box($('[data-sg=search]'));
-    const padR=parseFloat(getComputedStyle($('.sg-bar')).paddingRight);
-    if(Math.abs(mid(ex)-mid(t))>3) bad.push(['export not in the title row',Math.round(mid(ex)-mid(t))]);
-    if(Math.abs(scr.right-padR-ex.right)>1) bad.push(['export not anchored right',Math.round(scr.right-padR-ex.right)]);
-    const add=$('[data-sg=add]');
-    if(add){ const a=box(add);
-      if(Math.abs(mid(a)-mid(se))>3) bad.push(['add row not in the search row',Math.round(mid(a)-mid(se))]);
-      if(Math.abs(scr.right-padR-a.right)>1) bad.push(['add row not anchored right',Math.round(scr.right-padR-a.right)]); }
-    $$('.sg-bar2 > *').filter(e=>e.offsetParent&&!e.classList.contains('sg-spacer')).forEach(e=>{
-      if(Math.abs(mid(box(e))-mid(se))>3) bad.push(['row 2 wrapped',e.dataset.sg||e.className]); });
-    if(mid(se)<=mid(t)+8) bad.push(['search not below the title']);
-    return {bad:bad,rows:[Math.round(mid(t)),Math.round(mid(se))]};
+    const t=box($('.sg-title')), se=box($('[data-sg=search]')), cnt=box($('[data-sg=count]')), bk=box($('[data-sg=back]'));
+    if(Math.abs(se.left-t.left)>1) bad.push(['search not in line with the title text',Math.round(se.left-t.left)]);
+    if(Math.abs(cnt.left-t.left)>1) bad.push(['counts not in line with the title text',Math.round(cnt.left-t.left)]);
+    if(se.left<=bk.right) bad.push(['search not clear of the back arrow column']);
+    const order=['search','add','add-more','tools','temp-add','temp-add-more'].map(s=>$('[data-sg='+s+']')).filter(Boolean);
+    for(let i=1;i<order.length;i++){ const a=box(order[i-1]), b=box(order[i]);
+      if(Math.abs(mid(a)-mid(b))>3) bad.push(['row 2 not on one line',order[i].dataset.sg]);
+      if(b.left<a.right-1) bad.push(['row 2 order',order[i].dataset.sg]); }
+    if(!(mid(t)<mid(se)&&mid(se)<mid(cnt))) bad.push(['rows not in order: title, buttons, counts',[mid(t),mid(se),mid(cnt)].map(Math.round)]);
+    return {bad:bad,rows:[mid(t),mid(se),mid(cnt)].map(Math.round)};
   }
 
-  // My temp list workflow (Matt, 2026-09-27):
-  //   1 select and add to the temp list, 2 open the panel, select temp items, add to a saved list,
-  //   3 remove selected items from the temp list, 4 clear the temp list
-  // Layout: a vertical panel docked left, opened from the rail; core buttons only, the rest in menus.
+  // My temp list and saved lists (Matt, 2026-09-27)
   { const L=window.DEMO_LISTS, M=SRETCollections, btn=n=>$('[data-sg='+n+']');
     const msg=()=>$('[data-sg=msg]').textContent, n=visibleCount(), sorted=a=>a.slice().sort();
     const itemsIn=v=>eng().dataView.getItems().filter(i=>i._tmp===v);
-    const boxes=()=>$$('[data-sg=temp-items] input[type=checkbox]');
+    const boxes=()=>$$('[data-sg=panel-items] input[type=checkbox]');
     const pick=async idx=>{ for(const b of boxes()) if(b.checked) b.click(); for(const i of idx) boxes()[i].click(); await sleep(10); };
     const labels=m=>$$('[data-sg='+m+'-menu] .sg-menu-item').map(b=>b.textContent.replace(/^✓/,''));
+    const rowIdx=id=>eng().dataView.getIdxById(id);
     eng().grid.setSelectedRows([]); await sleep(10);
-    ok('panel collapsed; rail button shows collapsed; badge hidden at 0', btn('temp-panel').hidden &&
-       btn('temp-open').getAttribute('aria-expanded')==='false' && btn('temp-count').hidden);
+    ok('panel collapsed; rail buttons show collapsed; badge hidden at 0', btn('panel').hidden &&
+       btn('temp-open').getAttribute('aria-expanded')==='false' && btn('lists-open').getAttribute('aria-expanded')==='false' && btn('temp-count').hidden);
+    ok('Temp column dropped; List column present', colIdx('_tmp')===-1 && colIdx('_list')===1);
+    // Add row split button and its menu
+    const am=await menuItem('add-more','import'); const aml=labels('add-more'); await menuClose('add-more');
+    ok('Add row is a split button; its menu: Import milestones, Export .xlsx, Download import template', !!btn('add') && !!am &&
+       aml.join('|')==='Import milestones…|Export .xlsx|Download import template' && btn('add').parentNode===btn('add-more').parentNode, aml);
+    window.__xlsx={}; await menuPick('add-more','export'); await sleep(20);
+    ok('Add row menu > Export .xlsx writes the visible rows', window.__xlsx.name==='User milestones.xlsx' && (window.__xlsx.aoa||[]).length===n+1, window.__xlsx.name);
+    window.__xlsx={}; await menuPick('add-more','template'); await sleep(20);
+    ok('Add row menu > Download import template: the column headers only, without derived columns', window.__xlsx.name==='User milestones import template.xlsx' &&
+       JSON.stringify(window.__xlsx.aoa)===JSON.stringify([F.cols.userms.map(c=>c.label)]), [window.__xlsx.name,window.__xlsx.aoa]);
+    // Import milestones: centred modal dialog hosting the import form
+    await menuPick('add-more','import');
+    const dlg=btn('dialog'), dr=dlg&&dlg.getBoundingClientRect(), sr=$('.sg-screen').getBoundingClientRect();
+    ok('Import milestones opens a centred modal dialog (not a side panel)', !!dlg && dlg.getAttribute('role')==='dialog' && dlg.getAttribute('aria-modal')==='true' &&
+       Math.abs((dr.left+dr.right)/2-(sr.left+sr.right)/2)<=2 && Math.abs((dr.top+dr.bottom)/2-(sr.top+sr.bottom)/2)<=2 && $('.sg-dialog-title').textContent==='Import milestones',
+       dr&&[dr.left,dr.right,dr.top,dr.bottom]);
+    R.notes.swap_dialog=swapEscapes('light/import-dialog');
+    ok('the dialog hosts the import form, focus inside', !!$('[data-sg=dialog-body] [data-sg=demo-import-file]') && dlg.contains(document.activeElement) &&
+       lastLog('onImport').args[0]==='open');
+    const f=Array.from(dlg.querySelectorAll('button,input')); f[f.length-1].focus();
+    key(document.activeElement,'Tab'); const wrapped=document.activeElement===f[0];
+    key(document.activeElement,'Escape'); await sleep(10);
+    ok('dialog: Tab stays inside; Esc closes, runs the cleanup, focus returns to the menu button', wrapped && !btn('dialog') &&
+       lastLog('onImport').args[0]==='closed' && document.activeElement===btn('add-more'), [wrapped,document.activeElement&&document.activeElement.dataset.sg]);
+    await menuPick('add-more','import'); btn('demo-import-go').click(); await sleep(10);
+    ok('dialog: the form closes it when done', !btn('dialog') && LOG().filter(e=>e.kind==='onImport').slice(-2).map(e=>e.args[0]).join()==='import,closed');
+    // 1: add to the temp list, across filter states
     ok('1: Add to temp list disabled with nothing selected', btn('temp-add').disabled);
     await setFilter('type','INT'); const intKeys=[0,1].map(r=>eng().dataView.getItem(r).id);
     eng().grid.setSelectedRows([0,1]); await sleep(10);
     const c0=count('onListsChange'); btn('temp-add').click(); await sleep(20);
     ok('1: Add to temp list takes exactly the selected rows (filter state 1)', JSON.stringify(sorted(M.temp(L)))===JSON.stringify(sorted(intKeys.map(k=>'activity:'+k))) && count('onListsChange')===c0+1, M.temp(L));
     const lay=headerLayout();
-    ok('header: Export anchored right in the title row; Add row anchored right in the search row; row 2 on one line (1440px, message showing)', lay.bad.length===0, lay);
-    ok('status message is a toast over the grid, not in the header', !$('.sg-bar [data-sg=msg]') && !$('.sg-bar2 [data-sg=msg]') &&
+    ok('header: search in line with the title text; row 2 is search, Add row, Tools, Add to temp list on one line; counts below the buttons (1440px)', lay.bad.length===0, lay);
+    ok('status message is a toast over the grid, not in the header', !$('.sg-bar [data-sg=msg],.sg-bar2 [data-sg=msg],.sg-bar3 [data-sg=msg]') &&
        btn('msg').classList.contains('is-shown') && getComputedStyle(btn('msg')).position==='absolute' && msg().indexOf('Added 2 items to My temp list')===0, msg());
     await setFilter('type','CLI'); const cliKey=eng().dataView.getItem(0).id;
     eng().grid.setSelectedRows([0]); await sleep(10); btn('temp-add').click(); await sleep(20);
@@ -446,93 +475,122 @@ try{
     const picked=intKeys.concat([cliKey]);
     ok('1: builds across three filter states, no duplicates', M.temp(L).length===3 && new Set(M.temp(L)).size===3 &&
        againMsg==='No new items added to My temp list. 1 item was already on it. It now holds 3 items.', [M.temp(L),againMsg]);
-    ok('1: rail badge shows 3; Temp column marks exactly the picked rows', btn('temp-count').textContent==='3' && !btn('temp-count').hidden &&
-       JSON.stringify(itemsIn('Yes').map(i=>i.id).sort())===JSON.stringify(sorted(picked)));
-    // Tools menu: the secondary actions
-    const tFirst=await menuItem('tools','temp-only'), tl=labels('tools');
-    ok('Tools menu: Show only rows on My temp list, Remove selected rows from My temp list, Delete selected rows', tl.join('|')===
-       'Show only rows on My temp list|Remove selected rows from My temp list|Delete selected rows…' && tFirst.getAttribute('aria-checked')==='false', tl);
-    const focused=document.activeElement===tFirst; key(tFirst,'Escape'); await sleep(10);
-    ok('Tools menu: focus on the first item; Esc closes it and returns focus to Tools', focused && $('[data-sg=tools-menu]').hidden && document.activeElement===btn('tools'));
-    await menuPick('tools','temp-only');
-    const chk=(await menuItem('tools','temp-only')).getAttribute('aria-checked'); await menuClose('tools');
-    ok('Temp list only: exactly the 3 picked rows; a pill shows the filter is on; the menu item shows checked', visibleCount()===3 &&
-       !btn('temp-only-pill').hidden && chk==='true', [visibleCount(),chk]);
-    btn('temp-only-pill').click(); await sleep(20);
-    ok('clicking the pill turns the filter off; all rows back', visibleCount()===n && btn('temp-only-pill').hidden);
-    // 2: open the vertical panel from the rail
+    // the temp mark: a vertical line left of the checkbox, the same mark on the rail, title and button
+    const markRows=eng().dataView.getItems().filter(i=>{ const n0=eng().grid.getCellNode(rowIdx(i.id),0); return n0&&n0.parentNode.classList.contains('sg-in-temp'); }).map(i=>i.id).sort();
+    const cs=getComputedStyle(eng().grid.getCellNode(rowIdx(cliKey),0)), cs0=getComputedStyle(eng().grid.getCellNode(rowIdx(eng().dataView.getItems().find(i=>picked.indexOf(i.id)<0).id),0));
+    const acc=getComputedStyle(btn('temp-open').querySelector('.sg-tempmark')).backgroundColor;
+    ok('1: temp rows marked by a vertical line left of the checkbox (exactly the picked rows)', JSON.stringify(markRows)===JSON.stringify(sorted(picked)) &&
+       /3px 0px 0px 0px inset/.test(cs.boxShadow) && cs.boxShadow.indexOf(acc)>=0 && !/3px 0px 0px 0px inset/.test(cs0.boxShadow), [markRows,cs.boxShadow]);
+    ok('1: the same mark on the rail button, the Add to temp list button and the panel title', !!btn('temp-add').querySelector('.sg-tempmark') &&
+       !!btn('temp-title').querySelector('.sg-tempmark') && getComputedStyle(btn('temp-add').querySelector('.sg-tempmark')).backgroundColor===acc);
+    ok('1: rail badge shows 3', btn('temp-count').textContent==='3' && !btn('temp-count').hidden);
+    // Add to temp list split menu
+    eng().grid.setSelectedRows([rowIdx(cliKey)]); await sleep(10);
+    const tm=await menuItem('temp-add-more','temp-only'); const tml=labels('temp-add-more');
+    ok('Add to temp list menu: Remove selected from My temp list, Add to each saved list, Show only My temp list',
+       tml.join('|')==='Remove selected from My temp list|Add to "Site walk 3-Oct"|Add to "Owner review items"|Show only My temp list' && tm.getAttribute('aria-checked')==='false', tml);
+    $('[data-sg=temp-add-more-menu] [data-sg-list="UL-002"]').click(); await sleep(20);
+    ok('Add to temp list menu > Add to a list: adds the selected rows straight to that list', JSON.stringify(M.itemsOf(L,'UL-002'))===JSON.stringify(['activity:'+cliKey]) &&
+       msg()==='Added 1 item to "Owner review items".', msg());
+    await menuPick('temp-add-more','temp-only');
+    ok('Show only My temp list: exactly the 3 picked rows; the pill names the filter', visibleCount()===3 && !btn('scope-pill').hidden &&
+       btn('scope-pill').textContent.indexOf('My temp list only')===0, visibleCount());
+    btn('scope-pill').click(); await sleep(20);
+    ok('clicking the pill clears the filter; all rows back', visibleCount()===n && btn('scope-pill').hidden);
+    eng().grid.setSelectedRows([]); await sleep(10);
+    // List column: collapsed indicator, expandable
+    const li=colIdx('_list'), lcol=()=>eng().grid.getColumns()[li], cellL=()=>eng().grid.getCellNode(rowIdx(cliKey),li);
+    const sortedBefore=JSON.stringify(eng().grid.getSortColumns());
+    ok('List column collapsed: narrow, an indicator with the count, the arrow shows collapsed', lcol().width<=60 &&
+       !!cellL().querySelector('.sg-inlist-mark') && cellL().textContent==='1' && btn('list-col-toggle').getAttribute('aria-expanded')==='false', [lcol().width,cellL().innerHTML]);
+    btn('list-col-toggle').click(); await sleep(20);
+    ok('List column expanded: wide, the list names, arrow shows expanded; the click did not sort', lcol().width>=160 && cellL().textContent==='Owner review items' &&
+       btn('list-col-toggle').getAttribute('aria-expanded')==='true' && JSON.stringify(eng().grid.getSortColumns())===sortedBefore, [lcol().width,cellL().textContent]);
+    await menuPick('tools','list-col');
+    ok('Tools > Expand the List column toggles it back', lcol().width<=60 && btn('list-col-toggle').getAttribute('aria-expanded')==='false');
+    // 2: My temp list panel, actions above the items
     btn('temp-open').click(); await sleep(30);
-    const refs=boxes().map(b=>b.getAttribute('data-sg-temp-item'));
-    const pr=btn('temp-panel').getBoundingClientRect(), gr=$('.sg-grid').getBoundingClientRect();
-    ok('2: the rail opens a vertical panel docked left of the grid, listing the temp items', !btn('temp-panel').hidden &&
+    const refs=boxes().map(b=>b.getAttribute('data-sg-item'));
+    const pr=btn('panel').getBoundingClientRect(), gr=$('.sg-grid').getBoundingClientRect();
+    ok('2: the rail opens a vertical panel docked left of the grid, listing the temp items', !btn('panel').hidden &&
        btn('temp-open').getAttribute('aria-expanded')==='true' && btn('temp-open').classList.contains('is-open') &&
        pr.height>pr.width && Math.abs(pr.right-gr.left)<=1 && JSON.stringify(sorted(refs))===JSON.stringify(sorted(M.temp(L))) &&
-       btn('temp-summary').textContent==='3 items, 3 on this screen', [pr.width,pr.height,pr.right,gr.left,btn('temp-summary').textContent]);
-    eng().requestResize(); await sleep(30);
-    ok('2: grid resizes to sit beside the panel', Math.abs($('.sg-grid .slick-viewport').clientWidth-$('.sg-grid').clientWidth)<=20,
-       [$('.sg-grid .slick-viewport').clientWidth,$('.sg-grid').clientWidth]);
-    const foot=$$('.sg-temp-foot > *').map(e=>e.classList.contains('sg-spacer')?'spacer':(e.dataset.sg||e.querySelector('[data-sg]').dataset.sg));
-    ok('2: only the core buttons show: Add to list, Remove, and a More menu', JSON.stringify(foot)===JSON.stringify(['temp-addto','temp-remove','spacer','temp-more']), foot);
-    ok('2: items are named (ID and name), with their lists', $$('.sg-temp-item-name').every(e=>/^(USR|SNIP)-\d+\s+\S/.test(e.textContent)) &&
-       $$('.sg-temp-item-lists').every(e=>e.textContent==='No list'), $$('.sg-temp-item-name').map(e=>e.textContent));
-    ok('2: Add to list and Remove disabled until temp items are selected', btn('temp-addto').disabled && btn('temp-remove').disabled);
+       btn('panel-summary').textContent==='3 items, 3 on this screen', [pr.width,pr.height,btn('panel-summary').textContent]);
+    const ab=btn('temp-addto').getBoundingClientRect(), tb=btn('temp-title').getBoundingClientRect(), ib=btn('panel-items').getBoundingClientRect();
+    ok('2: action buttons sit below the title and above the items', ab.top>=tb.bottom && ab.bottom<=ib.top, [tb.bottom,ab.top,ab.bottom,ib.top]);
+    ok('2: Add to list and Remove disabled until items are selected', btn('temp-addto').disabled && btn('temp-remove').disabled);
     R.notes.swap_temp=swapEscapes('light/temp-panel');
     await pick([0,1]); const two=refs.slice(0,2);
-    ok('2: selecting temp items shows the count and a partial select-all', btn('temp-picked').textContent==='(2 selected)' && btn('temp-all').indeterminate);
+    ok('2: selecting items shows the count and a partial select-all', btn('panel-picked').textContent==='(2 selected)' && btn('panel-all').indeterminate);
     btn('temp-addto').click(); await sleep(10);
     const al=labels('temp-addto');
-    ok('2: Add to list menu lists the saved lists and New list…', al.join('|')==='Site walk 3-Oct (0)|Owner review items (0)|New list…', al);
+    ok('2: Add to list menu lists the saved lists and New list…', al.join('|')==='Site walk 3-Oct (0)|Owner review items (1)|New list…', al);
     R.notes.swap_menu=swapEscapes('light/add-to-list-menu');
     $('[data-sg=temp-addto-menu] [data-sg-list="UL-001"]').click(); await sleep(20);
     const sw=L.list.find(c=>c.id==='UL-001');
-    ok('2: adds only the selected temp items to the saved list; temp list unchanged; menu closed', JSON.stringify(sorted(sw.items))===JSON.stringify(sorted(two)) &&
+    ok('2: adds only the selected temp items; temp list unchanged; menu closed', JSON.stringify(sorted(sw.items))===JSON.stringify(sorted(two)) &&
        M.temp(L).length===3 && msg()==='Added 2 items to "Site walk 3-Oct".' && btn('temp-addto-menu').hidden, [msg(),sw.items]);
-    // 2 (new list), and one item in two lists
     await pick([1,2]);
     await menuPick('temp-addto','temp-newlist');
     const nm=btn('temp-name');
-    ok('2: New list… opens the name form (footer hidden) with the name field focused', !btn('temp-newlist-form').hidden && document.activeElement===nm &&
-       !$('.sg-temp-foot').offsetParent);
+    ok('2: New list… opens the name form with the field focused', !btn('temp-newlist-form').hidden && document.activeElement===nm);
     const errs=[];
-    for(const v of ['  ','site WALK 3-oct','My temp list']){ nm.value=v; key(nm,'Enter'); await sleep(10); errs.push(btn('temp-err').textContent); }
+    for(const v of ['  ','site WALK 3-oct','My temp list']){ nm.value=v; key(nm,'Enter'); await sleep(10); errs.push(btn('panel-err').textContent); }
     ok('2: empty, duplicate and reserved names refused; nothing changes', errs[0]==='Enter a name for the list.' && /already exists/.test(errs[1]) &&
        /used by the temp list/.test(errs[2]) && M.list(L).length===2, errs);
     nm.value='Punch list'; btn('temp-newlist-save').click(); await sleep(20);
     const pl=L.list.find(c=>c.name==='Punch list');
-    ok('2: new list made from the selected temp items; form closes', !!pl && JSON.stringify(sorted(pl.items))===JSON.stringify(sorted(refs.slice(1,3))) &&
-       msg()==='Saved 2 items as the new list "Punch list".' && btn('temp-newlist-form').hidden && !!$('.sg-temp-foot').offsetParent, [msg(),pl&&pl.items]);
-    const both=refs[1], bothId=both.replace('activity:','');
-    ok('multiple lists per item (default): one item in both lists, List column and panel show both',
-       JSON.stringify(M.membership(L,both))===JSON.stringify(['Site walk 3-Oct','Punch list']) &&
-       cellText(eng().dataView.getIdxById(bothId),'_list')==='Site walk 3-Oct, Punch list' &&
-       $$('.sg-temp-item').some(li=>li.querySelector('input').getAttribute('data-sg-temp-item')===both && li.querySelector('.sg-temp-item-lists').textContent==='Site walk 3-Oct, Punch list'),
-       M.membership(L,both));
-    btn('temp-all').click(); await sleep(10);
-    btn('temp-addto').click(); await sleep(10); $('[data-sg=temp-addto-menu] [data-sg-list="UL-001"]').click(); await sleep(20);
-    ok('2: re-adding is idempotent', sw.items.length===3 && msg()==='Added 1 item to "Site walk 3-Oct". 2 items were already in it.', msg());
-    // 3: remove selected items from the temp list
+    ok('2: new list made from the selected items; form closes', !!pl && JSON.stringify(sorted(pl.items))===JSON.stringify(sorted(refs.slice(1,3))) &&
+       msg()==='Saved 2 items as the new list "Punch list".' && btn('temp-newlist-form').hidden, [msg(),pl&&pl.items]);
+    const both=refs[1];
+    ok('multiple lists per item: one item in both lists, shown in the panel', JSON.stringify(M.membership(L,both))===JSON.stringify(['Site walk 3-Oct','Punch list']) &&
+       $$('.sg-temp-item').some(li=>li.querySelector('input').getAttribute('data-sg-item')===both && li.querySelector('.sg-temp-item-lists').textContent==='Site walk 3-Oct, Punch list'));
+    // 3: remove from the temp list
     const lists0=JSON.stringify(L.list);
-    await pick([0]); const gone=boxes()[0].getAttribute('data-sg-temp-item');
+    await pick([0]); const gone=boxes()[0].getAttribute('data-sg-item');
     btn('temp-remove').click(); await sleep(20);
     ok('3: Remove takes only the selected items off the temp list; saved lists unchanged', M.temp(L).length===2 && !M.inTemp(L,gone) &&
        boxes().length===2 && JSON.stringify(L.list)===lists0 && btn('temp-count').textContent==='2', M.temp(L));
-    // More menu: the table filter and Clear
+    // 4: clear, via More, with inline confirmation
     await menuItem('temp-more','temp-clear'); const ml=labels('temp-more'); await menuClose('temp-more');
-    ok('More menu: Show only these rows in the table, Clear temp list', ml.join('|')==='Show only these rows in the table|Clear temp list…', ml);
-    // 4: clear, with inline confirmation
+    ok('More: Show only these rows in the table, Clear temp list', ml.join('|')==='Show only these rows in the table|Clear temp list…', ml);
     await menuPick('temp-more','temp-clear');
-    const cf=btn('temp-confirm'), cb=$$('button',cf).map(b=>b.textContent);
+    const cf=btn('panel-confirm'), cb=$$('button',cf).map(b=>b.textContent);
     ok('4: Clear asks first, with the count; Cancel left, Clear right (danger)', !cf.hidden &&
-       $('.sg-temp-confirm .sg-confirm-msg').textContent==='Clear My temp list (2 items)? Saved lists are not changed.' &&
+       $('[data-sg=panel-confirm] .sg-confirm-msg').textContent==='Clear My temp list (2 items)? Saved lists are not changed.' &&
        cb.join('|')==='Cancel|Clear' && $$('button',cf)[1].classList.contains('sg-btn--danger'), cb);
     key(document.activeElement,'Escape'); await sleep(10);
-    ok('4: Esc cancels the clear; panel stays open', cf.hidden && !btn('temp-panel').hidden && M.temp(L).length===2);
+    ok('4: Esc cancels the clear; panel stays open', cf.hidden && !btn('panel').hidden && M.temp(L).length===2);
     await menuPick('temp-more','temp-clear'); btn('temp-clear-confirm').click(); await sleep(20);
     ok('4: Clear empties the temp list and leaves saved lists unchanged', M.temp(L).length===0 && JSON.stringify(L.list)===lists0 &&
        msg()==='Cleared My temp list (2 items).' && itemsIn('Yes').length===0 && btn('temp-count').hidden && $$('.sg-temp-empty').length===1, msg());
-    key(btn('temp-all'),'Escape'); await sleep(10);
-    ok('panel: Esc collapses it, rail shows collapsed, focus back on the rail button', btn('temp-panel').hidden && btn('temp-open').getAttribute('aria-expanded')==='false' &&
-       !btn('temp-open').classList.contains('is-open') && document.activeElement===btn('temp-open'));
+    // Saved lists: the second rail button, same panel style, a dropdown picks the list
+    btn('lists-open').click(); await sleep(20);
+    const opts=Array.from(btn('list-pick').options).map(o=>o.textContent);
+    ok('Saved lists: the rail button switches the panel; the header is a dropdown of saved lists', !btn('panel').hidden && btn('panel').getAttribute('data-mode')==='list' &&
+       btn('lists-open').getAttribute('aria-expanded')==='true' && btn('temp-open').getAttribute('aria-expanded')==='false' &&
+       opts.join('|')==='Site walk 3-Oct (2)|Owner review items (1)|Punch list (2)' && btn('temp-title').offsetParent===null, opts);
+    const lb=btn('list-remove').getBoundingClientRect(), pk=btn('list-pick').getBoundingClientRect(), ib2=btn('panel-items').getBoundingClientRect();
+    ok('Saved lists: actions below the header dropdown and above the items', lb.top>=pk.bottom && lb.bottom<=ib2.top);
+    btn('list-pick').value=pl.id; btn('list-pick').dispatchEvent(new Event('change')); await sleep(10);
+    ok('Saved lists: choosing a list shows its items', JSON.stringify(sorted(boxes().map(b=>b.getAttribute('data-sg-item'))))===JSON.stringify(sorted(pl.items)));
+    await menuPick('list-more','list-only-panel');
+    ok('Saved lists > More > Show only these rows: the grid shows that list; the pill names it', visibleCount()===pl.items.length &&
+       btn('scope-pill').textContent.indexOf('List: Punch list')===0, [visibleCount(),btn('scope-pill').textContent]);
+    btn('scope-pill').click(); await sleep(20);
+    await pick([0]); const rm=boxes()[0].getAttribute('data-sg-item'), keepSw=JSON.stringify(sw.items);
+    btn('list-remove').click(); await sleep(20);
+    ok('Saved lists > Remove from list: only this list changes', pl.items.length===1 && pl.items.indexOf(rm)<0 && JSON.stringify(sw.items)===keepSw &&
+       msg()==='Removed 1 item from "Punch list".', msg());
+    await menuPick('list-more','list-delete');
+    ok('Saved lists > Delete list asks first', !btn('panel-confirm').hidden && /^Delete the list "Punch list" \(1 item\)\?/.test($('[data-sg=panel-confirm] .sg-confirm-msg').textContent));
+    btn('list-delete-confirm').click(); await sleep(20);
+    ok('Saved lists > Delete list removes the list; the dropdown moves to another list', !L.list.some(c=>c.name==='Punch list') &&
+       Array.from(btn('list-pick').options).length===2 && btn('list-pick').value==='UL-001' &&
+       msg()==='Deleted the list "Punch list" (1 item). The items themselves are unchanged.', msg());
+    key(btn('list-pick'),'Escape'); await sleep(10);
+    ok('panel: Esc collapses it, rail shows collapsed, focus back on the rail button', btn('panel').hidden && btn('lists-open').getAttribute('aria-expanded')==='false' &&
+       document.activeElement===btn('lists-open'));
     eng().grid.setSelectedRows([]); await sleep(10); }
 
   // idle palette swap, both themes, and theming differs between themes
@@ -543,8 +601,8 @@ try{
     const bgD=getComputedStyle($('.sg-grid .slick-row')).backgroundColor, hdD=getComputedStyle($('.sg-bar')).backgroundColor, txD=getComputedStyle($('.sg-grid .slick-cell')).color;
     document.documentElement.setAttribute('data-theme','light'); await sleep(10);
     ok('light and dark both themed (row, toolbar, text differ)', bgL!==bgD && hdL!==hdD && txL!==txD, {bgL,bgD,hdL,hdD,txL,txD});
-    const esc=[].concat(R.notes.swap_idle_light,R.notes.swap_idle_dark,R.notes.swap_edit_light,R.notes.swap_edit_dark,R.notes.swap_confirm,R.notes.swap_temp,R.notes.swap_menu);
-    ok('palette swap: every painted colour in the screen moves with --pal-* (idle, editing, confirm, temp list panel, open menu; both themes)', esc.length===0, esc.slice(0,12)); }
+    const esc=[].concat(R.notes.swap_idle_light,R.notes.swap_idle_dark,R.notes.swap_edit_light,R.notes.swap_edit_dark,R.notes.swap_confirm,R.notes.swap_temp,R.notes.swap_menu,R.notes.swap_dialog);
+    ok('palette swap: every painted colour in the screen moves with --pal-* (idle, editing, confirm, panel, open menu, dialog; both themes)', esc.length===0, esc.slice(0,12)); }
 
   // back
   { const b0=count('onBack'); const launcher=$('#go-userms'); launcher.focus();
@@ -570,7 +628,7 @@ try{
   { DEMO_OPEN('sched'); await sleep(20);
     ok('sched: title and row count', $('.sg-title').textContent==='Schedule activities' && visibleCount()===F.sched.length && F.sched.length>100,
        [visibleCount(),F.sched.length]);
-    ok('sched: My temp list panel collapsed on open', $('[data-sg=temp-panel]').hidden);
+    ok('sched: panel collapsed on open; a plain Export button (no Add row)', $('[data-sg=panel]').hidden && !!$('[data-sg=export]') && !$('[data-sg=add-more]'));
     ok('sched: no Add, no Delete (read-only schedule)', !$('[data-sg=add]') && !(await menuItem('tools','delete'))); await menuClose('tools');
     const res=[]; for(const k of ['id','name','start','finish','float']) res.push(await tryOpenEditor(1,k));
     ok('sched: schedule columns refuse edits (N=5)', res.every(x=>x===false), res);
@@ -591,7 +649,7 @@ try{
     await SRETGrid.exportVisible();
     const aoa=window.__xlsx.aoa||[];
     ok('export: header row plus exactly the visible rows', aoa.length===vis+1 && vis>0 && vis<F.sched.length, [aoa.length,vis]);
-    ok('export: headers are List, Temp, then the column labels', JSON.stringify(aoa[0])===JSON.stringify(['List','Temp'].concat(F.cols.sched.map(c=>c.label))), aoa[0]);
+    ok('export: headers are List, then the column labels', JSON.stringify(aoa[0])===JSON.stringify(['List'].concat(F.cols.sched.map(c=>c.label))), aoa[0]);
     const fi=aoa[0].indexOf('Finish'), ii=aoa[0].indexOf('Activity ID');
     const firstId=eng().dataView.getItem(0).id;
     ok('export: row order follows the sort', aoa[1][ii]===firstId, [aoa[1]&&aoa[1][ii],firstId]);
@@ -613,7 +671,7 @@ try{
     SRETGrid.close(); DEMO_OPEN('stress'); await sleep(20);
     ok('stress: 2,000 rows loaded', visibleCount()===2000);
     const lay2=headerLayout();
-    ok('header: layout holds with a long title (title truncates, anchors stay)', lay2.bad.length===0, lay2);
+    ok('header: layout holds with a long title', lay2.bad.length===0 && $('.sg-title').scrollWidth>=$('.sg-title').clientWidth, lay2);
     const domRows=$$('.sg-grid .slick-row').length; R.notes.dom_rows_2000=domRows;
     ok('stress: virtual rendering (DOM rows far below 2,000)', domRows>0 && domRows<150, domRows);
     eng().grid.scrollRowIntoView(1999); await sleep(50);

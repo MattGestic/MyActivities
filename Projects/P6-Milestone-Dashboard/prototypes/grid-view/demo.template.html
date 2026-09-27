@@ -22,6 +22,8 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
 .demo-board h1{font-size:20px;line-height:28px;margin-bottom:var(--space-4)}
 .demo-board p{color:var(--color-text-muted);margin-bottom:var(--group-gap);max-width:720px;line-height:20px;font-size:var(--text-lg)}
 .demo-launch{display:flex;flex-wrap:wrap;gap:var(--ctl-gap);margin-bottom:var(--group-gap)}
+.demo-import-note{margin-bottom:var(--group-gap);color:var(--color-text-muted)}
+.demo-import-row{display:flex;flex-wrap:wrap;align-items:center;gap:var(--ctl-gap)}
 .demo-log{font-family:var(--font-mono);font-size:var(--text-sm);background:var(--color-bg-elevated);border:1px solid var(--color-border-panel);
   border-radius:var(--radius-md);padding:var(--space-4);max-height:40vh;overflow:auto;white-space:pre-wrap;color:var(--color-text-small)}
 </style>
@@ -90,6 +92,23 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
   function labelOf(ref){ return LABELS[ref]||(/^activity:(.*)-\d\d$/.test(ref)?LABELS[ref.replace(/-\d\d$/,'')]+' (stress copy)':''); }
   function listsOpt(refOf){ return {store:lstore,refOf:refOf,labelOf:labelOf,onChange:function(r){ log('onListsChange',[r.kind||'create']); }}; }
   var ACT=function(k){ return 'activity:'+k; }, ANN=function(k){ return 'annot:'+k; };
+  // Stand-in for the app's schedule import form. In the app, onImport moves
+  // the real form (Data and view > Import) into the dialog body and the
+  // returned cleanup moves it back, so both screens use the same form.
+  function importForm(body,close){
+    log('onImport',['open']);
+    var note=document.createElement('p');
+    note.className='demo-import-note';
+    note.textContent='Stand-in for the schedule import form. In the app this dialog hosts that same form: choose a P6 export, map the columns, review, import.';
+    var file=document.createElement('input'); file.type='file'; file.accept='.xlsx,.xls,.csv'; file.setAttribute('aria-label','P6 export file');
+    file.setAttribute('data-sg','demo-import-file');
+    var go=document.createElement('button'); go.type='button'; go.className='sg-btn sg-btn--primary'; go.textContent='Import';
+    go.setAttribute('data-sg','demo-import-go');
+    go.addEventListener('click',function(){ log('onImport',['import']); close(); });
+    var row=document.createElement('div'); row.className='demo-import-row'; row.appendChild(file); row.appendChild(go);
+    body.appendChild(note); body.appendChild(row);
+    return function(){ log('onImport',['closed']); };
+  }
   var back=function(){ log('onBack',[]); };
   var CONFIGS={
     userms:function(){ return {
@@ -102,7 +121,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
           start:null,finish:null,band:'User Defined Milestones',pred:'',succ:'',comment:''};
         store.userms.push(r); log('onAdd',[id]); return r; },
       onDelete:function(keys){ log('onDelete',[keys]); store.userms=store.userms.filter(function(r){ return keys.indexOf(r.id)<0; }); },
-      onBack:back,ensureXLSX:ensureXLSX,host:host}; },
+      onImport:importForm,onBack:back,ensureXLSX:ensureXLSX,host:host}; },
     annot:function(){ return {
       title:'Annotations: W/E 27-Sep-26',rowKey:'aid',editable:true,exportName:'Annotations W-E 27-Sep-26',
       columns:F.cols.annot,rows:store.annot.slice(),lists:listsOpt(ANN),

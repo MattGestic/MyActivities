@@ -123,6 +123,30 @@
     if(added) c.updatedAt=stamp(now);
     return {kind:'assign',collection:c,added:added,already:already,movedFrom:movedFrom};
   }
+  // The items of one saved list (a copy), or [] when it does not exist.
+  function itemsOf(store,id){ var c=find(ensure(store),id); return c?c.items.slice():[]; }
+  // ids of every saved list holding ref (for filtering by list).
+  function listIdsOf(store,ref){
+    return listsOf(ensure(store),String(ref)).map(function(c){ return c.id; });
+  }
+  // Takes refs out of one saved list; the items and other lists are untouched.
+  function removeFromList(store,id,refs,now){
+    ensure(store);
+    var c=find(store,id);
+    if(!c) return {error:'That list no longer exists.'};
+    var removed=0;
+    uniqueRefs(refs).forEach(function(r){ var i=c.items.indexOf(r); if(i>=0){ c.items.splice(i,1); removed++; } });
+    if(removed) c.updatedAt=stamp(now);
+    return {kind:'removeFromList',collection:c,removed:removed};
+  }
+  // Deletes the list itself. Its items stay wherever else they are.
+  function deleteList(store,id){
+    ensure(store);
+    var c=find(store,id);
+    if(!c) return {error:'That list no longer exists.'};
+    store.list.splice(store.list.indexOf(c),1);
+    return {kind:'deleteList',collection:c,count:c.items.length};
+  }
   function unassign(store,refs,now){
     ensure(store);
     var removed=0;
@@ -169,6 +193,8 @@
       case 'tempRemove': return 'Removed '+plural(r.removed,'item')+' from My temp list. It now holds '+plural(r.total,'item')+'.';
       case 'tempClear':  return 'Cleared My temp list ('+plural(r.cleared,'item')+').';
       case 'unassign':   return 'Removed '+plural(r.removed,'item')+' from their lists.';
+      case 'removeFromList': return 'Removed '+plural(r.removed,'item')+' from "'+r.collection.name+'".';
+      case 'deleteList':  return 'Deleted the list "'+r.collection.name+'" ('+plural(r.count,'item')+'). The items themselves are unchanged.';
     }
     var name='"'+r.collection.name+'"';
     var s=(r.kind==='saveFromTemp'?'Saved '+plural(r.added+r.already,'item')+' as the new list '+name+'.'
@@ -181,5 +207,6 @@
 
   root.SRETCollections={newStore:newStore,temp:temp,inTemp:inTemp,tempAdd:tempAdd,tempRemove:tempRemove,
                         tempClear:tempClear,list:list,membership:membership,create:create,assign:assign,
-                        unassign:unassign,addFromTemp:addFromTemp,saveFromTemp:saveFromTemp,describe:describe};
+                        unassign:unassign,listIdsOf:listIdsOf,itemsOf:itemsOf,removeFromList:removeFromList,deleteList:deleteList,
+                        addFromTemp:addFromTemp,saveFromTemp:saveFromTemp,describe:describe};
 })(window);
