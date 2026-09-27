@@ -37,6 +37,13 @@ Format: `As a [persona], I want [capability], so that [outcome].`
 | US-18 | P-01 | FEAT-10 | As the coordinator, I want to define and reorder my own row groupings, so that the view matches how the study is actually reported rather than the fixed phase bands. | Med | Draft |
 | US-19 | P-02 | FEAT-11 | As a lead, I want to sort rows and customise the icon per milestone type, so that the view emphasises what I care about. | Low | Draft |
 | US-20 | P-01, P-03 | FEAT-12 | As a user, I want the whole tool to be one file I can email or drop on a share, opening with no install, so that anyone on the study can use it. | High | Built |
+| US-21 | P-01, P-04 | FEAT-26 | As the coordinator, I want a full project schedule (all activities, all headings, full logic) to import and respond in seconds, so that the tool works on the live EPCM schedule and not only the study extract. | High | Draft (D-26) |
+| US-22 | P-01, P-04 | FEAT-24 | As the coordinator, I want to import a P6 `.xer` directly, alongside Excel and paste, so that I get full logic and WBS without an export-to-Excel step. | High | Draft (D-24) |
+| US-23 | P-01, P-02 | FEAT-10 | As a user, I want to switch the row grouping between the activity indentation, the WBS, Discipline and Owner, and save my own arrangement of each, so that one file serves several reporting audiences. | High | Draft (D-27) |
+| US-24 | P-01 | FEAT-10 | As the coordinator, I want to drag rows, add, rename, reorder and delete groups, and see that a view has unsaved changes, so that I control the layout without losing work. | High | Draft (D-27) |
+| US-25 | P-01, P-02 | FEAT-27 | As the coordinator, I want to assign a Discipline from a list and an Activity Owner by name, per row with per-activity exceptions, so that I can group and report by who and what. | High | Draft (D-28) |
+| US-26 | P-01 | FEAT-21 | As the coordinator, I want activities new since the last import listed with a count, placed for me in bulk, and exportable or copyable as IDs, so that a weekly update does not scatter new work unseen. | High | Draft (D-29) |
+| US-27 | P-01, P-04 | FEAT-20 | As the coordinator, I want a register of every value I changed against the imported value, so that the scheduler can apply my updates in P6 without the tool writing to it. | High | Draft (D-10, option A) |
 
 ## UI/UX Component Requirements
 
@@ -57,6 +64,11 @@ Format: `As a [persona], I want [capability], so that [outcome].`
 | UX-13 | US-20 | Theme | `html[data-theme="light"]` default, `dark` block present and maintained for a future toggle. |
 | UX-14 | all | Output text | No em dashes, no AI-associated punctuation patterns in any user-facing or client-facing string the tool produces. |
 | UX-15 | US-08 | Annotation colour convention | Red = new/draft, yellow highlight = carried over from prior period, black = confirmed. Distinct from dashboard status colours. |
+| UX-16 | US-23, US-24 | View selector | One single-list control at the top of the board, sectioned by type (Indent, WBS, Discipline, Owner), system view first in each section, search box, `*` for unsaved changes, Save / Save as / Discard / Rename / Delete / Set default. Spec: `docs/specs/D-23_scale-model-and-views.md` D-27. |
+| UX-17 | US-24 | Unsaved view state | Editing never raises a dialog mid-drag. A system view becomes "<Type> (unsaved)*"; the choice to overwrite, name or replace is made at save time; switching away from unsaved changes asks Save / Discard / Cancel. |
+| UX-18 | US-25 | Mixed-value indicator | A row whose activities do not all share the row's Discipline or Owner shows a compact indicator ("1 of 4 differs"), hover lists the exceptions, exception markers are outlined. A View toggle (off by default) draws exceptions on an indented sub-row. |
+| UX-19 | US-26 | New since last import notice | Count, expand to list, per-item apply, Apply system positions to all, Export to Excel, Copy IDs (comma-separated). A matching notice for activities no longer in the schedule. |
+| UX-20 | US-24 | Row and group delete | A row holding activities cannot be deleted (move shortcut offered). Deleting a group moves its rows to the parent. Activities are never deleted. |
 
 ---
 **Rules:**

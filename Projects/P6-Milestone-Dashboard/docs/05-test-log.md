@@ -2740,3 +2740,42 @@ in light and dark at 1440.
 
 **Published:** `releases/v3.1.0-P58_note-collections.html`
 
+
+## TEST-59: Scale baseline for D-26 (v3.1.0-P58, no code change)
+
+Asks whether the board is serviceable at full-schedule scale, and at twice
+that, and where the time goes. Raised TD-216. Every figure is in
+`docs/perf/Scale_Measurement_Log.md`; this entry names metrics only.
+
+**Method.** The real import path (file input, column mapper, `runIngest()`),
+with `rerender()` wrapped to time each rebuild including its forced layout,
+and Chrome DevTools Protocol layout and style-recalc durations captured over
+the import. Interactions timed to a settled board: full rebuild, the
+Critical path 0d float filter, dependency lines all on, a rebuild with lines
+on, and the theme toggle. Three sources: the committed reference export,
+the client live XER at 1x and 2x (not committed, see the log), and a
+synthetic schedule from the committed `tools/scale_bench.mjs` for
+reproducibility.
+
+**Findings.**
+- The reference export is interactive on every metric.
+- At client scale, `import_ms`, `rebuild_ms`, `dep_all_on_ms` and
+  `rebuild_with_deps_ms` are all far outside interactive limits.
+- From 1x to 2x, rebuild and filter grow a little faster than the row count,
+  and `dep_all_on_ms` and `rebuild_with_deps_ms` grow several times faster.
+- Parsing and memory are not the problem (`heap_mb`).
+- Cause, measured rather than inferred: `td_cells` is rows x
+  `week_columns`, against `visible_rows` on screen, and
+  `import_layout_s` plus `import_style_s` account for most of `import_ms`.
+- The isolated micro-benchmark (`microbench_per_week_ms` against
+  `microbench_one_cell_ms`, and `class_toggle_ms`) supports D-26's
+  one-timeline-cell and class-only-filter design.
+
+**Not a pass/fail test.** It is the baseline each D-26 stage is re-measured
+against with `tools/scale_bench.mjs`, appending synthetic rows to the log.
+
+**Caveat recorded with the result.** The synthetic generator's WBS is
+shallower than the client schedule's (fewer headings per activity), so its
+absolute figures differ from the client rows. It is used for the scaling
+shape and for before/after comparison, not as a substitute for the client
+figures.
