@@ -25,7 +25,7 @@
      parseCsv(text)             -> aoa
      check(aoa, cfg)            -> result          (see below)
      logEntries(result, meta)   -> [{time,file,user,id,field,note}]
-     summary(result, assigned)  -> [sentences]
+     summary(result, assigned, noun) -> [sentences]; noun ['task','tasks'], default milestone
    cfg: { columns:[{key,label,type,options,min,max}], idKey, depKeys:{pred:'Predecessors',...},
           existingIds:[...], knownIds:[...], dateOrder:'auto'|'DMY'|'MDY'|'YMD' }
    result.dates: {order, chosen, confirmed, reason, numeric, ambiguous, ask}
@@ -160,9 +160,9 @@
     });
   }
   function plural(n,w){ return n+' '+w+(n===1?'':'s'); }
-  function summary(res,assigned){
-    var ids=Object.keys(assigned||{}).map(function(k){ return assigned[k]; });
-    var out=['Imported '+plural(res.rows.length,'milestone')+'.'];
+  function summary(res,assigned,noun){
+    var ids=Object.keys(assigned||{}).map(function(k){ return assigned[k]; }), w=noun||['milestone','milestones'];
+    var out=['Imported '+res.rows.length+' '+(res.rows.length===1?w[0]:w[1])+'.'];
     if(res.dates&&res.dates.numeric) out.push('Dates read as '+root.SRETDates.orderLabel(res.dates.order)+'. '+res.dates.reason);
     if(ids.length) out.push('IDs assigned to '+plural(ids.length,'row')+' with a blank ID: '+ids.join(', ')+'.');
     if(res.skipped.length) out.push('Skipped '+plural(res.skipped.length,'row')+' already in the table: '+res.skipped.map(function(s){ return s.id; }).join(', ')+'.');

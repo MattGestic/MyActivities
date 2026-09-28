@@ -140,12 +140,24 @@ def comparison_snapshots(sched):
         slip = 0 if i < 3 else (5 if i < 9 else 9)
         v2.append({"id": "OS-%d" % (100 + i * 10), "name": n, "start": _shift(st, slip if i >= 4 else 0), "finish": _shift(fi, slip),
                    "float": 10 - (i % 5) - (2 if i >= 9 else 0), "actual": "Yes" if i < 3 else "No"})
+    # Loaded in this order (Matt, 2026-09-28: three per schedule plus the
+    # embedded baseline). The demo then imports the live 29-Aug update as the
+    # latest, so 22-Aug becomes the comparison and 15-Aug is dropped.
+    proj = "P:\\103787 SRET\\05 Controls\\Schedule\\Weekly updates"
+    vend = "P:\\103787 SRET\\07 Procurement\\P8010 Ocean Steel\\Schedules"
     return [
-        {"meta": {"id": "bl", "role": "baseline", "name": "Baseline", "dataDate": "2026-08-15", "file": "Embedded baseline"}, "rows": base},
-        {"meta": {"id": "pu-0822", "role": "project", "name": "Project schedule", "dataDate": "2026-08-22", "file": "103787-13_PFS_Weekly_Update_DD-2026-08-22.xlsx", "importedAt": "2026-08-24T08:00:00Z"}, "rows": prev},
-        {"meta": {"id": "iu-0826", "role": "interim", "name": "Project schedule", "dataDate": "2026-08-26", "file": "PFS interim DD-2026-08-26.xlsx", "importedAt": "2026-08-26T15:00:00Z"}, "rows": interim},
-        {"meta": {"id": "os-0820", "role": "external", "name": "Ocean Steel fabrication", "dataDate": "2026-08-20", "file": "OceanSteel_P8010_2026-08-20.xlsx", "importedAt": "2026-08-21T09:00:00Z"}, "rows": v1},
-        {"meta": {"id": "os-0827", "role": "external", "name": "Ocean Steel fabrication", "dataDate": "2026-08-27", "file": "OceanSteel_P8010_2026-08-27.xlsx", "importedAt": "2026-08-28T09:00:00Z"}, "rows": v2},
+        {"slot": "baseline", "meta": {"id": "bl", "role": "project", "dataDate": "2026-08-15", "file": "Embedded baseline",
+                                      "path": "(inside this file)", "snapshotAt": "2026-08-18T08:00:00Z"}, "rows": base},
+        {"slot": "latest", "meta": {"id": "pu-0815", "role": "project", "dataDate": "2026-08-15", "file": "103787-13_PFS_Weekly_Update_DD-2026-08-15.xlsx",
+                                    "path": proj, "snapshotAt": "2026-08-18T08:05:00Z"}, "rows": base},
+        {"slot": "latest", "meta": {"id": "pu-0822", "role": "project", "dataDate": "2026-08-22", "file": "103787-13_PFS_Weekly_Update_DD-2026-08-22.xlsx",
+                                    "path": proj, "snapshotAt": "2026-08-24T08:00:00Z"}, "rows": prev},
+        {"slot": "alternate", "meta": {"id": "pa-0826", "role": "project", "dataDate": "2026-08-26", "file": "PFS interim cut DD-2026-08-26.xlsx",
+                                       "path": proj + "\\Interim", "snapshotAt": "2026-08-26T15:00:00Z"}, "rows": interim},
+        {"slot": "latest", "meta": {"id": "os-0820", "role": "external", "name": "Ocean Steel fabrication", "dataDate": "2026-08-20",
+                                    "file": "OceanSteel_P8010_2026-08-20.xlsx", "path": vend, "snapshotAt": "2026-08-21T09:00:00Z"}, "rows": v1},
+        {"slot": "latest", "meta": {"id": "os-0827", "role": "external", "name": "Ocean Steel fabrication", "dataDate": "2026-08-27",
+                                    "file": "OceanSteel_P8010_2026-08-27.xlsx", "path": vend, "snapshotAt": "2026-08-28T09:00:00Z"}, "rows": v2},
     ]
 
 

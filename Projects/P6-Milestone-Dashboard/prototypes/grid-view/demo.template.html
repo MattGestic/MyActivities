@@ -44,11 +44,11 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
   <button type="button" id="demo-theme" aria-pressed="false">Dark theme</button></span></header>
 <main class="demo-board" id="demo-board">
   <h1>Grid view (D-09)</h1>
-  <p>Stand-in for the board area. In the app each button below is an entry point: Workspace, User milestones, View items; Workspace, Comments and markups, a collection row; Data and view, Schedule activities.</p>
+  <p>Stand-in for the board area. In the app each button below is an entry point: Workspace, User tasks, View items; Workspace, Comments and markups, a collection row; Data and view, Schedule activities.</p>
   <div class="demo-launch">
-    <button type="button" class="sg-btn" id="go-userms">User milestones</button>
+    <button type="button" class="sg-btn" id="go-userms">User tasks</button>
     <button type="button" class="sg-btn" id="go-annot">Comments and markups: W/E 27-Sep-26</button>
-    <button type="button" class="sg-btn" id="go-sched">Schedule activities</button>
+    <button type="button" class="sg-btn" id="go-sched">Schedule milestones</button>
     <button type="button" class="sg-btn" id="go-stress">Stress test: 2,000 rows</button>
   </div>
   <section class="demo-settings" id="demo-settings-box" aria-label="Data settings (stand-in)"></section>
@@ -137,7 +137,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
   function openMilestone(id){
     log('onOpenItem',[id]);
     var r=store.userms.filter(function(x){ return x.id===id; })[0]; if(!r) return;
-    SRETGrid.dialog('Milestone '+id,function(body){
+    SRETGrid.dialog('Task '+id,function(body){
       var dl=document.createElement('dl'); dl.className='demo-ms'; dl.setAttribute('data-sg','demo-ms-form');
       F.cols.userms.forEach(function(c){
         var dt=document.createElement('dt'); dt.textContent=c.label;
@@ -154,19 +154,21 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
   // Views reached from the title (Matt, 2026-09-28). Schedule milestones are
   // zero-duration activities; Schedule updates are schedule rows carrying an
   // annotation (short title, health or comment).
-  function isSchedMs(r){ return r.dur===0; }
   function hasAnnot(r){ return !!(r.short||r.comment||(r.health!=null&&r.health!=='')); }
   // Schedule changes: earlier imports kept as snapshots (SRETCompare). The
   // current project update is the live schedule store.
   var C=window.SRETCompare;
-  function snaps(){
-    var cur=C.snapshot({id:'pu-0829',role:'project',name:'Project schedule',dataDate:'2026-08-29',file:'103787-13_PFS_Weekly_Update_DD-2026-08-29.xlsx',importedAt:'2026-08-31T08:00:00Z'},store.sched);
-    return F.snaps.map(function(x){ return C.snapshot(x.meta,x.rows); }).concat([cur]);
-  }
+  // Loaded schedules: three per schedule line plus the embedded baseline.
+  // The live 29-Aug update is imported last as the latest.
+  var CST=window.DEMO_CMP=C.newStore();
+  F.snaps.forEach(function(x){ C.receive(CST,x.meta,x.rows,x.slot); });
+  var DROPPED=C.receive(CST,{id:'pu-0829',role:'project',dataDate:'2026-08-29',file:'103787-13_PFS_Weekly_Update_DD-2026-08-29.xlsx',
+    path:'P:\\103787 SRET\\05 Controls\\Schedule\\Weekly updates',snapshotAt:'2026-08-31T08:00:00Z'},store.sched,'latest').dropped;
+  log('onScheduleLoaded',['pu-0829','dropped '+(DROPPED?DROPPED.id:'none')]);
   var CMP={cur:'pu-0829',basis:null};   // basis null = the default for the chosen schedule
   function changesData(){
-    var all=snaps(), cur=all.filter(function(s){ return s.id===CMP.cur; })[0];
-    var bs=C.bases(all,cur), basis=CMP.basis?(bs.filter(function(b){ return b.snap.id===CMP.basis; })[0]||{}).snap:C.defaultBasis(all,cur);
+    var all=C.list(CST), cur=all.filter(function(s){ return s.id===CMP.cur; })[0];
+    var bs=C.bases(CST,cur), basis=CMP.basis?(bs.filter(function(b){ return b.snap.id===CMP.basis; })[0]||{}).snap:C.defaultBasis(CST,cur);
     return {all:all,cur:cur,bases:bs,basis:basis,result:C.compare(basis,cur)};
   }
   var CHANGE_COLS=[{key:'id',label:'Activity ID',type:'text',width:110},{key:'name',label:'Name',type:'text',width:240},
@@ -177,26 +179,45 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
     {key:'startSlip',label:'Start moved (days)',type:'number',width:110},
     {key:'floatWas',label:'Float was',type:'number',width:80},{key:'floatNow',label:'Float now',type:'number',width:80},
     {key:'floatChange',label:'Float change',type:'number',width:90}];
+  var MONS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function dmy(iso){ if(!iso) return ''; var p=iso.slice(0,10).split('-'); return (+p[2])+'-'+MONS[+p[1]-1]+'-'+p[0].slice(2); }
+  // The record of what is loaded: slot, data date, snapshot date, file, location.
+  function openLoaded(){
+    SRETGrid.dialog('Loaded schedules',function(body){
+      var t=document.createElement('table'); t.className='sg-itable'; t.setAttribute('data-sg','loaded-table');
+      var hd=['Schedule','Data date','Snapshot taken','File','Location','Activities'];
+      t.innerHTML='<thead><tr>'+hd.map(function(x){ return '<th>'+x+'</th>'; }).join('')+'</tr></thead>';
+      var tb=document.createElement('tbody');
+      C.record(CST).forEach(function(r){ var tr=document.createElement('tr');
+        [r.slot,dmy(r.dataDate),dmy(r.snapshotAt)+' '+r.snapshotAt.slice(11,16),r.file,r.path,String(r.activities)].forEach(function(v){
+          var td=document.createElement('td'); td.textContent=v; tr.appendChild(td); }); tb.appendChild(tr); });
+      t.appendChild(tb); body.appendChild(t);
+      var p=document.createElement('p'); p.className='demo-import-note';
+      p.textContent='Three per schedule: a new latest moves the latest to comparison and drops the old comparison; an alternate is replaced only by another alternate. The baseline is embedded.';
+      body.appendChild(p);
+    });
+  }
   function changesCfg(){
     var d=changesData();
     return Object.assign({title:'Schedule changes',rowKey:'id',editable:false,exportName:'Schedule changes',
       columns:CHANGE_COLS,rows:d.result.rows,lists:listsOpt(ACT),
+      toolsItems:[{label:'Loaded schedules…',sg:'loaded',onSelect:openLoaded}],
       pickers:[
-        {sg:'cmp-cur',label:'Schedule',items:d.all.filter(function(s){ return s.role!=='baseline'; })
-          .sort(function(a,b){ return a.lineage===b.lineage?(a.dataDate<b.dataDate?1:-1):(a.lineage==='project'?-1:1); })
+        {sg:'cmp-cur',label:'Schedule',items:d.all.filter(function(s){ return s.slot!=='baseline'; })
           .map(function(s){ return {id:s.id,label:C.label(s),checked:s.id===d.cur.id}; }),
           onSelect:function(id){ CMP.cur=id; CMP.basis=null; log('onCompare',[id,'default']); window.DEMO_OPEN('changes'); }},
         {sg:'cmp-basis',label:'Compared with',items:d.bases.map(function(b){ return {id:b.snap.id,label:b.label+(b.isDefault?' (default)':''),checked:b.snap===d.basis}; }),
           onSelect:function(id){ CMP.basis=id; log('onCompare',[CMP.cur,id]); window.DEMO_OPEN('changes'); }}],
-      note:d.basis?C.summary(d.result)+' Calendar days; positive is later.':'This is the first import of this schedule, so there is nothing to compare it with yet.',
+      note:d.basis?C.summary(d.result)+' Calendar days; positive is later.':d.bases.length?'Nothing older is loaded for this schedule. Choose a schedule under Compared with.':'Nothing loaded to compare this schedule with yet.',
       onBack:back,ensureXLSX:ensureXLSX,host:host},viewsOpt('changes'));
   }
+  // Schedule milestones: every activity from an uploaded schedule (the board
+  // plots each as a milestone). User tasks are the user's own items.
   function viewsOpt(cur){
     return {view:cur,onView:function(id){ log('onView',[id]); window.DEMO_OPEN(id); },
-      views:[{id:'userms',label:'User milestones',count:store.userms.length},
-             {id:'schedms',label:'Schedule milestones',count:store.sched.filter(isSchedMs).length},
+      views:[{id:'userms',label:'User tasks',count:store.userms.length},
+             {id:'schedms',label:'Schedule milestones',count:store.sched.length},
              {id:'schedupd',label:'Schedule updates',count:store.sched.filter(hasAnnot).length},
-             {id:'sched',label:'All schedule activities',count:store.sched.length},
              {id:'changes',label:'Schedule changes',count:changesData().result.rows.length},
              {id:'annot',label:'Comments and markups',count:store.annot.length}]};
   }
@@ -207,17 +228,17 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
       onBack:back,ensureXLSX:ensureXLSX,host:host},viewsOpt(cur)); }
   var CONFIGS={
     userms:function(){ return {
-      title:'User milestones',rowKey:'id',editable:true,exportName:'User milestones',
+      title:'User tasks',rowKey:'id',editable:true,exportName:'User tasks',
       columns:F.cols.userms,rows:store.userms.slice(),lists:listsOpt(ACT),
       onEdit:function(k,f,v){ log('onEdit',[k,f,v]);
         if(f==='progress' && v!=null && (v<0||v>100)) return false;   // app-side rule: 0 to 100
         patch(store.userms,'id',k,f,v); },
-      onAdd:function(){ var id=nextUsr(); var r={id:id,name:'New milestone',type:'MS',state:'FUTURE',progress:0,
+      onAdd:function(){ var id=nextUsr(); var r={id:id,name:'New task',type:'MS',state:'FUTURE',progress:0,
           start:null,finish:null,band:'User Defined Milestones',wbs:'',pred:'',succ:'',comment:'',created:TODAY,createdBy:userName(),health:0};
         store.userms.push(r); log('onAdd',[id]); return r; },
       onDelete:function(keys){ log('onDelete',[keys]); store.userms=store.userms.filter(function(r){ return keys.indexOf(r.id)<0; }); },
       openColumn:'id',onOpenItem:openMilestone,view:'userms',views:viewsOpt('userms').views,onView:viewsOpt('userms').onView,
-      importer:{idKey:'id',depKeys:{pred:'Predecessors',succ:'Successors'},user:userName,log:IMPORT_LOG,nextId:nextUsr,
+      importer:{noun:['task','tasks'],idKey:'id',depKeys:{pred:'Predecessors',succ:'Successors'},user:userName,log:IMPORT_LOG,nextId:nextUsr,
         // IDs a dependency may name: every schedule activity and user milestone the app knows.
         knownIds:function(){ return F.sched.map(function(r){ return r.id; }).concat(store.userms.map(function(r){ return r.id; })); },
         onCommit:function(rows){
@@ -235,11 +256,11 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
       onDelete:function(keys){ log('onDelete',[keys]); store.annot=store.annot.filter(function(r){ return keys.indexOf(r.aid)<0; }); },
       onBack:back,ensureXLSX:ensureXLSX,host:host,view:'annot',views:viewsOpt('annot').views,onView:viewsOpt('annot').onView}; },
     changes:changesCfg,
-    sched:function(){ return schedView('Schedule activities',store.sched.slice(),'sched'); },
-    schedms:function(){ return schedView('Schedule milestones',store.sched.filter(isSchedMs),'schedms'); },
+    sched:function(){ return schedView('Schedule milestones',store.sched.slice(),'schedms'); },
+    schedms:function(){ return schedView('Schedule milestones',store.sched.slice(),'schedms'); },
     schedupd:function(){ return schedView('Schedule updates',store.sched.filter(hasAnnot),'schedupd'); },
     stress:function(){ return {
-      title:'Schedule activities (2,000 row stress set)',rowKey:'id',editable:true,exportName:'Stress',
+      title:'Schedule milestones (2,000 row stress set)',rowKey:'id',editable:true,exportName:'Stress',
       columns:F.cols.sched,rows:window.SRET_STRESS(2000),lists:listsOpt(ACT),
       onEdit:function(k,f,v){ log('onEdit',[k,f,v]); },
       onBack:back,ensureXLSX:ensureXLSX,host:host}; }
@@ -256,7 +277,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
     document.documentElement.setAttribute('data-theme',dark?'dark':'light');
     tb.setAttribute('aria-pressed',String(dark)); tb.textContent=dark?'Light theme':'Dark theme';
   });
-  // Opens on User milestones so a reviewer (and the palette swap check) sees
+  // Opens on User tasks so a reviewer (and the palette swap check) sees
   // the grid at load; #home opens the launcher instead.
   document.getElementById('demo-settings').addEventListener('click',function(){ openSettings(); });
   showUser();

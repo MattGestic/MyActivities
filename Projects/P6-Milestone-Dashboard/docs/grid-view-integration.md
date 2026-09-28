@@ -18,7 +18,7 @@ The app keeps one `<style>` (scanned by `colour_audit.py --strict`) and one `<sc
 | 4c | `src/modules/ms-import/ms-import.js` | Directly after #4b, same script | Self-contained IIFE; defines `window.SRETMsImport` only (the milestone import rules). The grid's import dialog calls it; the app's own import form can too |
 | 4d | `src/modules/dates/dates.js` | Directly after #4b, before #4c | `window.SRETDates`: the one date reader for every import (grid and dashboard). #4c needs it |
 | 4e | `src/modules/user/user.js`, `src/modules/user/user.css` | JS after #4d; CSS in the main `<style>` after #1 | `window.SRETUser`: the user name and save history, and the Data settings field |
-| 4f | `src/modules/compare/compare.js` | After #4e | `window.SRETCompare`: snapshots and the Schedule changes comparison |
+| 4f | `src/modules/compare/compare.js` | After #4e | `window.SRETCompare`: the three loaded schedules per line plus the baseline, and the Schedule changes comparison |
 | 5 | The adapters below | In `app-script`, beside the Workspace code (`setWorkspaceSection()`) | The only code that knows both the app's stores and the grid contract |
 
 Check before pasting: neither vendor file contains `</script` or `</style` (`tools/grid_view_assemble.py` asserts this for the demo and would fail the same way).
@@ -235,20 +235,19 @@ While a filter is on, a pill in row 3 names it ("My temp list only" or "List: <n
   - "Limit items to a single list", when it becomes a setting, belongs in Data & view > Data settings and just sets `USER_LISTS.settings.singleList`.
 - **Relationship to week collections (P58, D-19a).** These are separate. A note keeps its reporting week; lists are the user's own working groups.
 
-### 3. Views from the title: user milestones and the schedule (Matt, 2026-09-28)
+### 3. Views from the title (Matt, 2026-09-28)
 
-The grid's title is a view switcher (`views`, `view`, `onView`). One grid screen, four views, each reopening the grid with its own config; Back returns to where the grid was first opened.
+The grid's title is a view switcher (`views`, `view`, `onView`). Back returns to where the grid was first opened.
 
 | View | Rows | Editable |
 |---|---|---|
-| User milestones | `USER_MILESTONES` | Yes (section 1) |
-| Schedule milestones | **[CONFIRM WITH MATT]** The demo uses zero-duration activities. The board plots every leaf activity as a milestone (`MILESTONES`, built in the ingest), so in the app this view is either those board milestones (then "All schedule activities" adds only the WBS-level rows) or P6 milestone-type activities only | Annotation columns only |
-| Schedule updates | Schedule activities carrying an annotation: short title, health or comment | Annotation columns only |
-| All schedule activities | Every schedule activity | Annotation columns only |
+| User tasks | The user's own items (`USER_MILESTONES`). Called tasks in the grid to keep them apart from schedule milestones | Yes (section 1) |
+| Schedule milestones | Every activity from an uploaded schedule (the board plots each as a milestone: `MILESTONES` from `PRIMARY_SOURCES`) | Annotation columns only |
+| Schedule updates | Schedule milestones carrying an annotation: short title, health or comment | Annotation columns only |
+| Schedule changes | Section 4 | Read-only |
+| Comments and markups | The current annotation collection (section 2) | As section 2 |
 
-Schedule columns (ID, name, WBS, duration, dates, float, predecessors, successors, actual flag) are **read-only**; there is no `onAdd` and no `onDelete` on schedule views. Annotation edits go through `onEdit` to the annotation stores, never to `TASKS` / `MILESTONES`, so schedule data is never mutated. Counts in the menu come from the app's stores at open.
-
-Entry: the existing "View items" button (section 1) opens User milestones; the other views are reached from the title, so no separate Data & view button is needed.
+Schedule columns (ID, name, WBS, duration, dates, float, predecessors, successors, actual flag) are **read-only**; annotation edits go through `onEdit` to the annotation stores, never to `TASKS` / `MILESTONES`. The importer passes `noun:['task','tasks']`, so the menu, dialog and summary say "Import tasks" and "Imported 3 tasks". **[CONFIRM WITH MATT]** whether the Workspace section and the board legend also rename user milestones to user tasks, or only the grid.
 
 **Built at P63 (TD-223).** The grid module already had `views`/`view`/`onView`, so the switcher is the module's own title menu (a menu button with `aria-haspopup`, arrow keys, Home/End, Esc back to the button, the current view checked); `grid-view.js` is unchanged. The adapter in the app:
 
@@ -265,23 +264,25 @@ Entry: the existing "View items" button (section 1) opens User milestones; the o
 
 ### 4. Schedule changes (`SRETCompare`, Matt 2026-09-28)
 
-A view in the title menu that lists what moved between the chosen schedule and a comparison basis: Later, Earlier, Completed, New, Removed, Float only, with the old and new start, finish and float, and the days moved (calendar days, positive is later). Biggest slips first; read-only; exportable; rows can go to the temp list.
+Lists what moved between a loaded schedule and a basis: Later, Earlier, Completed, New, Removed, Float only, with old and new start, finish and float and the days moved (**calendar days**, positive is later). Biggest slips first; read-only; exportable; rows can go to the temp list. Tools > Loaded schedules lists what is held.
 
-**Comparison basis.** Not every import is a project update, so each import is filed with a role:
+**Three loaded per schedule, plus the embedded baseline:**
 
-| Role at import | Examples | Compared with by default | Can also pick |
-|---|---|---|---|
-| Project update | The formal weekly or monthly P6 update | The previous project update | Any earlier project or interim update, the baseline |
-| Interim update | A mid-period cut of the project schedule | The latest project update before it (never another interim) | As above |
-| External schedule (named) | Vendor or contractor schedule, e.g. "Ocean Steel fabrication" | The previous import of the same named schedule | Its own earlier imports only; never the project schedule |
+| Slot | How it gets there | Default basis when viewed |
+|---|---|---|
+| Project schedule | The latest import (what the board shows) | Project schedule comparison (else the baseline) |
+| Project schedule comparison | The previous latest, moved here by the next import; the one it replaces is dropped | Project baseline |
+| Project schedule alternate | Loaded on purpose as an alternative basis (an interim cut, a what-if); replaced only by another alternate | Project schedule |
+| Project baseline | Embedded in the file | (basis only) |
 
-Activities match by Activity ID within the same schedule line (project, or one named external schedule), so a vendor's IDs are never matched against the project's. The first import of any schedule shows "nothing to compare it with yet".
+A vendor or contractor schedule is its own line, named at import, with the same three slots and no baseline. Lines never compare with each other, so a vendor's IDs never meet the project's.
 
-**What the app must add at merge (it keeps no history today).** `PRIMARY_SOURCES` is replaced on a normal import, so earlier updates are lost.
-1. The Import step asks the role (Project update / Interim update / External schedule + its name). Append mode already covers adding an external schedule beside the project one.
-2. Each successful import stores `SRETCompare.snapshot(meta, rows)`: only ID, name, start, finish, float and the actual flag, about 40 bytes per activity. The embedded baseline becomes the one `role:'baseline'` snapshot.
-3. Snapshots persist with the annotations and publish state. **[CONFIRM WITH MATT]** how many to keep per schedule (proposed: every project update, and the last 3 interim and 3 per external schedule).
-4. Working days: differences are calendar days until the P6 calendar is imported. **[CONFIRM WITH MATT]** whether working days are needed.
+**Recorded for each loaded schedule:** snapshot date (when it was loaded), data date, file name, file location, activity count. A browser never reveals the folder a file came from (it gives the name only), so **the location is what the user types or pastes at import** (optional, remembered per schedule line as the default for the next import).
+
+**What the app must add at merge (it keeps no history today; `PRIMARY_SOURCES` is replaced on import):**
+1. Import asks: Project schedule (latest) / Project schedule alternate / an external schedule by name, and the optional location. Before a new latest replaces the comparison, the confirmation names the one that will be dropped.
+2. Each import calls `SRETCompare.receive(store, meta, rows, slot)`; it stores ID, name, start, finish, float and the actual flag only (about 40 bytes per activity). The embedded baseline is loaded once with slot `'baseline'`.
+3. The store persists with the annotations and publish state, and shows in Data & view > Sources as the Loaded schedules record.
 
 ## Verification at merge
 

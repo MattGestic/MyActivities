@@ -1,95 +1,128 @@
 /* =====================================================================
    SRET schedule comparison (Matt, 2026-09-28). No UI, no app globals.
 
-   What "changed" means depends on what the current schedule is compared
-   with, and not every import is a project update. Each import is filed
-   with a role and a lineage:
+   Every schedule line keeps three loaded imports at any one time, plus the
+   embedded baseline for the project:
 
-     role 'project'   a formal update of the project schedule (lineage 'project')
-     role 'interim'   an interim cut of the project schedule between formal
-                      updates (lineage 'project'); never becomes the default
-                      basis for a formal update
-     role 'external'  a schedule from someone else: vendor, contractor
-                      (lineage = its name, e.g. 'Ocean Steel fabrication').
-                      Only ever compared with earlier imports of itself.
+     Project schedule             the latest import (what the board shows)
+     Project schedule comparison  the previous latest: moved here when a new
+                                  latest is imported; the one before is dropped
+     Project schedule alternate   loaded on purpose as an alternative basis
+                                  (an interim cut, a what-if); replaced only
+                                  when another alternate is loaded
+     Project baseline             embedded in the file; never replaced here
 
-   Default basis (the user can pick any other eligible one):
-     project  -> the previous formal project update
-     interim  -> the latest formal project update before it
-     external -> the previous import of the same external schedule
-   Eligible bases: earlier snapshots of the same lineage (by data date, then
-   import time), plus the project baseline for the project lineage.
+   A schedule from someone else (vendor, contractor) is its own line, named
+   at import, with the same three slots and no baseline. Lines never compare
+   with each other, so a vendor's IDs never meet the project's.
 
-   Activities match by Activity ID within the lineage. Differences are in
-   calendar days, positive = later (a slip). Float is as exported.
+   Each loaded import records: snapshot date (when it was taken), data date,
+   file name and file location. A browser does not reveal a file's folder,
+   so the location is what the user typed at import (optional).
+
+   Default basis:
+     latest      -> comparison (else the baseline)
+     comparison  -> the baseline
+     alternate   -> latest
+   Any other slot of the same line (and the baseline) can be picked.
+   Differences are calendar days, positive = later (a slip).
 
    API (window.SRETCompare):
-     snapshot(meta, rows)     -> {id, lineage, role, name, dataDate, file, importedAt, rows:{ID:{n,s,f,fl,a}}}
-                                meta: {id, role, name, dataDate, file, importedAt}
-                                rows: [{id, name, start, finish, float, actual}]
-     bases(snaps, current)    -> [{snap, label, isDefault}]   newest first
-     defaultBasis(snaps, cur) -> snap | null
-     compare(basis, current)  -> {rows:[...], counts:{later, earlier, completed, added, removed, float, unchanged}}
-     label(snap)              -> 'Project update, DD 22-Aug-26'
+     newStore()                                  -> store
+     receive(store, meta, rows, slot)            -> {snap, dropped}   slot 'latest' (default) | 'alternate' | 'baseline'
+        meta: {name, role:'project'|'external', dataDate, file, path, snapshotAt}
+        rows: [{id, name, start, finish, float, actual}]
+     list(store)                                 -> [snap]  project first: latest, comparison, alternate, baseline; then external lines
+     bases(store, snap)                          -> [{snap, label, isDefault}]
+     defaultBasis(store, snap)                   -> snap | null
+     compare(basis, snap)                        -> {rows, counts}
+     label(snap)                                 -> 'Project schedule comparison, DD 22-Aug-26'
+     slotName(snap)                              -> 'Project schedule comparison'
+     summary(result)                             -> '14 later, 8 earlier, ...'
+     record(store)                               -> [{slot, dataDate, snapshotAt, file, path}] for the Loaded schedules table
    ===================================================================== */
 (function(root){
   'use strict';
   var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  var ROLE={project:'Project update',interim:'Interim update',external:'',baseline:'Baseline'};
+  var SLOTS=['latest','comparison','alternate'];
+  var seq=0;
 
-  function lineageOf(meta){ return meta.role==='external'?'ext:'+String(meta.name||'').trim().toLowerCase():'project'; }
   function fmt(iso){ if(!iso) return ''; var p=String(iso).split('-'); return (+p[2])+'-'+MON[+p[1]-1]+'-'+p[0].slice(2); }
   function days(a,b){
     if(!a||!b) return null;
     return Math.round((Date.UTC(+b.slice(0,4),+b.slice(5,7)-1,+b.slice(8,10))-Date.UTC(+a.slice(0,4),+a.slice(5,7)-1,+a.slice(8,10)))/86400000);
   }
-  function snapshot(meta,rows){
+  function lineKey(meta){ return meta.role==='external'?'ext:'+String(meta.name||'').trim().toLowerCase():'project'; }
+  function snapRows(rows){
     var r={};
     (rows||[]).forEach(function(x){
       if(!x||x.id==null||x.id==='') return;
       r[String(x.id)]={n:x.name||'',s:x.start||null,f:x.finish||null,fl:x.float==null||x.float===''?null:+x.float,a:x.actual==='Yes'||x.actual===true};
     });
-    return {id:meta.id,lineage:meta.role==='baseline'?'project':lineageOf(meta),role:meta.role||'project',name:meta.name||'',
-            dataDate:meta.dataDate||null,file:meta.file||'',importedAt:meta.importedAt||null,rows:r};
+    return r;
   }
-  function label(s){
-    if(!s) return 'Nothing to compare with';
-    var what=s.role==='external'?s.name:ROLE[s.role]||s.role;
-    return what+(s.dataDate?', DD '+fmt(s.dataDate):'');
+  function newStore(){ return {lines:{},order:[],baseline:null}; }
+  function receive(store,meta,rows,slot){
+    slot=slot||'latest';
+    var key=slot==='baseline'?'project':lineKey(meta);
+    var snap={id:meta.id||('snap-'+(++seq)),line:key,role:key==='project'?'project':'external',
+              lineName:key==='project'?'Project schedule':String(meta.name||'External schedule').trim(),
+              slot:slot,dataDate:meta.dataDate||null,snapshotAt:meta.snapshotAt||new Date().toISOString(),
+              file:meta.file||'',path:meta.path||'',rows:snapRows(rows)};
+    if(slot==='baseline'){ var old=store.baseline; store.baseline=snap; return {snap:snap,dropped:old}; }
+    var ln=store.lines[key];
+    if(!ln){ ln=store.lines[key]={name:snap.lineName,latest:null,comparison:null,alternate:null}; store.order.push(key); }
+    var dropped=null;
+    if(slot==='alternate'){ dropped=ln.alternate; ln.alternate=snap; }
+    else {
+      dropped=ln.comparison;
+      if(ln.latest){ ln.comparison=ln.latest; ln.comparison.slot='comparison'; }
+      ln.latest=snap; snap.slot='latest';
+    }
+    if(dropped) dropped.slot='dropped';
+    return {snap:snap,dropped:dropped};
   }
-  function before(a,b){  // a earlier than b
-    if(a.dataDate&&b.dataDate&&a.dataDate!==b.dataDate) return a.dataDate<b.dataDate;
-    return String(a.importedAt||'')<String(b.importedAt||'');
+  function lineSnaps(store,key){
+    var ln=store.lines[key]; if(!ln) return [];
+    var out=SLOTS.map(function(s){ return ln[s]; }).filter(Boolean);
+    if(key==='project'&&store.baseline) out.push(store.baseline);
+    return out;
   }
-  function eligible(snaps,cur){
-    return (snaps||[]).filter(function(s){
-      return s!==cur&&s.id!==cur.id&&s.lineage===cur.lineage&&(s.role==='baseline'||before(s,cur));
-    }).sort(function(a,b){
-      if(a.role==='baseline'!==(b.role==='baseline')) return a.role==='baseline'?1:-1;   // baseline listed last
-      return before(a,b)?1:-1;                                                             // newest first
-    });
+  function list(store){
+    var keys=store.order.slice().sort(function(a,b){ return a==='project'?-1:b==='project'?1:0; });
+    if(!store.lines.project&&store.baseline) keys.unshift('project');
+    var out=[]; keys.forEach(function(k){ lineSnaps(store,k).forEach(function(s){ if(out.indexOf(s)<0) out.push(s); }); });
+    return out;
   }
-  function defaultBasis(snaps,cur){
-    var el=eligible(snaps,cur);
-    if(cur.role==='external') return el.filter(function(s){ return s.role==='external'; })[0]||null;
-    // project and interim: the latest formal project update before it
-    return el.filter(function(s){ return s.role==='project'; })[0]||el.filter(function(s){ return s.role==='baseline'; })[0]||null;
+  function slotName(s){
+    if(!s) return '';
+    if(s.slot==='baseline') return 'Project baseline';
+    return s.lineName+({latest:'',comparison:' comparison',alternate:' alternate'}[s.slot]||'');
   }
-  function bases(snaps,cur){
-    var d=defaultBasis(snaps,cur);
-    return eligible(snaps,cur).map(function(s){ return {snap:s,label:label(s),isDefault:s===d}; });
+  function label(s){ return s?slotName(s)+(s.dataDate?', DD '+fmt(s.dataDate):''):'Nothing to compare with'; }
+  function defaultBasis(store,s){
+    var ln=store.lines[s.line]||{}, base=s.line==='project'?store.baseline:null;
+    if(s.slot==='latest') return ln.comparison||base||null;
+    if(s.slot==='comparison') return base||null;
+    if(s.slot==='alternate') return ln.latest||null;
+    return null;
+  }
+  function bases(store,s){
+    var d=defaultBasis(store,s);
+    return lineSnaps(store,s.line).filter(function(x){ return x!==s; })
+      .map(function(x){ return {snap:x,label:label(x),isDefault:x===d}; });
   }
   function compare(basis,cur){
     var out=[], c={later:0,earlier:0,completed:0,added:0,removed:0,float:0,unchanged:0};
-    var ids={}; Object.keys(cur.rows).forEach(function(k){ ids[k]=1; }); if(basis) Object.keys(basis.rows).forEach(function(k){ ids[k]=1; });
+    if(!basis||!cur) return {rows:out,counts:c};
+    var ids={}; Object.keys(cur.rows).forEach(function(k){ ids[k]=1; }); Object.keys(basis.rows).forEach(function(k){ ids[k]=1; });
     Object.keys(ids).sort().forEach(function(id){
-      var was=basis?basis.rows[id]:null, now=cur.rows[id];
+      var was=basis.rows[id], now=cur.rows[id];
       var row={id:id,name:(now||was).n,
         startWas:was?was.s:null,startNow:now?now.s:null,finishWas:was?was.f:null,finishNow:now?now.f:null,
         floatWas:was?was.fl:null,floatNow:now?now.fl:null,
         startSlip:was&&now?days(was.s,now.s):null,finishSlip:was&&now?days(was.f,now.f):null,
         floatChange:was&&now&&was.fl!=null&&now.fl!=null?now.fl-was.fl:null,change:''};
-      if(!basis){ return; }
       if(!was){ row.change='New'; c.added++; }
       else if(!now){ row.change='Removed'; c.removed++; }
       else if(now.a&&!was.a){ row.change='Completed'; c.completed++; }
@@ -110,6 +143,12 @@
     if(c.float) parts.push(c.float+' float only');
     return parts.length?parts.join(', ')+'; '+c.unchanged+' unchanged.':'No changes; '+c.unchanged+' unchanged.';
   }
+  function record(store){
+    return list(store).map(function(s){
+      return {id:s.id,slot:slotName(s),dataDate:s.dataDate,snapshotAt:s.snapshotAt,file:s.file,path:s.path,activities:Object.keys(s.rows).length};
+    });
+  }
 
-  root.SRETCompare={snapshot:snapshot,bases:bases,defaultBasis:defaultBasis,compare:compare,label:label,summary:summary,_days:days};
+  root.SRETCompare={newStore:newStore,receive:receive,list:list,bases:bases,defaultBasis:defaultBasis,compare:compare,
+                    label:label,slotName:slotName,summary:summary,record:record,_days:days};
 })(window);

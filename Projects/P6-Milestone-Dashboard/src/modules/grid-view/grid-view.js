@@ -10,7 +10,8 @@
        lists:{ store, refOf(rowKey), labelOf(ref), onChange(result) },
        openColumn, onOpenItem(rowKey), importer:{...},
        views:[{id,label,count}], view, onView(id)   (title becomes a view switcher)
-       pickers:[{sg,label,items:[{id,label,checked}],onSelect(id)}], note
+       pickers:[{sg,label,items:[{id,label,checked}],onSelect(id)}], note,
+       toolsItems:[{label,sg,onSelect}]   importer.noun:['task','tasks']
      })
      SRETGrid.close()   SRETGrid.setRows(rows)   SRETGrid.patchRows(rows)   SRETGrid.isOpen()
      SRETGrid.dialog(title, build)   SRETGrid.importAoa(aoa, fileName)
@@ -734,10 +735,14 @@
       if(S) say(err&&err.message?err.message:'Export failed.');
     }).then(function(r){ if(S&&S.expBtn) S.expBtn.disabled=false; return r; });
   }
+  // What one imported row is called: importer.noun ['task','tasks'];
+  // default milestone (Matt, 2026-09-28: user milestones read as tasks).
+  function noun(n){ var im=S&&S.opts.importer, w=im&&im.noun||['milestone','milestones']; return n===1?w[0]:w[1]; }
+  function importTitle(){ var w=noun(2); return 'Import '+w; }
   function openImport(){
     var s=S;
-    if(s.opts.importer) return openDialog('Import milestones',function(body,close){ return buildImport(body,close); });
-    openDialog('Import milestones',function(body,close){ return s.opts.onImport(body,close); });
+    if(s.opts.importer) return openDialog(importTitle(),function(body,close){ return buildImport(body,close); });
+    openDialog(importTitle(),function(body,close){ return s.opts.onImport(body,close); });
   }
 
   // ---------- milestone import (rules in SRETMsImport) ----------
@@ -823,7 +828,7 @@
     if(im.log) Array.prototype.push.apply(im.log,entries);
     if(entries.length&&typeof im.onLog==='function') im.onLog(entries);
     if(s.lists) refreshLists(); else { s.grid.invalidate(); updateStatus(); }
-    var lines=root.SRETMsImport.summary(res,assigned);
+    var lines=root.SRETMsImport.summary(res,assigned,S.opts.importer.noun);
     say(lines[0]);
     var ul=h('ul',{'class':'sg-import-summary','data-sg':'import-summary'});
     lines.forEach(function(l){ ul.appendChild(h('li',{text:l})); });
@@ -997,7 +1002,7 @@
               {label:'Export .xlsx',sg:'export',onSelect:exportRows},
               {label:'Download import template',sg:'template',onSelect:downloadTemplate},
               imp?{sep:1}:null,
-              imp?{label:'Import milestones…',sg:'import',onSelect:openImport}:null,
+              imp?{label:importTitle()+'…',sg:'import',onSelect:openImport}:null,
               opts.importer?{label:'Import log',sg:'import-log',onSelect:openImportLog}:null];
     },'sg-btn--primary',add):null;
     var exp=canAdd?null:h('button',{type:'button','class':'sg-btn','data-sg':'export',text:'Export .xlsx'});
@@ -1028,9 +1033,13 @@
         if(it.length) it.push({sep:1});
         it.push(deleteItem());
       }
+      if((opts.toolsItems||[]).length){
+        if(it.length) it.push({sep:1});
+        opts.toolsItems.forEach(function(x){ it.push({label:x.label,sg:x.sg,onSelect:x.onSelect}); });
+      }
       return it;
     };
-    var tools=(lists||canDel)?makeMenu('Tools','tools',toolsItems):null;
+    var tools=(lists||canDel||(opts.toolsItems||[]).length)?makeMenu('Tools','tools',toolsItems):null;
     var msg=h('span',{'class':'sg-msg',role:'status','aria-live':'polite','data-sg':'msg'});
     // Row 1: back, title. Row 2 (starts in line with the title): search, Add
     // row, Tools, Add to temp list. Row 3: counts, Select all, the filter pill.
@@ -1267,7 +1276,7 @@
     // runs the same checks, question, log and summary in its dialog.
     importAoa:function(aoa,fileName){
       if(!S||!S.opts.importer) return null;
-      openDialog('Import milestones',function(body,close){
+      openDialog(importTitle(),function(body,close){
         var ui={pick:h('div'),status:h('div',{'class':'sg-import-status','data-sg':'import-status'}),go:h('button'),close:close,onCancel:close};
         body.appendChild(h('div',{'class':'sg-import-row'},[dateSelect(ui)])); body.appendChild(ui.status);
         runImport(aoa,fileName||'Imported sheet',ui);
