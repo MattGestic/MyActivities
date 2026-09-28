@@ -77,8 +77,16 @@ def property_root(prop: str) -> str | None:
 
 
 def extract_style_blocks(html: str) -> list[tuple[str, int]]:
-    """[(content, offset_in_file), ...] for every <style> block."""
-    return [(m.group(1), m.start(1)) for m in re.finditer(r"<style[^>]*>(.*?)</style>", html, re.S | re.I)]
+    """[(content, offset_in_file), ...] for every <style> block of the app's
+    own CSS. An embedded third-party stylesheet (<style id="vendor-...">, e.g.
+    vendor-slickgrid-css, P61) is skipped: it is copied in unmodified and
+    recorded in vendor/<lib>/SOURCE.md, never edited here, so its px are not
+    debt this ratchet can pay down. colour_audit.py --strict likewise reads
+    only the first (app) block. The app's own grid view CSS sits in the main
+    block and is counted."""
+    return [(m.group(2), m.start(2))
+            for m in re.finditer(r"<style([^>]*)>(.*?)</style>", html, re.S | re.I)
+            if not re.search(r'\bid\s*=\s*["\']vendor-', m.group(1), re.I)]
 
 
 def scan_declarations(text: str, base_offset: int, html: str, source: str) -> list[dict]:

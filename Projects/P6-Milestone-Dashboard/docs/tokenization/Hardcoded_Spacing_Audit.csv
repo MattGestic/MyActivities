@@ -136,14 +136,14 @@ line,property,value,px_literals,also_uses_space_token,source
 2320,padding,3px 4px,3px|4px,False,style-block
 2327,gap,6px 16px,6px|16px,False,style-block
 2328,gap,6px,6px,False,style-block
-3514,padding,4px 5px,4px|5px,False,inline-style
-3515,padding,4px 5px,4px|5px,False,inline-style
-3516,padding,4px 5px,4px|5px,False,inline-style
-3517,padding,4px 5px,4px|5px,False,inline-style
-3518,padding,4px 5px,4px|5px,False,inline-style
-3519,padding,4px 5px,4px|5px,False,inline-style
-3520,padding,4px 5px,4px|5px,False,inline-style
-3521,padding,4px 5px,4px|5px,False,inline-style
-3522,padding,4px 5px,4px|5px,False,inline-style
-3523,padding,4px 5px,4px|5px,False,inline-style
-8709,gap,8px,8px,False,inline-style
+3826,padding,4px 5px,4px|5px,False,inline-style
+3827,padding,4px 5px,4px|5px,False,inline-style
+3828,padding,4px 5px,4px|5px,False,inline-style
+3829,padding,4px 5px,4px|5px,False,inline-style
+3830,padding,4px 5px,4px|5px,False,inline-style
+3831,padding,4px 5px,4px|5px,False,inline-style
+3832,padding,4px 5px,4px|5px,False,inline-style
+3833,padding,4px 5px,4px|5px,False,inline-style
+3834,padding,4px 5px,4px|5px,False,inline-style
+3835,padding,4px 5px,4px|5px,False,inline-style
+10363,gap,8px,8px,False,inline-style

@@ -120,6 +120,13 @@ The wrapper reads no app global. SheetJS arrives as whatever `ensureXLSX()` reso
 
 `host` is the element the screen covers with `position:absolute; inset:0`. Pass the board container so the app header and icon bar stay visible and clickable: today that is the parent of `#scroll-wrap` (`#scroll-wrap` itself scrolls, so covering it would scroll with the table). The host must be positioned (`position:relative`); `#scroll-wrap` already is, its parent needs checking after P59 moves the header. **[CONFIRM AT MERGE against the P59 layout]**
 
+**Checked at P61 (TD-221):**
+
+- The parent of `#scroll-wrap` is `#page-frame`, which is `display:contents`. It has no box, so it cannot be positioned, and the next box up is `<body>`. Covering `<body>` would cover the icon bar.
+- The app therefore has its own host, `#grid-host`, placed after `.rpt-hd` and `position:relative`. It is shown while `body.grid-open` is set. That class hides the filter bar, `#scroll-wrap`, the legend and the print filter note.
+- The host's height is the viewport less its top edge. It is set on open, on a window resize, and whenever `.rpt-hd` changes size, which happens when a side panel docks.
+- The icon bar and report header stay visible and clickable. `tools/p61_check.py` measures this with `elementFromPoint`.
+
 Back returns focus to the element that had it when `open()` ran, so opening from a Workspace button and pressing back lands on that button. `onBack` runs after the screen has closed: use it to re-render anything the edits changed (`scheduleRerender(true)`, never `rerender(true)`).
 
 ## Entry points to wire
