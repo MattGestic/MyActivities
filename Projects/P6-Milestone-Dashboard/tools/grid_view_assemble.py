@@ -145,15 +145,28 @@ def comparison_snapshots(sched):
     # latest, so 22-Aug becomes the comparison and 15-Aug is dropped.
     proj = "P:\\103787 SRET\\05 Controls\\Schedule\\Weekly updates"
     vend = "P:\\103787 SRET\\07 Procurement\\P8010 Ocean Steel\\Schedules"
+    # Interim update of part of the schedule only (Matt, 2026-09-28): the cost
+    # estimate band, cut after the latest full update, with moves and one
+    # activity the full schedule does not have yet.
+    part = []
+    for k, r in enumerate([r for r in sched if r["wbs"] == "Capital and Operating Cost Estimate"]):
+        x = row(r)
+        if k % 3 == 0:
+            x["finish"] = _shift(r["finish"], 5)
+        part.append(x)
+    part.append({"id": "SNIP-950", "name": "Estimate peer review", "start": "2026-10-05", "finish": "2026-10-09", "float": 6, "actual": "No"})
     return [
+        {"slot": "interim", "meta": {"id": "pi-0902", "role": "project", "dataDate": "2026-09-02", "scope": "Cost estimate",
+                                     "file": "PFS interim, cost estimate only DD-2026-09-02.xlsx", "path": proj + "\\Interim",
+                                     "snapshotAt": "2026-09-03T10:00:00Z"}, "rows": part},
         {"slot": "baseline", "meta": {"id": "bl", "role": "project", "dataDate": "2026-08-15", "file": "Embedded baseline",
                                       "path": "(inside this file)", "snapshotAt": "2026-08-18T08:00:00Z"}, "rows": base},
         {"slot": "latest", "meta": {"id": "pu-0815", "role": "project", "dataDate": "2026-08-15", "file": "103787-13_PFS_Weekly_Update_DD-2026-08-15.xlsx",
                                     "path": proj, "snapshotAt": "2026-08-18T08:05:00Z"}, "rows": base},
         {"slot": "latest", "meta": {"id": "pu-0822", "role": "project", "dataDate": "2026-08-22", "file": "103787-13_PFS_Weekly_Update_DD-2026-08-22.xlsx",
                                     "path": proj, "snapshotAt": "2026-08-24T08:00:00Z"}, "rows": prev},
-        {"slot": "alternate", "meta": {"id": "pa-0826", "role": "project", "dataDate": "2026-08-26", "file": "PFS interim cut DD-2026-08-26.xlsx",
-                                       "path": proj + "\\Interim", "snapshotAt": "2026-08-26T15:00:00Z"}, "rows": interim},
+        {"slot": "alternate", "meta": {"id": "pa-0826", "role": "project", "dataDate": "2026-08-26", "file": "PFS recovery option DD-2026-08-26.xlsx",
+                                       "path": proj + "\\Options", "snapshotAt": "2026-08-26T15:00:00Z"}, "rows": interim},
         {"slot": "latest", "meta": {"id": "os-0820", "role": "external", "name": "Ocean Steel fabrication", "dataDate": "2026-08-20",
                                     "file": "OceanSteel_P8010_2026-08-20.xlsx", "path": vend, "snapshotAt": "2026-08-21T09:00:00Z"}, "rows": v1},
         {"slot": "latest", "meta": {"id": "os-0827", "role": "external", "name": "Ocean Steel fabrication", "dataDate": "2026-08-27",

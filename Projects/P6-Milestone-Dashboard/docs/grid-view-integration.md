@@ -272,15 +272,18 @@ Lists what moved between a loaded schedule and a basis: Later, Earlier, Complete
 |---|---|---|
 | Project schedule | The latest import (what the board shows) | Project schedule comparison (else the baseline) |
 | Project schedule comparison | The previous latest, moved here by the next import; the one it replaces is dropped | Project baseline |
-| Project schedule alternate | Loaded on purpose as an alternative basis (an interim cut, a what-if); replaced only by another alternate | Project schedule |
+| Project schedule alternate | Loaded on purpose as an alternative basis (a recovery option, a what-if); replaced only by another alternate | Project schedule |
+| Project interim update (scope) | An interim that may cover only part of the schedule (e.g. commissioning). Filed under a scope named at import; one kept per scope, replaced by the next interim of that scope. **Never the full project update**: it does not move the latest to comparison and does not replace the board | Project schedule |
 | Project baseline | Embedded in the file | (basis only) |
+
+**Comparing a partial interim.** Activities outside the interim's scope are counted as "outside the interim", never Removed or New. An activity the interim has and the full schedule does not is New when the interim is viewed, and "Only in interim" when the full schedule is compared against the interim.
 
 A vendor or contractor schedule is its own line, named at import, with the same three slots and no baseline. Lines never compare with each other, so a vendor's IDs never meet the project's.
 
 **Recorded for each loaded schedule:** snapshot date (when it was loaded), data date, file name, file location, activity count. A browser never reveals the folder a file came from (it gives the name only), so **the location is what the user types or pastes at import** (optional, remembered per schedule line as the default for the next import).
 
 **What the app must add at merge (it keeps no history today; `PRIMARY_SOURCES` is replaced on import):**
-1. Import asks: Project schedule (latest) / Project schedule alternate / an external schedule by name, and the optional location. Before a new latest replaces the comparison, the confirmation names the one that will be dropped.
+1. Import asks: Project schedule (latest, full update) / Project interim update (with its scope, e.g. Commissioning) / Project schedule alternate / an external schedule by name, and the optional location. An interim import never replaces the board's schedule. **[CONFIRM WITH MATT]** whether the board should optionally show an interim's dates over the full update (e.g. as ghost markers, like the baseline). Before a new latest replaces the comparison, the confirmation names the one that will be dropped.
 2. Each import calls `SRETCompare.receive(store, meta, rows, slot)`; it stores ID, name, start, finish, float and the actual flag only (about 40 bytes per activity). The embedded baseline is loaded once with slot `'baseline'`.
 3. The store persists with the annotations and publish state, and shows in Data & view > Sources as the Loaded schedules record.
 

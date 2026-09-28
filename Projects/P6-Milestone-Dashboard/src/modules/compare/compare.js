@@ -12,6 +12,14 @@
                                   when another alternate is loaded
      Project baseline             embedded in the file; never replaced here
 
+   Interim updates (Matt, 2026-09-28) are loaded as well, but are never the
+   full project update: an interim may cover only part of the schedule
+   (e.g. just commissioning). Each is filed under a scope named at import
+   and held beside the three slots; the next interim of the same scope
+   replaces it. It never moves the latest into comparison. Compared as a
+   part: activities outside its scope are neither Removed nor New, they are
+   counted as outside the interim.
+
    A schedule from someone else (vendor, contractor) is its own line, named
    at import, with the same three slots and no baseline. Lines never compare
    with each other, so a vendor's IDs never meet the project's.
@@ -24,15 +32,16 @@
      latest      -> comparison (else the baseline)
      comparison  -> the baseline
      alternate   -> latest
+     interim     -> latest (what the interim changes against the full update)
    Any other slot of the same line (and the baseline) can be picked.
    Differences are calendar days, positive = later (a slip).
 
    API (window.SRETCompare):
      newStore()                                  -> store
-     receive(store, meta, rows, slot)            -> {snap, dropped}   slot 'latest' (default) | 'alternate' | 'baseline'
-        meta: {name, role:'project'|'external', dataDate, file, path, snapshotAt}
+     receive(store, meta, rows, slot)            -> {snap, dropped}   slot 'latest' (default) | 'alternate' | 'interim' | 'baseline'
+        meta: {name, role:'project'|'external', dataDate, file, path, snapshotAt, scope (interim only)}
         rows: [{id, name, start, finish, float, actual}]
-     list(store)                                 -> [snap]  project first: latest, comparison, alternate, baseline; then external lines
+     list(store)                                 -> [snap]  project first: latest, comparison, alternate, interims (newest first), baseline; then external lines
      bases(store, snap)                          -> [{snap, label, isDefault}]
      defaultBasis(store, snap)                   -> snap | null
      compare(basis, snap)                        -> {rows, counts}
@@ -68,12 +77,14 @@
     var snap={id:meta.id||('snap-'+(++seq)),line:key,role:key==='project'?'project':'external',
               lineName:key==='project'?'Project schedule':String(meta.name||'External schedule').trim(),
               slot:slot,dataDate:meta.dataDate||null,snapshotAt:meta.snapshotAt||new Date().toISOString(),
-              file:meta.file||'',path:meta.path||'',rows:snapRows(rows)};
+              file:meta.file||'',path:meta.path||'',rows:snapRows(rows),
+              partial:slot==='interim',scope:slot==='interim'?String(meta.scope||'Interim').trim():''};
     if(slot==='baseline'){ var old=store.baseline; store.baseline=snap; return {snap:snap,dropped:old}; }
     var ln=store.lines[key];
-    if(!ln){ ln=store.lines[key]={name:snap.lineName,latest:null,comparison:null,alternate:null}; store.order.push(key); }
+    if(!ln){ ln=store.lines[key]={name:snap.lineName,latest:null,comparison:null,alternate:null,interims:{}}; store.order.push(key); }
     var dropped=null;
-    if(slot==='alternate'){ dropped=ln.alternate; ln.alternate=snap; }
+    if(slot==='interim'){ var sk=snap.scope.toLowerCase(); dropped=ln.interims[sk]||null; ln.interims[sk]=snap; }
+    else if(slot==='alternate'){ dropped=ln.alternate; ln.alternate=snap; }
     else {
       dropped=ln.comparison;
       if(ln.latest){ ln.comparison=ln.latest; ln.comparison.slot='comparison'; }
@@ -85,6 +96,8 @@
   function lineSnaps(store,key){
     var ln=store.lines[key]; if(!ln) return [];
     var out=SLOTS.map(function(s){ return ln[s]; }).filter(Boolean);
+    Object.keys(ln.interims).map(function(k){ return ln.interims[k]; })
+      .sort(function(a,b){ return String(b.dataDate)<String(a.dataDate)?-1:1; }).forEach(function(x){ out.push(x); });
     if(key==='project'&&store.baseline) out.push(store.baseline);
     return out;
   }
@@ -97,6 +110,7 @@
   function slotName(s){
     if(!s) return '';
     if(s.slot==='baseline') return 'Project baseline';
+    if(s.slot==='interim') return s.lineName.replace(/ schedule$/,'')+' interim update ('+s.scope+')';
     return s.lineName+({latest:'',comparison:' comparison',alternate:' alternate'}[s.slot]||'');
   }
   function label(s){ return s?slotName(s)+(s.dataDate?', DD '+fmt(s.dataDate):''):'Nothing to compare with'; }
@@ -104,7 +118,7 @@
     var ln=store.lines[s.line]||{}, base=s.line==='project'?store.baseline:null;
     if(s.slot==='latest') return ln.comparison||base||null;
     if(s.slot==='comparison') return base||null;
-    if(s.slot==='alternate') return ln.latest||null;
+    if(s.slot==='alternate'||s.slot==='interim') return ln.latest||null;
     return null;
   }
   function bases(store,s){
@@ -113,17 +127,21 @@
       .map(function(x){ return {snap:x,label:label(x),isDefault:x===d}; });
   }
   function compare(basis,cur){
-    var out=[], c={later:0,earlier:0,completed:0,added:0,removed:0,float:0,unchanged:0};
+    var out=[], c={later:0,earlier:0,completed:0,added:0,removed:0,float:0,unchanged:0,outside:0,onlyInterim:0};
     if(!basis||!cur) return {rows:out,counts:c};
     var ids={}; Object.keys(cur.rows).forEach(function(k){ ids[k]=1; }); Object.keys(basis.rows).forEach(function(k){ ids[k]=1; });
     Object.keys(ids).sort().forEach(function(id){
       var was=basis.rows[id], now=cur.rows[id];
+      // An interim covers part of the schedule: what it does not hold is out of scope, not Removed or New.
+      if((!now&&cur.partial)||(!was&&basis.partial)){ c.outside++; return; }
       var row={id:id,name:(now||was).n,
         startWas:was?was.s:null,startNow:now?now.s:null,finishWas:was?was.f:null,finishNow:now?now.f:null,
         floatWas:was?was.fl:null,floatNow:now?now.fl:null,
         startSlip:was&&now?days(was.s,now.s):null,finishSlip:was&&now?days(was.f,now.f):null,
         floatChange:was&&now&&was.fl!=null&&now.fl!=null?now.fl-was.fl:null,change:''};
       if(!was){ row.change='New'; c.added++; }
+      // Held by the interim basis but not by this full schedule: the interim added it; nothing was removed.
+      else if(!now&&basis.partial){ row.change='Only in interim'; c.onlyInterim++; }
       else if(!now){ row.change='Removed'; c.removed++; }
       else if(now.a&&!was.a){ row.change='Completed'; c.completed++; }
       else if(row.finishSlip>0||(!row.finishSlip&&row.startSlip>0)){ row.change='Later'; c.later++; }
@@ -140,12 +158,13 @@
     var c=r.counts, parts=[];
     if(c.later) parts.push(c.later+' later'); if(c.earlier) parts.push(c.earlier+' earlier');
     if(c.completed) parts.push(c.completed+' completed'); if(c.added) parts.push(c.added+' new'); if(c.removed) parts.push(c.removed+' removed');
-    if(c.float) parts.push(c.float+' float only');
-    return parts.length?parts.join(', ')+'; '+c.unchanged+' unchanged.':'No changes; '+c.unchanged+' unchanged.';
+    if(c.float) parts.push(c.float+' float only'); if(c.onlyInterim) parts.push(c.onlyInterim+' only in the interim');
+    var tail=c.outside?' '+c.outside+' outside the interim.':'';
+    return (parts.length?parts.join(', ')+'; '+c.unchanged+' unchanged.':'No changes; '+c.unchanged+' unchanged.')+tail;
   }
   function record(store){
     return list(store).map(function(s){
-      return {id:s.id,slot:slotName(s),dataDate:s.dataDate,snapshotAt:s.snapshotAt,file:s.file,path:s.path,activities:Object.keys(s.rows).length};
+      return {id:s.id,slot:slotName(s),dataDate:s.dataDate,snapshotAt:s.snapshotAt,file:s.file,path:s.path,activities:Object.keys(s.rows).length,partial:!!s.partial};
     });
   }
 

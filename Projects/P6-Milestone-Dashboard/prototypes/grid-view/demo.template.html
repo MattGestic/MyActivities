@@ -172,7 +172,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
     return {all:all,cur:cur,bases:bs,basis:basis,result:C.compare(basis,cur)};
   }
   var CHANGE_COLS=[{key:'id',label:'Activity ID',type:'text',width:110},{key:'name',label:'Name',type:'text',width:240},
-    {key:'change',label:'Change',type:'text',width:100,tones:{Later:'crit',Earlier:'track',Completed:'done',New:'future',Removed:'risk','Float only':'future'}},
+    {key:'change',label:'Change',type:'text',width:100,tones:{Later:'crit',Earlier:'track',Completed:'done',New:'future',Removed:'risk','Float only':'future','Only in interim':'future'}},
     {key:'finishWas',label:'Finish was',type:'date',width:96},{key:'finishNow',label:'Finish now',type:'date',width:96},
     {key:'finishSlip',label:'Finish moved (days)',type:'number',width:110},
     {key:'startWas',label:'Start was',type:'date',width:96},{key:'startNow',label:'Start now',type:'date',width:96},
@@ -185,15 +185,15 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
   function openLoaded(){
     SRETGrid.dialog('Loaded schedules',function(body){
       var t=document.createElement('table'); t.className='sg-itable'; t.setAttribute('data-sg','loaded-table');
-      var hd=['Schedule','Data date','Snapshot taken','File','Location','Activities'];
+      var hd=['Schedule','Covers','Data date','Snapshot taken','File','Location','Activities'];
       t.innerHTML='<thead><tr>'+hd.map(function(x){ return '<th>'+x+'</th>'; }).join('')+'</tr></thead>';
       var tb=document.createElement('tbody');
       C.record(CST).forEach(function(r){ var tr=document.createElement('tr');
-        [r.slot,dmy(r.dataDate),dmy(r.snapshotAt)+' '+r.snapshotAt.slice(11,16),r.file,r.path,String(r.activities)].forEach(function(v){
+        [r.slot,r.partial?'Part of the schedule':'Full schedule',dmy(r.dataDate),dmy(r.snapshotAt)+' '+r.snapshotAt.slice(11,16),r.file,r.path,String(r.activities)].forEach(function(v){
           var td=document.createElement('td'); td.textContent=v; tr.appendChild(td); }); tb.appendChild(tr); });
       t.appendChild(tb); body.appendChild(t);
       var p=document.createElement('p'); p.className='demo-import-note';
-      p.textContent='Three per schedule: a new latest moves the latest to comparison and drops the old comparison; an alternate is replaced only by another alternate. The baseline is embedded.';
+      p.textContent='Three per schedule: a new latest moves the latest to comparison and drops the old comparison; an alternate is replaced only by another alternate. Interim updates cover part of the schedule, are kept one per scope, and never replace the full update. The baseline is embedded.';
       body.appendChild(p);
     });
   }
