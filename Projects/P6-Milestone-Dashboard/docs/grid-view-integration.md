@@ -19,6 +19,7 @@ The app keeps one `<style>` (scanned by `colour_audit.py --strict`) and one `<sc
 | 4d | `src/modules/dates/dates.js` | Directly after #4b, before #4c | `window.SRETDates`: the one date reader for every import (grid and dashboard). #4c needs it |
 | 4e | `src/modules/user/user.js`, `src/modules/user/user.css` | JS after #4d; CSS in the main `<style>` after #1 | `window.SRETUser`: the user name and save history, and the Data settings field |
 | 4f | `src/modules/compare/compare.js` | After #4e | `window.SRETCompare`: stored uploads, the designation reference table, and the Schedule changes comparison |
+| 4g | `src/modules/migrate/migrate.js` | After #4f | `window.SRETMigrate`: renames old stored keys and values (user milestones to user tasks) on every load |
 | 5 | The adapters below | In `app-script`, beside the Workspace code (`setWorkspaceSection()`) | The only code that knows both the app's stores and the grid contract |
 
 Check before pasting: neither vendor file contains `</script` or `</style` (`tools/grid_view_assemble.py` asserts this for the demo and would fail the same way).
@@ -137,7 +138,7 @@ Back returns focus to the element that had it when `open()` ran, so opening from
 
 Today: `renderMounts()` (line ~10737) renders a disabled `Manage…` button titled "Grid arrives in D-17c" in the User-defined group, which lands in `#ws-userms-body`. Replace it with an enabled "View items" button calling `openUserMsGrid()`.
 
-Adapter outline (field names from the `USER_MILESTONES.push` in the add-milestone handler, line ~12704):
+Adapter outline (field names from the `USER_MILESTONES.push` in the add-milestone handler, line ~12704; after TD-217 these are `USER_TASKS` and the add-task handler):
 
 | Grid column (`key`) | From `USER_MILESTONES` record | Editable |
 |---|---|---|
@@ -241,7 +242,7 @@ The grid's title is a view switcher (`views`, `view`, `onView`). Back returns to
 
 | View | Rows | Editable |
 |---|---|---|
-| User tasks | The user's own items (`USER_MILESTONES`). Called tasks in the grid to keep them apart from schedule milestones | Yes (section 1) |
+| User tasks | The user's own items (`USER_TASKS`, today `USER_MILESTONES`). Called tasks in the grid to keep them apart from schedule milestones | Yes (section 1) |
 | Schedule milestones | Every activity from an uploaded schedule (the board plots each as a milestone: `MILESTONES` from `PRIMARY_SOURCES`) | Annotation columns only |
 | Schedule updates | Schedule milestones carrying an annotation: short title, health or comment | Annotation columns only |
 | Schedule changes | Section 4 | Read-only |
@@ -249,21 +250,36 @@ The grid's title is a view switcher (`views`, `view`, `onView`). Back returns to
 
 Schedule columns (ID, name, WBS, duration, dates, float, predecessors, successors, actual flag) are **read-only**; annotation edits go through `onEdit` to the annotation stores, never to `TASKS` / `MILESTONES`. The importer passes `noun:['task','tasks']`, so the menu, dialog and summary say "Import tasks" and "Imported 3 tasks".
 
-**User tasks across the dashboard (Matt, 2026-09-28).** Tracked as TD-217. Rename the words people read; keep the stored keys, because saved files and publish payloads carry them (the TD-209 approach: a data key, not a display string). Places at base `81cfd7a`, by search text:
+**User tasks across the dashboard, names and stored keys in sync (Matt, 2026-09-28).** Tracked as TD-217. Everything is renamed: the words people read, the keys and values saved in files, and the code identifiers, so they cannot drift apart. Files saved before the rename still open because every load path runs `SRETMigrate.userTasks()` first (`src/modules/migrate/migrate.js`, paste as #4g after #4f). Saving writes only the new names.
 
-| Where | Today | Becomes |
+*Stored keys and values (migrated on load):*
+
+| Stored where | Old | New |
 |---|---|---|
-| Workspace rail button (`#ws-tab-userms` title and aria-label) | User milestones | User tasks |
-| Workspace panel heading (`WS_TITLES.userms`) | User milestones | User tasks |
-| Header button `#btn-add-ms` title, add dialog `aria-label` and heading | Add a milestone | Add a task |
-| Help list ("double-click a week cell to add a milestone") | add a milestone | add a task |
-| Sources tab group title and row label (`renderMounts()`, "User-defined") | User-defined | User tasks |
-| Sources tab description ("A user-defined milestone is a schedule item whose source is...") | user-defined milestone | user task |
-| Status messages: restored, showing/hiding, deleted, exported, "No user-defined milestones yet", delete confirmation | user-defined milestone(s) | user task(s) |
-| Board band label for `USER_BAND` | User Defined Milestones | User tasks (display only; see below) |
-| Export sheet name and file name part (`_user-defined_`) | User-defined | User tasks, `_user-tasks_` |
+| Publish, model and annotations payload key | `userMilestones` | `userTasks` |
+| Payload key | `userMsEnabled` | `userTasksEnabled` |
+| `source` / `sourceSchedule` value on tasks, rows, milestones, registered sources | `User-defined` | `User tasks` |
+| Band value (`notes` on the band's rows) | `User Defined Milestones` | `User Tasks` |
+| `localStorage` `sret-ws-section` value | `userms` | `usertasks` (via `SRETMigrate.wsSection`) |
+| Export sheet name / file name part | `User-defined` / `_user-defined_` | `User tasks` / `_user-tasks_`; re-import accepts both (`SRETMigrate.sheetName`) |
 
-Keep unchanged: `USER_BAND='User Defined Milestones'` and `USER_BAND_SOURCE='User-defined'` as stored values (a display map shows "User tasks"), the `USR-` ID prefix, the `userms` ids and function names, and `USER_MILESTONES`. Re-importing an older export must still recognise the old sheet name. The board keeps drawing user tasks with the milestone markers they have today.
+*Where the app calls the migration (by function, base `81cfd7a`):* `applyPublishedState()` (published file), the `ANNOT_CATEGORIES` entry that applies `userMilestones` (model and annotations `.json` import and mount), `restorePrimarySources()`, the user route in `runIngest()` (`srcName===USER_BAND_SOURCE` must also accept the old value through `SRETMigrate.value`), and the start-up read of `sret-ws-section`. Each takes the migrated payload and never reads the old key again.
+
+*Code identifiers (renamed with every reference):*
+
+| Old | New |
+|---|---|
+| `USER_MILESTONES`, `USER_MS_ENABLED`, `USER_BAND`, `USER_BAND_SOURCE` | `USER_TASKS`, `USER_TASKS_ENABLED`, `USER_TASKS_BAND`, `USER_TASKS_SOURCE` |
+| `applyUserMilestones()`, `nextUserMsId()`, `exportUserDefinedSchedule()`, `userDefinedExportRows()` | `applyUserTasks()`, `nextUserTaskId()`, `exportUserTasks()`, `userTaskExportRows()` |
+| `openAddMilestone()` / `closeAddMilestone()`, ids and classes `add-ms-*`, `#btn-add-ms` | `openAddTask()` / `closeAddTask()`, `add-task-*`, `#btn-add-task` |
+| Workspace section `userms`, ids `ws-tab-userms`, `ws-sec-userms`, `ws-userms-body`, `ws-userms-count`, `WS_TITLES.userms` | `usertasks`, `ws-tab-usertasks`, `ws-sec-usertasks`, `ws-usertasks-body`, `ws-usertasks-count`, `WS_TITLES.usertasks` |
+| `ANNOT_CATEGORIES` key `userMs`, label "Milestones added on the board" | `userTasks`, "Tasks added on the board" |
+
+*Words people read:* Workspace button and heading "User tasks"; "Add a task" (header button, dialog, help list); Sources group "User tasks" and its description; status messages ("3 user tasks restored", "Showing user tasks", "Deleted 2 user tasks", "Exported 12 user tasks", "No user tasks yet"); the band label "User Tasks". The board keeps drawing user tasks with the markers they have today.
+
+*Stays the same:* the `USR-` ID prefix, because annotations, comments and dependency links in saved files and other people's copies are keyed by these IDs. **[CONFIRM WITH MATT]**
+
+*Drift check at merge:* the rendered text and the source both contain no `user milestone`, `User-defined`, `User Defined Milestones`, `userMilestones`, `userMsEnabled` or `userms`, except inside `SRETMigrate.KEYS`; an older published file, an older model `.json` and an older user-defined export all load, and saving them writes only the new names. Re-grep at merge: P59 may have added references.
 
 **Built at P63 (TD-223).** The grid module already had `views`/`view`/`onView`, so the switcher is the module's own title menu (a menu button with `aria-haspopup`, arrow keys, Home/End, Esc back to the button, the current view checked); `grid-view.js` is unchanged. The adapter in the app:
 

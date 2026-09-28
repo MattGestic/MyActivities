@@ -142,6 +142,9 @@ MUTATIONS = {
     "interim-one-for-all-scopes": ("o.scope.toLowerCase()===u.scope.toLowerCase()&&", ""),
     "overlay-ignores-moved-only": ("if(opts.movedOnly&&!moved) return;", ""),
     "overlay-drops-unplaced": ("if(!p){ unplaced.push({id:id,name:r.n,scope:u.scope,upload:u.id,finish:r.f}); return; }", "if(!p){ return; }"),
+    "migrate-keeps-old-key": ("      delete p[oldK];\n", ""),
+    "migrate-mutates-input": ("    var p=clone(payload);", "    var p=payload;"),
+    "migrate-misses-values": ("    fixRecords(p.tasks,'tasks',out.changed);", ""),
     "health-shown-in-grid": ("if(lists) cols=[{key:L_LIST", "cols=cols.filter(function(c){ return c.key!=='health'; }).concat(cols.filter(function(c){ return c.key==='health'; }).map(function(c){ return Object.assign({},c,{hidden:false}); }));\n    if(lists) cols=[{key:L_LIST"),
 }
 
@@ -198,7 +201,7 @@ TIMING = r"""
   window.__scroll={p95Ms:steps[142],medianMs:steps[75],smallMiss:smallMiss,flingMiss:flingMiss,
     wheelMoved:vp.scrollTop-before,transform:!!(rowEl&&rowEl.style.transform&&!rowEl.style.top)};
   SRETGrid.close();
-  DEMO_OPEN('userms');
+  DEMO_OPEN('usertasks');
 })();
 </script>
 """
@@ -334,12 +337,12 @@ try{
     ok('user: the prompt closes; the grid is usable', !btn('dialog') && SRETGrid.isOpen()); }
 
   // ============ User milestones (opened on load) ============
-  ok('userms: screen open on load', SRETGrid.isOpen() && !!$('.sg-screen'));
-  ok('userms: title', $('.sg-title').textContent==='User tasks', $('.sg-title').textContent);
-  ok('userms: row count', visibleCount()===F.userms.length && $('[data-sg=count]').textContent===F.userms.length+' rows',
+  ok('usertasks: screen open on load', SRETGrid.isOpen() && !!$('.sg-screen'));
+  ok('usertasks: title', $('.sg-title').textContent==='User tasks', $('.sg-title').textContent);
+  ok('usertasks: row count', visibleCount()===F.usertasks.length && $('[data-sg=count]').textContent===F.usertasks.length+' rows',
      $('[data-sg=count]').textContent);
-  ok('userms: My temp list panel collapsed on open; rail shows collapsed', $('[data-sg=panel]').hidden && $('[data-sg=temp-open]').getAttribute('aria-expanded')==='false');
-  ok('userms: Add row present; Delete in the Tools menu', !!$('[data-sg=add]') && !!(await menuItem('tools','delete'))); await menuClose('tools');
+  ok('usertasks: My temp list panel collapsed on open; rail shows collapsed', $('[data-sg=panel]').hidden && $('[data-sg=temp-open]').getAttribute('aria-expanded')==='false');
+  ok('usertasks: Add row present; Delete in the Tools menu', !!$('[data-sg=add]') && !!(await menuItem('tools','delete'))); await menuClose('tools');
 
   // keyboard navigation
   { const g=eng().grid, f=FD(); g.setActiveCell(0,f); await sleep(10);
@@ -406,7 +409,7 @@ try{
 
   // sort: text asc/desc, number asc (N=3 ordered pairs)
   { header('name').click(); await sleep(20);
-    const names=F.userms.map(r=>r.name).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true,sensitivity:'base'}));
+    const names=F.usertasks.map(r=>r.name).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true,sensitivity:'base'}));
     const got=[0,1,2].map(i=>cellText(i,'name'));
     ok('sort: text ascending, first three', JSON.stringify(got)===JSON.stringify(names.slice(0,3)), got);
     header('name').click(); await sleep(20);
@@ -414,31 +417,31 @@ try{
     ok('sort: text descending, first three', JSON.stringify(gotD)===JSON.stringify(names.slice().reverse().slice(0,3)), gotD);
     header('progress').click(); await sleep(20);
     const n=[0,1,2,3].map(i=>Number(cellText(i,'progress')));
-    ok('sort: number ascending, numeric not lexical', n[0]<=n[1]&&n[1]<=n[2]&&n[2]<=n[3]&&n[0]===Math.min(...F.userms.map(r=>r.progress)), n);
+    ok('sort: number ascending, numeric not lexical', n[0]<=n[1]&&n[1]<=n[2]&&n[2]<=n[3]&&n[0]===Math.min(...F.usertasks.map(r=>r.progress)), n);
     ok('sort: sorted header shows state', header('progress').classList.contains('slick-header-column-sorted')); }
 
   // filters
   { await setFilter('type','INT');
-    const exp=F.userms.filter(r=>r.type==='INT').length;
-    ok('filter: contains on select column', visibleCount()===exp && $('[data-sg=count]').textContent===exp+' of '+F.userms.length+' rows',
+    const exp=F.usertasks.filter(r=>r.type==='INT').length;
+    ok('filter: contains on select column', visibleCount()===exp && $('[data-sg=count]').textContent===exp+' of '+F.usertasks.length+' rows',
        [visibleCount(),exp,$('[data-sg=count]').textContent]);
     await setFilter('type','');
     await setFilter('progress','>=75');
-    const e2=F.userms.filter(r=>r.progress>=75).length;
+    const e2=F.usertasks.filter(r=>r.progress>=75).length;
     ok('filter: >= on number column', visibleCount()===e2, [visibleCount(),e2]);
     await setFilter('progress','');
     await setFilter('finish','<1-Aug-26');
-    const e3=F.userms.filter(r=>r.finish && r.finish<'2026-08-01').length;
+    const e3=F.usertasks.filter(r=>r.finish && r.finish<'2026-08-01').length;
     ok('filter: < on date column (d-Mmm-yy input)', visibleCount()===e3 && e3>0, [visibleCount(),e3]);
     await setFilter('finish','>2026-09-01');
-    const e4=F.userms.filter(r=>r.finish && r.finish>'2026-09-01').length;
+    const e4=F.usertasks.filter(r=>r.finish && r.finish>'2026-09-01').length;
     ok('filter: > on date column (ISO input)', visibleCount()===e4 && e4>0, [visibleCount(),e4]);
     await setFilter('finish','');
     await setSearch('review');
-    const e5=F.userms.filter(r=>JSON.stringify(r).toLowerCase().indexOf('review')>=0).length;
-    ok('quick search across columns', visibleCount()===e5 && e5>0 && e5<F.userms.length, [visibleCount(),e5]);
+    const e5=F.usertasks.filter(r=>JSON.stringify(r).toLowerCase().indexOf('review')>=0).length;
+    ok('quick search across columns', visibleCount()===e5 && e5>0 && e5<F.usertasks.length, [visibleCount(),e5]);
     await setSearch('');
-    ok('filters cleared', visibleCount()===F.userms.length); }
+    ok('filters cleared', visibleCount()===F.usertasks.length); }
 
   // selection: select all then deselect three
   { // The plugin re-renders the header cell on every selection change, so the
@@ -449,7 +452,7 @@ try{
     rowCheckbox(1).click(); await sleep(10); const s1=selCount();
     rowCheckbox(3).click(); await sleep(10); const s2=selCount();
     rowCheckbox(5).click(); await sleep(10); const s3=selCount(), t3=$('[data-sg=selcount]').textContent;
-    const n=F.userms.length;
+    const n=F.usertasks.length;
     ok('select all selects every row', s0===n && t0==='('+n+' selected)', [s0,t0]);
     ok('deselect one at a time (N=3)', s1===n-1&&s2===n-2&&s3===n-3 && t3==='('+(n-3)+' selected)', [s1,s2,s3,t3]);
     ok('Tools > Delete enabled with a selection', await delEnabled());
@@ -478,7 +481,7 @@ try{
     }
     ok('edit: display updates (date shown d-Mmm-yy, select shows label)', cellText(3,'finish')==='13-Nov-26' && cellText(1,'state')==='At risk',
        [cellText(3,'finish'),cellText(1,'state')]);
-    ok('edit: caller row objects never mutated by the grid', JSON.stringify(handed)===before && handed.length===F.userms.length); }
+    ok('edit: caller row objects never mutated by the grid', JSON.stringify(handed)===before && handed.length===F.usertasks.length); }
 
   // Esc cancels N=3
   { const n0=count('onEdit'); const snaps=[];
@@ -593,7 +596,7 @@ try{
     ok('Add row menu > Export .xlsx writes the visible rows', window.__xlsx.name==='User tasks.xlsx' && (window.__xlsx.aoa||[]).length===n+1, window.__xlsx.name);
     window.__xlsx={}; await menuPick('add-more','template'); await sleep(20);
     ok('Add row menu > Download import template: the column headers only, without derived columns', window.__xlsx.name==='User tasks import template.xlsx' &&
-       JSON.stringify(window.__xlsx.aoa)===JSON.stringify([F.cols.userms.map(c=>c.label)]), [window.__xlsx.name,window.__xlsx.aoa]);
+       JSON.stringify(window.__xlsx.aoa)===JSON.stringify([F.cols.usertasks.map(c=>c.label)]), [window.__xlsx.name,window.__xlsx.aoa]);
     // Import milestones: centred modal dialog, real checks (Matt, 2026-09-27)
     const importCsv=async(name,text)=>{
       if(!btn('dialog')) await menuPick('add-more','import');
@@ -876,9 +879,9 @@ try{
     ok('palette swap: every painted colour in the screen moves with --pal-* (idle, editing, confirm, panel, open menu, dialog; both themes)', esc.length===0, esc.slice(0,12)); }
 
   // back
-  { const b0=count('onBack'); const launcher=$('#go-userms'); launcher.focus();
+  { const b0=count('onBack'); const launcher=$('#go-usertasks'); launcher.focus();
     // reopen from a launcher so focus has somewhere to return to
-    SRETGrid.close(); launcher.focus(); DEMO_OPEN('userms'); await sleep(20);
+    SRETGrid.close(); launcher.focus(); DEMO_OPEN('usertasks'); await sleep(20);
     $('[data-sg=back]').click(); await sleep(20);
     ok('back calls onBack once and closes the screen', count('onBack')===b0+1 && !SRETGrid.isOpen() && !$('.sg-screen'));
     ok('back restores focus to where the user came from', document.activeElement===launcher, document.activeElement&&document.activeElement.id); }
@@ -895,10 +898,36 @@ try{
     ok('annot: read-only columns refuse edits (N=3)', res.every(x=>x===false), res);
     SRETGrid.close(); }
 
+  // ============ Stored keys renamed to user tasks, older files migrate on load (Matt, 2026-09-28) ============
+  { const M=window.SRETMigrate;
+    const old={publishedAt:'2026-09-20T09:12:00Z',userMsEnabled:false,
+      userMilestones:[{id:'USR-001',source:'User-defined',notes:'[USR-001] - Client review'},{id:'USR-002',source:'User-defined',notes:'User Defined Milestones'}],
+      userRows:[{ref:'USR-ROW',notes:'User Defined Milestones',sourceSchedule:'User-defined'}],
+      tasks:[{ref:'T1',notes:'Key Milestones',sourceSchedule:'Project'},{ref:'USR-ROW',notes:'User Defined Milestones',sourceSchedule:'User-defined'}],
+      milestones:[{ref:'T1',source:'Project'},{ref:'USR-ROW',source:'User-defined'}],sources:[{id:'s1',name:'Project'},{id:'s9',name:'User-defined'}]};
+    const before=JSON.stringify(old), r=M.userTasks(old), q=r.payload;
+    ok('migrate: an older file\'s keys become userTasks and userTasksEnabled; the old keys are gone',
+       Array.isArray(q.userTasks) && q.userTasks.length===2 && q.userTasksEnabled===false && !('userMilestones' in q) && !('userMsEnabled' in q), Object.keys(q));
+    const vals=JSON.stringify(q);
+    ok('migrate: source and band values renamed everywhere they are stored (tasks, rows, milestones, sources); other values untouched',
+       !/User-defined|User Defined Milestones/.test(vals) && q.tasks[1].notes==='User Tasks' && q.tasks[1].sourceSchedule==='User tasks' &&
+       q.milestones[1].source==='User tasks' && q.sources[1].name==='User tasks' && q.tasks[0].notes==='Key Milestones' && q.sources[0].name==='Project' &&
+       q.userTasks[0].notes==='[USR-001] - Client review', vals);
+    ok('migrate: the input is never changed; what changed is reported', JSON.stringify(old)===before && r.changed.indexOf('userMilestones -> userTasks')>=0 && r.conflicts.length===0, r.changed);
+    const r2=M.userTasks(q);
+    ok('migrate: a file already in the new names is returned as is (idempotent)', r2.payload===q && r2.changed.length===0 && r2.conflicts.length===0);
+    const both=M.userTasks({userMilestones:[{id:'a'}],userTasks:[{id:'b'}]});
+    ok('migrate: a file with both old and new keys keeps the new and reports it', both.payload.userTasks[0].id==='b' && !('userMilestones' in both.payload) &&
+       both.conflicts[0]==='Both userMilestones and userTasks present; kept userTasks.');
+    ok('migrate: the saved Workspace section and the export sheet name are recognised old and new',
+       M.wsSection('userms')==='usertasks' && M.wsSection('notes')==='notes' && M.sheetName('User-defined') && M.sheetName('user tasks') && !M.sheetName('Grid'));
+    ok('migrate: the grid demo uses only the new names', !/userms|User Defined Milestones/.test(JSON.stringify(window.SRET_FIXTURES)) &&
+       DEMO_STORE().usertasks.every(r=>r.band==='User Tasks'||r.band==null)); }
+
   // ============ Views from the title (Matt, 2026-09-28) ============
-  { const btn=n=>$('[data-sg='+n+']'), launcher=$('#go-userms'), C=window.SRETCompare;
+  { const btn=n=>$('[data-sg='+n+']'), launcher=$('#go-usertasks'), C=window.SRETCompare;
     const labels=m=>$$('[data-sg='+m+'-menu] .sg-menu-item').map(b=>b.textContent.replace(/^✓/,''));
-    SRETGrid.close(); launcher.focus(); DEMO_OPEN('userms'); await sleep(20);
+    SRETGrid.close(); launcher.focus(); DEMO_OPEN('usertasks'); await sleep(20);
     const nUpd=F.sched.filter(r=>!!(r.short||r.comment||(r.health!=null&&r.health!==''))).length, nUms=eng().dataView.getItems().length;
     const nChg=C.compare(C.defaultBasis(DEMO_CMP,C.list(DEMO_CMP)[0]),C.list(DEMO_CMP)[0]).rows.length;
     const vb=btn('view'), fs=getComputedStyle(vb).fontSize, tfs=getComputedStyle($('.sg-title')).fontSize;
@@ -928,10 +957,10 @@ try{
     ok('views: Back after switching views returns to where the grid was opened from', !SRETGrid.isOpen() && document.activeElement===launcher, document.activeElement&&document.activeElement.id);
     DEMO_OPEN('stress'); await sleep(20);
     ok('views: a screen without views keeps a plain title', !btn('view') && $('.sg-title').textContent.indexOf('Schedule milestones (2,000')===0);
-    SRETGrid.close(); DEMO_OPEN('userms'); await sleep(20); }
+    SRETGrid.close(); DEMO_OPEN('usertasks'); await sleep(20); }
 
   // ============ Schedule changes: three loaded per schedule plus the baseline (Matt, 2026-09-28) ============
-  { const btn=n=>$('[data-sg='+n+']'), launcher=$('#go-userms'), C=window.SRETCompare;
+  { const btn=n=>$('[data-sg='+n+']'), launcher=$('#go-usertasks'), C=window.SRETCompare;
     const labels=m=>$$('[data-sg='+m+'-menu] .sg-menu-item').map(b=>b.textContent.replace(/^✓/,''));
     // Designations (Matt, 2026-09-28): uploads are stored by reference; a table designates them.
     const T=C.newStore(), R=(id,f)=>[{id:id,name:id,start:'2026-09-01',finish:f,float:1,actual:'No'}];
@@ -975,7 +1004,7 @@ try{
     ok('overlay: "moved only" and a scope filter narrow it; it never changes the designations', ovm.marks.length===Math.ceil(nBand/3) &&
        ovx.marks.length===0 && JSON.stringify(C.table(DEMO_CMP))===before);
     ok('designations: the demo loaded 15-Aug, 22-Aug, then the live 29-Aug as primary; 15-Aug was released', lastLog('onScheduleLoaded')&&lastLog('onScheduleLoaded').args[1]==='released pu-0815');
-    SRETGrid.close(); launcher.focus(); DEMO_OPEN('userms'); await sleep(20);
+    SRETGrid.close(); launcher.focus(); DEMO_OPEN('usertasks'); await sleep(20);
     await menuPick('view','view-changes');
     const rows=eng().dataView.getItems();
     ok('changes: opens from the title; Project schedule compared with Project schedule comparison by default',
@@ -1057,7 +1086,7 @@ try{
     ok('views: Comments and markups is in the same menu', btn('view').textContent==='Comments and markups: W/E 27-Sep-26' && eng().dataView.getItems().length===DEMO_STORE().annot.length, btn('view').textContent);
     btn('back').click(); await sleep(20);
     ok('changes: Back returns to where the grid was opened from', !SRETGrid.isOpen() && document.activeElement===launcher);
-    DEMO_OPEN('userms'); await sleep(20); }
+    DEMO_OPEN('usertasks'); await sleep(20); }
 
   // ============ Schedule activities + export ============
   { DEMO_OPEN('sched'); await sleep(20);
@@ -1073,7 +1102,7 @@ try{
     // the temp list is shared across screens: pick here, see it on User milestones
     { const L=window.DEMO_LISTS, k=[0,1].map(r=>eng().dataView.getItem(r).id);
       eng().grid.setSelectedRows([0,1]); await sleep(10); $('[data-sg=temp-add]').click(); await sleep(20);
-      eng().grid.setSelectedRows([]); SRETGrid.close(); DEMO_OPEN('userms'); await sleep(20);
+      eng().grid.setSelectedRows([]); SRETGrid.close(); DEMO_OPEN('usertasks'); await sleep(20);
       ok('temp list carries across screens (2 schedule rows picked, then seen on User milestones)',
          $('[data-sg=temp-count]').textContent==='2' && k.every(x=>SRETCollections.inTemp(L,'activity:'+x)),
          $('[data-sg=temp-count]').textContent);

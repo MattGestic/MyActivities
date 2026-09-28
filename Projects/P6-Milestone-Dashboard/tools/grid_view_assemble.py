@@ -189,15 +189,15 @@ def fixtures():
              "Geotech report issued for review", "Permitting pre-application meeting", "Cost estimate basis frozen",
              "Execution plan workshop", "Water balance model accepted", "Power supply study received",
              "Risk register refreshed", "Board paper lodged", "Final PFS issued"]
-    userms = []
+    usertasks = []
     for i, name in enumerate(names):
         a = ms[i % len(ms)]
         b = ms[(i + 1) % len(ms)]
         fin = a["finish"] or a["start"] or "2026-10-30"
         d = datetime.date.fromisoformat(fin) + datetime.timedelta(days=7 * (i % 4))
-        userms.append({"id": f"USR-{i + 1:03d}", "name": name, "type": types[i % 4], "state": states[i % 5],
+        usertasks.append({"id": f"USR-{i + 1:03d}", "name": name, "type": types[i % 4], "state": states[i % 5],
                        "start": None if i % 3 else (d - datetime.timedelta(days=14)).isoformat(),
-                       "finish": d.isoformat(), "band": "User Defined Milestones", "wbs": a["wbs"],
+                       "finish": d.isoformat(), "band": "User Tasks", "wbs": a["wbs"],
                        "pred": a["id"], "succ": b["id"] if i % 2 else "",
                        "progress": [0, 25, 50, 75, 100][i % 5],
                        "comment": "" if i % 3 else "Added at the weekly review.",
@@ -235,7 +235,7 @@ def fixtures():
              {"value": "review", "label": "In review"}, {"value": "outstanding", "label": "Outstanding"},
              {"value": "done", "label": "Done"}, {"value": "closed", "label": "Closed"}]
     cols = {
-        "userms": [
+        "usertasks": [
             # ID carries the health icon (tap to change, as the dashboard); Health itself is a
             # hidden column so it exports last and appears last in the import template.
             {"key": "id", "label": "ID", "type": "text", "width": 104,
@@ -291,7 +291,7 @@ def fixtures():
     file_state = {"savedBy": "J. Ruiz", "history": [
         {"at": "2026-09-14T08:05:00Z", "by": "M. Garrett", "version": "3.1.0-P57"},
         {"at": "2026-09-20T09:12:00Z", "by": "J. Ruiz", "version": "3.1.0-P58"}]}
-    data = {"sched": sched, "userms": userms, "annot": annot, "cols": cols, "fileState": file_state, "snaps": snaps}
+    data = {"sched": sched, "usertasks": usertasks, "annot": annot, "cols": cols, "fileState": file_state, "snaps": snaps}
     js = "window.SRET_FIXTURES=" + json.dumps(data, separators=(",", ":"), ensure_ascii=False) + ";\n"
     js += ("// Stress set: the reference schedule repeated to n rows with unique IDs.\n"
            "window.SRET_STRESS=function(n){var s=window.SRET_FIXTURES.sched,out=[];"
@@ -325,6 +325,7 @@ def build() -> str:
         "/*@DATES_JS@*/": safe_inline((ROOT / "src" / "modules" / "dates" / "dates.js").read_text(encoding="utf-8"), "</script", "dates.js"),
         "/*@USER_JS@*/": safe_inline((ROOT / "src" / "modules" / "user" / "user.js").read_text(encoding="utf-8"), "</script", "user.js"),
         "/*@COMPARE_JS@*/": safe_inline((ROOT / "src" / "modules" / "compare" / "compare.js").read_text(encoding="utf-8"), "</script", "compare.js"),
+        "/*@MIGRATE_JS@*/": safe_inline((ROOT / "src" / "modules" / "migrate" / "migrate.js").read_text(encoding="utf-8"), "</script", "migrate.js"),
         "/*@MSIMPORT_JS@*/": safe_inline((ROOT / "src" / "modules" / "ms-import" / "ms-import.js").read_text(encoding="utf-8"), "</script", "ms-import.js"),
         "/*@FIXTURES@*/": safe_inline(fixtures(), "</script", "fixtures"),
     }

@@ -47,7 +47,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
   <h1>Grid view (D-09)</h1>
   <p>Stand-in for the board area. In the app each button below is an entry point: Workspace, User tasks, View items; Workspace, Comments and markups, a collection row; Data and view, Schedule activities.</p>
   <div class="demo-launch">
-    <button type="button" class="sg-btn" id="go-userms">User tasks</button>
+    <button type="button" class="sg-btn" id="go-usertasks">User tasks</button>
     <button type="button" class="sg-btn" id="go-annot">Comments and markups: W/E 27-Sep-26</button>
     <button type="button" class="sg-btn" id="go-sched">Schedule milestones</button>
     <button type="button" class="sg-btn" id="go-stress">Stress test: 2,000 rows</button>
@@ -64,6 +64,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
 /*@DATES_JS@*/
 /*@USER_JS@*/
 /*@COMPARE_JS@*/
+/*@MIGRATE_JS@*/
 /*@MSIMPORT_JS@*/
 /*@FIXTURES@*/
 (function(){
@@ -76,7 +77,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
     logEl.textContent=LOG.map(function(e){ return e.kind+' '+JSON.stringify(e.args); }).join('\n');
   }
   // The demo's own stores stand in for USER_MILESTONES and the annotation stores.
-  var store={userms:F.userms.slice(),annot:F.annot.slice(),sched:F.sched.slice()};
+  var store={usertasks:F.usertasks.slice(),annot:F.annot.slice(),sched:F.sched.slice()};
   window.DEMO_STORE=function(){ return store; };   // test hook: the demo's app-side stores
   // Mirror of the app's ensureXLSX(): SheetJS from the same CDN, on demand.
   function ensureXLSX(){
@@ -101,7 +102,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
   SRETCollections.create(lstore,'Owner review items','2026-09-27T00:00:00Z');
   // Names for the temp list panel, from any screen's data (the app would read its stores).
   var LABELS={};
-  F.sched.concat(F.userms).forEach(function(r){ LABELS['activity:'+r.id]=r.id+'  '+r.name; });
+  F.sched.concat(F.usertasks).forEach(function(r){ LABELS['activity:'+r.id]=r.id+'  '+r.name; });
   F.annot.forEach(function(r){ LABELS['annot:'+r.aid]=r.aid+'  '+r.kind+' on '+r.target; });
   function labelOf(ref){ return LABELS[ref]||(/^activity:(.*)-\d\d$/.test(ref)?LABELS[ref.replace(/-\d\d$/,'')]+' (stress copy)':''); }
   function listsOpt(refOf){ return {store:lstore,refOf:refOf,labelOf:labelOf,onChange:function(r){ log('onListsChange',[r.kind||'create']); }}; }
@@ -110,7 +111,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
   // the rule the app's nextUserMsId() follows, shared by Add row and import.
   // taken: IDs already handed out in the same import, not yet in the store.
   function nextUsr(taken){
-    var max=0; store.userms.map(function(r){ return r.id; }).concat(taken||[]).forEach(function(id){ var m=/^USR-(\d+)$/.exec(id); if(m) max=Math.max(max,+m[1]); });
+    var max=0; store.usertasks.map(function(r){ return r.id; }).concat(taken||[]).forEach(function(id){ var m=/^USR-(\d+)$/.exec(id); if(m) max=Math.max(max,+m[1]); });
     return 'USR-'+String(max+1).padStart(3,'0');
   }
   var TODAY=new Date().toISOString().slice(0,10);
@@ -137,10 +138,10 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
   // Stand-in for the app's milestone dialog (openMsDialog), opened by double-clicking an ID.
   function openMilestone(id){
     log('onOpenItem',[id]);
-    var r=store.userms.filter(function(x){ return x.id===id; })[0]; if(!r) return;
+    var r=store.usertasks.filter(function(x){ return x.id===id; })[0]; if(!r) return;
     SRETGrid.dialog('Task '+id,function(body){
       var dl=document.createElement('dl'); dl.className='demo-ms'; dl.setAttribute('data-sg','demo-ms-form');
-      F.cols.userms.forEach(function(c){
+      F.cols.usertasks.forEach(function(c){
         var dt=document.createElement('dt'); dt.textContent=c.label;
         var dd=document.createElement('dd'); var v=r[c.key];
         dd.textContent=v==null||v===''?'Not set':(c.options?((c.options.filter(function(o){ return String(o.value!=null?o.value:o)===String(v); })[0]||{}).label||v):v);
@@ -240,7 +241,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
   // plots each as a milestone). User tasks are the user's own items.
   function viewsOpt(cur){
     return {view:cur,onView:function(id){ log('onView',[id]); window.DEMO_OPEN(id); },
-      views:[{id:'userms',label:'User tasks',count:store.userms.length},
+      views:[{id:'usertasks',label:'User tasks',count:store.usertasks.length},
              {id:'schedms',label:'Schedule milestones',count:store.sched.length},
              {id:'schedupd',label:'Schedule updates',count:store.sched.filter(hasAnnot).length},
              {id:'changes',label:'Schedule changes',count:changesData().result.rows.length},
@@ -252,25 +253,25 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
       onEdit:function(k,f,v){ log('onEdit',[k,f,v]); patch(store.sched,'id',k,f,v); },
       onBack:back,ensureXLSX:ensureXLSX,host:host},viewsOpt(cur)); }
   var CONFIGS={
-    userms:function(){ return {
+    usertasks:function(){ return {
       title:'User tasks',rowKey:'id',editable:true,exportName:'User tasks',
-      columns:F.cols.userms,rows:store.userms.slice(),lists:listsOpt(ACT),
+      columns:F.cols.usertasks,rows:store.usertasks.slice(),lists:listsOpt(ACT),
       onEdit:function(k,f,v){ log('onEdit',[k,f,v]);
         if(f==='progress' && v!=null && (v<0||v>100)) return false;   // app-side rule: 0 to 100
-        patch(store.userms,'id',k,f,v); },
+        patch(store.usertasks,'id',k,f,v); },
       onAdd:function(){ var id=nextUsr(); var r={id:id,name:'New task',type:'MS',state:'FUTURE',progress:0,
-          start:null,finish:null,band:'User Defined Milestones',wbs:'',pred:'',succ:'',comment:'',created:TODAY,createdBy:userName(),health:0};
-        store.userms.push(r); log('onAdd',[id]); return r; },
-      onDelete:function(keys){ log('onDelete',[keys]); store.userms=store.userms.filter(function(r){ return keys.indexOf(r.id)<0; }); },
-      openColumn:'id',onOpenItem:openMilestone,view:'userms',views:viewsOpt('userms').views,onView:viewsOpt('userms').onView,
+          start:null,finish:null,band:'User Tasks',wbs:'',pred:'',succ:'',comment:'',created:TODAY,createdBy:userName(),health:0};
+        store.usertasks.push(r); log('onAdd',[id]); return r; },
+      onDelete:function(keys){ log('onDelete',[keys]); store.usertasks=store.usertasks.filter(function(r){ return keys.indexOf(r.id)<0; }); },
+      openColumn:'id',onOpenItem:openMilestone,view:'usertasks',views:viewsOpt('usertasks').views,onView:viewsOpt('usertasks').onView,
       importer:{noun:['task','tasks'],idKey:'id',depKeys:{pred:'Predecessors',succ:'Successors'},user:userName,log:IMPORT_LOG,nextId:nextUsr,
         // IDs a dependency may name: every schedule activity and user milestone the app knows.
-        knownIds:function(){ return F.sched.map(function(r){ return r.id; }).concat(store.userms.map(function(r){ return r.id; })); },
+        knownIds:function(){ return F.sched.map(function(r){ return r.id; }).concat(store.usertasks.map(function(r){ return r.id; })); },
         onCommit:function(rows){
-          var out=rows.map(function(r){ var o=Object.assign({name:'',type:'MS',state:'FUTURE',progress:0,band:'User Defined Milestones',
+          var out=rows.map(function(r){ var o=Object.assign({name:'',type:'MS',state:'FUTURE',progress:0,band:'User Tasks',
             wbs:'',pred:'',succ:'',comment:'',health:0},r); o.created=TODAY; o.createdBy=userName(); if(o.health==null) o.health=0;
-            if(!o.band) o.band='User Defined Milestones'; return o; });
-          out.forEach(function(o){ store.userms.push(o); });
+            if(!o.band) o.band='User Tasks'; return o; });
+          out.forEach(function(o){ store.usertasks.push(o); });
           log('onImportCommit',[out.map(function(o){ return o.id; })]);
           return out; }},
       onBack:back,ensureXLSX:ensureXLSX,host:host}; },
@@ -293,7 +294,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
   // DEMO_LAST_ROWS is the exact array handed to open(), so the check can prove
   // the grid never mutates the caller's objects.
   window.DEMO_OPEN=function(name){ var c=CONFIGS[name](); window.DEMO_LAST_ROWS=c.rows; return SRETGrid.open(c); };
-  ['userms','annot','sched','stress'].forEach(function(n){
+  ['usertasks','annot','sched','stress'].forEach(function(n){
     document.getElementById('go-'+n).addEventListener('click',function(){ window.DEMO_OPEN(n); });
   });
   var tb=document.getElementById('demo-theme');
@@ -306,7 +307,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
   // the grid at load; #home opens the launcher instead.
   document.getElementById('demo-settings').addEventListener('click',function(){ openSettings(); });
   showUser();
-  if(location.hash!=='#home') window.DEMO_OPEN('userms');
+  if(location.hash!=='#home') window.DEMO_OPEN('usertasks');
   // First use on this computer: ask for the name (confirm or change it later in Data settings).
   if(USERS.status().state==='unset') openSettings('Who is using this file?');
 })();
