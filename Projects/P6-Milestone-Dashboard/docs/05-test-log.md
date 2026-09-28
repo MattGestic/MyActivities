@@ -3047,3 +3047,70 @@ No other check changed.
 - Its version assertion now expects 0.20.3.
 - Its headless virtual-time budget went from 20 to 60 seconds. The larger library used up the old budget before the renamed-legacy-file read could complete, which left the status at "Reading…". The app handled the same flow correctly when traced outside the check.
 - It now polls for the message instead of waiting a fixed time, and its failure detail includes the ingest status.
+
+## TEST-64: P63 grid over a narrow Workspace panel, and views from the grid title (v3.1.0-P63)
+
+TD-223. Two parts. The mobile bug (Matt, screenshot): below the docking breakpoint the Workspace panel overlays the board, so View opened the grid behind it. The view switcher: the grid title lists User milestones, the non-empty annotation types, Schedule milestones, Schedule updates and All schedule activities. Schedule milestones are the board milestones **[CONFIRM WITH MATT]**.
+
+**`tools/p63_check.py` (new).** It runs four clean page loads in headless Chromium, with the host resolver mapped to nothing: mobile at 390x844, tablet at 900x800, desktop at 1440x900 and the switcher at 1440x900. It reads the DOM, `classList`, geometry from `elementFromPoint` and the store contents, never a screenshot. Schedule data is checked both as a JSON snapshot of every store and as a deep comparison of `TASKS`, `MILESTONES` and `USER_MILESTONES` against a copy.
+
+*Source checks:*
+- `</body>`, `<head>`, `</head>` and `</html>` each appear exactly once.
+- The version grep returns 1 and `APP_VERSION` is 3.1.0-P63 or later.
+- No script contains a script start tag, and no CDN URL is present.
+- The P63 view labels and column names carry no em or en dash.
+
+*Mobile (390) and tablet (900), where the panel overlays:*
+- Three user milestones and three milestone comments are made through the real paths. The open panel overlays the board (the body makes no room for it).
+- Comments & markups > View closes the panel. The element at the grid centre is inside `#grid-host`. The title switcher fits the screen and the page has no sideways scroll.
+- Back closes the grid, reopens the panel on Comments & markups, and focus is on the same View button, which is the element at its own centre.
+- The same for User milestones > View items (three rows), back to User milestones with focus on View items.
+- Opened from Comments & markups and switched twice from the title (Schedule milestones, then User milestones), the panel stays closed and the grid stays on top. Back reopens Comments & markups with focus on its View button.
+
+*Desktop (1440), where the panel docks:*
+- For both entry points, the panel is open and docked, stays open while the grid is open, and the grid is the element at its centre.
+- The icon bar, every visible icon bar button and the report header stay clickable.
+- Back returns focus to the button with the panel still on its section.
+
+*Switcher (N=3 user milestones, N=3 milestone comments, one health override):*
+- The title is a menu button (`aria-haspopup="menu"`) named by its text, the current view. The menu is a labelled `role="menu"` of `menuitemradio` items, with the current view checked.
+- It lists exactly: User milestones (3), Milestone comments (3), Milestone health overrides (1), Schedule milestones (193), Schedule updates (3), All schedule activities (159). The probe computes the expected counts from `MILESTONES` and `TASKS`. Empty annotation types are absent.
+- Switching to each view shows its title and row count, and the grid stays open (no trip back to the panel).
+- Schedule milestones: the eight schedule columns have no editor, an attempted edit on each opens none, `schedGridEdit()` refuses every one, and nothing changes. There is no Add row and no Delete. Comment, health (Critical, stored as the card's code 4) and short title each land in their own store and no other; health code 9 is refused. `TASKS`, `MILESTONES` and `USER_MILESTONES` deep-equal the snapshot.
+- Reopened, Schedule updates lists four milestones, including the one just annotated, and the menu counts are read at open (Milestone comments (4), Milestone health overrides (2), Custom short titles (1), Schedule updates (4)).
+- All schedule activities: schedule columns read only, health and remark editable. A remark lands on the board row (row overrides) only; a finish date write is refused; the name cell opens no editor; the schedule arrays are unchanged.
+- Keyboard: ArrowDown on the title opens the menu on its first item, ArrowDown moves, Esc closes it and returns focus to the title. End, ArrowUp and Enter (native button activation, invoked as `click()` on the focused item) switch to Schedule updates, with focus on the new title.
+- Back after several switches returns to User milestones and View items. Opened from Milestone comments, Back after switching returns to that View button.
+- Zero http(s) requests.
+
+**Changed assertions (behaviour deliberately changed by P63):**
+
+| Check | Old assertion | New assertion |
+|---|---|---|
+| p62_check | `APP_VERSION` is 3.1.0-P62 | `APP_VERSION` is 3.1.0-P62 or a later partial. The version grep still returns 1 |
+
+No other check changed. `grid-view.js` is unchanged, since the module already had `views`/`view`/`onView`, so the embedded copy and the demo stay current.
+
+**Found while building:**
+- `syncAnnotGrid()` set the title with `textContent`. With a view switcher in the title, that would have replaced the menu button with plain text after the first edit. Now `syncGridView()` sets the button's label text through `setGridTitle()`, and the view's count in the menu follows.
+- The overlay applies at and below 1024px, not only at 640px and below. At 900px the 320px panel still sits over the grid's left edge, so the fix keys on the docking state, not on the full-width breakpoint.
+
+**Negative control:** run against `releases/v3.1.0-P62_annotation-tables.html`, `p63_check` fails (59/75). At 390 the element at the grid centre is the panel (`sd-row`, `ws-panel`) and the panel stays open. The title is not a menu, so no view can be picked.
+
+**Results at v3.1.0-P63:**
+- All 40 tools exit 0: the P62 set plus `p63_check`, run one after another, with `grid_view_assemble --check`.
+- `p63_check`: 124/124.
+- `p62_check`: 105/105.
+- `p61_check`: 94/94.
+- `grid_view_check`: 210/210.
+- `grid_view_assemble --check`: current.
+- `p59_check`: 92/92.
+- `ds_check`: 128/128.
+- `d23_check`: 23/23.
+- `persist_check`: 22/22.
+- `colour_audit --strict`: 0.
+- `palette_swap_check`: 0 escapes.
+- `spacing_audit`: at its ceiling.
+- The version grep returns 1.
+
+**Published:** `releases/v3.1.0-P63_views-mobile.html`

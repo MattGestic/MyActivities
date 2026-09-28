@@ -30,7 +30,7 @@ a screenshot. One page load (tables) plus a source pass:
           the row health dot).
 
 Source assertions: the four tag counts are 1; the version grep returns 1 and
-APP_VERSION is 3.1.0-P62; no script start tag inside a script; no CDN URL.
+APP_VERSION is 3.1.0-P62 or later; no script start tag inside a script; no CDN URL.
 
 Usage:
   python3 tools/p62_check.py [--html FILE]
@@ -389,7 +389,9 @@ def source_checks(src: str) -> list:
     for t in ("</body>", "<head>", "</head>", "</html>"):
         ck(f"the page holds exactly one {t}", src.count(t) == 1, src.count(t))
     ck("version grep returns 1", len(re.findall(r"3\.[0-9]*\.[0-9]*-P", src)) == 1)
-    ck("APP_VERSION is 3.1.0-P62", "const APP_VERSION='3.1.0-P62';" in src)
+    # P63 moved the version on; P62's own features are what this check proves.
+    m = re.search(r"const APP_VERSION='3\.1\.0-P(\d+)';", src)
+    ck("APP_VERSION is 3.1.0-P62 or a later partial", bool(m) and int(m.group(1)) >= 62, m and m.group(0))
     scripts = re.findall(r"<script[^>]*>(.*?)</script>", src, re.S)
     ck("no literal script start tag inside any script", not any(re.search(r"<script", s, re.I) for s in scripts))
     ck("no CDN URL in the file", not re.search(r"cdnjs|cdn\.sheetjs|jsdelivr|unpkg", src))
