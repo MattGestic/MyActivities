@@ -3040,3 +3040,10 @@ No other check changed.
 - The version grep returns 1.
 
 **Published:** `releases/v3.1.0-P62_annotation-tables.html`
+
+**Also in P62: SheetJS 0.18.5 to 0.20.3 (TD-220).** The embedded mini build is now 0.20.3, supplied by Matt, which is past both published advisories. The same six tag literals are escaped. Against 0.18.5 on the reference export, one cell differs: the "Activity ID" header's surrounding line breaks. The app trims them.
+
+`d23_check` changes:
+- Its version assertion now expects 0.20.3.
+- Its headless virtual-time budget went from 20 to 60 seconds. The larger library used up the old budget before the renamed-legacy-file read could complete, which left the status at "Reading…". The app handled the same flow correctly when traced outside the check.
+- It now polls for the message instead of waiting a fixed time, and its failure detail includes the ingest status.
