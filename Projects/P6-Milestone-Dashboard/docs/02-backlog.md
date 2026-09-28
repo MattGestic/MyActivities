@@ -17,7 +17,7 @@ Status baseline is the delivered v3.1.0-P1 build. Features marked `Published` we
 | EPIC-07 | Grouping and presentation (future) | FEAT-10, FEAT-11 | 0/2 published |
 | EPIC-08 | Repository and delivery | FEAT-12, FEAT-15 | 1/2 published |
 | EPIC-09 | Edit ledger, schedule hand-back and review | FEAT-18 to FEAT-23 | 0/6 published. Staged plan agreed 2026-09-23, one release per stage |
-| EPIC-10 | Scale, schedule model and views | FEAT-24 to FEAT-27, with FEAT-10 re-specced | 0/5 published. Proposed 2026-09-27 (D-23 to D-29), spec `docs/specs/D-23_scale-model-and-views.md`. Order against EPIC-09 pending Matt |
+| EPIC-10 | Scale, schedule model and views | FEAT-24 to FEAT-27, with FEAT-10 re-specced | 0/5 published. Proposed 2026-09-27 (D-23 to D-29), spec `docs/decisions/D-23-scale-model-and-views.md`. Order against EPIC-09 pending Matt |
 
 ## Features
 
@@ -45,7 +45,7 @@ Status baseline is the delivered v3.1.0-P1 build. Features marked `Published` we
 | FEAT-20 | EPIC-09 | Scheduler hand-back export and ID mapping (D-10, D-11) | US-27 | H | M | Not started | Change request workbook for the master schedule; temporary IDs mapped back to master IDs. Never writes to P6. **2026-09-27: Matt chose the register only (option A); an XER patch was considered and declined.** Built on FEAT-25's resolved values. |
 | FEAT-21 | EPIC-09 | Import reconciliation: confirm, acknowledge or dismiss changes between periods (D-12) | US-26 | H | H | Not started | Summary first, expand for exceptions and bulk update; a decision is recorded so the same item is not raised again. First slice specced 2026-09-27 as D-29: new and removed activities, apply system positions in bulk, Excel export, Copy IDs. |
 | FEAT-22 | EPIC-09 | Multi-select and saved lists panel, filter the board to a list (D-06) | — | M | M | Not started | Ctrl-click selection; one default list and named lists; full-height panel docked left or right. |
-| FEAT-23 | EPIC-09 | Variance, summary strip and milestone register (D-07 to D-09) | — | M | H | Not started | Register uses Tabulator vendored inline, a constraint change needing sign-off before D-09. D-23 (SheetJS inline) sets how a vendored block is marked and excluded from audits. |
+| FEAT-23 | EPIC-09 | Variance, summary strip and milestone register (D-07 to D-09) | — | M | H | Not started | Register grid library settled by D-09 (`docs/decisions/D-09-grid-library.md`): SlickGrid, vendored under the 2026-09-28 embedding rules in `CLAUDE.md`. |
 | FEAT-24 | EPIC-10 | In-app XER import alongside Excel and paste (D-24) | US-22 | H | M | Not started | JS port of `tools/xer_to_aoa.py`; one model builder for all three formats; per-activity calendar hours (TD-22 first). Resolves TD-21. |
 | FEAT-25 | EPIC-10 | Schedule model: frozen activities, links, one hierarchy node type, one place values resolve (D-25) | US-21 | H | H | Not started | In-memory side of D-02's envelope (FEAT-18); annotation writes through FEAT-19. Staged behind a compatibility view with all existing checks passing. |
 | FEAT-26 | EPIC-10 | Batch rendering: one timeline cell per row, class-only filters, dependency geometry from data (D-26) | US-21 | H | H | Not started | Cause measured in TEST-59. Gate: `tools/scale_bench.mjs` re-run per stage, appended to `docs/perf/Scale_Measurement_Log.md`. |
@@ -91,7 +91,7 @@ Status baseline is the delivered v3.1.0-P1 build. Features marked `Published` we
 | TASK-38 | FEAT-14 | Sweep every consumer of `--color-text-small` and `--color-purple-dark` | Open | TD-33. Both measured below 1.2:1 in dark on the surfaces used this pass. |
 | TASK-39 | FEAT-02 | Route every import failure through one handler that clears stale parse state | Done | TD-34. v3.1.0-P10. A failure could previously leave the prior file importable. |
 | TASK-40 | FEAT-02 | Show a visible failure block where the column-mapping step would have appeared | Done | TD-35. v3.1.0-P10. Names the file, the reason and the remedy. |
-| TASK-41 | FEAT-02, FEAT-12 | Decide how `.xlsx` import behaves when the SheetJS CDN is unreachable | Decided | TD-36. The only dependency that can remove a whole input format. **Decided 2026-09-27 (D-23): inline SheetJS; implemented by TASK-62.** |
+| TASK-41 | FEAT-02, FEAT-12 | Decide how `.xlsx` import behaves when the SheetJS CDN is unreachable | Decided | TD-36. The only dependency that can remove a whole input format. **Decided: embed SheetJS (Matt, 2026-09-28); implemented by TD-216, placement detail in D-23.** |
 | TASK-42 | FEAT-02 | Report the real `FileReader` DOMException and its remedy instead of a generic message | Done | TD-37. v3.1.0-P11. |
 | TASK-43 | FEAT-02 | Retry a failed file read once before reporting | Done | TD-38. v3.1.0-P11. Covers transient OneDrive hydration and antivirus locks. |
 | TASK-44 | FEAT-02 | Move the data date under step 1, relabel it, default to the previous Friday | Done | TD-39. v3.1.0-P12. Was hidden until a file loaded and defaulted to a stale literal. |
@@ -115,7 +115,7 @@ Status baseline is the delivered v3.1.0-P1 build. Features marked `Published` we
 | TASK-07 | FEAT-02 | Decide whether `headerAliases` should move from exact-match to fuzzy | Open | Accepted gap today. `"BL1 Start"` will not match a `"bl start"` alias. Primary `Start`/`Finish` cover the core need. |
 | TASK-08 | FEAT-03 | Multi-line short-title vertical bleed into neighbouring rows | Open | Separate, smaller problem than the same-row collision system. |
 | TASK-09 | FEAT-10 | Banding Phase 1: auto-derivation of row collections | Open | Re-scoped by D-27: auto-derivation becomes building the Indent and WBS hierarchies on import. Go-ahead in principle 2026-09-27; order pending. |
-| TASK-62 | FEAT-02, FEAT-12 | Inline SheetJS as a marked `VENDOR` block, last in `<body>`; exclude vendor blocks from audits; amend the constraint in `CLAUDE.md` and `00-project-context.md` §4 in the same release (D-23) | Open | Placement verified in Chromium 2026-09-27. |
+| TASK-62 | FEAT-02, FEAT-12 | Inline SheetJS as a marked block, last in `<body>`, excluded from audits (D-23) | **Merged into TD-216** | Kept for its ID only. TD-216 tracks the embed; D-23 carries the placement and audit detail. |
 | TASK-63 | FEAT-26 | Commit the scale benchmark on synthetic data and record the baseline | Done | `tools/scale_bench.mjs`, TEST-59. Client-schedule runs are recorded for context only; the file stays out of the repo. |
 
 ---
