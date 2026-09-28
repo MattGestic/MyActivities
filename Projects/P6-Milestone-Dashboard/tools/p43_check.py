@@ -219,10 +219,12 @@ PROBE = r"""
        fieldsA.length===3&&fieldsB.length===3,
        fieldsA.length+' and '+fieldsB.length);
     // Equal weight, within a pixel of rounding.
-    const eq=g=>Math.max(g[0].w,g[1].w,g[2].w)-Math.min(g[0].w,g[1].w,g[2].w)<=1;
-    ck('columns: the three are equally weighted on a card WITH a start date',
+    // P59 (D-01): Start and Finish share the width equally and Progress is a
+    // fixed narrower track, so an actualised date fits. Positions stay fixed.
+    const eq=g=>Math.abs(g[0].w-g[1].w)<=1&&g[2].w<g[0].w;
+    ck('columns: Start and Finish equally weighted, Progress narrower, on a card WITH a start date',
        eq(geomA), JSON.stringify(geomA));
-    ck('columns: and equally weighted on a card WITHOUT one',
+    ck('columns: and the same split on a card WITHOUT one',
        eq(geomB), JSON.stringify(geomB));
     // The case that used to move them: Start hid itself and the other two slid.
     const sameL=geomA.every((g,i)=>Math.abs(g.l-geomB[i].l)<=1);
@@ -304,6 +306,8 @@ PROBE = r"""
                     'ms-weight','ms-float-val','ms-progress-input','ms-comment-text'];
     const notEditable=editable.filter(function(id){
       const e=$(id);
+      // P59 (D-03): a completed milestone's float is a read-only "-".
+      if(id==='ms-float-val'&&/status-done/.test(dlg().className)) return !e;
       return !e||e.readOnly||e.disabled||
              (e.tagName!=='INPUT'&&e.tagName!=='TEXTAREA');
     });

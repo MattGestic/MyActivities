@@ -153,9 +153,14 @@ PROBE = r"""
     const pad=parseFloat(getComputedStyle(dlg()).paddingLeft)||0;
     const gap=parseFloat(getComputedStyle(dlg().querySelector('.ms-title-row')).columnGap)||0;
     R.notes.rows.pad=Math.round(pad); R.notes.rows.gap=Math.round(gap);
-    ck('rows: the heading starts at the card\u2019s left edge and runs up to the float',
-       Math.abs(box(heading).l-pad)<=1&&
-       Math.abs(box(floatCol).l-box(heading).r-gap)<=1,
+    // P59 (D-02/D-03): the float moved INTO the heading, beside the ID, and
+    // the heading is outdented slightly so the mark sits further left. It now
+    // runs the card's full content width, with the float inside it.
+    const padR=parseFloat(getComputedStyle(dlg()).paddingRight)||0;
+    const cardW=dlg().getBoundingClientRect().width;
+    ck('rows: the heading starts at the card\u2019s left edge and runs its full width, float inside',
+       box(heading).l<=pad&&box(heading).l>=pad-3&&
+       Math.abs(box(heading).r-(cardW-padR))<=1&&heading.contains(floatCol),
        JSON.stringify({pad:pad,headingL:box(heading).l,headingR:box(heading).r,
                        floatL:box(floatCol).l,gap:gap}));
     ck('rows: the heading is wider than the ID it used to share a line with',

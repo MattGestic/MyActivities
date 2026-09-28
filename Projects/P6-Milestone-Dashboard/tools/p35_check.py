@@ -207,8 +207,10 @@ PROBE = r"""
     R.card=R.notes.card;
 
     // ============ 2. The shrink ============================================
-    const capped=Math.min(306,window.innerWidth-24);
-    ck('shrink: the card renders at 90% of the old 340px cap',
+    // P59 (D-01, Matt 2026-09-27) widened the card back to 340px so an
+    // actualised date no longer truncates; that supersedes P35's 306px cap.
+    const capped=Math.min(340,window.innerWidth-24);
+    ck('width: the card renders at the P59 340px cap',
        Math.abs(R.notes.card.w-capped)<=0.5, R.notes.card.w+'px against '+capped);
 
     // ============ 3. Start / Finish / Progress on one row ==================
@@ -561,8 +563,8 @@ def main():
     m = re.search(r"\.ms-dialog\{([^}]*)\}", src)
     if m:
         ms_rule = m.group(1)
-    checks.append(("source: the card's width cap is 90% of the old 340px",
-                   "width:min(306px," in ms_rule and "width:min(340px," not in ms_rule,
+    checks.append(("source: the card's width cap is the P59 340px (D-01)",
+                   "width:min(340px," in ms_rule,
                    f"the .ms-dialog rule reads: {ms_rule[:80]!r}"))
     checks.append(("source: the rollup reads effectiveProgress, not the record",
                    "m.weight*(effectiveProgress(m)||0)" in src
@@ -615,10 +617,8 @@ def main():
                 print("   P34 card: %sx%s   P35 card: %sx%s   (-%.1f%% wide, -%.1f%% tall)"
                       % (b["w"], b["h"], c["w"], c["h"], dw, dh))
                 print("   P34 finish/start text: %s / %s px" % (B["dateSize"], B["startSize"]))
-                checks.append((f"[{w}x{h}] shrink: narrower than the P34 card, by about a tenth",
-                               8.0 <= dw <= 12.0, "%.1f%% (%s -> %s)" % (dw, b["w"], c["w"])))
-                checks.append((f"[{w}x{h}] shrink: and no taller, so the card really is smaller",
-                               dh >= 0, "%.1f%% (%s -> %s)" % (dh, b["h"], c["h"])))
+                # The P35 shrink comparisons (narrower by a tenth, no taller)
+                # were retired at P59: D-01 restored the 340px width.
                 checks.append((f"[{w}x{h}] row: P34's two date sizes really did differ",
                                B["startSize"] is not None and B["dateSize"] != B["startSize"],
                                f"{B['dateSize']} vs {B['startSize']}"))
