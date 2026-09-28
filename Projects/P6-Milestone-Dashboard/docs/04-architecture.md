@@ -4,7 +4,7 @@
 
 - **Front-end:** Single self-contained HTML file. Vanilla JS in one `<script>` block, no modules, no bundler, no framework. All CSS in one `<style>` block including token definitions.
 - **Back-end:** None. There is no server, no API, no database, no auth. This is deliberate, not a gap.
-- **Decoupling approach:** N/A. The only external boundary is the user's local file system (import in, export out) and one on-demand CDN fetch of SheetJS for `.xlsx` parsing.
+- **Decoupling approach:** N/A. The only external boundary is the user's local file system (import in, export out). Third-party code is embedded in the file (CLAUDE.md, Hard constraints); the remaining SheetJS CDN fetch is removed by TD-216.
 
 ## Compute / Hosting Strategy
 
@@ -13,7 +13,7 @@ No hosting. The file is opened directly from disk or a file share.
 Well-Architected trade-offs behind that:
 - **Operational excellence:** zero deploy pipeline, zero environment drift. The file a reviewer opens is byte-identical to the one that was tested.
 - **Cost:** nil.
-- **Reliability:** no runtime dependency that can go down, except the SheetJS CDN load, which only affects the `.xlsx` path. Paste and delimited import work fully offline.
+- **Reliability:** no runtime dependency that can go down once TD-216 embeds SheetJS. Until then the SheetJS CDN load is the one exception, and it only affects the `.xlsx` path. Paste and delimited import work fully offline.
 - **Security:** no data leaves the machine. Schedule data is commercially sensitive and client-owned, so a hosted variant would need a data-handling review that has not been done and is not currently wanted.
 - **Performance:** full DOM rebuild on rerender is the known cost. Mitigated by `scheduleRerender()` debouncing, not by incremental DOM diffing. Revisit only if a real dataset makes it visible again.
 
@@ -128,10 +128,11 @@ The version lives only in `APP_VERSION`. The working file keeps a stable filenam
 | Decision | Alternatives considered | Why chosen | Date |
 |---|---|---|---|
 | Single-file, no build step | Vite + modules; React SPA | Study team SOE has no Node. File must open from a share or email attachment with zero tooling. | Pre-migration |
-| SheetJS on-demand from CDN | Inline the library; drop `.xlsx` support | Keeps the file small for the majority path. `.xlsx` users are on a corporate network with CDN access. | Pre-migration |
+| SheetJS on-demand from CDN | Inline the library; drop `.xlsx` support | Keeps the file small for the majority path. `.xlsx` users are on a corporate network with CDN access. Superseded 2026-09-28, see below. | Pre-migration |
 | `scheduleRerender()` debounce over incremental DOM diffing | Virtual DOM; targeted patching | Debounce fixed the reported slowdown at a fraction of the complexity and risk. Revisit only if it resurfaces. | Pre-migration |
 | Label collision: 3-band cycling, same-row only | General N-marker collision solver | Covers the common case. A 4+ marker cluster in a very tight span can still partially overlap — an explicit, acknowledged scope boundary. | Pre-migration |
 | Exact-match header aliases, not fuzzy | Fuzzy/levenshtein matching | Primary `Start`/`Finish` already cover the core need. Fuzzy risks silent mis-mapping, which is worse than a visible failure. | Pre-migration |
+| Embedded third-party code only; the app makes no network requests (Matt, 2026-09-28) | Keep the SheetJS CDN fetch; npm and a build step | The file must work offline and on locked-down networks, and a CDN is a supply-chain and availability risk. Permissive licence (MIT, BSD, Apache-2.0), embedded inline with its licence, recorded in `vendor/<lib>/SOURCE.md`. One-time minification at vendoring is allowed; the app is never built. Supersedes "SheetJS on-demand from CDN". SheetJS embedding: TD-216. | 2026-09-28 |
 | Two-sided workspace: annotations left, schedule and format right (D-20) | Keep three separate panel systems; one combined drawer with tabs | The old drawer mixed the user's own layer with the schedule layer, and exports sat in a menu. A hard left/right line makes ownership visible. Existing ids and entry points kept so behaviour and checks carry over | 2026-09-26 (P56) |
 | Orphan branch per app | Monorepo on one `main`; separate repos | Apps are independent; a shared `main` makes every diff noisy. A separate repo per app fragments a personal workspace. | 2026-09-09 |
 | Board order follows the schedule's own order | Alphabetical by WBS path; by phase; by date | The board presents the client's schedule, so it presents it in the client's sequence. Anything else makes the reader reconcile two orderings, and the schedule's order carries meaning the dashboard does not know. **This rule was assumed rather than recorded, and the code did the opposite for as long as import existed (TD-65).** | 2026-09-14 |
