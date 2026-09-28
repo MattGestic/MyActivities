@@ -25,8 +25,15 @@ Read `docs/03-todo.md` first in any session. One fact lives in one file — refe
 
 ## Hard constraints
 
-- Single self-contained HTML file. **No npm, no build step, no bundler, no framework.**
-- Only external dependency is an on-demand CDN load of SheetJS for `.xlsx` import. Nothing else.
+- Single self-contained HTML file. **No npm, no build step, no bundler, no framework** in the app.
+- **Third-party code only when embedded and permissively licensed (Matt, 2026-09-28).** Allowed only when all of these hold:
+  - the licence is permissive: MIT, BSD or Apache-2.0;
+  - the code is embedded inline in the HTML file, with its licence text in a comment beside it;
+  - it is recorded in `vendor/<lib>/SOURCE.md` (version, where it came from, sha256 of the embedded file);
+  - it is never loaded from the internet and makes no network request at runtime: no CDN, no external links, no fetched chunks.
+  Embedded today: SlickGrid (grid view, D-09). To embed: SheetJS for `.xlsx` (TD-216).
+- **The app makes no network requests.** Everything it runs is inside the file. Until TD-216 lands, `ensureXLSX()` still fetches SheetJS from cdnjs; that fetch is the one known breach and is removed by TD-216.
+- A library may be **minified once, when it is vendored**, with the pinned command written in its `SOURCE.md`, so the embedded copy is smaller. That is part of copying the library in, not a build step: the app itself is never built and is edited as the file it is.
 - **Never writes back to P6.** Read and render only.
 - **No em dashes, no AI-associated punctuation patterns** in any user-facing or client-facing string the tool produces. This applies to the app's output, not to these docs.
 - Display state never mutates schedule data. Three layers stay separate: schedule data / annotation layer / display state.
