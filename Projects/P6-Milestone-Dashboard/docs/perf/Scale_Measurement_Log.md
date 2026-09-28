@@ -1,6 +1,6 @@
 # Scale Measurement Log
 
-Figures behind TD-216, TEST-59 and the D-23 to D-29 spec (`docs/specs/D-23_scale-model-and-views.md`). Prose elsewhere names a metric and points here; it never states the figure.
+Figures behind TD-219, TEST-59 and the D-23 to D-29 spec (`docs/specs/D-23_scale-model-and-views.md`). Prose elsewhere names a metric and points here; it never states the figure.
 
 **Append only.** Add rows as measurements are taken. Never edit or delete a prior row; the last row per metric and source is the current figure.
 

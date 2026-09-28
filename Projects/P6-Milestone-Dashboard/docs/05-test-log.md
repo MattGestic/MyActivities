@@ -2744,7 +2744,7 @@ in light and dark at 1440.
 ## TEST-59: Scale baseline for D-26 (v3.1.0-P58, no code change)
 
 Asks whether the board is serviceable at full-schedule scale, and at twice
-that, and where the time goes. Raised TD-216. Every figure is in
+that, and where the time goes. Raised TD-219. Every figure is in
 `docs/perf/Scale_Measurement_Log.md`; this entry names metrics only.
 
 **Method.** The real import path (file input, column mapper, `runIngest()`),
