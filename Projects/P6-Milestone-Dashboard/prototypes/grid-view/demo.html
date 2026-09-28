@@ -2609,6 +2609,12 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
      record(store)                              -> every stored upload with its designation, for the Loaded schedules table
      bases(store, upload) / defaultBasis(store, upload) / compare(basis, upload)
      label(upload) -> 'Project secondary, DD 22-Aug-26'    slotName(upload)    summary(result)
+     overlay(store, {scopes, movedOnly}) -> {marks:[...], unplaced:[...]}
+        Interim dates to draw over the primary on the board (Matt, 2026-09-28:
+        optional, display state only). One mark per activity the interim and
+        the primary share: {id, name, scope, upload, dataDate, start, finish,
+        primaryStart, primaryFinish, finishSlip, moved}. unplaced: activities
+        only the interim holds (no row on the board to draw them on).
    ===================================================================== */
 (function(root){
   'use strict';
@@ -2764,7 +2770,27 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
     });
   }
 
-  root.SRETCompare={newStore:newStore,add:add,designate:designate,receive:receive,table:table,list:list,bases:bases,
+  // Interim dates over the primary. Never changes the primary or any store:
+  // the board draws these as extra markers when the overlay is switched on.
+  function overlay(store,opts){
+    opts=opts||{};
+    var t=store.refs.project, prim=t&&t.primary&&store.uploads[t.primary], marks=[], unplaced=[];
+    if(!prim) return {marks:marks,unplaced:unplaced,primary:null};
+    var want=opts.scopes?opts.scopes.map(function(x){ return String(x).toLowerCase(); }):null;
+    list(store).filter(function(u){ return u.line==='project'&&u.partial&&u!==prim&&(!want||want.indexOf(u.scope.toLowerCase())>=0); })
+      .forEach(function(u){
+        Object.keys(u.rows).sort().forEach(function(id){
+          var r=u.rows[id], p=prim.rows[id];
+          if(!p){ unplaced.push({id:id,name:r.n,scope:u.scope,upload:u.id,finish:r.f}); return; }
+          var slip=days(p.f,r.f), moved=!!(slip||days(p.s,r.s));
+          if(opts.movedOnly&&!moved) return;
+          marks.push({id:id,name:r.n,scope:u.scope,upload:u.id,dataDate:u.dataDate,start:r.s,finish:r.f,
+                      primaryStart:p.s,primaryFinish:p.f,finishSlip:slip,moved:moved});
+        });
+      });
+    return {marks:marks,unplaced:unplaced,primary:prim.id};
+  }
+  root.SRETCompare={overlay:overlay,newStore:newStore,add:add,designate:designate,receive:receive,table:table,list:list,bases:bases,
                     defaultBasis:defaultBasis,compare:compare,label:label,slotName:slotName,summary:summary,record:record,_days:days};
 })(window);
 

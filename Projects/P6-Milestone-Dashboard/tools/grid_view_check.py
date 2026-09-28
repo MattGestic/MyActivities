@@ -140,6 +140,8 @@ MUTATIONS = {
     "designate-deletes": ("    if(d) t[d]=id;\n    sync(store);\n", "    if(d) t[d]=id;\n    sync(store); prune(store);\n"),
     "interim-treated-as-full": ("var partial=!!(meta.scope&&!isBaseline);", "var partial=false;"),
     "interim-one-for-all-scopes": ("o.scope.toLowerCase()===u.scope.toLowerCase()&&", ""),
+    "overlay-ignores-moved-only": ("if(opts.movedOnly&&!moved) return;", ""),
+    "overlay-drops-unplaced": ("if(!p){ unplaced.push({id:id,name:r.n,scope:u.scope,upload:u.id,finish:r.f}); return; }", "if(!p){ return; }"),
     "health-shown-in-grid": ("if(lists) cols=[{key:L_LIST", "cols=cols.filter(function(c){ return c.key!=='health'; }).concat(cols.filter(function(c){ return c.key==='health'; }).map(function(c){ return Object.assign({},c,{hidden:false}); }));\n    if(lists) cols=[{key:L_LIST"),
 }
 
@@ -964,6 +966,14 @@ try{
     const T2=C.newStore(); C.receive(T2,{id:'x',dataDate:'2026-08-08',file:'f.xlsx',path:'P:\\SRET',snapshotAt:'2026-08-09T10:00:00Z'},R('A','2026-09-06'));
     ok('designations: each upload records snapshot date, data date, file name, location, coverage and designation', JSON.stringify(C.record(T2)[0])===
        JSON.stringify({id:'x',slot:'Project primary',dataDate:'2026-08-08',snapshotAt:'2026-08-09T10:00:00Z',file:'f.xlsx',path:'P:\\SRET',activities:1,partial:false,designation:'primary'}), C.record(T2)[0]);
+    // Interim dates over the primary on the board (Matt, 2026-09-28: optional).
+    const nBand=F.sched.filter(r=>r.wbs==='Capital and Operating Cost Estimate').length, before=JSON.stringify(C.table(DEMO_CMP));
+    const ov=C.overlay(DEMO_CMP), ovm=C.overlay(DEMO_CMP,{movedOnly:true}), ovx=C.overlay(DEMO_CMP,{scopes:['Electrical']});
+    ok('overlay: one mark per activity the interim shares with the primary, with both dates and the slip; the interim-only activity is listed as unplaced',
+       ov.primary==='pu-0829' && ov.marks.length===nBand && ov.marks.every(m=>m.scope==='Cost estimate'&&m.upload==='pi-0902') &&
+       ov.unplaced.map(u=>u.id).join()==='SNIP-950' && ov.marks.filter(m=>m.moved).every(m=>m.finishSlip===5), [ov.marks.length,nBand,ov.unplaced]);
+    ok('overlay: "moved only" and a scope filter narrow it; it never changes the designations', ovm.marks.length===Math.ceil(nBand/3) &&
+       ovx.marks.length===0 && JSON.stringify(C.table(DEMO_CMP))===before);
     ok('designations: the demo loaded 15-Aug, 22-Aug, then the live 29-Aug as primary; 15-Aug was released', lastLog('onScheduleLoaded')&&lastLog('onScheduleLoaded').args[1]==='released pu-0815');
     SRETGrid.close(); launcher.focus(); DEMO_OPEN('userms'); await sleep(20);
     await menuPick('view','view-changes');

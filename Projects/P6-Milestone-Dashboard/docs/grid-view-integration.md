@@ -247,7 +247,23 @@ The grid's title is a view switcher (`views`, `view`, `onView`). Back returns to
 | Schedule changes | Section 4 | Read-only |
 | Comments and markups | The current annotation collection (section 2) | As section 2 |
 
-Schedule columns (ID, name, WBS, duration, dates, float, predecessors, successors, actual flag) are **read-only**; annotation edits go through `onEdit` to the annotation stores, never to `TASKS` / `MILESTONES`. The importer passes `noun:['task','tasks']`, so the menu, dialog and summary say "Import tasks" and "Imported 3 tasks". **[CONFIRM WITH MATT]** whether the Workspace section and the board legend also rename user milestones to user tasks, or only the grid.
+Schedule columns (ID, name, WBS, duration, dates, float, predecessors, successors, actual flag) are **read-only**; annotation edits go through `onEdit` to the annotation stores, never to `TASKS` / `MILESTONES`. The importer passes `noun:['task','tasks']`, so the menu, dialog and summary say "Import tasks" and "Imported 3 tasks".
+
+**User tasks across the dashboard (Matt, 2026-09-28).** Tracked as TD-217. Rename the words people read; keep the stored keys, because saved files and publish payloads carry them (the TD-209 approach: a data key, not a display string). Places at base `81cfd7a`, by search text:
+
+| Where | Today | Becomes |
+|---|---|---|
+| Workspace rail button (`#ws-tab-userms` title and aria-label) | User milestones | User tasks |
+| Workspace panel heading (`WS_TITLES.userms`) | User milestones | User tasks |
+| Header button `#btn-add-ms` title, add dialog `aria-label` and heading | Add a milestone | Add a task |
+| Help list ("double-click a week cell to add a milestone") | add a milestone | add a task |
+| Sources tab group title and row label (`renderMounts()`, "User-defined") | User-defined | User tasks |
+| Sources tab description ("A user-defined milestone is a schedule item whose source is...") | user-defined milestone | user task |
+| Status messages: restored, showing/hiding, deleted, exported, "No user-defined milestones yet", delete confirmation | user-defined milestone(s) | user task(s) |
+| Board band label for `USER_BAND` | User Defined Milestones | User tasks (display only; see below) |
+| Export sheet name and file name part (`_user-defined_`) | User-defined | User tasks, `_user-tasks_` |
+
+Keep unchanged: `USER_BAND='User Defined Milestones'` and `USER_BAND_SOURCE='User-defined'` as stored values (a display map shows "User tasks"), the `USR-` ID prefix, the `userms` ids and function names, and `USER_MILESTONES`. Re-importing an older export must still recognise the old sheet name. The board keeps drawing user tasks with the milestone markers they have today.
 
 **Built at P63 (TD-223).** The grid module already had `views`/`view`/`onView`, so the switcher is the module's own title menu (a menu button with `aria-haspopup`, arrow keys, Home/End, Esc back to the button, the current view checked); `grid-view.js` is unchanged. The adapter in the app:
 
@@ -293,13 +309,18 @@ Plus the embedded **Project baseline**. A vendor or contractor schedule is its o
 **Comparing a partial interim.** Activities outside its scope are counted as outside the interim, never Removed or New. An activity only the interim holds is New when the interim is viewed, and "Only in interim" when the full schedule is compared against it.
 
 **What the app must add at merge (it keeps no history today; `PRIMARY_SOURCES` is replaced on import):**
-1. **Storage.** Keep each upload's full source record (the tasks and milestones a `PRIMARY_SOURCES` entry already holds) under its source id, not just the comparison fields. The board must be able to render whichever upload is primary, so the full rows are needed. Size: one full source per designated upload and per interim scope, instead of one today. **[CONFIRM WITH MATT]** that this growth in the saved file is acceptable; the alternative is to keep full rows for the primary only and comparison fields (about 40 bytes per activity) for the rest, which means a secondary cannot be promoted to primary without re-importing it.
+1. **Storage.** Keep each upload's full source record (the tasks and milestones a `PRIMARY_SOURCES` entry already holds) under its source id, not just the comparison fields. The board must be able to render whichever upload is primary, so the full rows are needed. Size: one full source per designated upload and per interim scope, instead of one today. **Decided (Matt, 2026-09-28): keep full copies**, so any stored upload can be made primary without re-importing.
 2. **Reference table.** `SOURCE_DESIGNATIONS` as above, persisted with the annotations and publish state. The board renders `SOURCE_DESIGNATIONS.project.primary` (plus enabled external sources as today). Changing the primary calls `scheduleRerender(true)`.
 3. **Import** asks: Primary update / Interim update (with scope) / Alternate / an external schedule by name, and the optional location. Before an import releases uploads, the confirmation names them.
 4. **Data & view > Sources** shows the reference table and the stored uploads with a Set as control, as in the demo's Tools > Loaded schedules.
 5. `SRETCompare` reads the same records: `add()` takes the app's source id as the upload reference.
 
-**[CONFIRM WITH MATT]** whether the board should optionally show an interim's dates over the primary (e.g. as ghost markers, like the baseline).
+**Interim dates over the primary on the board (Matt, 2026-09-28: yes, optional).** Tracked as TD-218.
+- A View controls toggle, off by default: "Show interim dates". It is display state only; it never changes the primary, the reference table or any stored upload.
+- When on, `SRETCompare.overlay(store, {scopes, movedOnly})` gives one mark per activity the interim shares with the primary: the interim's start and finish, the primary's, and the finish slip. The board draws each as an extra marker on that activity's row, styled apart from the baseline ghost (the baseline is the past; the interim is newer than the primary), with a tooltip naming the interim, its scope and data date.
+- Options beside the toggle: which interim scopes to show (default all), and "Moved only" (default on) so unchanged activities add no marker.
+- Activities only the interim holds have no row on the board; they are counted in a line under the toggle ("1 activity in the interim is not on the board") and listed in Schedule changes as New.
+- Dependency lines: interim markers take no part in `drawDepLines()`; lines stay on the primary's markers.
 
 ## Verification at merge
 
