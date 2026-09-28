@@ -1,0 +1,282 @@
+/* =====================================================================
+   SRET grid view (D-09). Tier 3 component styles: every colour is a
+   --color-* role, every size a D-16 token. No literal colours here.
+   The vendored engine stylesheet (vendor/slickgrid/dist/slick.grid.css)
+   carries structural rules plus a handful of its own greys; every rule of
+   it that paints is overridden below under .sg-grid, and
+   tools/grid_view_check.py proves it with a palette swap on the open grid.
+   ===================================================================== */
+.sg-screen{position:absolute;inset:0;z-index:60;display:flex;flex-direction:column;min-width:0;min-height:0;
+  background:var(--color-bg-panel);color:var(--color-text-primary);font-family:var(--font-sans);
+  font-size:var(--text-md);line-height:16px}
+.sg-screen--fixed{position:fixed}
+.sg-screen *,.sg-screen *::before,.sg-screen *::after{box-sizing:border-box}
+
+/* ---- header: three rows, after the Aconex register (Matt, 2026-09-27) ----
+   Row 1: back, title. Row 2: search, Add row (split), Tools, Add to temp list
+   (split). Row 3: counts, Select all, the filter pill. Rows 2 and 3 start in
+   line with the title text, leaving the strip above the rail clear up to the
+   back arrow. Row 2 only wraps below 768px. */
+.sg-screen{--sg-indent:calc(var(--group-gap) + var(--icon-btn) + var(--ctl-gap))}
+.sg-bar,.sg-bar2,.sg-bar3{display:flex;flex-wrap:nowrap;align-items:center;gap:var(--ctl-gap);
+  padding:var(--space-4) var(--group-gap);background:var(--color-bg-elevated)}
+.sg-bar{padding-bottom:0}
+.sg-bar2,.sg-bar3{padding-left:var(--sg-indent)}
+.sg-bar2{padding-bottom:0}
+.sg-bar3{padding-top:var(--space-3);padding-bottom:var(--space-3);border-bottom:1px solid var(--color-border-panel)}
+.sg-bar-lead{display:flex;align-items:center;gap:var(--ctl-gap);min-width:0;flex:0 1 auto}
+.sg-spacer{flex:1 1 auto;min-width:0}
+.sg-title{margin:0;font-size:20px;line-height:28px;font-weight:600;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--color-text-primary)}
+/* Title as a view switcher: the heading's own size and weight, a chevron, no button chrome until hover. */
+.sg-title--views{overflow:visible}
+.sg-note{color:var(--color-text-muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sg-picker{max-width:320px}
+.sg-picker > span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sg-title .sg-btn.sg-title-btn{height:auto;padding:0 var(--space-3);margin-left:calc(-1 * var(--space-3));font-size:inherit;line-height:inherit;font-weight:inherit;
+  border-color:transparent;background:transparent;color:var(--color-text-primary)}
+.sg-title .sg-btn.sg-title-btn:hover,.sg-title .sg-btn.sg-title-btn.is-open{background:var(--color-btn-secondary-hover-bg);border-color:var(--color-line-default)}
+.sg-title .sg-menu-pop{font-size:var(--text-md);font-weight:400;line-height:normal}
+.sg-counts{display:inline-flex;gap:var(--ctl-gap-tight);color:var(--color-text-muted);white-space:nowrap}
+.sg-selcount:not(:empty){color:var(--color-text-primary);font-weight:600}
+.sg-link{height:var(--ctl-h);padding:0 var(--space-2);border:0;background:transparent;font:inherit;font-size:var(--text-md);
+  color:var(--color-accent-ink);cursor:pointer;white-space:nowrap;border-radius:var(--radius-ctl)}
+.sg-link:hover:not(:disabled){text-decoration:underline}
+.sg-link:disabled{color:var(--color-text-label);cursor:default}
+.sg-pill{display:inline-flex;align-items:center;height:var(--ctl-h);padding:0 var(--ctl-pad-x);font:inherit;font-size:var(--text-md);
+  white-space:nowrap;cursor:pointer;border:var(--stroke-ctl) solid var(--color-accent);border-radius:var(--radius-pill);
+  background:var(--color-accent-tint-bg);color:var(--color-accent-ink)}
+.sg-pill[hidden]{display:none}
+.sg-msg{position:absolute;left:50%;bottom:var(--group-gap);transform:translateX(-50%);z-index:5;max-width:min(640px,calc(100% - 2 * var(--group-gap)));
+  padding:var(--space-4) var(--space-5);border-radius:var(--radius-overlay);box-shadow:var(--shadow-2);pointer-events:none;
+  background:var(--color-tooltip-bg);color:var(--color-text-on-header);font-size:var(--text-md);line-height:16px;
+  opacity:0;transition:opacity .2s ease}
+.sg-msg.is-shown{opacity:1}
+.sg-badge{display:inline-block;min-width:16px;padding:0 var(--space-2);border-radius:var(--radius-pill);
+  background:var(--color-accent);color:var(--color-text-on-accent);font-weight:600;font-size:var(--text-sm);line-height:16px;text-align:center}
+.sg-badge[hidden]{display:none}
+
+/* ---- dropdown menu ---- */
+.sg-menu{position:relative;display:inline-flex}
+.sg-btn--menu{display:inline-flex;align-items:center;gap:var(--space-2)}
+.sg-btn--menu.is-open{background:var(--color-btn-secondary-pressed-bg)}
+.sg-btn--primary.sg-btn--menu.is-open{background:var(--color-btn-primary-pressed-bg)}
+.sg-chev{display:inline-flex}
+.sg-menu-pop{position:absolute;top:calc(100% + var(--space-1));left:0;z-index:20;min-width:200px;width:max-content;max-width:420px;padding:var(--space-2) 0;
+  background:var(--color-bg-elevated);color:var(--color-text-primary);border:1px solid var(--color-border-panel);
+  border-radius:var(--radius-overlay);box-shadow:var(--shadow-2)}
+.sg-menu-pop[hidden]{display:none}
+.sg-temp-actions .sg-menu:last-child .sg-menu-pop{left:auto;right:0}
+/* Split button: main action and its options arrow, joined. */
+.sg-split{display:inline-flex}
+.sg-split-main{border-top-right-radius:0;border-bottom-right-radius:0}
+.sg-split-chev{display:inline-flex;align-items:center;justify-content:center;padding:0 var(--space-2);margin-left:-1px;
+  border-top-left-radius:0;border-bottom-left-radius:0}
+.sg-btn--primary.sg-split-chev{border-left-color:var(--color-btn-primary-hover-bg)}
+.sg-split-chev.is-open{background:var(--color-btn-secondary-pressed-bg)}
+.sg-btn--primary.sg-split-chev.is-open{background:var(--color-btn-primary-pressed-bg)}
+.sg-split-main{display:inline-flex;align-items:center;gap:var(--space-3)}
+/* My temp list mark: one vertical line, used on rows, the rail, the panel title and the button. */
+.sg-tempmark{display:inline-block;flex:0 0 auto;width:3px;height:14px;border-radius:var(--radius-pill);background:var(--color-accent)}
+.sg-btn:disabled .sg-tempmark{background:var(--color-text-label)}
+.sg-tempmark--rail{height:18px;width:4px}
+.sg-menu-item{display:flex;align-items:center;gap:var(--space-2);width:100%;min-height:calc(var(--ctl-h) + var(--space-2));
+  padding:0 var(--space-5) 0 var(--space-3);border:0;background:transparent;font:inherit;font-size:var(--text-lg);text-align:left;
+  color:var(--color-text-primary);cursor:pointer;white-space:nowrap}
+.sg-menu-item:hover:not(:disabled),.sg-menu-item:focus-visible{background:var(--color-row-hover-bg);outline:0}
+.sg-menu-item:disabled{color:var(--color-text-label);cursor:default}
+.sg-menu-check{flex:0 0 14px;color:var(--color-accent-ink);font-weight:600}
+.sg-menu-sep{height:1px;margin:var(--space-2) 0;background:var(--color-line-hairline)}
+
+.sg-iconbtn{display:inline-flex;align-items:center;justify-content:center;width:var(--icon-btn);height:var(--icon-btn);
+  padding:0;border:0;border-radius:var(--radius-ctl);background:transparent;color:var(--color-text-primary);cursor:pointer}
+.sg-iconbtn:hover{background:var(--color-btn-icon-hover-bg)}
+.sg-iconbtn:active{background:var(--color-btn-icon-pressed-bg)}
+
+.sg-search,.sg-hfilter{height:var(--ctl-h);padding:0 var(--ctl-pad-x);font:inherit;font-size:var(--text-md);
+  border:var(--stroke-ctl) solid var(--color-input-border);border-radius:var(--radius-ctl);
+  background:var(--color-bg-elevated);color:var(--color-text-primary)}
+.sg-search{width:200px;min-width:120px}
+.sg-select{height:var(--ctl-h);padding:0 var(--ctl-pad-x);font:inherit;font-size:var(--text-md);max-width:220px;cursor:pointer;
+  border:var(--stroke-ctl) solid var(--color-input-border);border-radius:var(--radius-ctl);
+  background:var(--color-bg-elevated);color:var(--color-text-primary)}
+.sg-select:disabled{opacity:.5;cursor:default}
+/* Options otherwise take the browser's grey when the select is disabled, which ignores the theme. */
+.sg-select option{color:var(--color-text-primary);background-color:var(--color-bg-elevated)}
+.sg-search::placeholder,.sg-hfilter::placeholder{color:var(--color-text-label)}
+
+.sg-btn{height:var(--ctl-h);padding:0 var(--ctl-pad-x);font:inherit;font-size:var(--text-md);white-space:nowrap;cursor:pointer;
+  border:var(--stroke-ctl) solid var(--color-btn-secondary-outline);border-radius:var(--radius-ctl);
+  background:var(--color-btn-secondary-bg);color:var(--color-btn-secondary-text)}
+.sg-btn:hover:not(:disabled){background:var(--color-btn-secondary-hover-bg)}
+.sg-btn:active:not(:disabled){background:var(--color-btn-secondary-pressed-bg)}
+.sg-btn--primary{font-weight:600;border-color:var(--color-btn-primary-outline);background:var(--color-btn-primary-bg);color:var(--color-btn-primary-text)}
+.sg-btn--primary:hover:not(:disabled){background:var(--color-btn-primary-hover-bg)}
+.sg-btn--primary:active:not(:disabled){background:var(--color-btn-primary-pressed-bg)}
+.sg-btn--danger{font-weight:600;border-color:var(--color-status-crit);background:var(--color-status-crit);color:var(--color-text-on-accent)}
+.sg-btn--danger:hover:not(:disabled){background:var(--color-crit-border)}
+.sg-btn:disabled{opacity:.5;cursor:default}
+
+.sg-screen :focus-visible{outline:var(--focus-ring) solid var(--color-accent);outline-offset:1px}
+
+/* ---- inline confirmation (design-standard.md, Inline confirmation) ---- */
+.sg-confirm{padding:var(--space-4) var(--group-gap);background:var(--color-crit-tint-bg);color:var(--color-crit-text);
+  border-bottom:1px solid var(--color-border-panel)}
+.sg-confirm[hidden]{display:none}
+.sg-confirm-msg{margin:0 0 var(--ctl-gap);font-size:var(--text-lg);line-height:20px}
+.sg-confirm-btns{display:flex;justify-content:space-between;gap:var(--ctl-gap)}
+
+/* ---- body: rail, My temp list panel (vertical, docked left), grid ---- */
+.sg-body{display:flex;flex:1 1 auto;min-height:0;min-width:0}
+.sg-rail{flex:0 0 40px;display:flex;flex-direction:column;align-items:center;gap:var(--space-2);padding:var(--space-4) 0;
+  background:var(--color-bg-subtle);border-right:1px solid var(--color-border-panel)}
+.sg-rail-btn{position:relative;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;padding:0;
+  border:0;border-radius:var(--radius-ctl);background:transparent;color:var(--color-text-primary);cursor:pointer}
+.sg-rail-btn:hover{background:var(--color-btn-icon-hover-bg)}
+.sg-rail-btn.is-open{background:var(--color-accent-tint-bg);color:var(--color-accent-ink);box-shadow:inset 3px 0 0 var(--color-accent)}
+.sg-rail-badge{position:absolute;top:-2px;right:-4px}
+.sg-temp{flex:0 0 300px;width:300px;display:flex;flex-direction:column;min-height:0;
+  background:var(--color-bg-subtle);color:var(--color-text-primary);border-right:1px solid var(--color-border-panel)}
+.sg-temp[hidden]{display:none}
+.sg-temp-head{display:flex;align-items:center;gap:var(--ctl-gap);padding:var(--space-4) var(--space-5) 0}
+.sg-temp-head [hidden]{display:none}
+.sg-temp-title{display:inline-flex;align-items:center;gap:var(--ctl-gap);margin:0;font-size:var(--text-lg);line-height:20px;font-weight:600;white-space:nowrap}
+.sg-list-head{flex:1 1 auto;min-width:0;display:flex}
+.sg-list-pick{flex:1 1 auto;min-width:0;font-weight:600}
+.sg-temp-actions{display:flex;align-items:center;gap:var(--ctl-gap);padding:var(--space-4) var(--space-5) var(--space-2)}
+.sg-temp-actions[hidden]{display:none}
+.sg-temp-sub{display:flex;align-items:center;flex-wrap:wrap;gap:var(--ctl-gap-tight) var(--ctl-gap);
+  padding:var(--space-3) var(--space-5);border-bottom:1px solid var(--color-line-default)}
+.sg-temp-all{display:inline-flex;align-items:center;gap:var(--ctl-gap);cursor:pointer;color:var(--color-text-muted)}
+.sg-temp-items{flex:1 1 auto;min-height:0;overflow:auto;list-style:none;margin:0;padding:0;background:var(--color-bg-elevated)}
+.sg-temp-item{border-bottom:1px solid var(--color-line-hairline)}
+.sg-temp-item.sg-in-temp .sg-temp-item-lbl{box-shadow:inset 3px 0 0 var(--color-accent)}
+.sg-temp-item-lbl{display:flex;align-items:flex-start;gap:var(--ctl-gap);padding:var(--space-3) var(--space-5);cursor:pointer}
+.sg-temp-item-lbl:hover{background:var(--color-row-hover-bg)}
+.sg-temp-item-text{display:flex;flex-direction:column;min-width:0}
+.sg-temp-item-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sg-temp-item-lists{color:var(--color-text-muted);font-size:var(--text-sm);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sg-temp-empty{padding:var(--space-5);color:var(--color-text-muted)}
+.sg-temp input[type=checkbox]{flex:0 0 16px;width:16px;height:16px;margin:0;color:inherit;accent-color:var(--color-accent)}
+.sg-temp-form,.sg-temp-confirm{padding:var(--space-3) var(--space-5) var(--space-4)}
+.sg-temp-form[hidden],.sg-temp-confirm[hidden]{display:none}
+.sg-temp-form-lbl{margin:0 0 var(--ctl-gap-tight);font-weight:600}
+.sg-temp-name{width:100%;margin-bottom:var(--ctl-gap)}
+.sg-temp-err{margin:0;padding:0 var(--space-5) var(--space-3);color:var(--color-crit-text)}
+.sg-temp-err:empty{display:none}
+
+/* ---- List column: collapsed indicator, or expanded names ---- */
+.sg-grid .slick-header-column.sg-lcol-h{padding:0 var(--space-1)}
+.sg-grid .slick-cell.sg-lcol{padding:0 var(--space-2)}
+.sg-lcol-toggle{display:inline-flex;align-items:center;gap:var(--space-1);height:100%;padding:0 var(--space-1);border:0;
+  background:transparent;font:inherit;font-weight:600;color:inherit;cursor:pointer;border-radius:var(--radius-ctl)}
+.sg-lcol-toggle:hover{background:var(--color-btn-icon-hover-bg)}
+.sg-lcol-arrow{color:var(--color-accent-ink)}
+.sg-inlist{display:inline-flex;align-items:center;gap:var(--space-2);color:var(--color-accent-ink);font-weight:600}
+.sg-inlist-mark{display:inline-block;width:8px;height:8px;border-radius:var(--radius-pill);background:var(--color-accent)}
+/* Rows on My temp list: a vertical line to the left of the checkbox. */
+.sg-grid .slick-row.sg-in-temp .slick-cell.sg-check{box-shadow:inset 3px 0 0 var(--color-accent)}
+
+/* ---- status shading (conditional formatting on a column's value) ---- */
+.sg-grid .slick-cell.sg-tone{font-weight:600}
+.sg-grid .slick-cell.sg-tone-future{background:var(--color-status-track-bg);color:var(--color-text-muted)}
+.sg-grid .slick-cell.sg-tone-track{background:color-mix(in srgb,var(--color-status-track) 16%,var(--color-bg-canvas));color:var(--color-text-primary)}
+.sg-grid .slick-cell.sg-tone-risk{background:var(--color-notice-bg);color:var(--color-notice-ink)}
+.sg-grid .slick-cell.sg-tone-crit{background:var(--color-crit-tint-bg);color:var(--color-crit-text)}
+.sg-grid .slick-cell.sg-tone-done{background:var(--color-ready-tint-bg);color:var(--color-ok-text)}
+
+/* ---- health icon (same states and roles as the dashboard's health dot) ---- */
+.sg-hdot{display:inline-block;color:var(--color-text-primary);flex:0 0 auto;width:10px;height:10px;margin:0 var(--space-3) 0 0;padding:0;vertical-align:middle;
+  border-radius:var(--radius-pill);border:1.2px solid var(--color-health-rim);background:transparent;cursor:pointer}
+button.sg-hdot:hover{transform:scale(1.25)}
+.sg-hdot.sg-h-0{background:transparent;border-color:var(--color-health-none-border)}
+.sg-hdot.sg-h-1{background:var(--color-health-good);border-color:var(--color-health-good-border)}
+.sg-hdot.sg-h-2{background:var(--color-health-watch);border-color:var(--color-health-watch-border)}
+.sg-hdot.sg-h-3{background:var(--color-crit);border-color:var(--color-crit-border)}
+.sg-hdot.sg-h-4{background:var(--color-status-done);border-color:var(--color-health-good-border)}
+.sg-hpick{position:absolute;min-width:160px}
+.sg-hpick .sg-hdot{margin-right:var(--space-2);cursor:default}
+.sg-grid .slick-cell.sg-cell-open{cursor:pointer}
+
+/* ---- import and Import log ---- */
+.sg-import-pick p{margin:0 0 var(--ctl-gap);color:var(--color-text-muted)}
+.sg-import-pick[hidden]{display:none}
+.sg-import-row{display:flex;flex-wrap:wrap;align-items:center;gap:var(--ctl-gap);margin-bottom:var(--ctl-gap)}
+.sg-import-date{display:inline-flex;align-items:center;gap:var(--ctl-gap);color:var(--color-text-label)}
+.sg-select.sg-date-order{max-width:none}
+.sg-import-status:not(:empty){margin-top:var(--group-gap);padding-top:var(--group-gap);border-top:1px solid var(--color-line-default)}
+.sg-import-status:first-child{margin-top:0;padding-top:0;border-top:0}
+.sg-import-status[data-kind=error]{color:var(--color-crit-text)}
+.sg-import-head{margin:0 0 var(--ctl-gap);font-weight:600;font-size:var(--text-lg)}
+/* Host-page p rules must not recolour the import text. */
+.sg-dialog .sg-import-status p{margin:0 0 var(--ctl-gap);color:inherit}
+.sg-dialog .sg-import-status p.sg-muted{color:var(--color-text-muted)}
+.sg-import-summary{margin:0 0 var(--group-gap);padding-left:var(--group-gap)}
+.sg-muted{color:var(--color-text-muted)}
+.sg-itable-wrap{max-height:260px;overflow:auto;margin-bottom:var(--ctl-gap);border:1px solid var(--color-line-default);border-radius:var(--radius-ctl)}
+.sg-itable{width:100%;border-collapse:separate;border-spacing:0;font-size:var(--text-md);line-height:16px}
+.sg-itable th{position:sticky;top:0;text-align:left;font-weight:600;background:var(--color-bg-subtle);color:var(--color-text-primary)}
+.sg-itable th,.sg-itable td{padding:var(--space-2) var(--space-4);border-bottom:1px solid var(--color-line-hairline);vertical-align:top}
+.sg-itable td{color:var(--color-text-primary)}
+
+/* ---- dialog: centre screen, modal (Import milestones) ---- */
+.sg-scrim{position:absolute;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:var(--group-gap);
+  background:var(--color-scrim)}
+.sg-dialog{width:min(640px,100%);max-height:calc(100% - 2 * var(--group-gap));display:flex;flex-direction:column;
+  background:var(--color-dialog-elev);color:var(--color-text-primary);border:1px solid var(--color-border-panel);
+  border-radius:var(--radius-overlay);box-shadow:var(--shadow-3)}
+.sg-dialog-head{display:flex;align-items:center;justify-content:space-between;gap:var(--ctl-gap);
+  padding:var(--space-5) var(--group-gap) var(--space-4);border-bottom:1px solid var(--color-line-default)}
+.sg-dialog-title{margin:0;font-size:20px;line-height:28px;font-weight:600}
+.sg-dialog-body{padding:var(--group-gap);overflow:auto;font-size:var(--text-lg);line-height:20px}
+@media (max-width:767px){
+  .sg-temp{position:absolute;top:0;bottom:0;left:40px;z-index:10;width:min(300px,calc(100% - 40px));box-shadow:var(--shadow-3)}
+  .sg-body{position:relative}
+}
+
+/* ---- grid engine skin ---- */
+.sg-grid{flex:1 1 auto;min-height:0;min-width:0;position:relative;background:var(--color-bg-canvas);color:var(--color-text-primary)}
+.sg-grid .slick-pane,.sg-grid .slick-viewport{background:var(--color-bg-canvas)}
+/* Scroll inside the grid never chains to the page, and row layout stays inside each row. */
+.sg-grid .slick-viewport{overscroll-behavior:contain}
+.sg-grid .slick-row{contain:layout style}
+.sg-grid .slick-header.ui-state-default,.sg-grid .slick-headerrow.ui-state-default{
+  background:var(--color-bg-subtle);border-top:0;border-bottom:1px solid var(--color-line-default)}
+.sg-grid .slick-header-column.ui-state-default{height:calc(var(--ctl-h) + var(--space-2));line-height:calc(var(--ctl-h) + var(--space-2));
+  padding:0 var(--space-4);box-sizing:border-box!important;font-weight:600;
+  background:var(--color-bg-subtle);color:var(--color-text-primary);border-right:1px solid var(--color-line-hairline);cursor:pointer}
+.sg-grid .slick-header-column.ui-state-default:hover{background:var(--color-row-hover-bg)}
+.sg-grid .slick-header-column.sg-h-edit .slick-column-name{text-decoration:underline dotted var(--color-accent);text-underline-offset:3px}
+.sg-grid .slick-header-column-sorted{font-style:normal;color:var(--color-accent-ink)}
+.sg-grid .slick-sort-indicator{margin-top:0;float:right;height:100%;display:inline-flex;align-items:center}
+.sg-grid .slick-sort-indicator-asc,.sg-grid .slick-sort-indicator-desc{color:var(--color-accent-ink);margin-top:0;align-self:center}
+.sg-grid .slick-resizable-handle:hover{background:var(--color-accent-wash-strong)}
+.sg-grid .slick-headerrow-column.ui-state-default{padding:var(--space-2);background:var(--color-bg-subtle);
+  border-right:1px solid var(--color-line-hairline);border-bottom-color:var(--color-line-default)}
+.sg-grid .sg-hfilter{width:100%;min-width:0}
+
+.sg-grid .slick-row{background:var(--color-row-default-bg)}
+.sg-grid .slick-row.odd{background:var(--color-row-alt-bg)}
+.sg-grid .slick-row:hover{background:var(--color-row-hover-bg)}
+.sg-grid .slick-cell{padding:0 var(--space-4);line-height:calc(var(--ctl-h) - 2px);color:var(--color-text-primary);
+  border-top-color:transparent;border-left-color:transparent;
+  border-right:1px solid var(--color-line-hairline);border-bottom-color:var(--color-line-hairline)}
+.sg-grid .slick-cell.selected{background:var(--color-row-selected)}
+.sg-grid .slick-cell.active{box-shadow:inset 0 0 0 var(--focus-ring) var(--color-accent)}
+.sg-grid .slick-cell.editable{padding:0;background:var(--color-bg-elevated);border-color:var(--color-accent);border-style:solid}
+.sg-grid .slick-cell.invalid{box-shadow:inset 0 0 0 var(--focus-ring) var(--color-status-crit)}
+.sg-grid .slick-cell.highlighted{background:var(--color-accent-wash)}
+.sg-grid .slick-cell.flashing{border-color:var(--color-status-crit)!important}
+.sg-grid .slick-selection{border-color:var(--color-accent)}
+.sg-grid .sg-check,.sg-grid .slick-header-column.sg-check-h{display:flex;align-items:center;justify-content:center;padding:0;text-overflow:clip}
+.sg-grid .slick-header-column .slick-column-name input[type=checkbox],.sg-grid .sg-check input[type=checkbox]{
+  width:16px;height:16px;margin:0;vertical-align:middle;color:inherit;accent-color:var(--color-accent)}
+
+.sg-editor{width:100%;height:100%;margin:0;padding:0 var(--space-4);font:inherit;border:0;outline:0;
+  background:var(--color-bg-elevated);color:var(--color-text-primary)}
+
+@media (max-width:767px){
+  .sg-bar,.sg-bar2,.sg-bar3{padding-left:var(--space-4);padding-right:var(--space-4)}
+  .sg-bar2{flex-wrap:wrap}
+  .sg-bar2 .sg-spacer{display:none}
+  .sg-search{flex:1 1 100%;width:auto}
+}
