@@ -38,6 +38,20 @@ sha256 `57ee09f30f74cb51ad949b8a5cf25fa6ed9e28735fac5cc24f93e167528f71f9`, 217,4
 
 The package does not ship minified browser files, which is why this one step exists. esbuild is used at vendoring time only and never by the app. See `docs/decisions/D-09-grid-library.md` for the sign-off point this raises.
 
+## Embedded in the app (P61, TD-221)
+
+Where `docs/grid-view-integration.md` puts them:
+
+- `slickgrid.subset.min.js` is in `<script id="vendor-slickgrid">`, immediately before `<script id="app-script">`. A `/* */` comment ahead of it holds the version line and the full text of `LICENSE`.
+- `dist/slick.grid.css` is in `<style id="vendor-slickgrid-css">`, immediately after the main `</style>`.
+
+**Both are embedded byte for byte. No `\x3C` escape was needed**, unlike SheetJS (TD-216). Checked before embedding:
+
+- Neither file contains `</body>`, `<body>`, `<head>`, `</head>`, `<html>`, `</html>`, a script start or end tag, `</style` or `<!--`.
+- The JS holds one tag-like literal, `'<style type="text/css" rel="stylesheet" />'`, in `createCssRulesAlternative()`. It is not on the list above. Inside a script it is plain text to the HTML parser. It only runs when the engine cannot create a stylesheet the normal way.
+
+`tools/p61_check.py` asserts that each block carries its file unchanged, and that the page still holds exactly one of each tag the check tools inject against.
+
 ## Not included, on purpose
 
 - `slick.editors.js`, `slick.formatters.js`: the wrapper has its own four native-input editors and formatter, so the date editor needs no third-party picker (the package's date editor needs Flatpickr).

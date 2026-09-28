@@ -2909,3 +2909,77 @@ The existing checks keep stubbing `XLSX` at the app's boundary. Their stubs are 
 **File size:** the app grows by the embedded mini build plus its licence. The figures are in the release snapshot.
 
 **Published:** `releases/v3.1.0-P60_sheetjs-embedded.html`
+
+## TEST-62: P61 grid view embedded, View items, Your edits, export names (v3.1.0-P61)
+
+TD-221. The embed follows `docs/grid-view-integration.md`. The scope is F-01, E-01 and E-03 only. Lists, the temp list, `SRETUser`, the `SRETDates` dashboard switch, milestone import in the grid, the view switcher and schedule compare are deferred.
+
+**`tools/p61_check.py` (new).** It runs three clean page loads in headless Chromium at 1440x900, with the host resolver mapped to nothing. It reads the DOM, `classList`, geometry from `elementFromPoint` and the store contents, never a screenshot. `XLSX.writeFile` and the CSV blob are captured rather than downloaded.
+
+*Source checks:*
+- `</body>`, `<head>`, `</head>` and `</html>` each appear exactly once.
+- The version grep returns 1.
+- `vendor-slickgrid` sits immediately before the app script. It carries `slickgrid.subset.min.js` unchanged, after a comment holding the version line and the full MIT licence.
+- `vendor-slickgrid-css` follows the main `</style>` and carries `slick.grid.css` unchanged.
+- `grid-view.css` is in the main style and `grid-view.js` is at the top of the app script, both unchanged.
+- The collections, ms-import, dates and user modules are absent.
+- No script contains a script start tag, and no CDN URL is present.
+
+*Grid embed and F-01:*
+- `window.Slick` and `window.SRETGrid` exist at load. There is no `<script src>`, and there are zero `http(s)` resource entries at the end.
+- Three milestones are added through `saveAddMilestone()`, and their IDs come from `nextUserMsId()`.
+- View items is enabled, and the Manage… placeholder is gone. It opens the grid with three rows inside `#grid-host`.
+- The icon bar, every visible icon bar button and the report header are the element at their own centre. The grid starts below the header and fits the viewport.
+- A name edit lands in `USER_MILESTONES`, including the `[ID] - Name` notes.
+- Progress 150, 101 and -1 are refused: the cell reverts, the store is unchanged and no edit is signalled. Progress 0 and 100 are accepted.
+- A date 30 days either side of the week range is refused. The first and last week endings are accepted.
+- A comment edit writes `MS_COMMENTS`. The health dot stores Critical as the milestone code.
+- Add row takes its ID from `nextUserMsId()` through the add dialog's writer. Delete selected rows removes the milestone and the row it created.
+- Double-clicking an ID opens the milestone card above the grid.
+- Export .xlsx writes one sheet with the grid's columns (Health last) and one row per milestone.
+- Back gives the board back and returns focus to View items after the rebuild. The rebuilt board shows the rename, the deletion and the addition.
+
+*E-01:*
+- On a fresh load, the Your edits row is the first row of its group and says "No edits yet".
+- One card comment, one card health override and one note give exactly those three categories at 1 each, under their `ANNOT_CATEGORIES` labels, before any rebuild.
+- A row health change counts under Row health and remarks, and Reset row marks takes it off again.
+- Deleting the note drops Notes.
+- A dependency comment counts at once.
+- A file mounted through the real mount dialog raises the comments count and adds short titles.
+
+*E-03:*
+- The three labels are exact, the old names are gone, and the rows and tooltips carry no em or en dash.
+- The All remarks workbook has exactly the Milestone Comments, Dependency Comments, Row Remarks and Notes sheets. Outside Notes it has no Health, Progress, Status or Date column. A health-only row is absent, and every Row Remarks row carries text.
+- The CSV has one row per deliverable row on the board, in board order, carrying the annotations.
+
+**Changed assertions (behaviour deliberately changed by P61):**
+
+| Check | Old assertion | New assertion |
+|---|---|---|
+| spacing_audit | Counts raw px in every `<style>` block | Skips `<style id="vendor-...">` blocks, which hold third-party CSS embedded unmodified and recorded in `SOURCE.md`. The app's own grid view CSS is in the main block and is still counted. `colour_audit --strict` already read only the main block. The ceiling is unchanged |
+
+No other check changed. `p40_check` and `p43_check` failed on the first build. That build called `mergeUserMilestones()` and `applyFieldOverrides()` outside `renderRows()`, which both checks correctly flag. The app was fixed, not the checks: the grid now refreshes the board's copies and lets the scheduled rebuild do both.
+
+**Found while building:**
+- `#page-frame` is `display:contents`, so the positioned board container the plan assumed does not exist. The grid uses its own host (see `docs/grid-view-integration.md`).
+- Every `noteMarkup()` re-renders the Workspace groups through `updateHeaderMeta()` and `renderMounts()`. That detached the View items node the grid returns focus to. Back now focuses the live button, and `renderMounts()` keeps focus on a Workspace control it rebuilds.
+- `saveCommentPanel()` never called `noteMarkup()`, so dependency comments never marked unsaved work. It now does, on a real change.
+
+**Negative control:** run against `releases/v3.1.0-P60_sheetjs-embedded.html`, `p61_check` fails (23/51). With no `SRETGrid`, its grid probe stops early.
+
+**Results at v3.1.0-P61:**
+- All 38 tools exit 0: the P60 set plus `p61_check`.
+- `p61_check`: 94/94.
+- `grid_view_check`: 210/210. Its scroll-cost p95 timing failed twice under the parallel suite run, including once on the P60 base, and passes run alone. The demo is unaffected by this change.
+- `grid_view_assemble --check`: current.
+- `p59_check`: 92/92.
+- `ds_check`: 128/128.
+- `p57_check`: 56/56.
+- `d23_check`: 23/23.
+- `persist_check`: 22/22.
+- `colour_audit --strict`: 0.
+- `palette_swap_check`: 0 escapes.
+- `spacing_audit`: at its ceiling.
+- The version grep returns 1.
+
+**Published:** `releases/v3.1.0-P61_workspace-grid.html`
