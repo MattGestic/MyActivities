@@ -2983,3 +2983,60 @@ No other check changed. `p40_check` and `p43_check` failed on the first build. T
 - The version grep returns 1.
 
 **Published:** `releases/v3.1.0-P61_workspace-grid.html`
+
+## TEST-63: P62 annotation tables from Comments & markups (v3.1.0-P62)
+
+TD-222 (E-02). A collection is an annotation type: the stores carry no period except notes, so grouping by week or source file waits on the D-03 edit ledger.
+
+**`tools/p62_check.py` (new).** It runs one clean page load in headless Chromium at 1440x900, with the host resolver mapped to nothing. It reads the DOM, `classList`, geometry from `elementFromPoint` and the store contents, never a screenshot. `XLSX.writeFile` is captured rather than downloaded. Every edit is checked against a snapshot of all eight annotation stores plus `TASKS`, `MILESTONES` and `USER_MILESTONES`, taken before and after.
+
+*Source checks:*
+- `</body>`, `<head>`, `</head>` and `</html>` each appear exactly once.
+- The version grep returns 1 and `APP_VERSION` is 3.1.0-P62.
+- No script contains a script start tag, and no CDN URL is present.
+
+*Rows:*
+- A fresh load says "No edits yet" and offers no View control.
+- Entries are made through the real paths: three comments, one health override, one progress override and three field edits (title, finish, weight) through the milestone card; two notes through the composer; a row health change and a typed row remark on the board; a dependency comment through the comment panel.
+- The rows are exactly those seven types, with counts 3, 2, 1, 1, 3, 2 and 1, each under its `ANNOT_CATEGORIES` label with an enabled View button. Custom short titles, at zero, is hidden.
+- A user milestone added through the Add milestone dialog never becomes a row.
+
+*Per type (comments, health, progress, field edits, row health and remarks, dependency comments, notes):*
+- View opens the grid in `#grid-host` with the title "<label> (<n>)" and n rows, and no Add row. The icon bar, every visible icon bar button and the report header are the element at their own centre.
+- One edit lands in that type's store and nowhere else; the schedule arrays are unchanged.
+- Refused, with the store unchanged: progress 150, 101 and -1 (the cell reverts); health code 9; note status "bogus"; an empty note text; the date "not a date"; the weight "heavy".
+- Accepted: progress 99 or 100; Critical, stored as the card's code 4 so `effectiveState()` reads CRIT; a d-Mmm-yy finish, stored as ISO; a row remark; a note status and text.
+- Clearing a comment, a progress override, a field edit and a row health removes that entry, and the row count and title drop. Delete selected removes a comment, the dependency comment and a note.
+- Double-click on an Activity ID opens the milestone card above the grid. Double-click on a note number opens the Notes pane with that note marked.
+- Export .xlsx writes one workbook, "Milestone comments <date>.xlsx", with Activity ID, Activity name and Comment and one row per entry, carrying the edit.
+- Back returns focus to that type's View button, or to the first View button when the type has emptied and its row has gone. After a note is opened, the Workspace returns to Comments & markups.
+- The rebuilt board shows the edit: the marker's icon carries the Critical class, the row remark is the edited text marked changed, and the cleared row health is back to its own value.
+
+**Changed assertions (behaviour deliberately changed by P62):**
+
+| Check | Old assertion | New assertion |
+|---|---|---|
+| p61_check | A user milestone name edit showed as `userMs` 3 in the Your edits counts | User milestones are not a Your edits row (E-02); the edit's `noteMarkup()` is read from `MARKUP_COUNT`, and `userMs` must be absent |
+| p61_check | `APP_VERSION` is 3.1.0-P61 | `APP_VERSION` is 3.1.0-P61 or a later partial. The version grep still returns 1 |
+
+No other check changed.
+
+**Negative control:** run against `releases/v3.1.0-P61_workspace-grid.html`, `p62_check` fails (10/15). The field edit count is 1 (milestones, not fields), there is no View button, and the grid probe stops early.
+
+**Results at v3.1.0-P62:**
+- All 39 tools exit 0: the P61 set plus `p62_check`, run one after another.
+- `p62_check`: 105/105.
+- `p61_check`: 94/94.
+- `grid_view_check`: 210/210.
+- `grid_view_assemble --check`: current.
+- `p59_check`: 92/92.
+- `ds_check`: 128/128.
+- `p57_check`: 56/56.
+- `d23_check`: 23/23.
+- `persist_check`: 22/22.
+- `colour_audit --strict`: 0.
+- `palette_swap_check`: 0 escapes.
+- `spacing_audit`: at its ceiling.
+- The version grep returns 1.
+
+**Published:** `releases/v3.1.0-P62_annotation-tables.html`
