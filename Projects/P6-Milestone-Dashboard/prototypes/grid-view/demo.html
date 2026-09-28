@@ -142,7 +142,7 @@ html[data-theme="dark"]{
   --color-bg-canvas:var(--pal-surface);
   --color-bg-elevated:var(--pal-surface);
   --color-row-selected:var(--pal-teal-tint);
-  --color-dialog-bg:color-mix(in srgb,var(--pal-surface) 92%,transparent);
+  --color-dialog-bg:var(--pal-surface); /* P59 (X-01): opaque. At 92% the board showed through the card. */
   --color-dialog-elev:var(--pal-surface);
   /* Borders */
   --color-border-panel:var(--pal-line);

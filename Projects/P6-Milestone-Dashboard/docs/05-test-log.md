@@ -2888,3 +2888,24 @@ build choice (mini) is Matt's, 2026-09-28.
 **Negative control:** run against `releases/v3.1.0-P59_layout-consistency.html`, the check fails (6/12). P59 still has the CDN loader and no block, and its runtime probe cannot run.
 
 **Found while building:** the library's HTML-table template put a second `</body>` into the page, and every check tool's `replace("</body>", probe)` then injected into the library's string. Fixed in the embedded copy (see `docs/06-lessons-learned.md`). Separately, a comment of mine named the block as a literal script start tag; it was reworded.
+
+**Results at v3.1.0-P60:**
+- All 37 tools exit 0. That is the P59 set plus `d23_check` and `grid_view_check`.
+- `d23_check`: 23/23.
+- `grid_view_check`: 210/210.
+- `p59_check`: 92/92.
+- `ds_check`: 128/128.
+- `p57_check`: 56/56.
+- `persist_check`: 22/22.
+- `colour_audit --strict`: 0.
+- `palette_swap_check`: 0 escapes.
+- `spacing_audit`: at its ceiling.
+- The version grep returns 1.
+
+The existing checks keep stubbing `XLSX` at the app's boundary. Their stubs are injected after the embedded block, so they still take precedence.
+
+**Also fixed:** `grid_view_check` was red on the base branch. `prototypes/grid-view/demo.html` copies the app's token CSS and went stale when P59 merged. It was regenerated with `tools/grid_view_assemble.py`; the tool itself did not change.
+
+**File size:** the app grows by the embedded mini build plus its licence. The figures are in the release snapshot.
+
+**Published:** `releases/v3.1.0-P60_sheetjs-embedded.html`
