@@ -2741,6 +2741,52 @@ in light and dark at 1440.
 **Published:** `releases/v3.1.0-P58_note-collections.html`
 
 
+## TEST-59: Scale baseline for D-26 (v3.1.0-P58, no code change)
+
+Asks whether the board is serviceable at full-schedule scale, and at twice
+that, and where the time goes. Raised TD-219. Every figure is in
+`docs/perf/Scale_Measurement_Log.md`; this entry names metrics only.
+
+**Method.** The real import path (file input, column mapper, `runIngest()`),
+with `rerender()` wrapped to time each rebuild including its forced layout,
+and Chrome DevTools Protocol layout and style-recalc durations captured over
+the import. Interactions timed to a settled board: full rebuild, the
+Critical path 0d float filter, dependency lines all on, a rebuild with lines
+on, and the theme toggle. Three sources: the committed reference export,
+the client live XER at 1x and 2x (not committed, see the log), and a
+synthetic schedule from the committed `tools/scale_bench.mjs` for
+reproducibility.
+
+**Findings.**
+- The reference export is interactive on every metric.
+- At client scale, `import_ms`, `rebuild_ms`, `dep_all_on_ms` and
+  `rebuild_with_deps_ms` are all far outside interactive limits.
+- From 1x to 2x, rebuild and filter grow a little faster than the row count,
+  and `dep_all_on_ms` and `rebuild_with_deps_ms` grow several times faster.
+- Parsing and memory are not the problem (`heap_mb`).
+- Cause, measured rather than inferred: `td_cells` is rows x
+  `week_columns`, against `visible_rows` on screen, and
+  `import_layout_s` plus `import_style_s` account for most of `import_ms`.
+- The isolated micro-benchmark (`microbench_per_week_ms` against
+  `microbench_one_cell_ms`, and `class_toggle_ms`) supports D-26's
+  one-timeline-cell and class-only-filter design.
+
+**Not a pass/fail test.** It is the baseline each D-26 stage is re-measured
+against with `tools/scale_bench.mjs`, appending synthetic rows to the log.
+
+**Synthetic series.** `tools/scale_bench.mjs` at the client's activity
+count and at twice it, rows in the log under `synthetic-*`. It reproduces the
+client finding's shape: every interaction far outside interactive limits, and
+`dep_all_on_ms` and `rebuild_with_deps_ms` growing several times faster than
+the row count, as on the client schedule. Its absolute figures are higher
+than the client rows because it builds more cells per row (`td_cells`) and has
+a shallower WBS, so the two series are compared by shape only. Later D-26
+stages compare synthetic against synthetic.
+
+**First synthetic run lost.** The first run was stopped by a session time
+limit during the 2x size, and the script wrote its JSON only at the end, so
+nothing was kept. The script now writes after each size (commit `409a7f9`).
+
 ## TEST-60: P59 layout and consistency (v3.1.0-P59)
 
 Matt's P59 feedback, collated into items A, B, C, D and X and approved on

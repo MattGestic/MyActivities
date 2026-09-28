@@ -17,6 +17,7 @@ Status baseline is the delivered v3.1.0-P1 build. Features marked `Published` we
 | EPIC-07 | Grouping and presentation (future) | FEAT-10, FEAT-11 | 0/2 published |
 | EPIC-08 | Repository and delivery | FEAT-12, FEAT-15 | 1/2 published |
 | EPIC-09 | Edit ledger, schedule hand-back and review | FEAT-18 to FEAT-23 | 0/6 published. Staged plan agreed 2026-09-23, one release per stage |
+| EPIC-10 | Scale, schedule model and views | FEAT-24 to FEAT-27, with FEAT-10 re-specced | 0/5 published. Proposed 2026-09-27 (D-23 to D-29), spec `docs/specs/D-23_scale-model-and-views.md`. Order against EPIC-09 pending Matt |
 
 ## Features
 
@@ -31,7 +32,7 @@ Status baseline is the delivered v3.1.0-P1 build. Features marked `Published` we
 | FEAT-07 | EPIC-04 | Customize View sidebar (columns, text scale, fit) | US-13, US-14 | H | M | Published | 3 independent scale sliders, deliberately not merged. |
 | FEAT-08 | EPIC-05 | Export: full JSON model + status/remarks CSV | US-15 | H | M | Published | JSON payload includes dep visibility, health overrides, comments, short titles. |
 | FEAT-09 | EPIC-01 | Ingest diagnostics panel | US-17 | M | L | Published | Collapsible, hidden entirely when empty. |
-| FEAT-10 | EPIC-07 | Banding / row-collections (user-reorderable grouping) | US-18 | M | H | Not started | Fully specced. Phase 1 auto-derivation not begun. Assume none of it exists. |
+| FEAT-10 | EPIC-07 | Banding / row-collections (user-reorderable grouping) | US-18, US-23, US-24 | **H** | H | Not started | **Re-specced 2026-09-27 as D-27**: independent Indent, WBS, Discipline and Owner hierarchies, saved views stored as changes from the system view, single-list view selector. Supersedes the earlier phase-band spec. Depends on FEAT-25. Impact raised from M: grouping is how the full schedule becomes readable. Assume none of it exists. |
 | FEAT-11 | EPIC-07 | Row sorting + per-type icon customisation | US-19 | L | M | Not started | Labelled "Future" in the UI. Genuinely not built, not partially built. |
 | FEAT-12 | EPIC-08 | Single-file zero-dependency distribution | US-20 | H | L | Published | Constraint, not a feature to be traded away. v3.1.0-P14 adds publishing: the app writes a new standalone file with the current schedule built in, which is how a SharePoint-hosted copy carries its schedule to other readers. |
 | FEAT-13 | EPIC-05 | Import previously exported JSON model (round-trip) | US-16 | M | M | Dev — annotation layer done at v3.1.0-P9, schedule rehydration not built | Six independently selectable categories, validated on payload identity rather than filename. `tasks`/`milestones`/`timeline` are in the payload but do not rebuild the board (TD-32). |
@@ -41,10 +42,14 @@ Status baseline is the delivered v3.1.0-P1 build. Features marked `Published` we
 | FEAT-17 | EPIC-01 | Mount manager: three fixed source slots with unmount and remount | — | H | M | Published | v3.1.0-P9. Baseline (locked) / Schedule / Annotations, each showing file name, data date and load time, so an active override is visible as an override. |
 | FEAT-18 | EPIC-09 | Data envelope: schedule data in a JSON block with a schema version, separate from code (D-02) | — | M | M | Not started | Published state moves to a JSON block too; publish keeps a whitelist of the file's own blocks. |
 | FEAT-19 | EPIC-09 | Edit ledger: every edit and comment timestamped with its period, one reader per field (D-03 to D-05) | — | H | H | Not started | Wraps the five existing annotation stores. Drafts stay on the card (P43). Timestamped comment thread, Clear comments, per-field discard, saved asterisk, NEW badge. |
-| FEAT-20 | EPIC-09 | Scheduler hand-back export and ID mapping (D-10, D-11) | — | H | M | Not started | Change request workbook for the master schedule; temporary IDs mapped back to master IDs. Never writes to P6. |
-| FEAT-21 | EPIC-09 | Import reconciliation: confirm, acknowledge or dismiss changes between periods (D-12) | — | H | H | Not started | Summary first, expand for exceptions and bulk update; a decision is recorded so the same item is not raised again. |
+| FEAT-20 | EPIC-09 | Scheduler hand-back export and ID mapping (D-10, D-11) | US-27 | H | M | Not started | Change request workbook for the master schedule; temporary IDs mapped back to master IDs. Never writes to P6. **2026-09-27: Matt chose the register only (option A); an XER patch was considered and declined.** Built on FEAT-25's resolved values. |
+| FEAT-21 | EPIC-09 | Import reconciliation: confirm, acknowledge or dismiss changes between periods (D-12) | US-26 | H | H | Not started | Summary first, expand for exceptions and bulk update; a decision is recorded so the same item is not raised again. First slice specced 2026-09-27 as D-29: new and removed activities, apply system positions in bulk, Excel export, Copy IDs. |
 | FEAT-22 | EPIC-09 | Multi-select and saved lists panel, filter the board to a list (D-06) | — | M | M | Not started | Ctrl-click selection; one default list and named lists; full-height panel docked left or right. |
-| FEAT-23 | EPIC-09 | Variance, summary strip and milestone register (D-07 to D-09) | — | M | H | Not started | Register uses Tabulator vendored inline, a constraint change needing sign-off before D-09. |
+| FEAT-23 | EPIC-09 | Variance, summary strip and milestone register (D-07 to D-09) | — | M | H | Not started | Register uses Tabulator vendored inline, a constraint change needing sign-off before D-09. D-23 (SheetJS inline) sets how a vendored block is marked and excluded from audits. |
+| FEAT-24 | EPIC-10 | In-app XER import alongside Excel and paste (D-24) | US-22 | H | M | Not started | JS port of `tools/xer_to_aoa.py`; one model builder for all three formats; per-activity calendar hours (TD-22 first). Resolves TD-21. |
+| FEAT-25 | EPIC-10 | Schedule model: frozen activities, links, one hierarchy node type, one place values resolve (D-25) | US-21 | H | H | Not started | In-memory side of D-02's envelope (FEAT-18); annotation writes through FEAT-19. Staged behind a compatibility view with all existing checks passing. |
+| FEAT-26 | EPIC-10 | Batch rendering: one timeline cell per row, class-only filters, dependency geometry from data (D-26) | US-21 | H | H | Not started | Cause measured in TEST-59. Gate: `tools/scale_bench.mjs` re-run per stage, appended to `docs/perf/Scale_Measurement_Log.md`. |
+| FEAT-27 | EPIC-10 | Discipline and Activity Owner fields, row value with activity exceptions (D-28) | US-25 | H | M | Not started | Mixed indicator, sub-row toggle off by default, group totals by resolved value. Groups feed FEAT-10's Discipline and Owner types. |
 
 ## Tasks
 
@@ -71,12 +76,12 @@ Status baseline is the delivered v3.1.0-P1 build. Features marked `Published` we
 | TASK-23 | FEAT-03 | Row model: one row per deliverable, stage chains collapsed with dependency corroboration | Done | v3.1.0-P4. PFS 146 activities to 115 rows. |
 | TASK-24 | FEAT-02 | XER extractor (`tools/xer_to_aoa.py`) for testing against real EPCM schedules | Done | Standalone tool, not app code. TD-21 covers in-app ingest. |
 | TASK-25 | FEAT-10 | Aggregation axis for EPCM/construction schedules | Done | TD-20. v3.1.0-P5, mixed strategies per band. |
-| TASK-26 | FEAT-10 | Sub-headings within a band, chosen by count | Open | TD-23. The unbuilt half of the agreed row rule. |
+| TASK-26 | FEAT-10 | Sub-headings within a band, chosen by count | Open | TD-23. The unbuilt half of the agreed row rule. Revisit under D-27: the WBS and Indent hierarchies may supply the sub-headings directly. |
 | TASK-27 | FEAT-03 | Dependency-first row building with a deliverable-identity second pass | Done | v3.1.0-P7. 8/8 over-merge guards, PFS 108 rows, EPCM 1898. |
 | TASK-28 | FEAT-03 | Relax the convergence constraint with a measured predecessor threshold | Done | TD-26. v3.1.0-P8. Threshold 6 chosen from the distribution, not assumed. PFS 108 to 105 rows. |
 | TASK-29 | FEAT-03 | Row numbers per banding, rendered beside the health dot | Done | v3.1.0-P8. Flex slot, not a text prefix, so the drag handle can join it. |
 | TASK-30 | FEAT-03 | Drag a milestone from one row to another, mouse and touch | Done | v3.1.0-P8. Pointer Events; 4px threshold on mouse, 400ms hold on touch. Target row re-bands via the existing collision system. |
-| TASK-31 | FEAT-11 | Row dragging (reorder rows within a banding) | Open | TD-29. The handle slot and `data-rownum` are in place; the interaction is not. |
+| TASK-31 | FEAT-11, FEAT-10 | Row dragging (reorder rows within a banding) | Open | TD-29. The handle slot and `data-rownum` are in place; the interaction is not. Becomes a saved-view operation under D-27. |
 | TASK-32 | FEAT-14 | Re-run the contrast check across transparent-background components now the blind spot is closed | Open | TD-28. `--color-text-small` measures 1.18:1 on a dark row. |
 | TASK-33 | FEAT-17 | Mount panel: three fixed slots, each with name, data date and load time | Done | v3.1.0-P9. Replaces the single "Currently Imported Schedule" summary. |
 | TASK-34 | FEAT-17 | Unmount and remount actions per slot | Done | v3.1.0-P9. Baseline is locked; unmounting a schedule reverts to it and leaves annotations alone. |
@@ -86,7 +91,7 @@ Status baseline is the delivered v3.1.0-P1 build. Features marked `Published` we
 | TASK-38 | FEAT-14 | Sweep every consumer of `--color-text-small` and `--color-purple-dark` | Open | TD-33. Both measured below 1.2:1 in dark on the surfaces used this pass. |
 | TASK-39 | FEAT-02 | Route every import failure through one handler that clears stale parse state | Done | TD-34. v3.1.0-P10. A failure could previously leave the prior file importable. |
 | TASK-40 | FEAT-02 | Show a visible failure block where the column-mapping step would have appeared | Done | TD-35. v3.1.0-P10. Names the file, the reason and the remedy. |
-| TASK-41 | FEAT-02, FEAT-12 | Decide how `.xlsx` import behaves when the SheetJS CDN is unreachable | Open | TD-36. The only dependency that can remove a whole input format. |
+| TASK-41 | FEAT-02, FEAT-12 | Decide how `.xlsx` import behaves when the SheetJS CDN is unreachable | Decided | TD-36. The only dependency that can remove a whole input format. **Decided 2026-09-27 (D-23): inline SheetJS; implemented by TASK-62.** |
 | TASK-42 | FEAT-02 | Report the real `FileReader` DOMException and its remedy instead of a generic message | Done | TD-37. v3.1.0-P11. |
 | TASK-43 | FEAT-02 | Retry a failed file read once before reporting | Done | TD-38. v3.1.0-P11. Covers transient OneDrive hydration and antivirus locks. |
 | TASK-44 | FEAT-02 | Move the data date under step 1, relabel it, default to the previous Friday | Done | TD-39. v3.1.0-P12. Was hidden until a file loaded and defaulted to a stale literal. |
@@ -109,7 +114,9 @@ Status baseline is the delivered v3.1.0-P1 build. Features marked `Published` we
 | TASK-13 | FEAT-16 | Promote the two general lessons (verification methodology, append-only measurement logs) to repository governance | Done | Applied on `main-projects-hub`. |
 | TASK-07 | FEAT-02 | Decide whether `headerAliases` should move from exact-match to fuzzy | Open | Accepted gap today. `"BL1 Start"` will not match a `"bl start"` alias. Primary `Start`/`Finish` cover the core need. |
 | TASK-08 | FEAT-03 | Multi-line short-title vertical bleed into neighbouring rows | Open | Separate, smaller problem than the same-row collision system. |
-| TASK-09 | FEAT-10 | Banding Phase 1: auto-derivation of row collections | Open | Blocked on FEAT-10 go-ahead. |
+| TASK-09 | FEAT-10 | Banding Phase 1: auto-derivation of row collections | Open | Re-scoped by D-27: auto-derivation becomes building the Indent and WBS hierarchies on import. Go-ahead in principle 2026-09-27; order pending. |
+| TASK-62 | FEAT-02, FEAT-12 | Inline SheetJS as a marked `VENDOR` block, last in `<body>`; exclude vendor blocks from audits; amend the constraint in `CLAUDE.md` and `00-project-context.md` §4 in the same release (D-23) | Open | Placement verified in Chromium 2026-09-27. |
+| TASK-63 | FEAT-26 | Commit the scale benchmark on synthetic data and record the baseline | Done | `tools/scale_bench.mjs`, TEST-59. Client-schedule runs are recorded for context only; the file stays out of the repo. |
 
 ---
 **Rules:**

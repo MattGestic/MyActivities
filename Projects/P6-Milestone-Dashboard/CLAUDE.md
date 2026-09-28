@@ -20,6 +20,9 @@ Read this before touching any file in this project. It is the short form; `docs/
 | `tools/colour_audit.py` | Regenerates the audit CSV and every Measurement Log metric |
 | `tools/theme_check.py` | Compares computed styles across light and dark. Non-zero exit if anything expected to toggle is frozen. |
 | `docs/handoff/` | Archive of the original claude.ai chat-to-code handoff |
+| `docs/specs/` | Design specs too large for a kit row; kit rows reference them by D number. `D-23_scale-model-and-views.md` covers D-23 to D-29 |
+| `docs/perf/Scale_Measurement_Log.md` | Append-only scale and performance figures (TD-219, TEST-59) |
+| `tools/scale_bench.mjs` | Scale benchmark on a synthetic schedule through the real import path. Node + Playwright: `NODE_PATH=$(npm root -g) node tools/scale_bench.mjs` |
 
 Read `docs/03-todo.md` first in any session. One fact lives in one file — reference by ID, do not restate.
 
