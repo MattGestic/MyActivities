@@ -174,6 +174,8 @@ Today: `renderCollections()` (line ~7238) renders `.coll-row` buttons into `#col
 
 One row per annotation entry in that collection: milestone comment, row remark, dependency comment, note, and field edits (health, progress, date overrides). Columns as in the demo's annotation config: entry, kind, activity ID, activity name (read-only), comment or value and status (editable). `canEdit` refuses the value cell for entries whose value is not user-entered. Edits go back through the same setters the card and Notes panes use, so the annotation layer stays the only thing written.
 
+**Built at P62 (TD-222, E-02), per annotation type rather than per period.** Matt's feedback asked for one row per collection of annotations with a count, each opening an editable table. Only notes carry a period, so a collection is read as an annotation type: the Your edits row in Comments & markups lists each non-empty type with its count and a View button calling `openAnnotGrid(type)`, the `openUserMsGrid()` pattern. Grouping by week or source file waits on the D-03 edit ledger. The period-collection table above is not built.
+
 ### Shared: My temp list and saved lists
 
 Purpose (Matt, 2026-09-27): keep track of important activities in groups, aggregate them by a scope or reason, and build a selection set to bulk edit across several filtered states.

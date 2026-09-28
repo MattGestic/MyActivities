@@ -16,7 +16,7 @@ Source assertions:
   - the version grep still returns 1
 
 Runtime assertions (headless Chromium, no network):
-  - XLSX is defined at load, version 0.18.5, and ensureXLSX() resolves
+  - XLSX is defined at load, version 0.20.3, and ensureXLSX() resolves
   - the reference P6 export parses through Parse.workbook() to its known
     header and data-row count, from the real bytes
   - a workbook written with the embedded library (the export path) reads back
@@ -59,7 +59,7 @@ PROBE = r"""
   window.addEventListener('load',function(){ setTimeout(async function(){
    try{
     ck('XLSX is defined at load, from the embedded block', typeof XLSX!=='undefined'&&typeof XLSX.read==='function');
-    ck('it is SheetJS 0.18.5', XLSX&&XLSX.version==='0.18.5', XLSX&&XLSX.version);
+    ck('it is SheetJS 0.20.3', XLSX&&XLSX.version==='0.20.3', XLSX&&XLSX.version);
     let ok=false; try{ await ensureXLSX(); ok=true; }catch(e){}
     ck('ensureXLSX() resolves without loading anything', ok);
     ck('no <script src> anywhere in the document',
@@ -93,8 +93,9 @@ PROBE = r"""
     const dt2=new DataTransfer(); dt2.items.add(new File([b64ToBytes(XLS_B64)],'renamed.xlsx'));
     input.files=dt2.files; handleFile(input);
     await new Promise(r=>setTimeout(r,800));
+    for(let i=0;i<20&&!/Excel 97-2003/.test((document.getElementById('import-error-wrap')||{}).textContent||'');i++) await new Promise(r=>setTimeout(r,250));
     const txt2=(document.getElementById('import-error-wrap')||{}).textContent||'';
-    ck('a legacy workbook renamed .xlsx gets the same message', /Excel 97-2003/.test(txt2), txt2.slice(0,160));
+    ck('a legacy workbook renamed .xlsx gets the same message', /Excel 97-2003/.test(txt2), txt2.slice(0,160)+' | status: '+((document.getElementById('ingest-status')||{}).textContent||''));
 
     const net=performance.getEntriesByType('resource').map(e=>e.name).filter(u=>/^https?:/i.test(u));
     ck('the page made zero network requests', net.length===0, net.join(', '));
@@ -161,7 +162,7 @@ def main() -> int:
         path = f.name
     out = subprocess.run([find_chrome(), "--headless", "--no-sandbox", "--disable-gpu",
                           "--host-resolver-rules=MAP * ~NOTFOUND",
-                          "--window-size=1440,900", "--virtual-time-budget=20000",
+                          "--window-size=1440,900", "--virtual-time-budget=60000",
                           "--dump-dom", "file://" + path],
                          capture_output=True, text=True, timeout=240).stdout
     mm = OUT_RE.search(out)

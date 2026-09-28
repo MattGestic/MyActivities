@@ -152,7 +152,9 @@ PROBE = r"""
     ck('a name edit lands in USER_MILESTONES (and its [ID] - Name notes)',
        rec(A).actName==='Renamed in grid'&&rec(A).notes==='['+A+'] - Renamed in grid'&&nm==='Renamed in grid',
        JSON.stringify([rec(A).actName,rec(A).notes,nm]));
-    ck('the edit signalled noteMarkup (Your edits counts it)', ye().userMs===3&&MARKUP_COUNT>=4, JSON.stringify(ye())+' '+MARKUP_COUNT);
+    // P62 (E-02): user milestones are no longer a Your edits row (they have
+    // their own section and grid), so the signal is read from MARKUP_COUNT.
+    ck('the edit signalled noteMarkup', !('userMs' in ye())&&MARKUP_COUNT>=4, JSON.stringify(ye())+' '+MARKUP_COUNT);
 
     // progress: both bounds, just inside and just outside
     const p0=rec(B).progress, cnt0=MARKUP_COUNT;
@@ -433,7 +435,9 @@ def source_checks(src: str) -> list:
     for t in ("</body>", "<head>", "</head>", "</html>"):
         ck(f"the page holds exactly one {t}", src.count(t) == 1, src.count(t))
     ck("version grep returns 1", len(re.findall(r"3\.[0-9]*\.[0-9]*-P", src)) == 1)
-    ck("APP_VERSION is 3.1.0-P61", "const APP_VERSION='3.1.0-P61';" in src)
+    # P62 moved the version on; P61's own features are what this check proves.
+    m = re.search(r"const APP_VERSION='3\.1\.0-P(\d+)';", src)
+    ck("APP_VERSION is 3.1.0-P61 or a later partial", bool(m) and int(m.group(1)) >= 61, m and m.group(0))
 
     vjs = (VENDOR / "slickgrid.subset.min.js").read_text(encoding="utf-8").rstrip("\n")
     vcss = (VENDOR / "dist" / "slick.grid.css").read_text(encoding="utf-8").rstrip("\n")
