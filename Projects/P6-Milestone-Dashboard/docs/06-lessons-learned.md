@@ -533,3 +533,11 @@ They now assert the rule: the injected page rule matches **whatever** is current
 
 **A check that has to be edited to change a default is measuring the default, not the behaviour.** That is the shape that trains you to relax checks, and a relaxed check is the one that misses the real regression.
 
+## An embedded library broke every probe, not the app (v3.1.0-P60)
+
+SheetJS's table-export template holds the string literals `<html><head>...<body>` and `</body></html>`. Embedded as-is, the page contained two `</body>`. Every check tool injects its probe with Python's `html.replace("</body>", probe)`, which replaces **every** occurrence, so the probe landed inside the library's string, the library threw a syntax error, and `XLSX` was undefined in every probed page. The app itself loaded fine: only the harness broke it.
+
+A second, separate trap in the same change: a JS comment naming the block as a literal `<script id=...>` tag. Inside a script, after any earlier `<!--`, a script start tag switches the HTML parser into the double-escaped state, where the closing tag no longer ends the block.
+
+**Before embedding anything, count `</body>`, `<head>`, `</head>` and `</html>` across the whole page (each must stay at one) and search the library and your own comments for script start tags.** The fix that keeps the library honest is a documented `\x3C` escape of the `<` in those literals, which is the same string at runtime, rather than changing 34 tools. `tools/d23_check.py` asserts the counts.
+

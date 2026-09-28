@@ -34,8 +34,9 @@ Read `docs/03-todo.md` first in any session. One fact lives in one file — refe
   - the code is embedded inline in the HTML file, with its licence text in a comment beside it;
   - it is recorded in `vendor/<lib>/SOURCE.md` (version, where it came from, sha256 of the embedded file);
   - it is never loaded from the internet and makes no network request at runtime: no CDN, no external links, no fetched chunks.
-  Embedded today: SlickGrid (grid view, D-09). To embed: SheetJS for `.xlsx` (TD-216).
-- **The app makes no network requests.** Everything it runs is inside the file. Until TD-216 lands, `ensureXLSX()` still fetches SheetJS from cdnjs; that fetch is the one known breach and is removed by TD-216.
+  Embedded today: SheetJS 0.18.5 mini (`.xlsx` import and export, TD-216, `<script id="vendor-sheetjs">` last in `<body>`). To embed with the grid view: SlickGrid (D-09).
+  An embedded library must not put a second `</body>`, `<head>`, `</head>` or `</html>` into the page: every check injects its probe with `replace("</body>", …)`. Escape the `<` of any such literal as `\x3C` and record it in `SOURCE.md` (TD-216 did this for SheetJS). Never write a literal script start tag inside a script either.
+- **The app makes no network requests.** Everything it runs is inside the file. `tools/d23_check.py` proves it with the network unresolvable.
 - A library may be **minified once, when it is vendored**, with the pinned command written in its `SOURCE.md`, so the embedded copy is smaller. That is part of copying the library in, not a build step: the app itself is never built and is edited as the file it is.
 - **Never writes back to P6.** Read and render only.
 - **No em dashes, no AI-associated punctuation patterns** in any user-facing or client-facing string the tool produces. This applies to the app's output, not to these docs.

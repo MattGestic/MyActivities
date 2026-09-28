@@ -2856,3 +2856,35 @@ the phone column. The phone rule now sets `align-items:stretch`.
 **Run note:** the first full pass overlapped the edits made during it. The eight tools that failed there were re-run against the final file and all exit 0.
 
 **Published:** `releases/v3.1.0-P59_layout-consistency.html`
+
+## TEST-61: D-23 SheetJS embedded, no network requests (v3.1.0-P60)
+
+TD-216, placement per `docs/decisions/D-23-scale-model-and-views.md`. The
+build choice (mini) is Matt's, 2026-09-28.
+
+**Build comparison (Node, both 0.18.5 builds):**
+- The reference export reads identically in mini and full (sheet names and every cell, `sheet_to_json` with the app's options).
+- `.xlsm` and CSV read identically in both.
+- Mini's own `.xlsx` output reads back identically in full.
+- Legacy `.xls` (BIFF8) fails in mini, so the import now answers it with a plain message.
+
+**`tools/d23_check.py` (new).** It uses the real embedded library with no stub, in headless Chromium with the host resolver mapped to nothing.
+
+*Source checks:*
+- There is one `vendor-sheetjs` block, the last element in `<body>`.
+- Its payload is the vendored file changed only by the documented `\x3C` escapes, and that file's sha256 is the one in `SOURCE.md`.
+- The Apache-2.0 licence is in the comment before the block.
+- `</body>`, `<head>`, `</head>` and `</html>` each appear exactly once.
+- No CDN URL remains, and `ensureXLSX()` no longer injects a script.
+- The version grep returns 1.
+
+*Runtime checks:*
+- `XLSX` is 0.18.5 at load, `ensureXLSX()` resolves, and the page has no `<script src>`.
+- The reference export parses through `Parse.workbook()` to its recorded row count, with its header row and Activity ID column found.
+- A workbook written by the embedded library reads back unchanged.
+- A chosen `.xls` shows the plain message. So does a real Excel 97-2003 workbook renamed `.xlsx` (fixture `tools/fixtures/legacy_excel97.xls`, written once by the full build).
+- The page made zero `http(s)` requests.
+
+**Negative control:** run against `releases/v3.1.0-P59_layout-consistency.html`, the check fails (6/12). P59 still has the CDN loader and no block, and its runtime probe cannot run.
+
+**Found while building:** the library's HTML-table template put a second `</body>` into the page, and every check tool's `replace("</body>", probe)` then injected into the library's string. Fixed in the embedded copy (see `docs/06-lessons-learned.md`). Separately, a comment of mine named the block as a literal script start tag; it was reworded.
