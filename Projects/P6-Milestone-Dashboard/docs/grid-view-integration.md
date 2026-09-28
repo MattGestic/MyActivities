@@ -18,7 +18,7 @@ The app keeps one `<style>` (scanned by `colour_audit.py --strict`) and one `<sc
 | 4c | `src/modules/ms-import/ms-import.js` | Directly after #4b, same script | Self-contained IIFE; defines `window.SRETMsImport` only (the milestone import rules). The grid's import dialog calls it; the app's own import form can too |
 | 4d | `src/modules/dates/dates.js` | Directly after #4b, before #4c | `window.SRETDates`: the one date reader for every import (grid and dashboard). #4c needs it |
 | 4e | `src/modules/user/user.js`, `src/modules/user/user.css` | JS after #4d; CSS in the main `<style>` after #1 | `window.SRETUser`: the user name and save history, and the Data settings field |
-| 4f | `src/modules/compare/compare.js` | After #4e | `window.SRETCompare`: the three loaded schedules per line plus the baseline, and the Schedule changes comparison |
+| 4f | `src/modules/compare/compare.js` | After #4e | `window.SRETCompare`: stored uploads, the designation reference table, and the Schedule changes comparison |
 | 5 | The adapters below | In `app-script`, beside the Workspace code (`setWorkspaceSection()`) | The only code that knows both the app's stores and the grid contract |
 
 Check before pasting: neither vendor file contains `</script` or `</style` (`tools/grid_view_assemble.py` asserts this for the demo and would fail the same way).
@@ -266,26 +266,40 @@ Schedule columns (ID, name, WBS, duration, dates, float, predecessors, successor
 
 Lists what moved between a loaded schedule and a basis: Later, Earlier, Completed, New, Removed, Float only, with old and new start, finish and float and the days moved (**calendar days**, positive is later). Biggest slips first; read-only; exportable; rows can go to the temp list. Tools > Loaded schedules lists what is held.
 
-**Three loaded per schedule, plus the embedded baseline:**
+**Storage by upload, designations by reference (Matt, 2026-09-28).** Every loaded file is stored once under its upload reference. What role it plays is a row in a reference table, so "set this source as the primary" changes one row and copies nothing.
 
-| Slot | How it gets there | Default basis when viewed |
-|---|---|---|
-| Project schedule | The latest import (what the board shows) | Project schedule comparison (else the baseline) |
-| Project schedule comparison | The previous latest, moved here by the next import; the one it replaces is dropped | Project baseline |
-| Project schedule alternate | Loaded on purpose as an alternative basis (a recovery option, a what-if); replaced only by another alternate | Project schedule |
-| Project interim update (scope) | An interim that may cover only part of the schedule (e.g. commissioning). Filed under a scope named at import; one kept per scope, replaced by the next interim of that scope. **Never the full project update**: it does not move the latest to comparison and does not replace the board | Project schedule |
-| Project baseline | Embedded in the file | (basis only) |
+```
+SOURCE_DESIGNATIONS                     (per schedule line)
+line      designation   source id
+project   primary       src-12      the schedule the board shows
+project   secondary     src-9       the usual comparison
+project   alternate     src-11      another basis kept on purpose (can be an interim)
+```
 
-**Comparing a partial interim.** Activities outside the interim's scope are counted as "outside the interim", never Removed or New. An activity the interim has and the full schedule does not is New when the interim is viewed, and "Only in interim" when the full schedule is compared against the interim.
+Plus the embedded **Project baseline**. A vendor or contractor schedule is its own line (named at import) with its own three rows and no baseline; lines never compare with each other.
 
-A vendor or contractor schedule is its own line, named at import, with the same three slots and no baseline. Lines never compare with each other, so a vendor's IDs never meet the project's.
+**Each stored upload records:** upload reference, snapshot date (when loaded), data date, file name, file location (typed at import: a browser gives the file name only), coverage (full schedule, or part with the interim's scope), activity count.
 
-**Recorded for each loaded schedule:** snapshot date (when it was loaded), data date, file name, file location, activity count. A browser never reveals the folder a file came from (it gives the name only), so **the location is what the user types or pastes at import** (optional, remembered per schedule line as the default for the next import).
+**Rules:**
+
+| Rule | Detail |
+|---|---|
+| Import as primary (the weekly update) | A shortcut for two table changes: old primary becomes secondary, the new upload becomes primary |
+| Interim update | Stored with its scope (e.g. Commissioning), no designation. Can be set as secondary or alternate, **never primary**. One kept per scope. Never changes the board |
+| Re-designating | Never deletes. An upload that loses its designation stays stored, shown as not designated |
+| Retention | On each import, uploads with no designation are released, except the latest interim of each scope and the baseline. So each line holds its three designated uploads, plus interims |
+| Default comparison | Primary vs secondary (else baseline); secondary vs baseline; alternate, interim or not designated vs primary |
+
+**Comparing a partial interim.** Activities outside its scope are counted as outside the interim, never Removed or New. An activity only the interim holds is New when the interim is viewed, and "Only in interim" when the full schedule is compared against it.
 
 **What the app must add at merge (it keeps no history today; `PRIMARY_SOURCES` is replaced on import):**
-1. Import asks: Project schedule (latest, full update) / Project interim update (with its scope, e.g. Commissioning) / Project schedule alternate / an external schedule by name, and the optional location. An interim import never replaces the board's schedule. **[CONFIRM WITH MATT]** whether the board should optionally show an interim's dates over the full update (e.g. as ghost markers, like the baseline). Before a new latest replaces the comparison, the confirmation names the one that will be dropped.
-2. Each import calls `SRETCompare.receive(store, meta, rows, slot)`; it stores ID, name, start, finish, float and the actual flag only (about 40 bytes per activity). The embedded baseline is loaded once with slot `'baseline'`.
-3. The store persists with the annotations and publish state, and shows in Data & view > Sources as the Loaded schedules record.
+1. **Storage.** Keep each upload's full source record (the tasks and milestones a `PRIMARY_SOURCES` entry already holds) under its source id, not just the comparison fields. The board must be able to render whichever upload is primary, so the full rows are needed. Size: one full source per designated upload and per interim scope, instead of one today. **[CONFIRM WITH MATT]** that this growth in the saved file is acceptable; the alternative is to keep full rows for the primary only and comparison fields (about 40 bytes per activity) for the rest, which means a secondary cannot be promoted to primary without re-importing it.
+2. **Reference table.** `SOURCE_DESIGNATIONS` as above, persisted with the annotations and publish state. The board renders `SOURCE_DESIGNATIONS.project.primary` (plus enabled external sources as today). Changing the primary calls `scheduleRerender(true)`.
+3. **Import** asks: Primary update / Interim update (with scope) / Alternate / an external schedule by name, and the optional location. Before an import releases uploads, the confirmation names them.
+4. **Data & view > Sources** shows the reference table and the stored uploads with a Set as control, as in the demo's Tools > Loaded schedules.
+5. `SRETCompare` reads the same records: `add()` takes the app's source id as the upload reference.
+
+**[CONFIRM WITH MATT]** whether the board should optionally show an interim's dates over the primary (e.g. as ghost markers, like the baseline).
 
 ## Verification at merge
 

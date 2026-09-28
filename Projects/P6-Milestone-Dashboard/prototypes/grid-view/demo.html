@@ -707,6 +707,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
 .demo-ms{display:grid;grid-template-columns:minmax(0,140px) minmax(0,1fr);gap:var(--space-2) var(--group-gap);margin:0}
 .demo-ms dt{font-weight:600;color:var(--color-text-muted)}
 .demo-ms dd{margin:0}
+.demo-h{margin:var(--group-gap) 0 var(--ctl-gap);font-size:var(--text-lg);font-weight:600}
 .demo-log{font-family:var(--font-mono);font-size:var(--text-sm);background:var(--color-bg-elevated);border:1px solid var(--color-border-panel);
   border-radius:var(--radius-md);padding:var(--space-4);max-height:40vh;overflow:auto;white-space:pre-wrap;color:var(--color-text-small)}
 </style>
@@ -2026,6 +2027,9 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
     exportVisible:function(){ return S?exportRows():Promise.resolve(null); },
     // A centred modal dialog on the open screen; build(body, close) may return a cleanup.
     dialog:function(title,build){ return S?openDialog(title,build):null; },
+    // Reopen the screen with a new config (e.g. after the caller's data
+    // changed) keeping where Back returns to.
+    refresh:function(o){ if(S) S.switching=true; return open(o); },
     // For the app's own import form: hand in the parsed sheet, and the grid
     // runs the same checks, question, log and summary in its dialog.
     importAoa:function(aoa,fileName){
@@ -2557,59 +2561,59 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
 /* =====================================================================
    SRET schedule comparison (Matt, 2026-09-28). No UI, no app globals.
 
-   Every schedule line keeps three loaded imports at any one time, plus the
-   embedded baseline for the project:
+   Storage is by upload: every loaded file is kept under its upload
+   reference (the app's source id), with what it is and where it came from:
+   snapshot date, data date, file name, file location, and whether it covers
+   the full schedule or part of it (an interim, with its scope).
 
-     Project schedule             the latest import (what the board shows)
-     Project schedule comparison  the previous latest: moved here when a new
-                                  latest is imported; the one before is dropped
-     Project schedule alternate   loaded on purpose as an alternative basis
-                                  (an interim cut, a what-if); replaced only
-                                  when another alternate is loaded
-     Project baseline             embedded in the file; never replaced here
+   Designations are applied to uploads through a reference table, one per
+   schedule line. Setting "this source is the primary" is one row in that
+   table; nothing is copied or moved:
 
-   Interim updates (Matt, 2026-09-28) are loaded as well, but are never the
-   full project update: an interim may cover only part of the schedule
-   (e.g. just commissioning). Each is filed under a scope named at import
-   and held beside the three slots; the next interim of the same scope
-   replaces it. It never moves the latest into comparison. Compared as a
-   part: activities outside its scope are neither Removed nor New, they are
-   counted as outside the interim.
+     line      designation   upload
+     project   primary       pu-0829     the schedule the board shows
+     project   secondary     pu-0822     the usual comparison
+     project   alternate     pa-0826     another basis kept on purpose
 
-   A schedule from someone else (vendor, contractor) is its own line, named
-   at import, with the same three slots and no baseline. Lines never compare
-   with each other, so a vendor's IDs never meet the project's.
+   Plus the embedded Project baseline. A vendor or contractor schedule is
+   its own line, named at import, with its own table rows and no baseline;
+   lines never compare with each other.
 
-   Each loaded import records: snapshot date (when it was taken), data date,
-   file name and file location. A browser does not reveal a file's folder,
-   so the location is what the user typed at import (optional).
+   Rules:
+     - An interim covers part of the schedule (e.g. commissioning), so it
+       can be the secondary or alternate but never the primary. Stored
+       interims are kept one per scope.
+     - Importing as primary (the usual weekly update) is a shortcut for two
+       table changes: the old primary becomes the secondary, the new upload
+       the primary.
+     - Retention: on each import, uploads that hold no designation (and are
+       not the latest interim of their scope, nor the baseline) are released.
+       So each line keeps its three designated uploads, plus interims.
+     - Re-designating never deletes: an upload that loses its designation
+       stays listed as not designated until the next import.
 
-   Default basis:
-     latest      -> comparison (else the baseline)
-     comparison  -> the baseline
-     alternate   -> latest
-     interim     -> latest (what the interim changes against the full update)
-   Any other slot of the same line (and the baseline) can be picked.
+   Default basis: primary -> secondary (else baseline); secondary ->
+   baseline; alternate, interim or not designated -> primary.
    Differences are calendar days, positive = later (a slip).
 
    API (window.SRETCompare):
-     newStore()                                  -> store
-     receive(store, meta, rows, slot)            -> {snap, dropped}   slot 'latest' (default) | 'alternate' | 'interim' | 'baseline'
-        meta: {name, role:'project'|'external', dataDate, file, path, snapshotAt, scope (interim only)}
+     newStore()                                 -> store
+     add(store, meta, rows)                     -> upload (stored, not designated)
+        meta: {id, name, role:'project'|'external', dataDate, file, path, snapshotAt, scope (interim only)}
         rows: [{id, name, start, finish, float, actual}]
-     list(store)                                 -> [snap]  project first: latest, comparison, alternate, interims (newest first), baseline; then external lines
-     bases(store, snap)                          -> [{snap, label, isDefault}]
-     defaultBasis(store, snap)                   -> snap | null
-     compare(basis, snap)                        -> {rows, counts}
-     label(snap)                                 -> 'Project schedule comparison, DD 22-Aug-26'
-     slotName(snap)                              -> 'Project schedule comparison'
-     summary(result)                             -> '14 later, 8 earlier, ...'
-     record(store)                               -> [{slot, dataDate, snapshotAt, file, path}] for the Loaded schedules table
+     designate(store, uploadId, 'primary'|'secondary'|'alternate'|null) -> {ok, previous, error}
+     receive(store, meta, rows, as)             -> {snap, released}   import shortcut:
+        as 'primary' (default) | 'secondary' | 'alternate' | 'interim' | 'baseline'
+     table(store)                               -> [{line, lineName, designation, upload}]  the reference table
+     list(store)                                -> [upload] designated, interims, baseline; project line first
+     record(store)                              -> every stored upload with its designation, for the Loaded schedules table
+     bases(store, upload) / defaultBasis(store, upload) / compare(basis, upload)
+     label(upload) -> 'Project secondary, DD 22-Aug-26'    slotName(upload)    summary(result)
    ===================================================================== */
 (function(root){
   'use strict';
   var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  var SLOTS=['latest','comparison','alternate'];
+  var DES=['primary','secondary','alternate'];
   var seq=0;
 
   function fmt(iso){ if(!iso) return ''; var p=String(iso).split('-'); return (+p[2])+'-'+MON[+p[1]-1]+'-'+p[0].slice(2); }
@@ -2626,56 +2630,91 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
     });
     return r;
   }
-  function newStore(){ return {lines:{},order:[],baseline:null}; }
-  function receive(store,meta,rows,slot){
-    slot=slot||'latest';
-    var key=slot==='baseline'?'project':lineKey(meta);
-    var snap={id:meta.id||('snap-'+(++seq)),line:key,role:key==='project'?'project':'external',
-              lineName:key==='project'?'Project schedule':String(meta.name||'External schedule').trim(),
-              slot:slot,dataDate:meta.dataDate||null,snapshotAt:meta.snapshotAt||new Date().toISOString(),
-              file:meta.file||'',path:meta.path||'',rows:snapRows(rows),
-              partial:slot==='interim',scope:slot==='interim'?String(meta.scope||'Interim').trim():''};
-    if(slot==='baseline'){ var old=store.baseline; store.baseline=snap; return {snap:snap,dropped:old}; }
-    var ln=store.lines[key];
-    if(!ln){ ln=store.lines[key]={name:snap.lineName,latest:null,comparison:null,alternate:null,interims:{}}; store.order.push(key); }
-    var dropped=null;
-    if(slot==='interim'){ var sk=snap.scope.toLowerCase(); dropped=ln.interims[sk]||null; ln.interims[sk]=snap; }
-    else if(slot==='alternate'){ dropped=ln.alternate; ln.alternate=snap; }
-    else {
-      dropped=ln.comparison;
-      if(ln.latest){ ln.comparison=ln.latest; ln.comparison.slot='comparison'; }
-      ln.latest=snap; snap.slot='latest';
-    }
-    if(dropped) dropped.slot='dropped';
-    return {snap:snap,dropped:dropped};
+  function newStore(){ return {uploads:{},order:[],refs:{},lines:{},baseline:null}; }
+  // The cached designation on each upload mirrors the reference table.
+  function sync(store){
+    Object.keys(store.uploads).forEach(function(id){ var u=store.uploads[id]; u.slot=u===store.baseline?'baseline':u.partial?'interim':'none'; });
+    Object.keys(store.refs).forEach(function(k){ DES.forEach(function(d){ var id=store.refs[k][d]; if(id&&store.uploads[id]) store.uploads[id].slot=d; }); });
   }
+  function add(store,meta,rows,isBaseline){
+    var key=isBaseline?'project':lineKey(meta);
+    var partial=!!(meta.scope&&!isBaseline);
+    var u={id:meta.id||('up-'+(++seq)),line:key,role:key==='project'?'project':'external',
+           lineName:key==='project'?'Project':String(meta.name||'External schedule').trim(),
+           dataDate:meta.dataDate||null,snapshotAt:meta.snapshotAt||new Date().toISOString(),
+           file:meta.file||'',path:meta.path||'',rows:snapRows(rows),partial:partial,scope:partial?String(meta.scope).trim():'',slot:'none'};
+    store.uploads[u.id]=u; store.order.push(u.id);
+    if(!store.refs[key]){ store.refs[key]={primary:null,secondary:null,alternate:null}; store.lines[key]=u.lineName; }
+    if(isBaseline) store.baseline=u;
+    sync(store);
+    return u;
+  }
+  function designate(store,id,d){
+    var u=store.uploads[id];
+    if(!u) return {ok:false,error:'That upload is not loaded.'};
+    if(u===store.baseline) return {ok:false,error:'The baseline is embedded and is not designated.'};
+    if(d&&DES.indexOf(d)<0) return {ok:false,error:'Unknown designation.'};
+    if(d==='primary'&&u.partial) return {ok:false,error:'An interim update covers part of the schedule, so it cannot be the primary.'};
+    var t=store.refs[u.line], prev=d?t[d]:null;
+    DES.forEach(function(x){ if(t[x]===id) t[x]=null; });
+    if(d) t[d]=id;
+    sync(store);
+    return {ok:true,previous:prev&&prev!==id?prev:null};
+  }
+  function kept(store,u){
+    if(u===store.baseline||u.slot!=='none'&&u.slot!=='interim') return true;
+    if(!u.partial) return false;
+    // the newest stored interim of its scope, per line
+    return !store.order.some(function(id){ var o=store.uploads[id];
+      return o&&o!==u&&o.partial&&o.line===u.line&&o.scope.toLowerCase()===u.scope.toLowerCase()&&store.order.indexOf(id)>store.order.indexOf(u.id); });
+  }
+  function prune(store){
+    var released=[];
+    store.order.slice().forEach(function(id){ var u=store.uploads[id]; if(u&&!kept(store,u)){ released.push(u); delete store.uploads[id]; store.order.splice(store.order.indexOf(id),1); } });
+    released.forEach(function(u){ u.slot='released'; });
+    return released;
+  }
+  function receive(store,meta,rows,as){
+    as=as==='latest'?'primary':(as||'primary');
+    var u=add(store,meta,rows,as==='baseline');
+    if(as==='primary'){
+      var t=store.refs[u.line];
+      if(t.primary) designate(store,t.primary,'secondary');
+      designate(store,u.id,'primary');
+    } else if(as==='secondary'||as==='alternate') designate(store,u.id,as);
+    return {snap:u,released:as==='baseline'?[]:prune(store)};
+  }
+  function table(store){
+    var out=[];
+    lineKeys(store).forEach(function(k){ DES.forEach(function(d){ out.push({line:k,lineName:store.lines[k],designation:d,upload:store.refs[k][d]}); }); });
+    return out;
+  }
+  function lineKeys(store){ return Object.keys(store.refs).sort(function(a,b){ return a==='project'?-1:b==='project'?1:store.order.indexOf(a)-store.order.indexOf(b); }); }
   function lineSnaps(store,key){
-    var ln=store.lines[key]; if(!ln) return [];
-    var out=SLOTS.map(function(s){ return ln[s]; }).filter(Boolean);
-    Object.keys(ln.interims).map(function(k){ return ln.interims[k]; })
+    var t=store.refs[key]; if(!t) return [];
+    var out=DES.map(function(d){ return t[d]&&store.uploads[t[d]]; }).filter(Boolean);
+    store.order.map(function(id){ return store.uploads[id]; })
+      .filter(function(u){ return u.line===key&&u.slot==='interim'; })
       .sort(function(a,b){ return String(b.dataDate)<String(a.dataDate)?-1:1; }).forEach(function(x){ out.push(x); });
     if(key==='project'&&store.baseline) out.push(store.baseline);
     return out;
   }
-  function list(store){
-    var keys=store.order.slice().sort(function(a,b){ return a==='project'?-1:b==='project'?1:0; });
-    if(!store.lines.project&&store.baseline) keys.unshift('project');
-    var out=[]; keys.forEach(function(k){ lineSnaps(store,k).forEach(function(s){ if(out.indexOf(s)<0) out.push(s); }); });
-    return out;
-  }
+  function list(store){ var out=[]; lineKeys(store).forEach(function(k){ lineSnaps(store,k).forEach(function(s){ if(out.indexOf(s)<0) out.push(s); }); }); return out; }
   function slotName(s){
     if(!s) return '';
     if(s.slot==='baseline') return 'Project baseline';
-    if(s.slot==='interim') return s.lineName.replace(/ schedule$/,'')+' interim update ('+s.scope+')';
-    return s.lineName+({latest:'',comparison:' comparison',alternate:' alternate'}[s.slot]||'');
+    var part=s.partial?' (interim: '+s.scope+')':'';
+    if(s.slot==='interim') return s.lineName+' interim ('+s.scope+')';
+    if(s.slot==='none') return s.lineName+' upload, not designated'+part;
+    return s.lineName+' '+s.slot+part;
   }
   function label(s){ return s?slotName(s)+(s.dataDate?', DD '+fmt(s.dataDate):''):'Nothing to compare with'; }
   function defaultBasis(store,s){
-    var ln=store.lines[s.line]||{}, base=s.line==='project'?store.baseline:null;
-    if(s.slot==='latest') return ln.comparison||base||null;
-    if(s.slot==='comparison') return base||null;
-    if(s.slot==='alternate'||s.slot==='interim') return ln.latest||null;
-    return null;
+    var t=store.refs[s.line]||{}, base=s.line==='project'?store.baseline:null, get=function(d){ return t[d]&&store.uploads[t[d]]||null; };
+    if(s.slot==='primary') return get('secondary')||base||null;
+    if(s.slot==='secondary') return base||null;
+    if(s.slot==='baseline') return null;
+    var p=get('primary'); return p&&p!==s?p:null;
   }
   function bases(store,s){
     var d=defaultBasis(store,s);
@@ -2719,13 +2758,14 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
     return (parts.length?parts.join(', ')+'; '+c.unchanged+' unchanged.':'No changes; '+c.unchanged+' unchanged.')+tail;
   }
   function record(store){
-    return list(store).map(function(s){
-      return {id:s.id,slot:slotName(s),dataDate:s.dataDate,snapshotAt:s.snapshotAt,file:s.file,path:s.path,activities:Object.keys(s.rows).length,partial:!!s.partial};
+    var shown=list(store), rest=store.order.map(function(id){ return store.uploads[id]; }).filter(function(u){ return shown.indexOf(u)<0; });
+    return shown.concat(rest).map(function(s){
+      return {id:s.id,slot:slotName(s),dataDate:s.dataDate,snapshotAt:s.snapshotAt,file:s.file,path:s.path,activities:Object.keys(s.rows).length,partial:!!s.partial,designation:s.slot};
     });
   }
 
-  root.SRETCompare={newStore:newStore,receive:receive,list:list,bases:bases,defaultBasis:defaultBasis,compare:compare,
-                    label:label,slotName:slotName,summary:summary,record:record,_days:days};
+  root.SRETCompare={newStore:newStore,add:add,designate:designate,receive:receive,table:table,list:list,bases:bases,
+                    defaultBasis:defaultBasis,compare:compare,label:label,slotName:slotName,summary:summary,record:record,_days:days};
 })(window);
 
 /* =====================================================================
@@ -3004,10 +3044,10 @@ window.SRET_STRESS=function(n){var s=window.SRET_FIXTURES.sched,out=[];for(var i
   // The live 29-Aug update is imported last as the latest.
   var CST=window.DEMO_CMP=C.newStore();
   F.snaps.forEach(function(x){ C.receive(CST,x.meta,x.rows,x.slot); });
-  var DROPPED=C.receive(CST,{id:'pu-0829',role:'project',dataDate:'2026-08-29',file:'103787-13_PFS_Weekly_Update_DD-2026-08-29.xlsx',
-    path:'P:\\103787 SRET\\05 Controls\\Schedule\\Weekly updates',snapshotAt:'2026-08-31T08:00:00Z'},store.sched,'latest').dropped;
-  log('onScheduleLoaded',['pu-0829','dropped '+(DROPPED?DROPPED.id:'none')]);
-  var CMP={cur:'pu-0829',basis:null};   // basis null = the default for the chosen schedule
+  var LOADED=C.receive(CST,{id:'pu-0829',role:'project',dataDate:'2026-08-29',file:'103787-13_PFS_Weekly_Update_DD-2026-08-29.xlsx',
+    path:'P:\\103787 SRET\\05 Controls\\Schedule\\Weekly updates',snapshotAt:'2026-08-31T08:00:00Z'},store.sched,'primary');
+  log('onScheduleLoaded',['pu-0829','released '+(LOADED.released.map(function(x){ return x.id; }).join(',')||'none')]);
+  var CMP=window.DEMO_CMP_STATE={cur:'pu-0829',basis:null};   // basis null = the default for the chosen schedule
   function changesData(){
     var all=C.list(CST), cur=all.filter(function(s){ return s.id===CMP.cur; })[0];
     var bs=C.bases(CST,cur), basis=CMP.basis?(bs.filter(function(b){ return b.snap.id===CMP.basis; })[0]||{}).snap:C.defaultBasis(CST,cur);
@@ -3023,20 +3063,44 @@ window.SRET_STRESS=function(n){var s=window.SRET_FIXTURES.sched,out=[];for(var i
     {key:'floatChange',label:'Float change',type:'number',width:90}];
   var MONS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   function dmy(iso){ if(!iso) return ''; var p=iso.slice(0,10).split('-'); return (+p[2])+'-'+MONS[+p[1]-1]+'-'+p[0].slice(2); }
-  // The record of what is loaded: slot, data date, snapshot date, file, location.
+  // Stored uploads and the reference table that designates them (Matt,
+  // 2026-09-28: "set this source as the primary" is one row in a table).
+  var DES_LABEL={primary:'Primary',secondary:'Secondary',alternate:'Alternate',interim:'Not designated (interim)',none:'Not designated',baseline:'Baseline (embedded)'};
   function openLoaded(){
     SRETGrid.dialog('Loaded schedules',function(body){
-      var t=document.createElement('table'); t.className='sg-itable'; t.setAttribute('data-sg','loaded-table');
-      var hd=['Schedule','Covers','Data date','Snapshot taken','File','Location','Activities'];
-      t.innerHTML='<thead><tr>'+hd.map(function(x){ return '<th>'+x+'</th>'; }).join('')+'</tr></thead>';
-      var tb=document.createElement('tbody');
-      C.record(CST).forEach(function(r){ var tr=document.createElement('tr');
-        [r.slot,r.partial?'Part of the schedule':'Full schedule',dmy(r.dataDate),dmy(r.snapshotAt)+' '+r.snapshotAt.slice(11,16),r.file,r.path,String(r.activities)].forEach(function(v){
-          var td=document.createElement('td'); td.textContent=v; tr.appendChild(td); }); tb.appendChild(tr); });
-      t.appendChild(tb); body.appendChild(t);
-      var p=document.createElement('p'); p.className='demo-import-note';
-      p.textContent='Three per schedule: a new latest moves the latest to comparison and drops the old comparison; an alternate is replaced only by another alternate. Interim updates cover part of the schedule, are kept one per scope, and never replace the full update. The baseline is embedded.';
-      body.appendChild(p);
+      function el(tag,cls,text){ var e=document.createElement(tag); if(cls) e.className=cls; if(text!=null) e.textContent=text; return e; }
+      function render(){
+        body.innerHTML='';
+        var h1=el('h4','demo-h','Designations'); body.appendChild(h1);
+        var rt=el('table','sg-itable'); rt.setAttribute('data-sg','ref-table');
+        rt.innerHTML='<thead><tr><th>Schedule</th><th>Designation</th><th>Upload</th></tr></thead>';
+        var rb=el('tbody');
+        C.table(CST).forEach(function(r){ var tr=el('tr'), up=r.upload&&CST.uploads[r.upload];
+          [r.lineName,DES_LABEL[r.designation],up?up.file+', DD '+dmy(up.dataDate):'None'].forEach(function(v){ tr.appendChild(el('td',null,v)); }); rb.appendChild(tr); });
+        rt.appendChild(rb); body.appendChild(rt);
+        body.appendChild(el('h4','demo-h','Stored uploads'));
+        var t=el('table','sg-itable'); t.setAttribute('data-sg','loaded-table');
+        var hd=['Upload','Covers','Data date','Snapshot taken','File','Location','Activities','Set as'];
+        t.innerHTML='<thead><tr>'+hd.map(function(x){ return '<th>'+x+'</th>'; }).join('')+'</tr></thead>';
+        var tb=el('tbody');
+        C.record(CST).forEach(function(r){ var tr=el('tr'), up=CST.uploads[r.id];
+          [r.id,r.partial?'Part: '+up.scope:'Full schedule',dmy(r.dataDate),dmy(r.snapshotAt)+' '+r.snapshotAt.slice(11,16),r.file,r.path,String(r.activities)].forEach(function(v){ tr.appendChild(el('td',null,v)); });
+          var td=el('td'), sel=el('select','sg-select'); sel.setAttribute('data-sg','set-as-'+r.id); sel.setAttribute('aria-label','Set '+r.file+' as');
+          if(r.designation==='baseline'){ sel.appendChild(el('option',null,DES_LABEL.baseline)); sel.disabled=true; }
+          else [['primary','Primary'],['secondary','Secondary'],['alternate','Alternate'],['','Not designated']].forEach(function(o){
+            var op=el('option',null,o[1]); op.value=o[0]; if(o[0]==='primary'&&up.partial) op.disabled=true;
+            if(o[0]===r.designation||(!o[0]&&(r.designation==='none'||r.designation==='interim'))) op.selected=true; sel.appendChild(op); });
+          sel.addEventListener('change',function(){
+            var res=C.designate(CST,r.id,sel.value||null); log('onDesignate',[r.id,sel.value||'none',res.ok?'ok':res.error]);
+            render(); if(!res.ok){ var m=body.querySelector('[data-sg=designate-error]'); m.hidden=false; m.textContent=res.error; } });
+          td.appendChild(sel); tr.appendChild(td); tb.appendChild(tr); });
+        t.appendChild(tb); body.appendChild(t);
+        var err=el('p','demo-import-note'); err.setAttribute('data-sg','designate-error'); err.setAttribute('role','alert'); err.hidden=true; body.appendChild(err);
+        body.appendChild(el('p','demo-import-note','Designations point at stored uploads; changing one moves nothing. Importing a new primary makes the old primary the secondary. On each import, uploads with no designation are released, except the latest interim of each scope. An interim covers part of the schedule and cannot be the primary.'));
+      }
+      render();
+      // Views read the table when they open: refresh Schedule changes on close.
+      return function(){ var all=C.list(CST); if(!all.some(function(s){ return s.id===CMP.cur; })) CMP.cur=(C.list(CST)[0]||{}).id; CMP.basis=null; setTimeout(function(){ if(SRETGrid.isOpen()){ var c=CONFIGS.changes(); window.DEMO_LAST_ROWS=c.rows; SRETGrid.refresh(c); } },0); };
     });
   }
   function changesCfg(){

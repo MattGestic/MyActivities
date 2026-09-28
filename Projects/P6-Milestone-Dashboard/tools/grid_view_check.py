@@ -126,17 +126,20 @@ MUTATIONS = {
     "view-no-current-mark": ("radio:true,checked:v.id===opts.view,", "radio:true,checked:false,"),
     "compare-vendor-with-project": ("function lineKey(meta){ return meta.role==='external'?'ext:'+String(meta.name||'').trim().toLowerCase():'project'; }",
                                     "function lineKey(meta){ return 'project'; }"),
-    "compare-latest-vs-baseline": ("if(s.slot==='latest') return ln.comparison||base||null;", "if(s.slot==='latest') return base||null;"),
     "compare-removed-dropped": ("else if(!now){ row.change='Removed'; c.removed++; }", "else if(!now){ return; }"),
     "compare-slip-sign": ("return Math.round((Date.UTC(+b.slice(0,4)", "return -Math.round((Date.UTC(+b.slice(0,4)"),
-    "slots-comparison-not-kept": ("if(ln.latest){ ln.comparison=ln.latest; ln.comparison.slot='comparison'; }", ""),
-    "slots-alternate-overwrites-latest": ("if(slot==='alternate'){ dropped=ln.alternate; ln.alternate=snap; }", "if(false){ }"),
     "slots-baseline-offered-to-vendor": ("if(key==='project'&&store.baseline) out.push(store.baseline);", "if(store.baseline) out.push(store.baseline);"),
     "importer-noun-ignored": ("var im=S&&S.opts.importer, w=im&&im.noun||['milestone','milestones'];", "var w=['milestone','milestones'];"),
-    "interim-as-full-update": ("if(slot==='interim'){ var sk=snap.scope.toLowerCase(); dropped=ln.interims[sk]||null; ln.interims[sk]=snap; }", "if(false){ }"),
     "interim-out-of-scope-removed": ("if((!now&&cur.partial)||(!was&&basis.partial)){ c.outside++; return; }", ""),
-    "interim-one-slot-for-all-scopes": ("var sk=snap.scope.toLowerCase();", "var sk='all';"),
     "interim-added-shown-removed": ("else if(!now&&basis.partial){ row.change='Only in interim'; c.onlyInterim++; }", ""),
+    "compare-primary-vs-baseline": ("if(s.slot==='primary') return get('secondary')||base||null;", "if(s.slot==='primary') return base||null;"),
+    "designate-interim-as-primary": ("if(d==='primary'&&u.partial) return", "if(false) return"),
+    "import-primary-no-secondary": ("if(t.primary) designate(store,t.primary,'secondary');", ""),
+    "designate-two-per-file": ("DES.forEach(function(x){ if(t[x]===id) t[x]=null; });", ""),
+    "prune-releases-designated": ("if(u===store.baseline||u.slot!=='none'&&u.slot!=='interim') return true;", "if(u===store.baseline) return true;"),
+    "designate-deletes": ("    if(d) t[d]=id;\n    sync(store);\n", "    if(d) t[d]=id;\n    sync(store); prune(store);\n"),
+    "interim-treated-as-full": ("var partial=!!(meta.scope&&!isBaseline);", "var partial=false;"),
+    "interim-one-for-all-scopes": ("o.scope.toLowerCase()===u.scope.toLowerCase()&&", ""),
     "health-shown-in-grid": ("if(lists) cols=[{key:L_LIST", "cols=cols.filter(function(c){ return c.key!=='health'; }).concat(cols.filter(function(c){ return c.key==='health'; }).map(function(c){ return Object.assign({},c,{hidden:false}); }));\n    if(lists) cols=[{key:L_LIST"),
 }
 
@@ -928,37 +931,46 @@ try{
   // ============ Schedule changes: three loaded per schedule plus the baseline (Matt, 2026-09-28) ============
   { const btn=n=>$('[data-sg='+n+']'), launcher=$('#go-userms'), C=window.SRETCompare;
     const labels=m=>$$('[data-sg='+m+'-menu] .sg-menu-item').map(b=>b.textContent.replace(/^✓/,''));
-    // The slot rules, on a fresh store: N=3 imports so one is dropped.
+    // Designations (Matt, 2026-09-28): uploads are stored by reference; a table designates them.
     const T=C.newStore(), R=(id,f)=>[{id:id,name:id,start:'2026-09-01',finish:f,float:1,actual:'No'}];
     C.receive(T,{id:'bl',dataDate:'2026-08-01'},R('A','2026-09-05'),'baseline');
     const r1=C.receive(T,{id:'u1',dataDate:'2026-08-08',file:'u1.xlsx',path:'P:\\x'},R('A','2026-09-06'));
     const r2=C.receive(T,{id:'u2',dataDate:'2026-08-15'},R('A','2026-09-07'));
     const r3=C.receive(T,{id:'u3',dataDate:'2026-08-22'},R('A','2026-09-09'));
+    const ref=()=>C.table(T).filter(r=>r.line==='project').map(r=>r.designation+'='+(r.upload||'-')).join('|');
+    ok('designations: importing a primary makes the old primary the secondary; the upload left with no designation is released on import (N=3)',
+       r1.released.length===0 && r2.released.length===0 && r3.released.map(u=>u.id).join()==='u1' && ref()==='primary=u3|secondary=u2|alternate=-' && !T.uploads.u1, ref());
     const ra=C.receive(T,{id:'a1',dataDate:'2026-08-18'},R('A','2026-09-08'),'alternate');
-    const ra2=C.receive(T,{id:'a2',dataDate:'2026-08-19'},R('A','2026-09-10'),'alternate');
-    ok('slots: a new latest moves the latest to comparison and drops the old comparison; an alternate replaces only the alternate; the baseline stays',
-       r1.dropped===null && r2.dropped===null && r3.dropped&&r3.dropped.id==='u1' && ra.dropped===null && ra2.dropped&&ra2.dropped.id==='a1' &&
-       C.list(T).map(s=>C.slotName(s)+':'+s.id).join('|')==='Project schedule:u3|Project schedule comparison:u2|Project schedule alternate:a2|Project baseline:bl',
-       C.list(T).map(s=>s.id));
-    const rec=C.record(C.newStore()), T2=C.newStore(); C.receive(T2,{id:'x',dataDate:'2026-08-08',file:'f.xlsx',path:'P:\\SRET',snapshotAt:'2026-08-09T10:00:00Z'},R('A','2026-09-06'));
-    ok('slots: each loaded schedule records snapshot date, data date, file name and location', JSON.stringify(C.record(T2)[0])===
-       JSON.stringify({id:'x',slot:'Project schedule',dataDate:'2026-08-08',snapshotAt:'2026-08-09T10:00:00Z',file:'f.xlsx',path:'P:\\SRET',activities:1,partial:false}) && rec.length===0);
-    const dl=C.defaultBasis(T,C.list(T)[0]), dc=C.defaultBasis(T,C.list(T)[1]), da=C.defaultBasis(T,C.list(T)[2]);
-    ok('slots: defaults: latest vs comparison; comparison vs baseline; alternate vs latest', dl.id==='u2' && dc.id==='bl' && da.id==='u3');
     const i1=C.receive(T,{id:'i1',dataDate:'2026-08-23',scope:'Commissioning'},R('A','2026-09-12'),'interim');
     const i2=C.receive(T,{id:'i2',dataDate:'2026-08-24',scope:'Electrical'},R('A','2026-09-13'),'interim');
     const i3=C.receive(T,{id:'i3',dataDate:'2026-08-25',scope:'commissioning'},R('A','2026-09-14'),'interim');
-    ok('slots: an interim never moves the latest; one kept per scope (same scope replaces, another scope sits beside it); defaults to the latest',
-       i1.dropped===null && i2.dropped===null && i3.dropped&&i3.dropped.id==='i1' && C.list(T)[0].id==='u3' && C.list(T)[1].id==='u2' &&
-       C.list(T).filter(s=>s.slot==='interim').map(s=>s.id).join('|')==='i3|i2' && C.defaultBasis(T,i3.snap).id==='u3' &&
-       C.slotName(i2.snap)==='Project interim update (Electrical)', C.list(T).map(s=>s.id));
-    ok('slots: the demo loaded 15-Aug, 22-Aug, then the live 29-Aug; 15-Aug was dropped', lastLog('onScheduleLoaded')&&lastLog('onScheduleLoaded').args[1]==='dropped pu-0815');
+    ok('designations: an interim is stored without a designation and never moves the primary; one kept per scope',
+       ref()==='primary=u3|secondary=u2|alternate=a1' && i1.released.length===0 && i2.released.length===0 && i3.released.map(u=>u.id).join()==='i1' &&
+       C.list(T).map(s=>s.id).join('|')==='u3|u2|a1|i3|i2|bl' && C.slotName(i2.snap)==='Project interim (Electrical)', C.list(T).map(s=>s.id));
+    const bad=C.designate(T,'i3','primary');
+    ok('designations: an interim cannot be the primary; the table is unchanged', !bad.ok && bad.error==='An interim update covers part of the schedule, so it cannot be the primary.' && ref()==='primary=u3|secondary=u2|alternate=a1');
+    const al=C.designate(T,'i3','alternate');
+    ok('designations: an interim can be the alternate; the previous alternate stays stored, not designated, until the next import',
+       al.ok && al.previous==='a1' && ref()==='primary=u3|secondary=u2|alternate=i3' && !!T.uploads.a1 && T.uploads.a1.slot==='none' &&
+       C.slotName(T.uploads.i3)==='Project alternate (interim: commissioning)', [ref(),T.uploads.a1&&T.uploads.a1.slot]);
+    const sp=C.designate(T,'u2','primary');
+    ok('designations: setting a source as primary is one table change: nothing is copied; a file holds one designation per schedule',
+       sp.ok && sp.previous==='u3' && ref()==='primary=u2|secondary=-|alternate=i3' && T.uploads.u2.rows.A.f==='2026-09-07' && T.uploads.u3.slot==='none', ref());
+    const r4=C.receive(T,{id:'u4',dataDate:'2026-08-29'},R('A','2026-09-15'));
+    ok('designations: the next import releases the not-designated uploads (u3, a1), keeps interims and the baseline',
+       r4.released.map(u=>u.id).sort().join()==='a1,u3' && ref()==='primary=u4|secondary=u2|alternate=i3' && !!T.uploads.i2 && !!T.uploads.bl, [r4.released.map(u=>u.id),ref()]);
+    const dl=C.defaultBasis(T,T.uploads.u4), ds=C.defaultBasis(T,T.uploads.u2), da=C.defaultBasis(T,T.uploads.i3), di=C.defaultBasis(T,T.uploads.i2);
+    ok('designations: defaults: primary vs secondary; secondary vs baseline; alternate and interim vs primary', dl.id==='u2' && ds.id==='bl' && da.id==='u4' && di.id==='u4');
+    const T2=C.newStore(); C.receive(T2,{id:'x',dataDate:'2026-08-08',file:'f.xlsx',path:'P:\\SRET',snapshotAt:'2026-08-09T10:00:00Z'},R('A','2026-09-06'));
+    ok('designations: each upload records snapshot date, data date, file name, location, coverage and designation', JSON.stringify(C.record(T2)[0])===
+       JSON.stringify({id:'x',slot:'Project primary',dataDate:'2026-08-08',snapshotAt:'2026-08-09T10:00:00Z',file:'f.xlsx',path:'P:\\SRET',activities:1,partial:false,designation:'primary'}), C.record(T2)[0]);
+    ok('designations: the demo loaded 15-Aug, 22-Aug, then the live 29-Aug as primary; 15-Aug was released', lastLog('onScheduleLoaded')&&lastLog('onScheduleLoaded').args[1]==='released pu-0815');
     SRETGrid.close(); launcher.focus(); DEMO_OPEN('userms'); await sleep(20);
     await menuPick('view','view-changes');
     const rows=eng().dataView.getItems();
     ok('changes: opens from the title; Project schedule compared with Project schedule comparison by default',
-       btn('view').textContent==='Schedule changes' && btn('cmp-cur').textContent==='Schedule: Project schedule, DD 29-Aug-26' &&
-       btn('cmp-basis').textContent==='Compared with: Project schedule comparison, DD 22-Aug-26 (default)', [btn('cmp-cur').textContent,btn('cmp-basis').textContent]);
+       btn('view').textContent==='Schedule changes' && btn('cmp-cur').textContent==='Schedule: Project primary, DD 29-Aug-26' &&
+       btn('cmp-basis').textContent==='Compared with: Project secondary, DD 22-Aug-26 (default)', [btn('cmp-cur').textContent,btn('cmp-basis').textContent]);
     const kinds=new Set(rows.map(r=>r.change));
     ok('changes: only changed activities, each classed Later, Earlier, Completed, New, Removed or Float only; biggest slip first',
        rows.length>0 && ['Later','Earlier','Completed','New','Removed','Float only'].every(k=>kinds.has(k)) && rows[0].finishSlip===7 &&
@@ -973,20 +985,20 @@ try{
        !(await tryOpenEditor(0,'name')), btn('note').textContent);
     await menuItem('cmp-cur','cmp-cur-pu-0829'); const cl=labels('cmp-cur'); await menuClose('cmp-cur');
     ok('changes: Schedule offers the three project slots, then each external schedule\'s slots; the baseline is only a basis',
-       cl.join('|')==='Project schedule, DD 29-Aug-26|Project schedule comparison, DD 22-Aug-26|Project schedule alternate, DD 26-Aug-26|Project interim update (Cost estimate), DD 2-Sep-26|Ocean Steel fabrication, DD 27-Aug-26|Ocean Steel fabrication comparison, DD 20-Aug-26', cl);
+       cl.join('|')==='Project primary, DD 29-Aug-26|Project secondary, DD 22-Aug-26|Project alternate, DD 26-Aug-26|Project interim (Cost estimate), DD 2-Sep-26|Ocean Steel fabrication primary, DD 27-Aug-26|Ocean Steel fabrication secondary, DD 20-Aug-26', cl);
     await menuItem('cmp-basis','cmp-basis-pa-0826'); const bl=labels('cmp-basis'); await menuClose('cmp-basis');
     ok('changes: Compared with offers the comparison (default), the alternate, the interim and the embedded baseline; nothing from the vendor',
-       bl.join('|')==='Project schedule comparison, DD 22-Aug-26 (default)|Project schedule alternate, DD 26-Aug-26|Project interim update (Cost estimate), DD 2-Sep-26|Project baseline, DD 15-Aug-26', bl);
+       bl.join('|')==='Project secondary, DD 22-Aug-26 (default)|Project alternate, DD 26-Aug-26|Project interim (Cost estimate), DD 2-Sep-26|Project baseline, DD 15-Aug-26', bl);
     await menuPick('cmp-basis','cmp-basis-pa-0826');
     const ra3=eng().dataView.getItems();
-    ok('changes: comparing with the alternate re-runs it (moves since then are 3 days)', btn('cmp-basis').textContent==='Compared with: Project schedule alternate, DD 26-Aug-26' &&
+    ok('changes: comparing with the alternate re-runs it (moves since then are 3 days)', btn('cmp-basis').textContent==='Compared with: Project alternate, DD 26-Aug-26' &&
        ra3.filter(r=>r.change==='Later').every(r=>r.finishSlip===3) && ra3.some(r=>r.change==='Later'), ra3.slice(0,3));
     // Interim updates (Matt, 2026-09-28): part of the schedule, never the full update.
     const nIn=F.sched.filter(r=>r.wbs==='Capital and Operating Cost Estimate').length;
     await menuPick('cmp-cur','cmp-cur-pi-0902');
     const ir=eng().dataView.getItems();
     ok('interim: compared with the Project schedule by default; only its own activities; nothing outside it shown as Removed',
-       btn('cmp-basis').textContent==='Compared with: Project schedule, DD 29-Aug-26 (default)' && !ir.some(r=>r.change==='Removed') &&
+       btn('cmp-basis').textContent==='Compared with: Project primary, DD 29-Aug-26 (default)' && !ir.some(r=>r.change==='Removed') &&
        ir.filter(r=>r.change==='Later').length===Math.ceil(nIn/3) && ir.filter(r=>r.change==='Later').every(r=>r.finishSlip===5) &&
        ir.some(r=>r.id==='SNIP-950'&&r.change==='New') && ir.length===Math.ceil(nIn/3)+1, ir.map(r=>[r.id,r.change]));
     ok('interim: the note counts what is outside the interim', new RegExp(' '+(F.sched.length-nIn)+' outside the interim\\. ').test(btn('note').textContent), btn('note').textContent);
@@ -996,25 +1008,41 @@ try{
        !lr2.some(r=>r.change==='New') && !lr2.some(r=>r.change==='Removed') && lr2.find(r=>r.id==='SNIP-950').change==='Only in interim' &&
        lr2.filter(r=>r.change==='Earlier').length===Math.ceil(nIn/3) && lr2.length===Math.ceil(nIn/3)+1, lr2.map(r=>[r.id,r.change]));
     await menuPick('cmp-cur','cmp-cur-pa-0826');
-    ok('changes: the alternate as the schedule defaults to the latest', btn('cmp-basis').textContent==='Compared with: Project schedule, DD 29-Aug-26 (default)');
+    ok('changes: the alternate as the schedule defaults to the latest', btn('cmp-basis').textContent==='Compared with: Project primary, DD 29-Aug-26 (default)');
     await menuPick('cmp-cur','cmp-cur-os-0827');
     const v=eng().dataView.getItems(); await menuItem('cmp-basis','cmp-basis-os-0820'); const vb=labels('cmp-basis'); await menuClose('cmp-basis');
     ok('changes: a vendor schedule is compared only with its own loads, never with the project schedule or baseline',
-       btn('cmp-cur').textContent==='Schedule: Ocean Steel fabrication, DD 27-Aug-26' && vb.join('|')==='Ocean Steel fabrication comparison, DD 20-Aug-26 (default)' &&
+       btn('cmp-cur').textContent==='Schedule: Ocean Steel fabrication primary, DD 27-Aug-26' && vb.join('|')==='Ocean Steel fabrication secondary, DD 20-Aug-26 (default)' &&
        v.length>0 && v.every(r=>/^OS-/.test(r.id)) && v.some(r=>r.finishSlip===9) && v.some(r=>r.change==='Completed'), [vb,v.length]);
     await menuPick('cmp-cur','cmp-cur-os-0820');
     await menuItem('cmp-basis','cmp-basis-os-0827'); const vb2=labels('cmp-basis'); await menuClose('cmp-basis');
     ok('changes: a vendor comparison slot with nothing older says so, and offers its later load to pick', visibleCount()===0 &&
        btn('note').textContent==='Nothing older is loaded for this schedule. Choose a schedule under Compared with.' &&
-       vb2.join('|')==='Ocean Steel fabrication, DD 27-Aug-26' && btn('cmp-basis').textContent==='Compared with: None', [btn('note').textContent,vb2]);
+       vb2.join('|')==='Ocean Steel fabrication primary, DD 27-Aug-26' && btn('cmp-basis').textContent==='Compared with: None', [btn('note').textContent,vb2]);
+    await menuPick('cmp-cur','cmp-cur-pu-0829');
     await menuPick('tools','loaded');
+    const refRows=()=>$$('[data-sg=ref-table] tbody tr').map(tr=>Array.from(tr.children).map(td=>td.textContent));
     const lr=$$('[data-sg=loaded-table] tbody tr').map(tr=>Array.from(tr.children).map(td=>td.textContent)), lh=$$('[data-sg=loaded-table] th').map(t=>t.textContent);
-    ok('Tools > Loaded schedules: slot, data date, snapshot taken, file, location for each of the loaded schedules (the dropped one gone)',
-       lh.join('|')==='Schedule|Covers|Data date|Snapshot taken|File|Location|Activities' && lr.length===7 &&
-       lr[0][0]==='Project schedule' && lr[0][1]==='Full schedule' && lr[0][2]==='29-Aug-26' && lr[0][3]==='31-Aug-26 08:00' && lr[0][4]==='103787-13_PFS_Weekly_Update_DD-2026-08-29.xlsx' &&
-       lr[0][5]==='P:\\103787 SRET\\05 Controls\\Schedule\\Weekly updates' && lr[3][0]==='Project interim update (Cost estimate)' && lr[3][1]==='Part of the schedule' &&
-       lr[4][0]==='Project baseline' && !lr.some(r=>/08-15\.xlsx$/.test(r[4])), lr.map(r=>r.slice(0,2)));
-    key(btn('dialog'),'Escape'); await sleep(10);
+    ok('Loaded schedules: the reference table designates uploads: Primary, Secondary, Alternate per schedule',
+       JSON.stringify(refRows().map(r=>r.slice(0,2)))===JSON.stringify([['Project','Primary'],['Project','Secondary'],['Project','Alternate'],
+         ['Ocean Steel fabrication','Primary'],['Ocean Steel fabrication','Secondary'],['Ocean Steel fabrication','Alternate']]) &&
+       refRows()[0][2]==='103787-13_PFS_Weekly_Update_DD-2026-08-29.xlsx, DD 29-Aug-26' && refRows()[5][2]==='None', refRows());
+    ok('Loaded schedules: each stored upload with coverage, data date, snapshot taken, file, location and its designation (the released one gone)',
+       lh.join('|')==='Upload|Covers|Data date|Snapshot taken|File|Location|Activities|Set as' && lr.length===7 &&
+       lr[0][0]==='pu-0829' && lr[0][1]==='Full schedule' && lr[0][2]==='29-Aug-26' && lr[0][3]==='31-Aug-26 08:00' && lr[0][4]==='103787-13_PFS_Weekly_Update_DD-2026-08-29.xlsx' &&
+       lr[0][5]==='P:\\103787 SRET\\05 Controls\\Schedule\\Weekly updates' && lr[3][0]==='pi-0902' && lr[3][1]==='Part: Cost estimate' &&
+       btn('set-as-bl').disabled && btn('set-as-pi-0902').querySelector('option[value=primary]').disabled && !lr.some(r=>r[0]==='pu-0815'), lr.map(r=>r.slice(0,2)));
+    const sa=btn('set-as-pi-0902'); sa.value='alternate'; sa.dispatchEvent(new Event('change')); await sleep(10);
+    ok('Set as: the interim becomes the Alternate; the table row points at it; the old alternate stays stored, not designated',
+       refRows()[2][2]==='PFS interim, cost estimate only DD-2026-09-02.xlsx, DD 2-Sep-26' && btn('set-as-pa-0826').value==='' && !!DEMO_CMP.uploads['pa-0826'], refRows()[2]);
+    const spx=btn('set-as-pi-0902'); spx.value='primary'; spx.dispatchEvent(new Event('change')); await sleep(10);
+    ok('Set as: an interim is refused as Primary with the reason; nothing changes', !btn('designate-error').hidden &&
+       btn('designate-error').textContent==='An interim update covers part of the schedule, so it cannot be the primary.' && refRows()[0][2].indexOf('DD-2026-08-29')>0);
+    key(btn('dialog'),'Escape'); await sleep(40);
+    await menuItem('cmp-basis','cmp-basis-pu-0822'); const bl2=labels('cmp-basis'); await menuClose('cmp-basis');
+    ok('Set as: Schedule changes reads the new designations when the dialog closes',
+       bl2.join('|')==='Project secondary, DD 22-Aug-26 (default)|Project alternate (interim: Cost estimate), DD 2-Sep-26|Project baseline, DD 15-Aug-26', bl2);
+    C.designate(DEMO_CMP,'pa-0826','alternate');   // restore for later checks
     await menuPick('view','view-annot');
     ok('views: Comments and markups is in the same menu', btn('view').textContent==='Comments and markups: W/E 27-Sep-26' && eng().dataView.getItems().length===DEMO_STORE().annot.length, btn('view').textContent);
     btn('back').click(); await sleep(20);

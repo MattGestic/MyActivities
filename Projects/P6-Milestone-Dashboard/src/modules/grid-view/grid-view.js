@@ -1272,6 +1272,9 @@
     exportVisible:function(){ return S?exportRows():Promise.resolve(null); },
     // A centred modal dialog on the open screen; build(body, close) may return a cleanup.
     dialog:function(title,build){ return S?openDialog(title,build):null; },
+    // Reopen the screen with a new config (e.g. after the caller's data
+    // changed) keeping where Back returns to.
+    refresh:function(o){ if(S) S.switching=true; return open(o); },
     // For the app's own import form: hand in the parsed sheet, and the grid
     // runs the same checks, question, log and summary in its dialog.
     importAoa:function(aoa,fileName){
