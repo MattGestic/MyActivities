@@ -6,7 +6,7 @@
 
 | D | Subject | Backlog | Supersedes or extends |
 |---|---|---|---|
-| D-23 | SheetJS inlined in the file | TASK-62 | Resolves TD-36 / TASK-41 |
+| D-23 | SheetJS embed: placement and audit handling | TD-216 | Detail for TD-216; resolves TD-36 / TASK-41 |
 | D-24 | In-app XER import alongside Excel and paste | FEAT-24 | Resolves TD-21; TD-22 must close first |
 | D-25 | Schedule model | FEAT-25 | Designed together with D-02 (FEAT-18) and FEAT-19 |
 | D-26 | Batch rendering | FEAT-26 | Replaces the per-week cell board |
@@ -17,14 +17,14 @@
 
 ---
 
-## D-23 SheetJS inlined
+## D-23 SheetJS embedded: placement and audit handling only
 
-- The pinned SheetJS CE build (same version the CDN loads today, so parsing is unchanged) sits in one marked `VENDOR` block as the **last element inside `<body>`**, after `#app-script`.
-- Not after `</body>`: the parser silently moves it back into the body, and markup after `</body>` is a parse error. Verified in Chromium: all three placements run; only in-body placement is valid HTML.
-- `ensureXLSX()` needs no logic change: it already returns early when `XLSX` is defined, so the CDN branch becomes an unused fallback. Its failure text is reworded so it no longer claims a CDN fetch.
-- Every audit tool that scans the whole file excludes `VENDOR` blocks. The block header carries name, version, source URL, licence (Apache-2.0) and "replace the whole block to update".
-- **Constraint change.** `CLAUDE.md` and `00-project-context.md` §4 say the only external dependency is the SheetJS CDN load. Both are amended in the same release as the code, not before, so the docs never describe a file that does not exist.
-- Verified before writing this: with SheetJS inlined, the reference export parsed offline through `Parse.workbook()` to the row count recorded for it in `04-architecture.md`, with no network requests and no errors, in all three placements tested. Not yet verified: that the full import after mapping is identical to the CDN path; that is the release's own check.
+**The embed itself is TD-216** (Matt, 2026-09-28: SheetJS embedded, never fetched), under the vendoring rules in `CLAUDE.md` Hard constraints (permissive licence, inline with its licence text, `vendor/sheetjs/SOURCE.md` with version, URL and sha256, no network request at runtime). TD-216 also sets the **version**: a release with the fixes for the two published advisories against 0.18.5, and full or mini build is open with Matt there. This section adds only what TD-216 does not say:
+
+- **Placement:** the `<script id="vendor-sheetjs">` block is the last element inside `<body>`, after `#app-script`. Not after `</body>`: the parser silently moves it back into the body, and markup after `</body>` is a parse error. Not before `#app-script`: it would parse a library most sessions never use ahead of the app. Verified in Chromium on 2026-09-27: all three placements run; only the in-body ones are valid HTML.
+- **`ensureXLSX()`:** it already returns early when `XLSX` is defined. TD-216 goes further and removes the script injection entirely, which supersedes the "keep the CDN branch as a fallback" idea this section first carried.
+- **Audits:** every tool that scans the whole file skips vendored `<script id="vendor-*">` blocks, as it must already for SlickGrid (D-09), so colour, spacing and em-dash counts measure the app only.
+- Verified on 2026-09-27 with 0.18.5 embedded: the reference export parsed offline through `Parse.workbook()` to the row count recorded for it in `04-architecture.md`, with no network requests. The same check is repeated on the version TD-216 settles on.
 
 ## D-24 In-app XER import
 
@@ -157,7 +157,7 @@ After each import, in the notification area:
 - **"N new activities since last import"**, with:
   - **Apply system positions to all**: each new activity takes its system-determined position in every custom view at once (per-view option available).
   - **Expand**: list of ID, name, proposed group, start, finish, with checkboxes to apply a subset.
-  - **Export to Excel**: ID, name, WBS, proposed group, start, finish (uses the D-23 inlined SheetJS).
+  - **Export to Excel**: ID, name, WBS, proposed group, start, finish (uses the SheetJS embedded by TD-216).
   - **Copy IDs**: comma-separated, no spaces, for example `A1010,A1020` `[CONFIRM spacing]`.
 - Unapplied items stay in a **New since last import** group until placed.
 - The same control reports **"N activities no longer in the schedule"** so removals are as visible as additions.
@@ -171,7 +171,7 @@ After each import, in the notification area:
 
 ## Deferred, recorded so it is not re-derived
 
-- **D3 for new views** (logic view, milestone trend analysis, S-curve, float erosion): vendored as a module subset, not the full bundle. Module groups: scales and axes; label collision (`d3-quadtree`, `d3-force`); optional zoom. Sizes in metrics `vendor_*_kb`. Not used for the existing board. vis-network was assessed and not chosen (canvas rendering breaks CSS theming and DOM-based checks; no date axis; cannot be trimmed without a build step). Mermaid not chosen (bundle size, metric `vendor_mermaid_kb`). FEAT-23 already proposes vendoring Tabulator inline; D-23 sets the precedent for how a vendored block is marked and excluded from audits.
+- **D3 for new views** (logic view, milestone trend analysis, S-curve, float erosion): vendored as a module subset, not the full bundle. Module groups: scales and axes; label collision (`d3-quadtree`, `d3-force`); optional zoom. Sizes in metrics `vendor_*_kb`. Not used for the existing board. vis-network was assessed and not chosen (canvas rendering breaks CSS theming and DOM-based checks; no date axis; cannot be trimmed without a build step). Mermaid not chosen (bundle size, metric `vendor_mermaid_kb`). Any D3 modules follow the same vendoring rules as SlickGrid (D-09) and SheetJS (TD-216).
 - **Logic quality checks** (open ends, SF links, negative and large lags, constraints) into the existing Diagnostics channel: plain JavaScript, no library.
 
 ## Open items
