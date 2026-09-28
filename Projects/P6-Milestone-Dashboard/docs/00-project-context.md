@@ -7,7 +7,7 @@ Instance: Eskay Creek PFS Deliverable Milestone Dashboard
 
 - **Problem statement (why):** P6 schedule exports are not a review or reporting instrument. Deliverable end dates sit buried in a 190+ row activity list, with no week-by-week visual, no deliverable-level aggregation, and no way for the study coordinator or discipline leads to annotate status, health, or remarks without editing the schedule itself. Manual re-plotting each weekly update cycle is slow and error prone.
 - **Objective (what):** A single, self-contained HTML dashboard that ingests a P6 export (or its own baked-in baseline) and renders every activity end date as a milestone marker on a week-by-week timeline, with rows aggregated by schedule hierarchy, plus persistent user annotation and export. Reporting/review tool only — it never writes back to P6.
-- **Description (how):** One HTML file, no build step, no framework, no runtime dependencies except an on-demand CDN load of SheetJS for `.xlsx` import. Loads a baked-in baseline on open so it is useful with zero setup. Live schedule updates overlay the baseline without mutating baseline data. Extensive display controls held in session state, never written back into the schedule model. Exports full JSON model or status/remarks CSV.
+- **Description (how):** One HTML file, no build step, no framework, no runtime dependencies: third-party code (SheetJS for `.xlsx`) is embedded in the file, and the app makes no network requests. Loads a baked-in baseline on open so it is useful with zero setup. Live schedule updates overlay the baseline without mutating baseline data. Extensive display controls held in session state, never written back into the schedule model. Exports full JSON model or status/remarks CSV.
 - **Phasing/timeline (when):**
   - Phase 1: Chat-based development to v3.1.0-P1 — **Done** (claude.ai, closed out 2026-09-09)
   - Phase 2: Migration to git repository, project kit established — **In progress** (this session)
@@ -31,7 +31,7 @@ Instance: Eskay Creek PFS Deliverable Milestone Dashboard
 |---|---|---|
 | Single self-contained HTML file, no build step | Must be openable by anyone on the study team from a file share or email with zero tooling. Corporate SOE has no Node. | Pre-migration |
 | Vanilla JS, one `<script>` block, no modules/bundler | Follows directly from no-build-step. Section comments only, not enforced boundaries. | Pre-migration |
-| SheetJS loaded on demand from CDN, only for `.xlsx` | Avoids a multi-hundred-KB inline payload for a path many users never take. Paste/CSV import works fully offline. | Pre-migration |
+| SheetJS loaded on demand from CDN, only for `.xlsx` | Avoids a multi-hundred-KB inline payload for a path many users never take. Paste/CSV import works fully offline. | Pre-migration. **Superseded 2026-09-28 (TD-216):** SheetJS mini is embedded; no CDN load |
 | `APP_VERSION` as single source of truth for version string | Three independent copies (title, icon-bar label, export payload) had already drifted once. | Pre-migration |
 | Tokenized design system (colour/spacing/text) over ad hoc styling | Incremental, deliberate initiative. Not finished — see §4 and Token Migration Log. | Pre-migration |
 | `body.cv-open{margin-left:300px}` class toggle for sidebar dock, not DOM restructure | `position:fixed` overlays are unaffected by an ancestor margin, so the sidebar docks without touching page layout. | Pre-migration |
@@ -43,7 +43,7 @@ Instance: Eskay Creek PFS Deliverable Milestone Dashboard
 
 **Hard stack constraints**
 - No npm, no build step, no bundler, no framework.
-- Single HTML file. No external assets except the SheetJS CDN load.
+- Single HTML file. No external assets and no network requests (TD-216 embedded SheetJS).
 - No write-back to P6 under any circumstance. Read and render only.
 
 **Text/output conventions**

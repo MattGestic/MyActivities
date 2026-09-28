@@ -4,7 +4,7 @@
 
 - **Front-end:** Single self-contained HTML file. Vanilla JS in one `<script>` block, no modules, no bundler, no framework. All CSS in one `<style>` block including token definitions.
 - **Back-end:** None. There is no server, no API, no database, no auth. This is deliberate, not a gap.
-- **Decoupling approach:** N/A. The only external boundary is the user's local file system (import in, export out). Third-party code is embedded in the file (CLAUDE.md, Hard constraints); the remaining SheetJS CDN fetch is removed by TD-216.
+- **Decoupling approach:** N/A. The only external boundary is the user's local file system (import in, export out). Third-party code is embedded in the file (CLAUDE.md, Hard constraints); SheetJS is embedded (TD-216), so the app makes no network requests.
 
 ## Compute / Hosting Strategy
 
@@ -13,7 +13,7 @@ No hosting. The file is opened directly from disk or a file share.
 Well-Architected trade-offs behind that:
 - **Operational excellence:** zero deploy pipeline, zero environment drift. The file a reviewer opens is byte-identical to the one that was tested.
 - **Cost:** nil.
-- **Reliability:** no runtime dependency that can go down once TD-216 embeds SheetJS. Until then the SheetJS CDN load is the one exception, and it only affects the `.xlsx` path. Paste and delimited import work fully offline.
+- **Reliability:** no runtime dependency that can go down: SheetJS is embedded (TD-216). Paste, delimited and `.xlsx` import all work offline.
 - **Security:** no data leaves the machine. Schedule data is commercially sensitive and client-owned, so a hosted variant would need a data-handling review that has not been done and is not currently wanted.
 - **Performance:** full DOM rebuild on rerender is the known cost. Mitigated by `scheduleRerender()` debouncing, not by incremental DOM diffing. Revisit only if a real dataset makes it visible again.
 
