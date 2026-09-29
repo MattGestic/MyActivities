@@ -575,7 +575,8 @@ body{margin-left:var(--ws-rail-w);transition:margin-left .18s ease,margin-right 
 .ws-ri.is-active::before{content:'';position:absolute;left:-6px;top:6px;bottom:6px;width:3px;
   border-radius:2px;background:var(--color-accent)}
 .ws-ri:focus-visible{outline:var(--focus-ring) solid var(--color-accent);outline-offset:1px}
-.ws-bd{position:absolute;top:calc(-1 * var(--space-2));right:calc(-1 * var(--space-3));min-width:14px;height:14px;padding:0 var(--space-1);border-radius:7px;
+/* P63 (Matt): the Workspace rail badge sits top-LEFT of its icon, on the rail's outer edge. */
+.ws-bd{position:absolute;top:calc(-1 * var(--space-2));left:calc(-1 * var(--space-3));min-width:14px;height:14px;padding:0 var(--space-1);border-radius:7px;
   background:var(--color-accent);color:var(--color-text-on-accent);font-size:9px;font-weight:700;
   line-height:14px;text-align:center}
 .ws-bd:empty{display:none}

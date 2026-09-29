@@ -3114,3 +3114,5 @@ No other check changed. `grid-view.js` is unchanged, since the module already ha
 - The version grep returns 1.
 
 **Published:** `releases/v3.1.0-P63_views-mobile.html`
+
+**Also in P63: rail badges on the left (Matt, 2026-09-28).** The Workspace rail count badges moved to the top-left of their icons. The right-hand Data & view rail is unchanged. `p59_check` X-02 now asserts "offset up and left", which is an intentional change.
