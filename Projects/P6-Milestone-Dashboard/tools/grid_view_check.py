@@ -145,6 +145,9 @@ MUTATIONS = {
     "migrate-keeps-old-key": ("      delete p[oldK];\n", ""),
     "migrate-mutates-input": ("    var p=clone(payload);", "    var p=payload;"),
     "migrate-misses-values": ("    fixRecords(p.tasks,'tasks',out.changed);", ""),
+    "merge-by-id-only": ("if(a.guid&&b.guid) return a.guid===b.guid;", "return true;"),
+    "merge-refs-not-rewritten": ("if(Object.keys(map).length) res.add.concat(res.same)", "if(false) res.add.concat(res.same)"),
+    "guid-regenerated": ("if(t&&!t.guid){ t.guid=guid(); n++; }", "if(t){ t.guid=guid(); n++; }"),
     "health-shown-in-grid": ("if(lists) cols=[{key:L_LIST", "cols=cols.filter(function(c){ return c.key!=='health'; }).concat(cols.filter(function(c){ return c.key==='health'; }).map(function(c){ return Object.assign({},c,{hidden:false}); }));\n    if(lists) cols=[{key:L_LIST"),
 }
 
@@ -923,6 +926,29 @@ try{
        M.wsSection('userms')==='usertasks' && M.wsSection('notes')==='notes' && M.sheetName('User-defined') && M.sheetName('user tasks') && !M.sheetName('Grid'));
     ok('migrate: the grid demo uses only the new names', !/userms|User Defined Milestones/.test(JSON.stringify(window.SRET_FIXTURES)) &&
        DEMO_STORE().usertasks.every(r=>r.band==='User Tasks'||r.band==null)); }
+
+  // ============ User task GUIDs: merge by identity, not by USR- number (Matt, 2026-09-29) ============
+  { const I=window.SRETIds, G=/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/, ut=DEMO_STORE().usertasks;
+    const gs=ut.map(r=>r.guid);
+    ok('guid: every user task carries a version 4 GUID, all different (loaded, added and imported ones)', ut.length>12 && gs.every(g=>G.test(g)) && new Set(gs).size===gs.length &&
+       ut.some(r=>r.name==='New task') && ut.some(r=>r.createdBy==='Demo user'&&r.name==='New one'), gs.slice(0,3));
+    ok('guid: new IDs stay USR- numbered in order', I.next(['USR-001','USR-013','SNIP-900'],['USR-020'])==='USR-021' && I.next([],[])==='USR-001');
+    const g=()=>I.guid(), gA=g(), gB=g(), gZ=g(), gQ=g();
+    const local=[{id:'USR-013',guid:gA,name:'Local task',created:'2026-09-01'},{id:'USR-014',guid:gB,name:'Shared task'}];
+    const inc=[{id:'USR-013',guid:gZ,name:'Their task',pred:'USR-014'},{id:'USR-014',guid:gB,name:'Shared task'},
+               {id:'USR-015',guid:gQ,name:'New one',pred:'USR-013, SNIP-101: FS',succ:'USR-013;USR-0130'}];
+    const incBefore=JSON.stringify(inc), m=I.merge(local,inc);
+    ok('merge: same GUID is the same task, kept once; same USR- number with a different GUID is renumbered to the next free',
+       m.same.map(t=>t.id).join()==='USR-014' && m.renamed.length===1 && m.renamed[0].from==='USR-013' && m.renamed[0].to==='USR-016' && m.renamed[0].guid===gZ &&
+       m.add.map(t=>t.id).join()==='USR-016,USR-015' && JSON.stringify(inc)===incBefore, m);
+    ok('merge: the incoming file\'s references follow the renumber (predecessors, successors, lags kept, look-alike IDs untouched); annotation keys too',
+       m.add[1].pred==='USR-016, SNIP-101: FS' && m.add[1].succ==='USR-016;USR-0130' && m.add[0].pred==='USR-014' &&
+       JSON.stringify(I.rewriteKeys({'USR-013':{c:1},'SNIP-1':{c:2}},m.map))==='{"USR-016":{"c":1},"SNIP-1":{"c":2}}', m.add);
+    const lg=I.merge([{id:'USR-005',name:'A',created:'2026-09-01'}],[{id:'USR-005',name:'A',created:'2026-09-01'},{id:'USR-005x',name:'x'},{id:'USR-006',name:'B'}]);
+    const lg2=I.merge([{id:'USR-005',name:'A',created:'2026-09-01'}],[{id:'USR-005',name:'A',created:'2026-09-02'}]);
+    ok('merge: older tasks without a GUID match only when ID, name and created date agree', lg.same.length===1 && lg.renamed.length===0 && lg2.renamed.length===1 && lg2.renamed[0].to==='USR-006');
+    const old=[{id:'USR-001'},{id:'USR-002',guid:gA}];
+    ok('guid: older tasks get a GUID once; existing GUIDs never change', I.ensureGuids(old)===1 && G.test(old[0].guid) && old[1].guid===gA && I.ensureGuids(old)===0); }
 
   // ============ Views from the title (Matt, 2026-09-28) ============
   { const btn=n=>$('[data-sg='+n+']'), launcher=$('#go-usertasks'), C=window.SRETCompare;

@@ -20,6 +20,7 @@ The app keeps one `<style>` (scanned by `colour_audit.py --strict`) and one `<sc
 | 4e | `src/modules/user/user.js`, `src/modules/user/user.css` | JS after #4d; CSS in the main `<style>` after #1 | `window.SRETUser`: the user name and save history, and the Data settings field |
 | 4f | `src/modules/compare/compare.js` | After #4e | `window.SRETCompare`: stored uploads, the designation reference table, and the Schedule changes comparison |
 | 4g | `src/modules/migrate/migrate.js` | After #4f | `window.SRETMigrate`: renames old stored keys and values (user milestones to user tasks) on every load |
+| 4h | `src/modules/ids/ids.js` | After #4g | `window.SRETIds`: user task GUIDs, next `USR-` number, and the merge that renumbers clashing IDs |
 | 5 | The adapters below | In `app-script`, beside the Workspace code (`setWorkspaceSection()`) | The only code that knows both the app's stores and the grid contract |
 
 Check before pasting: neither vendor file contains `</script` or `</style` (`tools/grid_view_assemble.py` asserts this for the demo and would fail the same way).
@@ -277,7 +278,13 @@ Schedule columns (ID, name, WBS, duration, dates, float, predecessors, successor
 
 *Words people read:* Workspace button and heading "User tasks"; "Add a task" (header button, dialog, help list); Sources group "User tasks" and its description; status messages ("3 user tasks restored", "Showing user tasks", "Deleted 2 user tasks", "Exported 12 user tasks", "No user tasks yet"); the band label "User Tasks". The board keeps drawing user tasks with the markers they have today.
 
-*Stays the same:* the `USR-` ID prefix, because annotations, comments and dependency links in saved files and other people's copies are keyed by these IDs. **[CONFIRM WITH MATT]**
+*Stays the same:* the `USR-` ID prefix and its numbering (Matt, 2026-09-29).
+
+*Identity for merging (Matt, 2026-09-29: "generate a GUID for the tasks and use that to merge").* Two people adding tasks in their own copies can both create `USR-013`. Every user task therefore carries a `guid` (version 4), set once when it is created or first loaded and never changed; `SRETIds` (`src/modules/ids/ids.js`, paste as #4h) does the work:
+- New tasks: `id` from `SRETIds.next()` (one above the highest `USR-` number, as `nextUserTaskId()` does today) and `guid` from `SRETIds.guid()`. Imported rows get a `guid` on commit.
+- Load: every load path calls `SRETIds.ensureGuids(USER_TASKS)` after `SRETMigrate.userTasks()`, so older tasks get one; saving writes it.
+- Merging another person's file (model or annotations `.json` import, and the mount path): `SRETIds.merge(USER_TASKS, incoming.userTasks)`. Same GUID is the same task, kept once. Same `USR-` number with a different GUID is a different task: it gets the next free number, and the incoming file's own references follow it (`pred`/`succ` through `rewriteRefs`, and its ID-keyed annotation stores through `rewriteKeys`) before anything is applied. Each renumber is listed in the Import log ("USR-013 from J. Ruiz's file is now USR-016").
+- Older tasks without a GUID match only when ID, name and created date all agree.
 
 *Drift check at merge:* the rendered text and the source both contain no `user milestone`, `User-defined`, `User Defined Milestones`, `userMilestones`, `userMsEnabled` or `userms`, except inside `SRETMigrate.KEYS`; an older published file, an older model `.json` and an older user-defined export all load, and saving them writes only the new names. Re-grep at merge: P59 may have added references.
 

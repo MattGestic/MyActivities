@@ -325,6 +325,7 @@ def build() -> str:
         "/*@DATES_JS@*/": safe_inline((ROOT / "src" / "modules" / "dates" / "dates.js").read_text(encoding="utf-8"), "</script", "dates.js"),
         "/*@USER_JS@*/": safe_inline((ROOT / "src" / "modules" / "user" / "user.js").read_text(encoding="utf-8"), "</script", "user.js"),
         "/*@COMPARE_JS@*/": safe_inline((ROOT / "src" / "modules" / "compare" / "compare.js").read_text(encoding="utf-8"), "</script", "compare.js"),
+        "/*@IDS_JS@*/": safe_inline((ROOT / "src" / "modules" / "ids" / "ids.js").read_text(encoding="utf-8"), "</script", "ids.js"),
         "/*@MIGRATE_JS@*/": safe_inline((ROOT / "src" / "modules" / "migrate" / "migrate.js").read_text(encoding="utf-8"), "</script", "migrate.js"),
         "/*@MSIMPORT_JS@*/": safe_inline((ROOT / "src" / "modules" / "ms-import" / "ms-import.js").read_text(encoding="utf-8"), "</script", "ms-import.js"),
         "/*@FIXTURES@*/": safe_inline(fixtures(), "</script", "fixtures"),

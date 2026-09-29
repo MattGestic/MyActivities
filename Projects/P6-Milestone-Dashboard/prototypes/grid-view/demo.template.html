@@ -64,6 +64,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
 /*@DATES_JS@*/
 /*@USER_JS@*/
 /*@COMPARE_JS@*/
+/*@IDS_JS@*/
 /*@MIGRATE_JS@*/
 /*@MSIMPORT_JS@*/
 /*@FIXTURES@*/
@@ -79,6 +80,8 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
   // The demo's own stores stand in for USER_MILESTONES and the annotation stores.
   var store={usertasks:F.usertasks.slice(),annot:F.annot.slice(),sched:F.sched.slice()};
   window.DEMO_STORE=function(){ return store; };   // test hook: the demo's app-side stores
+  // Every user task carries a GUID (Matt, 2026-09-29): tasks loaded without one get it now.
+  SRETIds.ensureGuids(store.usertasks);
   // Mirror of the app's ensureXLSX(): SheetJS from the same CDN, on demand.
   function ensureXLSX(){
     return new Promise(function(res,rej){
@@ -110,10 +113,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
   // Next user milestone ID: one above the highest USR number in the store,
   // the rule the app's nextUserMsId() follows, shared by Add row and import.
   // taken: IDs already handed out in the same import, not yet in the store.
-  function nextUsr(taken){
-    var max=0; store.usertasks.map(function(r){ return r.id; }).concat(taken||[]).forEach(function(id){ var m=/^USR-(\d+)$/.exec(id); if(m) max=Math.max(max,+m[1]); });
-    return 'USR-'+String(max+1).padStart(3,'0');
-  }
+  function nextUsr(taken){ return SRETIds.next(store.usertasks.map(function(r){ return r.id; }),taken); }
   var TODAY=new Date().toISOString().slice(0,10);
   // Who is using the file (SRETUser). The fixture file was last saved by
   // someone else, as when a published file is shared and opened elsewhere.
@@ -259,7 +259,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
       onEdit:function(k,f,v){ log('onEdit',[k,f,v]);
         if(f==='progress' && v!=null && (v<0||v>100)) return false;   // app-side rule: 0 to 100
         patch(store.usertasks,'id',k,f,v); },
-      onAdd:function(){ var id=nextUsr(); var r={id:id,name:'New task',type:'MS',state:'FUTURE',progress:0,
+      onAdd:function(){ var id=nextUsr(); var r={id:id,guid:SRETIds.guid(),name:'New task',type:'MS',state:'FUTURE',progress:0,
           start:null,finish:null,band:'User Tasks',wbs:'',pred:'',succ:'',comment:'',created:TODAY,createdBy:userName(),health:0};
         store.usertasks.push(r); log('onAdd',[id]); return r; },
       onDelete:function(keys){ log('onDelete',[keys]); store.usertasks=store.usertasks.filter(function(r){ return keys.indexOf(r.id)<0; }); },
@@ -269,7 +269,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
         knownIds:function(){ return F.sched.map(function(r){ return r.id; }).concat(store.usertasks.map(function(r){ return r.id; })); },
         onCommit:function(rows){
           var out=rows.map(function(r){ var o=Object.assign({name:'',type:'MS',state:'FUTURE',progress:0,band:'User Tasks',
-            wbs:'',pred:'',succ:'',comment:'',health:0},r); o.created=TODAY; o.createdBy=userName(); if(o.health==null) o.health=0;
+            wbs:'',pred:'',succ:'',comment:'',health:0},r); o.created=TODAY; o.createdBy=userName(); o.guid=SRETIds.guid(); if(o.health==null) o.health=0;
             if(!o.band) o.band='User Tasks'; return o; });
           out.forEach(function(o){ store.usertasks.push(o); });
           log('onImportCommit',[out.map(function(o){ return o.id; })]);
