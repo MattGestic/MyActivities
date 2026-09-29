@@ -23,7 +23,9 @@ Well-Architected trade-offs behind that:
 
 | Unit | Purpose | Notes |
 |---|---|---|
-| `APP_VERSION` | Single source of truth for the version string | Read by the title, the icon-bar label, and the export payload. Never hand-edit any of the three. |
+| `APP_VERSION` | Single source of truth for the version string | Read by the title, the tool-name label (`#ib-label`, at the foot of Data & view since P64), and the export payload. Never hand-edit any of the three. |
+| `REPORT_META` | Report meta: `title`, `reportDate`, `projectNo`, `projectNoFromFile` | `projectNo` added at P64 (TD-224). One writer, `setProjectNo()`. Carried by publish (`projectNo`, `projectNoFromFile`), the model export (`projectNo`) and the `reportMeta` mount category. Files from before P64 carry none and keep the current value. |
+| `renderInfoBar()` | The schedule info bar (`#info-hdr`), top row of the board's timeline header | Called from `updateHeaderMeta()`. Chips from `PRIMARY_SOURCES` (the embedded baseline when nothing is imported); current is the enabled schedule with the latest data date. Tints that schedule's data-date week (`th.dd-wk`). |
 | `INGEST_CONFIG` | Header aliases, actual-flag regex, ingest tuning | `headerAliases` is exact-match after normalization, not fuzzy. Accepted gap. |
 | `Parse.workbook()` / `Parse.delimited()` | Entry points for `.xlsx` and paste/CSV/TSV | `.xlsx` path loads SheetJS from CDN on demand, `cellDates:false`. |
 | `parseLooseDate()` | Date normalization | Handles `dd-MMM-yy`, `dd-MMM-yyyy`, `dd MMM yy`, ISO, `dd/mm/yyyy`, and bare Excel serial. Strips and records the ` A` actualised suffix and the `*` constrained suffix separately. |
@@ -337,6 +339,7 @@ The two header rows stack: the month band sticks at the top of the scroller, the
 
 | Property | Source | Read by |
 |---|---|---|
+| `--hdr-info-h` | `#info-hdr`'s row height (P64; also written by `renderInfoBar()` straight after its content changes) | `tr.hdr-phase th { top }`, and added into `tr.hdr-wk th { top }` |
 | `--hdr-phase-h` | `#phase-hdr`'s row height | `tr.hdr-wk th { top }` |
 | `--tfb-h` | `#top-filter-bar`'s content height | `#top-filter-bar.open { max-height }` |
 
@@ -347,3 +350,15 @@ Three rules that are load-bearing here:
 - **The filter bar's cap over-estimates on purpose.** `scrollHeight` is read from whichever state the bar is in, and while it is closed its vertical padding has transitioned away, so an exact figure taken then would be short by that padding and clip on the way back open. A `max-height` that overshoots costs nothing visible; it is a cap, not a height.
 
 Both literals these replaced were wrong and had been for some time: the week band sat 3.5px below a 16px row, and the filter bar's 160px cap cut 43px off its own content at phone width.
+
+### Schedule info bar and report meta (v3.1.0-P64)
+
+Matt's approved mockup of 2026-09-29 (TD-224). The project details left the app heading for a bar on top of the board's timeline header. Recorded here because the header now has three sticky rows and the report meta changed shape.
+
+- **The bar is a table row, not a div above the table.** It is the first row of `<thead>`, so it scrolls and sticks by the same mechanism as the month and week rows (`border-collapse:separate`, sticky cells) and is captured by the PDF export's header collection with them. A div before the table could not stay pinned sideways: a sticky element cannot leave its containing block, which is only as wide as the scroller.
+- **One cell, spanning the laid-out columns.** `syncInfoBarSpan()` sets the span to the number of `<col>`s not set to `display:none`, the one way both the metadata toggles and the date range hide a column. A `MutationObserver` on the colgroup calls it, so no writer has to. A span past the grid would add phantom columns.
+- **The strip inside the cell is sticky at left 0 and as wide as the scroller's client width, capped at the board's own width** (`--sib-w`; uncapped, a strip wider than a narrow board stretched every column, the label column past its slider). Its left part is the label column's width (`--sib-lbl-w`, written by `setNameWidth()`), its right part sits over the timeline. `100cqw` was tried for the width and counts the vertical scrollbar, so the strip overhung the scroller by the scrollbar's width and drifted sideways on horizontal scroll. The width is read by a `ResizeObserver` on the scroller and, synchronously, by a `MutationObserver` on the body's class list, where every docking panel and print preview announce a width change; `setNameWidth()` and `setWkWidth()` re-fit it in the same task.
+- **The grid view needed `#page-frame` to be a real box while it is open** (`body.grid-open #page-frame{display:block}`). SlickGrid's init treats an ancestor without client rects as hidden, and `display:contents` has none, so it measured the grid's viewport from a shrink-to-fit copy of `#page-frame`: as wide as the widest header line. P63's long project-details line hid this; without it the grid measured 397px at 1440 and never drew its right-hand columns (p61, p63).
+- **Current schedule.** The app has no separate notion of a current source (`UPDATE_SOURCE` is only the latest import, whatever its data date), so current is the enabled schedule with the latest data date. Chips are display only; a click opens Data & view > Sources.
+- **Project number.** `REPORT_META.projectNo`, seeded from `SEED_PROJECT_NO` for the embedded board, never a markup literal. An import fills it from a leading `^\d{4,}(?:-\d+)?` token in the file name only when it is empty, and marks it `projectNoFromFile` until the user edits or confirms it. A mount applies a non-empty value only, so a mount never blanks a number that is set.
+

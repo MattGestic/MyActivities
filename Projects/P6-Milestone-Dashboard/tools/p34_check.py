@@ -79,11 +79,14 @@ PROBE = r"""
   }
   // The offset the week band must sit at is the month ROW's height, not one of
   // its cells: the metadata cells carry padding:0 and the month cells 3px.
+  // P64 (TD-224): the schedule info bar (#info-hdr) is a third header row above
+  // the month band, so the week band sits at the height of BOTH rows above it.
   function seam(){
     const ph=document.getElementById('phase-hdr'), wh=document.getElementById('week-hdr');
     if(!ph||!wh) return null;
+    const ih=document.getElementById('info-hdr');
     const wth=wh.querySelector('th:not(.sticky)')||wh.querySelector('th');
-    const rowH=ph.getBoundingClientRect().height;
+    const rowH=ph.getBoundingClientRect().height+(ih?ih.getBoundingClientRect().height:0);
     const top=parseFloat(getComputedStyle(wth).top);
     return {rowH:Math.round(rowH*100)/100, stickyTop:Math.round(top*100)/100,
             seam:Math.round((rowH-top)*100)/100};
@@ -143,7 +146,7 @@ PROBE = r"""
     R.notes.seams=seams;
 
     const bad=seams.filter(function(s){ return !s.v||Math.abs(s.v.seam)>0.5; });
-    ck('header: the week band sticks exactly at the month row’s measured height',
+    ck('header: the week band sticks exactly at the measured height of the rows above it',
        seams.length===6&&bad.length===0,
        seams.length+' states, off: '+(bad.map(function(s){
          return s.at+' '+(s.v?s.v.seam:'null'); }).join(', ')||'none'));
@@ -373,8 +376,10 @@ def main():
     static.append(("source: no header row sticks at a hardcoded offset",
                    "top:calc(var(--hdr-search-h)" not in src and "top:19.5px" not in src,
                    "calc offset or bare literal still present"))
-    static.append(("source: the week band's offset reads the measured property",
-                   "top:var(--hdr-phase-h" in src, "not found"))
+    # P64 (TD-224): the week band sits under the info bar and the month band,
+    # so its offset is the sum of the two measured properties.
+    static.append(("source: the week band's offset reads the measured properties",
+                   "top:calc(var(--hdr-info-h,0px) + var(--hdr-phase-h" in src, "not found"))
     static.append(("source: the filter bar's open cap reads the measured property",
                    "max-height:var(--tfb-h" in src, "not found"))
     static.append(("source: the level cycle is the plain repeat",
