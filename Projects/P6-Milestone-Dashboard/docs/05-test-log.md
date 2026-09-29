@@ -3116,3 +3116,82 @@ No other check changed. `grid-view.js` is unchanged, since the module already ha
 **Published:** `releases/v3.1.0-P63_views-mobile.html`
 
 **Also in P63: rail badges on the left (Matt, 2026-09-28).** The Workspace rail count badges moved to the top-left of their icons. The right-hand Data & view rail is unchanged. `p59_check` X-02 now asserts "offset up and left", which is an intentional change.
+
+## TEST-65: P64 schedule info bar, header moves and an editable project number (v3.1.0-P64)
+
+TD-224. Matt's approved mockup of 2026-09-29 (https://claude.ai/artifact/12BBYyHg6AWSn5tS1aBsD6). The project details move from the app heading to a bar on top of the board's timeline header; the Unsaved changes pill moves beside More actions; the tool name and version move to the foot of Data & view; the project number becomes a stored, editable field. Current schedule is the enabled schedule with the latest data date **[CONFIRM WITH MATT]**.
+
+**`tools/p64_check.py` (new).** Headless Chromium with the host resolver mapped to nothing, at 1440x900 and 390x844, plus four round-trip loads. It reads geometry, DOM state, `classList`, computed style and the stores, never a screenshot. Extra schedules come through the real import path (`Parse.workbook`, `showMapper`, `runIngest`) with SheetJS stood in at its boundary, fed the reference workbook's rows.
+
+*Source checks:*
+- `</body>`, `<head>`, `</head>` and `</html>` each appear exactly once; the version grep returns 1; `APP_VERSION` is 3.1.0-P64 or later.
+- No script contains a script start tag. The project number is not a literal in the markup. The P64 user strings carry no em or en dash.
+
+*Heading (both widths):*
+- No Project No., Report date, Data date, Activities, Baseline or Updated by text, and not the project number, in `.rpt-hd` or `#icon-bar`. No tool name or version there either.
+- The pill is in `#icon-bar`, is the element right before the icon cluster, sits left of the More actions control (the inline cluster at 1440, the trigger at 390) within 16px, and shares its row (centres within 3px).
+- `#ib-label` is the last child of Data & view's scrolling column, reads `v` plus `APP_VERSION`, and in each of Sources, Import, Data settings, View controls, Help and About is visible, at the panel's bottom edge, and the element at its own centre.
+
+*Info bar:*
+- It is the first row of the board's `<thead>`; its bottom equals the month row's top (1px).
+- 1440: its left part spans the frozen label column's header cell exactly, its right part starts at the first week column and ends at the scroller's visible edge, and the cell spans every laid-out column.
+- Scrolled 600px down, the bar cell and the strip inside it keep their top (1px) and the month row stays under it. Scrolled 400px sideways, the left part stays over the label column, the header and body label cells stay frozen, and the right part stays on screen.
+- It shows the project number, the report date and its W/E; the meta carries the baseline label, the task and milestone counts and "updated by Matthew Garrett", right-aligned.
+- Unimported: one chip, the embedded baseline, current, with its data date, and its data-date week tinted.
+
+*Chips, N=3 (Src A 29-Aug, Src B 05-Sep, Src C 12-Sep):*
+- Three chips reading "name · DD date" exactly; exactly one current, the latest (C), with a different background; one tinted week, the one holding 12-Sep.
+- B off: its chip is dimmed (opacity) and C is still the only current. C off too: current moves to A and the tint to A's week.
+- Clicking a chip opens Data & view on Sources and toggles nothing.
+
+*Project number (1440):*
+- Typing in Data settings > Report > Project No. updates the bar. Blank shows "Project No. not set"; its link opens the drawer on Data settings with the field focused.
+- An import of `123456-7_Something.xlsx` into the empty field fills 123456-7 with the "from file name" hint beside the field. A second import (`999999-1_Other.xlsx`) does not overwrite it. OK clears the hint and keeps the value. A value the user typed is never overwritten by an import. Editing clears the hint. A name with no leading number fills nothing.
+
+*Round trips:*
+- The model export and the publish payload carry `projectNo`. The published file reopens with the number in the store, the field and the bar. A blank number publishes and reopens blank, showing "Project No. not set".
+- A published payload with `projectNo` stripped (a pre-P64 file) opens without error and keeps the seeded 103787-13.
+- Mounting the model onto a clean app with a blank field restores it, and the `reportMeta` category counts it. An old model without `projectNo` validates, counts title and date only, mounts without throwing, and keeps the number that is set.
+
+*Phone (390):* the bar wraps to two lines at most, the project and report date line above the chips; the bar fits the screen; the chips overflow and scroll sideways inside it; the page body does not scroll sideways; the bar stays directly above the month row.
+
+*Print preview (1440):* the bar is present in `#page-frame`, directly above the month row, with the project number and the three chips.
+
+**Changed assertions (behaviour deliberately changed by P64):**
+
+| Check | Old assertion | New assertion |
+|---|---|---|
+| p59_check A-01 | The pill shares the subtitle line, right-aligned in the header, level with the subtitle | The pill is in the top title row, not the subtitle line; immediately left of the More actions control; level with it (Matt reversed A-01) |
+| p34_check header seam | The week band sticks at the month row's measured height | The week band sticks at the measured height of the rows above it (info bar plus month row) |
+| p34_check source | `top:var(--hdr-phase-h` is in the file | `top:calc(var(--hdr-info-h,0px) + var(--hdr-phase-h` is in the file (both measured) |
+
+No other check changed.
+
+**Found while building:**
+- **The grid view's width depended on the heading.** SlickGrid's init treats an ancestor without client rects as hidden and swaps it to an absolute, shrink-to-fit block to measure; `#page-frame` is `display:contents`, so the grid measured its viewport as the widest header line. P63's long project-details line made that wide enough; without it the grid measured 397px at 1440 and never drew its right-hand columns, so `p61_check` (88/94) and `p63_check` (119/124) failed on the second edit. Fixed with `body.grid-open #page-frame{display:block}`.
+- **A strip wider than the board stretched the columns.** On a screen wider than the board the strip was the widest thing in the table; `p37_check` saw the label column at 265px against a 220px slider. The strip is now capped at the board's own width, re-fitted in the same task by `setNameWidth()` and `setWkWidth()`.
+- `100cqw` for the strip counted the vertical scrollbar, so the strip overhung and drifted 15px on sideways scroll; replaced by a measured `--sib-w`.
+- A field that had focus when an import auto-filled it was not updated; now only the field's own input skips rewriting it.
+
+**Negative control:** run against `releases/v3.1.0-P63_views-mobile.html`, `p64_check` fails (11/33): the heading still carries the details and the tool name, the pill is on the subtitle line, there is no foot label, no `#info-hdr` and no Project No. field.
+
+**Results at v3.1.0-P64:**
+- All 41 tools exit 0, run one after another: every `tools/*.py` except `d01_render.py`, `xer_to_aoa.py` and `grid_view_assemble.py`, plus `grid_view_assemble --check`.
+- `p64_check`: 130/130.
+- `p63_check`: 124/124.
+- `p62_check`: 105/105.
+- `p61_check`: 94/94.
+- `p59_check`: 92/92.
+- `p37_check`: 68/68.
+- `p34_check`: 73/73.
+- `ds_check`: 128/128.
+- `d23_check`: 23/23.
+- `persist_check`: 22/22.
+- `grid_view_check`: 210/210.
+- `grid_view_assemble --check`: current.
+- `colour_audit --strict`: 0.
+- `palette_swap_check`: 0 escapes.
+- `spacing_audit`: at its ceiling.
+- The version grep returns 1.
+
+**Published:** `releases/v3.1.0-P64_schedule-info-bar.html`

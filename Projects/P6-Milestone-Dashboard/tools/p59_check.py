@@ -5,7 +5,8 @@ P59 layout and consistency check (Matt's P59 feedback, items A, B, C, D, X).
 Runs the real app in headless Chromium at several widths and reads geometry
 and computed style, never a screenshot:
 
-  A-01  the Unsaved changes pill sits on the subtitle line, right-aligned
+  A-01  the Unsaved changes pill sits in the top title row, immediately left of
+        the More actions control (P64 reversed P59's subtitle-line placement)
   A-02  header controls share --ctl-h; the shadow switch is 32x16; the More
         actions trigger is an --icon-btn, and on touch stays 32px visible
         (its 40px hit area is a pseudo-element, not a bigger box)
@@ -85,14 +86,20 @@ PROBE = r"""
 
     if(!ARGS.phone && !ARGS.coarse){
       // ---------- A-01 ----------
+      // P64 (TD-224, Matt 2026-09-29) reversed P59's A-01: the pill now sits in
+      // the top title row, immediately left of the More actions control (the
+      // inline icon cluster above 1024px), not on the subtitle line.
       const pill=$('dirty-indicator');
       pill.style.display='inline-block';
-      const top=pill.parentElement, sub=document.querySelector('.rpt-hd .subtitle');
-      ck('A-01 the pill shares the subtitle line', top.classList.contains('rpt-hd-top')&&top.contains(sub));
-      const pr=rc(pill), sr=rc(sub), hr=rc(document.querySelector('.rpt-hd'));
-      ck('A-01 the pill is right-aligned in the header', hr.right-pr.right<=12, (hr.right-pr.right).toFixed(1));
-      ck('A-01 the pill is level with the subtitle',
-         Math.abs((pr.top+pr.bottom)/2-(sr.top+sr.bottom)/2)<=3, [pr.top,sr.top].map(Math.round).join('/'));
+      const sub=document.querySelector('.rpt-hd .subtitle');
+      const ctl=$('ib-menu');
+      ck('A-01 the pill is in the top title row, not on the subtitle line',
+         $('icon-bar').contains(pill)&&!document.querySelector('.rpt-hd').contains(pill));
+      const pr=rc(pill), cr=rc(ctl);
+      ck('A-01 the pill sits immediately left of the More actions control',
+         pill.nextElementSibling===ctl&&pr.right<=cr.left+0.5&&cr.left-pr.right<=16, (cr.left-pr.right).toFixed(1));
+      ck('A-01 the pill is level with the More actions control',
+         Math.abs((pr.top+pr.bottom)/2-(cr.top+cr.bottom)/2)<=3, [pr.top,cr.top].map(Math.round).join('/'));
       pill.style.display='';
 
       // ---------- A-02 ----------
