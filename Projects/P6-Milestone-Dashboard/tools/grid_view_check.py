@@ -148,6 +148,11 @@ MUTATIONS = {
     "merge-by-id-only": ("if(a.guid&&b.guid) return a.guid===b.guid;", "return true;"),
     "merge-refs-not-rewritten": ("if(Object.keys(map).length) res.add.concat(res.same)", "if(false) res.add.concat(res.same)"),
     "guid-regenerated": ("if(t&&!t.guid){ t.guid=guid(); n++; }", "if(t){ t.guid=guid(); n++; }"),
+    "ids-no-initials": ("    if(!w.length) return 'UXX';\n", "    return 'USR';\n"),
+    "ids-one-series-for-all": ("function next(existing,pfx,taken){ return seriesNext(String(pfx||'UXX').toUpperCase(),", "function next(existing,pfx,taken){ return seriesNext('UXX',"),
+    "ids-merge-wrong-series": ("var nid=seriesNext(seriesOf(id)||'USR',taken);", "var nid=seriesNext('USR',taken);"),
+    "prefix-ignored": ("function nextUsr(taken){ return SRETIds.next(taskIds(),USERS.idPrefix(),taken); }", "function nextUsr(taken){ return SRETIds.next(taskIds(),SRETIds.prefix(userName()),taken); }"),
+    "prefix-unchecked": ("        var r=root.SRETIds?root.SRETIds.checkPrefix(v,scheduleIds):", "        var r=false?0:"),
     "health-shown-in-grid": ("if(lists) cols=[{key:L_LIST", "cols=cols.filter(function(c){ return c.key!=='health'; }).concat(cols.filter(function(c){ return c.key==='health'; }).map(function(c){ return Object.assign({},c,{hidden:false}); }));\n    if(lists) cols=[{key:L_LIST"),
 }
 
@@ -632,8 +637,8 @@ try{
     ok('import fails on duplicate IDs within the file, naming them and their rows; blank IDs are fine', fails[3][1]===
        'There are duplicate activity IDs within the list: USR-050 (rows 2, 3). Only unique IDs, or blank IDs, can be imported.' && nRows()===n0, fails[3][1]);
     // clean import: one existing ID (skipped), one new ID, two blank IDs (assigned), valid dependencies
-    const maxUsr=Math.max(...eng().dataView.getItems().map(i=>+(/^USR-(\d+)$/.exec(i.id)||[0,0])[1]));
-    const nx=k=>'USR-'+String(maxUsr+k).padStart(3,'0'), have=eng().dataView.getItems()[0].id;
+    const maxUsr=Math.max(0,...eng().dataView.getItems().map(i=>+(/^UDU-(\d+)$/.exec(i.id)||[0,0])[1]));
+    const nx=k=>'UDU-'+String(maxUsr+k).padStart(3,'0'), have=eng().dataView.getItems()[0].id;
     await importCsv('clean.csv',HEAD+'\n'+have+',Already here,MS\nUSR-050,New one,INT,,2026-10-09,,,TRACK,SNIP-101,,40\n'+
       ',First blank,CLI,,9-Oct-26,,,,USR-050,,\n,Second blank,MS,,10/10/2026,,,RISK,,SNIP-118,\n');
     const sum=$$('[data-sg=import-summary] li').map(l=>l.textContent);
@@ -678,7 +683,7 @@ try{
     // a blank-ID row with an issue is logged under the ID it was given
     await importCsv('blank.csv',HEAD+'\n,Blank with bad dep,MS,,,,,,QQQ-1,\n'); btn('import-continue').click(); await sleep(20);
     const lastLog0=window.DEMO_IMPORT_LOG[window.DEMO_IMPORT_LOG.length-1], newId=eng().dataView.getItems().find(i=>i.name==='Blank with bad dep').id;
-    ok('a blank-ID row is logged under the ID the app assigned', lastLog0.id===newId && /^USR-\d{3}$/.test(newId), [lastLog0,newId]);
+    ok('a blank-ID row is logged under the ID the app assigned', lastLog0.id===newId && /^UDU-\d{3}$/.test(newId), [lastLog0,newId]);
     await closeDlg();
     // only field issues: the other question
     await importCsv('fields.csv',HEAD+'\nUSR-070,Only a bad date,MS,,not a date,,,,,,\n');
@@ -932,7 +937,16 @@ try{
     const gs=ut.map(r=>r.guid);
     ok('guid: every user task carries a version 4 GUID, all different (loaded, added and imported ones)', ut.length>12 && gs.every(g=>G.test(g)) && new Set(gs).size===gs.length &&
        ut.some(r=>r.name==='New task') && ut.some(r=>r.createdBy==='Demo user'&&r.name==='New one'), gs.slice(0,3));
-    ok('guid: new IDs stay USR- numbered in order', I.next(['USR-001','USR-013','SNIP-900'],['USR-020'])==='USR-021' && I.next([],[])==='USR-001');
+    ok('ids (Matt, 2026-09-29): U + initials + dash + number, numbered within each person\'s series; older USR- IDs still count as user tasks',
+       I.prefix('Matt Garrett')==='UMG' && I.prefix('Demo user')==='UDU' && I.prefix('J. Ruiz')==='UJR' && I.prefix('')==='UXX' &&
+       I.next(['USR-001','USR-013','UMG-002','UJR-009','SNIP-900'],I.prefix('Matt Garrett'))==='UMG-003' && I.next(['UMG-002'],I.prefix('Jo Ruiz'),['UJR-001'])==='UJR-002' &&
+       I.isUserId('UMG-001') && I.isUserId('USR-013') && !I.isUserId('SNIP-101') && !I.isUserId('UTIL-100') && !I.isUserId('UG-100'));
+    const added=ut.filter(r=>r.createdBy==='Demo user').map(r=>r.id);
+    ok('ids: IDs the app assigned in the demo (Add row, blank IDs on import) are UDU- numbered; IDs given in an import file are kept as given; the older fixture tasks keep USR-',
+       added.filter(id=>!/^USR-/.test(id)).length>=4 && added.filter(id=>!/^USR-/.test(id)).every(id=>/^UDU-\d{3}$/.test(id)) && lastLog('onAdd') && /^UDU-\d{3}$/.test(lastLog('onAdd').args[0]) &&
+       ut.filter(r=>/^USR-0(0[1-9]|1[0-2])$/.test(r.id)).length>=10, added);
+    const same=I.merge([{id:'UMG-001',guid:I.guid(),name:'Mine'}],[{id:'UMG-001',guid:I.guid(),name:'Mary Green task',pred:'UMG-001'}]);
+    ok('merge: two people with the same initials: the clash is renumbered in that series (UMG-001 -> UMG-002)', same.renamed[0].to==='UMG-002' && same.add[0].pred==='UMG-002', same.renamed);
     const g=()=>I.guid(), gA=g(), gB=g(), gZ=g(), gQ=g();
     const local=[{id:'USR-013',guid:gA,name:'Local task',created:'2026-09-01'},{id:'USR-014',guid:gB,name:'Shared task'}];
     const inc=[{id:'USR-013',guid:gZ,name:'Their task',pred:'USR-014'},{id:'USR-014',guid:gB,name:'Shared task'},
@@ -947,6 +961,39 @@ try{
     const lg=I.merge([{id:'USR-005',name:'A',created:'2026-09-01'}],[{id:'USR-005',name:'A',created:'2026-09-01'},{id:'USR-005x',name:'x'},{id:'USR-006',name:'B'}]);
     const lg2=I.merge([{id:'USR-005',name:'A',created:'2026-09-01'}],[{id:'USR-005',name:'A',created:'2026-09-02'}]);
     ok('merge: older tasks without a GUID match only when ID, name and created date agree', lg.same.length===1 && lg.renamed.length===0 && lg2.renamed.length===1 && lg2.renamed[0].to==='USR-006');
+    // A prefix of the user's own (Matt, 2026-09-29): A100 for area 100, then A200.
+    { const btn=n=>$('[data-sg='+n+']'), U=DEMO_USER, addRow=async()=>{ btn('add').click(); await sleep(20); return lastLog('onAdd').args[0]; };
+      SRETGrid.close(); DEMO_OPEN('usertasks'); await sleep(20);
+      await menuPick('tools','prefix');
+      ok('prefix: Tools > Task ID prefix opens the field; blank means the initials (UDU)', !!btn('dialog') && $('.sg-dialog-title').textContent==='Task ID prefix' &&
+         btn('prefix-input').value==='' && U.idPrefix()==='UDU' && U.prefixIsDefault() && btn('prefix-reset').hidden &&
+         /^New tasks are numbered UDU-001, UDU-002 and so on\. Next task: UDU-\d{3}\.$/.test(btn('prefix-status').textContent), btn('prefix-status').textContent);
+      btn('prefix-input').value='1ab'; btn('prefix-set').click(); await sleep(10);
+      const e1=btn('prefix-error').textContent;
+      btn('prefix-input').value='ABCDEFGHI'; key(btn('prefix-input'),'Enter'); await sleep(10);
+      const e2=btn('prefix-error').textContent;
+      ok('prefix: letters and digits starting with a letter, 8 at most; refused otherwise, nothing stored',
+         e1==='Use letters and digits only, starting with a letter.' && e2==='Use 8 characters or fewer.' && U.prefixIsDefault(), [e1,e2]);
+      btn('prefix-input').value='snip'; btn('prefix-set').click(); await sleep(10);
+      ok('prefix: one the schedule already uses is allowed with a warning', U.idPrefix()==='SNIP' && !btn('prefix-error').hidden &&
+         btn('prefix-error').getAttribute('data-kind')==='warning' && btn('prefix-error').textContent==='Schedule activities already use SNIP-. Task IDs will look like theirs.');
+      btn('prefix-input').value='a100'; btn('prefix-set').click(); await sleep(10);
+      ok('prefix: A100 set (upper case); the note shows the next ID; "Use my initials" appears', U.idPrefix()==='A100' && btn('prefix-error').hidden &&
+         btn('prefix-status').textContent==='New tasks are numbered A100-001, A100-002 and so on. Next task: A100-001.' && !btn('prefix-reset').hidden &&
+         btn('prefix-reset').textContent==='Use my initials (UDU)');
+      key(btn('dialog'),'Escape'); await sleep(10);
+      const a1=await addRow(), a2=await addRow();
+      U.setIdPrefix('A200'); const b1=await addRow();
+      U.setIdPrefix('A100'); const a3=await addRow();
+      ok('prefix: tasks added under A100, then A200, then back to A100 are numbered within each prefix (N=3 in A100)',
+         [a1,a2,b1,a3].join()==='A100-001,A100-002,A200-001,A100-003' && DEMO_STORE().usertasks.filter(r=>/^A[12]00-/.test(r.id)).every(r=>/^[0-9a-f-]{36}$/.test(r.guid)), [a1,a2,b1,a3]);
+      ok('prefix: tasks under a custom prefix are recognised as user tasks when their prefix is known', I.isUserId('A100-003',['A100','A200']) && !I.isUserId('A100-003'));
+      await menuPick('tools','prefix'); btn('prefix-reset').click(); await sleep(10);
+      ok('prefix: Use my initials goes back to UDU', U.prefixIsDefault() && U.idPrefix()==='UDU' && btn('prefix-input').value==='' && btn('prefix-reset').hidden);
+      key(btn('dialog'),'Escape'); await sleep(10);
+      btn('demo-settings').click(); await sleep(10);
+      ok('prefix: Data settings shows the same prefix field under the name', !!btn('prefix-box') && !!btn('user-box') && btn('dialog').contains(btn('prefix-box')));
+      key(btn('dialog'),'Escape'); await sleep(10); }
     const old=[{id:'USR-001'},{id:'USR-002',guid:gA}];
     ok('guid: older tasks get a GUID once; existing GUIDs never change', I.ensureGuids(old)===1 && G.test(old[0].guid) && old[1].guid===gA && I.ensureGuids(old)===0); }
 

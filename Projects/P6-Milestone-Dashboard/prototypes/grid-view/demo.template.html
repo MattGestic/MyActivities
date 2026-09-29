@@ -113,7 +113,12 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
   // Next user milestone ID: one above the highest USR number in the store,
   // the rule the app's nextUserMsId() follows, shared by Add row and import.
   // taken: IDs already handed out in the same import, not yet in the store.
-  function nextUsr(taken){ return SRETIds.next(store.usertasks.map(function(r){ return r.id; }),taken); }
+  // New user task IDs: the user's prefix + number (Matt, 2026-09-29). Default
+  // prefix U + initials (UDU for Demo user); the user can set e.g. A100.
+  function taskIds(){ return store.usertasks.map(function(r){ return r.id; }); }
+  function nextUsr(taken){ return SRETIds.next(taskIds(),USERS.idPrefix(),taken); }
+  var PREFIX_OPTS={nextId:function(p){ return SRETIds.next(taskIds(),p); },scheduleIds:function(){ return F.sched.map(function(r){ return r.id; }); }};
+  function openPrefix(){ SRETGrid.dialog('Task ID prefix',function(body){ return SRETUser.buildPrefixField(body,USERS,Object.assign({heading:false},PREFIX_OPTS)).destroy; }); }
   var TODAY=new Date().toISOString().slice(0,10);
   // Who is using the file (SRETUser). The fixture file was last saved by
   // someone else, as when a published file is shared and opened elsewhere.
@@ -124,7 +129,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
   USERS.onChange(showUser);
   // Stand-in for Data and view > Data settings: the name field, the save history and a Save.
   function settingsInto(body){
-    var f=SRETUser.buildField(body,USERS);
+    var f=SRETUser.buildField(body,USERS,{prefix:PREFIX_OPTS});
     var save=document.createElement('button'); save.type='button'; save.className='sg-btn'; save.textContent='Save file (demo)';
     save.setAttribute('data-sg','demo-save'); save.addEventListener('click',function(){ var e=USERS.recordSave({version:'grid demo'}); log('onSave',[e.by]); });
     body.appendChild(save);
@@ -263,6 +268,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
           start:null,finish:null,band:'User Tasks',wbs:'',pred:'',succ:'',comment:'',created:TODAY,createdBy:userName(),health:0};
         store.usertasks.push(r); log('onAdd',[id]); return r; },
       onDelete:function(keys){ log('onDelete',[keys]); store.usertasks=store.usertasks.filter(function(r){ return keys.indexOf(r.id)<0; }); },
+      toolsItems:[{label:'Task ID prefix…',sg:'prefix',onSelect:openPrefix}],
       openColumn:'id',onOpenItem:openMilestone,view:'usertasks',views:viewsOpt('usertasks').views,onView:viewsOpt('usertasks').onView,
       importer:{noun:['task','tasks'],idKey:'id',depKeys:{pred:'Predecessors',succ:'Successors'},user:userName,log:IMPORT_LOG,nextId:nextUsr,
         // IDs a dependency may name: every schedule activity and user milestone the app knows.

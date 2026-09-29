@@ -686,6 +686,8 @@ button.sg-hdot:hover{transform:scale(1.25)}
 .su-error[hidden]{display:none}
 .su-box p.su-help{margin:var(--space-2) 0 0;color:var(--color-text-muted);font-size:var(--text-sm)}
 .su-h{margin:var(--group-gap) 0 var(--ctl-gap);font-size:var(--text-lg);font-weight:600}
+.su-prefix{width:160px;max-width:100%;text-transform:uppercase}
+.su-box p.su-error[data-kind=warning]{color:var(--color-text-primary)}
 
 /* ---- demo page only: stands in for the app header and board ---- */
 body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--color-bg-panel);color:var(--color-text-primary);
@@ -2448,13 +2450,18 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
        u.recordSave(meta)    -> entry {at, by, version}; appended to the history
        u.history()           -> copy, oldest first
        u.fileState()         -> {savedBy, history} to write into the saved file
-       u.onChange(fn)        called after setName or recordSave; returns an unsubscribe
-     buildField(container, u) -> {destroy}. Renders the Data settings field: the name,
+       u.onChange(fn)        called after setName, setIdPrefix or recordSave; returns an unsubscribe
+       u.idPrefix()          the prefix for new task IDs: the one the user set, else U + initials
+       u.setIdPrefix(p, scheduleIds) -> {ok, value, warning} | {ok:false, error}; '' goes back to the initials
+       u.prefixIsDefault()   true while no prefix of the user's own is set
+     buildPrefixField(container, u, {nextId(prefix), scheduleIds(), heading}) -> {destroy}. The task ID
+       prefix field (Data settings, and the User tasks grid's Tools menu).
+     buildField(container, u, opts) -> {destroy}. Renders the Data settings field: the name,
        Confirm, the comparison with the file's last saver, the save history.
    ===================================================================== */
 (function(root){
   'use strict';
-  var KEY='sret-user-name', MAX=60;
+  var KEY='sret-user-name', PKEY='sret-task-prefix', MAX=60;
 
   function memory(){ var m={}; return {getItem:function(k){ return k in m?m[k]:null; },setItem:function(k,v){ m[k]=String(v); },removeItem:function(k){ delete m[k]; }}; }
   function clean(v){ return String(v==null?'':v).replace(/[\u0000-\u001f\u007f]/g,'').replace(/\s+/g,' ').trim(); }
@@ -2474,7 +2481,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
       name:read,
       status:function(){
         var n=read(), st=!n?'unset':(!savedBy||same(n,savedBy)?'same':'other');
-        var msg=st==='unset'?'Set your name so imports, new milestones and saves are recorded against you.'
+        var msg=st==='unset'?'Set your name so imports, new tasks and saves are recorded against you.'
                :st==='other'?'You are working as '+n+'. This file was last saved by '+savedBy+'.'
                :'You are working as '+n+'.';
         return {name:n,savedBy:savedBy,state:st,message:msg};
@@ -2493,6 +2500,20 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
         hist.push(e); savedBy=e.by;
         fire();
         return Object.assign({},e);
+      },
+      // Task ID prefix (Matt, 2026-09-29): the user's own, e.g. A100 for area 100, else U + initials.
+      idPrefix:function(){
+        var own=''; try{ own=clean(store.getItem(PKEY)); }catch(e){}
+        return own||(root.SRETIds?root.SRETIds.prefix(read()):'UXX');
+      },
+      prefixIsDefault:function(){ try{ return !clean(store.getItem(PKEY)); }catch(e){ return true; } },
+      setIdPrefix:function(v,scheduleIds){
+        if(clean(v)===''){ try{ store.removeItem(PKEY); }catch(e){} fire(); return {ok:true,value:u.idPrefix(),warning:''}; }
+        var r=root.SRETIds?root.SRETIds.checkPrefix(v,scheduleIds):{ok:true,value:clean(v).toUpperCase(),warning:''};
+        if(!r.ok) return r;
+        try{ store.setItem(PKEY,r.value); }catch(e){ return {ok:false,error:'This browser would not store the prefix.'}; }
+        fire();
+        return r;
       },
       history:function(){ return hist.map(function(e){ return Object.assign({},e); }); },
       fileState:function(){ return {savedBy:savedBy,history:u.history()}; },
@@ -2517,7 +2538,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
     var d=new Date(iso); if(isNaN(d)) return String(iso||'');
     return d.getDate()+'-'+MON[d.getMonth()]+'-'+String(d.getFullYear()).slice(2)+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
   }
-  function buildField(container,u){
+  function buildField(container,u,opts){
     var input=el('input',{type:'text','class':'sg-search su-name',maxlength:String(MAX),autocomplete:'name','aria-label':'Your name','data-sg':'user-name'});
     var ok=el('button',{type:'button','class':'sg-btn sg-btn--primary','data-sg':'user-confirm',text:'Confirm'});
     var note=el('p',{'class':'su-note','data-sg':'user-status',role:'status'});
@@ -2548,14 +2569,52 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
     container.appendChild(el('div',{'class':'su-box','data-sg':'user-box'},[
       el('div',{'class':'su-field','data-sg':'user-field'},[el('label',{'class':'su-label'},[el('span',{text:'Your name'}),input]),ok]),
       err,note,
-      el('p',{'class':'su-help',text:'Remembered on this computer only. Imports, new milestones and saves are recorded against this name. A browser cannot read the computer login name, so it is asked here.'}),
+      el('p',{'class':'su-help',text:'Remembered on this computer only. Imports, new tasks and saves are recorded against this name. A browser cannot read the computer login name, so it is asked here.'}),
       hist]));
+    var pf=opts&&opts.prefix?buildPrefixField(container,u,opts.prefix):null;
+    render();
+    var off=u.onChange(render);
+    return {render:render,input:input,destroy:function(){ off(); if(pf) pf.destroy(); }};
+  }
+  // Task ID prefix: type A100 before adding the tasks for area 100, A200 for
+  // the next set. Blank goes back to the initials.
+  function buildPrefixField(container,u,o){
+    o=o||{};
+    var input=el('input',{type:'text','class':'sg-search su-prefix',maxlength:'8',autocomplete:'off','aria-label':'Task ID prefix','data-sg':'prefix-input',
+                          placeholder:'e.g. A100'});
+    var set=el('button',{type:'button','class':'sg-btn','data-sg':'prefix-set',text:'Set prefix'});
+    var reset=el('button',{type:'button','class':'sg-link','data-sg':'prefix-reset'});
+    var note=el('p',{'class':'su-note','data-sg':'prefix-status',role:'status'});
+    var err=el('p',{'class':'su-error','data-sg':'prefix-error',role:'alert',hidden:true});
+    function render(){
+      var p=u.idPrefix();
+      if(document.activeElement!==input) input.value=u.prefixIsDefault()?'':p;
+      input.placeholder=p+' (default: your initials)';
+      var nxt=typeof o.nextId==='function'?o.nextId(p):p+'-001';
+      note.textContent='New tasks are numbered '+p+'-001, '+p+'-002 and so on. Next task: '+nxt+'.';
+      reset.textContent='Use my initials ('+(root.SRETIds?root.SRETIds.prefix(u.name()):'UXX')+')';
+      reset.hidden=u.prefixIsDefault();
+    }
+    function apply(v){
+      var r=u.setIdPrefix(v,typeof o.scheduleIds==='function'?o.scheduleIds():[]);
+      err.hidden=r.ok&&!r.warning; err.textContent=r.ok?(r.warning||''):r.error;
+      err.setAttribute('data-kind',r.ok?'warning':'error');
+      render(); if(!r.ok) input.focus();
+    }
+    set.addEventListener('click',function(){ apply(input.value); });
+    input.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); apply(input.value); } });
+    reset.addEventListener('click',function(){ input.value=''; apply(''); });
+    container.appendChild(el('div',{'class':'su-box','data-sg':'prefix-box'},[
+      o.heading===false?null:el('h4',{'class':'su-h',text:'Task ID prefix'}),
+      el('div',{'class':'su-field'},[el('label',{'class':'su-label'},[el('span',{text:'Prefix for new task IDs'}),input]),set,reset]),
+      err,note,
+      el('p',{'class':'su-help',text:'Use a prefix to group tasks, e.g. A100 while adding the tasks for area 100, then A200 for the next set. Each prefix has its own numbering. Leave it blank to use your initials. Remembered on this computer only.'})]));
     render();
     var off=u.onChange(render);
     return {render:render,input:input,destroy:off};
   }
 
-  root.SRETUser={create:create,buildField:buildField,_memory:memory};
+  root.SRETUser={create:create,buildField:buildField,buildPrefixField:buildPrefixField,_memory:memory};
 })(window);
 
 /* =====================================================================
@@ -2795,26 +2854,38 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
 })(window);
 
 /* =====================================================================
-   SRET user task identity (Matt, 2026-09-29). No UI, no app globals.
+   SRET user task IDs and identity (Matt, 2026-09-29). No UI, no app globals.
 
-   The USR- ID stays what people read (USR-001, USR-002, numbered in
-   order). Two people adding tasks in their own copies can both create
-   USR-013, so the ID alone cannot say which task is which when their files
-   are merged. Each task therefore carries a GUID, set once when it is
-   created (or when an older task is first loaded) and never changed.
+   IDs people read: a prefix, a dash and a number, numbered within each
+   prefix's own series. The default prefix is U + the user's initials:
+     Matt Garrett  -> UMG-001, UMG-002        Jo Ruiz -> UJR-001
+   The user can set their own prefix to group tasks, e.g. A100 while
+   working on area 100 (A100-001, A100-002), then A200 (A200-001); going
+   back to A100 carries on at A100-003. Prefix: 1 to 8 letters or digits,
+   starting with a letter, stored in upper case. Initials: first letter of
+   the first and last word of the confirmed user name (SRETUser); a
+   one-word name gives its first two letters; no name gives UXX. Tasks
+   created before this keep their USR-013 IDs.
 
-   Merging another file's tasks in, an incoming task whose USR- ID is
-   already here is
+   Identity for merging: every user task also carries a GUID, set once when
+   it is created (or when an older task is first loaded) and never changed.
+   Merging another file's tasks in, an incoming task whose ID is already
+   here is
      - the same task (same GUID)          -> kept once, not duplicated
-     - a different task (different GUID)  -> given the next free USR- number,
-       and every reference to it in the incoming data (predecessors,
-       successors, annotation keys) is rewritten to match.
-   Older tasks without a GUID match when the ID, name and created date all
-   agree; otherwise they are treated as different tasks.
+     - a different task (different GUID)  -> given the next free number in
+       its own series (A100-004 stays A100-, USR-013 stays USR-), and every
+       reference to it in the incoming data (predecessors, successors,
+       annotation keys) is rewritten to match.
+   This happens when two people use the same prefix. Older tasks without a GUID match when the ID, name and created
+   date all agree; otherwise they are treated as different tasks.
 
    API (window.SRETIds):
+     prefix(name)                   -> 'UMG'   ('Matt Garrett'), 'UDU' ('Demo user'), 'UXX' (no name): the default
+     checkPrefix(p, scheduleIds)    -> {ok, value:'A100', warning} | {ok:false, error}
+     next(existingIds, prefix, taken) -> 'A100-004' (one above the highest in that prefix's series)
+     seriesOf(id)                   -> 'A100' for A100-004, null if not prefix-dash-number
+     isUserId(id, prefixes)         -> true for USR-, U + two letters, or any prefix in the list
      guid()                         -> '3f2a9c1e-7b4d-4e8a-9f10-2c6d8e4b1a07' (random, version 4)
-     next(existingIds, taken)       -> 'USR-014' (one above the highest in use)
      ensureGuids(tasks)             -> number of older tasks given a GUID
      merge(local, incoming, opts)   -> {add, same, renamed:[{from,to,name,guid}], map:{from:to}}
         opts: {idKey:'id', refKeys:['pred','succ'], nameKey:'name', createdKey:'created'}
@@ -2823,14 +2894,37 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
    ===================================================================== */
 (function(root){
   'use strict';
-  var RX=/^USR-(\d+)$/;
+  // Any series: a prefix (starting with a letter), a dash, a number.
+  var RX=/^([A-Z][A-Z0-9]{0,7})-(\d+)$/;
+  var DEFAULT_RX=/^(U[A-Z]{2}|USR)-\d+$/;
 
-  function pad(n){ return String(n).padStart(3,'0'); }
-  function next(existing,taken){
-    var max=0;
-    (existing||[]).concat(taken||[]).forEach(function(id){ var m=RX.exec(String(id||'')); if(m) max=Math.max(max,+m[1]); });
-    return 'USR-'+pad(max+1);
+  function prefix(name){
+    var w=String(name||'').replace(/[^A-Za-z\s'-]/g,' ').trim().split(/[\s'-]+/).filter(Boolean);
+    if(!w.length) return 'UXX';
+    var s=w.length===1?(w[0]+'X').slice(0,2):w[0].charAt(0)+w[w.length-1].charAt(0);
+    return 'U'+s.toUpperCase();
   }
+  function checkPrefix(p,scheduleIds){
+    var v=String(p==null?'':p).trim().toUpperCase().replace(/-+$/,'');
+    if(!v) return {ok:false,error:'Enter a prefix, e.g. A100.'};
+    if(!/^[A-Z][A-Z0-9]*$/.test(v)) return {ok:false,error:'Use letters and digits only, starting with a letter.'};
+    if(v.length>8) return {ok:false,error:'Use 8 characters or fewer.'};
+    var clash=(scheduleIds||[]).some(function(id){ return String(id).toUpperCase().indexOf(v+'-')===0; });
+    return {ok:true,value:v,warning:clash?'Schedule activities already use '+v+'-. Task IDs will look like theirs.':''};
+  }
+  function seriesOf(id){ var m=RX.exec(String(id||'').toUpperCase()); return m?m[1]:null; }
+  function isUserId(id,prefixes){
+    var s=String(id||'').toUpperCase();
+    if(DEFAULT_RX.test(s)) return true;
+    var se=seriesOf(s); return !!se&&(prefixes||[]).map(function(x){ return String(x).toUpperCase(); }).indexOf(se)>=0;
+  }
+  function pad(n){ return String(n).padStart(3,'0'); }
+  function seriesNext(series,ids){
+    var max=0;
+    ids.forEach(function(id){ var m=RX.exec(String(id||'').toUpperCase()); if(m&&m[1]===series) max=Math.max(max,+m[2]); });
+    return series+'-'+pad(max+1);
+  }
+  function next(existing,pfx,taken){ return seriesNext(String(pfx||'UXX').toUpperCase(),(existing||[]).concat(taken||[])); }
   function guid(){
     try{ if(root.crypto&&root.crypto.randomUUID) return root.crypto.randomUUID(); }catch(e){}
     var b=new Uint8Array(16);
@@ -2866,8 +2960,8 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
       var id=t[o.idKey], here=byId[id];
       if(!here){ res.add.push(t); return; }
       if(sameTask(here,t,o)){ res.same.push(t); return; }
-      // A different task under the same ID: the next free USR- number.
-      var nid=next(taken,[]);
+      // A different task under the same ID: the next free number in its own series.
+      var nid=seriesNext(seriesOf(id)||'USR',taken);
       taken.push(nid); map[id]=nid; t[o.idKey]=nid;
       res.renamed.push({from:id,to:nid,name:t[o.nameKey]||'',guid:t.guid||''});
       res.add.push(t);
@@ -2877,7 +2971,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
     return res;
   }
 
-  root.SRETIds={guid:guid,next:next,ensureGuids:ensureGuids,merge:merge,rewriteKeys:rewriteKeys,rewriteRefs:rewriteRefs};
+  root.SRETIds={prefix:prefix,checkPrefix:checkPrefix,seriesOf:seriesOf,isUserId:isUserId,guid:guid,next:next,ensureGuids:ensureGuids,merge:merge,rewriteKeys:rewriteKeys,rewriteRefs:rewriteRefs};
 })(window);
 
 /* =====================================================================
@@ -3178,7 +3272,12 @@ window.SRET_STRESS=function(n){var s=window.SRET_FIXTURES.sched,out=[];for(var i
   // Next user milestone ID: one above the highest USR number in the store,
   // the rule the app's nextUserMsId() follows, shared by Add row and import.
   // taken: IDs already handed out in the same import, not yet in the store.
-  function nextUsr(taken){ return SRETIds.next(store.usertasks.map(function(r){ return r.id; }),taken); }
+  // New user task IDs: the user's prefix + number (Matt, 2026-09-29). Default
+  // prefix U + initials (UDU for Demo user); the user can set e.g. A100.
+  function taskIds(){ return store.usertasks.map(function(r){ return r.id; }); }
+  function nextUsr(taken){ return SRETIds.next(taskIds(),USERS.idPrefix(),taken); }
+  var PREFIX_OPTS={nextId:function(p){ return SRETIds.next(taskIds(),p); },scheduleIds:function(){ return F.sched.map(function(r){ return r.id; }); }};
+  function openPrefix(){ SRETGrid.dialog('Task ID prefix',function(body){ return SRETUser.buildPrefixField(body,USERS,Object.assign({heading:false},PREFIX_OPTS)).destroy; }); }
   var TODAY=new Date().toISOString().slice(0,10);
   // Who is using the file (SRETUser). The fixture file was last saved by
   // someone else, as when a published file is shared and opened elsewhere.
@@ -3189,7 +3288,7 @@ window.SRET_STRESS=function(n){var s=window.SRET_FIXTURES.sched,out=[];for(var i
   USERS.onChange(showUser);
   // Stand-in for Data and view > Data settings: the name field, the save history and a Save.
   function settingsInto(body){
-    var f=SRETUser.buildField(body,USERS);
+    var f=SRETUser.buildField(body,USERS,{prefix:PREFIX_OPTS});
     var save=document.createElement('button'); save.type='button'; save.className='sg-btn'; save.textContent='Save file (demo)';
     save.setAttribute('data-sg','demo-save'); save.addEventListener('click',function(){ var e=USERS.recordSave({version:'grid demo'}); log('onSave',[e.by]); });
     body.appendChild(save);
@@ -3328,6 +3427,7 @@ window.SRET_STRESS=function(n){var s=window.SRET_FIXTURES.sched,out=[];for(var i
           start:null,finish:null,band:'User Tasks',wbs:'',pred:'',succ:'',comment:'',created:TODAY,createdBy:userName(),health:0};
         store.usertasks.push(r); log('onAdd',[id]); return r; },
       onDelete:function(keys){ log('onDelete',[keys]); store.usertasks=store.usertasks.filter(function(r){ return keys.indexOf(r.id)<0; }); },
+      toolsItems:[{label:'Task ID prefix…',sg:'prefix',onSelect:openPrefix}],
       openColumn:'id',onOpenItem:openMilestone,view:'usertasks',views:viewsOpt('usertasks').views,onView:viewsOpt('usertasks').onView,
       importer:{noun:['task','tasks'],idKey:'id',depKeys:{pred:'Predecessors',succ:'Successors'},user:userName,log:IMPORT_LOG,nextId:nextUsr,
         // IDs a dependency may name: every schedule activity and user milestone the app knows.

@@ -22,13 +22,18 @@
        u.recordSave(meta)    -> entry {at, by, version}; appended to the history
        u.history()           -> copy, oldest first
        u.fileState()         -> {savedBy, history} to write into the saved file
-       u.onChange(fn)        called after setName or recordSave; returns an unsubscribe
-     buildField(container, u) -> {destroy}. Renders the Data settings field: the name,
+       u.onChange(fn)        called after setName, setIdPrefix or recordSave; returns an unsubscribe
+       u.idPrefix()          the prefix for new task IDs: the one the user set, else U + initials
+       u.setIdPrefix(p, scheduleIds) -> {ok, value, warning} | {ok:false, error}; '' goes back to the initials
+       u.prefixIsDefault()   true while no prefix of the user's own is set
+     buildPrefixField(container, u, {nextId(prefix), scheduleIds(), heading}) -> {destroy}. The task ID
+       prefix field (Data settings, and the User tasks grid's Tools menu).
+     buildField(container, u, opts) -> {destroy}. Renders the Data settings field: the name,
        Confirm, the comparison with the file's last saver, the save history.
    ===================================================================== */
 (function(root){
   'use strict';
-  var KEY='sret-user-name', MAX=60;
+  var KEY='sret-user-name', PKEY='sret-task-prefix', MAX=60;
 
   function memory(){ var m={}; return {getItem:function(k){ return k in m?m[k]:null; },setItem:function(k,v){ m[k]=String(v); },removeItem:function(k){ delete m[k]; }}; }
   function clean(v){ return String(v==null?'':v).replace(/[\u0000-\u001f\u007f]/g,'').replace(/\s+/g,' ').trim(); }
@@ -48,7 +53,7 @@
       name:read,
       status:function(){
         var n=read(), st=!n?'unset':(!savedBy||same(n,savedBy)?'same':'other');
-        var msg=st==='unset'?'Set your name so imports, new milestones and saves are recorded against you.'
+        var msg=st==='unset'?'Set your name so imports, new tasks and saves are recorded against you.'
                :st==='other'?'You are working as '+n+'. This file was last saved by '+savedBy+'.'
                :'You are working as '+n+'.';
         return {name:n,savedBy:savedBy,state:st,message:msg};
@@ -67,6 +72,20 @@
         hist.push(e); savedBy=e.by;
         fire();
         return Object.assign({},e);
+      },
+      // Task ID prefix (Matt, 2026-09-29): the user's own, e.g. A100 for area 100, else U + initials.
+      idPrefix:function(){
+        var own=''; try{ own=clean(store.getItem(PKEY)); }catch(e){}
+        return own||(root.SRETIds?root.SRETIds.prefix(read()):'UXX');
+      },
+      prefixIsDefault:function(){ try{ return !clean(store.getItem(PKEY)); }catch(e){ return true; } },
+      setIdPrefix:function(v,scheduleIds){
+        if(clean(v)===''){ try{ store.removeItem(PKEY); }catch(e){} fire(); return {ok:true,value:u.idPrefix(),warning:''}; }
+        var r=root.SRETIds?root.SRETIds.checkPrefix(v,scheduleIds):{ok:true,value:clean(v).toUpperCase(),warning:''};
+        if(!r.ok) return r;
+        try{ store.setItem(PKEY,r.value); }catch(e){ return {ok:false,error:'This browser would not store the prefix.'}; }
+        fire();
+        return r;
       },
       history:function(){ return hist.map(function(e){ return Object.assign({},e); }); },
       fileState:function(){ return {savedBy:savedBy,history:u.history()}; },
@@ -91,7 +110,7 @@
     var d=new Date(iso); if(isNaN(d)) return String(iso||'');
     return d.getDate()+'-'+MON[d.getMonth()]+'-'+String(d.getFullYear()).slice(2)+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
   }
-  function buildField(container,u){
+  function buildField(container,u,opts){
     var input=el('input',{type:'text','class':'sg-search su-name',maxlength:String(MAX),autocomplete:'name','aria-label':'Your name','data-sg':'user-name'});
     var ok=el('button',{type:'button','class':'sg-btn sg-btn--primary','data-sg':'user-confirm',text:'Confirm'});
     var note=el('p',{'class':'su-note','data-sg':'user-status',role:'status'});
@@ -122,12 +141,50 @@
     container.appendChild(el('div',{'class':'su-box','data-sg':'user-box'},[
       el('div',{'class':'su-field','data-sg':'user-field'},[el('label',{'class':'su-label'},[el('span',{text:'Your name'}),input]),ok]),
       err,note,
-      el('p',{'class':'su-help',text:'Remembered on this computer only. Imports, new milestones and saves are recorded against this name. A browser cannot read the computer login name, so it is asked here.'}),
+      el('p',{'class':'su-help',text:'Remembered on this computer only. Imports, new tasks and saves are recorded against this name. A browser cannot read the computer login name, so it is asked here.'}),
       hist]));
+    var pf=opts&&opts.prefix?buildPrefixField(container,u,opts.prefix):null;
+    render();
+    var off=u.onChange(render);
+    return {render:render,input:input,destroy:function(){ off(); if(pf) pf.destroy(); }};
+  }
+  // Task ID prefix: type A100 before adding the tasks for area 100, A200 for
+  // the next set. Blank goes back to the initials.
+  function buildPrefixField(container,u,o){
+    o=o||{};
+    var input=el('input',{type:'text','class':'sg-search su-prefix',maxlength:'8',autocomplete:'off','aria-label':'Task ID prefix','data-sg':'prefix-input',
+                          placeholder:'e.g. A100'});
+    var set=el('button',{type:'button','class':'sg-btn','data-sg':'prefix-set',text:'Set prefix'});
+    var reset=el('button',{type:'button','class':'sg-link','data-sg':'prefix-reset'});
+    var note=el('p',{'class':'su-note','data-sg':'prefix-status',role:'status'});
+    var err=el('p',{'class':'su-error','data-sg':'prefix-error',role:'alert',hidden:true});
+    function render(){
+      var p=u.idPrefix();
+      if(document.activeElement!==input) input.value=u.prefixIsDefault()?'':p;
+      input.placeholder=p+' (default: your initials)';
+      var nxt=typeof o.nextId==='function'?o.nextId(p):p+'-001';
+      note.textContent='New tasks are numbered '+p+'-001, '+p+'-002 and so on. Next task: '+nxt+'.';
+      reset.textContent='Use my initials ('+(root.SRETIds?root.SRETIds.prefix(u.name()):'UXX')+')';
+      reset.hidden=u.prefixIsDefault();
+    }
+    function apply(v){
+      var r=u.setIdPrefix(v,typeof o.scheduleIds==='function'?o.scheduleIds():[]);
+      err.hidden=r.ok&&!r.warning; err.textContent=r.ok?(r.warning||''):r.error;
+      err.setAttribute('data-kind',r.ok?'warning':'error');
+      render(); if(!r.ok) input.focus();
+    }
+    set.addEventListener('click',function(){ apply(input.value); });
+    input.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); apply(input.value); } });
+    reset.addEventListener('click',function(){ input.value=''; apply(''); });
+    container.appendChild(el('div',{'class':'su-box','data-sg':'prefix-box'},[
+      o.heading===false?null:el('h4',{'class':'su-h',text:'Task ID prefix'}),
+      el('div',{'class':'su-field'},[el('label',{'class':'su-label'},[el('span',{text:'Prefix for new task IDs'}),input]),set,reset]),
+      err,note,
+      el('p',{'class':'su-help',text:'Use a prefix to group tasks, e.g. A100 while adding the tasks for area 100, then A200 for the next set. Each prefix has its own numbering. Leave it blank to use your initials. Remembered on this computer only.'})]));
     render();
     var off=u.onChange(render);
     return {render:render,input:input,destroy:off};
   }
 
-  root.SRETUser={create:create,buildField:buildField,_memory:memory};
+  root.SRETUser={create:create,buildField:buildField,buildPrefixField:buildPrefixField,_memory:memory};
 })(window);
