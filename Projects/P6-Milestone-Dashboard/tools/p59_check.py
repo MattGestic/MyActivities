@@ -13,7 +13,7 @@ and computed style, never a screenshot:
         panel; the state persists; phones start collapsed; opening a section
         from collapsed shows the rail
   B-02  the header's title and subtitle do not move between rail states
-  X-02  the rail badge sits clear of its icon (offset up and right)
+  X-02  the rail badge sits clear of its icon (offset up and left, P63)
   C-01  Find fits its card at wide widths: Source stays inside, Banding is not
         clipped
   C-02  Activity name takes half of Find's first row
@@ -134,7 +134,8 @@ PROBE = r"""
       if(bd){
         const had=bd.textContent; bd.textContent='3';
         const b=rc(bd), i=rc(bd.parentElement);
-        ck('X-02 the badge is offset up and right of its icon', b.top<i.top&&b.right>i.right,
+        // P63 (Matt): top-left of the icon, on the rail's outer edge.
+        ck('X-02 the badge is offset up and left of its icon', b.top<i.top&&b.left<i.left,
            [b.top,i.top,b.right,i.right].map(Math.round).join(','));
         bd.textContent=had;
       }
