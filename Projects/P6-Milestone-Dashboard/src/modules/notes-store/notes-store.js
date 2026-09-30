@@ -15,7 +15,7 @@
        links:[ID], period:'YYYY-MM-DD', at:ISO, updatedAt:ISO, by:null,
        status:'note'|'open'|'sent'|'review'|'outstanding'|'done'|'closed',
        text:string, changes:{ <field>:{from, to} }, origin:string,
-       followsUp:eid|null, nid?:'N-###', sig?:string }
+       followsUp:eid|null, nid?:'N-###', sig?:string, clearText?:true }
    to:null in a change means "back to the schedule / no override".
 
    Pure functions over an array the caller owns and persists. create() is a
@@ -109,7 +109,6 @@
   function sameTarget(e,kind,key){
     return e&&e.target&&e.target.kind===kind&&(e.target.key==null?null:String(e.target.key))===(key==null?null:String(key));
   }
-  function isUsrKey(key){ return /^USR-/.test(String(key||'')); }
   // Drops every field whose to equals its from: a change that changes nothing.
   function pruneChanges(ch){
     var out={};
@@ -121,7 +120,8 @@
     return out;
   }
   function isEmptyEntry(e){
-    return !e||(!String(e.text||'').length&&!Object.keys(e.changes||{}).length&&e.target.kind!=='general');
+    // A clearText entry is never empty: clearing a remark is itself the record.
+    return !e||(!e.clearText&&!String(e.text||'').length&&!Object.keys(e.changes||{}).length&&e.target.kind!=='general');
   }
   function findIdx(entries,eid){
     for(var i=0;i<entries.length;i++) if(entries[i].eid===eid) return i;
@@ -152,16 +152,20 @@
     var nowMs=toMs(ctx.now);
     var windowMs=(typeof ctx.windowMs==='number')?ctx.windowMs:DEFAULT_WINDOW_MS;
     var period=ctx.period||draft.period||null;
-    var text=(draft.text==null)?'':String(draft.text);
+    // clearText: an explicit "this remark is now cleared". Its text is always ''.
+    var clearText=draft.clearText===true;
+    var text=(clearText||draft.text==null)?'':String(draft.text);
     var changes=pruneChanges(draft.changes);
     var origin=draft.origin||'card';
-    if(kind!=='general'&&!text.length&&!Object.keys(changes).length) return null;
+    if(kind!=='general'&&!clearText&&!text.length&&!Object.keys(changes).length) return null;
 
     // Coalescing: a card save within the window, in the same report, on the
     // same target, folds into the entry it follows rather than adding one.
-    if(kind!=='general'&&origin==='card'){
+    // A clear never coalesces (folding it into an entry with text of its own
+    // would lose that text), and nothing coalesces into a clear.
+    if(kind!=='general'&&origin==='card'&&!clearText){
       var last=latestOn(entries,kind,key);
-      if(last&&last.origin==='card'&&last.period===period&&
+      if(last&&!last.clearText&&last.origin==='card'&&last.period===period&&
          nowMs-toMs(last.updatedAt)<=windowMs&&nowMs-toMs(last.updatedAt)>=0){
         var oldText=String(last.text||'');
         // Merge text only when nothing is lost.
@@ -201,6 +205,7 @@
     };
     if(kind==='general') e.nid=draft.nid?String(draft.nid):nextNid(entries);
     else if(draft.nid) e.nid=String(draft.nid);
+    if(clearText) e.clearText=true;
     if(draft.sig) e.sig=draft.sig;
     entries.push(e);
     return e;
@@ -224,6 +229,7 @@
     if(has(patch,'status')&&STATUSES.indexOf(normStatus(patch.status))<0)
       return {ok:false,error:'status',message:'Unknown status.'};
     if(has(patch,'text')) e.text=(patch.text==null)?'':String(patch.text);
+    if(has(patch,'clearText')){ if(patch.clearText===true){ e.clearText=true; e.text=''; } else delete e.clearText; }
     if(has(patch,'changes')) e.changes=pruneChanges(patch.changes);
     if(has(patch,'links')) e.links=(patch.links||[]).slice();
     if(has(patch,'status')) e.status=normStatus(patch.status);
@@ -268,7 +274,9 @@
         if(c.to===null||c.to===undefined) delete values[f];
         else values[f]=c.to;
       });
-      if(String(e.text||'').length) lastText=e.text;
+      // The latest entry with text OR a clear decides; a clear resets to ''.
+      if(e.clearText) lastText='';
+      else if(String(e.text||'').length) lastText=e.text;
       lastAt=e.at;
       if(OPEN_STATUSES.indexOf(e.status)>=0) openCount++;
     });
@@ -293,8 +301,9 @@
     Object.keys(keys.ms).forEach(function(key){
       var r=rollup(entries,key,{kind:'ms'});
       if(r.lastText.length) out.comments[key]=r.lastText;
-      // A user-added milestone's own record is edited directly: no overrides.
-      if(isUsrKey(key)) return;
+      // USR- keys are treated like any other key: the app writes and reads
+      // their overrides through the same stores (userMsGridEdit, saveMsDialog,
+      // umsHealth, umsEffective).
       var v=r.values;
       // Health: every explicit code is kept, 0 included. Absent is automatic.
       if(has(v,'health')) out.health[key]=v.health;

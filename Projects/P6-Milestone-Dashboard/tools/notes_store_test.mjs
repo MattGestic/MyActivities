@@ -231,15 +231,56 @@ const ms = (key, changes, text) => ({ target: { kind: 'ms', key }, changes: chan
   check('notes: NOTES shape exactly', eq(Object.keys(pr.notes[0]).sort(), ['at', 'links', 'nid', 'period', 'status', 'text', 'updatedAt']));
 }
 
-// ---------- USR keys ----------
+// ---------- clearing a remark (clearText) ----------
+{
+  let E = [];
+  S.append(E, ms('CL', {}, 'Delayed by rain'), { now: T0, period: P });
+  const c = S.append(E, { target: { kind: 'ms', key: 'CL' }, clearText: true, text: 'ignored' }, { now: T0 + MIN, period: P });
+  check('clear: a clearText draft with no change is kept, not empty', c && E.length === 2 && c.clearText === true && c.text === '' && !S.isEmptyEntry(c));
+  check('clear: after 1 remark, comment key is absent', !('CL' in S.projectEntries(E).comments) && S.rollup(E, 'CL').lastText === '');
+  check('clear: never coalesces into the in-window card entry with text', E[0].text === 'Delayed by rain' && E.length === 2);
+  S.append(E, ms('CL', {}, 'Back on track'), { now: T0 + 2 * MIN, period: P });
+  check('clear: a remark after a clear re-shows', S.projectEntries(E).comments.CL === 'Back on track' && E.length === 3 && !E[1].text);
+  check('clear: a remark does not coalesce into a clear entry', E.length === 3 && E[2].eid === 'E-0003' && E[1].clearText === true);
+  // N=3: remark / clear / remark, then remove from the end to walk it back.
+  E = [];
+  const r1 = S.append(E, Object.assign(ms('N3', {}, 'one'), { origin: 'grid' }), { now: T0, period: P });
+  const c2 = S.append(E, { target: { kind: 'ms', key: 'N3' }, clearText: true, origin: 'grid' }, { now: T0 + MIN, period: P });
+  const r3 = S.append(E, Object.assign(ms('N3', {}, 'three'), { origin: 'grid' }), { now: T0 + 2 * MIN, period: P });
+  check('clear: N=3 remark/clear/remark shows the 3rd', S.projectEntries(E).comments.N3 === 'three' && S.rollup(E, 'N3').lastText === 'three');
+  S.remove(E, r3.eid);
+  check('clear: N=3 without the 3rd, the clear wins (absent)', !('N3' in S.projectEntries(E).comments));
+  S.remove(E, c2.eid);
+  check('clear: N=3 without the clear, the 1st re-shows', S.projectEntries(E).comments.N3 === 'one' && r1.text === 'one');
+  // Entries with only field changes and no text do not count as a clear.
+  E = [];
+  S.append(E, Object.assign(ms('FC', {}, 'kept'), { origin: 'grid' }), { now: T0, period: P });
+  S.append(E, Object.assign(ms('FC', { weight: { from: 1, to: 2 } }), { origin: 'grid' }), { now: T0 + MIN, period: P });
+  check('clear: a later text-less change entry does not clear the remark', S.projectEntries(E).comments.FC === 'kept');
+  // Dep key
+  E = [];
+  S.append(E, { target: { kind: 'dep', key: 'pred:A->B' }, text: 'dep remark', origin: 'grid' }, { now: T0, period: P });
+  S.append(E, { target: { kind: 'dep', key: 'pred:A->B' }, clearText: true, origin: 'card' }, { now: T0 + MIN, period: P });
+  S.append(E, { target: { kind: 'dep', key: 'pred:C->D' }, text: 'other dep', origin: 'grid' }, { now: T0, period: P });
+  const pr = S.projectEntries(E);
+  check('clear: a clear on a dep key removes that dep comment only', !('pred:A->B' in pr.depComments) && pr.depComments['pred:C->D'] === 'other dep');
+  // Edit can set a clear on a current-period entry.
+  const ed = S.edit(E, 'E-0001', { clearText: true }, { now: T0 + 2 * MIN, period: P });
+  check('clear: edit clearText:true empties text and marks the entry', ed.ok && E[0].clearText === true && E[0].text === '');
+  check('clear: survives serialize/deserialize', S.deserialize(S.serialize(E)).filter(e => e.clearText).length === 2);
+}
+
+// ---------- USR keys project like any other key ----------
 {
   const E = [];
   S.append(E, Object.assign(ms('USR-001', { health: { from: null, to: 3 }, progress: { from: null, to: 50 }, date: { from: null, to: '2026-10-01' } }, 'user ms remark'), { origin: 'grid' }), { now: T0, period: P });
-  S.append(E, Object.assign(ms('SNIP-9', { health: { from: null, to: 3 } }), { origin: 'grid' }), { now: T0, period: P });
+  S.append(E, Object.assign(ms('USR-002', { health: { from: null, to: 0 } }), { origin: 'grid' }), { now: T0, period: P });
   const pr = S.projectEntries(E);
-  check('USR: no health, progress or field override projected', !('USR-001' in pr.health) && !('USR-001' in pr.progress) && !('USR-001' in pr.fields));
-  check('USR: text still projects to comments', pr.comments['USR-001'] === 'user ms remark');
-  check('USR: a schedule key beside it still projects', pr.health['SNIP-9'] === 3);
+  check('USR: health projects (3, and explicit 0)', pr.health['USR-001'] === 3 && ('USR-002' in pr.health) && pr.health['USR-002'] === 0);
+  check('USR: progress and fields project', pr.progress['USR-001'] === 50 && eq(pr.fields['USR-001'], { date: '2026-10-01' }));
+  check('USR: text projects to comments', pr.comments['USR-001'] === 'user ms remark');
+  const pr2 = S.projectEntries(E, (k, f) => ({ progress: 50, date: '2026-10-01' })[f]);
+  check('USR: equal-to-source rule applies to USR as to any key', !('USR-001' in pr2.progress) && !('USR-001' in pr2.fields) && pr2.health['USR-001'] === 3);
 }
 
 // ---------- round trip on REAL fixtures ----------
@@ -248,7 +289,6 @@ const fx = {
   published: JSON.parse(readFileSync(join(here, 'fixtures', 'p65', 'published_p64.json'), 'utf8')),
 };
 function nonEmpty(o) { const r = {}; Object.keys(o || {}).forEach(k => { if (String(o[k] == null ? '' : o[k]).length) r[k] = o[k]; }); return r; }
-function noUsr(o) { const r = {}; Object.keys(o || {}).forEach(k => { if (!/^USR-/.test(k)) r[k] = o[k]; }); return r; }
 for (const name of ['model', 'published']) {
   const p = fx[name];
   // The fixture must actually exercise every kind, or the round trip proves nothing.
@@ -266,9 +306,9 @@ for (const name of ['model', 'published']) {
   const entries = S.migrateLegacy(p, { period: '2000-01-02', now: T0 });
   const pr = S.projectEntries(entries, () => undefined);
   check(name + ' round trip: milestoneComments (empty strings ignored)', eq(pr.comments, nonEmpty(p.milestoneComments)), [pr.comments, p.milestoneComments]);
-  check(name + ' round trip: milestoneHealthOverrides', eq(pr.health, noUsr(p.milestoneHealthOverrides)), [pr.health, p.milestoneHealthOverrides]);
-  check(name + ' round trip: milestoneProgressOverrides', eq(pr.progress, noUsr(p.milestoneProgressOverrides)), [pr.progress, p.milestoneProgressOverrides]);
-  check(name + ' round trip: milestoneFieldOverrides', eq(pr.fields, noUsr(p.milestoneFieldOverrides)), [pr.fields, p.milestoneFieldOverrides]);
+  check(name + ' round trip: milestoneHealthOverrides', eq(pr.health, p.milestoneHealthOverrides), [pr.health, p.milestoneHealthOverrides]);
+  check(name + ' round trip: milestoneProgressOverrides', eq(pr.progress, p.milestoneProgressOverrides), [pr.progress, p.milestoneProgressOverrides]);
+  check(name + ' round trip: milestoneFieldOverrides', eq(pr.fields, p.milestoneFieldOverrides), [pr.fields, p.milestoneFieldOverrides]);
   check(name + ' round trip: dependencyComments', eq(pr.depComments, nonEmpty(p.dependencyComments)), [pr.depComments, p.dependencyComments]);
   check(name + ' round trip: overrides (row health and remarks)', eq(pr.rowOverrides, p.overrides), [pr.rowOverrides, p.overrides]);
   check(name + ' round trip: notes reproduced exactly', eq(pr.notes, p.notes), [pr.notes, p.notes]);
@@ -278,6 +318,21 @@ for (const name of ['model', 'published']) {
   check(name + ' migrate: period is the reportDate week (' + p.reportDate + ' to 2026-10-04), not opts.period',
     msE.every(e => e.period === '2026-10-04'));
   check(name + ' migrate: short titles are not entries', !entries.some(e => 'shortTitle' in e.changes));
+}
+{
+  // A fixture-style payload with USR overrides (the real model export plus the
+  // shapes userMsGridEdit and saveMsDialog write for a USR key) round-trips.
+  const p = JSON.parse(JSON.stringify(fx.model));
+  p.milestoneHealthOverrides['USR-001'] = 3;
+  p.milestoneHealthOverrides['USR-002'] = 0;
+  p.milestoneProgressOverrides['USR-001'] = 60;
+  p.milestoneFieldOverrides['USR-001'] = { actName: 'User milestone renamed', date: '2026-10-09', type: 'MS' };
+  p.milestoneComments['USR-001'] = 'USR comment';
+  const pr = S.projectEntries(S.migrateLegacy(p, { now: T0 }), () => undefined);
+  check('USR round trip: health (3 and 0) exact', eq(pr.health, p.milestoneHealthOverrides), [pr.health, p.milestoneHealthOverrides]);
+  check('USR round trip: progress exact', eq(pr.progress, p.milestoneProgressOverrides));
+  check('USR round trip: fields exact', eq(pr.fields, p.milestoneFieldOverrides));
+  check('USR round trip: comments exact', eq(pr.comments, nonEmpty(p.milestoneComments)));
 }
 {
   // Period falls back to opts.period when reportDate is absent.

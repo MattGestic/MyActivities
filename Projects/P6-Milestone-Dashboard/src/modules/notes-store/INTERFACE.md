@@ -17,7 +17,7 @@ with `python3 tools/p65_fixtures.py`.
   period:'YYYY-MM-DD', at:ISO, updatedAt:ISO, by:null,
   status:'note'|'open'|'sent'|'review'|'outstanding'|'done'|'closed',
   text:string, changes:{ <field>:{from, to} }, origin:'card'|'grid'|'notes'|'carried'|'mount:<file>'|string,
-  followsUp:eid|null, nid?:'N-###', sig?:string }
+  followsUp:eid|null, nid?:'N-###', sig?:string, clearText?:true }
 ```
 
 - `changes` fields: `actName start date weight floatD type marker` (the app's
@@ -25,6 +25,8 @@ with `python3 tools/p65_fixtures.py`.
   targets `rowHealth`, `rowRemark`. `to:null` is "back to the schedule / no override".
 - `general`: `key` is always null, and `nid` is always set (assigned `N-###` when absent).
 - `dep`: key is the `edgeKey()` string. `row`: key is the row ref.
+- `clearText:true` (text always `''`) is an explicit "this remark is now cleared".
+  It is never an empty entry, never coalesces, and nothing coalesces into it.
 - `sig` is set only on migrated entries: a stable hash of kind, key, text and
   the `to` values (not period, not time), used for idempotent import.
 
@@ -37,17 +39,17 @@ outstanding), `MS_FIELDS`, `CHANGE_FIELDS`, `DEFAULT_WINDOW_MS` (600000).
 
 | Signature | Returns | Notes |
 |---|---|---|
-| `append(entries, draft, ctx)` | the new entry, the entry it merged into, or `null` | `draft = {target, text?, changes?, origin? ('card' default), links?, status?, followsUp?, by?, nid?, sig?}`. `ctx = {now? (ms, Date or ISO; default Date.now()), period, windowMs? (default 10 min), seq? (eid floor)}`. Fields whose `from` equals `to` are dropped. A non-general draft with no text and no change returns `null` and appends nothing. Default status: `note`, or `open` for `general`. |
-| `edit(entries, eid, patch, ctx)` | `{ok:true, entry}` or `{ok:false, error, message}` | Never throws. Refused (`error:'period'`) unless `entry.period === ctx.period`. `patch` may carry `text, changes (replaces), links, status, followsUp, by`; `eid, target, at, period, origin, nid, sig` are refused (`error:'immutable'`). Sets `updatedAt`. |
+| `append(entries, draft, ctx)` | the new entry, the entry it merged into, or `null` | `draft = {target, text?, changes?, clearText?, origin? ('card' default), links?, status?, followsUp?, by?, nid?, sig?}`. `ctx = {now? (ms, Date or ISO; default Date.now()), period, windowMs? (default 10 min), seq? (eid floor)}`. Fields whose `from` equals `to` are dropped. A non-general draft with no text and no change returns `null` and appends nothing. Default status: `note`, or `open` for `general`. |
+| `edit(entries, eid, patch, ctx)` | `{ok:true, entry}` or `{ok:false, error, message}` | Never throws. Refused (`error:'period'`) unless `entry.period === ctx.period`. `patch` may carry `text, clearText, changes (replaces), links, status, followsUp, by`; `eid, target, at, period, origin, nid, sig` are refused (`error:'immutable'`). Sets `updatedAt`. |
 | `remove(entries, eid)` | the removed entry or `null` | |
 | `setStatus(entries, eids, status, ctx?)` | count changed | `pending` reads as `review`; an unknown status changes nothing. Bumps `updatedAt` (like `setNoteStatus`). |
-| `rollup(entries, key, opts?)` | `{values, lastText, lastAt, count, openCount, byField}` | `opts = {kind? ('ms' default), period?}`. Latest wins per field, ordered by `at`, then eid number. `to:null` removes the field from `values` but is still the latest in `byField[f] = {eid, from, to, at}`. `lastText` is the latest non-empty text; `lastAt` the `at` of the latest entry. |
+| `rollup(entries, key, opts?)` | `{values, lastText, lastAt, count, openCount, byField}` | `opts = {kind? ('ms' default), period?}`. Latest wins per field, ordered by `at`, then eid number. `to:null` removes the field from `values` but is still the latest in `byField[f] = {eid, from, to, at}`. `lastText` is decided by the latest entry that has non-empty text or `clearText` (a clear gives `''`); `lastAt` the `at` of the latest entry. |
 | `projectEntries(entries, sourceOf?)` | `{comments, health, progress, fields, depComments, rowOverrides, notes}` | Exact current store shapes. See below. |
 
 ### Coalescing (inside `append`)
 
 Merges into the LATEST entry on the same target (kind and key) when all hold:
-the draft and that entry both have `origin 'card'`; same `period`;
+the draft and that entry both have `origin 'card'`; neither is a `clearText` entry; same `period`;
 `0 <= ctx.now - updatedAt <= windowMs` (inclusive); and no text is lost (new
 text empty, OR old text empty, OR new text starts with old text). Then: earlier
 `from`, later `to`; fields whose merged `to` equals the original `from` drop
@@ -58,12 +60,13 @@ from `entries`, and the returned object satisfies `isEmptyEntry(e)`.
 
 ### Projection rules
 
-- `comments[key]` = latest non-empty text of `ms` entries on `key`.
+- `comments[key]` = `rollup.lastText` of `ms` entries on `key`: the latest entry with non-empty text or `clearText` decides, and a clear leaves the key absent.
 - `health[key]` whenever the latest health `to` is not null, **0 included**. No equal-to-source rule.
 - `progress[key]` unless `sourceOf(key,'progress') != null` and equal (mirrors `saveMsDialog`).
 - `fields[key][f]` unless equal to `sourceOf(key, f)`; an empty object is omitted.
-- `USR-` keys: comments only, never health, progress or fields.
-- `depComments[key]` = latest non-empty text of `dep` entries.
+- `USR-` keys are treated exactly like any other key (the app reads and writes their
+  overrides through the same stores).
+- `depComments[key]`: the same rule over `dep` entries, clears included.
 - `rowOverrides[ref] = {health: rowHealth ?? null, remarks: rowRemark ?? ''}` when either is set.
 - `notes`: every `general` entry, in array order, as `{nid, text, status, links, period, at, updatedAt}`.
 
