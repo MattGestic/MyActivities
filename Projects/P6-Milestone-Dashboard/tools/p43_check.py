@@ -380,7 +380,10 @@ def main():
     # these was a separate wiring site and a missed one is silent.
     for (label, needle) in [
         ("the publish payload", "milestoneFieldOverrides:MS_FIELD_OVERRIDE,"),
-        ("selective import", "Object.assign(MS_FIELD_OVERRIDE,p.milestoneFieldOverrides||{})"),
+        # P65: field edits are entries; a mount stages the legacy store field
+        # for migration into entries, and a v2 file brings the entries.
+        ("selective import", "stageLegacyEntries(p,'milestoneFieldOverrides')"),
+        ("the publish payload's entries", "entries:ENTRIES,"),
         ("the CSV report", "csvEnteredCell(ms,MS_FIELD_OVERRIDE,"),
     ]:
         found = needle.replace(" ", "") in nospace
@@ -390,8 +393,10 @@ def main():
             "" if found else f"not found: {needle}"))
     checks.append((
         "source: field edits are carried when a milestone is moved to another row",
-        nospace.count("MS_PROGRESS_OVERRIDE,MS_FIELD_OVERRIDE].forEach") == 2,
-        f"{nospace.count('MS_PROGRESS_OVERRIDE,MS_FIELD_OVERRIDE].forEach')} of 2 key-migration sites"))
+        # P65: the stores are projections of ENTRIES, so a move re-keys the
+        # entries (and re-projects) at both key-migration sites.
+        nospace.count("if(e.target.kind==='ms'&&e.target.key===oldKey)e.target.key=newKey;") == 2,
+        f"{nospace.count(chr(105)+chr(102)+'(e.target.kind===' + chr(39)+'ms'+chr(39)+'&&e.target.key===oldKey)e.target.key=newKey;')} of 2 key-migration sites"))
     # Applied from the ONE function every build path goes through, beside the
     # user-milestone merge, and from nowhere else. A second call site is how
     # this family of defect starts (TD-106, TD-145, TD-159).
