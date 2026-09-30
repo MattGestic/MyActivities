@@ -231,6 +231,7 @@ button.sg-sym:hover{transform:scale(1.2)}
   border-radius:var(--radius-overlay);box-shadow:var(--shadow-3)}
 .sg-dialog-head{display:flex;align-items:center;justify-content:space-between;gap:var(--ctl-gap);
   padding:var(--space-5) var(--group-gap) var(--space-4);border-bottom:1px solid var(--color-line-default)}
+.sg-dialog--wide{width:min(1040px,100%)}
 .sg-dialog-title{margin:0;font-size:20px;line-height:28px;font-weight:600}
 .sg-dialog-body{padding:var(--group-gap);overflow:auto;font-size:var(--text-lg);line-height:20px}
 @media (max-width:767px){
@@ -246,7 +247,7 @@ button.sg-sym:hover{transform:scale(1.2)}
 .sg-grid .slick-row{contain:layout style}
 .sg-grid .slick-header.ui-state-default,.sg-grid .slick-headerrow.ui-state-default{
   background:var(--color-bg-subtle);border-top:0;border-bottom:1px solid var(--color-line-default)}
-.sg-grid .slick-header-column.ui-state-default{height:calc(var(--ctl-h) + var(--space-2));line-height:calc(var(--ctl-h) + var(--space-2));
+.sg-grid .slick-header-column.ui-state-default{height:var(--sg-head-h);line-height:var(--sg-head-h);
   padding:0 var(--space-4);box-sizing:border-box!important;font-weight:600;
   background:var(--color-bg-subtle);color:var(--color-text-primary);border-right:1px solid var(--color-line-hairline);cursor:pointer}
 .sg-grid .slick-header-column.ui-state-default:hover{background:var(--color-row-hover-bg)}
@@ -279,9 +280,18 @@ button.sg-sym:hover{transform:scale(1.2)}
 .sg-editor{width:100%;height:100%;margin:0;padding:0 var(--space-4);font:inherit;border:0;outline:0;
   background:var(--color-bg-elevated);color:var(--color-text-primary)}
 
+/* Header buttons wrap whenever they run out of room, not only on phones. */
+.sg-bar2{flex-wrap:wrap;row-gap:var(--ctl-gap)}
+/* Phones: search behind a button in the title row; the counts row only while
+   something is selected or filtered (the header checkbox still selects all). */
+.sg-search-toggle{display:none}
 @media (max-width:767px){
   .sg-bar,.sg-bar2,.sg-bar3{padding-left:var(--space-4);padding-right:var(--space-4)}
-  .sg-bar2{flex-wrap:wrap}
+  .sg-bar{justify-content:space-between}
+  .sg-search-toggle{display:inline-flex;flex:0 0 auto}
+  .sg-screen:not(.is-search-open):not(.has-search) .sg-search{display:none}
+  .sg-screen.is-search-open .sg-search-toggle,.sg-screen.has-search .sg-search-toggle{color:var(--color-accent-ink)}
+  .sg-bar3.is-idle{display:none}
   .sg-bar2 .sg-spacer{display:none}
   .sg-search{flex:1 1 100%;width:auto}
 }
@@ -321,3 +331,24 @@ button.sg-sym:hover{transform:scale(1.2)}
 .sg-dialog .sg-import-status p.sg-bulk-err,.sg-dialog p.sg-bulk-err{color:var(--color-crit-text)}
 .sg-bulk-err[hidden]{display:none}
 @media (max-width:767px){ .sg-bulk{grid-template-columns:minmax(0,1fr)} .sg-bulk-ctl{margin-bottom:var(--ctl-gap)} }
+
+/* ---- touch (D-16 rule, as the dashboard): controls take --ctl-h-touch through
+   --ctl-h; each tap area reaches --ctl-hit-touch through an invisible
+   pseudo-element, never by growing the visible control. Rows grow to the
+   tap size so the controls inside a cell (checkbox, health dot, icon) get
+   the whole cell. ---- */
+.sg-screen{--sg-row-h:var(--ctl-h);--sg-head-h:calc(var(--ctl-h) + var(--space-2))}
+@media (pointer:coarse){
+  .sg-screen{--sg-row-h:var(--ctl-hit-touch);--sg-head-h:var(--ctl-hit-touch)}
+  .sg-btn,.sg-iconbtn,.sg-link,.sg-rail-btn,.sg-lcol-toggle,.sg-tok-x,.sg-sym,button.sg-hdot,.sg-search-toggle{position:relative}
+  .sg-btn::after,.sg-iconbtn::after,.sg-link::after,.sg-rail-btn::after,.sg-lcol-toggle::after,.sg-tok-x::after,.sg-sym::after,button.sg-hdot::after,.sg-search-toggle::after{
+    content:'';position:absolute;top:50%;left:50%;width:max(100%,var(--ctl-hit-touch));height:max(100%,var(--ctl-hit-touch));transform:translate(-50%,-50%)}
+  .sg-menu-item,.sg-refs-opt{min-height:var(--ctl-hit-touch)}
+  .sg-refs-opt{align-items:center}
+}
+
+/* Pinned columns: the pinned pane scrolls up and down natively (following the
+   main pane) with its scrollbar hidden, and never sideways. */
+.sg-grid .slick-pane-left .slick-viewport{overflow-y:auto!important;overflow-x:hidden!important;scrollbar-width:none}
+.sg-grid .slick-pane-left .slick-viewport::-webkit-scrollbar{display:none}
+.sg-grid .slick-pane-left{box-shadow:1px 0 0 var(--color-line-default)}

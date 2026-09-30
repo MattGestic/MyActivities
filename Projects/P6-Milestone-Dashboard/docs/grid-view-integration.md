@@ -79,7 +79,8 @@ SRETGrid.open({
   }
 });
 SRETGrid.close(); SRETGrid.setRows(rows); SRETGrid.patchRows(rows); SRETGrid.isOpen();
-SRETGrid.dialog(title, build);        // the grid's centred modal, for the app's own content
+SRETGrid.dialog(title, build, {wide});// the grid's centred modal, for the app's own content (wide: up to 1040px)
+SRETGrid.refresh(config);             // reopen with a new config, keeping where Back returns to
 SRETGrid.importAoa(aoa, fileName);    // run the import checks on a sheet the app already parsed
 ```
 
@@ -349,6 +350,22 @@ Plus the embedded **Project baseline**. A vendor or contractor schedule is its o
 - Options beside the toggle: which interim scopes to show (default all), and "Moved only" (default on) so unchanged activities add no marker.
 - Activities only the interim holds have no row on the board; they are counted in a line under the toggle ("1 activity in the interim is not on the board") and listed in Schedule changes as New.
 - Dependency lines: interim markers take no part in `drawDepLines()`; lines stay on the primary's markers.
+
+### 5. Table editing and phones (Matt, 2026-09-30)
+
+**New column and grid options**
+
+| Option | What it does | App wiring |
+|---|---|---|
+| `type:'refs'` + `opts.refOptions(key, rowKey)` | Predecessor and Successor are token pickers: type a letter to list IDs starting with it (S lists SNIP-...), digits to match the start of the ID number (117 lists SNIP-117, exact first, then ID order). Enter or a click adds; the cross removes one; Delete clears what was typed; Backspace deletes characters; Enter on an empty input, Tab or a press outside saves; Esc cancels. The value stays text (`'SNIP-101, UMG-003'`); an ID with a relationship (`'SNIP-101: FS'`) keeps it; an unknown ID keeps a dashed token | `refOptions` returns every schedule activity and user task `{id, name}` the board knows |
+| `symbols:{prefix:'ico-', stateKey:'state'}` on a select column | The Icon column: draws `<svg><use href="#ico-...">` coloured by the row's status (the board's `.ms-icon` classes); tap to pick from the five marks. `opts.renderSymbol(value, item)` can draw it instead | Options are `MS_MARKERS` (diamond, lock, flag, star, circle); the key is the user task's `marker`, normalised with `normalizeMarker()`; `renderSymbol` can call the app's `renderIcon()` |
+| WBS label | "WBS/Area" on User tasks and the schedule views | Column label only |
+| Bulk edit (automatic when the grid is editable) | "Edit N rows" appears while rows are selected. Tick fields, set values, Apply: every change goes through `canEdit` and `onEdit`; references can be added, replaced or removed; ranges are checked first; refused changes are listed | Nothing extra: it uses the same `onEdit` as a cell edit |
+| `pin:['id','name']` | Below 1024px of grid width the checkbox and these columns stay put while the rest scrolls sideways; the last one narrows so the pinned part stays under about 70% | Pass the ID and name keys of each view |
+
+**Phones and touch:** on a coarse pointer controls are 32px with an invisible 40px tap area (`--ctl-hit-touch`, as the dashboard's filter bar), rows and header grow to 40px, and the whole checkbox cell ticks the row. Menus and pickers stay inside the screen. Header buttons wrap at every width. Below 768px search sits behind a button in the title row and the counts row shows only while something is selected or filtered. `tools/grid_view_responsive.py` (part of `grid_view_check.py`) asserts all of this at 390, 768 and 1440 wide with mouse and touch, and has its own `--prove-fails`.
+
+**Icon symbols in the demo:** `tools/grid_view_assemble.py` copies the app's `#ico-*` symbols and `.ms-icon` rules into the demo; in the app they already exist.
 
 ## Verification at merge
 

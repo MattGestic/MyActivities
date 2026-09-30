@@ -63,7 +63,7 @@ MUTATIONS = {
     # refuses), so this mutation removes both; removing either alone is
     # covered by the other and correctly still passes.
     "readonly-ignored": [("if(!gridEditable||!c||!c.editable) return false;", "if(!gridEditable||!c) return false;"),
-                         ("editor:ed?Editor:null", "editor:gridEditable?Editor:null")],
+                         ("editor:ed?(c.type==='refs'?RefsEditor:Editor):null", "editor:gridEditable?(c.type==='refs'?RefsEditor:Editor):null")],
     "esc-commits": ("    el.addEventListener('keydown',function(e){\n      if((e.key==='ArrowLeft'",
                     "    el.addEventListener('keydown',function(e){ if(e.key==='Escape'){ args.grid.getEditorLock().commitCurrentEdit(); return; }\n      if((e.key==='ArrowLeft'"),
     "no-selection-count": ("grid.onSelectedRowsChanged.subscribe(updateStatus);", ""),
@@ -527,7 +527,8 @@ try{
       if($('.sg-editor')) key($('.sg-editor'),'Enter'); await frames(); await sleep(20);
       const e=lastLog('onEdit');
       res.push({same:same,committed:!!e&&e.args[0]===rk&&e.args[2]===txt,
-                applied:Math.abs(vp.clientWidth-$('.sg-grid').clientWidth)<=20});
+                // both panes together (narrow widths pin ID and Name into a left pane)
+                applied:Math.abs($$('.sg-grid .slick-pane-top .slick-viewport').filter(v=>v.offsetParent).reduce((a,v)=>a+v.clientWidth,0)-$('.sg-grid').clientWidth)<=20});
     }
     board.style.width=''; await frames(); await sleep(20);
     ok('resize during an edit (N=3): editor and typed text kept, onEdit commits, resize applied after', res.every(x=>x.same&&x.committed&&x.applied), res); }
@@ -1065,6 +1066,13 @@ try{
     function refSplitT(v){ return String(v||'').split(/[,;]+/).map(x=>x.trim().toUpperCase()).filter(Boolean); }
     ok('bulk: a summary names what changed', /^Updated 3 rows \(\d+ changes\)\.$/.test(sum[0]) && msg()===sum[0], sum);
     btn('bulk-done').click(); await sleep(10);
+    // Adding the same ID again leaves it listed once.
+    btn('bulk-edit').click(); await sleep(20);
+    const ria=$('[data-sg=bulk-ctl-pred] [data-sg=refs-input]'); ria.value='117'; ria.dispatchEvent(new Event('input',{bubbles:true})); await sleep(10); key(ria,'Enter'); await sleep(10);
+    btn('bulk-apply').click(); await sleep(20);
+    ok('bulk: adding an ID a row already has does not repeat it', keys.every(k=>refSplitT(eng().dataView.getItemById(k).pred).filter(x=>x==='SNIP-117').length===1),
+       keys.map(k=>eng().dataView.getItemById(k).pred));
+    btn('bulk-done').click(); await sleep(10);
     btn('bulk-edit').click(); await sleep(20);
     const mode=btn('bulk-mode-pred'); mode.value='remove'; mode.dispatchEvent(new Event('change',{bubbles:true}));
     const ri2=$('[data-sg=bulk-ctl-pred] [data-sg=refs-input]'); ri2.value='117'; ri2.dispatchEvent(new Event('input',{bubbles:true})); await sleep(10); key(ri2,'Enter'); await sleep(10);
@@ -1103,6 +1111,8 @@ try{
     ok('refs: it narrows as the user keeps typing (SNIP-11...)', s11.length>0 && s11.length<sAll.length && s11.every(id=>id.indexOf('SNIP-11')===0), s11);
     await typeIn('117'); const n117=opts();
     ok('refs: digits match the ID number (117 -> SNIP-117), the exact one first', n117[0]==='SNIP-117' && n117.every(id=>/(^|\D)117\d*$/.test(id)), n117);
+    await typeIn('2'); const n2=opts();
+    ok('refs: digits match the start of the number, not anywhere in it (2 lists SNIP-2xx, not SNIP-112)', n2.length>0 && n2.every(id=>/^2/.test((/(\d+)\D*$/.exec(id)||[,''])[1].replace(/^0+/,''))||/^2/.test((/(\d+)\D*$/.exec(id)||[,''])[1])) && !n2.includes('SNIP-112'), n2.slice(0,6));
     await typeIn('snip-1'); const ord=opts();
     ok('refs: matches are in ID order, numbers compared as numbers', ord.length>3 && ord.every((id,i)=>i===0||id.localeCompare(ord[i-1],undefined,{numeric:true})>0), ord.slice(0,5));
     await typeIn('1'); const n1=opts();
@@ -1418,6 +1428,7 @@ def subprocess_checks(html_path: pathlib.Path) -> list:
     for label, cmd in [
         ("colour_audit.py --strict on demo.html", [sys.executable, str(ROOT / "tools" / "colour_audit.py"), str(html_path), "--strict"]),
         ("palette_swap_check.py on demo.html", [sys.executable, str(ROOT / "tools" / "palette_swap_check.py"), str(html_path)]),
+        ("grid_view_responsive.py on demo.html (390/768/1440, mouse and touch)", [sys.executable, str(ROOT / "tools" / "grid_view_responsive.py"), "--html", str(html_path)]),
     ]:
         p = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
         tail = [ln for ln in p.stdout.strip().splitlines() if ln.strip()][-1:] or [p.stderr.strip()[-200:]]

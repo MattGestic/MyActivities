@@ -228,7 +228,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
       render();
       // Views read the table when they open: refresh Schedule changes on close.
       return function(){ var all=C.list(CST); if(!all.some(function(s){ return s.id===CMP.cur; })) CMP.cur=(C.list(CST)[0]||{}).id; CMP.basis=null; setTimeout(function(){ if(SRETGrid.isOpen()){ var c=CONFIGS.changes(); window.DEMO_LAST_ROWS=c.rows; SRETGrid.refresh(c); } },0); };
-    });
+    },{wide:true});
   }
   function changesCfg(){
     var d=changesData();
@@ -242,7 +242,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
         {sg:'cmp-basis',label:'Compared with',items:d.bases.map(function(b){ return {id:b.snap.id,label:b.label+(b.isDefault?' (default)':''),checked:b.snap===d.basis}; }),
           onSelect:function(id){ CMP.basis=id; log('onCompare',[CMP.cur,id]); window.DEMO_OPEN('changes'); }}],
       note:d.basis?C.summary(d.result)+' Calendar days; positive is later.':d.bases.length?'Nothing older is loaded for this schedule. Choose a schedule under Compared with.':'Nothing loaded to compare this schedule with yet.',
-      onBack:back,ensureXLSX:ensureXLSX,host:host},viewsOpt('changes'));
+      pin:['id','name'],onBack:back,ensureXLSX:ensureXLSX,host:host},viewsOpt('changes'));
   }
   // Schedule milestones: every activity from an uploaded schedule (the board
   // plots each as a milestone). User tasks are the user's own items.
@@ -258,7 +258,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
       title:title,rowKey:'id',editable:true,exportName:title,
       columns:F.cols.sched,rows:rows,lists:listsOpt(ACT),
       onEdit:function(k,f,v){ log('onEdit',[k,f,v]); patch(store.sched,'id',k,f,v); },
-      onBack:back,ensureXLSX:ensureXLSX,host:host},viewsOpt(cur)); }
+      pin:['id','name'],onBack:back,ensureXLSX:ensureXLSX,host:host},viewsOpt(cur)); }
   var CONFIGS={
     usertasks:function(){ return {
       title:'User tasks',rowKey:'id',editable:true,exportName:'User tasks',
@@ -285,13 +285,13 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
           out.forEach(function(o){ store.usertasks.push(o); });
           log('onImportCommit',[out.map(function(o){ return o.id; })]);
           return out; }},
-      onBack:back,ensureXLSX:ensureXLSX,host:host}; },
+      pin:['id','name'],onBack:back,ensureXLSX:ensureXLSX,host:host}; },
     annot:function(){ return {
       title:'Comments and markups: W/E 27-Sep-26',rowKey:'aid',editable:true,exportName:'Comments and markups W-E 27-Sep-26',
       columns:F.cols.annot,rows:store.annot.slice(),lists:listsOpt(ANN),
       onEdit:function(k,f,v){ log('onEdit',[k,f,v]); patch(store.annot,'aid',k,f,v); },
       onDelete:function(keys){ log('onDelete',[keys]); store.annot=store.annot.filter(function(r){ return keys.indexOf(r.aid)<0; }); },
-      onBack:back,ensureXLSX:ensureXLSX,host:host,view:'annot',views:viewsOpt('annot').views,onView:viewsOpt('annot').onView}; },
+      pin:['id','name'],onBack:back,ensureXLSX:ensureXLSX,host:host,view:'annot',views:viewsOpt('annot').views,onView:viewsOpt('annot').onView}; },
     changes:changesCfg,
     sched:function(){ return schedView('Schedule milestones',store.sched.slice(),'schedms'); },
     schedms:function(){ return schedView('Schedule milestones',store.sched.slice(),'schedms'); },
@@ -300,7 +300,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
       title:'Schedule milestones (2,000 row stress set)',rowKey:'id',editable:true,exportName:'Stress',
       columns:F.cols.sched,rows:window.SRET_STRESS(2000),lists:listsOpt(ACT),
       onEdit:function(k,f,v){ log('onEdit',[k,f,v]); },
-      onBack:back,ensureXLSX:ensureXLSX,host:host}; }
+      pin:['id','name'],onBack:back,ensureXLSX:ensureXLSX,host:host}; }
   };
   // DEMO_LAST_ROWS is the exact array handed to open(), so the check can prove
   // the grid never mutates the caller's objects.

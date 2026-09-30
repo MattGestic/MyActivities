@@ -11,6 +11,7 @@
        openColumn, onOpenItem(rowKey), importer:{...},
        views:[{id,label,count}], view, onView(id)   (title becomes a view switcher)
        pickers:[{sg,label,items:[{id,label,checked}],onSelect(id)}], note,
+       pin:['id','name']   columns kept in view on narrow screens (with the checkbox)
        toolsItems:[{label,sg,onSelect}]   importer.noun:['task','tasks']
      })
      SRETGrid.close()   SRETGrid.setRows(rows)   SRETGrid.patchRows(rows)   SRETGrid.isOpen()
@@ -358,6 +359,8 @@
     (kids||[]).forEach(function(c){ if(c) el.appendChild(c); });
     return el;
   }
+  var SEARCH_SVG='<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">'+
+    '<circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.5 10.5 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
   var BACK_SVG='<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">'+
                '<path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
@@ -371,6 +374,21 @@
   // split button (main action on the left, its options on the right).
   // Matt, 2026-09-28: the temp list is session only; saved lists are kept.
   var TEMP_HINT='My temp list is for this session only. It clears when the file is closed or reloaded. Add items to a saved list to keep them.';
+  // A menu opens below its button, left-aligned; where that would run off
+  // the screen it aligns right instead, and caps its width to the screen.
+  function keepInside(pop){
+    var s=S; if(!s) return;
+    pop.style.left=''; pop.style.right=''; pop.style.maxWidth='';
+    var sr=s.screen.getBoundingClientRect(), r=pop.getBoundingClientRect(), room=sr.width-8;
+    if(r.width>room) pop.style.maxWidth=room+'px';
+    r=pop.getBoundingClientRect();
+    if(r.right>sr.right-4){
+      var wrap=pop.offsetParent?pop.offsetParent.getBoundingClientRect():sr;
+      pop.style.left='auto'; pop.style.right='0px';
+      r=pop.getBoundingClientRect();
+      if(r.left<sr.left+4){ pop.style.right='auto'; pop.style.left=(sr.left+4-wrap.left)+'px'; }
+    }
+  }
   function makeMenu(label,sg,getItems,extraClass,split){
     var btn=split
       ?h('button',{type:'button','class':'sg-btn sg-split-chev'+(extraClass?' '+extraClass:''),'aria-haspopup':'menu',
@@ -402,6 +420,7 @@
     function open(){
       if(S&&S.openMenu&&S.openMenu!==m) S.openMenu.close(false);
       render(); pop.hidden=false; btn.setAttribute('aria-expanded','true'); btn.classList.add('is-open');
+      keepInside(pop);
       if(S) S.openMenu=m;
       document.addEventListener('mousedown',onDoc,true);
       var f=enabled()[0]; if(f) f.focus();
@@ -442,7 +461,8 @@
     if(text) s.msgTimer=root.setTimeout(function(){ if(S===s) s.msgEl.classList.remove('is-shown'); },6000);
   }
   function ctlHeight(el){
-    var v=parseFloat(getComputedStyle(el).getPropertyValue('--ctl-h'));
+    var cs=getComputedStyle(el), v=parseFloat(cs.getPropertyValue('--sg-row-h'));
+    if(!(isFinite(v)&&v>0)) v=parseFloat(cs.getPropertyValue('--ctl-h'));
     return isFinite(v)&&v>0?v:24;
   }
 
@@ -454,6 +474,7 @@
     s.selEl.textContent=sel?('('+sel+' selected)'):'';
     s.selAllBtn.textContent=shown&&sel===shown?'Clear selection':'Select all';
     s.selAllBtn.disabled=!shown;
+    if(s.bar3) s.bar3.classList.toggle('is-idle',!sel&&(!s.pill||s.pill.hidden));
     if(s.editBtn){ s.editBtn.hidden=!sel; s.editBtn.textContent=sel>1?'Edit '+sel+' rows':'Edit row'; }
     if(s.lists) updateLists();
   }
@@ -754,6 +775,7 @@
       p[1].setAttribute('aria-expanded',String(on)); p[1].classList.toggle('is-open',on);
     });
     s.pill.hidden=!s.scope;
+    if(s.bar3) s.bar3.classList.toggle('is-idle',!s.grid.getSelectedRows().length&&s.pill.hidden);
     if(s.scope) s.pillText.textContent=s.scope.type==='temp'?'My temp list only':'List: '+listName(s.scope.id);
     if(s.panelMode) renderPanel();
   }
@@ -882,7 +904,7 @@
   }
 
   // ----- the List column: collapsed to an indicator, or expanded to names -----
-  var LIST_COL_W={collapsed:36,expanded:180};
+  var LIST_COL_W={collapsed:40,expanded:180};
   function listColName(){
     var ex=S&&S.listExpanded;
     return '<button type="button" class="sg-lcol-toggle" data-sg="list-col-toggle" aria-expanded="'+(ex?'true':'false')+
@@ -907,17 +929,59 @@
     var b=s.screen.querySelector('[data-sg=list-col-toggle]'); if(b) b.focus();
   }
 
+  // ---------- pinned columns on narrow screens (Matt, 2026-09-30, option A) ----------
+  // Below PIN_BELOW px of grid width, the checkbox and the columns named in
+  // opts.pin (e.g. ['id','name']) stay put while the rest scrolls sideways.
+  // The last pinned column narrows so the pinned part takes at most about
+  // 62% of the width. SlickGrid's pinned pane cannot scroll up and down on
+  // its own (it relies on a wheel handler we keep off for smooth scrolling),
+  // so it scrolls natively with its scrollbar hidden and follows the main pane.
+  var PIN_BELOW=1024, PIN_SHARE=0.62, PIN_MIN=100;
+  function applyPin(){
+    var s=S; if(!s||!s.pinKeys.length) return;
+    var w=s.gridEl.clientWidth, want=w>0&&w<PIN_BELOW, g=s.grid;
+    var cols=g.getColumns();
+    if(!want){
+      if(!s.pinned) return;
+      s.pinned=false;
+      var order=s.baseOrder, byId={}; cols.forEach(function(c){ byId[c.id]=c; });
+      var back=order.map(function(id){ return byId[id]; }).filter(Boolean);
+      back.forEach(function(c){ if(s.pinWidths[c.id]) c.width=s.pinWidths[c.id]; });
+      g.setOptions({frozenColumn:-1}); g.setColumns(back); g.invalidate();
+      return;
+    }
+    var ids=['_checkbox_selector'].concat(s.pinKeys), pins=[], rest=[];
+    ids.forEach(function(id){ var c=cols.filter(function(x){ return x.id===id; })[0]; if(c) pins.push(c); });
+    cols.forEach(function(c){ if(pins.indexOf(c)<0) rest.push(c); });
+    var last=pins[pins.length-1];
+    if(!s.pinned){ s.pinWidths={}; s.pinWidths[last.id]=last.width; }
+    var fixed=pins.slice(0,-1).reduce(function(a,c){ return a+c.width; },0);
+    last.width=Math.max(PIN_MIN,Math.min(s.pinWidths[last.id],Math.floor(w*PIN_SHARE)-fixed));
+    var was=s.pinned; s.pinned=true;
+    g.setColumns(pins.concat(rest));
+    if(!was) g.setOptions({frozenColumn:pins.length-1});
+    g.invalidate();
+    syncPinnedScroll();
+  }
+  function syncPinnedScroll(){
+    var s=S, left=s.gridEl.querySelector('.slick-pane-top.slick-pane-left .slick-viewport'),
+        right=s.gridEl.querySelector('.slick-pane-top.slick-pane-right .slick-viewport');
+    if(!left||!right||left.__sgSync) return;
+    left.__sgSync=true;
+    left.addEventListener('scroll',function(){ if(Math.abs(right.scrollTop-left.scrollTop)>0.5) right.scrollTop=left.scrollTop; },{passive:true});
+  }
+
   // ---------- dialog (centre screen, modal) ----------
   // Used for Import milestones: the app mounts its own schedule import form
   // into the body, so it is the same form, not a copy.
   function focusables(el){
     return Array.prototype.slice.call(el.querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'));
   }
-  function openDialog(title,build){
+  function openDialog(title,build,o){
     var s=S; if(s.dialog) s.dialog.close();
     var body=h('div',{'class':'sg-dialog-body','data-sg':'dialog-body'});
     var x=h('button',{type:'button','class':'sg-iconbtn','aria-label':'Close',title:'Close','data-sg':'dialog-close',text:'✕'});
-    var dlg=h('div',{'class':'sg-dialog',role:'dialog','aria-modal':'true','aria-labelledby':'sg-dialog-title','data-sg':'dialog'},[
+    var dlg=h('div',{'class':'sg-dialog'+(o&&o.wide?' sg-dialog--wide':''),role:'dialog','aria-modal':'true','aria-labelledby':'sg-dialog-title','data-sg':'dialog'},[
       h('div',{'class':'sg-dialog-head'},[h('h3',{'class':'sg-dialog-title',id:'sg-dialog-title',text:title}),x]),body]);
     var scrim=h('div',{'class':'sg-scrim','data-sg':'dialog-scrim'},[dlg]);
     var ret=document.activeElement, cleanup=null;
@@ -1126,7 +1190,7 @@
       });
       t.appendChild(b);
       body.appendChild(h('div',{'class':'sg-itable-wrap'},[t]));
-    });
+    },{wide:true});
   }
 
   // ---------- health icon prefix, tap to edit (as the dashboard) ----------
@@ -1320,7 +1384,10 @@
     var msg=h('span',{'class':'sg-msg',role:'status','aria-live':'polite','data-sg':'msg'});
     // Row 1: back, title. Row 2 (starts in line with the title): search, Add
     // row, Tools, Add to temp list. Row 3: counts, Select all, the filter pill.
-    var bar=h('div',{'class':'sg-bar'},[h('div',{'class':'sg-bar-lead'},[back,title])]);
+    // Phones: search sits behind this button in the title row (shown by CSS only below 768px).
+    var searchToggle=h('button',{type:'button','class':'sg-iconbtn sg-search-toggle','aria-label':'Search','aria-expanded':'false',title:'Search','data-sg':'search-toggle'});
+    searchToggle.innerHTML=SEARCH_SVG;
+    var bar=h('div',{'class':'sg-bar'},[h('div',{'class':'sg-bar-lead'},[back,title]),searchToggle]);
     // Pickers (e.g. Schedule changes: which schedule, compared with what):
     // radio menus after the search; the caller reopens the grid in onSelect.
     var pickers=(opts.pickers||[]).map(function(p){
@@ -1353,7 +1420,7 @@
 
     var rowH=ctlHeight(screen);
     var dv=new root.Slick.Data.DataView({inlineFilters:false});
-    var check=new root.Slick.CheckboxSelectColumn({cssClass:'sg-check',width:32,hideInFilterHeaderRow:true});
+    var check=new root.Slick.CheckboxSelectColumn({cssClass:'sg-check',width:40,hideInFilterHeaderRow:true});
     var checkDef=check.getColumnDefinition();
     checkDef.headerCssClass='sg-check-h';
     var colDefs=cols.filter(function(c){ return !c.hidden; }).map(function(c){
@@ -1387,7 +1454,7 @@
 
     S={opts:opts,rowKey:rowKey,cols:cols,colByKey:colByKey,filters:{},quick:'',grid:grid,dv:dv,
        screen:screen,host:host,countEl:count,selEl:selc,msgEl:msg,expBtn:exp,searchEl:search,selAllBtn:selAll,tools:tools,openMenu:null,
-       confirmEl:confirm,prev:null,returnFocus:carried||document.activeElement,ro:null,viewMenu:viewMenu,editBtn:editBtn,
+       confirmEl:confirm,prev:null,returnFocus:carried||document.activeElement,ro:null,viewMenu:viewMenu,editBtn:editBtn,bar3:bar3,
        lists:lists,scope:null,listExpanded:false,tmpAddBtn:tmpAdd,tmpCount:tmpCount,railTemp:railTemp,railLists:railLists,
        pill:pill,pillText:pillText,panel:panel,panelMode:null,dialog:null,msgTimer:0};
     if(lists) buildPanel();
@@ -1445,6 +1512,16 @@
       if(!gridEditable||(sym&&!c.sg.editable)){ say('This view is read only.'); return; }
       if(sym) openSymPicker(b,it[rowKey],c.sg); else openHealthPicker(b,it[rowKey],c.sg);
     });
+    // Tapping anywhere in the checkbox cell ticks the row, so the tap area is
+    // the whole cell, not the 16px box.
+    grid.onClick.subscribe(function(e,args){
+      var ne=e&&e.getNativeEvent?e.getNativeEvent():e, t=ne&&ne.target, c=grid.getColumns()[args.cell];
+      if(!c||c.id!=='_checkbox_selector'||(t&&t.tagName==='INPUT')) return;
+      var sel=grid.getSelectedRows().slice(), i=sel.indexOf(args.row);
+      if(i>=0) sel.splice(i,1); else sel.push(args.row);
+      grid.setSelectedRows(sel);
+      if(e.stopImmediatePropagation) e.stopImmediatePropagation();
+    });
     grid.onDblClick.subscribe(function(e,args){
       var c=grid.getColumns()[args.cell], it=dv.getItem(args.row);
       if(c&&c.id===opts.openColumn&&it&&typeof opts.onOpenItem==='function') opts.onOpenItem(it[rowKey]);
@@ -1471,7 +1548,15 @@
     if(lists) refreshLists();
 
     back.addEventListener('click',function(){ var cb=opts.onBack; close(); if(typeof cb==='function') cb(); });
-    search.addEventListener('input',function(){ S.quick=search.value; dv.refresh(); });
+    search.addEventListener('input',function(){ S.quick=search.value; dv.refresh(); screen.classList.toggle('has-search',!!search.value); });
+    searchToggle.addEventListener('click',function(){
+      var open=!screen.classList.contains('is-search-open');
+      screen.classList.toggle('is-search-open',open); searchToggle.setAttribute('aria-expanded',String(open));
+      if(open) search.focus(); else searchToggle.focus();
+    });
+    search.addEventListener('keydown',function(e){
+      if(e.key==='Escape'&&!search.value&&screen.classList.contains('is-search-open')){ e.stopPropagation(); searchToggle.click(); }
+    });
     if(exp) exp.addEventListener('click',exportRows);
     if(add) add.addEventListener('click',doAdd);
     if(editBtn) editBtn.addEventListener('click',openBulkEdit);
@@ -1502,7 +1587,7 @@
       var doResize=function(){
         timer=0; if(!S||S.grid!==grid) return;
         if(grid.getEditorLock().isActive()){ pending=true; return; }
-        pending=false; grid.resizeCanvas();
+        pending=false; grid.resizeCanvas(); applyPin();
       };
       // A timer, not requestAnimationFrame: it still runs outside the observer
       // callback, and it fires even when no frame is being drawn.
@@ -1517,6 +1602,9 @@
       S.ro.observe(gridEl);
     }
     updateStatus();
+    S.gridEl=gridEl; S.pinKeys=(opts.pin||[]).filter(function(k){ return !!colByKey[k]&&!colByKey[k].hidden; });
+    S.baseOrder=grid.getColumns().map(function(c){ return c.id; }); S.pinned=false;
+    applyPin();
     if(dv.getLength()) grid.setActiveCell(0,firstDataCell());
     if(carried&&viewMenu) viewMenu.btn.focus();
     return api;
@@ -1551,7 +1639,7 @@
     patchRows:patchRows,
     exportVisible:function(){ return S?exportRows():Promise.resolve(null); },
     // A centred modal dialog on the open screen; build(body, close) may return a cleanup.
-    dialog:function(title,build){ return S?openDialog(title,build):null; },
+    dialog:function(title,build,o){ return S?openDialog(title,build,o):null; },
     // Reopen the screen with a new config (e.g. after the caller's data
     // changed) keeping where Back returns to.
     refresh:function(o){ if(S) S.switching=true; return open(o); },
