@@ -53,6 +53,28 @@ def token_blocks() -> str:
             ":root{accent-color:var(--color-accent)}\n*{box-sizing:border-box;margin:0;padding:0}")
 
 
+def icon_defs() -> str:
+    """The app's marker symbols (#ico-*) and the .ms-icon rules that colour
+    them, so the grid's Icon column draws the board's own marks."""
+    html = APP.read_text(encoding="utf-8")
+    m = re.search(r'<svg width="0" height="0"[^>]*>\s*<defs>.*?</defs>\s*</svg>', html, re.S)
+    if not m or 'id="ico-diamond"' not in m.group(0):
+        sys.exit("Could not find the marker symbols in the app file.")
+    return m.group(0)
+
+
+def icon_css() -> str:
+    html = APP.read_text(encoding="utf-8")
+    style = re.search(r"<style[^>]*>(.*?)</style>", html, re.S).group(1)
+    # Only the .ms-icon rules themselves (one line each), not .ms-icon-btn and friends.
+    rules = [l for l in style.splitlines() if re.match(r"\.ms-icon[.{]", l)]
+    if any(l.count("{") != l.count("}") for l in rules):
+        sys.exit("An .ms-icon rule spans several lines in the app file; update icon_css().")
+    if len(rules) < 5:
+        sys.exit("Could not find the .ms-icon rules in the app file.")
+    return "/* Copied from src/milestone-dashboard.html: the marker colours. */\n" + "\n".join(rules)
+
+
 def iso(s: str):
     s = (s or "").strip().rstrip("A").rstrip("*").strip()
     m = re.match(r"^(\d{1,2})-([A-Za-z]{3})-(\d{2})$", s)
@@ -202,7 +224,8 @@ def fixtures():
                        "progress": [0, 25, 50, 75, 100][i % 5],
                        "comment": "" if i % 3 else "Added at the weekly review.",
                        "created": (datetime.date(2026, 9, 1) + datetime.timedelta(days=i)).isoformat(),
-                       "createdBy": ["MG", "JR", "AK"][i % 3], "health": [1, 2, 3, 4, 0][i % 5]})
+                       "createdBy": ["MG", "JR", "AK"][i % 3], "health": [1, 2, 3, 4, 0][i % 5],
+                       "marker": ["diamond", "lock", "diamond", "star", "flag", "circle"][i % 6]})
     kinds = [("Milestone comment", "comment"), ("Row remark", "remark"), ("Dependency comment", "dep"),
              ("Note", "note"), ("Health override", "health"), ("Progress override", "progress"),
              ("Date override", "date")]
@@ -234,6 +257,10 @@ def fixtures():
     nstat = [{"value": "note", "label": "Note"}, {"value": "open", "label": "Open"}, {"value": "sent", "label": "Sent"},
              {"value": "review", "label": "In review"}, {"value": "outstanding", "label": "Outstanding"},
              {"value": "done", "label": "Done"}, {"value": "closed", "label": "Closed"}]
+    # The board's marks (MS_MARKERS in the app), drawn from its #ico-* symbols.
+    markers = [{"value": "diamond", "label": "Diamond, default milestone"}, {"value": "lock", "label": "Lock, stage gate"},
+               {"value": "flag", "label": "Flag, notable milestone"}, {"value": "star", "label": "Star, key project milestone"},
+               {"value": "circle", "label": "Circle"}]
     cols = {
         "usertasks": [
             # ID carries the health icon (tap to change, as the dashboard); Health itself is a
@@ -242,14 +269,17 @@ def fixtures():
              "icon": {"key": "health", "label": "Health", "options": health}},
             {"key": "name", "label": "Name", "type": "text", "editable": True, "width": 240},
             {"key": "type", "label": "Type", "type": "select", "editable": True, "options": types, "width": 70},
+            # Icon (Matt, 2026-09-30): the mark the board draws, picked from the board's own set.
+            {"key": "marker", "label": "Icon", "type": "select", "editable": True, "options": markers, "width": 96,
+             "symbols": {"prefix": "ico-", "stateKey": "state"}},
             {"key": "start", "label": "Start", "type": "date", "editable": True},
             {"key": "finish", "label": "Finish", "type": "date", "editable": True},
             {"key": "band", "label": "Band", "type": "text", "editable": True, "width": 170},
-            {"key": "wbs", "label": "WBS", "type": "text", "editable": True, "width": 150},
+            {"key": "wbs", "label": "WBS/Area", "type": "text", "editable": True, "width": 150},
             {"key": "state", "label": "Status", "type": "select", "editable": True, "options": state,
              "tones": {"FUTURE": "future", "TRACK": "track", "RISK": "risk", "CRIT": "crit", "DONEUSER": "done"}},
-            {"key": "pred", "label": "Predecessor", "type": "text", "editable": True, "width": 110},
-            {"key": "succ", "label": "Successor", "type": "text", "editable": True, "width": 110},
+            {"key": "pred", "label": "Predecessor", "type": "refs", "editable": True, "width": 150},
+            {"key": "succ", "label": "Successor", "type": "refs", "editable": True, "width": 150},
             {"key": "progress", "label": "% complete", "type": "number", "editable": True, "width": 90, "min": 0, "max": 100},
             {"key": "comment", "label": "Comment", "type": "text", "editable": True, "width": 220},
             {"key": "created", "label": "Date created", "type": "date", "width": 100},
@@ -269,7 +299,7 @@ def fixtures():
         "sched": [
             {"key": "id", "label": "Activity ID", "type": "text", "width": 100},
             {"key": "name", "label": "Activity name", "type": "text", "width": 260},
-            {"key": "wbs", "label": "WBS", "type": "text", "width": 160},
+            {"key": "wbs", "label": "WBS/Area", "type": "text", "width": 160},
             {"key": "dur", "label": "Duration", "type": "number", "width": 72},
             {"key": "start", "label": "Start", "type": "date"},
             {"key": "finish", "label": "Finish", "type": "date"},
@@ -317,6 +347,8 @@ def build() -> str:
     parts = {
         "/*@TOKENS@*/": token_blocks(),
         "/*@GRID_CSS@*/": (MOD / "grid-view.css").read_text(encoding="utf-8"),
+        "/*@ICON_CSS@*/": icon_css(),
+        "<!--@ICON_DEFS@-->": icon_defs(),
         "/*@USER_CSS@*/": (ROOT / "src" / "modules" / "user" / "user.css").read_text(encoding="utf-8"),
         "/*@VENDOR_CSS@*/": safe_inline(vendor_css, "</style", "vendor CSS"),
         "/*@VENDOR_JS@*/": safe_inline(vendor_js, "</script", "vendor JS"),

@@ -49,8 +49,8 @@
   'use strict';
 
   var MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  var TYPES={text:1,date:1,number:1,select:1};
-  var DEFAULT_WIDTH={text:180,date:96,number:80,select:120};
+  var TYPES={text:1,date:1,number:1,select:1,refs:1};
+  var DEFAULT_WIDTH={text:180,date:96,number:80,select:120,refs:160};
   var CHECK_ID='_checkbox_selector';
   var S=null;   // the one open screen, or null
 
@@ -97,9 +97,155 @@
   function cellFormatter(r,cell,v,colDef,item){
     var c=colDef.sg, txt=esc(display(c,v));
     if(c.icon) txt=hdot(c.icon,item?item[c.icon.key]:null)+'<span class="sg-cell-txt">'+txt+'</span>';
+    if(c.symbols) txt=symBtn(c,v,item)+'<span class="sg-cell-txt">'+esc(String(display(c,v)).split(',')[0])+'</span>';
     if(c.tones&&v!=null&&c.tones[v]) return {text:txt,addClasses:'sg-tone sg-tone-'+c.tones[v]};
     return txt;
   }
+
+  // ---------- references: predecessor and successor pickers (Matt, 2026-09-30) ----------
+  // A value is a list of activity IDs kept as text ('SNIP-101, UMG-003').
+  // Each item may carry a relationship after the ID ('SNIP-101: FS'); it is
+  // kept as written. The picker shows the items as tokens with a cross, and
+  // an input that filters the IDs the app knows as the user types:
+  //   starts with a letter -> IDs that start with it   (S -> SNIP-...)
+  //   digits only          -> IDs whose number starts with them (117 -> SNIP-117)
+  // Enter adds the highlighted ID. Delete clears what has been typed;
+  // Backspace deletes characters. The cross removes one token.
+  var REF_LIMIT=50;
+  function refSplit(v){ return String(v==null?'':v).split(/[,;]+/).map(function(x){ return x.trim(); }).filter(Boolean); }
+  function refId(tok){ return String(tok).split(/[:\s]/)[0].toUpperCase(); }
+  function refNum(id){ var m=/(\d+)\D*$/.exec(id); return m?m[1]:''; }
+  function refMatch(q,opts,taken){
+    q=String(q||'').trim().toUpperCase();
+    var digits=/^\d+$/.test(q), out=[];
+    for(var i=0;i<opts.length;i++){
+      var o=opts[i], id=String(o.id).toUpperCase();
+      if(taken[id]) continue;
+      if(q){
+        if(digits){ var n=refNum(id); if(!(n.indexOf(q)===0||n.replace(/^0+/,'').indexOf(q)===0)) continue; }
+        else if(id.indexOf(q)!==0) continue;
+      }
+      out.push(o);
+    }
+    // An exact ID or number first, then in ID order (numbers compared as numbers).
+    var exact=function(o){ var id=String(o.id).toUpperCase(); return q&&(id===q||(digits&&refNum(id).replace(/^0+/,'')===q.replace(/^0+/,'')))?0:1; };
+    return out.sort(function(a,b){ return exact(a)-exact(b)||String(a.id).localeCompare(String(b.id),undefined,{numeric:true,sensitivity:'base'}); });
+  }
+  function refOptions(key,rowKey){
+    var s=S, f=s&&s.opts.refOptions;
+    var list=typeof f==='function'?(f(key,rowKey)||[]):[];
+    return list.filter(function(o){ return o&&o.id!=null&&String(o.id)!==String(rowKey); })
+      .map(function(o){ return {id:String(o.id),name:o.name||''}; });
+  }
+  // The token field itself; used by the cell editor and by bulk edit.
+  // o: {label, value, options:[{id,name}], onEnterEmpty(), onEscape(), onTab(back), onChange()}
+  function tokenField(o){
+    var toks=refSplit(o.value), known={}, hi=0, shown=[];
+    o.options.forEach(function(x){ known[x.id.toUpperCase()]=x; });
+    var uid='sg-refs-'+(++tokenField.n);
+    var list=h('div',{'class':'sg-refs-toks',role:'list'});
+    var input=h('input',{type:'text','class':'sg-refs-input',role:'combobox','aria-autocomplete':'list','aria-expanded':'false',
+                         'aria-controls':uid,'aria-label':o.label+': type an ID to add','data-sg':'refs-input',autocomplete:'off',spellcheck:'false',
+                         placeholder:'Type an ID, e.g. S or 117'});
+    var lb=h('div',{'class':'sg-refs-list',id:uid,role:'listbox','aria-label':o.label+' matches','data-sg':'refs-list',hidden:true});
+    var more=h('div',{'class':'sg-refs-more','data-sg':'refs-more',hidden:true});
+    var box=h('div',{'class':'sg-refs','data-sg':'refs'},[list,input,lb,more]);
+    function taken(){ var m={}; toks.forEach(function(x){ m[refId(x)]=1; }); return m; }
+    function drawToks(){
+      list.innerHTML='';
+      toks.forEach(function(tok,i){
+        var id=refId(tok), k=known[id];
+        var x=h('button',{type:'button','class':'sg-tok-x','aria-label':'Remove '+tok,title:'Remove','data-sg':'tok-x',tabindex:'-1',text:'×'});
+        x.addEventListener('mousedown',function(e){ e.preventDefault(); });
+        x.addEventListener('click',function(e){ e.stopPropagation(); toks.splice(i,1); drawToks(); filter(); input.focus(); if(o.onChange) o.onChange(); });
+        list.appendChild(h('span',{'class':'sg-tok'+(k?'':' sg-tok--unknown'),role:'listitem','data-sg-tok':id,
+                                   title:k?(k.id+'  '+k.name):id+': not found in the schedule or the user tasks'},[h('span',{text:tok}),x]));
+      });
+    }
+    function filter(){
+      var q=input.value.trim();
+      shown=refMatch(q,o.options,taken());
+      lb.innerHTML='';
+      var vis=shown.slice(0,REF_LIMIT);
+      hi=Math.min(hi,Math.max(0,vis.length-1));
+      vis.forEach(function(x,i){
+        var op=h('div',{'class':'sg-refs-opt'+(i===hi?' is-hi':''),role:'option','aria-selected':String(i===hi),id:uid+'-'+i,'data-sg-ref':x.id},
+                 [h('b',{text:x.id}),h('span',{text:x.name})]);
+        op.addEventListener('mousedown',function(e){ e.preventDefault(); });
+        op.addEventListener('click',function(e){ e.stopPropagation(); add(x.id); });
+        lb.appendChild(op);
+      });
+      var open=vis.length>0&&(q!==''||document.activeElement===input);
+      lb.hidden=!open; input.setAttribute('aria-expanded',String(open));
+      if(open) input.setAttribute('aria-activedescendant',uid+'-'+hi); else input.removeAttribute('aria-activedescendant');
+      more.hidden=shown.length<=REF_LIMIT; more.textContent=(shown.length-REF_LIMIT)+' more. Keep typing to narrow the list.';
+      if(q&&!vis.length){ more.hidden=false; more.textContent='No ID matches "'+q+'".'; }
+    }
+    function add(id){ toks.push(id); input.value=''; hi=0; drawToks(); filter(); input.focus(); if(o.onChange) o.onChange(); }
+    function move(d){ var n=Math.min(shown.length,REF_LIMIT); if(!n) return; hi=(hi+d+n)%n; filter(); var el=lb.children[hi]; if(el&&el.scrollIntoView) el.scrollIntoView({block:'nearest'}); }
+    input.addEventListener('input',function(){ hi=0; filter(); });
+    input.addEventListener('focus',filter);
+    input.addEventListener('keydown',function(e){
+      var k=e.key;
+      if(k==='ArrowDown'||k==='ArrowUp'){ e.preventDefault(); e.stopImmediatePropagation(); move(k==='ArrowDown'?1:-1); return; }
+      if(k==='Enter'){
+        e.preventDefault(); e.stopImmediatePropagation();
+        if(input.value.trim()!==''){ var x=shown[hi]; if(x) add(x.id); return; }
+        if(o.onEnterEmpty) o.onEnterEmpty();
+        return;
+      }
+      if(k==='Escape'&&o.onEscape){ e.preventDefault(); e.stopImmediatePropagation(); o.onEscape(); return; }
+      if(k==='Tab'&&o.onTab){ e.preventDefault(); e.stopImmediatePropagation(); o.onTab(e.shiftKey); return; }
+      if(k==='Delete'){ e.preventDefault(); e.stopImmediatePropagation(); input.value=''; hi=0; filter(); return; }
+      if(k==='Backspace'||k==='ArrowLeft'||k==='ArrowRight'||k==='Home'||k==='End'||k===' '){ e.stopImmediatePropagation(); return; }
+    });
+    drawToks();
+    return {el:box,input:input,value:function(){ return toks.join(', '); },tokens:function(){ return toks.slice(); },
+            set:function(v){ toks=refSplit(v); drawToks(); filter(); }};
+  }
+  tokenField.n=0;
+
+  // Cell editor for refs: the token field in a popup over the cell, since
+  // tokens and the match list do not fit in a 24px row.
+  function RefsEditor(args){
+    var s=S;
+    this.args=args; this.col=args.column.sg;
+    this.rowKey=args.item?args.item[s.rowKey]:null;
+    this.def=args.item?args.item[this.col.key]:'';
+    // The popup lives outside the grid, so it saves, cancels and moves on itself.
+    var lock=s.grid.getEditorLock(), grid=s.grid;
+    this.field=tokenField({label:this.col.label,value:this.def,options:refOptions(this.col.key,this.rowKey),
+      onEnterEmpty:function(){ if(lock.commitCurrentEdit()) grid.focus(); },
+      onEscape:function(){ lock.cancelCurrentEdit(); grid.focus(); },
+      onTab:function(back){ if(lock.commitCurrentEdit()){ grid.focus(); if(back) grid.navigatePrev(); else grid.navigateNext(); } }});
+    var pop=h('div',{'class':'sg-refs-pop','data-sg':'refs-pop'},[this.field.el]);
+    this.pop=pop;
+    args.container.appendChild(h('span',{'class':'sg-refs-cell',text:String(this.def||'')}));
+    s.screen.appendChild(pop);
+    this.position();
+    var self=this;
+    this.onScroll=function(){ self.position(); };
+    s.grid.onScroll.subscribe(this.onScroll);
+    // A press outside the popup saves, as moving to another cell does.
+    this.onOut=function(e){ if(!pop.contains(e.target)&&!self.args.container.contains(e.target)&&lock.isActive()) lock.commitCurrentEdit(); };
+    document.addEventListener('mousedown',this.onOut,true);
+    this.field.input.focus();
+  }
+  RefsEditor.prototype.position=function(){
+    var s=S, cell=this.args.container.getBoundingClientRect(), sr=s.screen.getBoundingClientRect(), pop=this.pop;
+    pop.style.minWidth=Math.max(cell.width,280)+'px';
+    var left=cell.left-sr.left, top=cell.top-sr.top;
+    if(left+pop.offsetWidth>sr.width-4) left=Math.max(4,sr.width-4-pop.offsetWidth);
+    if(top+pop.offsetHeight>sr.height-4) top=Math.max(4,sr.height-4-pop.offsetHeight);
+    pop.style.left=left+'px'; pop.style.top=top+'px';
+  };
+  RefsEditor.prototype.destroy=function(){ if(S) S.grid.onScroll.unsubscribe(this.onScroll); document.removeEventListener('mousedown',this.onOut,true); this.pop.remove(); };
+  RefsEditor.prototype.focus=function(){ this.field.input.focus(); };
+  RefsEditor.prototype.loadValue=function(){};
+  RefsEditor.prototype.serializeValue=function(){ return this.field.value(); };
+  RefsEditor.prototype.applyValue=function(item,state){ item[this.col.key]=state; };
+  RefsEditor.prototype.isValueChanged=function(){ return this.field.value()!==refSplit(this.def).join(', '); };
+  RefsEditor.prototype.validate=function(){ return {valid:true,msg:null}; };
 
   // ---------- editors (SlickGrid editor interface) ----------
   // One class for all four types. Native inputs so the browser draws the date
@@ -893,21 +1039,44 @@
     return '<button type="button" class="sg-hdot sg-h-'+esc(v==null?0:v)+'" tabindex="-1" data-sg-hdot="1" aria-label="'+
       esc(icon.label+': '+o.label+'. Change')+'" title="'+esc(icon.label+': '+o.label)+'"></button>';
   }
+  // Icon column (Matt, 2026-09-30): the board's own marks (#ico-* symbols),
+  // coloured by the row's status the way the board colours them. The caller
+  // can draw them itself with opts.renderSymbol(value, item).
+  function symGlyph(c,v,item){
+    var s=S, sy=c.symbols;
+    if(s&&typeof s.opts.renderSymbol==='function') return s.opts.renderSymbol(v,item);
+    var st=item&&sy.stateKey?String(item[sy.stateKey]||'future').toLowerCase():'future';
+    return '<svg class="ms-icon filled sg-sym-svg s-'+esc(st)+'" aria-hidden="true" focusable="false"><use href="#'+esc((sy.prefix||'')+(v||'diamond'))+'"/></svg>';
+  }
+  function symBtn(c,v,item){
+    var lab=display(c,v)||'None';
+    return '<button type="button" class="sg-sym" tabindex="-1" data-sg-sym="1" aria-label="'+esc(c.label+': '+lab+'. Change')+'" title="'+esc(c.label+': '+lab)+'">'+
+      symGlyph(c,v,item)+'</button>';
+  }
+  function openSymPicker(btn,rowKey,col){
+    var s=S, it=s.dv.getItemById(rowKey);
+    openPicker(btn,rowKey,{key:col.key,label:col.label,options:col.opts,sg:'icon-picker',attr:'data-sg-icon',cur:it?it[col.key]:null,
+      glyph:function(o){ var sp=h('span',{'class':'sg-sym sg-sym--menu','aria-hidden':'true'}); sp.innerHTML=symGlyph(col,o.value,it); return sp; }});
+  }
   function closeHealthPicker(){ var s=S; if(s&&s.hpick){ s.hpick.remove(); s.hpick=null; document.removeEventListener('mousedown',s.hpickOff,true); } }
   function openHealthPicker(btn,rowKey,col){
+    var s=S, icon=col.icon, it=s.dv.getItemById(rowKey), cur=it?it[icon.key]:null;
+    openPicker(btn,rowKey,{key:icon.key,label:icon.label,options:icon.options,sg:'health-picker',attr:'data-sg-health',cur:cur==null?0:cur,
+      glyph:function(o){ return h('span',{'class':'sg-hdot sg-h-'+o.value,'aria-hidden':'true'}); }});
+  }
+  // One tap-to-pick popup for a row value (health dot, icon).
+  function openPicker(btn,rowKey,p){
     var s=S; closeHealthPicker();
-    var icon=col.icon, it=s.dv.getItemById(rowKey), cur=it?it[icon.key]:null;
-    var pop=h('div',{'class':'sg-menu-pop sg-hpick',role:'menu','aria-label':icon.label,'data-sg':'health-picker'});
-    (icon.options||[]).forEach(function(o){
-      var b=h('button',{type:'button','class':'sg-menu-item',role:'menuitemradio','aria-checked':String(String(o.value)===String(cur==null?0:cur)),
-                        tabindex:'-1','data-sg-health':String(o.value)},
-              [h('span',{'class':'sg-hdot sg-h-'+o.value,'aria-hidden':'true'}),h('span',{text:o.label})]);
-      b.addEventListener('click',function(e){ e.stopPropagation(); closeHealthPicker(); setIconValue(rowKey,icon.key,o.value); });
+    var pop=h('div',{'class':'sg-menu-pop sg-hpick',role:'menu','aria-label':p.label,'data-sg':p.sg});
+    (p.options||[]).forEach(function(o){
+      var at={type:'button','class':'sg-menu-item',role:'menuitemradio','aria-checked':String(String(o.value)===String(p.cur)),tabindex:'-1'};
+      at[p.attr]=String(o.value);
+      var b=h('button',at,[p.glyph(o),h('span',{text:o.label})]);
+      b.addEventListener('click',function(e){ e.stopPropagation(); closeHealthPicker(); setIconValue(rowKey,p.key,o.value); });
       pop.appendChild(b);
     });
-    var r=btn.getBoundingClientRect(), sr=s.screen.getBoundingClientRect();
-    pop.style.left=(r.left-sr.left)+'px'; pop.style.top=(r.bottom-sr.top+4)+'px';
     s.screen.appendChild(pop); s.hpick=pop;
+    placePop(pop,btn);
     s.hpickOff=function(e){ if(!pop.contains(e.target)) closeHealthPicker(); };
     document.addEventListener('mousedown',s.hpickOff,true);
     pop.addEventListener('keydown',function(e){
@@ -917,6 +1086,15 @@
       else if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); closeHealthPicker(); s.grid.focus(); }
     });
     (pop.querySelector('[aria-checked=true]')||pop.firstChild).focus();
+  }
+  // Put a popup under its anchor inside the screen, flipping left or up
+  // when it would run off the right or bottom edge.
+  function placePop(pop,anchor){
+    var s=S, r=anchor.getBoundingClientRect(), sr=s.screen.getBoundingClientRect();
+    var w=pop.offsetWidth, hgt=pop.offsetHeight, left=r.left-sr.left, top=r.bottom-sr.top+4;
+    if(left+w>sr.width-4) left=Math.max(4,sr.width-4-w);
+    if(top+hgt>sr.height-4&&r.top-sr.top-hgt-4>=0) top=r.top-sr.top-hgt-4;
+    pop.style.left=left+'px'; pop.style.top=top+'px';
   }
   function setIconValue(rowKey,key,value){
     var s=S, it=s.dv.getItemById(rowKey); if(!it) return;
@@ -959,7 +1137,7 @@
       var type=TYPES[c.type]?c.type:'text';
       return {key:c.key,label:c.label==null?c.key:String(c.label),type:type,editable:!!c.editable,
               opts:normOptions(c.options),width:c.width||DEFAULT_WIDTH[type],min:c.min,max:c.max,options:c.options,
-              hidden:!!c.hidden,tones:c.tones||null,
+              hidden:!!c.hidden,tones:c.tones||null,symbols:c.symbols||null,
               icon:c.icon?{key:c.icon.key,label:c.icon.label||c.icon.key,options:normOptions(c.icon.options)}:null};
     });
     var gridEditable=!!opts.editable;
@@ -1086,7 +1264,7 @@
       var cls=(ed?'sg-cell-edit':'sg-cell-ro')+(c.key===opts.openColumn?' sg-cell-open':'');
       return {id:c.key,field:c.key,name:esc(c.label),toolTip:c.key===opts.openColumn?c.label+' (double-click to open)':c.label,
               width:c.width,minWidth:48,sortable:true,resizable:true,
-              sg:c,editor:ed?Editor:null,cssClass:cls,headerCssClass:ed?'sg-h-edit':null,formatter:cellFormatter};
+              sg:c,editor:ed?(c.type==='refs'?RefsEditor:Editor):null,cssClass:cls,headerCssClass:ed?'sg-h-edit':null,formatter:cellFormatter};
     });
     // The List column sits left of the checkbox (Matt, 2026-09-27).
     var slickCols=colDefs.filter(function(d){ return d.id===L_LIST; }).concat([checkDef],colDefs.filter(function(d){ return d.id!==L_LIST; }));
@@ -1159,12 +1337,14 @@
     });
     grid.onClick.subscribe(function(e,args){
       var ne=e&&e.getNativeEvent?e.getNativeEvent():e, t=ne&&ne.target;
-      var b=t&&t.closest&&t.closest('[data-sg-hdot]'); if(!b) return;
+      var b=t&&t.closest&&t.closest('[data-sg-hdot],[data-sg-sym]'); if(!b) return;
       var c=grid.getColumns()[args.cell], it=dv.getItem(args.row);
-      if(!c||!c.sg||!c.sg.icon||!it) return;
+      if(!c||!c.sg||!it) return;
+      var sym=b.hasAttribute('data-sg-sym');
+      if(sym?!c.sg.symbols:!c.sg.icon) return;
       if(e.stopImmediatePropagation) e.stopImmediatePropagation();
-      if(!gridEditable){ say('This view is read only.'); return; }
-      openHealthPicker(b,it[rowKey],c.sg);
+      if(!gridEditable||(sym&&!c.sg.editable)){ say('This view is read only.'); return; }
+      if(sym) openSymPicker(b,it[rowKey],c.sg); else openHealthPicker(b,it[rowKey],c.sg);
     });
     grid.onDblClick.subscribe(function(e,args){
       var c=grid.getColumns()[args.cell], it=dv.getItem(args.row);

@@ -10,6 +10,7 @@
 /*@TOKENS@*/
 /*@GRID_CSS@*/
 /*@USER_CSS@*/
+/*@ICON_CSS@*/
 /* ---- demo page only: stands in for the app header and board ---- */
 body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--color-bg-panel);color:var(--color-text-primary);
   height:100vh;display:flex;flex-direction:column}
@@ -39,6 +40,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
 </style>
 </head>
 <body>
+<!--@ICON_DEFS@-->
 <header class="demo-hd"><b>SRET grid view prototype</b>
   <span class="demo-hd-r"><span class="demo-user" id="demo-user" data-sg="demo-user"></span>
   <button type="button" id="demo-settings" data-sg="demo-settings">Data settings</button>
@@ -269,6 +271,9 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
         store.usertasks.push(r); log('onAdd',[id]); return r; },
       onDelete:function(keys){ log('onDelete',[keys]); store.usertasks=store.usertasks.filter(function(r){ return keys.indexOf(r.id)<0; }); },
       toolsItems:[{label:'Task ID prefix…',sg:'prefix',onSelect:openPrefix}],
+      // IDs a predecessor or successor may name: the schedule and the user tasks.
+      refOptions:function(){ return F.sched.map(function(r){ return {id:r.id,name:r.name}; })
+        .concat(store.usertasks.map(function(r){ return {id:r.id,name:r.name}; })); },
       openColumn:'id',onOpenItem:openMilestone,view:'usertasks',views:viewsOpt('usertasks').views,onView:viewsOpt('usertasks').onView,
       importer:{noun:['task','tasks'],idKey:'id',depKeys:{pred:'Predecessors',succ:'Successors'},user:userName,log:IMPORT_LOG,nextId:nextUsr,
         // IDs a dependency may name: every schedule activity and user milestone the app knows.

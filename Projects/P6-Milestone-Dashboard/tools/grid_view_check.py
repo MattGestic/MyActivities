@@ -153,6 +153,11 @@ MUTATIONS = {
     "ids-merge-wrong-series": ("var nid=seriesNext(seriesOf(id)||'USR',taken);", "var nid=seriesNext('USR',taken);"),
     "prefix-ignored": ("function nextUsr(taken){ return SRETIds.next(taskIds(),USERS.idPrefix(),taken); }", "function nextUsr(taken){ return SRETIds.next(taskIds(),SRETIds.prefix(userName()),taken); }"),
     "prefix-unchecked": ("        var r=root.SRETIds?root.SRETIds.checkPrefix(v,scheduleIds):", "        var r=false?0:"),
+    "icon-not-coloured-by-status": ("var st=item&&sy.stateKey?String(item[sy.stateKey]||'future').toLowerCase():'future';", "var st='future';"),
+    "refs-digits-match-anywhere": ("if(!(n.indexOf(q)===0||n.replace(/^0+/,'').indexOf(q)===0)) continue;", "if(id.indexOf(q)<0) continue;"),
+    "refs-delete-ignored": ("if(k==='Delete'){ e.preventDefault(); e.stopImmediatePropagation(); input.value=''; hi=0; filter(); return; }", ""),
+    "refs-cross-removes-all": ("toks.splice(i,1); drawToks();", "toks=[]; drawToks();"),
+    "refs-enter-does-not-save": ("if(o.onEnterEmpty) o.onEnterEmpty();", ""),
     "health-shown-in-grid": ("if(lists) cols=[{key:L_LIST", "cols=cols.filter(function(c){ return c.key!=='health'; }).concat(cols.filter(function(c){ return c.key==='health'; }).map(function(c){ return Object.assign({},c,{hidden:false}); }));\n    if(lists) cols=[{key:L_LIST"),
 }
 
@@ -405,7 +410,7 @@ try{
     ok('export: Health is the last column, after Date created and Created by', eh.slice(-3).join('|')==='Date created|Created by|Health', eh);
     window.__xlsx={}; await menuPick('add-more','template'); await sleep(20);
     const th=(window.__xlsx.aoa||[[]])[0];
-    ok('import template: Health is the last column', th[th.length-1]==='Health' && th.indexOf('Band')>=0 && th.indexOf('WBS')>=0, th);
+    ok('import template: Health is the last column', th[th.length-1]==='Health' && th.indexOf('Band')>=0 && th.indexOf('WBS/Area')>=0, th);
   }
 
   // D-16 sizes
@@ -996,6 +1001,92 @@ try{
       key(btn('dialog'),'Escape'); await sleep(10); }
     const old=[{id:'USR-001'},{id:'USR-002',guid:gA}];
     ok('guid: older tasks get a GUID once; existing GUIDs never change', I.ensureGuids(old)===1 && G.test(old[0].guid) && old[1].guid===gA && I.ensureGuids(old)===0); }
+
+  // ============ Icon column and WBS/Area (Matt, 2026-09-30) ============
+  { const btn=n=>$('[data-sg='+n+']');
+    SRETGrid.close(); DEMO_OPEN('usertasks'); await sleep(20);
+    const ids=eng().grid.getColumns().map(c=>c.id), ic=colIdx('marker');
+    ok('columns: Icon sits after Type; WBS is labelled WBS/Area (User tasks and schedule views)', ids.indexOf('marker')===ids.indexOf('type')+1 &&
+       header('wbs').textContent.trim().indexOf('WBS/Area')===0 && F.cols.sched.find(c=>c.key==='wbs').label==='WBS/Area', ids);
+    const rows=[0,1,3].map(r=>({it:eng().dataView.getItem(r),n:eng().grid.getCellNode(r,ic)}));
+    ok('icon: each cell draws the board\'s own mark (#ico-*), coloured by the row\'s status, with its name',
+       rows.every(x=>{ const u=x.n.querySelector('svg use'), sv=x.n.querySelector('svg');
+         return u && u.getAttribute('href')==='#ico-'+x.it.marker && sv.classList.contains('s-'+String(x.it.state).toLowerCase()) &&
+                x.n.textContent.trim()===({diamond:'Diamond',lock:'Lock',star:'Star',flag:'Flag',circle:'Circle'})[x.it.marker]; }) &&
+       !!document.getElementById('ico-lock') && getComputedStyle(rows[1].n.querySelector('svg')).fill!=='none', rows.map(x=>x.it.marker));
+    const k0=eng().dataView.getItem(0).id;
+    rows[0].n.querySelector('[data-sg-sym]').dispatchEvent(new MouseEvent('click',{bubbles:true})); await sleep(10);
+    const pk=btn('icon-picker'), po=pk?$$('[data-sg-icon]',pk):[];
+    ok('icon: tapping the mark opens a picker with the five marks, each drawn, the current one checked',
+       po.map(b=>b.getAttribute('data-sg-icon')).join()==='diamond,lock,flag,star,circle' && po.every(b=>!!b.querySelector('svg use')) &&
+       po.filter(b=>b.getAttribute('aria-checked')==='true').map(b=>b.getAttribute('data-sg-icon')).join()===eng().dataView.getItem(0).marker, po.map(b=>b.getAttribute('aria-checked')));
+    const pick=eng().dataView.getItem(0).marker==='star'?'flag':'star';
+    $('[data-sg-icon='+pick+']',pk).click(); await sleep(20);
+    const ie=lastLog('onEdit');
+    ok('icon: picking a mark calls onEdit(id, "marker", value); the cell redraws; the picker closes', ie.args.join()===k0+',marker,'+pick &&
+       eng().grid.getCellNode(eng().dataView.getRowById(k0),ic).querySelector('use').getAttribute('href')==='#ico-'+pick && !btn('icon-picker'));
+    window.__xlsx={}; await menuPick('add-more','export'); await sleep(20);
+    const hd=window.__xlsx.aoa[0], ri=window.__xlsx.aoa.findIndex(r=>r[hd.indexOf('ID')]===k0);
+    ok('icon: exported as its label under "Icon"', hd[hd.indexOf('Icon')]==='Icon' && window.__xlsx.aoa[ri][hd.indexOf('Icon')]===({star:'Star, key project milestone',flag:'Flag, notable milestone'})[pick], hd); }
+
+  // ============ Predecessor / successor token picker (Matt, 2026-09-30) ============
+  { const btn=n=>$('[data-sg='+n+']'), g=()=>eng().grid;
+    SRETGrid.close(); DEMO_OPEN('usertasks'); await sleep(20);
+    const row=0, it0=eng().dataView.getItem(row), pc=colIdx('pred');
+    const typeIn=async v=>{ const i=btn('refs-input'); i.value=v; i.dispatchEvent(new Event('input',{bubbles:true})); await sleep(10); };
+    const opts=()=>$$('[data-sg=refs-list] [data-sg-ref]').map(o=>o.getAttribute('data-sg-ref'));
+    const toks=()=>$$('[data-sg=refs] [data-sg-tok]').map(t=>t.getAttribute('data-sg-tok'));
+    g().setActiveCell(row,pc); await sleep(10); key(g().getActiveCellNode(),'Enter'); await sleep(20);
+    ok('refs: Enter on a Predecessor cell opens the picker over the cell with the current IDs as tokens, focus in the input',
+       !!btn('refs-pop') && document.activeElement===btn('refs-input') && toks().join()===String(it0.pred).toUpperCase() &&
+       btn('refs-input').getAttribute('role')==='combobox', toks());
+    await typeIn('s'); const sAll=opts();
+    ok('refs: a letter lists the IDs that start with it (S -> SNIP...), the first highlighted, the row itself and chosen IDs left out',
+       sAll.length>0 && sAll.every(id=>/^S/.test(id)) && !sAll.includes(it0.id) && !sAll.includes(String(it0.pred).toUpperCase()) &&
+       $('[data-sg=refs-list] .sg-refs-opt').classList.contains('is-hi') && btn('refs-input').getAttribute('aria-expanded')==='true', sAll.slice(0,4));
+    await typeIn('snip-11'); const s11=opts();
+    ok('refs: it narrows as the user keeps typing (SNIP-11...)', s11.length>0 && s11.length<sAll.length && s11.every(id=>id.indexOf('SNIP-11')===0), s11);
+    await typeIn('117'); const n117=opts();
+    ok('refs: digits match the ID number (117 -> SNIP-117), the exact one first', n117[0]==='SNIP-117' && n117.every(id=>/(^|\D)117\d*$/.test(id)), n117);
+    await typeIn('snip-1'); const ord=opts();
+    ok('refs: matches are in ID order, numbers compared as numbers', ord.length>3 && ord.every((id,i)=>i===0||id.localeCompare(ord[i-1],undefined,{numeric:true})>0), ord.slice(0,5));
+    await typeIn('1'); const n1=opts();
+    ok('refs: one digit lists every ID whose number starts with it; the list is capped with a keep-typing note', n1.length===50 && !btn('refs-more').hidden &&
+       /more\. Keep typing to narrow the list\.$/.test(btn('refs-more').textContent), [n1.length,btn('refs-more').textContent]);
+    const dk=new KeyboardEvent('keydown',{key:'Delete',bubbles:true,cancelable:true}); btn('refs-input').dispatchEvent(dk); await sleep(10);
+    ok('refs: Delete clears what has been typed; the picker stays open', btn('refs-input').value==='' && dk.defaultPrevented && !!btn('refs-pop'));
+    await typeIn('SNIP-11');
+    const bk=new KeyboardEvent('keydown',{key:'Backspace',bubbles:true,cancelable:true}); btn('refs-input').dispatchEvent(bk); await sleep(10);
+    ok('refs: Backspace is left to the input (deletes a character), not taken by the grid', !bk.defaultPrevented && !!btn('refs-pop') && btn('refs-input').value==='SNIP-11');
+    key(btn('refs-input'),'ArrowDown'); await sleep(10);
+    const second=opts()[1]; ok('refs: ArrowDown moves the highlight', $$('[data-sg=refs-list] .sg-refs-opt')[1].classList.contains('is-hi'));
+    key(btn('refs-input'),'Enter'); await sleep(10);
+    ok('refs: Enter adds the highlighted ID as a token and clears the input; it drops out of the list', toks().includes(second) && btn('refs-input').value==='' &&
+       !!btn('refs-pop') && (await typeIn('SNIP-11'), !opts().includes(second)), toks());
+    await typeIn('');
+    await typeIn('117'); $('[data-sg=refs-list] [data-sg-ref="SNIP-117"]').click(); await sleep(10);
+    ok('refs: clicking a match adds it too', toks().includes('SNIP-117'));
+    const first=toks()[0]; $$('[data-sg=refs] [data-sg=tok-x]')[0].click(); await sleep(10);
+    ok('refs: the cross removes that one token only', !toks().includes(first) && toks().length===2 && toks().includes('SNIP-117'), toks());
+    const want=toks().join(', ');
+    key(btn('refs-input'),'Enter'); await sleep(20);
+    const e=lastLog('onEdit');
+    ok('refs: Enter on an empty input saves: onEdit gets the IDs as text; the picker closes; the cell shows them',
+       !btn('refs-pop') && !!e && e.args[0]===it0.id && e.args[1]==='pred' && e.args[2]===want && cellText(row,'pred')===want, [e&&e.args,cellText(row,'pred')]);
+    const n0=count('onEdit'); g().setActiveCell(1,pc); key(g().getActiveCellNode(),'Enter'); await sleep(20);
+    await typeIn('SNIP-10'); key(btn('refs-input'),'Enter'); await sleep(10); key(btn('refs-input'),'Escape'); await sleep(20);
+    ok('refs: Esc cancels: nothing saved, the picker closes', !btn('refs-pop') && count('onEdit')===n0);
+    g().setActiveCell(2,pc); key(g().getActiveCellNode(),'Enter'); await sleep(20);
+    const n1b=count('onEdit'); await typeIn('SNIP-10'); key(btn('refs-input'),'Enter'); await sleep(10);
+    btn('search').dispatchEvent(new MouseEvent('mousedown',{bubbles:true})); await sleep(20);
+    ok('refs: pressing outside the picker saves, as moving to another cell does', !btn('refs-pop') && count('onEdit')===n1b+1 && lastLog('onEdit').args[1]==='pred');
+    // An unknown ID keeps its token, marked.
+    eng().dataView.updateItem(eng().dataView.getItem(3).id,Object.assign({},eng().dataView.getItem(3),{pred:'NOPE-9: FS, SNIP-101'})); await sleep(10);
+    g().setActiveCell(3,pc); key(g().getActiveCellNode(),'Enter'); await sleep(20);
+    const tk=$$('[data-sg=refs] .sg-tok');
+    ok('refs: an ID that is not known keeps its token (with its relationship), marked as not found', tk.length===2 && tk[0].classList.contains('sg-tok--unknown') &&
+       tk[0].textContent.indexOf('NOPE-9: FS')===0 && !tk[1].classList.contains('sg-tok--unknown'), tk.map(x=>x.className));
+    key(btn('refs-input'),'Escape'); await sleep(10); }
 
   // ============ Views from the title (Matt, 2026-09-28) ============
   { const btn=n=>$('[data-sg='+n+']'), launcher=$('#go-usertasks'), C=window.SRETCompare;
