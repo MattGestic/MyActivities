@@ -158,6 +158,9 @@ MUTATIONS = {
     "refs-delete-ignored": ("if(k==='Delete'){ e.preventDefault(); e.stopImmediatePropagation(); input.value=''; hi=0; filter(); return; }", ""),
     "refs-cross-removes-all": ("toks.splice(i,1); drawToks();", "toks=[]; drawToks();"),
     "refs-enter-does-not-save": ("if(o.onEnterEmpty) o.onEnterEmpty();", ""),
+    "bulk-edit-always-shown": ("if(s.editBtn){ s.editBtn.hidden=!sel;", "if(s.editBtn){ s.editBtn.hidden=false;"),
+    "bulk-refused-silent": ("if(ret===false){ refused.push(k+' '+st.c.label); return; }\n", "if(ret===false){ return; }\n"),
+    "bulk-refs-add-duplicates": ("ids.forEach(function(x){ if(!have[up(x)]){ toks.push(x); have[up(x)]=1; } });", "ids.forEach(function(x){ toks.push(x); });"),
     "health-shown-in-grid": ("if(lists) cols=[{key:L_LIST", "cols=cols.filter(function(c){ return c.key!=='health'; }).concat(cols.filter(function(c){ return c.key==='health'; }).map(function(c){ return Object.assign({},c,{hidden:false}); }));\n    if(lists) cols=[{key:L_LIST"),
 }
 
@@ -1028,6 +1031,58 @@ try{
     window.__xlsx={}; await menuPick('add-more','export'); await sleep(20);
     const hd=window.__xlsx.aoa[0], ri=window.__xlsx.aoa.findIndex(r=>r[hd.indexOf('ID')]===k0);
     ok('icon: exported as its label under "Icon"', hd[hd.indexOf('Icon')]==='Icon' && window.__xlsx.aoa[ri][hd.indexOf('Icon')]===({star:'Star, key project milestone',flag:'Flag, notable milestone'})[pick], hd); }
+
+  // ============ Bulk edit (Matt, 2026-09-30) ============
+  { const btn=n=>$('[data-sg='+n+']'), msg=()=>$('[data-sg=msg]').textContent;
+    SRETGrid.close(); DEMO_OPEN('usertasks'); await sleep(20); eng().grid.setSelectedRows([]); await sleep(10);
+    ok('bulk: no Edit button while nothing is selected', btn('bulk-edit').hidden && getComputedStyle(btn('bulk-edit')).display==='none');
+    eng().grid.setSelectedRows([0,1,2]); await sleep(10);
+    const keys=[0,1,2].map(r=>eng().dataView.getItem(r).id);
+    ok('bulk: selecting rows shows "Edit 3 rows" in the ribbon, after Add row', !btn('bulk-edit').hidden && btn('bulk-edit').textContent==='Edit 3 rows' &&
+       btn('bulk-edit').previousElementSibling===btn('add').parentNode);
+    btn('bulk-edit').click(); await sleep(20);
+    const fields=$$('[data-sg=bulk-fields] .sg-bulk-lbl span').map(x=>x.textContent);
+    ok('bulk: the dialog lists the editable fields (not the ID, not read-only ones), Health included', $('.sg-dialog-title').textContent==='Edit 3 rows' &&
+       fields.includes('Name') && fields.includes('Status') && fields.includes('Icon') && fields.includes('Predecessor') && fields.includes('Health') &&
+       !fields.includes('ID') && !fields.includes('Date created') && !fields.includes('Created by'), fields);
+    btn('bulk-apply').click(); await sleep(10);
+    ok('bulk: Apply with nothing ticked says so', !btn('bulk-error').hidden && btn('bulk-error').textContent==='Tick at least one field to change.');
+    const set=(k,v)=>{ const el=$('[data-sg=bulk-ctl-'+k+'] select, [data-sg=bulk-ctl-'+k+'] input'); el.value=v; el.dispatchEvent(new Event('change',{bubbles:true})); el.dispatchEvent(new Event('input',{bubbles:true})); };
+    set('state','RISK');
+    ok('bulk: setting a value ticks its field', btn('bulk-tick-state').checked && !btn('bulk-tick-marker').checked);
+    set('progress','150'); btn('bulk-apply').click(); await sleep(10);
+    ok('bulk: a number outside its range is stopped before anything changes', btn('bulk-error').textContent==='% complete: use 0 to 100.' && keys.every(k=>eng().dataView.getItemById(k).progress!==150), btn('bulk-error').textContent);
+    set('progress','50'); set('marker','star');
+    const ri=$('[data-sg=bulk-ctl-pred] [data-sg=refs-input]'); ri.value='117'; ri.dispatchEvent(new Event('input',{bubbles:true})); await sleep(10); key(ri,'Enter'); await sleep(10);
+    const e0=count('onEdit');
+    btn('bulk-apply').click(); await sleep(20);
+    const its=keys.map(k=>eng().dataView.getItemById(k)), sum=$$('[data-sg=bulk-summary] li').map(l=>l.textContent);
+    ok('bulk: Apply sets every ticked field on every selected row through onEdit (N=3 rows); untouched fields stay',
+       its.every(i=>i.state==='RISK'&&i.progress===50&&i.marker==='star') && count('onEdit')-e0>=9 && btn('bulk-tick-state')===null &&
+       sum[1]==='Fields: Icon, Status, Predecessor, % complete.', [sum,its.map(i=>[i.state,i.progress,i.marker])]);
+    ok('bulk: Predecessor "Add these IDs" adds SNIP-117 once and keeps the IDs each row had', its.every(i=>refSplitT(i.pred).filter(x=>x==='SNIP-117').length===1) &&
+       its.every(i=>refSplitT(i.pred).length>=1), its.map(i=>i.pred));
+    function refSplitT(v){ return String(v||'').split(/[,;]+/).map(x=>x.trim().toUpperCase()).filter(Boolean); }
+    ok('bulk: a summary names what changed', /^Updated 3 rows \(\d+ changes\)\.$/.test(sum[0]) && msg()===sum[0], sum);
+    btn('bulk-done').click(); await sleep(10);
+    btn('bulk-edit').click(); await sleep(20);
+    const mode=btn('bulk-mode-pred'); mode.value='remove'; mode.dispatchEvent(new Event('change',{bubbles:true}));
+    const ri2=$('[data-sg=bulk-ctl-pred] [data-sg=refs-input]'); ri2.value='117'; ri2.dispatchEvent(new Event('input',{bubbles:true})); await sleep(10); key(ri2,'Enter'); await sleep(10);
+    btn('bulk-apply').click(); await sleep(20);
+    ok('bulk: Predecessor "Remove these IDs" takes SNIP-117 off each row and nothing else', keys.every(k=>!refSplitT(eng().dataView.getItemById(k).pred).includes('SNIP-117')) &&
+       keys.every(k=>refSplitT(eng().dataView.getItemById(k).pred).length>=0));
+    btn('bulk-done').click(); await sleep(10);
+    // A refused change is reported, not dropped silently (a small grid whose onEdit refuses row B).
+    SRETGrid.close();
+    SRETGrid.open({title:'Refusal test',rowKey:'id',editable:true,host:$('#demo-board'),rows:[{id:'A',v:'x'},{id:'B',v:'x'},{id:'C',v:'x'}],
+      columns:[{key:'id',label:'ID',type:'text'},{key:'v',label:'Value',type:'text',editable:true}],
+      onEdit:function(k){ return k==='B'?false:undefined; }});
+    await sleep(20); eng().grid.setSelectedRows([0,1,2]); await sleep(10); btn('bulk-edit').click(); await sleep(20);
+    const vi=$('[data-sg=bulk-ctl-v] input'); vi.value='y'; vi.dispatchEvent(new Event('input',{bubbles:true})); btn('bulk-apply').click(); await sleep(20);
+    const rs=$$('[data-sg=bulk-summary] li').map(l=>l.textContent);
+    ok('bulk: a change the app refuses is listed and that row keeps its value', rs[0]==='Updated 2 rows (2 changes).' && rs[2]==='1 change was not accepted: B Value.' &&
+       eng().dataView.getItemById('B').v==='x' && eng().dataView.getItemById('A').v==='y', rs);
+    SRETGrid.close(); DEMO_OPEN('usertasks'); await sleep(20); }
 
   // ============ Predecessor / successor token picker (Matt, 2026-09-30) ============
   { const btn=n=>$('[data-sg='+n+']'), g=()=>eng().grid;

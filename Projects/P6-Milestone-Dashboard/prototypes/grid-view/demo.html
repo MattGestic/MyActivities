@@ -705,6 +705,18 @@ button.sg-sym:hover{transform:scale(1.2)}
 .sg-refs-more{flex:1 1 100%;color:var(--color-text-muted);font-size:var(--text-sm)}
 .sg-refs-cell{padding:0 var(--space-4);color:var(--color-text-muted)}
 
+/* ---- bulk edit ---- */
+.sg-btn[hidden]{display:none}
+.sg-bulk{display:grid;grid-template-columns:minmax(0,160px) minmax(0,1fr);gap:var(--ctl-gap) var(--group-gap);align-items:center;margin:var(--ctl-gap) 0 var(--group-gap)}
+.sg-bulk-lbl{display:flex;align-items:center;gap:var(--ctl-gap);color:var(--color-text-label);cursor:pointer}
+.sg-bulk-lbl input{width:16px;height:16px;margin:0;accent-color:var(--color-accent)}
+.sg-bulk-ctl{min-width:0}
+.sg-bulk-ctl .sg-select,.sg-bulk-input{width:100%;max-width:none}
+.sg-bulk-refs{display:flex;flex-direction:column;gap:var(--space-2);padding:var(--space-2);border:1px solid var(--color-line-default);border-radius:var(--radius-ctl)}
+.sg-dialog .sg-import-status p.sg-bulk-err,.sg-dialog p.sg-bulk-err{color:var(--color-crit-text)}
+.sg-bulk-err[hidden]{display:none}
+@media (max-width:767px){ .sg-bulk{grid-template-columns:minmax(0,1fr)} .sg-bulk-ctl{margin-bottom:var(--ctl-gap)} }
+
 /* SRET user name field (Data settings) and save history. Roles and D-16 tokens only. */
 .su-field{display:flex;flex-wrap:wrap;align-items:flex-end;gap:var(--ctl-gap)}
 .su-label{display:flex;flex-direction:column;gap:var(--space-2);color:var(--color-text-label);font-size:var(--text-sm)}
@@ -1274,7 +1286,103 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
     s.selEl.textContent=sel?('('+sel+' selected)'):'';
     s.selAllBtn.textContent=shown&&sel===shown?'Clear selection':'Select all';
     s.selAllBtn.disabled=!shown;
+    if(s.editBtn){ s.editBtn.hidden=!sel; s.editBtn.textContent=sel>1?'Edit '+sel+' rows':'Edit row'; }
     if(s.lists) updateLists();
+  }
+  // ---------- bulk edit (Matt, 2026-09-30) ----------
+  // Edit, shown while rows are selected: tick the fields to change, set a
+  // value, and it is set on every selected row through onEdit (so the
+  // caller's rules still apply). References can be replaced, added to, or
+  // have IDs removed. Refused changes are listed, not dropped silently.
+  function bulkCols(){
+    var s=S;
+    return s.cols.filter(function(c){ return c.editable&&c.key.charAt(0)!=='_'&&c.key!==s.rowKey; })
+      .concat(s.cols.filter(function(c){ return c.icon; }).map(function(c){ return s.colByKey[c.icon.key]; }).filter(function(c){ return c&&!c.editable; }));
+  }
+  function bulkControl(c,keys){
+    var el;
+    if(c.type==='refs'){
+      var f=tokenField({label:c.label,value:'',options:refOptions(c.key,null)});
+      var mode=h('select',{'class':'sg-select','data-sg':'bulk-mode-'+c.key,'aria-label':c.label+': how'},
+        [['add','Add these IDs'],['replace','Replace with these IDs'],['remove','Remove these IDs']].map(function(o){ return h('option',{value:o[0],text:o[1]}); }));
+      el=h('div',{'class':'sg-bulk-refs'},[mode,f.el]);
+      return {el:el,focusEl:f.input,value:function(){ return {mode:mode.value,ids:f.tokens()}; },watch:[f.input,mode]};
+    }
+    if(c.type==='select'){
+      el=h('select',{'class':'sg-select','aria-label':c.label},[h('option',{value:'',text:'(blank)'})].concat(c.opts.map(function(o){ return h('option',{value:String(o.value),text:o.label}); })));
+      return {el:el,focusEl:el,value:function(){ var v=el.value; for(var i=0;i<c.opts.length;i++) if(String(c.opts[i].value)===v) return c.opts[i].value; return v===''?null:v; },watch:[el]};
+    }
+    el=h('input',{type:c.type==='date'?'date':'text','class':'sg-search sg-bulk-input','aria-label':c.label,inputmode:c.type==='number'?'decimal':null});
+    return {el:el,focusEl:el,value:function(){ var v=el.value.trim(); if(c.type==='number') return v===''?null:Number(v); if(c.type==='date') return v||null; return el.value; },watch:[el]};
+  }
+  function openBulkEdit(){
+    var s=S, keys=selectedKeys(); if(!keys.length) return;
+    var n=keys.length, cols=bulkCols();
+    openDialog(n>1?'Edit '+n+' rows':'Edit row',function(body,close){
+      var rows=[], err=h('p',{'class':'sg-bulk-err','data-sg':'bulk-error',role:'alert',hidden:true});
+      body.appendChild(h('p',{'class':'sg-muted',text:'Tick the fields to change. Each ticked field is set on all '+n+(n===1?' row':' rows')+'; the others are left as they are.'}));
+      var grid=h('div',{'class':'sg-bulk','data-sg':'bulk-fields'});
+      cols.forEach(function(c){
+        var ctl=bulkControl(c,keys), tick=h('input',{type:'checkbox','data-sg':'bulk-tick-'+c.key,'aria-label':'Change '+c.label});
+        ctl.watch.forEach(function(w){ w.addEventListener('input',function(){ tick.checked=true; }); w.addEventListener('change',function(){ tick.checked=true; }); });
+        grid.appendChild(h('label',{'class':'sg-bulk-lbl'},[tick,h('span',{text:c.label})]));
+        grid.appendChild(h('div',{'class':'sg-bulk-ctl','data-sg':'bulk-ctl-'+c.key},[ctl.el]));
+        rows.push({c:c,tick:tick,ctl:ctl});
+      });
+      body.appendChild(grid); body.appendChild(err);
+      var cancel=h('button',{type:'button','class':'sg-btn',text:'Cancel',on:{click:function(){ close(); }}});
+      var apply=h('button',{type:'button','class':'sg-btn sg-btn--primary','data-sg':'bulk-apply',text:'Apply to '+n+(n===1?' row':' rows')});
+      body.appendChild(h('div',{'class':'sg-confirm-btns'},[cancel,apply]));
+      apply.addEventListener('click',function(){
+        var todo=rows.filter(function(r){ return r.tick.checked; });
+        if(!todo.length){ err.hidden=false; err.textContent='Tick at least one field to change.'; return; }
+        for(var i=0;i<todo.length;i++){
+          var c=todo[i].c, v=todo[i].ctl.value();
+          if(c.type==='number'&&v!=null&&!isFinite(v)){ err.hidden=false; err.textContent=c.label+': enter a number.'; todo[i].ctl.focusEl.focus(); return; }
+          if(c.type==='number'&&v!=null&&(c.min!=null&&v<c.min||c.max!=null&&v>c.max)){ err.hidden=false; err.textContent=c.label+': use '+c.min+' to '+c.max+'.'; todo[i].ctl.focusEl.focus(); return; }
+        }
+        var res=applyBulk(keys,todo.map(function(r){ return {c:r.c,v:r.ctl.value()}; }));
+        body.innerHTML='';
+        var ul=h('ul',{'class':'sg-import-summary','data-sg':'bulk-summary'});
+        res.lines.forEach(function(l){ ul.appendChild(h('li',{text:l})); });
+        var done=h('button',{type:'button','class':'sg-btn sg-btn--primary','data-sg':'bulk-done',text:'Done',on:{click:function(){ close(); }}});
+        body.appendChild(h('div',{'class':'sg-import-status'},[h('p',{'class':'sg-import-head',text:'Changes applied'}),ul,h('div',{'class':'sg-confirm-btns'},[h('span'),done])]));
+        say(res.lines[0]); done.focus();
+      });
+      (rows[0]&&rows[0].ctl.focusEl||apply).focus();
+    });
+  }
+  function refsCombine(cur,mode,ids){
+    var toks=refSplit(cur), up=function(x){ return refId(x); };
+    if(mode==='replace') return ids.join(', ');
+    if(mode==='remove'){ var rm={}; ids.forEach(function(x){ rm[up(x)]=1; }); return toks.filter(function(x){ return !rm[up(x)]; }).join(', '); }
+    var have={}; toks.forEach(function(x){ have[up(x)]=1; });
+    ids.forEach(function(x){ if(!have[up(x)]){ toks.push(x); have[up(x)]=1; } });
+    return toks.join(', ');
+  }
+  function applyBulk(keys,sets){
+    var s=S, changed=0, rowsChanged={}, refused=[], can=s.opts.canEdit;
+    s.dv.beginUpdate();
+    keys.forEach(function(k){
+      var it=s.dv.getItemById(k); if(!it) return;
+      var c2=Object.assign({},it), any=false;
+      sets.forEach(function(st){
+        var key=st.c.key, v=st.c.type==='refs'?refsCombine(it[key],st.v.mode,st.v.ids):st.v;
+        if(String(v==null?'':v)===String(it[key]==null?'':it[key])) return;
+        if(typeof can==='function'&&can(k,key)===false){ refused.push(k+' '+st.c.label); return; }
+        var ret=typeof s.opts.onEdit==='function'?s.opts.onEdit(k,key,v):undefined;
+        if(ret===false){ refused.push(k+' '+st.c.label); return; }
+        c2[key]=v; any=true; changed++;
+      });
+      if(any){ if(s.lists) listFields(c2); s.dv.updateItem(k,c2); rowsChanged[k]=1; }
+    });
+    s.dv.endUpdate();
+    s.grid.invalidate(); updateStatus();
+    var nr=Object.keys(rowsChanged).length;
+    var lines=[changed?'Updated '+nr+(nr===1?' row':' rows')+' ('+changed+(changed===1?' change':' changes')+').':'Nothing to change: the rows already had those values.'];
+    lines.push('Fields: '+sets.map(function(st){ return st.c.label; }).join(', ')+'.');
+    if(refused.length) lines.push((refused.length===1?'1 change was':refused.length+' changes were')+' not accepted: '+refused.slice(0,10).join('; ')+(refused.length>10?'; and '+(refused.length-10)+' more':'')+'.');
+    return {lines:lines,changed:changed,refused:refused};
   }
   function selectedKeys(){
     var s=S;
@@ -1986,6 +2094,9 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
     var count=h('span',{'class':'sg-count','data-sg':'count'});
     var selc=h('span',{'class':'sg-selcount','data-sg':'selcount'});
     var add=canAdd?h('button',{type:'button','class':'sg-btn sg-btn--primary','data-sg':'add',text:'Add row'}):null;
+    var hasEditable=(opts.columns||[]).some(function(c){ return c.editable&&c.key!==opts.rowKey; });
+    var editBtn=gridEditable&&hasEditable?h('button',{type:'button','class':'sg-btn','data-sg':'bulk-edit',hidden:true,text:'Edit row',
+      title:'Change fields on all the selected rows'}):null;
     // Delete selected rows: the same item in the Add row menu and in Tools.
     var deleteItem=function(){
       var sel=S?S.grid.getSelectedRows().length:0;
@@ -2054,7 +2165,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
       return m;
     });
     var note=opts.note?h('span',{'class':'sg-note','data-sg':'note',text:opts.note,title:opts.note}):null;
-    var bar2=h('div',{'class':'sg-bar2'},[search].concat(pickers.map(function(m){ return m.wrap; })).concat([addMenu?addMenu.wrap:exp,tools&&tools.wrap,tmpMenu&&tmpMenu.wrap]));
+    var bar2=h('div',{'class':'sg-bar2'},[search].concat(pickers.map(function(m){ return m.wrap; })).concat([addMenu?addMenu.wrap:exp,editBtn,tools&&tools.wrap,tmpMenu&&tmpMenu.wrap]));
     var bar3=h('div',{'class':'sg-bar3'},[h('span',{'class':'sg-counts'},[count,selc]),selAll,pill,note]);
     var confirm=h('div',{'class':'sg-confirm',role:'alertdialog','aria-label':'Confirm remove','data-sg':'confirm',hidden:true});
     var tmpCount=lists?h('span',{'class':'sg-badge sg-rail-badge','data-sg':'temp-count',text:'0',hidden:true}):null;
@@ -2108,7 +2219,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
 
     S={opts:opts,rowKey:rowKey,cols:cols,colByKey:colByKey,filters:{},quick:'',grid:grid,dv:dv,
        screen:screen,host:host,countEl:count,selEl:selc,msgEl:msg,expBtn:exp,searchEl:search,selAllBtn:selAll,tools:tools,openMenu:null,
-       confirmEl:confirm,prev:null,returnFocus:carried||document.activeElement,ro:null,viewMenu:viewMenu,
+       confirmEl:confirm,prev:null,returnFocus:carried||document.activeElement,ro:null,viewMenu:viewMenu,editBtn:editBtn,
        lists:lists,scope:null,listExpanded:false,tmpAddBtn:tmpAdd,tmpCount:tmpCount,railTemp:railTemp,railLists:railLists,
        pill:pill,pillText:pillText,panel:panel,panelMode:null,dialog:null,msgTimer:0};
     if(lists) buildPanel();
@@ -2195,6 +2306,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
     search.addEventListener('input',function(){ S.quick=search.value; dv.refresh(); });
     if(exp) exp.addEventListener('click',exportRows);
     if(add) add.addEventListener('click',doAdd);
+    if(editBtn) editBtn.addEventListener('click',openBulkEdit);
     selAll.addEventListener('click',function(){
       var n=dv.getLength(), all=n&&grid.getSelectedRows().length===n, rows=[];
       if(!all) for(var i=0;i<n;i++) rows.push(i);
