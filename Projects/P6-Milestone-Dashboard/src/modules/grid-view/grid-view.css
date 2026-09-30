@@ -1,6 +1,10 @@
 /* =====================================================================
-   SRET grid view (D-09). Tier 3 component styles: every colour is a
-   --color-* role, every size a D-16 token. No literal colours here.
+   SRET grid view (D-09), the core. Tier 3 component styles: every colour
+   is a --color-* role, every size a D-16 token. No literal colours here.
+   Each feature's own styles sit beside it (features/<name>.css) and load
+   after this file. The tokens the grid reads are the host's; a host
+   without the SRET tokens defines them first (docs/grid-view-integration.md
+   section 6, Theme).
    The vendored engine stylesheet (vendor/slickgrid/dist/slick.grid.css)
    carries structural rules plus a handful of its own greys; every rule of
    it that paints is overridden below under .sg-grid, and
@@ -65,7 +69,6 @@
   background:var(--color-bg-elevated);color:var(--color-text-primary);border:1px solid var(--color-border-panel);
   border-radius:var(--radius-overlay);box-shadow:var(--shadow-2)}
 .sg-menu-pop[hidden]{display:none}
-.sg-temp-actions .sg-menu:last-child .sg-menu-pop{left:auto;right:0}
 /* Split button: main action and its options arrow, joined. */
 .sg-split{display:inline-flex}
 .sg-split-main{border-top-right-radius:0;border-bottom-right-radius:0}
@@ -75,10 +78,6 @@
 .sg-split-chev.is-open{background:var(--color-btn-secondary-pressed-bg)}
 .sg-btn--primary.sg-split-chev.is-open{background:var(--color-btn-primary-pressed-bg)}
 .sg-split-main{display:inline-flex;align-items:center;gap:var(--space-3)}
-/* My temp list mark: one vertical line, used on rows, the rail, the panel title and the button. */
-.sg-tempmark{display:inline-block;flex:0 0 auto;width:3px;height:14px;border-radius:var(--radius-pill);background:var(--color-accent)}
-.sg-btn:disabled .sg-tempmark{background:var(--color-text-label)}
-.sg-tempmark--rail{height:18px;width:4px}
 .sg-menu-item{display:flex;align-items:center;gap:var(--space-2);width:100%;min-height:calc(var(--ctl-h) + var(--space-2));
   padding:0 var(--space-5) 0 var(--space-3);border:0;background:transparent;font:inherit;font-size:var(--text-lg);text-align:left;
   color:var(--color-text-primary);cursor:pointer;white-space:nowrap}
@@ -125,56 +124,8 @@
 .sg-confirm-msg{margin:0 0 var(--ctl-gap);font-size:var(--text-lg);line-height:20px}
 .sg-confirm-btns{display:flex;justify-content:space-between;gap:var(--ctl-gap)}
 
-/* ---- body: rail, My temp list panel (vertical, docked left), grid ---- */
+/* ---- body: feature panels (e.g. the lists rail and panel), then the grid ---- */
 .sg-body{display:flex;flex:1 1 auto;min-height:0;min-width:0}
-.sg-rail{flex:0 0 40px;display:flex;flex-direction:column;align-items:center;gap:var(--space-2);padding:var(--space-4) 0;
-  background:var(--color-bg-subtle);border-right:1px solid var(--color-border-panel)}
-.sg-rail-btn{position:relative;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;padding:0;
-  border:0;border-radius:var(--radius-ctl);background:transparent;color:var(--color-text-primary);cursor:pointer}
-.sg-rail-btn:hover{background:var(--color-btn-icon-hover-bg)}
-.sg-rail-btn.is-open{background:var(--color-accent-tint-bg);color:var(--color-accent-ink);box-shadow:inset 3px 0 0 var(--color-accent)}
-.sg-rail-badge{position:absolute;top:-2px;right:-4px}
-.sg-temp{flex:0 0 300px;width:300px;display:flex;flex-direction:column;min-height:0;
-  background:var(--color-bg-subtle);color:var(--color-text-primary);border-right:1px solid var(--color-border-panel)}
-.sg-temp[hidden]{display:none}
-.sg-temp-head{display:flex;align-items:center;gap:var(--ctl-gap);padding:var(--space-4) var(--space-5) 0}
-.sg-temp-head [hidden]{display:none}
-.sg-temp-title{display:inline-flex;align-items:center;gap:var(--ctl-gap);margin:0;font-size:var(--text-lg);line-height:20px;font-weight:600;white-space:nowrap}
-.sg-list-head{flex:1 1 auto;min-width:0;display:flex}
-.sg-list-pick{flex:1 1 auto;min-width:0;font-weight:600}
-.sg-temp-actions{display:flex;align-items:center;gap:var(--ctl-gap);padding:var(--space-4) var(--space-5) var(--space-2)}
-.sg-temp-actions[hidden]{display:none}
-.sg-temp-sub{display:flex;align-items:center;flex-wrap:wrap;gap:var(--ctl-gap-tight) var(--ctl-gap);
-  padding:var(--space-3) var(--space-5);border-bottom:1px solid var(--color-line-default)}
-.sg-temp-all{display:inline-flex;align-items:center;gap:var(--ctl-gap);cursor:pointer;color:var(--color-text-muted)}
-.sg-temp-items{flex:1 1 auto;min-height:0;overflow:auto;list-style:none;margin:0;padding:0;background:var(--color-bg-elevated)}
-.sg-temp-item{border-bottom:1px solid var(--color-line-hairline)}
-.sg-temp-item.sg-in-temp .sg-temp-item-lbl{box-shadow:inset 3px 0 0 var(--color-accent)}
-.sg-temp-item-lbl{display:flex;align-items:flex-start;gap:var(--ctl-gap);padding:var(--space-3) var(--space-5);cursor:pointer}
-.sg-temp-item-lbl:hover{background:var(--color-row-hover-bg)}
-.sg-temp-item-text{display:flex;flex-direction:column;min-width:0}
-.sg-temp-item-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.sg-temp-item-lists{color:var(--color-text-muted);font-size:var(--text-sm);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.sg-temp-empty{padding:var(--space-5);color:var(--color-text-muted)}
-.sg-temp input[type=checkbox]{flex:0 0 16px;width:16px;height:16px;margin:0;color:inherit;accent-color:var(--color-accent)}
-.sg-temp-form,.sg-temp-confirm{padding:var(--space-3) var(--space-5) var(--space-4)}
-.sg-temp-form[hidden],.sg-temp-confirm[hidden]{display:none}
-.sg-temp-form-lbl{margin:0 0 var(--ctl-gap-tight);font-weight:600}
-.sg-temp-name{width:100%;margin-bottom:var(--ctl-gap)}
-.sg-temp-err{margin:0;padding:0 var(--space-5) var(--space-3);color:var(--color-crit-text)}
-.sg-temp-err:empty{display:none}
-
-/* ---- List column: collapsed indicator, or expanded names ---- */
-.sg-grid .slick-header-column.sg-lcol-h{padding:0 var(--space-1)}
-.sg-grid .slick-cell.sg-lcol{padding:0 var(--space-2)}
-.sg-lcol-toggle{display:inline-flex;align-items:center;gap:var(--space-1);height:100%;padding:0 var(--space-1);border:0;
-  background:transparent;font:inherit;font-weight:600;color:inherit;cursor:pointer;border-radius:var(--radius-ctl)}
-.sg-lcol-toggle:hover{background:var(--color-btn-icon-hover-bg)}
-.sg-lcol-arrow{color:var(--color-accent-ink)}
-.sg-inlist{display:inline-flex;align-items:center;gap:var(--space-2);color:var(--color-accent-ink);font-weight:600}
-.sg-inlist-mark{display:inline-block;width:8px;height:8px;border-radius:var(--radius-pill);background:var(--color-accent)}
-/* Rows on My temp list: a vertical line to the left of the checkbox. */
-.sg-grid .slick-row.sg-in-temp .slick-cell.sg-check{box-shadow:inset 3px 0 0 var(--color-accent)}
 
 /* ---- status shading (conditional formatting on a column's value) ---- */
 .sg-grid .slick-cell.sg-tone{font-weight:600}
@@ -184,30 +135,9 @@
 .sg-grid .slick-cell.sg-tone-crit{background:var(--color-crit-tint-bg);color:var(--color-crit-text)}
 .sg-grid .slick-cell.sg-tone-done{background:var(--color-ready-tint-bg);color:var(--color-ok-text)}
 
-/* ---- health icon (same states and roles as the dashboard's health dot) ---- */
-.sg-hdot{display:inline-block;color:var(--color-text-primary);flex:0 0 auto;width:10px;height:10px;margin:0 var(--space-3) 0 0;padding:0;vertical-align:middle;
-  border-radius:var(--radius-pill);border:1.2px solid var(--color-health-rim);background:transparent;cursor:pointer}
-button.sg-hdot:hover{transform:scale(1.25)}
-.sg-hdot.sg-h-0{background:transparent;border-color:var(--color-health-none-border)}
-.sg-hdot.sg-h-1{background:var(--color-health-good);border-color:var(--color-health-good-border)}
-.sg-hdot.sg-h-2{background:var(--color-health-watch);border-color:var(--color-health-watch-border)}
-.sg-hdot.sg-h-3{background:var(--color-crit);border-color:var(--color-crit-border)}
-.sg-hdot.sg-h-4{background:var(--color-status-done);border-color:var(--color-health-good-border)}
-.sg-hpick{position:absolute;min-width:160px}
-.sg-sym{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:16px;height:16px;margin:0 var(--space-3) 0 0;
-  padding:0;border:0;background:transparent;vertical-align:middle;cursor:pointer;color:var(--color-text-primary)}
-.sg-sym .sg-sym-svg{width:13px;height:13px;display:block}
-button.sg-sym:hover{transform:scale(1.2)}
-.sg-sym--menu{margin-right:var(--space-2);cursor:default}
-.sg-hpick .sg-hdot{margin-right:var(--space-2);cursor:default}
 .sg-grid .slick-cell.sg-cell-open{cursor:pointer}
 
-/* ---- import and Import log ---- */
-.sg-import-pick p{margin:0 0 var(--ctl-gap);color:var(--color-text-muted)}
-.sg-import-pick[hidden]{display:none}
-.sg-import-row{display:flex;flex-wrap:wrap;align-items:center;gap:var(--ctl-gap);margin-bottom:var(--ctl-gap)}
-.sg-import-date{display:inline-flex;align-items:center;gap:var(--ctl-gap);color:var(--color-text-label)}
-.sg-select.sg-date-order{max-width:none}
+/* ---- dialog results (import, bulk edit) and tables ---- */
 .sg-import-status:not(:empty){margin-top:var(--group-gap);padding-top:var(--group-gap);border-top:1px solid var(--color-line-default)}
 .sg-import-status:first-child{margin-top:0;padding-top:0;border-top:0}
 .sg-import-status[data-kind=error]{color:var(--color-crit-text)}
@@ -234,10 +164,6 @@ button.sg-sym:hover{transform:scale(1.2)}
 .sg-dialog--wide{width:min(1040px,100%)}
 .sg-dialog-title{margin:0;font-size:20px;line-height:28px;font-weight:600}
 .sg-dialog-body{padding:var(--group-gap);overflow:auto;font-size:var(--text-lg);line-height:20px}
-@media (max-width:767px){
-  .sg-temp{position:absolute;top:0;bottom:0;left:40px;z-index:10;width:min(300px,calc(100% - 40px));box-shadow:var(--shadow-3)}
-  .sg-body{position:relative}
-}
 
 /* ---- grid engine skin ---- */
 .sg-grid{flex:1 1 auto;min-height:0;min-width:0;position:relative;background:var(--color-bg-canvas);color:var(--color-text-primary)}
@@ -295,42 +221,7 @@ button.sg-sym:hover{transform:scale(1.2)}
   .sg-bar2 .sg-spacer{display:none}
   .sg-search{flex:1 1 100%;width:auto}
 }
-
-/* ---- predecessor and successor picker (tokens + type-ahead) ---- */
-.sg-refs-pop{position:absolute;z-index:40;max-width:min(420px,calc(100% - 8px));padding:var(--space-2);
-  background:var(--color-bg-elevated);border:1px solid var(--color-accent);border-radius:var(--radius-ctl);box-shadow:var(--shadow-2)}
-.sg-refs{position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2)}
-.sg-refs-toks{display:contents}
-.sg-tok{display:inline-flex;align-items:center;gap:var(--space-1);height:calc(var(--ctl-h) - 4px);padding:0 0 0 var(--space-3);
-  border:1px solid var(--color-line-default);border-radius:var(--radius-pill);background:var(--color-bg-subtle);
-  color:var(--color-text-primary);font-size:var(--text-md);white-space:nowrap}
-.sg-tok--unknown{border-style:dashed;color:var(--color-crit-text)}
-.sg-tok-x{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;margin-right:var(--space-1);padding:0;
-  border:0;border-radius:var(--radius-pill);background:transparent;color:var(--color-text-muted);font:inherit;cursor:pointer}
-.sg-tok-x:hover{background:var(--color-btn-icon-hover-bg);color:var(--color-text-primary)}
-.sg-refs-input{flex:1 1 120px;min-width:100px;height:calc(var(--ctl-h) - 4px);border:0;outline:0;padding:0 var(--space-2);font:inherit;
-  background:transparent;color:var(--color-text-primary)}
-.sg-refs-list{position:absolute;left:0;right:0;top:100%;margin-top:var(--space-2);max-height:240px;overflow:auto;z-index:41;
-  background:var(--color-bg-elevated);border:1px solid var(--color-border-panel);border-radius:var(--radius-ctl);box-shadow:var(--shadow-2)}
-.sg-refs-list[hidden],.sg-refs-more[hidden]{display:none}
-.sg-refs-opt{display:flex;gap:var(--space-4);align-items:baseline;padding:var(--space-2) var(--space-4);cursor:pointer;color:var(--color-text-primary)}
-.sg-refs-opt b{flex:0 0 auto;font-weight:600}
-.sg-refs-opt span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--color-text-muted)}
-.sg-refs-opt.is-hi,.sg-refs-opt:hover{background:var(--color-row-hover-bg)}
-.sg-refs-more{flex:1 1 100%;color:var(--color-text-muted);font-size:var(--text-sm)}
-.sg-refs-cell{padding:0 var(--space-4);color:var(--color-text-muted)}
-
-/* ---- bulk edit ---- */
 .sg-btn[hidden]{display:none}
-.sg-bulk{display:grid;grid-template-columns:minmax(0,160px) minmax(0,1fr);gap:var(--ctl-gap) var(--group-gap);align-items:center;margin:var(--ctl-gap) 0 var(--group-gap)}
-.sg-bulk-lbl{display:flex;align-items:center;gap:var(--ctl-gap);color:var(--color-text-label);cursor:pointer}
-.sg-bulk-lbl input{width:16px;height:16px;margin:0;accent-color:var(--color-accent)}
-.sg-bulk-ctl{min-width:0}
-.sg-bulk-ctl .sg-select,.sg-bulk-input{width:100%;max-width:none}
-.sg-bulk-refs{display:flex;flex-direction:column;gap:var(--space-2);padding:var(--space-2);border:1px solid var(--color-line-default);border-radius:var(--radius-ctl)}
-.sg-dialog .sg-import-status p.sg-bulk-err,.sg-dialog p.sg-bulk-err{color:var(--color-crit-text)}
-.sg-bulk-err[hidden]{display:none}
-@media (max-width:767px){ .sg-bulk{grid-template-columns:minmax(0,1fr)} .sg-bulk-ctl{margin-bottom:var(--ctl-gap)} }
 
 /* ---- touch (D-16 rule, as the dashboard): controls take --ctl-h-touch through
    --ctl-h; each tap area reaches --ctl-hit-touch through an invisible
@@ -340,11 +231,10 @@ button.sg-sym:hover{transform:scale(1.2)}
 .sg-screen{--sg-row-h:var(--ctl-h);--sg-head-h:calc(var(--ctl-h) + var(--space-2))}
 @media (pointer:coarse){
   .sg-screen{--sg-row-h:var(--ctl-hit-touch);--sg-head-h:var(--ctl-hit-touch)}
-  .sg-btn,.sg-iconbtn,.sg-link,.sg-rail-btn,.sg-lcol-toggle,.sg-tok-x,.sg-sym,button.sg-hdot,.sg-search-toggle{position:relative}
-  .sg-btn::after,.sg-iconbtn::after,.sg-link::after,.sg-rail-btn::after,.sg-lcol-toggle::after,.sg-tok-x::after,.sg-sym::after,button.sg-hdot::after,.sg-search-toggle::after{
+  .sg-btn,.sg-iconbtn,.sg-link,.sg-search-toggle{position:relative}
+  .sg-btn::after,.sg-iconbtn::after,.sg-link::after,.sg-search-toggle::after{
     content:'';position:absolute;top:50%;left:50%;width:max(100%,var(--ctl-hit-touch));height:max(100%,var(--ctl-hit-touch));transform:translate(-50%,-50%)}
-  .sg-menu-item,.sg-refs-opt{min-height:var(--ctl-hit-touch)}
-  .sg-refs-opt{align-items:center}
+  .sg-menu-item{min-height:var(--ctl-hit-touch)}
 }
 
 /* Pinned columns: the pinned pane scrolls up and down natively (following the

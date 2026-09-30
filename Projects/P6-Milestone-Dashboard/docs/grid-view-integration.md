@@ -10,10 +10,10 @@ The app keeps one `<style>` (scanned by `colour_audit.py --strict`) and one `<sc
 
 | # | Source file | Destination in `milestone-dashboard.html` | Why there |
 |---|---|---|---|
-| 1 | `src/modules/grid-view/grid-view.css` | Inside the main `<style>`, after the Workspace / Data and view panel rules, as its own commented section | Tier 3 component styles; only `--color-*` roles and D-16 tokens, so `--strict` passes with no exception |
+| 1 | `src/modules/grid-view/grid-view.css`, then `features/*.css` in the feature load order (#4) | Inside the main `<style>`, after the Workspace / Data and view panel rules, as its own commented section | Tier 3 component styles; only `--color-*` roles and D-16 tokens, so `--strict` passes with no exception. `xlsx` has no styles |
 | 2 | `vendor/slickgrid/dist/slick.grid.css` | New `<style id="vendor-slickgrid-css">` immediately after the main `</style>` | Unmodified vendor CSS; kept out of the audited block. Every colour it could paint is overridden by #1 (proven by the palette swap in `tools/grid_view_check.py`) |
 | 3 | `vendor/slickgrid/slickgrid.subset.min.js` | New `<script id="vendor-slickgrid">` immediately **before** `<script id="app-script">`, preceded by a `/* */` comment holding the full text of `vendor/slickgrid/LICENSE` and the version line from `SOURCE.md` | Must define `window.Slick` before the app script runs; MIT notice travels with the code |
-| 4 | `src/modules/grid-view/grid-view.js` | Top of `<script id="app-script">`, before the app's own code, as one commented section | Self-contained IIFE; defines `window.SRETGrid` only |
+| 4 | `src/modules/grid-view/grid-view.js`, then `features/refs.js`, `marks.js`, `bulk-edit.js`, `lists.js`, `xlsx.js`, `import.js` | Top of `<script id="app-script">`, before the app's own code, as one commented section | The core defines `window.SRETGrid`; each feature registers itself with it and defines nothing else. Order: core first; `bulk-edit` after `refs`, `import` after `xlsx` (section 6) |
 | 4b | `src/modules/collections/collections.js` | Directly after #4, same script | Self-contained IIFE; defines `window.SRETCollections` only (My temp list and saved lists). Shared by the grid and the dashboard, so it must load before either calls it |
 | 4c | `src/modules/ms-import/ms-import.js` | Directly after #4b, same script | Self-contained IIFE; defines `window.SRETMsImport` only (the milestone import rules). The grid's import dialog calls it; the app's own import form can too |
 | 4d | `src/modules/dates/dates.js` | Directly after #4b, before #4c | `window.SRETDates`: the one date reader for every import (grid and dashboard). #4c needs it |
@@ -21,7 +21,7 @@ The app keeps one `<style>` (scanned by `colour_audit.py --strict`) and one `<sc
 | 4f | `src/modules/compare/compare.js` | After #4e | `window.SRETCompare`: stored uploads, the designation reference table, and the Schedule changes comparison |
 | 4g | `src/modules/migrate/migrate.js` | After #4f | `window.SRETMigrate`: renames old stored keys and values (user milestones to user tasks) on every load |
 | 4h | `src/modules/ids/ids.js` | After #4g | `window.SRETIds`: user task IDs (prefix + number, default U + initials), GUIDs, and the merge that renumbers clashing IDs |
-| 5 | The adapters below | In `app-script`, beside the Workspace code (`setWorkspaceSection()`) | The only code that knows both the app's stores and the grid contract |
+| 5 | The `SRETGrid.setup()` call (section 6), then the adapters below | In `app-script`, beside the Workspace code (`setWorkspaceSection()`); setup runs once at load, before any entry point can open the grid | The only code that knows both the app's stores and the grid contract |
 
 Check before pasting: neither vendor file contains `</script` or `</style` (`tools/grid_view_assemble.py` asserts this for the demo and would fail the same way).
 
@@ -35,9 +35,25 @@ Check before pasting: neither vendor file contains `</script` or `</style` (`too
 | Adapters (#5), estimate | about 8,000 | about 2,500 |
 | **Total added** | **about 339,000 (about 39%)** | about 87,000 |
 
+Measured before the core and feature split (section 6), which adds the setup layer and per-file headers; re-measure at merge with only the features the app loads.
+
 If Matt chooses the unminified vendor files (D-09 decision 2), #3 grows from 217,423 to 458,011 bytes and the total becomes about 580,000 (about 66%).
 
 ## The contract the app calls
+
+Once, at load (section 6 has every setting):
+
+```js
+SRETGrid.setup({
+  features: ['refs','marks','bulk-edit','lists','xlsx','import'],
+  defaults: { host, ensureXLSX, onBack, pin: ['id','name'], symbolClass: 'ms-icon filled' },
+  text: { readOnlyCell: 'This value comes from the schedule and cannot be edited here.',
+          noun: ['milestone','milestones'], refsPlaceholder: 'Type an ID, e.g. S or 117',
+          refsUnknown: 'not found in the schedule or the user tasks' }
+});
+```
+
+Then per screen; anything in `defaults` can be left out here, and a screen's own value wins:
 
 ```js
 SRETGrid.open({
@@ -358,7 +374,7 @@ Plus the embedded **Project baseline**. A vendor or contractor schedule is its o
 | Option | What it does | App wiring |
 |---|---|---|
 | `type:'refs'` + `opts.refOptions(key, rowKey)` | Predecessor and Successor are token pickers: type a letter to list IDs starting with it (S lists SNIP-...), digits to match the start of the ID number (117 lists SNIP-117, exact first, then ID order). Enter or a click adds; the cross removes one; Delete clears what was typed; Backspace deletes characters; Enter on an empty input, Tab or a press outside saves; Esc cancels. The value stays text (`'SNIP-101, UMG-003'`); an ID with a relationship (`'SNIP-101: FS'`) keeps it; an unknown ID keeps a dashed token | `refOptions` returns every schedule activity and user task `{id, name}` the board knows |
-| `symbols:{prefix:'ico-', stateKey:'state'}` on a select column | The Icon column: draws `<svg><use href="#ico-...">` coloured by the row's status (the board's `.ms-icon` classes); tap to pick from the five marks. `opts.renderSymbol(value, item)` can draw it instead | Options are `MS_MARKERS` (diamond, lock, flag, star, circle); the key is the user task's `marker`, normalised with `normalizeMarker()`; `renderSymbol` can call the app's `renderIcon()` |
+| `symbols:{prefix:'ico-', stateKey:'state'}` on a select column | The Icon column: draws `<svg><use href="#ico-...">` coloured by the row's status (the board's `.ms-icon` classes); tap to pick from the five marks. `symbolClass` (setup defaults, SRET: `'ms-icon filled'`) adds the board's classes; `renderSymbol(value, item, column)` can draw it instead | Options are `MS_MARKERS` (diamond, lock, flag, star, circle); the key is the user task's `marker`, normalised with `normalizeMarker()`; `renderSymbol` can call the app's `renderIcon()` |
 | WBS label | "WBS/Area" on User tasks and the schedule views | Column label only |
 | Bulk edit (automatic when the grid is editable) | "Edit N rows" appears while rows are selected. Tick fields, set values, Apply: every change goes through `canEdit` and `onEdit`; references can be added, replaced or removed; ranges are checked first; refused changes are listed | Nothing extra: it uses the same `onEdit` as a cell edit |
 | `pin:['id','name']` | Below 1024px of grid width the checkbox and these columns stay put while the rest scrolls sideways; the last one narrows so the pinned part stays under about 70% | Pass the ID and name keys of each view |
@@ -366,6 +382,42 @@ Plus the embedded **Project baseline**. A vendor or contractor schedule is its o
 **Phones and touch:** on a coarse pointer controls are 32px with an invisible 40px tap area (`--ctl-hit-touch`, as the dashboard's filter bar), rows and header grow to 40px, and the whole checkbox cell ticks the row. Menus and pickers stay inside the screen. Header buttons wrap at every width. Below 768px search sits behind a button in the title row and the counts row shows only while something is selected or filtered. `tools/grid_view_responsive.py` (part of `grid_view_check.py`) asserts all of this at 390, 768 and 1440 wide with mouse and touch, and has its own `--prove-fails`.
 
 **Icon symbols in the demo:** `tools/grid_view_assemble.py` copies the app's `#ico-*` symbols and `.ms-icon` rules into the demo; in the app they already exist.
+
+### 6. Reuse: core, features and setup (Matt, 2026-09-30)
+
+The grid is a core plus optional features, so another screen, or another app, takes only what it needs and configures it once.
+
+**Files**
+
+| File | Gives | Needs |
+|---|---|---|
+| `grid-view.js` + `.css` (core) | The screen, views and pickers, text/date/number/select columns and editors, header filters with operators, quick search, sort, Add row, Delete with confirmation, Tools menu, dialogs, messages, pinned columns, touch sizing, resize handling | `window.Slick` (vendored) |
+| `features/refs.js` + `.css` | Column type `refs`: the token picker for predecessors and successors | `refOptions(key, rowKey)` on the screen |
+| `features/marks.js` + `.css` | `icon` (health dot) and `symbols` (Icon column) on columns, tap-to-pick | The host's SVG symbols for `symbols` |
+| `features/bulk-edit.js` + `.css` | Edit N rows | `refs` for refs columns (without it they are edited as text) |
+| `features/lists.js` + `.css` | My temp list, saved lists, the rail, panel and List column | `window.SRETCollections`; `lists` on the screen |
+| `features/xlsx.js` | Export .xlsx, Download import template, `SRETGrid.exportVisible()` | `ensureXLSX` (SheetJS) |
+| `features/import.js` + `.css` | Import dialog, Import log, `SRETGrid.importAoa()` | An import engine (`importer.engine`, default `window.SRETMsImport`); `xlsx` for the template link; `SRETDates` for date-order wording |
+
+A feature that is not loaded costs nothing: the core calls only the hooks of features active on the open screen. The hot paths (cell drawing, filtering, scrolling) have no per-feature loop except the row filter, which is empty unless `lists` is on; the timing checks in `tools/grid_view_check.py` are unchanged by the split.
+
+**`SRETGrid.setup(settings)`: once per deployment, before the first `open()`**
+
+| Setting | Default | What it sets |
+|---|---|---|
+| `features` | every loaded feature | Which loaded features to use. An unknown name, or a feature whose helper module is missing, throws here |
+| `defaults` | none | Any `open()` option shared by every screen: `host`, `ensureXLSX`, `onBack`, `pin`, `symbolClass`, `renderSymbol`, `editable`... A screen's own option wins |
+| `text` | generic wording | `readOnlyCell` (a refused edit), `noun` (what import calls a row), `refsPlaceholder`, `refsUnknown`. A screen can pass `text` too |
+| `dates` | `d-Mmm-yy` | `format(iso)` for cells, `parse(text)` for filter operators (`<1-Oct-26`), `excel` for export |
+| `layout` | `pinBelow:1024, pinShare:0.62, pinMin:100` | When columns pin, and how much of the width they may take |
+
+It returns the settings in force. Mistakes fail at setup or at the first `open()`, with a message naming the feature or file: `lists` without the lists feature, a `refs` column with refs switched off, an unknown layout setting. A column type no loaded feature provides is shown as text.
+
+**Theme.** The CSS reads the host's tokens: `--color-*` roles, D-16 sizes (`--ctl-h`, `--ctl-hit-touch`, `--space-*`, `--radius-*`, `--text-*`) and `--font-sans`. A host without the SRET token blocks defines those names first; `tools/grid_view_assemble.py` `token_blocks()` shows the full set the demo copies from the app, and `palette_swap_check.py` proves nothing in the grid paints outside them.
+
+**Writing a feature.** `SRETGrid.feature(name, function(kit){ return hooks; })`. The hook list is in the header of `grid-view.js`; the six features are the worked examples. A feature reaches the open screen through `kit.s()`, shares helpers with others through `kit.provide()` and `kit.get()`, and adds row-derived fields through `prepare(item)`, which every row copy passes through (load, edit, bulk edit, import, `patchRows`).
+
+**Proof.** `tools/grid_view_modular.py` (part of `grid_view_check.py`) builds bare pages with no demo code: the core alone (opens, edits, filters, adds, deletes; no feature controls; missing features named at open), refs and bulk edit without the others, and all features under different `setup()` calls (fail-fast cases, defaults and overrides, text, a different date format, layout, `symbolClass`). It has its own `--prove-fails`.
 
 ## Verification at merge
 

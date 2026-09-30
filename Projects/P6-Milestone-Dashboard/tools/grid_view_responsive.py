@@ -45,7 +45,7 @@ MUTATIONS = {
     "menus-run-off": ("      keepInside(pop);\n", ""),
     "pinned-pane-cannot-scroll": (".sg-grid .slick-pane-left .slick-viewport{overflow-y:auto!important;", ".sg-grid .slick-pane-left .slick-viewport{"),
     "phone-search-always-shown": ("  .sg-screen:not(.is-search-open):not(.has-search) .sg-search{display:none}\n", ""),
-    "no-pinning": ("S.baseOrder=grid.getColumns().map(function(c){ return c.id; }); S.pinned=false;", "S.baseOrder=grid.getColumns().map(function(c){ return c.id; }); S.pinned=false; S.pinKeys=[];"),
+    "no-pinning": ("s.baseOrder=grid.getColumns().map(function(c){ return c.id; }); s.pinned=false;", "s.baseOrder=grid.getColumns().map(function(c){ return c.id; }); s.pinned=false; s.pinKeys=[];"),
     "touch-rows-stay-small": ("  .sg-screen{--sg-row-h:var(--ctl-hit-touch);", "  .sg-screen{--sg-row-h:var(--ctl-h);"),
 }
 

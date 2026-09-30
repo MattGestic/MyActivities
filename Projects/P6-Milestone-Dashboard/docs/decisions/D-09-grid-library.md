@@ -84,3 +84,7 @@ The colour rules need no change: vendored CSS sits in its own `<style id="vendor
 1. SlickGrid (recommended) or Tabulator. **[CONFIRM WITH MATT]**
 2. Minified vendored block (222 KB) or unminified (462 KB). **[CONFIRM WITH MATT]**
 3. ~~Apply the constraint wording~~ **Done 2026-09-28.** Matt widened it: third-party code only when permissively licensed and embedded in the file, never loaded from the internet, and SheetJS is to be embedded too (TD-216). The applied wording is in `CLAUDE.md`, Hard constraints; the proposal above is kept as history.
+
+## Structure (2026-09-30, Matt)
+
+The wrapper is a core plus optional features (refs, marks, bulk edit, lists, xlsx, import), each in its own file, configured once per deployment with `SRETGrid.setup()`, so the grid can serve other screens and other apps. Decision log row in `docs/04-architecture.md`; files, settings and proof in `docs/grid-view-integration.md` section 6.

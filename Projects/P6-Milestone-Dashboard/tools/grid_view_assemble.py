@@ -334,6 +334,22 @@ VENDOR_JS_ORDER = ["slick.core.js", "slick.interactions.js", "slick.grid.js", "s
                    "slick.checkboxselectcolumn.js", "slick.rowselectionmodel.js"]
 
 
+# Grid features, in load order (each after the core; bulk edit uses refs,
+# import uses xlsx for its template link). A feature with no styles has no .css.
+GRID_FEATURES = ["refs", "marks", "bulk-edit", "lists", "xlsx", "import"]
+
+
+def grid_features(ext: str) -> str:
+    out = []
+    for name in GRID_FEATURES:
+        f = MOD / "features" / f"{name}.{ext}"
+        if f.exists():
+            out.append(safe_inline(f.read_text(encoding="utf-8"), "</script" if ext == "js" else "</style", f.name))
+        elif ext == "js":
+            sys.exit(f"Grid feature {name} has no {f.relative_to(ROOT)}.")
+    return "\n".join(out)
+
+
 def safe_inline(text: str, closer: str, what: str) -> str:
     if closer in text.lower():
         sys.exit(f"{what} contains {closer}, which would end the inline block early.")
@@ -347,12 +363,14 @@ def build() -> str:
     parts = {
         "/*@TOKENS@*/": token_blocks(),
         "/*@GRID_CSS@*/": (MOD / "grid-view.css").read_text(encoding="utf-8"),
+        "/*@GRID_FEATURES_CSS@*/": grid_features("css"),
         "/*@ICON_CSS@*/": icon_css(),
         "<!--@ICON_DEFS@-->": icon_defs(),
         "/*@USER_CSS@*/": (ROOT / "src" / "modules" / "user" / "user.css").read_text(encoding="utf-8"),
         "/*@VENDOR_CSS@*/": safe_inline(vendor_css, "</style", "vendor CSS"),
         "/*@VENDOR_JS@*/": safe_inline(vendor_js, "</script", "vendor JS"),
         "/*@GRID_JS@*/": safe_inline((MOD / "grid-view.js").read_text(encoding="utf-8"), "</script", "grid-view.js"),
+        "/*@GRID_FEATURES_JS@*/": grid_features("js"),
         "/*@COLLECTIONS_JS@*/": safe_inline((COLL / "collections.js").read_text(encoding="utf-8"), "</script", "collections.js"),
         "/*@DATES_JS@*/": safe_inline((ROOT / "src" / "modules" / "dates" / "dates.js").read_text(encoding="utf-8"), "</script", "dates.js"),
         "/*@USER_JS@*/": safe_inline((ROOT / "src" / "modules" / "user" / "user.js").read_text(encoding="utf-8"), "</script", "user.js"),

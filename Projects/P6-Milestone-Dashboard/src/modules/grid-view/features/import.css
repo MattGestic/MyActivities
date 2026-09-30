@@ -1,0 +1,9 @@
+/* =====================================================================
+   SRET grid feature CSS: import. Load after grid-view.css, with features/import.js.
+   The import dialog: file picker, date order.
+   ===================================================================== */
+.sg-import-pick p{margin:0 0 var(--ctl-gap);color:var(--color-text-muted)}
+.sg-import-pick[hidden]{display:none}
+.sg-import-row{display:flex;flex-wrap:wrap;align-items:center;gap:var(--ctl-gap);margin-bottom:var(--ctl-gap)}
+.sg-import-date{display:inline-flex;align-items:center;gap:var(--ctl-gap);color:var(--color-text-label)}
+.sg-select.sg-date-order{max-width:none}

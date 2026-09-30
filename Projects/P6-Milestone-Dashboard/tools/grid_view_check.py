@@ -30,8 +30,9 @@ What it proves, per the brief (N=3 wherever a count applies):
     palette swap moves every painted colour in the screen, in the idle,
     editing and confirm states (nothing escapes tier 1)
 Plus, as subprocesses: tools/colour_audit.py --strict and
-tools/palette_swap_check.py against demo.html, and the assembler's --check
-(demo.html matches its sources).
+tools/palette_swap_check.py against demo.html, tools/grid_view_responsive.py
+(phone, tablet, desktop), tools/grid_view_modular.py (the core alone, feature
+subsets, setup()), and the assembler's --check (demo.html matches its sources).
 
 --prove-fails runs the probe against deliberately broken wrappers and exits
 non-zero unless every mutation is caught.
@@ -63,7 +64,7 @@ MUTATIONS = {
     # refuses), so this mutation removes both; removing either alone is
     # covered by the other and correctly still passes.
     "readonly-ignored": [("if(!gridEditable||!c||!c.editable) return false;", "if(!gridEditable||!c) return false;"),
-                         ("editor:ed?(c.type==='refs'?RefsEditor:Editor):null", "editor:gridEditable?(c.type==='refs'?RefsEditor:Editor):null")],
+                         ("editor:ed?(TYPES[c.type].editor||Editor):null", "editor:gridEditable?(TYPES[c.type].editor||Editor):null")],
     "esc-commits": ("    el.addEventListener('keydown',function(e){\n      if((e.key==='ArrowLeft'",
                     "    el.addEventListener('keydown',function(e){ if(e.key==='Escape'){ args.grid.getEditorLock().commitCurrentEdit(); return; }\n      if((e.key==='ArrowLeft'"),
     "no-selection-count": ("grid.onSelectedRowsChanged.subscribe(updateStatus);", ""),
@@ -73,7 +74,7 @@ MUTATIONS = {
                         "enableMouseWheelScrollHandler:true,forceSyncScrolling:false,\n      rowTopOffsetRenderType:'top',minRowBuffer:3"),
     # Collections: the shared rule (no duplicates) and the grid handing over the right keys.
     # Lists: each rule the temp list flow depends on.
-    "temp-wrong-keys": ("listsDone(M().tempAdd(lists.store,selectedRefs()));", "listsDone(M().tempAdd(lists.store,selectedRefs().slice(1)));"),
+    "temp-wrong-keys": ("listsDone(M().tempAdd(s.lists.store,selectedRefs()));", "listsDone(M().tempAdd(s.lists.store,selectedRefs().slice(1)));"),
     "temp-duplicates": ("if(store.temp.indexOf(r)>=0) already++; else", "if(false) already++; else"),
     "single-list-setting-ignored": ("      if(single(store)) listsOf(store,r)", "      if(false) listsOf(store,r)"),
     "multi-list-broken": ("settings:{singleList:!!(opts&&opts.singleList)}", "settings:{singleList:true}"),
@@ -84,14 +85,14 @@ MUTATIONS = {
     "panel-open-by-default": ("'data-sg':'panel',hidden:true}", "'data-sg':'panel'}"),
     "menu-stays-open": ("b.addEventListener('click',function(e){ e.stopPropagation(); close(true); it.onSelect(); });",
                         "b.addEventListener('click',function(e){ e.stopPropagation(); it.onSelect(); });"),
-    "import-in-side-panel": ("if(s.opts.importer) return openDialog(importTitle(),function(body,close){ return buildImport(body,close); });",
-                             "if(s.opts.importer) return buildImport(s.screen.querySelector('.sg-body'),function(){});"),
+    "import-in-side-panel": ("if(s.opts.importer) return K.openDialog(title(),function(body,close){ return build(body,close); });",
+                             "if(s.opts.importer) return build(s.screen.querySelector('.sg-body'),function(){});"),
     "list-toggle-sorts": ("if(b) b.addEventListener('click',function(ev){ ev.stopPropagation(); toggleListCol(); });",
                           "if(b) b.addEventListener('click',function(ev){ toggleListCol(); });"),
-    "temp-row-mark-missing": ("m.cssClasses=((m.cssClasses||'')+' sg-in-temp').trim();", ""),
+    "temp-row-mark-missing": ("rowClass:function(item){ return item[L_TMP]==='Yes'?'sg-in-temp':''; },", "rowClass:function(item){ return ''; },"),
     "panel-actions-below-items": ("    s.panel.appendChild(s.pnlItems);\n", "    s.panel.appendChild(s.pnlItems); s.panel.appendChild(s.pnlTempActions); s.panel.appendChild(s.pnlListActions);\n"),
     "remove-from-list-removes-everywhere": ("listsDone(M().removeFromList(s.lists.store,s.listId,pickedRefs()));", "listsDone(M().unassign(s.lists.store,pickedRefs()));"),
-    "temp-only-ignored": ("    if(s.scope && !inScope(item)) return false;\n", ""),
+    "temp-only-ignored": ("      rowFilter:inScope,\n", ""),
     "filter-state-not-shown": ("    s.pill.hidden=!s.scope;\n", ""),
     "resize-kills-edit": ("if(grid.getEditorLock().isActive()){ pending=true; return; }", ""),
     "mutates-caller": ("dv.setItems((opts.rows||[]).map(function(r){ return Object.assign({},r); }),rowKey);",
@@ -102,15 +103,15 @@ MUTATIONS = {
     "import-blank-id-kept": ("if(!d[idKey]){ d[idKey]=im.nextId(taken);", "if(false){ d[idKey]=im.nextId(taken);"),
     "import-same-id-twice": ("d[idKey]=im.nextId(taken); taken.push(d[idKey]);", "d[idKey]=im.nextId([]);"),
     "import-deps-unchecked": ("if(missing.length){ dep=true;", "if(false){ dep=true;"),
-    "import-no-question": ("    if(!res.issues.length&&!dt.ask){ commitImport(res,fileName,ui); return res; }", "    commitImport(res,fileName,ui); return res;"),
+    "import-no-question": ("      if(!res.issues.length&&!dt.ask){ commit(res,fileName,ui); return res; }", "      commit(res,fileName,ui); return res;"),
     "import-log-not-written": ("if(im.log) Array.prototype.push.apply(im.log,entries);", ""),
     "import-bad-date-kept": ("row[c.key]=null; return;\n        }", "row[c.key]=norm(v); return;\n        }"),
-    "import-silent-fail": ("importPanel(ui,'error',[h('p',{'class':'sg-import-head',text:'Import failed'}),h('p',{'data-sg':'import-error',text:res.fatal})]);", ""),
+    "import-silent-fail": ("panel(ui,'error',[h('p',{'class':'sg-import-head',text:'Import failed'}),h('p',{'data-sg':'import-error',text:res.fatal})]);", ""),
     "status-tone-missing": ("return {text:txt,addClasses:'sg-tone sg-tone-'+c.tones[v]};", "return txt;"),
     "open-on-any-column": ("if(c&&c.id===opts.openColumn&&it&&", "if(c&&it&&"),
     "health-dot-no-edit": ("var ret=typeof s.opts.onEdit==='function'?s.opts.onEdit(rowKey,key,value):undefined;", "var ret;"),
-    "collapsed-list-filter": ("if(!c||(c.key===L_LIST&&!S.listExpanded)) return;", "if(!c) return;"),
-    "add-menu-no-separators": ("return [canDel?deleteItem():null, canDel?{sep:1}:null,", "return [canDel?deleteItem():null,"),
+    "collapsed-list-filter": ("if(!c||(c.filterShown&&!c.filterShown())) return;", "if(!c) return;"),
+    "add-menu-no-separators": (".forEach(function(g,i){ if(i) out.push({sep:1}); ", ".forEach(function(g,i){ "),
     # Round 8 (Matt, 2026-09-28): shared date engine, user name
     "dates-order-fixed": ("var chosen=cfg.dateOrder&&cfg.dateOrder!=='auto'?cfg.dateOrder:null, det=D.detect(dv);",
                           "var chosen=cfg.dateOrder&&cfg.dateOrder!=='auto'?cfg.dateOrder:'DMY', det=D.detect(dv);"),
@@ -129,7 +130,7 @@ MUTATIONS = {
     "compare-removed-dropped": ("else if(!now){ row.change='Removed'; c.removed++; }", "else if(!now){ return; }"),
     "compare-slip-sign": ("return Math.round((Date.UTC(+b.slice(0,4)", "return -Math.round((Date.UTC(+b.slice(0,4)"),
     "slots-baseline-offered-to-vendor": ("if(key==='project'&&store.baseline) out.push(store.baseline);", "if(store.baseline) out.push(store.baseline);"),
-    "importer-noun-ignored": ("var im=S&&S.opts.importer, w=im&&im.noun||['milestone','milestones'];", "var w=['milestone','milestones'];"),
+    "importer-noun-ignored": ("var s=K.s(), im=s&&s.opts.importer, w=im&&im.noun||K.t('noun');", "var w=K.t('noun');"),
     "interim-out-of-scope-removed": ("if((!now&&cur.partial)||(!was&&basis.partial)){ c.outside++; return; }", ""),
     "interim-added-shown-removed": ("else if(!now&&basis.partial){ row.change='Only in interim'; c.onlyInterim++; }", ""),
     "compare-primary-vs-baseline": ("if(s.slot==='primary') return get('secondary')||base||null;", "if(s.slot==='primary') return base||null;"),
@@ -158,10 +159,10 @@ MUTATIONS = {
     "refs-delete-ignored": ("if(k==='Delete'){ e.preventDefault(); e.stopImmediatePropagation(); input.value=''; hi=0; filter(); return; }", ""),
     "refs-cross-removes-all": ("toks.splice(i,1); drawToks();", "toks=[]; drawToks();"),
     "refs-enter-does-not-save": ("if(o.onEnterEmpty) o.onEnterEmpty();", ""),
-    "bulk-edit-always-shown": ("if(s.editBtn){ s.editBtn.hidden=!sel;", "if(s.editBtn){ s.editBtn.hidden=false;"),
+    "bulk-edit-always-shown": ("status:function(s,sel){ s.editBtn.hidden=!sel;", "status:function(s,sel){ s.editBtn.hidden=false;"),
     "bulk-refused-silent": ("if(ret===false){ refused.push(k+' '+st.c.label); return; }\n", "if(ret===false){ return; }\n"),
-    "bulk-refs-add-duplicates": ("ids.forEach(function(x){ if(!have[up(x)]){ toks.push(x); have[up(x)]=1; } });", "ids.forEach(function(x){ toks.push(x); });"),
-    "health-shown-in-grid": ("if(lists) cols=[{key:L_LIST", "cols=cols.filter(function(c){ return c.key!=='health'; }).concat(cols.filter(function(c){ return c.key==='health'; }).map(function(c){ return Object.assign({},c,{hidden:false}); }));\n    if(lists) cols=[{key:L_LIST"),
+    "bulk-refs-add-duplicates": ("ids.forEach(function(x){ if(!have[refId(x)]){ toks.push(x); have[refId(x)]=1; } });", "ids.forEach(function(x){ toks.push(x); });"),
+    "health-shown-in-grid": ("    hooks.forEach(function(f){ if(f.columns) cols=f.columns(cols); });", "cols=cols.filter(function(c){ return c.key!=='health'; }).concat(cols.filter(function(c){ return c.key==='health'; }).map(function(c){ return Object.assign({},c,{hidden:false}); }));\n    hooks.forEach(function(f){ if(f.columns) cols=f.columns(cols); });"),
 }
 
 STUB = r"""<script>
@@ -1429,6 +1430,7 @@ def subprocess_checks(html_path: pathlib.Path) -> list:
         ("colour_audit.py --strict on demo.html", [sys.executable, str(ROOT / "tools" / "colour_audit.py"), str(html_path), "--strict"]),
         ("palette_swap_check.py on demo.html", [sys.executable, str(ROOT / "tools" / "palette_swap_check.py"), str(html_path)]),
         ("grid_view_responsive.py on demo.html (390/768/1440, mouse and touch)", [sys.executable, str(ROOT / "tools" / "grid_view_responsive.py"), "--html", str(html_path)]),
+        ("grid_view_modular.py (core alone, feature subsets, setup)", [sys.executable, str(ROOT / "tools" / "grid_view_modular.py")]),
     ]:
         p = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
         tail = [ln for ln in p.stdout.strip().splitlines() if ln.strip()][-1:] or [p.stderr.strip()[-200:]]
