@@ -106,6 +106,7 @@ MUTATIONS = {
     "import-no-question": ("      if(!res.issues.length&&!dt.ask){ commit(res,fileName,ui); return res; }", "      commit(res,fileName,ui); return res;"),
     "import-log-not-written": ("if(im.log) Array.prototype.push.apply(im.log,entries);", ""),
     "import-bad-date-kept": ("row[c.key]=null; return;\n        }", "row[c.key]=norm(v); return;\n        }"),
+    "xls-treated-as-xlsx": ("    if(/\\.xls$/i.test(name)) return Promise.reject(", "    if(false) return Promise.reject("),
     "import-silent-fail": ("panel(ui,'error',[h('p',{'class':'sg-import-head',text:'Import failed'}),h('p',{'data-sg':'import-error',text:res.fatal})]);", ""),
     "status-tone-missing": ("return {text:txt,addClasses:'sg-tone sg-tone-'+c.tones[v]};", "return txt;"),
     "open-on-any-column": ("if(c&&c.id===opts.openColumn&&it&&", "if(c&&it&&"),
@@ -170,7 +171,9 @@ window.__errs=[];
 window.addEventListener('error',function(e){ __errs.push(String(e.message)); });
 // SheetJS stub at the app's boundary with it (aoa_to_sheet, book_*, writeFile).
 window.__xlsx={};
-window.XLSX={utils:{
+// Once SheetJS is embedded (TD-216) the page defines the real XLSX after this
+// runs; the harness puts the stub back before any export (__xlsxStub).
+window.__xlsxStub=window.XLSX={utils:{
   aoa_to_sheet:function(aoa,o){ __xlsx.aoa=aoa; __xlsx.opts=o; return {}; },
   book_new:function(){ return {}; },
   book_append_sheet:function(wb,ws,n){ __xlsx.sheet=n; }},
@@ -227,6 +230,8 @@ HARNESS = r"""
 <script>
 (async function(){
 const R={checks:[],notes:{}};
+// The real library, if the page embeds one, before the stub goes back on.
+window.__realXLSX=window.XLSX!==window.__xlsxStub?window.XLSX:null; window.XLSX=window.__xlsxStub;
 const ok=(name,cond,detail)=>R.checks.push({name:name,pass:!!cond,detail:detail===undefined?null:detail});
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const $=(s,r)=>(r||document).querySelector(s);
@@ -639,11 +644,14 @@ try{
     R.notes.swap_dialog=swapEscapes('light/import-dialog');
     const n0=nRows(), fails=[];
     for(const [nm,txt] of [['empty.csv',''],['noid.csv','Name,Finish\nA milestone,1-Oct-26\n'],['headonly.csv',HEAD+'\n'],
-                           ['dups.csv',HEAD+'\nUSR-050,One,MS\nUSR-050,Two,MS\n,Blank,MS\n'],['notes.txt','x']]){
+                           ['dups.csv',HEAD+'\nUSR-050,One,MS\nUSR-050,Two,MS\n,Blank,MS\n'],['notes.txt','x'],['old.xls','x']]){
       await importCsv(nm,txt); const e=btn('import-error'); fails.push([nm,e?e.textContent:null,btn('import-status').getAttribute('role')]); }
     ok('import fails with a clear notice: empty file, no ID column, no rows, wrong file type; nothing added', fails[0][1]==='The file is empty.' &&
        /has no "ID" column/.test(fails[1][1]) && fails[2][1]==='The file has no rows to import.' && /Use an \.xlsx or \.csv file/.test(fails[4][1]) &&
        fails.every(f=>f[2]==='alert') && nRows()===n0 && /^Import failed\./.test(msg()), fails);
+    ok('legacy .xls is refused with how to fix it (the embedded SheetJS is the mini build, TD-216); the picker offers .xlsx and .csv only',
+       /is an old-style \.xls workbook, which cannot be read here\. Open it in Excel, save it as \.xlsx or \.csv/.test(fails[5][1]||'') && fails[5][2]==='alert' &&
+       btn('import-file').getAttribute('accept')==='.xlsx,.csv' && nRows()===n0, fails[5]);
     ok('import fails on duplicate IDs within the file, naming them and their rows; blank IDs are fine', fails[3][1]===
        'There are duplicate activity IDs within the list: USR-050 (rows 2, 3). Only unique IDs, or blank IDs, can be imported.' && nRows()===n0, fails[3][1]);
     // clean import: one existing ID (skipped), one new ID, two blank IDs (assigned), valid dependencies
@@ -1392,6 +1400,10 @@ try{
     const msgs=[M.describe(mv),M.describe(u),M.describe(M.tempAdd(st,['q'])),M.describe(M.tempRemove(st,['q'])),M.describe(M.tempClear(st))];
     ok('module: user-facing sentences have no em or en dashes', msgs.every(m=>!/[–—]/.test(m)), msgs); }
 }catch(err){ ok('probe ran without throwing', false, String(err&&err.stack||err)); }
+const net=performance.getEntriesByType('resource').map(e=>e.name).filter(n=>!/^(file|data|blob):/.test(n));
+ok('no network requests: nothing fetched while the whole probe ran (TD-216; the embedded SheetJS, when vendored, is used as is)',
+   !net.length && !$$('script[src]').length, net.concat($$('script[src]').map(s=>s.src)));
+R.notes.sheetjs=window.__realXLSX&&window.__realXLSX.version?'embedded '+window.__realXLSX.version:'not vendored (stubbed)';
 ok('no uncaught page errors', window.__errs.length===0, window.__errs);
 const pre=document.createElement('pre'); pre.id='grid-view-out'; pre.textContent=JSON.stringify(R); document.body.appendChild(pre);
 })();
@@ -1401,7 +1413,10 @@ const pre=document.createElement('pre'); pre.id='grid-view-out'; pre.textContent
 
 def probe(html_text: str) -> dict:
     js = HARNESS.replace("__OPEN__", str(OPEN_BUDGET_MS)).replace("__FILTER__", str(FILTER_BUDGET_MS))
-    html = html_text.replace("<head>", "<head>" + STUB, 1).replace("</body>", TIMING + js + "</body>")
+    # The last </body>: embedded libraries (SheetJS) carry the string too.
+    html = html_text.replace("<head>", "<head>" + STUB, 1)
+    i = html.rindex("</body>")
+    html = html[:i] + TIMING + js + html[i:]
     with tempfile.TemporaryDirectory() as td:
         f = pathlib.Path(td) / "grid_view_probe.html"
         f.write_text(html, encoding="utf-8")

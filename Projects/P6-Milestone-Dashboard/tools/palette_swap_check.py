@@ -231,7 +231,9 @@ def run(html_path: pathlib.Path) -> dict:
     # is read, so both runs would report the same in-between value and it would
     # look like an escape. Freeze them for the probe only.
     freeze = "<style>*,*::before,*::after{transition:none!important;animation:none!important}</style>"
-    injected = html.replace("</body>", f"{freeze}\n<script>\n{PROBE_JS}\n</script>\n</body>")
+    # The last </body>: embedded libraries (SheetJS) carry the string too.
+    i = html.rfind("</body>")
+    injected = html if i < 0 else html[:i] + f"{freeze}\n<script>\n{PROBE_JS}\n</script>\n" + html[i:]
     if injected == html:
         sys.exit("Could not find </body> to inject the probe script.")
 

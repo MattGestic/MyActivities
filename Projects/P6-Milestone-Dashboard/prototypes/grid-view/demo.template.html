@@ -61,6 +61,9 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
 <script id="vendor-slickgrid">
 /*@VENDOR_JS@*/
 </script>
+<script id="vendor-sheetjs">
+/*@SHEETJS_JS@*/
+</script>
 <script id="app-script">
 /*@GRID_JS@*/
 /*@GRID_FEATURES_JS@*/
@@ -86,7 +89,8 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
   window.DEMO_STORE=function(){ return store; };   // test hook: the demo's app-side stores
   // Every user task carries a GUID (Matt, 2026-09-29): tasks loaded without one get it now.
   SRETIds.ensureGuids(store.usertasks);
-  // Mirror of the app's ensureXLSX(): SheetJS from the same CDN, on demand.
+  // Mirror of the app's ensureXLSX(). Once SheetJS is vendored (TD-216) it is
+  // embedded above and this resolves at once; the CDN fetch is the fallback until then.
   function ensureXLSX(){
     return new Promise(function(res,rej){
       if(typeof XLSX!=='undefined') return res();

@@ -350,6 +350,19 @@ def grid_features(ext: str) -> str:
     return "\n".join(out)
 
 
+def sheetjs() -> str:
+    """The vendored SheetJS mini build with its licence beside it (TD-216),
+    once tools/vendor_sheetjs.py has been run; until then, a note."""
+    d = ROOT / "vendor" / "sheetjs"
+    js = d / "xlsx.mini.min.js"
+    if not js.exists():
+        return "/* SheetJS not vendored yet (TD-216): run tools/vendor_sheetjs.py. */"
+    lic = (d / "LICENSE").read_text(encoding="utf-8").replace("*/", "* /")
+    ver = re.search(r"\| Version \| ([^|]+) \|", (d / "SOURCE.md").read_text(encoding="utf-8"))
+    head = f"/* SheetJS Community Edition {ver.group(1).strip() if ver else ''} (mini build), vendor/sheetjs/SOURCE.md.\n{lic}*/\n"
+    return head + safe_inline(js.read_text(encoding="utf-8"), "</script", "SheetJS")
+
+
 def safe_inline(text: str, closer: str, what: str) -> str:
     if closer in text.lower():
         sys.exit(f"{what} contains {closer}, which would end the inline block early.")
@@ -369,6 +382,7 @@ def build() -> str:
         "/*@USER_CSS@*/": (ROOT / "src" / "modules" / "user" / "user.css").read_text(encoding="utf-8"),
         "/*@VENDOR_CSS@*/": safe_inline(vendor_css, "</style", "vendor CSS"),
         "/*@VENDOR_JS@*/": safe_inline(vendor_js, "</script", "vendor JS"),
+        "/*@SHEETJS_JS@*/": sheetjs(),
         "/*@GRID_JS@*/": safe_inline((MOD / "grid-view.js").read_text(encoding="utf-8"), "</script", "grid-view.js"),
         "/*@GRID_FEATURES_JS@*/": grid_features("js"),
         "/*@COLLECTIONS_JS@*/": safe_inline((COLL / "collections.js").read_text(encoding="utf-8"), "</script", "collections.js"),
@@ -402,7 +416,7 @@ def main():
         print("demo.html is current.")
         return 0
     out.write_text(html, encoding="utf-8")
-    print(f"Wrote {out.relative_to(ROOT)} ({len(html.encode('utf-8'))} bytes)")
+    print(f"Wrote {out} ({len(html.encode('utf-8'))} bytes)")
     return 0
 
 

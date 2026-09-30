@@ -396,7 +396,7 @@ The grid is a core plus optional features, so another screen, or another app, ta
 | `features/marks.js` + `.css` | `icon` (health dot) and `symbols` (Icon column) on columns, tap-to-pick | The host's SVG symbols for `symbols` |
 | `features/bulk-edit.js` + `.css` | Edit N rows | `refs` for refs columns (without it they are edited as text) |
 | `features/lists.js` + `.css` | My temp list, saved lists, the rail, panel and List column | `window.SRETCollections`; `lists` on the screen |
-| `features/xlsx.js` | Export .xlsx, Download import template, `SRETGrid.exportVisible()` | `ensureXLSX` (SheetJS) |
+| `features/xlsx.js` | Export .xlsx, Download import template, `SRETGrid.exportVisible()` | `ensureXLSX` (SheetJS; the SRET app embeds the mini build, TD-216, so import takes .xlsx and .csv, not legacy .xls) |
 | `features/import.js` + `.css` | Import dialog, Import log, `SRETGrid.importAoa()` | An import engine (`importer.engine`, default `window.SRETMsImport`); `xlsx` for the template link; `SRETDates` for date-order wording |
 
 A feature that is not loaded costs nothing: the core calls only the hooks of features active on the open screen. The hot paths (cell drawing, filtering, scrolling) have no per-feature loop except the row filter, which is empty unless `lists` is on; the timing checks in `tools/grid_view_check.py` are unchanged by the split.

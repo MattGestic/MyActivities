@@ -171,7 +171,10 @@ window.addEventListener('load',function(){ setTimeout(async function(){
 def run_one(page, w, h, coarse):
     extra = ("<style>" + coarse_css(page) + "</style></head>") if coarse else "</head>"
     probe = PROBE.replace("__COARSE__", "true" if coarse else "false").replace("__HIT__", str(HIT))
-    doc = page.replace("</head>", extra, 1).replace("</body>", probe, 1)
+    # The last </body>: embedded libraries (SheetJS) carry the string too.
+    doc = page.replace("</head>", extra, 1)
+    i = doc.rindex("</body>")
+    doc = doc[:i] + probe + doc[i + len("</body>"):]
     with tempfile.TemporaryDirectory() as td:
         f = pathlib.Path(td) / "responsive.html"
         f.write_text(doc, encoding="utf-8")

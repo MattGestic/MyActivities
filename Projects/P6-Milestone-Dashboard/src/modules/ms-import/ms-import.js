@@ -74,7 +74,9 @@
     if(!file) return Promise.reject(new Error('Choose a file first.'));
     var name=file.name||'';
     if(/\.csv$/i.test(name)) return file.text().then(parseCsv);
-    if(!/\.xlsx?$/i.test(name)) return Promise.reject(new Error('Use an .xlsx or .csv file. "'+name+'" is neither.'));
+    // The embedded SheetJS is the mini build (TD-216, Matt 2026-09-30): no legacy .xls.
+    if(/\.xls$/i.test(name)) return Promise.reject(new Error('"'+name+'" is an old-style .xls workbook, which cannot be read here. Open it in Excel, save it as .xlsx or .csv, and import that.'));
+    if(!/\.xlsx$/i.test(name)) return Promise.reject(new Error('Use an .xlsx or .csv file. "'+name+'" is neither.'));
     var loader=typeof ensureXLSX==='function'?ensureXLSX:function(){ return Promise.resolve(); };
     return Promise.all([Promise.resolve().then(loader),file.arrayBuffer()]).then(function(r){
       var X=r[0]||root.XLSX;

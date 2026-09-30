@@ -123,7 +123,7 @@
     }
     function build(body,close){
       var s=K.s(), o=s.opts, X=K.get('xlsx');
-      var file=h('input',{type:'file',accept:'.xlsx,.xls,.csv','aria-label':'File to import','data-sg':'import-file'});
+      var file=h('input',{type:'file',accept:'.xlsx,.csv','aria-label':'File to import','data-sg':'import-file'});
       var go=h('button',{type:'button','class':'sg-btn sg-btn--primary','data-sg':'import-go',text:'Import',disabled:true});
       var tpl=X?h('button',{type:'button','class':'sg-link','data-sg':'import-template',text:'Download import template',on:{click:X.template}}):null;
       var pick=h('div',{'class':'sg-import-pick'},[
