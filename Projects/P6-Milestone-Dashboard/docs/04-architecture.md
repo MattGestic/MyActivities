@@ -351,6 +351,18 @@ Three rules that are load-bearing here:
 
 Both literals these replaced were wrong and had been for some time: the week band sat 3.5px below a 16px row, and the filter bar's 160px cap cut 43px off its own content at phone width.
 
+### Entries are the record; the stores are projections (v3.1.0-P65)
+
+Matt's decision of 2026-09-30 (TD-225): every update to a milestone is its own entry, and a roll-up gives the compiled view.
+
+- **One writer path.** Remarks, notes and card or grid edits append or change entries in `ENTRIES` (module `SRETEntries`). `projectEntryStores()` rebuilds `MS_COMMENTS`, `MS_HEALTH_OVERRIDE`, `MS_PROGRESS_OVERRIDE`, `MS_FIELD_OVERRIDE` and `NOTES` from it. Readers were left alone; only writers changed.
+- **Latest wins per field**, ordered by `at` then eid. `to:null` is "back to the schedule". Removing an entry falls back to the one before.
+- **Projection runs on an entry change, never inside `renderRows`,** so `previewEffState`'s temporary health write and any render path stay as they were.
+- **Direct store writes are adopted, not lost.** `adoptStoreDrift()` runs before every writer and projection, compares the stores with the last projection, and turns any difference into an entry with origin `direct`. It exists for older code paths and harnesses; the app's own writers never trip it (`p65_check` asserts 0).
+- **Files keep `schemaVersion` 1.** `entries` is added beside the legacy store fields, which are still written (as projections), so a P64 build still opens a P65 file. A file without `entries` is migrated: one carried entry per milestone key.
+- **Short titles, dependency comments and row remarks keep their own stores in P65.** Short titles are a display setting and stay that way; dependency and row remarks become entries in P67.
+- **Modules.** `src/modules/notes-store/`, `src/modules/notes-card/`, `src/modules/notes-export/`, each with a Node test, pasted unchanged into the app script after the grid view module.
+
 ### Schedule info bar and report meta (v3.1.0-P64)
 
 Matt's approved mockup of 2026-09-29 (TD-224). The project details left the app heading for a bar on top of the board's timeline header. Recorded here because the header now has three sticky rows and the report meta changed shape.

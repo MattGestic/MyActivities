@@ -120,3 +120,6 @@ time, filled into every `ctx` that has none; `seq` is an eid floor.
 
 Helpers: `normStatus, weekEndISO(date, weekDay), isEmptyEntry, compare (the
 latest-wins order), nextEid(entries, floor), sigFor(kind, key, text, changes)`.
+
+## App file versioning
+The app keeps `schemaVersion: 1` on its publish and model files and adds `entries` beside the legacy store fields (still written, as projections), so a P64 build opens a P65 file. `validatePayload` here accepts both shapes; the app decides by the presence of `entries`, not by the number.

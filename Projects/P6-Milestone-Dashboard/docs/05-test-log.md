@@ -3195,3 +3195,28 @@ No other check changed.
 - The version grep returns 1.
 
 **Published:** `releases/v3.1.0-P64_schedule-info-bar.html`
+
+## TEST-66: P65 entries as the record of every milestone update (v3.1.0-P65)
+
+TD-225. No visible change: the board, card and tables read the same stores, now projected from `ENTRIES`.
+
+**Module tests (Node, re-run by the orchestrator, not taken from the agents' reports):**
+- `tools/notes_store_test.mjs` 119/119: latest-wins over 3 entries and fallback on removal, `to:null`, progress and fields equal to source not projected, health 0 projected, coalescing at window-1, window, window+1, text-loss guard, clears, USR keys, and the round trip `project(migrate(p))` equal to the stores for two real P64 fixtures (`tools/fixtures/p65/`, rebuilt by `tools/p65_fixtures.py`), idempotent re-import.
+- `tools/form_to_entry_test.mjs` 68/68: every card field, blank, unreadable date, progress 0/100/101/equal to schedule, health -1/0/4, read-only float.
+- `tools/notes_export_test.mjs` 45/45: Summary and Log row counts and cells, and a SheetJS write and read-back (not wired into the app until P67).
+
+**`tools/p65_check.py` (new) 90/90,** headless with the network unresolvable, every edit through the app's own writers:
+- Card: 3 finish saves (T, T+11 min, next report) give 3 entries and the marker moves each time; removing entries falls back 3rd to 2nd to 1st to none, measured on the marker cell.
+- Coalescing at +599999, +600000 (merge) and +600001 ms (new entry).
+- Remark, clear, remark again; health 0 kept, automatic removes the key; progress equal to schedule leaves no override.
+- Grid writers (`annotWrite`, user-milestone grid under a USR key) and note actions mirror into the stores.
+- Drift: 0 adopted after every flow; stores identical to a fresh projection; a deliberate direct write is adopted, not lost.
+- Publish and reload: entries and all five stores identical.
+- A real P64 model file mounted into a clean app gives stores equal to the file, and a second mount adds nothing.
+- The same file mounted into the P64 release and into this build gives identical boards: marker classes, edit marks and titles, edit ghosts, cells.
+- A file exported by this build mounts to the same 3 entries, twice.
+
+**Existing checks changed:** `p43_check` source assertions now look for the entry wiring (mount staging, `entries` in the payload, entry re-keying at both move sites). Same intent.
+
+**Full suite, sequential:** every tool exits 0, `colour_audit --strict` 0 violations, `palette_swap_check` 0 escapes, `spacing_audit` at its ceiling, `grid_view_assemble --check` current.
+
