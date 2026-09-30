@@ -61,7 +61,7 @@ def main():
 
     if a.tgz:
         raw = pathlib.Path(a.tgz).expanduser().read_bytes()
-        source = f"{pathlib.Path(a.tgz).name}, downloaded by hand from " + URL.format(v="<version>")
+        source = None  # named once the version is known
     else:
         url = URL.format(v=a.version)
         try:
@@ -79,6 +79,9 @@ def main():
             files[name] = m.read()
     pkg = json.loads(files["package/package.json"])
     v = pkg.get("version", "")
+    if source is None:
+        source = (f"`{pathlib.Path(a.tgz).name}`, supplied by hand (the published tarball is " + URL.format(v=v) +
+                  "; this session could not reach it to compare, so the tarball sha256 below is the record)")
     if a.version and v != a.version:
         sys.exit(f"Asked for {a.version}, the tarball is {v}.")
     if not ver(v) or (ver(v) < MIN_PATCHED and not a.allow_unpatched):

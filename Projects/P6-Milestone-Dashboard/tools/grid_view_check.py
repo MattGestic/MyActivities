@@ -107,6 +107,8 @@ MUTATIONS = {
     "import-log-not-written": ("if(im.log) Array.prototype.push.apply(im.log,entries);", ""),
     "import-bad-date-kept": ("row[c.key]=null; return;\n        }", "row[c.key]=norm(v); return;\n        }"),
     "xls-treated-as-xlsx": ("    if(/\\.xls$/i.test(name)) return Promise.reject(", "    if(false) return Promise.reject("),
+    "sheetjs-from-cdn": ("    return window.XLSX&&window.XLSX.utils?Promise.resolve(window.XLSX)\n",
+                         "    var sc=document.createElement('script'); sc.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; document.head.appendChild(sc);\n    return window.XLSX&&window.XLSX.utils?Promise.resolve(window.XLSX)\n"),
     "import-silent-fail": ("panel(ui,'error',[h('p',{'class':'sg-import-head',text:'Import failed'}),h('p',{'data-sg':'import-error',text:res.fatal})]);", ""),
     "status-tone-missing": ("return {text:txt,addClasses:'sg-tone sg-tone-'+c.tones[v]};", "return txt;"),
     "open-on-any-column": ("if(c&&c.id===opts.openColumn&&it&&", "if(c&&it&&"),
