@@ -48,12 +48,14 @@ MUTATIONS = {
     "date-format-setting-ignored": ("  function fmtDate(v){ return DATES.format(v); }", "  function fmtDate(v){ return fmtDateDMY(v); }"),
     "core-needs-lists": ("    for(var i=0;i<s.rowFilters.length;i++) if(!s.rowFilters[i](item)) return false;",
                          "    if(s.scope.type) return false;"),
+    "phone-pin-set-ignored": ("    var phone=s.pinPhoneKeys&&s.screen.clientWidth<LAYOUT.phoneBelow;", "    var phone=false;"),
+    "pin-set-switch-keeps-old-order": ("    if(s.pinned&&s.pinSet!==keys.join()) unpin(s);\n", ""),
     "bulk-refs-needs-refs-feature-order": ("      if(c.type==='refs'&&R){", "      if(c.type==='refs'&&!R){"),
 }
 
 HARNESS = r"""
 <script>
-(function(){
+(async function(){
 const R={checks:[]};
 function ok(name,pass,detail){ R.checks.push({name:name,pass:!!pass,detail:pass?null:detail}); }
 function throws(fn,re){ try{ fn(); return 'no error'; }catch(e){ return re.test(String(e.message))?true:String(e.message); } }
@@ -156,11 +158,11 @@ SRETGrid.close();
 // Defaults, text, dates, layout, symbol class.
 const host=document.createElement('div'); host.id='host2'; host.style.cssText='position:relative;width:900px;height:600px'; document.body.appendChild(host);
 const r2=SRETGrid.setup({
-  defaults:{host:host,pin:['id','name'],symbolClass:'brand-mark',editable:false},
+  defaults:{host:host,pin:['id','name'],pinPhone:['id'],symbolClass:'brand-mark',editable:false},
   text:{readOnlyCell:'Locked by the source system.',noun:['part','parts']},
   dates:{format:function(v){ return v?v.slice(8,10)+'/'+v.slice(5,7)+'/'+v.slice(0,4):''; },
          parse:function(s){ const x=/^(\d\d)\/(\d\d)\/(\d{4})$/.exec(String(s).trim()); return x?x[3]+'-'+x[2]+'-'+x[1]:null; },excel:'dd/mm/yyyy'},
-  layout:{pinBelow:1000}});
+  layout:{pinBelow:1000,phoneBelow:600}});
 ok('setup: all features on when features is not given', r2.features.length===__FEATURES__.length, r2.features);
 SRETGrid.open(cfg({canEdit:function(k,f){ return f!=='finish'; },importer:{nextId:()=>'A-99'},
   columns:[COLS[0],{key:'mark',label:'Icon',type:'select',editable:true,options:['diamond'],symbols:{prefix:'ico-',stateKey:'kind'}}].concat(COLS.slice(1)),
@@ -173,6 +175,14 @@ ok('dates: the deployment format shows in cells', !!cell && cell.textContent==='
 const fl=$('[data-sg-filter="finish"]'); fl.value='<01/11/2026'; fl.dispatchEvent(new Event('input',{bubbles:true}));
 ok('dates: filter operators parse the deployment format', SRETGrid._engine().dataView.getLength()===1, SRETGrid._engine().dataView.getLength());
 fl.value=''; fl.dispatchEvent(new Event('input',{bubbles:true}));
+// Pinning follows width changes within one screen: tablet, phone, tablet, desktop.
+const E=SRETGrid._engine(), frozenIds=()=>{ const f=E.grid.getOptions().frozenColumn; return f<0?'none':E.grid.getColumns().slice(0,f+1).map(c=>c.id).join(); };
+const nameW0=E.grid.getColumns().find(c=>c.id==='name').width;
+const seq=[]; for(const px of [500,900,1200]){ host.style.width=px+'px'; E.requestResize(); await new Promise(r=>setTimeout(r,30)); seq.push(px+':'+frozenIds()); }
+ok('layout: pinPhone below phoneBelow, pin below pinBelow, none above; switching sets restores the order',
+   seq.join(' | ')==='500:_checkbox_selector,id | 900:_checkbox_selector,id,name | 1200:none' &&
+   E.grid.getColumns().map(c=>c.id).join()==='_checkbox_selector,id,mark,name,finish,qty,kind,pred' && E.grid.getColumns().find(c=>c.id==='name').width>=nameW0, seq);
+host.style.width='900px'; E.requestResize(); await new Promise(r=>setTimeout(r,30));
 const g=SRETGrid._engine().grid, fi=g.getColumns().findIndex(c=>c.id==='finish');
 g.setActiveCell(0,fi); g.editActiveCell();
 ok('text: readOnlyCell from setup', $('[data-sg=msg]').textContent==='Locked by the source system.', $('[data-sg=msg]').textContent);

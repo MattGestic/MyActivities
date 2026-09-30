@@ -12,7 +12,7 @@
                    // any open() option; each screen's own options win
        text:     { readOnlyCell, noun:['task','tasks'], refsPlaceholder, refsUnknown },
        dates:    { format(iso)->text, parse(text)->iso|null, excel:'d-mmm-yy' },
-       layout:   { pinBelow:1024, pinShare:0.62, pinMin:100 }
+       layout:   { pinBelow:1024, phoneBelow:768, pinShare:0.62, pinMin:100 }
      }) -> {features, text, dates, layout}
    It fails fast: an unknown feature name, or a feature whose module is not
    loaded (lists needs SRETCollections), throws here rather than on first use.
@@ -26,6 +26,7 @@
        views:[{id,label,count}], view, onView(id)   (title becomes a view switcher)
        pickers:[{sg,label,items:[{id,label,checked}],onSelect(id)}], note,
        pin:['id','name']   columns kept in view on narrow screens (with the checkbox)
+       pinPhone:['id']     pinned instead below layout.phoneBelow (default: pin)
        toolsItems:[{label,sg,onSelect}]
        + feature options: lists (lists), importer / onImport (import),
          refOptions (refs), renderSymbol (marks), onTemplate (xlsx)
@@ -90,7 +91,7 @@
   var CONF=null;       // null until setup(); then {features, defaults, text}
   var DATES=null, LAYOUT=null;
   function defaultDates(){ return {format:fmtDateDMY,parse:parseDateDMY,excel:'d-mmm-yy'}; }
-  function defaultLayout(){ return {pinBelow:1024,pinShare:0.62,pinMin:100}; }
+  function defaultLayout(){ return {pinBelow:1024,phoneBelow:768,pinShare:0.62,pinMin:100}; }
 
   function enabled(name){ return !CONF||!CONF.features||CONF.features.indexOf(name)>=0; }
   function checkNeeds(f,where){
@@ -476,31 +477,37 @@
   // ---------- pinned columns on narrow screens (Matt, 2026-09-30, option A) ----------
   // Below layout.pinBelow px of grid width, the checkbox and the columns named in
   // opts.pin (e.g. ['id','name']) stay put while the rest scrolls sideways.
+  // Below layout.phoneBelow of screen width, opts.pinPhone (e.g. ['id']) is pinned instead, so
+  // a phone keeps most of its width for the scrolling columns (Matt, 2026-09-30).
   // The last pinned column narrows so the pinned part takes at most about
   // layout.pinShare of the width. SlickGrid's pinned pane cannot scroll up and down on
   // its own (it relies on a wheel handler we keep off for smooth scrolling),
   // so it scrolls natively with its scrollbar hidden and follows the main pane.
-    function applyPin(){
+  function unpin(s){
+    var g=s.grid, byId={}; g.getColumns().forEach(function(c){ byId[c.id]=c; });
+    var back=s.baseOrder.map(function(id){ return byId[id]; }).filter(Boolean);
+    back.forEach(function(c){ if(s.pinWidths[c.id]) c.width=s.pinWidths[c.id]; });
+    s.pinned=false; s.pinSet='';
+    g.setOptions({frozenColumn:-1}); g.setColumns(back); g.invalidate();
+  }
+  function applyPin(){
     var s=S; if(!s||!s.pinKeys.length) return;
-    var w=s.gridEl.clientWidth, want=w>0&&w<LAYOUT.pinBelow, g=s.grid;
+    var w=s.gridEl.clientWidth, g=s.grid;
+    // Phone is judged on the screen's width (as the CSS phone layout), pinning on the grid's.
+    var phone=s.pinPhoneKeys&&s.screen.clientWidth<LAYOUT.phoneBelow;
+    var keys=!(w>0)?[]:phone?s.pinPhoneKeys:w<LAYOUT.pinBelow?s.pinKeys:[];
+    if(!keys.length){ if(s.pinned) unpin(s); return; }
+    // A different set (phone to tablet): back to the full order first.
+    if(s.pinned&&s.pinSet!==keys.join()) unpin(s);
     var cols=g.getColumns();
-    if(!want){
-      if(!s.pinned) return;
-      s.pinned=false;
-      var order=s.baseOrder, byId={}; cols.forEach(function(c){ byId[c.id]=c; });
-      var back=order.map(function(id){ return byId[id]; }).filter(Boolean);
-      back.forEach(function(c){ if(s.pinWidths[c.id]) c.width=s.pinWidths[c.id]; });
-      g.setOptions({frozenColumn:-1}); g.setColumns(back); g.invalidate();
-      return;
-    }
-    var ids=[CHECK_ID].concat(s.pinKeys), pins=[], rest=[];
+    var ids=[CHECK_ID].concat(keys), pins=[], rest=[];
     ids.forEach(function(id){ var c=cols.filter(function(x){ return x.id===id; })[0]; if(c) pins.push(c); });
     cols.forEach(function(c){ if(pins.indexOf(c)<0) rest.push(c); });
     var last=pins[pins.length-1];
     if(!s.pinned){ s.pinWidths={}; s.pinWidths[last.id]=last.width; }
     var fixed=pins.slice(0,-1).reduce(function(a,c){ return a+c.width; },0);
     last.width=Math.max(LAYOUT.pinMin,Math.min(s.pinWidths[last.id],Math.floor(w*LAYOUT.pinShare)-fixed));
-    var was=s.pinned; s.pinned=true;
+    var was=s.pinned; s.pinned=true; s.pinSet=keys.join();
     g.setColumns(pins.concat(rest));
     if(!was) g.setOptions({frozenColumn:pins.length-1});
     g.invalidate();
@@ -907,7 +914,10 @@
       s.ro.observe(gridEl);
     }
     updateStatus();
-    s.pinKeys=(opts.pin||[]).filter(function(k){ return !!colByKey[k]&&!colByKey[k].hidden; });
+    var shown=function(k){ return !!colByKey[k]&&!colByKey[k].hidden; };
+    s.pinKeys=(opts.pin||[]).filter(shown);
+    s.pinPhoneKeys=opts.pinPhone?opts.pinPhone.filter(shown):null;
+    if(s.pinPhoneKeys&&!s.pinPhoneKeys.length) s.pinPhoneKeys=null;
     s.baseOrder=grid.getColumns().map(function(c){ return c.id; }); s.pinned=false;
     applyPin();
     if(dv.getLength()) grid.setActiveCell(0,firstDataCell());

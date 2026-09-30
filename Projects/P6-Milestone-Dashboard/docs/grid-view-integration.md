@@ -46,7 +46,7 @@ Once, at load (section 6 has every setting):
 ```js
 SRETGrid.setup({
   features: ['refs','marks','bulk-edit','lists','xlsx','import'],
-  defaults: { host, ensureXLSX, onBack, pin: ['id','name'], symbolClass: 'ms-icon filled' },
+  defaults: { host, ensureXLSX, onBack, pin: ['id','name'], pinPhone: ['id'], symbolClass: 'ms-icon filled' },
   text: { readOnlyCell: 'This value comes from the schedule and cannot be edited here.',
           noun: ['milestone','milestones'], refsPlaceholder: 'Type an ID, e.g. S or 117',
           refsUnknown: 'not found in the schedule or the user tasks' }
@@ -377,7 +377,7 @@ Plus the embedded **Project baseline**. A vendor or contractor schedule is its o
 | `symbols:{prefix:'ico-', stateKey:'state'}` on a select column | The Icon column: draws `<svg><use href="#ico-...">` coloured by the row's status (the board's `.ms-icon` classes); tap to pick from the five marks. `symbolClass` (setup defaults, SRET: `'ms-icon filled'`) adds the board's classes; `renderSymbol(value, item, column)` can draw it instead | Options are `MS_MARKERS` (diamond, lock, flag, star, circle); the key is the user task's `marker`, normalised with `normalizeMarker()`; `renderSymbol` can call the app's `renderIcon()` |
 | WBS label | "WBS/Area" on User tasks and the schedule views | Column label only |
 | Bulk edit (automatic when the grid is editable) | "Edit N rows" appears while rows are selected. Tick fields, set values, Apply: every change goes through `canEdit` and `onEdit`; references can be added, replaced or removed; ranges are checked first; refused changes are listed | Nothing extra: it uses the same `onEdit` as a cell edit |
-| `pin:['id','name']` | Below 1024px of grid width the checkbox and these columns stay put while the rest scrolls sideways; the last one narrows so the pinned part stays under about 70% | Pass the ID and name keys of each view |
+| `pin:['id','name']`, `pinPhone:['id']` | Below 1024px of grid width the checkbox and `pin` columns stay put while the rest scrolls sideways; the last one narrows so the pinned part stays under about 70%. Below 768px of screen width `pinPhone` is pinned instead (Matt, 2026-09-30: ID only on phones, so most of a phone's width scrolls) | Set both once in `setup()` defaults |
 
 **Phones and touch:** on a coarse pointer controls are 32px with an invisible 40px tap area (`--ctl-hit-touch`, as the dashboard's filter bar), rows and header grow to 40px, and the whole checkbox cell ticks the row. Menus and pickers stay inside the screen. Header buttons wrap at every width. Below 768px search sits behind a button in the title row and the counts row shows only while something is selected or filtered. `tools/grid_view_responsive.py` (part of `grid_view_check.py`) asserts all of this at 390, 768 and 1440 wide with mouse and touch, and has its own `--prove-fails`.
 
@@ -409,7 +409,7 @@ A feature that is not loaded costs nothing: the core calls only the hooks of fea
 | `defaults` | none | Any `open()` option shared by every screen: `host`, `ensureXLSX`, `onBack`, `pin`, `symbolClass`, `renderSymbol`, `editable`... A screen's own option wins |
 | `text` | generic wording | `readOnlyCell` (a refused edit), `noun` (what import calls a row), `refsPlaceholder`, `refsUnknown`. A screen can pass `text` too |
 | `dates` | `d-Mmm-yy` | `format(iso)` for cells, `parse(text)` for filter operators (`<1-Oct-26`), `excel` for export |
-| `layout` | `pinBelow:1024, pinShare:0.62, pinMin:100` | When columns pin, and how much of the width they may take |
+| `layout` | `pinBelow:1024, phoneBelow:768, pinShare:0.62, pinMin:100` | When columns pin (grid width), when the phone set `pinPhone` replaces `pin` (screen width), and how much of the width they may take |
 
 It returns the settings in force. Mistakes fail at setup or at the first `open()`, with a message naming the feature or file: `lists` without the lists feature, a `refs` column with refs switched off, an unknown layout setting. A column type no loaded feature provides is shown as text.
 

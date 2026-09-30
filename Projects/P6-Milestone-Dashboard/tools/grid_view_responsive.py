@@ -12,7 +12,8 @@ a fine pointer and a forced coarse (touch) pointer, and asserts:
   - menus, pickers and dialogs open inside the screen;
   - phones: search sits behind a button and opens on tap; the counts row
     shows only while something is selected;
-  - below 1024 px the checkbox, ID and Name are pinned: they stay put when
+  - below 1024 px the checkbox, ID and Name are pinned (below 768, the ID
+    only: Matt, 2026-09-30): they stay put when
     the rest scrolls sideways, and scrolling up and down over them moves
     the whole table; at 1440 nothing is pinned.
 
@@ -135,10 +136,11 @@ window.addEventListener('load',function(){ setTimeout(async function(){
  const pinned=SRETGrid._engine().grid.getOptions().frozenColumn>=0;
  const leftIds=$$('.sg-grid .slick-pane-header.slick-pane-left .slick-header-column').map(h=>h.id.replace(/^.*?(_checkbox_selector|id|name)$/,'$1'));
  if(W<1024){
-   ok(pre+'narrow screen: checkbox, ID and Name are pinned', pinned && leftIds.join()==='_checkbox_selector,id,name', leftIds);
+   const want=W<768?'_checkbox_selector,id':'_checkbox_selector,id,name';
+   ok(pre+(W<768?'phone: only the checkbox and ID are pinned':'tablet: checkbox, ID and Name are pinned'), pinned && leftIds.join()===want, leftIds);
    const lp=$('.sg-grid .slick-pane-top.slick-pane-left').getBoundingClientRect().width, gw=$('.sg-grid').getBoundingClientRect().width;
    R.notes[W+(COARSE?'_touch':'_mouse')+'_pinned_share']=Math.round(lp/gw*100)+'%';
-   ok(pre+'the pinned part takes at most about 70% of the width', lp/gw<=0.7, Math.round(lp/gw*100)+'%');
+   ok(pre+(W<768?'the pinned part takes under half of a phone grid':'the pinned part takes at most about 70% of the width'), lp/gw<=(W<768?0.45:0.7), Math.round(lp/gw*100)+'%');
    const right=$('.sg-grid .slick-pane-top.slick-pane-right .slick-viewport'), left=$('.sg-grid .slick-pane-top.slick-pane-left .slick-viewport');
    const idCell=()=>$('.sg-grid .slick-pane-top.slick-pane-left .slick-row .l1').getBoundingClientRect().left;
    const x0=idCell(); right.scrollLeft=300; await sleep(30);
