@@ -32,7 +32,7 @@
   var STATUSES=['note','open','sent','review','outstanding','done','closed'];
   var OPEN_STATUSES=['open','sent','review','outstanding'];
   // The milestone's own schedule fields, exactly MS_EDITABLE_FIELDS in the app.
-  var MS_FIELDS=['actName','start','date','weight','floatD','type','marker'];
+  var MS_FIELDS=['actName','start','date','weight','floatD','type','marker','actual','startActual'];
   var CHANGE_FIELDS=MS_FIELDS.concat(['health','progress','rowHealth','rowRemark']);
   var DEFAULT_WINDOW_MS=10*60*1000;
 

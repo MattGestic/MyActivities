@@ -430,7 +430,7 @@ def main():
         "msKeyFor still composes from the live values"))
     checks.append((
         "source: the ID and the relationships are absent from the editable list",
-        "const MS_EDITABLE_FIELDS=['actName','start','date','weight','floatD','type','marker']" in src,
+        "const MS_EDITABLE_FIELDS=['actName','start','date','weight','floatD','type','marker','actual','startActual']" in src,
         "the editable field list changed"))
     # The short title's own Save button is what was reported. It should be gone
     # rather than fixed in place beside a second save control.

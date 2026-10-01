@@ -378,7 +378,7 @@ def main():
         f"{src.count('syncMsEditedMarks();')} call sites, expected 2"))
     checks.append((
         "source: the marker shape joins the editable fields",
-        "'type','marker']" in nospace,
+        "'type','marker'," in nospace and "constMS_EDITABLE_FIELDS=['actName','start','date','weight','floatD','type','marker'," in nospace,
         "marker is not in MS_EDITABLE_FIELDS"))
 
     fails = 0

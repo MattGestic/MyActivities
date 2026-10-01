@@ -109,5 +109,22 @@ r=run(base,{weight:'11'}); ok('shortTitle null when unchanged', r.shortTitle===n
 r=run(base,{shortTitle:'Slab2'}); ok('shortTitle only -> draft null, shortTitle kept', r&&r.draft===null&&r.shortTitle==='Slab2');
 r=run(base,{shortTitle:''}); ok('shortTitle cleared -> empty string', r&&r.shortTitle==='');
 
+// P69: the A flag on each date (startActual -> startActual, dateActual -> actual)
+const baseA=Object.assign({},base,{startActual:false,dateActual:false});
+const ownA=f=>({actual:false,startActual:false})[f]!==undefined?({actual:false,startActual:false})[f]:own[f];
+r=run(baseA,{dateActual:true},{own:ownA,current:ownA}); ok('finish marked actual', r.draft.changes.actual.to===true&&r.draft.changes.actual.from===false, r);
+r=run(baseA,{startActual:true},{own:ownA,current:ownA}); ok('start marked actual', r.draft.changes.startActual.to===true&&!r.draft.changes.actual, r);
+r=run(baseA,{date:'2026-10-12',dateActual:true},{own:ownA,current:ownA});
+ok('new date saved as actual: two changes', r.draft.changes.date.to==='2026-10-12'&&r.draft.changes.actual.to===true);
+const ownT=f=>f==='actual'?true:ownA(f);
+const baseT=Object.assign({},baseA,{dateActual:true});
+r=run(baseT,{dateActual:false},{own:ownT,current:ownT}); ok('schedule actual set back to forecast', r.draft.changes.actual.to===false&&r.draft.changes.actual.from===true, r);
+const curT=f=>f==='actual'?false:ownT(f);
+r=run(Object.assign({},baseT,{dateActual:false}),{dateActual:true},{own:ownT,current:curT});
+ok('back to the schedule actual -> to null', r.draft.changes.actual.to===null, r);
+r=run(Object.assign({},baseA,{date:'2026-10-20',dateActual:true}),{date:'',dateActual:false},{own:ownA,current:f=>f==='date'?'2026-10-20':(f==='actual'?true:ownA(f))});
+ok('cleared date takes its flag back to schedule', r.draft.changes.date.to===null&&r.draft.changes.actual.to===null, r);
+ok('flag untouched -> nothing', run(baseA,{},{own:ownA,current:ownA})===null);
+
 console.log('\n'+(n-fails)+'/'+n+' passed');
 process.exit(fails?1:0);

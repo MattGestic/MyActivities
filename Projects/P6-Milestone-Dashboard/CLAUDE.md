@@ -22,6 +22,8 @@ Read this before touching any file in this project. It is the short form; `docs/
 | `docs/handoff/` | Archive of the original claude.ai chat-to-code handoff |
 | `docs/decisions/` | One file per design decision too large for a kit row, named `D-NN-<subject>.md`; kit rows reference them by D number |
 | `docs/perf/Scale_Measurement_Log.md` | Append-only scale and performance figures (TD-219, TEST-59) |
+| `tools/run_checks.py` | Change-scoped check runner. Runs only the checks whose covered code changed since their last pass; `--all` for everything, `--dry-run` to see why. How it works and its limits: `docs/check-map.md` |
+| `docs/component-register.md` | Generated. Every function's tie-ins, globals, DOM ids, covering checks and when each last passed |
 | `tools/scale_bench.mjs` | Scale benchmark on a synthetic schedule through the real import path. Node + Playwright: `NODE_PATH=$(npm root -g) node tools/scale_bench.mjs` |
 
 Read `docs/03-todo.md` first in any session. One fact lives in one file — reference by ID, do not restate.

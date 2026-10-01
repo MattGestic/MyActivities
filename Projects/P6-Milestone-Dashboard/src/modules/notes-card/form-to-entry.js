@@ -29,10 +29,14 @@
   'use strict';
 
   // form key -> entry field name
+  // startActual / dateActual: the A flag on each date (P69). true = actual,
+  // false = forecast; read by the caller from the field's " A" suffix.
   var FIELD = {title:'actName', start:'start', date:'date', weight:'weight',
                floatD:'floatD', type:'type', marker:'marker',
-               progress:'progress', health:'health'};
-  var ORDER = ['title','start','date','weight','floatD','type','marker','progress','health'];
+               progress:'progress', health:'health',
+               startActual:'startActual', dateActual:'actual'};
+  var ORDER = ['title','start','date','weight','floatD','type','marker','progress','health',
+               'startActual','dateActual'];
 
   function norm(v){ return (v===undefined||v===''||v!==v)?null:v; }
   function same(a,b){
@@ -69,6 +73,11 @@
         return {to:same(p,ctx.scheduleProgress)?null:p};
       case 'health':
         return {to:(raw===-1||raw==null)?null:raw};   // 0 is a real value
+      case 'startActual': case 'dateActual':
+        // A cleared date goes back to the schedule, its flag with it.
+        s=now[f==='startActual'?'start':'date'];
+        if(s==null||String(s).trim()==='') return {to:null};
+        return {to:raw===true};
     }
     return {skip:true};
   }

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-p68_check: the milestone card's fold memory, its one-step back arrow, and the
+p68_check (P68, collection strip moved to the main page in P69): the milestone card's fold memory, its one-step back arrow, and the
 double-click collection (P68, Matt 2026-10-01).
 
 Drives the real card in headless Chrome by clicking markers on the board:
@@ -14,7 +14,7 @@ Drives the real card in headless Chrome by clicking markers on the board:
     comma-separated collection and leave its card open; a repeat adds
     nothing; three markers give three chips in order; a single click still
     opens and closes as before;
-  - the row sits above Start / Duration / Finish, is one line that scrolls
+  - the strip sits on the main page directly above the date bands, is one line that scrolls
     sideways, Add to list on the left (inert), copy on the right; the cross
     removes one ID; copy writes the string; a chip opens that card;
   - markers take touch-action: manipulation, so a double tap is not a zoom.
@@ -60,7 +60,7 @@ PROBE = r"""
     if(dlg().hidden) throw new Error('card did not open for '+id);
   };
   const dbl=async function(id){ await gap(); const w=wrapOf(id); w.click(); w.click(); await settle(); };
-  const chips=()=>Array.prototype.map.call($('ms-collect-chips').querySelectorAll('.ms-dep-chip'),b=>b.getAttribute('data-id'));
+  const chips=()=>Array.prototype.map.call($('collect-chips').querySelectorAll('.ms-dep-chip'),b=>b.getAttribute('data-id'));
   try{
     const st=document.createElement('style');
     st.textContent='*{transition:none!important;animation:none!important}';
@@ -129,7 +129,7 @@ PROBE = r"""
 
     // ===== 3. Collection =====
     await open(A);
-    ck('collect: row hidden while empty', $('ms-collect').hidden, '');
+    ck('collect: row hidden while empty', $('collect-bar').hidden, '');
     await dbl(A);
     ck('collect: a double click on the open card\'s marker adds it and the card stays on it',
        MS_COLLECTION===A&&!dlg().hidden&&cur()===A, MS_COLLECTION+' / '+cur()+' hidden '+dlg().hidden);
@@ -141,9 +141,9 @@ PROBE = r"""
     await dbl(C);
     ck('collect: three markers, three chips in order', chips().join(',')===[A,B,C].join(',')&&MS_COLLECTION===[A,B,C].join(','), chips().join(','));
     ck('collect: chips carry the state dot like the dependency chips',
-       $('ms-collect-chips').querySelectorAll('.ms-dep-chip .ms-chip-dot').length===3, '');
-    ck('collect: each chip ends in a remove cross', $('ms-collect-chips').querySelectorAll('.ms-dep-chip .ms-collect-x').length===3&&
-       Array.prototype.every.call($('ms-collect-chips').querySelectorAll('.ms-dep-chip'),b=>b.lastElementChild.classList.contains('ms-collect-x')), '');
+       $('collect-chips').querySelectorAll('.ms-dep-chip .ms-chip-dot').length===3, '');
+    ck('collect: each chip ends in a remove cross', $('collect-chips').querySelectorAll('.ms-dep-chip .collect-x').length===3&&
+       Array.prototype.every.call($('collect-chips').querySelectorAll('.ms-dep-chip'),b=>b.lastElementChild.classList.contains('collect-x')), '');
     let stC=null; try{ stC=localStorage.getItem('sret-ms-collection'); }catch(x){}
     ck('collect: kept as display state', stC===MS_COLLECTION, stC);
     await gap();
@@ -153,13 +153,18 @@ PROBE = r"""
     wrapOf(D).click(); await settle();
     ck('collect: a single click opens a card and collects nothing', !dlg().hidden&&cur()===D&&chips().length===3, MS_COLLECTION);
     // Layout
-    const row=$('ms-collect'), host=$('ms-collect-chips');
-    const rR=row.getBoundingClientRect(), sR=dlg().querySelector('.ms-schedule').getBoundingClientRect();
-    ck('row: above Start / Duration / Finish', rR.bottom<=sR.top+1, Math.round(rR.bottom)+' <= '+Math.round(sR.top));
-    const add=$('ms-collect-add'), cp=$('ms-collect-copy');
-    const aR=add.getBoundingClientRect(), hR=host.getBoundingClientRect(), pR=cp.getBoundingClientRect();
-    ck('row: Add to list on the left, copy on the right', aR.right<=hR.left+1&&pR.left>=hR.right-1&&/Add to list/.test(add.textContent),
-       Math.round(aR.right)+' '+Math.round(hR.left)+'-'+Math.round(hR.right)+' '+Math.round(pR.left));
+    const row=$('collect-bar'), host=$('collect-chips');
+    const rR=row.getBoundingClientRect();
+    const ph=document.querySelector('#phase-hdr th'), pR=ph.getBoundingClientRect();
+    ck('strip: on the main page, in the info row, not in the card', !!row.closest('#info-hdr')&&!row.closest('#ms-dialog'), '');
+    ck('strip: directly above the date bands', rR.bottom<=pR.top+1&&pR.top-rR.bottom<4, Math.round(rR.bottom)+' / '+Math.round(pR.top));
+    ck('strip: the date bands stick below it (offset follows the taller row)',
+       Math.abs(parseFloat(getComputedStyle(ph).top)-document.getElementById('info-hdr').getBoundingClientRect().height)<1.5,
+       getComputedStyle(ph).top+' vs '+document.getElementById('info-hdr').getBoundingClientRect().height);
+    const add=$('collect-add'), cp=$('collect-copy');
+    const aR=add.getBoundingClientRect(), hR=host.getBoundingClientRect(), cR2=cp.getBoundingClientRect();
+    ck('row: Add to list on the left, copy on the right', aR.right<=hR.left+1&&cR2.left>=hR.right-1&&/Add to list/.test(add.textContent),
+       Math.round(aR.right)+' '+Math.round(hR.left)+'-'+Math.round(hR.right)+' '+Math.round(cR2.left));
     ck('row: Add to list is present but inert for now', add.getAttribute('aria-disabled')==='true', '');
     const h1=Math.round(rR.height);
     const many=all.filter(id=>[A,B,C].indexOf(id)<0).slice(0,12);
@@ -169,10 +174,11 @@ PROBE = r"""
     ck('row: 15 chips stay on one line', tops.size===1&&h2===h1, 'tops '+tops.size+' h '+h1+' -> '+h2);
     ck('row: it scrolls sideways instead', host.scrollWidth>host.clientWidth&&getComputedStyle(host).overflowX==='auto',
        host.scrollWidth+' > '+host.clientWidth);
-    ck('row: the card does not widen', Math.round(dlg().getBoundingClientRect().width)===Math.min(380,window.innerWidth-24), '');
+    ck('row: the strip stays the scroller\'s width', Math.round(row.getBoundingClientRect().width)<=Math.round($('scroll-wrap').clientWidth)+1,
+       Math.round(row.getBoundingClientRect().width)+' <= '+$('scroll-wrap').clientWidth);
     ck('page: no horizontal scroll', document.documentElement.scrollWidth<=window.innerWidth, document.documentElement.scrollWidth);
     setMsCollection([A,B,C]);
-    host.querySelector('.ms-dep-chip[data-id="'+CSS.escape(B)+'"] .ms-collect-x').click(); await settle();
+    host.querySelector('.ms-dep-chip[data-id="'+CSS.escape(B)+'"] .collect-x').click(); await settle();
     ck('remove: the cross takes out that ID only', MS_COLLECTION===A+','+C&&chips().join(',')===A+','+C, MS_COLLECTION);
     ck('remove: the card stays open', !dlg().hidden&&cur()===D, cur());
     let copied=null;
@@ -182,9 +188,10 @@ PROBE = r"""
     ck('copy: shows it worked', cp.classList.contains('is-copied'), '');
     host.querySelector('.ms-dep-chip[data-id="'+CSS.escape(C)+'"]').click(); await settle();
     ck('chip: opens that milestone\'s card', cur()===C, cur());
+    ck('chip: a strip chip is not a dependency jump, so no back arrow', $('ms-back').hidden, '');
     ck('touch: markers do not zoom on a double tap', getComputedStyle(wrapOf(A)).touchAction==='manipulation', getComputedStyle(wrapOf(A)).touchAction);
     setMsCollection([]);
-    ck('collect: emptied, the row hides', $('ms-collect').hidden, '');
+    ck('collect: emptied, the row hides', $('collect-bar').hidden, '');
     discardMsDialog(); await settle();
     emit();
   }catch(err){

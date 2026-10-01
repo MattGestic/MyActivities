@@ -3264,3 +3264,15 @@ TD-233. Screenshots: `docs/mockups/P68/impl-390.png`, `impl-1440.png`.
 - Row: above Start / Duration / Finish; Add to list left (aria-disabled), copy right; 15 chips stay on one line and scroll sideways; card width and page width unchanged; cross removes one ID; copy writes `A,C`; chip opens its card; markers `touch-action: manipulation`.
 
 **Full suite, sequential:** see the PR for the run on the release commit.
+
+## TEST-70: P69 collection strip, date picker with Actual, change-scoped checks (v3.1.0-P69)
+
+TD-234.
+
+**New check `tools/p69_check.py`** (1440x900 and 390x844): calendar buttons in both labels; picker opens on the field's own date and month, inside the viewport, Actual unticked by default and in the heading; forecast pick writes no A and is not green; ticked pick writes `<date> A` and is green at once (computed colour = `--color-status-done`); save records `date` and `actual` in one entry, projects to `MS_FIELD_OVERRIDE`, sets `m.actual`, reopens with A and green, history reads Forecast to Actual; unticked back to the schedule forecast clears the flag override; Clear restores the schedule date; start pick saves `startActual` only; month nav, focus on open, ArrowRight / ArrowDown / PageDown, Esc closes the picker before the card, Alt+Down opens, a click elsewhere in the card closes only the picker, a touch tap opens it without the keyboard and its own click does not close it; suffixes `A *`, `*`, and no space; row-health dots h-3 and h-4 computed against their tokens.
+
+**`tools/p68_check.py` updated, same intent:** the collection row assertions now find the strip on the main page: in the info row, not the card; directly above the date bands; the bands' sticky offset equals the taller row; strip no wider than the scroller; a strip chip shows no back arrow.
+
+**`tools/form_to_entry_test.mjs`:** 7 new cases for the A flag (75 total).
+
+**Checks run:** by `tools/run_checks.py` (change-scoped, 3 jobs). Results in the PR.

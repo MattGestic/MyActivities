@@ -21,7 +21,8 @@
 
   var FIELDS = [['status','Status'],['health','Health'],['progress','Progress'],
     ['date','End date'],['start','Start date'],['actName','Name'],['weight','Weight'],
-    ['floatD','Float'],['type','Type'],['marker','Mark']];
+    ['floatD','Float'],['type','Type'],['marker','Mark'],
+    ['startActual','Start date is'],['actual','End date is']];
   var STATUS_LABEL = {note:'Note', open:'Open', sent:'Sent', review:'In review',
     outstanding:'Outstanding', done:'Done', closed:'Closed'};
   var STATUS_ORDER = ['note','open','sent','review','outstanding','done','closed'];
@@ -57,6 +58,7 @@
       return /%$/.test(s) ? s : s + '%';
     }
     if (field === 'health') return ctx && ctx.healthLabel ? String(ctx.healthLabel(v)) : String(v);
+    if (field === 'actual' || field === 'startActual') return v ? 'Actual' : 'Forecast';
     return String(v);
   }
 

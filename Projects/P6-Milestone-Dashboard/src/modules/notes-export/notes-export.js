@@ -16,7 +16,7 @@
   var HEALTH={0:'N/A',1:'On track',2:'Done',3:'At risk',4:'Critical'};
   var FIELD_LABEL={actName:'Name',start:'Start',date:'Finish',weight:'Weight',floatD:'Float',
     type:'Type',marker:'Marker',health:'Health',progress:'Progress',
-    rowHealth:'Row health',rowRemark:'Row remark'};
+    rowHealth:'Row health',rowRemark:'Row remark',actual:'Finish actual',startActual:'Start actual'};
   var SCHEDULE='schedule value';
 
   function pad(n){ return (n<10?'0':'')+n; }
