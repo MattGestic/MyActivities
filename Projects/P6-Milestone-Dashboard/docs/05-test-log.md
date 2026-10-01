@@ -3252,3 +3252,15 @@ TD-232. Markup: `docs/mockups/P67/filter-markup.png`. Implementation screenshots
 **Existing checks changed for the new layout, same intent:** `p39_check`, `p32_check`, `p59_check` C-03, `d15a_check` (d), (h), (i), `ds_check` phone field width. Before and after listed in the PR.
 
 **Full suite, sequential:** see the PR for the run on the release commit.
+
+## TEST-69: P68 card fold memory, back step and double-click collection (v3.1.0-P68)
+
+TD-233. Screenshots: `docs/mockups/P68/impl-390.png`, `impl-1440.png`.
+
+**New check `tools/p68_check.py`** (headless Chromium, real marker clicks, 1440x900 and 390x844):
+- Folds: defaults on first card; toggled state stored and carried to N=3 further cards; set back, followed again.
+- Back: hidden from a board open; chip jump shows it named for the source card, top left beside close; using it returns and clears it; a second jump replaces it; a board open clears it.
+- Collection: double click on the open card's marker and on a closed one both add and leave the card open; repeat adds nothing; three markers give three chips in order; a single click after the window still opens and closes and collects nothing.
+- Row: above Start / Duration / Finish; Add to list left (aria-disabled), copy right; 15 chips stay on one line and scroll sideways; card width and page width unchanged; cross removes one ID; copy writes `A,C`; chip opens its card; markers `touch-action: manipulation`.
+
+**Full suite, sequential:** see the PR for the run on the release commit.
