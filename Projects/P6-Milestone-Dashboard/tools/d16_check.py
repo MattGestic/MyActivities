@@ -63,13 +63,13 @@ DIFF_TOLERANCE = 0.001     # fraction of pixels allowed to exceed that and still
 
 
 def find_chrome() -> str:
-    import os  # SRET_CHROME overrides the lookup (tools/run_checks.py coverage capture)
-    if os.environ.get("SRET_CHROME"):
-        return os.environ["SRET_CHROME"]
-    for c in CHROME_CANDIDATES:
-        if pathlib.Path(c).exists():
-            return c
-    sys.exit("No headless Chromium found. Checked: " + ", ".join(CHROME_CANDIDATES))
+    # P74 (TD-239): every launch goes through tools/check_map/chrome_fixture.py,
+    # which seeds the reference baseline into the current app (the app ships
+    # with none) and hands on to $SRET_CHROME (tools/run_checks.py coverage
+    # capture) when set, else to the real Chromium.
+    sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent / "check_map"))
+    import chrome_fixture
+    return chrome_fixture.launcher()
 
 
 def measure_full_height(chrome: str, width: int) -> int:

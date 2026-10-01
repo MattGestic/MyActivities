@@ -195,7 +195,7 @@ PROBE = r"""
     const cols=g.getColumns().map(x=>x.name);
     ck('comments: Activity ID and name are read only; the comment is editable',
        g.getColumns()[colIdx('id')].editor==null&&g.getColumns()[colIdx('name')].editor==null&&!!g.getColumns()[colIdx('value')].editor, JSON.stringify(cols));
-    const nm=findMilestoneBySnip(K1);
+    const nm=findMilestoneById(K1);
     ck('comments: the name is resolved from the schedule', dv.getItemById(K1).name!==''&&dv.getItemById(K1).name===(nm.actName||''), dv.getItemById(K1).name);
     let s0=snap();
     await edit(K1,'value','Edited in the table');
@@ -240,7 +240,7 @@ PROBE = r"""
     common('msHealth','Milestone health overrides',1);
     s0=snap();
     const hv=await edit(K1,'value',4);
-    ck('msHealth: Critical is stored as the card code 4', MS_HEALTH_OVERRIDE[K1]===4&&effectiveState(findMilestoneBySnip(K1))==='CRIT', JSON.stringify(MS_HEALTH_OVERRIDE));
+    ck('msHealth: Critical is stored as the card code 4', MS_HEALTH_OVERRIDE[K1]===4&&effectiveState(findMilestoneById(K1))==='CRIT', JSON.stringify(MS_HEALTH_OVERRIDE));
     ck('msHealth: only MS_HEALTH_OVERRIDE changed', JSON.stringify(diff(s0,snap()))==='["msHealth"]', JSON.stringify(diff(s0,snap())));
     s0=snap(); const mk0=MARKUP_COUNT;
     const bad=annotGridEdit(K1,'value',9);
@@ -258,7 +258,7 @@ PROBE = r"""
     const v150=await edit(K2,'value',150), v101=await edit(K2,'value',101), vm1=await edit(K2,'value',-1);
     ck('msProgress: 150, 101 and -1 are refused, the cell reverts', v150===p0&&v101===p0&&vm1===p0, [v150,v101,vm1].join(','));
     ck('msProgress: and the store is unchanged', JSON.stringify(diff(s0,snap()))==='[]', JSON.stringify(diff(s0,snap())));
-    const sp=findMilestoneBySnip(K2).progress;
+    const sp=findMilestoneById(K2).progress;
     const target=sp===100?99:100;
     await edit(K2,'value',target);
     ck('msProgress: '+target+' is taken into MS_PROGRESS_OVERRIDE only', MS_PROGRESS_OVERRIDE[K2]===target&&JSON.stringify(diff(s0,snap()))==='["msProgress"]', JSON.stringify(diff(s0,snap())));

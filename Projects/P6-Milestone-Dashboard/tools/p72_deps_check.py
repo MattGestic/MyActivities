@@ -200,7 +200,7 @@ PROBE = r"""
     ck('SNIP-102 card: lists A among its successors', chips('succ').indexOf(A)>=0, chips('succ').join(','));
     ck('SNIP-102 card: read only (no crosses, no Add field)', $('ms-dep-lists').querySelectorAll('.ms-dep-x').length===0&&$('ms-dep-add-pred').hidden&&$('ms-dep-add-succ').hidden, '');
     ck('SNIP-102 card: its schedule successors still listed', lst(S102.succ).every(x=>chips('succ').indexOf(x)>=0), '');
-    const sf=$('ms-float-val'), S102m=findMilestoneBySnip('SNIP-102');
+    const sf=$('ms-float-val'), S102m=findMilestoneById('SNIP-102');
     ck('schedule float: read only', sf.readOnly===true, '');
     await open('SNIP-126');
     ck('SNIP-126 card: lists A among its predecessors', chips('pred').indexOf(A)>=0, chips('pred').join(','));
@@ -238,7 +238,7 @@ PROBE = r"""
     setZeroFilter('all'); await settle();
 
     // ===== 6. Float =====
-    const Am=findMilestoneBySnip(A);
+    const Am=findMilestoneById(A);
     const tipA=wrapOf(A).getAttribute('data-tip')||'';
     ck('user tooltip: no float', !/Float/i.test(tipA), tipA.split('\n')[3]||'');
     const was=Am.floatD; Am.floatD=12;
@@ -269,7 +269,7 @@ PROBE = r"""
     // Legacy float override, seeded through the store.
     SRETEntries.append(ENTRIES,{target:{kind:'ms',key:SFkey},changes:{floatD:{from:SFfloat,to:SFfloat+50}},origin:'mount:legacy.json',status:'note'},entryCtx());
     projectEntryStores(); scheduleRerender(true); await gap(); await settle();
-    const SF2=findMilestoneBySnip(SFid);
+    const SF2=findMilestoneById(SFid);
     ck('legacy float override: kept in the entries', ENTRIES.some(e=>e.target.key===SFkey&&e.changes.floatD&&e.changes.floatD.to===SFfloat+50), '');
     ck('legacy float override: not projected to MS_FIELD_OVERRIDE', !(MS_FIELD_OVERRIDE[SFkey]&&'floatD' in MS_FIELD_OVERRIDE[SFkey]), JSON.stringify(MS_FIELD_OVERRIDE[SFkey]||null));
     ck('legacy float override: the board keeps the schedule float', SF2.floatD===SFfloat, SF2.floatD+' vs '+SFfloat);
@@ -449,6 +449,20 @@ def literal(src):
     return m.group(0) if m else None
 
 
+# P74 (TD-239): the app embeds no schedule. The schedule's links the board runs
+# on are the reference fixture's, seeded before boot by
+# tools/check_map/chrome_fixture.py, and a published file carries them in its
+# state block (scheduleDependencies) instead of a script literal.
+FIXTURE = pathlib.Path(__file__).resolve().parent / "fixtures" / "baseline" / "eskay-p73.json"
+
+
+def published_deps(text):
+    m = re.search(r"window\.__PUBLISHED_STATE__=(\{.*?\});</script>", text or "", re.S)
+    if not m:
+        return None
+    return json.loads(m.group(1)).get("scheduleDependencies")
+
+
 def canon(v):
     if not isinstance(v, dict):
         return json.dumps(v, separators=(",", ":"))
@@ -464,9 +478,9 @@ def main():
     checks = []
     ck = lambda n, p, d="": checks.append((n, bool(p), str(d)))
 
-    lit = literal(src)
-    ck("source: one schedule DEP_DATA literal", lit is not None and src.count("const DEP_DATA=") == 1)
-    lit_obj = json.loads(lit[len("const DEP_DATA="):-1])
+    ck("source: no embedded DEP_DATA literal; one declaration, seeded by the pre-boot hook",
+       literal(src) is None and src.count("const DEP_DATA=") == 1 and "const DEP_DATA=(PREBOOT&&PREBOOT.depData" in src)
+    lit_obj = json.loads(FIXTURE.read_text(encoding="utf-8"))["depData"]
     lit_canon = canon(lit_obj)
     ck("source: exactly one </body>", src.count("</body>") == 1, src.count("</body>"))
     ck("source: exactly one version literal", len(re.findall(r"3\.[0-9]+\.[0-9]+-P", src)) == 1)
@@ -487,8 +501,8 @@ def main():
         for c in R["checks"]:
             ck(f"[{w}x{h}] " + c["name"], c["pass"], c["detail"])
         n = R.get("notes", {})
-        ck(f"[{w}x{h}] strip before == source literal", n.get("literalStrip0") == lit_canon)
-        ck(f"[{w}x{h}] strip after edits == source literal", n.get("stripEnd") == lit_canon)
+        ck(f"[{w}x{h}] strip before == the fixture's schedule links", n.get("literalStrip0") == lit_canon)
+        ck(f"[{w}x{h}] strip after edits == the fixture's schedule links", n.get("stripEnd") == lit_canon)
         if cap:
             stage1 = R
 
@@ -497,8 +511,9 @@ def main():
         model = json.loads(stage1["modelText"])
         n = stage1["notes"]
         expect = json.dumps({"A": n["A"], "B": n["B"], "C": n["C"], "userMs": n["userMs"], "effective": n["effective"]})
-        ck("publish: the published DEP_DATA literal is byte identical to the source", literal(pub) == lit)
-        ck("publish: the published file carries no user link in its schedule literal", "USR-" not in (literal(pub) or ""))
+        pdeps = published_deps(pub)
+        ck("publish: the published schedule links are identical to the fixture's", pdeps is not None and canon(pdeps) == lit_canon)
+        ck("publish: the published file carries no user link in its schedule links", pdeps is not None and "USR-" not in json.dumps(pdeps))
         um = {r["id"]: r for r in model.get("userMilestones", [])}
         ck("model export: userMilestones carry pred/succ",
            um.get(n["B"], {}).get("pred") == n["A"] and um.get(n["B"], {}).get("succ") == n["C"]
@@ -507,14 +522,14 @@ def main():
         R2 = run_page(pub, REOPEN, 1440, 900, exp_tag)
         for c in R2["checks"]:
             ck("[published copy] " + c["name"], c["pass"], c["detail"])
-        ck("[published copy] strip == source literal", R2["notes"].get("strip") == lit_canon)
-        ck("[published copy] DEP_DATA_SCHEDULE == source literal", R2["notes"].get("sched") == lit_canon)
+        ck("[published copy] strip == the fixture's schedule links", R2["notes"].get("strip") == lit_canon)
+        ck("[published copy] DEP_DATA_SCHEDULE == the fixture's schedule links", R2["notes"].get("sched") == lit_canon)
         model_tag = "<script type=\"application/json\" id=\"p72-model\">" + stage1["modelText"].replace("<", "\\u003c") + "</script>\n"
         R3 = run_page(src, REOPEN, 1440, 900, exp_tag + model_tag)
         for c in R3["checks"]:
             ck("[model import] " + c["name"], c["pass"], c["detail"])
-        ck("[model import] strip == source literal", R3["notes"].get("strip") == lit_canon)
-        ck("[model import] DEP_DATA_SCHEDULE == source literal", R3["notes"].get("sched") == lit_canon)
+        ck("[model import] strip == the fixture's schedule links", R3["notes"].get("strip") == lit_canon)
+        ck("[model import] DEP_DATA_SCHEDULE == the fixture's schedule links", R3["notes"].get("sched") == lit_canon)
     else:
         ck("publish/model capture produced output", False, "nothing captured")
 

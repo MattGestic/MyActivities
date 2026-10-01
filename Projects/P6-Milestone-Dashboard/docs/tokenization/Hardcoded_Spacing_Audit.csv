@@ -117,14 +117,14 @@ line,property,value,px_literals,also_uses_space_token,source
 2260,gap,8px,8px,False,style-block
 2263,gap,6px,6px,False,style-block
 2268,padding,14px 16px,14px|16px,False,style-block
-4281,padding,4px 5px,4px|5px,False,inline-style
-4282,padding,4px 5px,4px|5px,False,inline-style
-4283,padding,4px 5px,4px|5px,False,inline-style
-4284,padding,4px 5px,4px|5px,False,inline-style
-4285,padding,4px 5px,4px|5px,False,inline-style
-4286,padding,4px 5px,4px|5px,False,inline-style
-4287,padding,4px 5px,4px|5px,False,inline-style
-4288,padding,4px 5px,4px|5px,False,inline-style
-4289,padding,4px 5px,4px|5px,False,inline-style
-4290,padding,4px 5px,4px|5px,False,inline-style
-12485,gap,8px,8px,False,inline-style
+4354,padding,4px 5px,4px|5px,False,inline-style
+4355,padding,4px 5px,4px|5px,False,inline-style
+4356,padding,4px 5px,4px|5px,False,inline-style
+4357,padding,4px 5px,4px|5px,False,inline-style
+4358,padding,4px 5px,4px|5px,False,inline-style
+4359,padding,4px 5px,4px|5px,False,inline-style
+4360,padding,4px 5px,4px|5px,False,inline-style
+4361,padding,4px 5px,4px|5px,False,inline-style
+4362,padding,4px 5px,4px|5px,False,inline-style
+4363,padding,4px 5px,4px|5px,False,inline-style
+12321,gap,8px,8px,False,inline-style

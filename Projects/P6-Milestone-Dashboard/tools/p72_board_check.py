@@ -43,7 +43,7 @@ PROBE = r"""
     const st=document.createElement('style'); st.textContent='*{transition:none!important;animation:none!important}'; document.head.appendChild(st);
     await settle(); await settle();
     // ===== 1. Baseline has no WBS summaries =====
-    const noId=MILESTONES.filter(m=>!extractSnipId(m.notes));
+    const noId=MILESTONES.filter(m=>!extractActivityId(m.notes));
     ck('baseline: every milestone has an Activity ID', noId.length===0, noId.map(m=>m.id).join('|'));
     const wbsMs=MILESTONES.filter(m=>WBS.indexOf(String(m.id))>=0);
     ck('baseline: no milestone is a P6 WBS node', wbsMs.length===0, wbsMs.map(m=>m.id).join('|'));

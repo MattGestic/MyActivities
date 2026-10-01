@@ -133,13 +133,13 @@ PROBE = r"""
 
 
 def find_chrome():
-    import os  # SRET_CHROME overrides the lookup (tools/run_checks.py coverage capture)
-    if os.environ.get("SRET_CHROME"):
-        return os.environ["SRET_CHROME"]
-    for c in CHROME_CANDIDATES:
-        if pathlib.Path(c).exists():
-            return c
-    sys.exit("No headless Chromium found.")
+    # P74 (TD-239): every launch goes through tools/check_map/chrome_fixture.py,
+    # which seeds the reference baseline into the current app (the app ships
+    # with none) and hands on to $SRET_CHROME (tools/run_checks.py coverage
+    # capture) when set, else to the real Chromium.
+    sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent / "check_map"))
+    import chrome_fixture
+    return chrome_fixture.launcher()
 
 
 def main():

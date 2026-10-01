@@ -551,8 +551,10 @@ def main():
         f"{src.count('syncLabelScaleEnabled();')} call sites"))
     checks.append((
         "source: the baseline note text lives in one place, as the tooltip",
-        src.count("Matches the embedded baseline") == 1,
-        f"{src.count('Matches the embedded baseline')} copies"))
+        # P74 (TD-239): the baseline is no longer embedded, so the tooltip says
+        # "the baseline"; still one copy, in the tooltip.
+        src.count("Matches the baseline to the imported schedule") == 1,
+        f"{src.count('Matches the baseline to the imported schedule')} copies"))
     # P56/D-20b: the sd-actions-main/-exports/-right containers were retired
     # with the row they built (see the "drawer's action bar" note above), so
     # this source check is retargeted to their replacement: the Workspace

@@ -287,7 +287,7 @@ PROBE = r"""
     ck('sched-ms: no Add row and no Delete', !h.querySelector('[data-sg="add"]')&&!h.querySelector('[data-sg="tools"]')&&!h.querySelector('[data-sg="add-more"]'));
     const K4=Object.keys(dv.getItems().reduce((o,r)=>(o[r.key]=1,o),{})).find(k=>![K1,K2,K3].includes(k));
     const r4=dv.getItemById(K4);
-    ck('sched-ms: a row shows the schedule\'s own values', !!r4&&r4.id===msId(findMilestoneBySnip(r4.id))&&!!r4.finish, JSON.stringify(r4));
+    ck('sched-ms: a row shows the schedule\'s own values', !!r4&&r4.id===msId(findMilestoneById(r4.id))&&!!r4.finish, JSON.stringify(r4));
     const base=schedSnap();
     let s0=snap();
     // Try to edit every schedule column through the engine: no editor opens.

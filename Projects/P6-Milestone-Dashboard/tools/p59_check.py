@@ -103,6 +103,12 @@ PROBE = r"""
       pill.style.display='';
 
       // ---------- A-02 ----------
+      // P74 (TD-239): the view toggle and the shadow switch are hidden until
+      // there are two schedules to compare, which this board (one baseline,
+      // no update) does not have. They are measured as they show once there
+      // are: the group's display put back for the measurement, then restored.
+      const vgrp=document.querySelector('.rpt-sub-view'), vwas=vgrp.style.display;
+      vgrp.style.display='';
       ['vt-baseline','vt-update','btn-add-ms','btn-filter-expand'].forEach(function(id){
         const e=$(id); if(!e||!e.offsetParent) return;
         ck('A-02 '+id+' is --ctl-h tall', Math.abs(rc(e).height-ctlH)<0.6, rc(e).height);
@@ -110,6 +116,7 @@ PROBE = r"""
       const sw=document.querySelector('.bl-shadow .toggle-switch');
       if(sw) ck('A-02 the Baseline shadow switch is 32x16', Math.round(rc(sw).width)===32&&Math.round(rc(sw).height)===16,
                 rc(sw).width+'x'+rc(sw).height);
+      vgrp.style.display=vwas;
 
       // ---------- B-02 / B-01 transitions ----------
       const title=$('rpt-title-text');

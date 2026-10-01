@@ -27,7 +27,7 @@ together, and the third is the one the three-layer rule turns on:
     written, which is what makes "clearing restores the schedule's value"
     possible at all,
   - and the key the card writes is msKeyFor(m), the key every reader uses. The
-    card used to compose its own from extractSnipId(notes) while msKeyFor
+    card used to compose its own from extractActivityId(notes) while msKeyFor
     prefers m.id. The divergence count on this dataset is reported, not assumed.
 
 Every assertion that measures a set asserts its own sample size.
@@ -167,12 +167,12 @@ PROBE = r"""
 
     // ============ 0. The annotation key the card writes ====================
     // msKeyFor() prefers m.id; the card used to compose its own key from
-    // extractSnipId(m.notes). Report how far apart they actually are on this
+    // extractActivityId(m.notes). Report how far apart they actually are on this
     // dataset rather than asserting they never differ.
     let diverged=0, keyed=0;
     MILESTONES.forEach(function(m){
       keyed++;
-      const byNotes=extractSnipId(m.notes)||('noid-'+m.ref+m.type+m.date);
+      const byNotes=extractActivityId(m.notes)||('noid-'+m.ref+m.type+m.date);
       if(msKeyFor(m)!==byNotes) diverged++;
     });
     R.notes.keys={milestones:keyed,idDiffersFromNotes:diverged};

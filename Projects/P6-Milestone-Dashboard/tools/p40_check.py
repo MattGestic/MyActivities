@@ -341,7 +341,7 @@ PROBE = r"""
     ck('add: it carries no weight, so no percentage on the board moves',
        added&&added.weight===0, 'weight '+(added?added.weight:'(missing)'));
     ck('add: the notes field carries the [ID] form the key readers re-derive from',
-       added&&extractSnipId(added.notes)===genId&&msKeyFor(added)===genId,
+       added&&extractActivityId(added.notes)===genId&&msKeyFor(added)===genId,
        added?added.notes:'(missing)');
     ck('add: THREE LAYERS, the seed arrays are byte-identical after the add',
        JSON.stringify(SEED_MILESTONES)===seedBefore&&

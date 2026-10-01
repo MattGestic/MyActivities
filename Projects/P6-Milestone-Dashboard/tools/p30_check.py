@@ -207,7 +207,7 @@ PROBE = r"""
     UPDATE_MILESTONES.forEach(function(m){
       const id=msId(m);
       if(!/_\d+$/.test(id)) return;
-      const fromNotes=extractSnipId(m.notes);
+      const fromNotes=extractActivityId(m.notes);
       if(fromNotes!==id) drift.push('notes '+fromNotes+' vs id '+id);
     });
     R.notes.drift=drift.slice(0,6);
@@ -236,7 +236,7 @@ PROBE = r"""
     // its unsuffixed twin. This is the whole reason the suffix exists.
     const twin=UPDATE_MILESTONES.filter(function(m){ return /_1$/.test(msId(m)); })[0];
     const baseId=twin?msId(twin).replace(/_1$/,''):null;
-    const original=baseId?findMilestoneBySnip(baseId):null;
+    const original=baseId?findMilestoneById(baseId):null;
     MS_COMMENTS[msKeyFor(twin)]='note on the appended copy';
     R.notes.twinId=twin?msId(twin):null;
     ck('dedupe: a suffixed milestone and its twin both resolve', !!twin&&!!original&&twin!==original,

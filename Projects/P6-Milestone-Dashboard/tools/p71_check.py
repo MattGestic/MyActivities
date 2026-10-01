@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """
 p71_check: a saved copy (publishDashboard) keeps the embedded libraries, and
-a copy saved from a fresh baseline load carries empty annotation state
-(P71, 2026-10-01).
+a copy saved from a fresh load carries empty annotation state (P71,
+2026-10-01). P74 (TD-239): the app ships with no schedule, so a fresh load is
+the empty state and this check runs WITHOUT the reference fixture
+(SRET_NO_FIXTURE on its launches, not a marker in the page, which publishing
+would carry into the saved copy); its saved copy is the empty dashboard.
 
-Stage 1: the app loads with the embedded baseline only, in a fresh profile.
-  Every annotation store is empty; a foreign script is injected into the live
-  DOM; publishDashboard() runs and its output is captured.
+Stage 1: the app loads as it ships, in a fresh profile: the empty state, no
+  schedule. Every annotation store is empty; a foreign script is injected into
+  the live DOM; publishDashboard() runs and its output is captured.
 Stage 2: assertions on the saved file's source: app-script, vendor-sheetjs,
   vendor-slickgrid and vendor-slickgrid-css present once each, the foreign
   script gone, one published-state block, one </body>, one version literal.
@@ -18,7 +21,7 @@ Usage: python3 tools/p71_check.py [--html FILE] [--save DIR]
   --save DIR also writes the saved copy into DIR.
 Exit code 1 on any failed check.
 """
-import argparse, base64, json, pathlib, re, subprocess, sys, tempfile
+import argparse, base64, json, os, pathlib, re, subprocess, sys, tempfile
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from import_check import find_chrome  # noqa: E402
 
@@ -28,7 +31,8 @@ STORES = r"""
     fields:n(MS_FIELD_OVERRIDE),notes:n(NOTES),userMs:n(USER_MILESTONES),shortTitles:n(MS_SHORT_TITLES),
     depComments:(typeof DEP_COMMENTS!=='undefined')?n(DEP_COMMENTS):0};
   const board={tasks:TASKS.length,milestones:MILESTONES.length,markers:document.querySelectorAll('#tbody .m-wrap').length,
-    version:APP_VERSION,published:!!window.__PUBLISHED_STATE__,xlsx:typeof XLSX,slick:typeof Slick};
+    version:APP_VERSION,published:!!window.__PUBLISHED_STATE__,xlsx:typeof XLSX,slick:typeof Slick,
+    empty:document.body.classList.contains('is-empty')&&!document.getElementById('empty-state').hidden};
 """
 
 PUBLISH = r"""<script>
@@ -72,7 +76,8 @@ def run(page, probe):
         f.write_text(page[:i] + probe + page[i + 7:], encoding="utf-8")
         p = subprocess.run([find_chrome(), "--no-sandbox", "--disable-gpu", f"--user-data-dir={td}/prof",
                             "--virtual-time-budget=20000", "--dump-dom", f.as_uri()],
-                           capture_output=True, text=True, timeout=300)
+                           capture_output=True, text=True, timeout=300,
+                           env=dict(os.environ, SRET_NO_FIXTURE="1"))
     m = re.search(r'<pre id="__out">(.*?)</pre>', p.stdout, re.S)
     if not m:
         sys.exit("Probe output not found.\n" + p.stderr[-2000:])
@@ -93,9 +98,12 @@ def main():
 
     R = run(src, PUBLISH)
     empty = all(v == 0 for v in R["st"].values())
-    ck("baseline load: every annotation store is empty", empty, json.dumps(R["st"]))
-    ck("baseline load: not a published copy", R["board"]["published"] is False)
-    ck("baseline load: the libraries are live", R["board"]["xlsx"] == "object" and R["board"]["slick"] == "object",
+    ck("fresh load: every annotation store is empty", empty, json.dumps(R["st"]))
+    ck("fresh load: opens on the empty state, with no schedule",
+       R["board"]["empty"] is True and R["board"]["tasks"] == 0 and R["board"]["milestones"] == 0,
+       f'{R["board"]["tasks"]}/{R["board"]["milestones"]}')
+    ck("fresh load: not a published copy", R["board"]["published"] is False)
+    ck("fresh load: the libraries are live", R["board"]["xlsx"] == "object" and R["board"]["slick"] == "object",
        R["board"]["xlsx"] + " " + R["board"]["slick"])
     out = R["html"]
     ck("publish: a file was produced", len(out) > 100000 and R["name"], f'{R["name"]} {len(out)}')
@@ -120,10 +128,11 @@ def main():
     ck("saved copy opens: reports itself as published", R2["board"]["published"] is True)
     ck("saved copy opens: SheetJS and SlickGrid are defined", R2["board"]["xlsx"] == "object" and R2["board"]["slick"] == "object",
        R2["board"]["xlsx"] + " " + R2["board"]["slick"])
-    ck("saved copy opens: same rows and milestones as the baseline",
+    ck("saved copy opens: same rows and milestones as the fresh load",
        R2["board"]["tasks"] == R["board"]["tasks"] and R2["board"]["milestones"] == R["board"]["milestones"],
        f'{R2["board"]["tasks"]}/{R2["board"]["milestones"]} vs {R["board"]["tasks"]}/{R["board"]["milestones"]}')
-    ck("saved copy opens: the board draws its markers", R2["board"]["markers"] > 0 and R2["board"]["markers"] == R["board"]["markers"],
+    ck("saved copy opens: on the empty state, like the fresh load, with no markers",
+       R2["board"]["empty"] is True and R2["board"]["markers"] == 0 and R2["board"]["markers"] == R["board"]["markers"],
        f'{R2["board"]["markers"]} vs {R["board"]["markers"]}')
     ck("saved copy opens: every annotation store still empty", all(v == 0 for v in R2["st"].values()), json.dumps(R2["st"]))
     ck("saved copy opens: the foreign script never ran", R2["intruder"] is False)
