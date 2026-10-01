@@ -7,7 +7,9 @@
    written. The editor shows the items as tokens with a cross, and an input
    that filters the IDs the caller offers (opts.refOptions(key, rowKey) ->
    [{id, name}]) as the user types:
-     starts with a letter -> IDs that start with it   (S -> SNIP-...)
+     starts with a letter -> IDs that start with it   (S -> SNIP-...), then,
+                             from two letters, names with a word starting
+                             with it (pump -> 'Feed pump install')
      digits only          -> IDs whose number starts with them (117 -> SNIP-117)
    Enter adds the highlighted ID. Delete clears what has been typed;
    Backspace deletes characters. The cross removes one token.
@@ -22,21 +24,28 @@
     function refSplit(v){ return String(v==null?'':v).split(/[,;]+/).map(function(x){ return x.trim(); }).filter(Boolean); }
     function refId(tok){ return String(tok).split(/[:\s]/)[0].toUpperCase(); }
     function refNum(id){ var m=/(\d+)\D*$/.exec(id); return m?m[1]:''; }
+    // Words, lower case, joined by single spaces: 'Feed-pump install' -> ' feed pump install'.
+    function words(s){ return ' '+String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim(); }
     function refMatch(q,opts,taken){
       q=String(q||'').trim().toUpperCase();
-      var digits=/^\d+$/.test(q), out=[];
+      var digits=/^\d+$/.test(q), qw=q.length>=2&&!digits?words(q):'', out=[];
       for(var i=0;i<opts.length;i++){
-        var o=opts[i], id=String(o.id).toUpperCase();
+        var o=opts[i], id=String(o.id).toUpperCase(), tier=1;
         if(taken[id]) continue;
         if(q){
           if(digits){ var n=refNum(id); if(!(n.indexOf(q)===0||n.replace(/^0+/,'').indexOf(q)===0)) continue; }
-          else if(id.indexOf(q)!==0) continue;
+          else if(id.indexOf(q)!==0){
+            // Names too (Matt, 2026-09-30), from two letters, on word starts: 'pump' finds 'Feed pump install'.
+            if(!qw||(o._w||(o._w=words(o.name))).indexOf(qw)<0) continue;
+            tier=2;
+          }
+          if(id===q||(digits&&refNum(id).replace(/^0+/,'')===q.replace(/^0+/,''))) tier=0;
         }
-        out.push(o);
+        out.push({o:o,t:tier});
       }
-      // An exact ID or number first, then in ID order (numbers compared as numbers).
-      var exact=function(o){ var id=String(o.id).toUpperCase(); return q&&(id===q||(digits&&refNum(id).replace(/^0+/,'')===q.replace(/^0+/,'')))?0:1; };
-      return out.sort(function(a,b){ return exact(a)-exact(b)||String(a.id).localeCompare(String(b.id),undefined,{numeric:true,sensitivity:'base'}); });
+      // An exact ID or number first, then IDs that match, then names that match; each in ID order.
+      return out.sort(function(a,b){ return a.t-b.t||String(a.o.id).localeCompare(String(b.o.id),undefined,{numeric:true,sensitivity:'base'}); })
+                .map(function(x){ return x.o; });
     }
     function refOptions(key,rowKey){
       var s=K.s(), f=s&&s.opts.refOptions;

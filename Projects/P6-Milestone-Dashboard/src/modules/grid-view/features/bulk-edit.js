@@ -30,8 +30,17 @@
         el=h('select',{'class':'sg-select','aria-label':c.label},[h('option',{value:'',text:'(blank)'})].concat(c.opts.map(function(o){ return h('option',{value:String(o.value),text:o.label}); })));
         return {el:el,focusEl:el,value:function(){ var v=el.value; for(var i=0;i<c.opts.length;i++) if(String(c.opts[i].value)===v) return c.opts[i].value; return v===''?null:v; },watch:[el]};
       }
-      el=h('input',{type:c.type==='date'?'date':'text','class':'sg-search sg-bulk-input','aria-label':c.label,inputmode:c.type==='number'?'decimal':null});
-      return {el:el,focusEl:el,value:function(){ var v=el.value.trim(); if(c.type==='number') return v===''?null:Number(v); if(c.type==='date') return v||null; return el.value; },watch:[el]};
+      // Dates are typed in the deployment's format (setup dates, SRET: 9-Oct-26),
+      // not the browser's locale picker, so they read as the grid shows them.
+      if(c.type==='date'){
+        var D=K.dates(), eg=D.format('2026-10-09');
+        el=h('input',{type:'text','class':'sg-search sg-bulk-input','aria-label':c.label+' (e.g. '+eg+')',placeholder:'e.g. '+eg,autocomplete:'off',spellcheck:'false'});
+        return {el:el,focusEl:el,watch:[el],
+          value:function(){ var v=el.value.trim(); return v===''?null:D.parse(v); },
+          error:function(){ var v=el.value.trim(); return v!==''&&!D.parse(v)?c.label+': enter a date like '+eg+'.':''; }};
+      }
+      el=h('input',{type:'text','class':'sg-search sg-bulk-input','aria-label':c.label,inputmode:c.type==='number'?'decimal':null});
+      return {el:el,focusEl:el,value:function(){ var v=el.value.trim(); if(c.type==='number') return v===''?null:Number(v); return el.value; },watch:[el]};
     }
     function open(){
       var keys=K.selectedKeys(); if(!keys.length) return;
@@ -55,7 +64,8 @@
           var todo=rows.filter(function(r){ return r.tick.checked; });
           if(!todo.length){ err.hidden=false; err.textContent='Tick at least one field to change.'; return; }
           for(var i=0;i<todo.length;i++){
-            var c=todo[i].c, v=todo[i].ctl.value();
+            var c=todo[i].c, v=todo[i].ctl.value(), bad=todo[i].ctl.error&&todo[i].ctl.error();
+            if(bad){ err.hidden=false; err.textContent=bad; todo[i].ctl.focusEl.focus(); return; }
             if(c.type==='number'&&v!=null&&!isFinite(v)){ err.hidden=false; err.textContent=c.label+': enter a number.'; todo[i].ctl.focusEl.focus(); return; }
             if(c.type==='number'&&v!=null&&(c.min!=null&&v<c.min||c.max!=null&&v>c.max)){ err.hidden=false; err.textContent=c.label+': use '+c.min+' to '+c.max+'.'; todo[i].ctl.focusEl.focus(); return; }
           }

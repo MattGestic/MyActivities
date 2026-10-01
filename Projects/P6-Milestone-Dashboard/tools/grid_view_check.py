@@ -109,6 +109,9 @@ MUTATIONS = {
     "xls-treated-as-xlsx": ("    if(/\\.xls$/i.test(name)) return Promise.reject(", "    if(false) return Promise.reject("),
     "sheetjs-from-cdn": ("    return window.XLSX&&window.XLSX.utils?Promise.resolve(window.XLSX)\n",
                          "    var sc=document.createElement('script'); sc.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; document.head.appendChild(sc);\n    return window.XLSX&&window.XLSX.utils?Promise.resolve(window.XLSX)\n"),
+    "bulk-bad-date-applied": ("            if(bad){ err.hidden=false; err.textContent=bad; todo[i].ctl.focusEl.focus(); return; }\n", ""),
+    "impossible-date-accepted": ("    return d.toISOString().slice(0,10)===iso?iso:null;   // 31-Feb is not a date", "    return iso;"),
+    "refs-names-ignored": ("            if(!qw||(o._w||(o._w=words(o.name))).indexOf(qw)<0) continue;", "            continue;"),
     "import-silent-fail": ("panel(ui,'error',[h('p',{'class':'sg-import-head',text:'Import failed'}),h('p',{'data-sg':'import-error',text:res.fatal})]);", ""),
     "status-tone-missing": ("return {text:txt,addClasses:'sg-tone sg-tone-'+c.tones[v]};", "return txt;"),
     "open-on-any-column": ("if(c&&c.id===opts.openColumn&&it&&", "if(c&&it&&"),
@@ -1064,14 +1067,19 @@ try{
     ok('bulk: setting a value ticks its field', btn('bulk-tick-state').checked && !btn('bulk-tick-marker').checked);
     set('progress','150'); btn('bulk-apply').click(); await sleep(10);
     ok('bulk: a number outside its range is stopped before anything changes', btn('bulk-error').textContent==='% complete: use 0 to 100.' && keys.every(k=>eng().dataView.getItemById(k).progress!==150), btn('bulk-error').textContent);
-    set('progress','50'); set('marker','star');
+    set('progress','50'); set('finish','31-Feb-26'); btn('bulk-apply').click(); await sleep(10);
+    const dIn=$('[data-sg=bulk-ctl-finish] input');
+    ok('bulk: dates are typed as the grid shows them (placeholder e.g. 9-Oct-26, not the browser locale picker); a bad date is stopped',
+       dIn.type==='text' && dIn.placeholder==='e.g. 9-Oct-26' && btn('bulk-error').textContent==='Finish: enter a date like 9-Oct-26.' &&
+       keys.every(k=>eng().dataView.getItemById(k).progress!==50), [dIn.type,dIn.placeholder,btn('bulk-error').textContent]);
+    set('finish','9-Oct-26'); set('marker','star');
     const ri=$('[data-sg=bulk-ctl-pred] [data-sg=refs-input]'); ri.value='117'; ri.dispatchEvent(new Event('input',{bubbles:true})); await sleep(10); key(ri,'Enter'); await sleep(10);
     const e0=count('onEdit');
     btn('bulk-apply').click(); await sleep(20);
     const its=keys.map(k=>eng().dataView.getItemById(k)), sum=$$('[data-sg=bulk-summary] li').map(l=>l.textContent);
     ok('bulk: Apply sets every ticked field on every selected row through onEdit (N=3 rows); untouched fields stay',
-       its.every(i=>i.state==='RISK'&&i.progress===50&&i.marker==='star') && count('onEdit')-e0>=9 && btn('bulk-tick-state')===null &&
-       sum[1]==='Fields: Icon, Status, Predecessor, % complete.', [sum,its.map(i=>[i.state,i.progress,i.marker])]);
+       its.every(i=>i.state==='RISK'&&i.progress===50&&i.marker==='star'&&i.finish==='2026-10-09') && count('onEdit')-e0>=12 && btn('bulk-tick-state')===null &&
+       sum[1]==='Fields: Icon, Finish, Status, Predecessor, % complete.', [sum,its.map(i=>[i.state,i.progress,i.marker,i.finish])]);
     ok('bulk: Predecessor "Add these IDs" adds SNIP-117 once and keeps the IDs each row had', its.every(i=>refSplitT(i.pred).filter(x=>x==='SNIP-117').length===1) &&
        its.every(i=>refSplitT(i.pred).length>=1), its.map(i=>i.pred));
     function refSplitT(v){ return String(v||'').split(/[,;]+/).map(x=>x.trim().toUpperCase()).filter(Boolean); }
@@ -1129,6 +1137,16 @@ try{
     await typeIn('1'); const n1=opts();
     ok('refs: one digit lists every ID whose number starts with it; the list is capped with a keep-typing note', n1.length===50 && !btn('refs-more').hidden &&
        /more\. Keep typing to narrow the list\.$/.test(btn('refs-more').textContent), [n1.length,btn('refs-more').textContent]);
+    // Names too (Matt, 2026-09-30): a word from an activity name finds it; IDs that match come first.
+    const W=s=>' '+String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+    const pickWord=()=>{ for(const r of F.sched){ for(const w of W(r.name).trim().split(' ')) if(w.length>=4&&/^[a-z]/.test(w)&&!F.sched.some(x=>x.id.toLowerCase().indexOf(w)===0)) return [w,r.id]; } return ['','']; };
+    const [word,wid]=pickWord(); await typeIn(word.slice(0,4)); const byName=opts(), names=Object.fromEntries(F.sched.concat(DEMO_STORE().usertasks).map(r=>[r.id,r.name]));
+    ok('refs: two or more letters also match the start of a word in the name ("'+word.slice(0,4)+'" finds '+wid+'); placeholder says so',
+       !!word && byName.includes(wid) && byName.every(id=>W(names[id]).indexOf(' '+word.slice(0,4))>=0) && btn('refs-input').placeholder==='Type an ID or name, e.g. S, 117 or pump', [word,byName.slice(0,4)]);
+    await typeIn('sn'); const mix=opts(), firstName=mix.findIndex(id=>id.indexOf('SN')!==0);
+    ok('refs: IDs that match come before names that match', mix.length>0 && (firstName<0 || mix.slice(firstName).every(id=>id.indexOf('SN')!==0)), mix.slice(0,3));
+    await typeIn('s'); const one=opts();
+    ok('refs: one letter matches IDs only (no name noise)', one.every(id=>/^S/.test(id)), one.filter(id=>!/^S/.test(id)).slice(0,3));
     const dk=new KeyboardEvent('keydown',{key:'Delete',bubbles:true,cancelable:true}); btn('refs-input').dispatchEvent(dk); await sleep(10);
     ok('refs: Delete clears what has been typed; the picker stays open', btn('refs-input').value==='' && dk.defaultPrevented && !!btn('refs-pop'));
     await typeIn('SNIP-11');
@@ -1332,6 +1350,14 @@ try{
   { DEMO_OPEN('sched'); await sleep(20);
     ok('sched: title and row count', $('.sg-title').textContent==='Schedule milestones' && visibleCount()===F.sched.length && F.sched.length>100,
        [visibleCount(),F.sched.length]);
+    { const btn=n=>$('[data-sg='+n+']'), mi=eng().grid.getColumns().findIndex(c=>c.id==='marker'), k=eng().dataView.getItem(0).id, cell=eng().grid.getCellNode(0,mi);
+      const u=cell&&cell.querySelector('[data-sg-sym] use');
+      cell.querySelector('[data-sg-sym]').dispatchEvent(new MouseEvent('click',{bubbles:true})); await sleep(10);
+      const pk=btn('icon-picker'); if(pk) $('[data-sg-icon=lock]',pk).click(); await sleep(20);
+      const e=lastLog('onEdit');
+      ok('icon override on schedule activities too (Matt, 2026-09-30: available to all): blank draws the default mark; picking one goes through onEdit',
+         mi>0 && !!u && u.getAttribute('href')==='#ico-diamond' && !!pk && e.args.join()===k+',marker,lock' &&
+         eng().grid.getCellNode(0,mi).querySelector('use').getAttribute('href')==='#ico-lock', [mi,e&&e.args]); }
     ok('sched: panel collapsed on open; a plain Export button (no Add row)', $('[data-sg=panel]').hidden && !!$('[data-sg=export]') && !$('[data-sg=add-more]'));
     ok('sched: no Add, no Delete (read-only schedule)', !$('[data-sg=add]') && !(await menuItem('tools','delete'))); await menuClose('tools');
     const res=[]; for(const k of ['id','name','start','finish','float']) res.push(await tryOpenEditor(1,k));

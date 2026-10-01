@@ -299,6 +299,10 @@ def fixtures():
         "sched": [
             {"key": "id", "label": "Activity ID", "type": "text", "width": 100},
             {"key": "name", "label": "Activity name", "type": "text", "width": 260},
+            # Icon override (Matt, 2026-09-30: "available to all"): an annotation on the
+            # activity, never schedule data; blank draws the board's default mark.
+            {"key": "marker", "label": "Icon", "type": "select", "editable": True, "options": markers, "width": 96,
+             "symbols": {"prefix": "ico-"}},
             {"key": "wbs", "label": "WBS/Area", "type": "text", "width": 160},
             {"key": "dur", "label": "Duration", "type": "number", "width": 72},
             {"key": "start", "label": "Start", "type": "date"},

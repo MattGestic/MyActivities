@@ -153,15 +153,19 @@
     return d+'-'+MONTHS[m-1]+'-'+y.slice(2);
   }
   // Accepts ISO or d-Mmm-yy(yy); returns ISO or null. Used by filter operators.
+  function realDate(iso){
+    var d=new Date(Date.UTC(+iso.slice(0,4),+iso.slice(5,7)-1,+iso.slice(8,10)));
+    return d.toISOString().slice(0,10)===iso?iso:null;   // 31-Feb is not a date
+  }
   function parseDateDMY(s){
     s=String(s).trim();
-    if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+    if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return realDate(s);
     var m=/^(\d{1,2})[-\s]([A-Za-z]{3})[-\s](\d{2}|\d{4})$/.exec(s);
     if(!m) return null;
     var mi=MONTHS.map(function(x){return x.toLowerCase();}).indexOf(m[2].toLowerCase());
     if(mi<0) return null;
     var y=m[3].length===2?'20'+m[3]:m[3];
-    return y+'-'+String(mi+1).padStart(2,'0')+'-'+String(+m[1]).padStart(2,'0');
+    return realDate(y+'-'+String(mi+1).padStart(2,'0')+'-'+String(+m[1]).padStart(2,'0'));
   }
   DATES=defaultDates(); LAYOUT=defaultLayout();
   function fmtDate(v){ return DATES.format(v); }

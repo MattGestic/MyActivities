@@ -50,6 +50,7 @@ MUTATIONS = {
                          "    if(s.scope.type) return false;"),
     "phone-pin-set-ignored": ("    var phone=s.pinPhoneKeys&&s.screen.clientWidth<LAYOUT.phoneBelow;", "    var phone=false;"),
     "pin-set-switch-keeps-old-order": ("    if(s.pinned&&s.pinSet!==keys.join()) unpin(s);\n", ""),
+    "refs-names-before-ids": ("            tier=2;\n", "            tier=1;\n"),
     "bulk-refs-needs-refs-feature-order": ("      if(c.type==='refs'&&R){", "      if(c.type==='refs'&&!R){"),
 }
 
@@ -118,7 +119,16 @@ SRETGrid.open(cfg());
 const e=SRETGrid._engine();
 const ci=e.grid.getColumns().findIndex(c=>c.id==='pred');
 ok('refs + bulk-edit: refs columns get the token editor', e.grid.getColumns()[ci].editor&&e.grid.getColumns()[ci].editor.name==='RefsEditor');
-e.grid.setSelectedRows([0,1]);
+// ID matches before name matches, even when a name match sorts first by ID.
+SRETGrid.close();
+SRETGrid.open(cfg({refOptions:()=>[{id:'A-7',name:'Pump skid'},{id:'PU-2',name:'Valve'},{id:'B-3',name:'Spare pump'},{id:'C-1',name:'Upgrade'}]}));
+{ const g=SRETGrid._engine().grid; g.setActiveCell(0,g.getColumns().findIndex(c=>c.id==='pred')); g.editActiveCell();
+  const inp=$('[data-sg=refs-input]'); inp.value='pu'; inp.dispatchEvent(new Event('input',{bubbles:true}));
+  const got=$$('[data-sg=refs-list] [data-sg-ref]').map(o=>o.getAttribute('data-sg-ref')).join();
+  ok('refs: "pu" lists the ID match first, then names with a word starting "pu" in ID order (not "Upgrade")', got==='PU-2,A-7,B-3', got);
+  g.getEditorLock().cancelCurrentEdit(); }
+SRETGrid.close(); SRETGrid.open(cfg());
+const e2=SRETGrid._engine(); e2.grid.setSelectedRows([0,1]);
 const b=$('[data-sg=bulk-edit]');
 ok('refs + bulk-edit: Edit shows for the selection', b && !b.hidden && b.textContent==='Edit 2 rows', b&&b.textContent);
 b.click();
