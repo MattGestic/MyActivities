@@ -3336,3 +3336,7 @@ TD-237.
 **Existing checks changed, same intent:** `p29` baseline pins 159/196/159/198 to 120/149/120/151 and `p30` 198 to 151 (the WBS rows are gone by design); `d18` source assertion moves the mark's negative offset from top/right to top/left; `p43`, `p44` editable-field list without `floatD`.
 
 **Checks run:** `tools/run_checks.py` (change-scoped). Results in the PR.
+
+## TEST-75: P73 update history stylesheet restored; base P70 merged (v3.1.0-P73)
+
+TD-238. **Reproduced:** after merging the base (P70), `.nh-head` computed `display:block` and only `*` and `.ms-dialog *` matched it; 52 `.nh-*` and Notes-group selectors were missing from the stylesheet (diffed against the P72 head). **Fixed:** `p72_board_check` 36/36 including the new source assertion that `.nh-head{` precedes the GRID VIEW banner; `p66_check` 101/101; `notes_history_check` 71/71; `grid_view_embed.py --check` clean. **Change-scoped run:** 58 selected, 58 passed (p61 now passes with TD-229 in the base). Empty-state copy regenerated from P73, `p71_check` 27/27.

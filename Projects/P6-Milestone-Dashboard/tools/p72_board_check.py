@@ -131,6 +131,10 @@ def main():
     checks.append(("source: exactly one version literal",
                    len(re.findall(r"3\.[0-9]+\.[0-9]+-P", src)) == 1, ""))
 
+    gv = src.find("/* ============================================================\n   GRID VIEW (D-09")
+    nh = src.find(".nh-head{")
+    checks.append(("source: the history CSS sits above the GRID VIEW banner (grid_view_embed.py rewrites from the banner to </style>; the P70 re-paste dropped it)",
+                   0 < nh < gv, f"nh-head at {nh}, grid banner at {gv}"))
     for (w, h) in VIEWPORTS:
         R = render(html, w, h)
         print(f"\n=== {w}x{h} ===  sample {R.get('notes', {}).get('sample')}")
