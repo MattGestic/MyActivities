@@ -38,6 +38,8 @@ import tempfile
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 DEMO = ROOT / "prototypes" / "grid-view" / "demo.html"
 SHELLS = sorted(pathlib.Path("/opt/pw-browsers").glob("chromium_headless_shell-*/chrome-linux/headless_shell"))
+if __import__("os").environ.get("SRET_CHROME"):  # override for tools/run_checks.py coverage capture
+    SHELLS = [pathlib.Path(__import__("os").environ["SRET_CHROME"])]
 SIZES = [(390, 844), (768, 1024), (1440, 900)]
 HIT = 40
 # Each one breaks one promise; --prove-fails asserts the check catches all.
