@@ -177,6 +177,7 @@ The version lives only in `APP_VERSION`. The working file keeps a stable filenam
 | **Proposed, D-27:** grouping hierarchies are independent trees over the same rows; saved views are stored as changes from the system view and are annotation data | One editable hierarchy (conflates imported structure with display); full-copy views (far larger at client scale, metric `view_full_kb` against `view_delta_kb`, and they do not inherit new activities) | Keeps imported structure read-only and the three-layer rule intact; views inherit system positions on each import for free. | 2026-09-27 |
 | **Confirmed, D-10:** schedule hand-back is a change register only | XER patch for manual P6 import; regenerated XER | Matt's choice 2026-09-27. "Never writes back to P6" stands unchanged. | 2026-09-27 |
 | **Deferred:** D3, as a vendored module subset, for new views only (logic view, trend and S-curve charts) | vis-network (canvas: no CSS theming, nodes invisible to DOM checks, no date axis, cannot be trimmed without a build step); Mermaid (3.5 MB); full D3 bundle | SVG output matches the existing board and check tooling; module subset keeps the inline cost small. Not for the existing board, which needs none of it. | 2026-09-27 |
+| The grid view is a core plus optional features, configured once with `SRETGrid.setup()` | One module with every feature (as before); separate grids per use; a configuration object passed to every `open()` | One module made every use carry lists, import and export whether it needed them, and every app-specific string and format lived inside it. Separate grids would fork the engine skin and the tests. Repeating shared settings on every `open()` is what the demo did, and each screen drifted. A core with feature hooks keeps one engine, lets a screen or another app load only what it uses, and puts deployment choices (features, defaults, wording, date format, layout) in one upfront call that fails fast. Measured: no change to open, filter or scroll timings (`tools/grid_view_check.py`); the core alone is proven by `tools/grid_view_modular.py`. | 2026-09-30 |
 
 ---
 **Rules:**
@@ -364,7 +365,7 @@ Both literals these replaced were wrong and had been for some time: the week ban
 
 ### The milestone card is the Claude Design dialog; history is one gallery (v3.1.0-P66)
 
-TD-226. Matt's design (`docs/mockups/P66/`) is the source for the card's layout; the app keeps its own fonts, tokens and control sizes (D-16), since it is offline and colour-audited.
+TD-231. Matt's design (`docs/mockups/P66/`) is the source for the card's layout; the app keeps its own fonts, tokens and control sizes (D-16), since it is offline and colour-audited.
 
 - **Every element id the card had is kept,** so its form logic (`msReadForm`, `msDirty`, `saveMsDialog`, the edited marks) is unchanged; the re-lay is CSS and markup order. Fields the design does not show sit in a collapsed More fields fold.
 - **The comment box is a new remark, always empty on open.** Earlier remarks are in the history. Saving appends an entry; the follow-up select sets its status, also when the save merges into the previous card entry.
@@ -373,7 +374,7 @@ TD-226. Matt's design (`docs/mockups/P66/`) is the source for the card's layout;
 
 ### Entries are the record; the stores are projections (v3.1.0-P65)
 
-Matt's decision of 2026-09-30 (TD-225): every update to a milestone is its own entry, and a roll-up gives the compiled view.
+Matt's decision of 2026-09-30 (TD-230): every update to a milestone is its own entry, and a roll-up gives the compiled view.
 
 - **One writer path.** Remarks, notes and card or grid edits append or change entries in `ENTRIES` (module `SRETEntries`). `projectEntryStores()` rebuilds `MS_COMMENTS`, `MS_HEALTH_OVERRIDE`, `MS_PROGRESS_OVERRIDE`, `MS_FIELD_OVERRIDE` and `NOTES` from it. Readers were left alone; only writers changed.
 - **Latest wins per field**, ordered by `at` then eid. `to:null` is "back to the schedule". Removing an entry falls back to the one before.

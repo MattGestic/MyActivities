@@ -1,0 +1,26 @@
+/* =====================================================================
+   SRET grid feature CSS: marks. Load after grid-view.css, with features/marks.js.
+   Health dot and Icon column marks, and their tap-to-pick popup.
+   ===================================================================== */
+/* ---- health icon (same states and roles as the dashboard's health dot) ---- */
+.sg-hdot{display:inline-block;color:var(--color-text-primary);flex:0 0 auto;width:10px;height:10px;margin:0 var(--space-3) 0 0;padding:0;vertical-align:middle;
+  border-radius:var(--radius-pill);border:1.2px solid var(--color-health-rim);background:transparent;cursor:pointer}
+button.sg-hdot:hover{transform:scale(1.25)}
+.sg-hdot.sg-h-0{background:transparent;border-color:var(--color-health-none-border)}
+.sg-hdot.sg-h-1{background:var(--color-health-good);border-color:var(--color-health-good-border)}
+.sg-hdot.sg-h-2{background:var(--color-health-watch);border-color:var(--color-health-watch-border)}
+.sg-hdot.sg-h-3{background:var(--color-crit);border-color:var(--color-crit-border)}
+.sg-hdot.sg-h-4{background:var(--color-status-done);border-color:var(--color-health-good-border)}
+.sg-hpick{position:absolute;min-width:160px}
+.sg-sym{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:16px;height:16px;margin:0 var(--space-3) 0 0;
+  padding:0;border:0;background:transparent;vertical-align:middle;cursor:pointer;color:var(--color-text-primary)}
+.sg-sym .sg-sym-svg{width:13px;height:13px;display:block}
+button.sg-sym:hover{transform:scale(1.2)}
+.sg-sym--menu{margin-right:var(--space-2);cursor:default}
+.sg-hpick .sg-hdot{margin-right:var(--space-2);cursor:default}
+
+@media (pointer:coarse){
+  .sg-sym,button.sg-hdot{position:relative}
+  .sg-sym::after,button.sg-hdot::after{
+    content:'';position:absolute;top:50%;left:50%;width:max(100%,var(--ctl-hit-touch));height:max(100%,var(--ctl-hit-touch));transform:translate(-50%,-50%)}
+}

@@ -30,8 +30,9 @@ What it proves, per the brief (N=3 wherever a count applies):
     palette swap moves every painted colour in the screen, in the idle,
     editing and confirm states (nothing escapes tier 1)
 Plus, as subprocesses: tools/colour_audit.py --strict and
-tools/palette_swap_check.py against demo.html, and the assembler's --check
-(demo.html matches its sources).
+tools/palette_swap_check.py against demo.html, tools/grid_view_responsive.py
+(phone, tablet, desktop), tools/grid_view_modular.py (the core alone, feature
+subsets, setup()), and the assembler's --check (demo.html matches its sources).
 
 --prove-fails runs the probe against deliberately broken wrappers and exits
 non-zero unless every mutation is caught.
@@ -63,7 +64,7 @@ MUTATIONS = {
     # refuses), so this mutation removes both; removing either alone is
     # covered by the other and correctly still passes.
     "readonly-ignored": [("if(!gridEditable||!c||!c.editable) return false;", "if(!gridEditable||!c) return false;"),
-                         ("editor:ed?Editor:null", "editor:gridEditable?Editor:null")],
+                         ("editor:ed?(TYPES[c.type].editor||Editor):null", "editor:gridEditable?(TYPES[c.type].editor||Editor):null")],
     "esc-commits": ("    el.addEventListener('keydown',function(e){\n      if((e.key==='ArrowLeft'",
                     "    el.addEventListener('keydown',function(e){ if(e.key==='Escape'){ args.grid.getEditorLock().commitCurrentEdit(); return; }\n      if((e.key==='ArrowLeft'"),
     "no-selection-count": ("grid.onSelectedRowsChanged.subscribe(updateStatus);", ""),
@@ -73,7 +74,7 @@ MUTATIONS = {
                         "enableMouseWheelScrollHandler:true,forceSyncScrolling:false,\n      rowTopOffsetRenderType:'top',minRowBuffer:3"),
     # Collections: the shared rule (no duplicates) and the grid handing over the right keys.
     # Lists: each rule the temp list flow depends on.
-    "temp-wrong-keys": ("listsDone(M().tempAdd(lists.store,selectedRefs()));", "listsDone(M().tempAdd(lists.store,selectedRefs().slice(1)));"),
+    "temp-wrong-keys": ("listsDone(M().tempAdd(s.lists.store,selectedRefs()));", "listsDone(M().tempAdd(s.lists.store,selectedRefs().slice(1)));"),
     "temp-duplicates": ("if(store.temp.indexOf(r)>=0) already++; else", "if(false) already++; else"),
     "single-list-setting-ignored": ("      if(single(store)) listsOf(store,r)", "      if(false) listsOf(store,r)"),
     "multi-list-broken": ("settings:{singleList:!!(opts&&opts.singleList)}", "settings:{singleList:true}"),
@@ -84,14 +85,14 @@ MUTATIONS = {
     "panel-open-by-default": ("'data-sg':'panel',hidden:true}", "'data-sg':'panel'}"),
     "menu-stays-open": ("b.addEventListener('click',function(e){ e.stopPropagation(); close(true); it.onSelect(); });",
                         "b.addEventListener('click',function(e){ e.stopPropagation(); it.onSelect(); });"),
-    "import-in-side-panel": ("if(s.opts.importer) return openDialog('Import milestones',function(body,close){ return buildImport(body,close); });",
-                             "if(s.opts.importer) return buildImport(s.screen.querySelector('.sg-body'),function(){});"),
+    "import-in-side-panel": ("if(s.opts.importer) return K.openDialog(title(),function(body,close){ return build(body,close); });",
+                             "if(s.opts.importer) return build(s.screen.querySelector('.sg-body'),function(){});"),
     "list-toggle-sorts": ("if(b) b.addEventListener('click',function(ev){ ev.stopPropagation(); toggleListCol(); });",
                           "if(b) b.addEventListener('click',function(ev){ toggleListCol(); });"),
-    "temp-row-mark-missing": ("m.cssClasses=((m.cssClasses||'')+' sg-in-temp').trim();", ""),
+    "temp-row-mark-missing": ("rowClass:function(item){ return item[L_TMP]==='Yes'?'sg-in-temp':''; },", "rowClass:function(item){ return ''; },"),
     "panel-actions-below-items": ("    s.panel.appendChild(s.pnlItems);\n", "    s.panel.appendChild(s.pnlItems); s.panel.appendChild(s.pnlTempActions); s.panel.appendChild(s.pnlListActions);\n"),
     "remove-from-list-removes-everywhere": ("listsDone(M().removeFromList(s.lists.store,s.listId,pickedRefs()));", "listsDone(M().unassign(s.lists.store,pickedRefs()));"),
-    "temp-only-ignored": ("    if(s.scope && !inScope(item)) return false;\n", ""),
+    "temp-only-ignored": ("      rowFilter:inScope,\n", ""),
     "filter-state-not-shown": ("    s.pill.hidden=!s.scope;\n", ""),
     "resize-kills-edit": ("if(grid.getEditorLock().isActive()){ pending=true; return; }", ""),
     "mutates-caller": ("dv.setItems((opts.rows||[]).map(function(r){ return Object.assign({},r); }),rowKey);",
@@ -102,15 +103,21 @@ MUTATIONS = {
     "import-blank-id-kept": ("if(!d[idKey]){ d[idKey]=im.nextId(taken);", "if(false){ d[idKey]=im.nextId(taken);"),
     "import-same-id-twice": ("d[idKey]=im.nextId(taken); taken.push(d[idKey]);", "d[idKey]=im.nextId([]);"),
     "import-deps-unchecked": ("if(missing.length){ dep=true;", "if(false){ dep=true;"),
-    "import-no-question": ("    if(!res.issues.length&&!dt.ask){ commitImport(res,fileName,ui); return res; }", "    commitImport(res,fileName,ui); return res;"),
+    "import-no-question": ("      if(!res.issues.length&&!dt.ask){ commit(res,fileName,ui); return res; }", "      commit(res,fileName,ui); return res;"),
     "import-log-not-written": ("if(im.log) Array.prototype.push.apply(im.log,entries);", ""),
     "import-bad-date-kept": ("row[c.key]=null; return;\n        }", "row[c.key]=norm(v); return;\n        }"),
-    "import-silent-fail": ("importPanel(ui,'error',[h('p',{'class':'sg-import-head',text:'Import failed'}),h('p',{'data-sg':'import-error',text:res.fatal})]);", ""),
+    "xls-treated-as-xlsx": ("    if(/\\.xls$/i.test(name)) return Promise.reject(", "    if(false) return Promise.reject("),
+    "sheetjs-from-cdn": ("    return window.XLSX&&window.XLSX.utils?Promise.resolve(window.XLSX)\n",
+                         "    var sc=document.createElement('script'); sc.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; document.head.appendChild(sc);\n    return window.XLSX&&window.XLSX.utils?Promise.resolve(window.XLSX)\n"),
+    "bulk-bad-date-applied": ("            if(bad){ err.hidden=false; err.textContent=bad; todo[i].ctl.focusEl.focus(); return; }\n", ""),
+    "impossible-date-accepted": ("    return d.toISOString().slice(0,10)===iso?iso:null;   // 31-Feb is not a date", "    return iso;"),
+    "refs-names-ignored": ("            if(!qw||(o._w||(o._w=words(o.name))).indexOf(qw)<0) continue;", "            continue;"),
+    "import-silent-fail": ("panel(ui,'error',[h('p',{'class':'sg-import-head',text:'Import failed'}),h('p',{'data-sg':'import-error',text:res.fatal})]);", ""),
     "status-tone-missing": ("return {text:txt,addClasses:'sg-tone sg-tone-'+c.tones[v]};", "return txt;"),
     "open-on-any-column": ("if(c&&c.id===opts.openColumn&&it&&", "if(c&&it&&"),
     "health-dot-no-edit": ("var ret=typeof s.opts.onEdit==='function'?s.opts.onEdit(rowKey,key,value):undefined;", "var ret;"),
-    "collapsed-list-filter": ("if(!c||(c.key===L_LIST&&!S.listExpanded)) return;", "if(!c) return;"),
-    "add-menu-no-separators": ("return [canDel?deleteItem():null, canDel?{sep:1}:null,", "return [canDel?deleteItem():null,"),
+    "collapsed-list-filter": ("if(!c||(c.filterShown&&!c.filterShown())) return;", "if(!c) return;"),
+    "add-menu-no-separators": (".forEach(function(g,i){ if(i) out.push({sep:1}); ", ".forEach(function(g,i){ "),
     # Round 8 (Matt, 2026-09-28): shared date engine, user name
     "dates-order-fixed": ("var chosen=cfg.dateOrder&&cfg.dateOrder!=='auto'?cfg.dateOrder:null, det=D.detect(dv);",
                           "var chosen=cfg.dateOrder&&cfg.dateOrder!=='auto'?cfg.dateOrder:'DMY', det=D.detect(dv);"),
@@ -124,12 +131,44 @@ MUTATIONS = {
     "view-switch-loses-back": ("var carried=S&&S.switching?S.returnFocus:null;", "var carried=null;"),
     "view-title-clips-menu": (".sg-title--views{overflow:visible}", ""),
     "view-no-current-mark": ("radio:true,checked:v.id===opts.view,", "radio:true,checked:false,"),
-    "compare-vendor-with-project": ("function lineageOf(meta){ return meta.role==='external'?'ext:'+String(meta.name||'').trim().toLowerCase():'project'; }",
-                                    "function lineageOf(meta){ return 'project'; }"),
-    "compare-interim-as-default": ("return el.filter(function(s){ return s.role==='project'; })[0]||", "return el[0]||"),
+    "compare-vendor-with-project": ("function lineKey(meta){ return meta.role==='external'?'ext:'+String(meta.name||'').trim().toLowerCase():'project'; }",
+                                    "function lineKey(meta){ return 'project'; }"),
     "compare-removed-dropped": ("else if(!now){ row.change='Removed'; c.removed++; }", "else if(!now){ return; }"),
     "compare-slip-sign": ("return Math.round((Date.UTC(+b.slice(0,4)", "return -Math.round((Date.UTC(+b.slice(0,4)"),
-    "health-shown-in-grid": ("if(lists) cols=[{key:L_LIST", "cols=cols.filter(function(c){ return c.key!=='health'; }).concat(cols.filter(function(c){ return c.key==='health'; }).map(function(c){ return Object.assign({},c,{hidden:false}); }));\n    if(lists) cols=[{key:L_LIST"),
+    "slots-baseline-offered-to-vendor": ("if(key==='project'&&store.baseline) out.push(store.baseline);", "if(store.baseline) out.push(store.baseline);"),
+    "importer-noun-ignored": ("var s=K.s(), im=s&&s.opts.importer, w=im&&im.noun||K.t('noun');", "var w=K.t('noun');"),
+    "interim-out-of-scope-removed": ("if((!now&&cur.partial)||(!was&&basis.partial)){ c.outside++; return; }", ""),
+    "interim-added-shown-removed": ("else if(!now&&basis.partial){ row.change='Only in interim'; c.onlyInterim++; }", ""),
+    "compare-primary-vs-baseline": ("if(s.slot==='primary') return get('secondary')||base||null;", "if(s.slot==='primary') return base||null;"),
+    "designate-interim-as-primary": ("if(d==='primary'&&u.partial) return", "if(false) return"),
+    "import-primary-no-secondary": ("if(t.primary) designate(store,t.primary,'secondary');", ""),
+    "designate-two-per-file": ("DES.forEach(function(x){ if(t[x]===id) t[x]=null; });", ""),
+    "prune-releases-designated": ("if(u===store.baseline||u.slot!=='none'&&u.slot!=='interim') return true;", "if(u===store.baseline) return true;"),
+    "designate-deletes": ("    if(d) t[d]=id;\n    sync(store);\n", "    if(d) t[d]=id;\n    sync(store); prune(store);\n"),
+    "interim-treated-as-full": ("var partial=!!(meta.scope&&!isBaseline);", "var partial=false;"),
+    "interim-one-for-all-scopes": ("o.scope.toLowerCase()===u.scope.toLowerCase()&&", ""),
+    "overlay-ignores-moved-only": ("if(opts.movedOnly&&!moved) return;", ""),
+    "overlay-drops-unplaced": ("if(!p){ unplaced.push({id:id,name:r.n,scope:u.scope,upload:u.id,finish:r.f}); return; }", "if(!p){ return; }"),
+    "migrate-keeps-old-key": ("      delete p[oldK];\n", ""),
+    "migrate-mutates-input": ("    var p=clone(payload);", "    var p=payload;"),
+    "migrate-misses-values": ("    fixRecords(p.tasks,'tasks',out.changed);", ""),
+    "merge-by-id-only": ("if(a.guid&&b.guid) return a.guid===b.guid;", "return true;"),
+    "merge-refs-not-rewritten": ("if(Object.keys(map).length) res.add.concat(res.same)", "if(false) res.add.concat(res.same)"),
+    "guid-regenerated": ("if(t&&!t.guid){ t.guid=guid(); n++; }", "if(t){ t.guid=guid(); n++; }"),
+    "ids-no-initials": ("    if(!w.length) return 'UXX';\n", "    return 'USR';\n"),
+    "ids-one-series-for-all": ("function next(existing,pfx,taken){ return seriesNext(String(pfx||'UXX').toUpperCase(),", "function next(existing,pfx,taken){ return seriesNext('UXX',"),
+    "ids-merge-wrong-series": ("var nid=seriesNext(seriesOf(id)||'USR',taken);", "var nid=seriesNext('USR',taken);"),
+    "prefix-ignored": ("function nextUsr(taken){ return SRETIds.next(taskIds(),USERS.idPrefix(),taken); }", "function nextUsr(taken){ return SRETIds.next(taskIds(),SRETIds.prefix(userName()),taken); }"),
+    "prefix-unchecked": ("        var r=root.SRETIds?root.SRETIds.checkPrefix(v,scheduleIds):", "        var r=false?0:"),
+    "icon-not-coloured-by-status": ("var st=item&&sy.stateKey?String(item[sy.stateKey]||'future').toLowerCase():'future';", "var st='future';"),
+    "refs-digits-match-anywhere": ("if(!(n.indexOf(q)===0||n.replace(/^0+/,'').indexOf(q)===0)) continue;", "if(id.indexOf(q)<0) continue;"),
+    "refs-delete-ignored": ("if(k==='Delete'){ e.preventDefault(); e.stopImmediatePropagation(); input.value=''; hi=0; filter(); return; }", ""),
+    "refs-cross-removes-all": ("toks.splice(i,1); drawToks();", "toks=[]; drawToks();"),
+    "refs-enter-does-not-save": ("if(o.onEnterEmpty) o.onEnterEmpty();", ""),
+    "bulk-edit-always-shown": ("status:function(s,sel){ s.editBtn.hidden=!sel;", "status:function(s,sel){ s.editBtn.hidden=false;"),
+    "bulk-refused-silent": ("if(ret===false){ refused.push(k+' '+st.c.label); return; }\n", "if(ret===false){ return; }\n"),
+    "bulk-refs-add-duplicates": ("ids.forEach(function(x){ if(!have[refId(x)]){ toks.push(x); have[refId(x)]=1; } });", "ids.forEach(function(x){ toks.push(x); });"),
+    "health-shown-in-grid": ("    hooks.forEach(function(f){ if(f.columns) cols=f.columns(cols); });", "cols=cols.filter(function(c){ return c.key!=='health'; }).concat(cols.filter(function(c){ return c.key==='health'; }).map(function(c){ return Object.assign({},c,{hidden:false}); }));\n    hooks.forEach(function(f){ if(f.columns) cols=f.columns(cols); });"),
 }
 
 STUB = r"""<script>
@@ -137,7 +176,9 @@ window.__errs=[];
 window.addEventListener('error',function(e){ __errs.push(String(e.message)); });
 // SheetJS stub at the app's boundary with it (aoa_to_sheet, book_*, writeFile).
 window.__xlsx={};
-window.XLSX={utils:{
+// Once SheetJS is embedded (TD-216) the page defines the real XLSX after this
+// runs; the harness puts the stub back before any export (__xlsxStub).
+window.__xlsxStub=window.XLSX={utils:{
   aoa_to_sheet:function(aoa,o){ __xlsx.aoa=aoa; __xlsx.opts=o; return {}; },
   book_new:function(){ return {}; },
   book_append_sheet:function(wb,ws,n){ __xlsx.sheet=n; }},
@@ -185,7 +226,7 @@ TIMING = r"""
   window.__scroll={p95Ms:steps[142],medianMs:steps[75],smallMiss:smallMiss,flingMiss:flingMiss,
     wheelMoved:vp.scrollTop-before,transform:!!(rowEl&&rowEl.style.transform&&!rowEl.style.top)};
   SRETGrid.close();
-  DEMO_OPEN('userms');
+  DEMO_OPEN('usertasks');
 })();
 </script>
 """
@@ -194,6 +235,8 @@ HARNESS = r"""
 <script>
 (async function(){
 const R={checks:[],notes:{}};
+// The real library, if the page embeds one, before the stub goes back on.
+window.__realXLSX=window.XLSX!==window.__xlsxStub?window.XLSX:null; window.XLSX=window.__xlsxStub;
 const ok=(name,cond,detail)=>R.checks.push({name:name,pass:!!cond,detail:detail===undefined?null:detail});
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const $=(s,r)=>(r||document).querySelector(s);
@@ -321,12 +364,12 @@ try{
     ok('user: the prompt closes; the grid is usable', !btn('dialog') && SRETGrid.isOpen()); }
 
   // ============ User milestones (opened on load) ============
-  ok('userms: screen open on load', SRETGrid.isOpen() && !!$('.sg-screen'));
-  ok('userms: title', $('.sg-title').textContent==='User milestones', $('.sg-title').textContent);
-  ok('userms: row count', visibleCount()===F.userms.length && $('[data-sg=count]').textContent===F.userms.length+' rows',
+  ok('usertasks: screen open on load', SRETGrid.isOpen() && !!$('.sg-screen'));
+  ok('usertasks: title', $('.sg-title').textContent==='User tasks', $('.sg-title').textContent);
+  ok('usertasks: row count', visibleCount()===F.usertasks.length && $('[data-sg=count]').textContent===F.usertasks.length+' rows',
      $('[data-sg=count]').textContent);
-  ok('userms: My temp list panel collapsed on open; rail shows collapsed', $('[data-sg=panel]').hidden && $('[data-sg=temp-open]').getAttribute('aria-expanded')==='false');
-  ok('userms: Add row present; Delete in the Tools menu', !!$('[data-sg=add]') && !!(await menuItem('tools','delete'))); await menuClose('tools');
+  ok('usertasks: My temp list panel collapsed on open; rail shows collapsed', $('[data-sg=panel]').hidden && $('[data-sg=temp-open]').getAttribute('aria-expanded')==='false');
+  ok('usertasks: Add row present; Delete in the Tools menu', !!$('[data-sg=add]') && !!(await menuItem('tools','delete'))); await menuClose('tools');
 
   // keyboard navigation
   { const g=eng().grid, f=FD(); g.setActiveCell(0,f); await sleep(10);
@@ -381,7 +424,7 @@ try{
     ok('export: Health is the last column, after Date created and Created by', eh.slice(-3).join('|')==='Date created|Created by|Health', eh);
     window.__xlsx={}; await menuPick('add-more','template'); await sleep(20);
     const th=(window.__xlsx.aoa||[[]])[0];
-    ok('import template: Health is the last column', th[th.length-1]==='Health' && th.indexOf('Band')>=0 && th.indexOf('WBS')>=0, th);
+    ok('import template: Health is the last column', th[th.length-1]==='Health' && th.indexOf('Band')>=0 && th.indexOf('WBS/Area')>=0, th);
   }
 
   // D-16 sizes
@@ -393,7 +436,7 @@ try{
 
   // sort: text asc/desc, number asc (N=3 ordered pairs)
   { header('name').click(); await sleep(20);
-    const names=F.userms.map(r=>r.name).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true,sensitivity:'base'}));
+    const names=F.usertasks.map(r=>r.name).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true,sensitivity:'base'}));
     const got=[0,1,2].map(i=>cellText(i,'name'));
     ok('sort: text ascending, first three', JSON.stringify(got)===JSON.stringify(names.slice(0,3)), got);
     header('name').click(); await sleep(20);
@@ -401,31 +444,31 @@ try{
     ok('sort: text descending, first three', JSON.stringify(gotD)===JSON.stringify(names.slice().reverse().slice(0,3)), gotD);
     header('progress').click(); await sleep(20);
     const n=[0,1,2,3].map(i=>Number(cellText(i,'progress')));
-    ok('sort: number ascending, numeric not lexical', n[0]<=n[1]&&n[1]<=n[2]&&n[2]<=n[3]&&n[0]===Math.min(...F.userms.map(r=>r.progress)), n);
+    ok('sort: number ascending, numeric not lexical', n[0]<=n[1]&&n[1]<=n[2]&&n[2]<=n[3]&&n[0]===Math.min(...F.usertasks.map(r=>r.progress)), n);
     ok('sort: sorted header shows state', header('progress').classList.contains('slick-header-column-sorted')); }
 
   // filters
   { await setFilter('type','INT');
-    const exp=F.userms.filter(r=>r.type==='INT').length;
-    ok('filter: contains on select column', visibleCount()===exp && $('[data-sg=count]').textContent===exp+' of '+F.userms.length+' rows',
+    const exp=F.usertasks.filter(r=>r.type==='INT').length;
+    ok('filter: contains on select column', visibleCount()===exp && $('[data-sg=count]').textContent===exp+' of '+F.usertasks.length+' rows',
        [visibleCount(),exp,$('[data-sg=count]').textContent]);
     await setFilter('type','');
     await setFilter('progress','>=75');
-    const e2=F.userms.filter(r=>r.progress>=75).length;
+    const e2=F.usertasks.filter(r=>r.progress>=75).length;
     ok('filter: >= on number column', visibleCount()===e2, [visibleCount(),e2]);
     await setFilter('progress','');
     await setFilter('finish','<1-Aug-26');
-    const e3=F.userms.filter(r=>r.finish && r.finish<'2026-08-01').length;
+    const e3=F.usertasks.filter(r=>r.finish && r.finish<'2026-08-01').length;
     ok('filter: < on date column (d-Mmm-yy input)', visibleCount()===e3 && e3>0, [visibleCount(),e3]);
     await setFilter('finish','>2026-09-01');
-    const e4=F.userms.filter(r=>r.finish && r.finish>'2026-09-01').length;
+    const e4=F.usertasks.filter(r=>r.finish && r.finish>'2026-09-01').length;
     ok('filter: > on date column (ISO input)', visibleCount()===e4 && e4>0, [visibleCount(),e4]);
     await setFilter('finish','');
     await setSearch('review');
-    const e5=F.userms.filter(r=>JSON.stringify(r).toLowerCase().indexOf('review')>=0).length;
-    ok('quick search across columns', visibleCount()===e5 && e5>0 && e5<F.userms.length, [visibleCount(),e5]);
+    const e5=F.usertasks.filter(r=>JSON.stringify(r).toLowerCase().indexOf('review')>=0).length;
+    ok('quick search across columns', visibleCount()===e5 && e5>0 && e5<F.usertasks.length, [visibleCount(),e5]);
     await setSearch('');
-    ok('filters cleared', visibleCount()===F.userms.length); }
+    ok('filters cleared', visibleCount()===F.usertasks.length); }
 
   // selection: select all then deselect three
   { // The plugin re-renders the header cell on every selection change, so the
@@ -436,7 +479,7 @@ try{
     rowCheckbox(1).click(); await sleep(10); const s1=selCount();
     rowCheckbox(3).click(); await sleep(10); const s2=selCount();
     rowCheckbox(5).click(); await sleep(10); const s3=selCount(), t3=$('[data-sg=selcount]').textContent;
-    const n=F.userms.length;
+    const n=F.usertasks.length;
     ok('select all selects every row', s0===n && t0==='('+n+' selected)', [s0,t0]);
     ok('deselect one at a time (N=3)', s1===n-1&&s2===n-2&&s3===n-3 && t3==='('+(n-3)+' selected)', [s1,s2,s3,t3]);
     ok('Tools > Delete enabled with a selection', await delEnabled());
@@ -465,7 +508,7 @@ try{
     }
     ok('edit: display updates (date shown d-Mmm-yy, select shows label)', cellText(3,'finish')==='13-Nov-26' && cellText(1,'state')==='At risk',
        [cellText(3,'finish'),cellText(1,'state')]);
-    ok('edit: caller row objects never mutated by the grid', JSON.stringify(handed)===before && handed.length===F.userms.length); }
+    ok('edit: caller row objects never mutated by the grid', JSON.stringify(handed)===before && handed.length===F.usertasks.length); }
 
   // Esc cancels N=3
   { const n0=count('onEdit'); const snaps=[];
@@ -495,7 +538,8 @@ try{
       if($('.sg-editor')) key($('.sg-editor'),'Enter'); await frames(); await sleep(20);
       const e=lastLog('onEdit');
       res.push({same:same,committed:!!e&&e.args[0]===rk&&e.args[2]===txt,
-                applied:Math.abs(vp.clientWidth-$('.sg-grid').clientWidth)<=20});
+                // both panes together (narrow widths pin ID and Name into a left pane)
+                applied:Math.abs($$('.sg-grid .slick-pane-top .slick-viewport').filter(v=>v.offsetParent).reduce((a,v)=>a+v.clientWidth,0)-$('.sg-grid').clientWidth)<=20});
     }
     board.style.width=''; await frames(); await sleep(20);
     ok('resize during an edit (N=3): editor and typed text kept, onEdit commits, resize applied after', res.every(x=>x.same&&x.committed&&x.applied), res); }
@@ -573,14 +617,14 @@ try{
     const delOff=$('[data-sg=add-more-menu] [data-sg=delete]').disabled, sepH=$$('[data-sg=add-more-menu] .sg-menu-sep').map(e=>e.getBoundingClientRect().height);
     await menuClose('add-more');
     ok('Add row menu (Matt, 2026-09-28): Delete selected rows first, separator, Export .xlsx, Download import template, separator, Import milestones, Import log',
-       !!btn('add') && !!am && aml.join('|')==='Delete selected rows…|---|Export .xlsx|Download import template|---|Import milestones…|Import log' &&
+       !!btn('add') && !!am && aml.join('|')==='Delete selected rows…|---|Export .xlsx|Download import template|---|Import tasks…|Import log' &&
        btn('add').parentNode===btn('add-more').parentNode, aml);
     ok('Add row menu: Delete is disabled with nothing selected; separators are 1px hairlines', delOff && sepH.length===2 && sepH.every(v=>v===1), [delOff,sepH]);
     window.__xlsx={}; await menuPick('add-more','export'); await sleep(20);
-    ok('Add row menu > Export .xlsx writes the visible rows', window.__xlsx.name==='User milestones.xlsx' && (window.__xlsx.aoa||[]).length===n+1, window.__xlsx.name);
+    ok('Add row menu > Export .xlsx writes the visible rows', window.__xlsx.name==='User tasks.xlsx' && (window.__xlsx.aoa||[]).length===n+1, window.__xlsx.name);
     window.__xlsx={}; await menuPick('add-more','template'); await sleep(20);
-    ok('Add row menu > Download import template: the column headers only, without derived columns', window.__xlsx.name==='User milestones import template.xlsx' &&
-       JSON.stringify(window.__xlsx.aoa)===JSON.stringify([F.cols.userms.map(c=>c.label)]), [window.__xlsx.name,window.__xlsx.aoa]);
+    ok('Add row menu > Download import template: the column headers only, without derived columns', window.__xlsx.name==='User tasks import template.xlsx' &&
+       JSON.stringify(window.__xlsx.aoa)===JSON.stringify([F.cols.usertasks.map(c=>c.label)]), [window.__xlsx.name,window.__xlsx.aoa]);
     // Import milestones: centred modal dialog, real checks (Matt, 2026-09-27)
     const importCsv=async(name,text)=>{
       if(!btn('dialog')) await menuPick('add-more','import');
@@ -601,27 +645,30 @@ try{
     const dlg=btn('dialog'), dr=dlg&&dlg.getBoundingClientRect(), sr=$('.sg-screen').getBoundingClientRect();
     ok('Import milestones opens a centred modal dialog with a file picker', !!dlg && dlg.getAttribute('aria-modal')==='true' &&
        Math.abs((dr.left+dr.right)/2-(sr.left+sr.right)/2)<=2 && Math.abs((dr.top+dr.bottom)/2-(sr.top+sr.bottom)/2)<=2 &&
-       !!btn('import-file') && btn('import-go').disabled && $('.sg-dialog-title').textContent==='Import milestones');
+       !!btn('import-file') && btn('import-go').disabled && $('.sg-dialog-title').textContent==='Import tasks');
     R.notes.swap_dialog=swapEscapes('light/import-dialog');
     const n0=nRows(), fails=[];
     for(const [nm,txt] of [['empty.csv',''],['noid.csv','Name,Finish\nA milestone,1-Oct-26\n'],['headonly.csv',HEAD+'\n'],
-                           ['dups.csv',HEAD+'\nUSR-050,One,MS\nUSR-050,Two,MS\n,Blank,MS\n'],['notes.txt','x']]){
+                           ['dups.csv',HEAD+'\nUSR-050,One,MS\nUSR-050,Two,MS\n,Blank,MS\n'],['notes.txt','x'],['old.xls','x']]){
       await importCsv(nm,txt); const e=btn('import-error'); fails.push([nm,e?e.textContent:null,btn('import-status').getAttribute('role')]); }
     ok('import fails with a clear notice: empty file, no ID column, no rows, wrong file type; nothing added', fails[0][1]==='The file is empty.' &&
        /has no "ID" column/.test(fails[1][1]) && fails[2][1]==='The file has no rows to import.' && /Use an \.xlsx or \.csv file/.test(fails[4][1]) &&
        fails.every(f=>f[2]==='alert') && nRows()===n0 && /^Import failed\./.test(msg()), fails);
+    ok('legacy .xls is refused with how to fix it (the embedded SheetJS is the mini build, TD-216); the picker offers .xlsx and .csv only',
+       /is an old-style \.xls workbook, which cannot be read here\. Open it in Excel, save it as \.xlsx or \.csv/.test(fails[5][1]||'') && fails[5][2]==='alert' &&
+       btn('import-file').getAttribute('accept')==='.xlsx,.csv' && nRows()===n0, fails[5]);
     ok('import fails on duplicate IDs within the file, naming them and their rows; blank IDs are fine', fails[3][1]===
        'There are duplicate activity IDs within the list: USR-050 (rows 2, 3). Only unique IDs, or blank IDs, can be imported.' && nRows()===n0, fails[3][1]);
     // clean import: one existing ID (skipped), one new ID, two blank IDs (assigned), valid dependencies
-    const maxUsr=Math.max(...eng().dataView.getItems().map(i=>+(/^USR-(\d+)$/.exec(i.id)||[0,0])[1]));
-    const nx=k=>'USR-'+String(maxUsr+k).padStart(3,'0'), have=eng().dataView.getItems()[0].id;
+    const maxUsr=Math.max(0,...eng().dataView.getItems().map(i=>+(/^UDU-(\d+)$/.exec(i.id)||[0,0])[1]));
+    const nx=k=>'UDU-'+String(maxUsr+k).padStart(3,'0'), have=eng().dataView.getItems()[0].id;
     await importCsv('clean.csv',HEAD+'\n'+have+',Already here,MS\nUSR-050,New one,INT,,2026-10-09,,,TRACK,SNIP-101,,40\n'+
       ',First blank,CLI,,9-Oct-26,,,,USR-050,,\n,Second blank,MS,,10/10/2026,,,RISK,,SNIP-118,\n');
     const sum=$$('[data-sg=import-summary] li').map(l=>l.textContent);
     const it50=eng().dataView.getItemById('USR-050'), itA=eng().dataView.getItemById(nx(1)), itB=eng().dataView.getItemById(nx(2));
-    ok('clean import: summary lists imported, the date order used, assigned and skipped', JSON.stringify(sum)===JSON.stringify(['Imported 3 milestones.',
+    ok('clean import: summary lists imported, the date order used, assigned and skipped', JSON.stringify(sum)===JSON.stringify(['Imported 3 tasks.',
        'Dates read as day/month/year. Every date reads the same either way.',
-       'IDs assigned to 2 rows with a blank ID: '+nx(1)+', '+nx(2)+'.','Skipped 1 row already in the table: '+have+'.']) && msg()==='Imported 3 milestones.', sum);
+       'IDs assigned to 2 rows with a blank ID: '+nx(1)+', '+nx(2)+'.','Skipped 1 row already in the table: '+have+'.']) && msg()==='Imported 3 tasks.', sum);
     ok('clean import: rows added with assigned IDs, values read (ISO, d-Mmm-yy, d/m/yyyy dates; labels to values), created by and date set',
        nRows()===n0+3 && !!it50&&it50.finish==='2026-10-09'&&it50.type==='INT'&&it50.progress===40&&it50.state==='TRACK' &&
        !!itA&&itA.finish==='2026-10-09'&&itA.pred==='USR-050' && !!itB&&itB.finish==='2026-10-10'&&itB.state==='RISK' &&
@@ -659,7 +706,7 @@ try{
     // a blank-ID row with an issue is logged under the ID it was given
     await importCsv('blank.csv',HEAD+'\n,Blank with bad dep,MS,,,,,,QQQ-1,\n'); btn('import-continue').click(); await sleep(20);
     const lastLog0=window.DEMO_IMPORT_LOG[window.DEMO_IMPORT_LOG.length-1], newId=eng().dataView.getItems().find(i=>i.name==='Blank with bad dep').id;
-    ok('a blank-ID row is logged under the ID the app assigned', lastLog0.id===newId && /^USR-\d{3}$/.test(newId), [lastLog0,newId]);
+    ok('a blank-ID row is logged under the ID the app assigned', lastLog0.id===newId && /^UDU-\d{3}$/.test(newId), [lastLog0,newId]);
     await closeDlg();
     // only field issues: the other question
     await importCsv('fields.csv',HEAD+'\nUSR-070,Only a bad date,MS,,not a date,,,,,,\n');
@@ -713,7 +760,7 @@ try{
     $$('[data-sg=import-status] button').find(b=>b.textContent==='Cancel').click(); await sleep(10);
     ok('importAoa: Cancel closes the dialog; nothing added', !btn('dialog') && nRows()===nA);
     SRETGrid.importAoa([['ID','Name'],['USR-091','From app']],'app.xlsx'); await sleep(10);
-    ok('importAoa: a clean sheet imports and shows the summary', nRows()===nA+1 && $$('[data-sg=import-summary] li')[0].textContent==='Imported 1 milestone.');
+    ok('importAoa: a clean sheet imports and shows the summary', nRows()===nA+1 && $$('[data-sg=import-summary] li')[0].textContent==='Imported 1 task.');
     btn('import-done').click(); await sleep(10);
     const nAll=eng().dataView.getItems().length;
     // 1: add to the temp list, across filter states
@@ -863,9 +910,9 @@ try{
     ok('palette swap: every painted colour in the screen moves with --pal-* (idle, editing, confirm, panel, open menu, dialog; both themes)', esc.length===0, esc.slice(0,12)); }
 
   // back
-  { const b0=count('onBack'); const launcher=$('#go-userms'); launcher.focus();
+  { const b0=count('onBack'); const launcher=$('#go-usertasks'); launcher.focus();
     // reopen from a launcher so focus has somewhere to return to
-    SRETGrid.close(); launcher.focus(); DEMO_OPEN('userms'); await sleep(20);
+    SRETGrid.close(); launcher.focus(); DEMO_OPEN('usertasks'); await sleep(20);
     $('[data-sg=back]').click(); await sleep(20);
     ok('back calls onBack once and closes the screen', count('onBack')===b0+1 && !SRETGrid.isOpen() && !$('.sg-screen'));
     ok('back restores focus to where the user came from', document.activeElement===launcher, document.activeElement&&document.activeElement.id); }
@@ -882,91 +929,435 @@ try{
     ok('annot: read-only columns refuse edits (N=3)', res.every(x=>x===false), res);
     SRETGrid.close(); }
 
+  // ============ Stored keys renamed to user tasks, older files migrate on load (Matt, 2026-09-28) ============
+  { const M=window.SRETMigrate;
+    const old={publishedAt:'2026-09-20T09:12:00Z',userMsEnabled:false,
+      userMilestones:[{id:'USR-001',source:'User-defined',notes:'[USR-001] - Client review'},{id:'USR-002',source:'User-defined',notes:'User Defined Milestones'}],
+      userRows:[{ref:'USR-ROW',notes:'User Defined Milestones',sourceSchedule:'User-defined'}],
+      tasks:[{ref:'T1',notes:'Key Milestones',sourceSchedule:'Project'},{ref:'USR-ROW',notes:'User Defined Milestones',sourceSchedule:'User-defined'}],
+      milestones:[{ref:'T1',source:'Project'},{ref:'USR-ROW',source:'User-defined'}],sources:[{id:'s1',name:'Project'},{id:'s9',name:'User-defined'}]};
+    const before=JSON.stringify(old), r=M.userTasks(old), q=r.payload;
+    ok('migrate: an older file\'s keys become userTasks and userTasksEnabled; the old keys are gone',
+       Array.isArray(q.userTasks) && q.userTasks.length===2 && q.userTasksEnabled===false && !('userMilestones' in q) && !('userMsEnabled' in q), Object.keys(q));
+    const vals=JSON.stringify(q);
+    ok('migrate: source and band values renamed everywhere they are stored (tasks, rows, milestones, sources); other values untouched',
+       !/User-defined|User Defined Milestones/.test(vals) && q.tasks[1].notes==='User Tasks' && q.tasks[1].sourceSchedule==='User tasks' &&
+       q.milestones[1].source==='User tasks' && q.sources[1].name==='User tasks' && q.tasks[0].notes==='Key Milestones' && q.sources[0].name==='Project' &&
+       q.userTasks[0].notes==='[USR-001] - Client review', vals);
+    ok('migrate: the input is never changed; what changed is reported', JSON.stringify(old)===before && r.changed.indexOf('userMilestones -> userTasks')>=0 && r.conflicts.length===0, r.changed);
+    const r2=M.userTasks(q);
+    ok('migrate: a file already in the new names is returned as is (idempotent)', r2.payload===q && r2.changed.length===0 && r2.conflicts.length===0);
+    const both=M.userTasks({userMilestones:[{id:'a'}],userTasks:[{id:'b'}]});
+    ok('migrate: a file with both old and new keys keeps the new and reports it', both.payload.userTasks[0].id==='b' && !('userMilestones' in both.payload) &&
+       both.conflicts[0]==='Both userMilestones and userTasks present; kept userTasks.');
+    ok('migrate: the saved Workspace section and the export sheet name are recognised old and new',
+       M.wsSection('userms')==='usertasks' && M.wsSection('notes')==='notes' && M.sheetName('User-defined') && M.sheetName('user tasks') && !M.sheetName('Grid'));
+    ok('migrate: the grid demo uses only the new names', !/userms|User Defined Milestones/.test(JSON.stringify(window.SRET_FIXTURES)) &&
+       DEMO_STORE().usertasks.every(r=>r.band==='User Tasks'||r.band==null)); }
+
+  // ============ User task GUIDs: merge by identity, not by USR- number (Matt, 2026-09-29) ============
+  { const I=window.SRETIds, G=/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/, ut=DEMO_STORE().usertasks;
+    const gs=ut.map(r=>r.guid);
+    ok('guid: every user task carries a version 4 GUID, all different (loaded, added and imported ones)', ut.length>12 && gs.every(g=>G.test(g)) && new Set(gs).size===gs.length &&
+       ut.some(r=>r.name==='New task') && ut.some(r=>r.createdBy==='Demo user'&&r.name==='New one'), gs.slice(0,3));
+    ok('ids (Matt, 2026-09-29): U + initials + dash + number, numbered within each person\'s series; older USR- IDs still count as user tasks',
+       I.prefix('Matt Garrett')==='UMG' && I.prefix('Demo user')==='UDU' && I.prefix('J. Ruiz')==='UJR' && I.prefix('')==='UXX' &&
+       I.next(['USR-001','USR-013','UMG-002','UJR-009','SNIP-900'],I.prefix('Matt Garrett'))==='UMG-003' && I.next(['UMG-002'],I.prefix('Jo Ruiz'),['UJR-001'])==='UJR-002' &&
+       I.isUserId('UMG-001') && I.isUserId('USR-013') && !I.isUserId('SNIP-101') && !I.isUserId('UTIL-100') && !I.isUserId('UG-100'));
+    const added=ut.filter(r=>r.createdBy==='Demo user').map(r=>r.id);
+    ok('ids: IDs the app assigned in the demo (Add row, blank IDs on import) are UDU- numbered; IDs given in an import file are kept as given; the older fixture tasks keep USR-',
+       added.filter(id=>!/^USR-/.test(id)).length>=4 && added.filter(id=>!/^USR-/.test(id)).every(id=>/^UDU-\d{3}$/.test(id)) && lastLog('onAdd') && /^UDU-\d{3}$/.test(lastLog('onAdd').args[0]) &&
+       ut.filter(r=>/^USR-0(0[1-9]|1[0-2])$/.test(r.id)).length>=10, added);
+    const same=I.merge([{id:'UMG-001',guid:I.guid(),name:'Mine'}],[{id:'UMG-001',guid:I.guid(),name:'Mary Green task',pred:'UMG-001'}]);
+    ok('merge: two people with the same initials: the clash is renumbered in that series (UMG-001 -> UMG-002)', same.renamed[0].to==='UMG-002' && same.add[0].pred==='UMG-002', same.renamed);
+    const g=()=>I.guid(), gA=g(), gB=g(), gZ=g(), gQ=g();
+    const local=[{id:'USR-013',guid:gA,name:'Local task',created:'2026-09-01'},{id:'USR-014',guid:gB,name:'Shared task'}];
+    const inc=[{id:'USR-013',guid:gZ,name:'Their task',pred:'USR-014'},{id:'USR-014',guid:gB,name:'Shared task'},
+               {id:'USR-015',guid:gQ,name:'New one',pred:'USR-013, SNIP-101: FS',succ:'USR-013;USR-0130'}];
+    const incBefore=JSON.stringify(inc), m=I.merge(local,inc);
+    ok('merge: same GUID is the same task, kept once; same USR- number with a different GUID is renumbered to the next free',
+       m.same.map(t=>t.id).join()==='USR-014' && m.renamed.length===1 && m.renamed[0].from==='USR-013' && m.renamed[0].to==='USR-016' && m.renamed[0].guid===gZ &&
+       m.add.map(t=>t.id).join()==='USR-016,USR-015' && JSON.stringify(inc)===incBefore, m);
+    ok('merge: the incoming file\'s references follow the renumber (predecessors, successors, lags kept, look-alike IDs untouched); annotation keys too',
+       m.add[1].pred==='USR-016, SNIP-101: FS' && m.add[1].succ==='USR-016;USR-0130' && m.add[0].pred==='USR-014' &&
+       JSON.stringify(I.rewriteKeys({'USR-013':{c:1},'SNIP-1':{c:2}},m.map))==='{"USR-016":{"c":1},"SNIP-1":{"c":2}}', m.add);
+    const lg=I.merge([{id:'USR-005',name:'A',created:'2026-09-01'}],[{id:'USR-005',name:'A',created:'2026-09-01'},{id:'USR-005x',name:'x'},{id:'USR-006',name:'B'}]);
+    const lg2=I.merge([{id:'USR-005',name:'A',created:'2026-09-01'}],[{id:'USR-005',name:'A',created:'2026-09-02'}]);
+    ok('merge: older tasks without a GUID match only when ID, name and created date agree', lg.same.length===1 && lg.renamed.length===0 && lg2.renamed.length===1 && lg2.renamed[0].to==='USR-006');
+    // A prefix of the user's own (Matt, 2026-09-29): A100 for area 100, then A200.
+    { const btn=n=>$('[data-sg='+n+']'), U=DEMO_USER, addRow=async()=>{ btn('add').click(); await sleep(20); return lastLog('onAdd').args[0]; };
+      SRETGrid.close(); DEMO_OPEN('usertasks'); await sleep(20);
+      await menuPick('tools','prefix');
+      ok('prefix: Tools > Task ID prefix opens the field; blank means the initials (UDU)', !!btn('dialog') && $('.sg-dialog-title').textContent==='Task ID prefix' &&
+         btn('prefix-input').value==='' && U.idPrefix()==='UDU' && U.prefixIsDefault() && btn('prefix-reset').hidden &&
+         /^New tasks are numbered UDU-001, UDU-002 and so on\. Next task: UDU-\d{3}\.$/.test(btn('prefix-status').textContent), btn('prefix-status').textContent);
+      btn('prefix-input').value='1ab'; btn('prefix-set').click(); await sleep(10);
+      const e1=btn('prefix-error').textContent;
+      btn('prefix-input').value='ABCDEFGHI'; key(btn('prefix-input'),'Enter'); await sleep(10);
+      const e2=btn('prefix-error').textContent;
+      ok('prefix: letters and digits starting with a letter, 8 at most; refused otherwise, nothing stored',
+         e1==='Use letters and digits only, starting with a letter.' && e2==='Use 8 characters or fewer.' && U.prefixIsDefault(), [e1,e2]);
+      btn('prefix-input').value='snip'; btn('prefix-set').click(); await sleep(10);
+      ok('prefix: one the schedule already uses is allowed with a warning', U.idPrefix()==='SNIP' && !btn('prefix-error').hidden &&
+         btn('prefix-error').getAttribute('data-kind')==='warning' && btn('prefix-error').textContent==='Schedule activities already use SNIP-. Task IDs will look like theirs.');
+      btn('prefix-input').value='a100'; btn('prefix-set').click(); await sleep(10);
+      ok('prefix: A100 set (upper case); the note shows the next ID; "Use my initials" appears', U.idPrefix()==='A100' && btn('prefix-error').hidden &&
+         btn('prefix-status').textContent==='New tasks are numbered A100-001, A100-002 and so on. Next task: A100-001.' && !btn('prefix-reset').hidden &&
+         btn('prefix-reset').textContent==='Use my initials (UDU)');
+      key(btn('dialog'),'Escape'); await sleep(10);
+      const a1=await addRow(), a2=await addRow();
+      U.setIdPrefix('A200'); const b1=await addRow();
+      U.setIdPrefix('A100'); const a3=await addRow();
+      ok('prefix: tasks added under A100, then A200, then back to A100 are numbered within each prefix (N=3 in A100)',
+         [a1,a2,b1,a3].join()==='A100-001,A100-002,A200-001,A100-003' && DEMO_STORE().usertasks.filter(r=>/^A[12]00-/.test(r.id)).every(r=>/^[0-9a-f-]{36}$/.test(r.guid)), [a1,a2,b1,a3]);
+      ok('prefix: tasks under a custom prefix are recognised as user tasks when their prefix is known', I.isUserId('A100-003',['A100','A200']) && !I.isUserId('A100-003'));
+      await menuPick('tools','prefix'); btn('prefix-reset').click(); await sleep(10);
+      ok('prefix: Use my initials goes back to UDU', U.prefixIsDefault() && U.idPrefix()==='UDU' && btn('prefix-input').value==='' && btn('prefix-reset').hidden);
+      key(btn('dialog'),'Escape'); await sleep(10);
+      btn('demo-settings').click(); await sleep(10);
+      ok('prefix: Data settings shows the same prefix field under the name', !!btn('prefix-box') && !!btn('user-box') && btn('dialog').contains(btn('prefix-box')));
+      key(btn('dialog'),'Escape'); await sleep(10); }
+    const old=[{id:'USR-001'},{id:'USR-002',guid:gA}];
+    ok('guid: older tasks get a GUID once; existing GUIDs never change', I.ensureGuids(old)===1 && G.test(old[0].guid) && old[1].guid===gA && I.ensureGuids(old)===0); }
+
+  // ============ Icon column and WBS/Area (Matt, 2026-09-30) ============
+  { const btn=n=>$('[data-sg='+n+']');
+    SRETGrid.close(); DEMO_OPEN('usertasks'); await sleep(20);
+    const ids=eng().grid.getColumns().map(c=>c.id), ic=colIdx('marker');
+    ok('columns: Icon sits after Type; WBS is labelled WBS/Area (User tasks and schedule views)', ids.indexOf('marker')===ids.indexOf('type')+1 &&
+       header('wbs').textContent.trim().indexOf('WBS/Area')===0 && F.cols.sched.find(c=>c.key==='wbs').label==='WBS/Area', ids);
+    const rows=[0,1,3].map(r=>({it:eng().dataView.getItem(r),n:eng().grid.getCellNode(r,ic)}));
+    ok('icon: each cell draws the board\'s own mark (#ico-*), coloured by the row\'s status, with its name',
+       rows.every(x=>{ const u=x.n.querySelector('svg use'), sv=x.n.querySelector('svg');
+         return u && u.getAttribute('href')==='#ico-'+x.it.marker && sv.classList.contains('s-'+String(x.it.state).toLowerCase()) &&
+                x.n.textContent.trim()===({diamond:'Diamond',lock:'Lock',star:'Star',flag:'Flag',circle:'Circle'})[x.it.marker]; }) &&
+       !!document.getElementById('ico-lock') && getComputedStyle(rows[1].n.querySelector('svg')).fill!=='none', rows.map(x=>x.it.marker));
+    const k0=eng().dataView.getItem(0).id;
+    rows[0].n.querySelector('[data-sg-sym]').dispatchEvent(new MouseEvent('click',{bubbles:true})); await sleep(10);
+    const pk=btn('icon-picker'), po=pk?$$('[data-sg-icon]',pk):[];
+    ok('icon: tapping the mark opens a picker with the five marks, each drawn, the current one checked',
+       po.map(b=>b.getAttribute('data-sg-icon')).join()==='diamond,lock,flag,star,circle' && po.every(b=>!!b.querySelector('svg use')) &&
+       po.filter(b=>b.getAttribute('aria-checked')==='true').map(b=>b.getAttribute('data-sg-icon')).join()===eng().dataView.getItem(0).marker, po.map(b=>b.getAttribute('aria-checked')));
+    const pick=eng().dataView.getItem(0).marker==='star'?'flag':'star';
+    $('[data-sg-icon='+pick+']',pk).click(); await sleep(20);
+    const ie=lastLog('onEdit');
+    ok('icon: picking a mark calls onEdit(id, "marker", value); the cell redraws; the picker closes', ie.args.join()===k0+',marker,'+pick &&
+       eng().grid.getCellNode(eng().dataView.getRowById(k0),ic).querySelector('use').getAttribute('href')==='#ico-'+pick && !btn('icon-picker'));
+    window.__xlsx={}; await menuPick('add-more','export'); await sleep(20);
+    const hd=window.__xlsx.aoa[0], ri=window.__xlsx.aoa.findIndex(r=>r[hd.indexOf('ID')]===k0);
+    ok('icon: exported as its label under "Icon"', hd[hd.indexOf('Icon')]==='Icon' && window.__xlsx.aoa[ri][hd.indexOf('Icon')]===({star:'Star, key project milestone',flag:'Flag, notable milestone'})[pick], hd); }
+
+  // ============ Bulk edit (Matt, 2026-09-30) ============
+  { const btn=n=>$('[data-sg='+n+']'), msg=()=>$('[data-sg=msg]').textContent;
+    SRETGrid.close(); DEMO_OPEN('usertasks'); await sleep(20); eng().grid.setSelectedRows([]); await sleep(10);
+    ok('bulk: no Edit button while nothing is selected', btn('bulk-edit').hidden && getComputedStyle(btn('bulk-edit')).display==='none');
+    eng().grid.setSelectedRows([0,1,2]); await sleep(10);
+    const keys=[0,1,2].map(r=>eng().dataView.getItem(r).id);
+    ok('bulk: selecting rows shows "Edit 3 rows" in the ribbon, after Add row', !btn('bulk-edit').hidden && btn('bulk-edit').textContent==='Edit 3 rows' &&
+       btn('bulk-edit').previousElementSibling===btn('add').parentNode);
+    btn('bulk-edit').click(); await sleep(20);
+    const fields=$$('[data-sg=bulk-fields] .sg-bulk-lbl span').map(x=>x.textContent);
+    ok('bulk: the dialog lists the editable fields (not the ID, not read-only ones), Health included', $('.sg-dialog-title').textContent==='Edit 3 rows' &&
+       fields.includes('Name') && fields.includes('Status') && fields.includes('Icon') && fields.includes('Predecessor') && fields.includes('Health') &&
+       !fields.includes('ID') && !fields.includes('Date created') && !fields.includes('Created by'), fields);
+    btn('bulk-apply').click(); await sleep(10);
+    ok('bulk: Apply with nothing ticked says so', !btn('bulk-error').hidden && btn('bulk-error').textContent==='Tick at least one field to change.');
+    const set=(k,v)=>{ const el=$('[data-sg=bulk-ctl-'+k+'] select, [data-sg=bulk-ctl-'+k+'] input'); el.value=v; el.dispatchEvent(new Event('change',{bubbles:true})); el.dispatchEvent(new Event('input',{bubbles:true})); };
+    set('state','RISK');
+    ok('bulk: setting a value ticks its field', btn('bulk-tick-state').checked && !btn('bulk-tick-marker').checked);
+    set('progress','150'); btn('bulk-apply').click(); await sleep(10);
+    ok('bulk: a number outside its range is stopped before anything changes', btn('bulk-error').textContent==='% complete: use 0 to 100.' && keys.every(k=>eng().dataView.getItemById(k).progress!==150), btn('bulk-error').textContent);
+    set('progress','50'); set('finish','31-Feb-26'); btn('bulk-apply').click(); await sleep(10);
+    const dIn=$('[data-sg=bulk-ctl-finish] input');
+    ok('bulk: dates are typed as the grid shows them (placeholder e.g. 9-Oct-26, not the browser locale picker); a bad date is stopped',
+       dIn.type==='text' && dIn.placeholder==='e.g. 9-Oct-26' && btn('bulk-error').textContent==='Finish: enter a date like 9-Oct-26.' &&
+       keys.every(k=>eng().dataView.getItemById(k).progress!==50), [dIn.type,dIn.placeholder,btn('bulk-error').textContent]);
+    set('finish','9-Oct-26'); set('marker','star');
+    const ri=$('[data-sg=bulk-ctl-pred] [data-sg=refs-input]'); ri.value='117'; ri.dispatchEvent(new Event('input',{bubbles:true})); await sleep(10); key(ri,'Enter'); await sleep(10);
+    const e0=count('onEdit');
+    btn('bulk-apply').click(); await sleep(20);
+    const its=keys.map(k=>eng().dataView.getItemById(k)), sum=$$('[data-sg=bulk-summary] li').map(l=>l.textContent);
+    ok('bulk: Apply sets every ticked field on every selected row through onEdit (N=3 rows); untouched fields stay',
+       its.every(i=>i.state==='RISK'&&i.progress===50&&i.marker==='star'&&i.finish==='2026-10-09') && count('onEdit')-e0>=12 && btn('bulk-tick-state')===null &&
+       sum[1]==='Fields: Icon, Finish, Status, Predecessor, % complete.', [sum,its.map(i=>[i.state,i.progress,i.marker,i.finish])]);
+    ok('bulk: Predecessor "Add these IDs" adds SNIP-117 once and keeps the IDs each row had', its.every(i=>refSplitT(i.pred).filter(x=>x==='SNIP-117').length===1) &&
+       its.every(i=>refSplitT(i.pred).length>=1), its.map(i=>i.pred));
+    function refSplitT(v){ return String(v||'').split(/[,;]+/).map(x=>x.trim().toUpperCase()).filter(Boolean); }
+    ok('bulk: a summary names what changed', /^Updated 3 rows \(\d+ changes\)\.$/.test(sum[0]) && msg()===sum[0], sum);
+    btn('bulk-done').click(); await sleep(10);
+    // Adding the same ID again leaves it listed once.
+    btn('bulk-edit').click(); await sleep(20);
+    const ria=$('[data-sg=bulk-ctl-pred] [data-sg=refs-input]'); ria.value='117'; ria.dispatchEvent(new Event('input',{bubbles:true})); await sleep(10); key(ria,'Enter'); await sleep(10);
+    btn('bulk-apply').click(); await sleep(20);
+    ok('bulk: adding an ID a row already has does not repeat it', keys.every(k=>refSplitT(eng().dataView.getItemById(k).pred).filter(x=>x==='SNIP-117').length===1),
+       keys.map(k=>eng().dataView.getItemById(k).pred));
+    btn('bulk-done').click(); await sleep(10);
+    btn('bulk-edit').click(); await sleep(20);
+    const mode=btn('bulk-mode-pred'); mode.value='remove'; mode.dispatchEvent(new Event('change',{bubbles:true}));
+    const ri2=$('[data-sg=bulk-ctl-pred] [data-sg=refs-input]'); ri2.value='117'; ri2.dispatchEvent(new Event('input',{bubbles:true})); await sleep(10); key(ri2,'Enter'); await sleep(10);
+    btn('bulk-apply').click(); await sleep(20);
+    ok('bulk: Predecessor "Remove these IDs" takes SNIP-117 off each row and nothing else', keys.every(k=>!refSplitT(eng().dataView.getItemById(k).pred).includes('SNIP-117')) &&
+       keys.every(k=>refSplitT(eng().dataView.getItemById(k).pred).length>=0));
+    btn('bulk-done').click(); await sleep(10);
+    // A refused change is reported, not dropped silently (a small grid whose onEdit refuses row B).
+    SRETGrid.close();
+    SRETGrid.open({title:'Refusal test',rowKey:'id',editable:true,host:$('#demo-board'),rows:[{id:'A',v:'x'},{id:'B',v:'x'},{id:'C',v:'x'}],
+      columns:[{key:'id',label:'ID',type:'text'},{key:'v',label:'Value',type:'text',editable:true}],
+      onEdit:function(k){ return k==='B'?false:undefined; }});
+    await sleep(20); eng().grid.setSelectedRows([0,1,2]); await sleep(10); btn('bulk-edit').click(); await sleep(20);
+    const vi=$('[data-sg=bulk-ctl-v] input'); vi.value='y'; vi.dispatchEvent(new Event('input',{bubbles:true})); btn('bulk-apply').click(); await sleep(20);
+    const rs=$$('[data-sg=bulk-summary] li').map(l=>l.textContent);
+    ok('bulk: a change the app refuses is listed and that row keeps its value', rs[0]==='Updated 2 rows (2 changes).' && rs[2]==='1 change was not accepted: B Value.' &&
+       eng().dataView.getItemById('B').v==='x' && eng().dataView.getItemById('A').v==='y', rs);
+    SRETGrid.close(); DEMO_OPEN('usertasks'); await sleep(20); }
+
+  // ============ Predecessor / successor token picker (Matt, 2026-09-30) ============
+  { const btn=n=>$('[data-sg='+n+']'), g=()=>eng().grid;
+    SRETGrid.close(); DEMO_OPEN('usertasks'); await sleep(20);
+    const row=0, it0=eng().dataView.getItem(row), pc=colIdx('pred');
+    const typeIn=async v=>{ const i=btn('refs-input'); i.value=v; i.dispatchEvent(new Event('input',{bubbles:true})); await sleep(10); };
+    const opts=()=>$$('[data-sg=refs-list] [data-sg-ref]').map(o=>o.getAttribute('data-sg-ref'));
+    const toks=()=>$$('[data-sg=refs] [data-sg-tok]').map(t=>t.getAttribute('data-sg-tok'));
+    g().setActiveCell(row,pc); await sleep(10); key(g().getActiveCellNode(),'Enter'); await sleep(20);
+    ok('refs: Enter on a Predecessor cell opens the picker over the cell with the current IDs as tokens, focus in the input',
+       !!btn('refs-pop') && document.activeElement===btn('refs-input') && toks().join()===String(it0.pred).toUpperCase() &&
+       btn('refs-input').getAttribute('role')==='combobox', toks());
+    await typeIn('s'); const sAll=opts();
+    ok('refs: a letter lists the IDs that start with it (S -> SNIP...), the first highlighted, the row itself and chosen IDs left out',
+       sAll.length>0 && sAll.every(id=>/^S/.test(id)) && !sAll.includes(it0.id) && !sAll.includes(String(it0.pred).toUpperCase()) &&
+       $('[data-sg=refs-list] .sg-refs-opt').classList.contains('is-hi') && btn('refs-input').getAttribute('aria-expanded')==='true', sAll.slice(0,4));
+    await typeIn('snip-11'); const s11=opts();
+    ok('refs: it narrows as the user keeps typing (SNIP-11...)', s11.length>0 && s11.length<sAll.length && s11.every(id=>id.indexOf('SNIP-11')===0), s11);
+    await typeIn('117'); const n117=opts();
+    ok('refs: digits match the ID number (117 -> SNIP-117), the exact one first', n117[0]==='SNIP-117' && n117.every(id=>/(^|\D)117\d*$/.test(id)), n117);
+    await typeIn('2'); const n2=opts();
+    ok('refs: digits match the start of the number, not anywhere in it (2 lists SNIP-2xx, not SNIP-112)', n2.length>0 && n2.every(id=>/^2/.test((/(\d+)\D*$/.exec(id)||[,''])[1].replace(/^0+/,''))||/^2/.test((/(\d+)\D*$/.exec(id)||[,''])[1])) && !n2.includes('SNIP-112'), n2.slice(0,6));
+    await typeIn('snip-1'); const ord=opts();
+    ok('refs: matches are in ID order, numbers compared as numbers', ord.length>3 && ord.every((id,i)=>i===0||id.localeCompare(ord[i-1],undefined,{numeric:true})>0), ord.slice(0,5));
+    await typeIn('1'); const n1=opts();
+    ok('refs: one digit lists every ID whose number starts with it; the list is capped with a keep-typing note', n1.length===50 && !btn('refs-more').hidden &&
+       /more\. Keep typing to narrow the list\.$/.test(btn('refs-more').textContent), [n1.length,btn('refs-more').textContent]);
+    // Names too (Matt, 2026-09-30): a word from an activity name finds it; IDs that match come first.
+    const W=s=>' '+String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+    const pickWord=()=>{ for(const r of F.sched){ for(const w of W(r.name).trim().split(' ')) if(w.length>=4&&/^[a-z]/.test(w)&&!F.sched.some(x=>x.id.toLowerCase().indexOf(w)===0)) return [w,r.id]; } return ['','']; };
+    const [word,wid]=pickWord(); await typeIn(word.slice(0,4)); const byName=opts(), names=Object.fromEntries(F.sched.concat(DEMO_STORE().usertasks).map(r=>[r.id,r.name]));
+    ok('refs: two or more letters also match the start of a word in the name ("'+word.slice(0,4)+'" finds '+wid+'); placeholder says so',
+       !!word && byName.includes(wid) && byName.every(id=>W(names[id]).indexOf(' '+word.slice(0,4))>=0) && btn('refs-input').placeholder==='Type an ID or name, e.g. S, 117 or pump', [word,byName.slice(0,4)]);
+    await typeIn('sn'); const mix=opts(), firstName=mix.findIndex(id=>id.indexOf('SN')!==0);
+    ok('refs: IDs that match come before names that match', mix.length>0 && (firstName<0 || mix.slice(firstName).every(id=>id.indexOf('SN')!==0)), mix.slice(0,3));
+    await typeIn('s'); const one=opts();
+    ok('refs: one letter matches IDs only (no name noise)', one.every(id=>/^S/.test(id)), one.filter(id=>!/^S/.test(id)).slice(0,3));
+    const dk=new KeyboardEvent('keydown',{key:'Delete',bubbles:true,cancelable:true}); btn('refs-input').dispatchEvent(dk); await sleep(10);
+    ok('refs: Delete clears what has been typed; the picker stays open', btn('refs-input').value==='' && dk.defaultPrevented && !!btn('refs-pop'));
+    await typeIn('SNIP-11');
+    const bk=new KeyboardEvent('keydown',{key:'Backspace',bubbles:true,cancelable:true}); btn('refs-input').dispatchEvent(bk); await sleep(10);
+    ok('refs: Backspace is left to the input (deletes a character), not taken by the grid', !bk.defaultPrevented && !!btn('refs-pop') && btn('refs-input').value==='SNIP-11');
+    key(btn('refs-input'),'ArrowDown'); await sleep(10);
+    const second=opts()[1]; ok('refs: ArrowDown moves the highlight', $$('[data-sg=refs-list] .sg-refs-opt')[1].classList.contains('is-hi'));
+    key(btn('refs-input'),'Enter'); await sleep(10);
+    ok('refs: Enter adds the highlighted ID as a token and clears the input; it drops out of the list', toks().includes(second) && btn('refs-input').value==='' &&
+       !!btn('refs-pop') && (await typeIn('SNIP-11'), !opts().includes(second)), toks());
+    await typeIn('');
+    await typeIn('117'); $('[data-sg=refs-list] [data-sg-ref="SNIP-117"]').click(); await sleep(10);
+    ok('refs: clicking a match adds it too', toks().includes('SNIP-117'));
+    const first=toks()[0]; $$('[data-sg=refs] [data-sg=tok-x]')[0].click(); await sleep(10);
+    ok('refs: the cross removes that one token only', !toks().includes(first) && toks().length===2 && toks().includes('SNIP-117'), toks());
+    const want=toks().join(', ');
+    key(btn('refs-input'),'Enter'); await sleep(20);
+    const e=lastLog('onEdit');
+    ok('refs: Enter on an empty input saves: onEdit gets the IDs as text; the picker closes; the cell shows them',
+       !btn('refs-pop') && !!e && e.args[0]===it0.id && e.args[1]==='pred' && e.args[2]===want && cellText(row,'pred')===want, [e&&e.args,cellText(row,'pred')]);
+    const n0=count('onEdit'); g().setActiveCell(1,pc); key(g().getActiveCellNode(),'Enter'); await sleep(20);
+    await typeIn('SNIP-10'); key(btn('refs-input'),'Enter'); await sleep(10); key(btn('refs-input'),'Escape'); await sleep(20);
+    ok('refs: Esc cancels: nothing saved, the picker closes', !btn('refs-pop') && count('onEdit')===n0);
+    g().setActiveCell(2,pc); key(g().getActiveCellNode(),'Enter'); await sleep(20);
+    const n1b=count('onEdit'); await typeIn('SNIP-10'); key(btn('refs-input'),'Enter'); await sleep(10);
+    btn('search').dispatchEvent(new MouseEvent('mousedown',{bubbles:true})); await sleep(20);
+    ok('refs: pressing outside the picker saves, as moving to another cell does', !btn('refs-pop') && count('onEdit')===n1b+1 && lastLog('onEdit').args[1]==='pred');
+    // An unknown ID keeps its token, marked.
+    eng().dataView.updateItem(eng().dataView.getItem(3).id,Object.assign({},eng().dataView.getItem(3),{pred:'NOPE-9: FS, SNIP-101'})); await sleep(10);
+    g().setActiveCell(3,pc); key(g().getActiveCellNode(),'Enter'); await sleep(20);
+    const tk=$$('[data-sg=refs] .sg-tok');
+    ok('refs: an ID that is not known keeps its token (with its relationship), marked as not found', tk.length===2 && tk[0].classList.contains('sg-tok--unknown') &&
+       tk[0].textContent.indexOf('NOPE-9: FS')===0 && !tk[1].classList.contains('sg-tok--unknown'), tk.map(x=>x.className));
+    key(btn('refs-input'),'Escape'); await sleep(10); }
+
   // ============ Views from the title (Matt, 2026-09-28) ============
-  { const btn=n=>$('[data-sg='+n+']'), launcher=$('#go-userms');
-    SRETGrid.close(); launcher.focus(); DEMO_OPEN('userms'); await sleep(20);
-    window.__nChanges=(()=>{ const C=window.SRETCompare, S=window.SRET_FIXTURES.snaps.map(x=>C.snapshot(x.meta,x.rows));
-      const cur=C.snapshot({id:'pu-0829',role:'project',dataDate:'2026-08-29',importedAt:'2026-08-31T08:00:00Z'},DEMO_STORE().sched);
-      return C.compare(C.defaultBasis(S.concat([cur]),cur),cur).rows.length; })();
-    const nUms=eng().dataView.getItems().length, nMs=F.sched.filter(r=>r.dur===0).length, nUpd=F.sched.filter(r=>!!(r.short||r.comment||(r.health!=null&&r.health!==''))).length;
+  { const btn=n=>$('[data-sg='+n+']'), launcher=$('#go-usertasks'), C=window.SRETCompare;
+    const labels=m=>$$('[data-sg='+m+'-menu] .sg-menu-item').map(b=>b.textContent.replace(/^✓/,''));
+    SRETGrid.close(); launcher.focus(); DEMO_OPEN('usertasks'); await sleep(20);
+    const nUpd=F.sched.filter(r=>!!(r.short||r.comment||(r.health!=null&&r.health!==''))).length, nUms=eng().dataView.getItems().length;
+    const nChg=C.compare(C.defaultBasis(DEMO_CMP,C.list(DEMO_CMP)[0]),C.list(DEMO_CMP)[0]).rows.length;
     const vb=btn('view'), fs=getComputedStyle(vb).fontSize, tfs=getComputedStyle($('.sg-title')).fontSize;
-    ok('views: the title is a menu button in the heading\'s own size, labelled User milestones', !!vb && vb.textContent==='User milestones' &&
+    ok('views: the title is a menu button in the heading\'s own size, labelled User tasks', !!vb && vb.textContent==='User tasks' &&
        vb.getAttribute('aria-haspopup')==='menu' && fs===tfs && fs==='20px' && vb.title==='Switch view', [vb&&vb.textContent,fs,tfs]);
     vb.click(); await sleep(10);
     const items=$$('[data-sg=view-menu] .sg-menu-item'), pop=btn('view-menu'), pr=pop.getBoundingClientRect();
     const hit=document.elementFromPoint(pr.left+pr.width/2,pr.top+pr.height/2);
-    ok('views: the menu lists User milestones, Schedule milestones, Schedule updates, All schedule activities with counts; the current one checked',
-       items.map(i=>i.textContent.replace(/^✓/,'')).join('|')==='User milestones ('+nUms+')|Schedule milestones ('+nMs+')|Schedule updates ('+nUpd+')|All schedule activities ('+F.sched.length+')|Schedule changes ('+window.__nChanges+')|Comments and markups ('+F.annot.length+')' &&
+    ok('views (Matt, 2026-09-28): User tasks, Schedule milestones, Schedule updates, Schedule changes, Comments and markups, with counts; the current one checked',
+       items.map(i=>i.textContent.replace(/^✓/,'')).join('|')==='User tasks ('+nUms+')|Schedule milestones ('+F.sched.length+')|Schedule updates ('+nUpd+')|Schedule changes ('+nChg+')|Comments and markups ('+DEMO_STORE().annot.length+')' &&
        items.every(i=>i.getAttribute('role')==='menuitemradio') && items[0].getAttribute('aria-checked')==='true' && items[1].getAttribute('aria-checked')==='false',
        items.map(i=>i.textContent));
     ok('views: the menu is not clipped by the heading (hit test lands inside it)', pr.height>40 && pop.contains(hit), [pr.height,hit&&hit.className]);
     btn('view-schedms').click(); await sleep(20);
     const focusAfter=document.activeElement===btn('view'), ms=eng().dataView.getItems();
-    ok('views: Schedule milestones shows only zero-duration schedule activities, read-only schedule columns kept', lastLog('onView').args[0]==='schedms' &&
-       btn('view').textContent==='Schedule milestones' && ms.length===nMs && nMs>0 && ms.every(r=>r.dur===0) && !(await tryOpenEditor(0,'finish')), [ms.length,nMs]);
+    ok('views: Schedule milestones shows every activity from the uploaded schedule; schedule columns read-only', lastLog('onView').args[0]==='schedms' &&
+       btn('view').textContent==='Schedule milestones' && ms.length===F.sched.length && !(await tryOpenEditor(0,'finish')), [ms.length]);
     ok('views: after a switch, focus is on the view button', focusAfter);
     await menuPick('view','view-schedupd');
     const up=eng().dataView.getItems();
     ok('views: Schedule updates shows only schedule rows with an annotation (short title, health or comment)', btn('view').textContent==='Schedule updates' &&
        up.length===nUpd && nUpd>0 && up.every(r=>!!(r.short||r.comment||(r.health!=null&&r.health!==''))), [up.length,nUpd]);
     const rk=eng().dataView.getItem(0).id; await editCell(0,'comment','Checked at the site walk');
-    await menuPick('view','view-sched'); const all=eng().dataView.getItemById(rk);
-    ok('views: an annotation edited in one view is there in another (All schedule activities)', !!all && all.comment==='Checked at the site walk' && visibleCount()===F.sched.length);
+    await menuPick('view','view-schedms'); const all=eng().dataView.getItemById(rk);
+    ok('views: an annotation edited in one view is there in another', !!all && all.comment==='Checked at the site walk');
     btn('back').click(); await sleep(20);
     ok('views: Back after switching views returns to where the grid was opened from', !SRETGrid.isOpen() && document.activeElement===launcher, document.activeElement&&document.activeElement.id);
     DEMO_OPEN('stress'); await sleep(20);
-    ok('views: a screen without views keeps a plain title', !btn('view') && $('.sg-title').textContent.indexOf('Schedule activities (2,000')===0);
-    SRETGrid.close(); DEMO_OPEN('userms'); await sleep(20); }
+    ok('views: a screen without views keeps a plain title', !btn('view') && $('.sg-title').textContent.indexOf('Schedule milestones (2,000')===0);
+    SRETGrid.close(); DEMO_OPEN('usertasks'); await sleep(20); }
 
-  // ============ Schedule changes (Matt, 2026-09-28) ============
-  { const btn=n=>$('[data-sg='+n+']'), launcher=$('#go-userms'), C=window.SRETCompare;
+  // ============ Schedule changes: three loaded per schedule plus the baseline (Matt, 2026-09-28) ============
+  { const btn=n=>$('[data-sg='+n+']'), launcher=$('#go-usertasks'), C=window.SRETCompare;
     const labels=m=>$$('[data-sg='+m+'-menu] .sg-menu-item').map(b=>b.textContent.replace(/^✓/,''));
-    SRETGrid.close(); launcher.focus(); DEMO_OPEN('userms'); await sleep(20);
+    // Designations (Matt, 2026-09-28): uploads are stored by reference; a table designates them.
+    const T=C.newStore(), R=(id,f)=>[{id:id,name:id,start:'2026-09-01',finish:f,float:1,actual:'No'}];
+    C.receive(T,{id:'bl',dataDate:'2026-08-01'},R('A','2026-09-05'),'baseline');
+    const r1=C.receive(T,{id:'u1',dataDate:'2026-08-08',file:'u1.xlsx',path:'P:\\x'},R('A','2026-09-06'));
+    const r2=C.receive(T,{id:'u2',dataDate:'2026-08-15'},R('A','2026-09-07'));
+    const r3=C.receive(T,{id:'u3',dataDate:'2026-08-22'},R('A','2026-09-09'));
+    const ref=()=>C.table(T).filter(r=>r.line==='project').map(r=>r.designation+'='+(r.upload||'-')).join('|');
+    ok('designations: importing a primary makes the old primary the secondary; the upload left with no designation is released on import (N=3)',
+       r1.released.length===0 && r2.released.length===0 && r3.released.map(u=>u.id).join()==='u1' && ref()==='primary=u3|secondary=u2|alternate=-' && !T.uploads.u1, ref());
+    const ra=C.receive(T,{id:'a1',dataDate:'2026-08-18'},R('A','2026-09-08'),'alternate');
+    const i1=C.receive(T,{id:'i1',dataDate:'2026-08-23',scope:'Commissioning'},R('A','2026-09-12'),'interim');
+    const i2=C.receive(T,{id:'i2',dataDate:'2026-08-24',scope:'Electrical'},R('A','2026-09-13'),'interim');
+    const i3=C.receive(T,{id:'i3',dataDate:'2026-08-25',scope:'commissioning'},R('A','2026-09-14'),'interim');
+    ok('designations: an interim is stored without a designation and never moves the primary; one kept per scope',
+       ref()==='primary=u3|secondary=u2|alternate=a1' && i1.released.length===0 && i2.released.length===0 && i3.released.map(u=>u.id).join()==='i1' &&
+       C.list(T).map(s=>s.id).join('|')==='u3|u2|a1|i3|i2|bl' && C.slotName(i2.snap)==='Project interim (Electrical)', C.list(T).map(s=>s.id));
+    const bad=C.designate(T,'i3','primary');
+    ok('designations: an interim cannot be the primary; the table is unchanged', !bad.ok && bad.error==='An interim update covers part of the schedule, so it cannot be the primary.' && ref()==='primary=u3|secondary=u2|alternate=a1');
+    const al=C.designate(T,'i3','alternate');
+    ok('designations: an interim can be the alternate; the previous alternate stays stored, not designated, until the next import',
+       al.ok && al.previous==='a1' && ref()==='primary=u3|secondary=u2|alternate=i3' && !!T.uploads.a1 && T.uploads.a1.slot==='none' &&
+       C.slotName(T.uploads.i3)==='Project alternate (interim: commissioning)', [ref(),T.uploads.a1&&T.uploads.a1.slot]);
+    const sp=C.designate(T,'u2','primary');
+    ok('designations: setting a source as primary is one table change: nothing is copied; a file holds one designation per schedule',
+       sp.ok && sp.previous==='u3' && ref()==='primary=u2|secondary=-|alternate=i3' && T.uploads.u2.rows.A.f==='2026-09-07' && T.uploads.u3.slot==='none', ref());
+    const r4=C.receive(T,{id:'u4',dataDate:'2026-08-29'},R('A','2026-09-15'));
+    ok('designations: the next import releases the not-designated uploads (u3, a1), keeps interims and the baseline',
+       r4.released.map(u=>u.id).sort().join()==='a1,u3' && ref()==='primary=u4|secondary=u2|alternate=i3' && !!T.uploads.i2 && !!T.uploads.bl, [r4.released.map(u=>u.id),ref()]);
+    const dl=C.defaultBasis(T,T.uploads.u4), ds=C.defaultBasis(T,T.uploads.u2), da=C.defaultBasis(T,T.uploads.i3), di=C.defaultBasis(T,T.uploads.i2);
+    ok('designations: defaults: primary vs secondary; secondary vs baseline; alternate and interim vs primary', dl.id==='u2' && ds.id==='bl' && da.id==='u4' && di.id==='u4');
+    const T2=C.newStore(); C.receive(T2,{id:'x',dataDate:'2026-08-08',file:'f.xlsx',path:'P:\\SRET',snapshotAt:'2026-08-09T10:00:00Z'},R('A','2026-09-06'));
+    ok('designations: each upload records snapshot date, data date, file name, location, coverage and designation', JSON.stringify(C.record(T2)[0])===
+       JSON.stringify({id:'x',slot:'Project primary',dataDate:'2026-08-08',snapshotAt:'2026-08-09T10:00:00Z',file:'f.xlsx',path:'P:\\SRET',activities:1,partial:false,designation:'primary'}), C.record(T2)[0]);
+    // Interim dates over the primary on the board (Matt, 2026-09-28: optional).
+    const nBand=F.sched.filter(r=>r.wbs==='Capital and Operating Cost Estimate').length, before=JSON.stringify(C.table(DEMO_CMP));
+    const ov=C.overlay(DEMO_CMP), ovm=C.overlay(DEMO_CMP,{movedOnly:true}), ovx=C.overlay(DEMO_CMP,{scopes:['Electrical']});
+    ok('overlay: one mark per activity the interim shares with the primary, with both dates and the slip; the interim-only activity is listed as unplaced',
+       ov.primary==='pu-0829' && ov.marks.length===nBand && ov.marks.every(m=>m.scope==='Cost estimate'&&m.upload==='pi-0902') &&
+       ov.unplaced.map(u=>u.id).join()==='SNIP-950' && ov.marks.filter(m=>m.moved).every(m=>m.finishSlip===5), [ov.marks.length,nBand,ov.unplaced]);
+    ok('overlay: "moved only" and a scope filter narrow it; it never changes the designations', ovm.marks.length===Math.ceil(nBand/3) &&
+       ovx.marks.length===0 && JSON.stringify(C.table(DEMO_CMP))===before);
+    ok('designations: the demo loaded 15-Aug, 22-Aug, then the live 29-Aug as primary; 15-Aug was released', lastLog('onScheduleLoaded')&&lastLog('onScheduleLoaded').args[1]==='released pu-0815');
+    SRETGrid.close(); launcher.focus(); DEMO_OPEN('usertasks'); await sleep(20);
     await menuPick('view','view-changes');
-    const rows=eng().dataView.getItems(), ids=rows.map(r=>r.id);
-    ok('changes: opens from the title; compares the current project update with the previous formal update by default',
-       btn('view').textContent==='Schedule changes' && btn('cmp-cur').textContent==='Schedule: Project update, DD 29-Aug-26' &&
-       btn('cmp-basis').textContent==='Compared with: Project update, DD 22-Aug-26 (default)', [btn('cmp-cur').textContent,btn('cmp-basis').textContent]);
+    const rows=eng().dataView.getItems();
+    ok('changes: opens from the title; Project schedule compared with Project schedule comparison by default',
+       btn('view').textContent==='Schedule changes' && btn('cmp-cur').textContent==='Schedule: Project primary, DD 29-Aug-26' &&
+       btn('cmp-basis').textContent==='Compared with: Project secondary, DD 22-Aug-26 (default)', [btn('cmp-cur').textContent,btn('cmp-basis').textContent]);
     const kinds=new Set(rows.map(r=>r.change));
     ok('changes: only changed activities, each classed Later, Earlier, Completed, New, Removed or Float only; biggest slip first',
        rows.length>0 && ['Later','Earlier','Completed','New','Removed','Float only'].every(k=>kinds.has(k)) && rows[0].finishSlip===7 &&
-       rows.every(r=>r.change!=='' ) && rows.filter(r=>r.change==='Later').every(r=>r.finishSlip>0||r.startSlip>0), Array.from(kinds));
+       rows.filter(r=>r.change==='Later').every(r=>r.finishSlip>0||r.startSlip>0), Array.from(kinds));
     const rem=rows.find(r=>r.id==='SNIP-901');
     ok('changes: an activity removed since the basis is listed with its old dates and no new ones', !!rem && rem.change==='Removed' && rem.finishWas==='2026-09-18' && rem.finishNow==null);
     const ci=colIdx('change'), later=rows.findIndex(r=>r.change==='Later'), early=rows.findIndex(r=>r.change==='Earlier');
     const toneAt=async r=>{ eng().grid.scrollRowIntoView(r); await sleep(20); const n=eng().grid.getCellNode(r,ci); return n?n.className:null; };
     const tl=await toneAt(later), te=await toneAt(early); eng().grid.scrollRowIntoView(0); await sleep(10);
     ok('changes: Change is shaded (Later critical, Earlier on track)', /sg-tone-crit/.test(tl) && /sg-tone-track/.test(te), [tl,te]);
-    ok('changes: the note summarises the counts; read-only', /^\d+ later, \d+ earlier, \d+ completed, \d+ new, 2 removed, \d+ float only; \d+ unchanged\. Calendar days; positive is later\.$/.test(btn('note').textContent) &&
+    ok('changes: the note summarises the counts in calendar days; read-only', /^\d+ later, \d+ earlier, \d+ completed, \d+ new, 2 removed, \d+ float only; \d+ unchanged\. Calendar days; positive is later\.$/.test(btn('note').textContent) &&
        !(await tryOpenEditor(0,'name')), btn('note').textContent);
-    await menuItem('cmp-basis','cmp-basis-iu-0826'); const bl=labels('cmp-basis'); await menuClose('cmp-basis');
-    ok('changes: Compared with offers the earlier project snapshots newest first, the baseline last, the default marked; nothing from the vendor',
-       bl.join('|')==='Interim update, DD 26-Aug-26|Project update, DD 22-Aug-26 (default)|Baseline, DD 15-Aug-26', bl);
-    await menuPick('cmp-basis','cmp-basis-iu-0826');
-    const r2=eng().dataView.getItems();
-    ok('changes: comparing with the interim update re-runs it (moves since then are 3 days)', btn('cmp-basis').textContent==='Compared with: Interim update, DD 26-Aug-26' &&
-       r2.filter(r=>r.change==='Later').every(r=>r.finishSlip===3) && r2.some(r=>r.change==='Later'), r2.slice(0,3));
+    await menuItem('cmp-cur','cmp-cur-pu-0829'); const cl=labels('cmp-cur'); await menuClose('cmp-cur');
+    ok('changes: Schedule offers the three project slots, then each external schedule\'s slots; the baseline is only a basis',
+       cl.join('|')==='Project primary, DD 29-Aug-26|Project secondary, DD 22-Aug-26|Project alternate, DD 26-Aug-26|Project interim (Cost estimate), DD 2-Sep-26|Ocean Steel fabrication primary, DD 27-Aug-26|Ocean Steel fabrication secondary, DD 20-Aug-26', cl);
+    await menuItem('cmp-basis','cmp-basis-pa-0826'); const bl=labels('cmp-basis'); await menuClose('cmp-basis');
+    ok('changes: Compared with offers the comparison (default), the alternate, the interim and the embedded baseline; nothing from the vendor',
+       bl.join('|')==='Project secondary, DD 22-Aug-26 (default)|Project alternate, DD 26-Aug-26|Project interim (Cost estimate), DD 2-Sep-26|Project baseline, DD 15-Aug-26', bl);
+    await menuPick('cmp-basis','cmp-basis-pa-0826');
+    const ra3=eng().dataView.getItems();
+    ok('changes: comparing with the alternate re-runs it (moves since then are 3 days)', btn('cmp-basis').textContent==='Compared with: Project alternate, DD 26-Aug-26' &&
+       ra3.filter(r=>r.change==='Later').every(r=>r.finishSlip===3) && ra3.some(r=>r.change==='Later'), ra3.slice(0,3));
+    // Interim updates (Matt, 2026-09-28): part of the schedule, never the full update.
+    const nIn=F.sched.filter(r=>r.wbs==='Capital and Operating Cost Estimate').length;
+    await menuPick('cmp-cur','cmp-cur-pi-0902');
+    const ir=eng().dataView.getItems();
+    ok('interim: compared with the Project schedule by default; only its own activities; nothing outside it shown as Removed',
+       btn('cmp-basis').textContent==='Compared with: Project primary, DD 29-Aug-26 (default)' && !ir.some(r=>r.change==='Removed') &&
+       ir.filter(r=>r.change==='Later').length===Math.ceil(nIn/3) && ir.filter(r=>r.change==='Later').every(r=>r.finishSlip===5) &&
+       ir.some(r=>r.id==='SNIP-950'&&r.change==='New') && ir.length===Math.ceil(nIn/3)+1, ir.map(r=>[r.id,r.change]));
+    ok('interim: the note counts what is outside the interim', new RegExp(' '+(F.sched.length-nIn)+' outside the interim\\. ').test(btn('note').textContent), btn('note').textContent);
+    await menuPick('cmp-cur','cmp-cur-pu-0829'); await menuPick('cmp-basis','cmp-basis-pi-0902');
+    const lr2=eng().dataView.getItems();
+    ok('interim as the basis for the full update: activities outside it are not New; the interim\'s own new activity is "Only in interim", not Removed',
+       !lr2.some(r=>r.change==='New') && !lr2.some(r=>r.change==='Removed') && lr2.find(r=>r.id==='SNIP-950').change==='Only in interim' &&
+       lr2.filter(r=>r.change==='Earlier').length===Math.ceil(nIn/3) && lr2.length===Math.ceil(nIn/3)+1, lr2.map(r=>[r.id,r.change]));
+    await menuPick('cmp-cur','cmp-cur-pa-0826');
+    ok('changes: the alternate as the schedule defaults to the latest', btn('cmp-basis').textContent==='Compared with: Project primary, DD 29-Aug-26 (default)');
     await menuPick('cmp-cur','cmp-cur-os-0827');
     const v=eng().dataView.getItems(); await menuItem('cmp-basis','cmp-basis-os-0820'); const vb=labels('cmp-basis'); await menuClose('cmp-basis');
-    ok('changes: a vendor schedule is compared only with its own earlier import, never with the project schedule',
-       btn('cmp-cur').textContent==='Schedule: Ocean Steel fabrication, DD 27-Aug-26' && vb.join('|')==='Ocean Steel fabrication, DD 20-Aug-26 (default)' &&
+    ok('changes: a vendor schedule is compared only with its own loads, never with the project schedule or baseline',
+       btn('cmp-cur').textContent==='Schedule: Ocean Steel fabrication primary, DD 27-Aug-26' && vb.join('|')==='Ocean Steel fabrication secondary, DD 20-Aug-26 (default)' &&
        v.length>0 && v.every(r=>/^OS-/.test(r.id)) && v.some(r=>r.finishSlip===9) && v.some(r=>r.change==='Completed'), [vb,v.length]);
     await menuPick('cmp-cur','cmp-cur-os-0820');
-    ok('changes: the first import of a schedule says there is nothing to compare it with yet', visibleCount()===0 && btn('cmp-basis').disabled &&
-       btn('note').textContent==='This is the first import of this schedule, so there is nothing to compare it with yet.');
-    // An interim update defaults to the latest formal project update before it.
-    const S=window.SRET_FIXTURES.snaps.map(x=>C.snapshot(x.meta,x.rows)), it=S.find(s=>s.id==='iu-0826');
-    ok('changes: an interim update defaults to the latest formal project update, not to another interim', C.label(C.defaultBasis(S,it))==='Project update, DD 22-Aug-26');
+    await menuItem('cmp-basis','cmp-basis-os-0827'); const vb2=labels('cmp-basis'); await menuClose('cmp-basis');
+    ok('changes: a vendor comparison slot with nothing older says so, and offers its later load to pick', visibleCount()===0 &&
+       btn('note').textContent==='Nothing older is loaded for this schedule. Choose a schedule under Compared with.' &&
+       vb2.join('|')==='Ocean Steel fabrication primary, DD 27-Aug-26' && btn('cmp-basis').textContent==='Compared with: None', [btn('note').textContent,vb2]);
+    await menuPick('cmp-cur','cmp-cur-pu-0829');
+    await menuPick('tools','loaded');
+    const refRows=()=>$$('[data-sg=ref-table] tbody tr').map(tr=>Array.from(tr.children).map(td=>td.textContent));
+    const lr=$$('[data-sg=loaded-table] tbody tr').map(tr=>Array.from(tr.children).map(td=>td.textContent)), lh=$$('[data-sg=loaded-table] th').map(t=>t.textContent);
+    ok('Loaded schedules: the reference table designates uploads: Primary, Secondary, Alternate per schedule',
+       JSON.stringify(refRows().map(r=>r.slice(0,2)))===JSON.stringify([['Project','Primary'],['Project','Secondary'],['Project','Alternate'],
+         ['Ocean Steel fabrication','Primary'],['Ocean Steel fabrication','Secondary'],['Ocean Steel fabrication','Alternate']]) &&
+       refRows()[0][2]==='103787-13_PFS_Weekly_Update_DD-2026-08-29.xlsx, DD 29-Aug-26' && refRows()[5][2]==='None', refRows());
+    ok('Loaded schedules: each stored upload with coverage, data date, snapshot taken, file, location and its designation (the released one gone)',
+       lh.join('|')==='Upload|Covers|Data date|Snapshot taken|File|Location|Activities|Set as' && lr.length===7 &&
+       lr[0][0]==='pu-0829' && lr[0][1]==='Full schedule' && lr[0][2]==='29-Aug-26' && lr[0][3]==='31-Aug-26 08:00' && lr[0][4]==='103787-13_PFS_Weekly_Update_DD-2026-08-29.xlsx' &&
+       lr[0][5]==='P:\\103787 SRET\\05 Controls\\Schedule\\Weekly updates' && lr[3][0]==='pi-0902' && lr[3][1]==='Part: Cost estimate' &&
+       btn('set-as-bl').disabled && btn('set-as-pi-0902').querySelector('option[value=primary]').disabled && !lr.some(r=>r[0]==='pu-0815'), lr.map(r=>r.slice(0,2)));
+    const sa=btn('set-as-pi-0902'); sa.value='alternate'; sa.dispatchEvent(new Event('change')); await sleep(10);
+    ok('Set as: the interim becomes the Alternate; the table row points at it; the old alternate stays stored, not designated',
+       refRows()[2][2]==='PFS interim, cost estimate only DD-2026-09-02.xlsx, DD 2-Sep-26' && btn('set-as-pa-0826').value==='' && !!DEMO_CMP.uploads['pa-0826'], refRows()[2]);
+    const spx=btn('set-as-pi-0902'); spx.value='primary'; spx.dispatchEvent(new Event('change')); await sleep(10);
+    ok('Set as: an interim is refused as Primary with the reason; nothing changes', !btn('designate-error').hidden &&
+       btn('designate-error').textContent==='An interim update covers part of the schedule, so it cannot be the primary.' && refRows()[0][2].indexOf('DD-2026-08-29')>0);
+    key(btn('dialog'),'Escape'); await sleep(40);
+    await menuItem('cmp-basis','cmp-basis-pu-0822'); const bl2=labels('cmp-basis'); await menuClose('cmp-basis');
+    ok('Set as: Schedule changes reads the new designations when the dialog closes',
+       bl2.join('|')==='Project secondary, DD 22-Aug-26 (default)|Project alternate (interim: Cost estimate), DD 2-Sep-26|Project baseline, DD 15-Aug-26', bl2);
+    C.designate(DEMO_CMP,'pa-0826','alternate');   // restore for later checks
     await menuPick('view','view-annot');
     ok('views: Comments and markups is in the same menu', btn('view').textContent==='Comments and markups: W/E 27-Sep-26' && eng().dataView.getItems().length===DEMO_STORE().annot.length, btn('view').textContent);
     btn('back').click(); await sleep(20);
     ok('changes: Back returns to where the grid was opened from', !SRETGrid.isOpen() && document.activeElement===launcher);
-    DEMO_OPEN('userms'); await sleep(20); }
+    DEMO_OPEN('usertasks'); await sleep(20); }
 
   // ============ Schedule activities + export ============
   { DEMO_OPEN('sched'); await sleep(20);
-    ok('sched: title and row count', $('.sg-title').textContent==='Schedule activities' && visibleCount()===F.sched.length && F.sched.length>100,
+    ok('sched: title and row count', $('.sg-title').textContent==='Schedule milestones' && visibleCount()===F.sched.length && F.sched.length>100,
        [visibleCount(),F.sched.length]);
+    { const btn=n=>$('[data-sg='+n+']'), mi=eng().grid.getColumns().findIndex(c=>c.id==='marker'), k=eng().dataView.getItem(0).id, cell=eng().grid.getCellNode(0,mi);
+      const u=cell&&cell.querySelector('[data-sg-sym] use');
+      cell.querySelector('[data-sg-sym]').dispatchEvent(new MouseEvent('click',{bubbles:true})); await sleep(10);
+      const pk=btn('icon-picker'); if(pk) $('[data-sg-icon=lock]',pk).click(); await sleep(20);
+      const e=lastLog('onEdit');
+      ok('icon override on schedule activities too (Matt, 2026-09-30: available to all): blank draws the default mark; picking one goes through onEdit',
+         mi>0 && !!u && u.getAttribute('href')==='#ico-diamond' && !!pk && e.args.join()===k+',marker,lock' &&
+         eng().grid.getCellNode(0,mi).querySelector('use').getAttribute('href')==='#ico-lock', [mi,e&&e.args]); }
     ok('sched: panel collapsed on open; a plain Export button (no Add row)', $('[data-sg=panel]').hidden && !!$('[data-sg=export]') && !$('[data-sg=add-more]'));
     ok('sched: no Add, no Delete (read-only schedule)', !$('[data-sg=add]') && !(await menuItem('tools','delete'))); await menuClose('tools');
     const res=[]; for(const k of ['id','name','start','finish','float']) res.push(await tryOpenEditor(1,k));
@@ -977,7 +1368,7 @@ try{
     // the temp list is shared across screens: pick here, see it on User milestones
     { const L=window.DEMO_LISTS, k=[0,1].map(r=>eng().dataView.getItem(r).id);
       eng().grid.setSelectedRows([0,1]); await sleep(10); $('[data-sg=temp-add]').click(); await sleep(20);
-      eng().grid.setSelectedRows([]); SRETGrid.close(); DEMO_OPEN('userms'); await sleep(20);
+      eng().grid.setSelectedRows([]); SRETGrid.close(); DEMO_OPEN('usertasks'); await sleep(20);
       ok('temp list carries across screens (2 schedule rows picked, then seen on User milestones)',
          $('[data-sg=temp-count]').textContent==='2' && k.every(x=>SRETCollections.inTemp(L,'activity:'+x)),
          $('[data-sg=temp-count]').textContent);
@@ -993,7 +1384,7 @@ try{
     const firstId=eng().dataView.getItem(0).id;
     ok('export: row order follows the sort', aoa[1][ii]===firstId, [aoa[1]&&aoa[1][ii],firstId]);
     ok('export: dates are Date cells', aoa.slice(1).some(r=>r[fi] instanceof Date));
-    ok('export: file name', window.__xlsx.name==='Schedule activities.xlsx', window.__xlsx.name);
+    ok('export: file name', window.__xlsx.name==='Schedule milestones.xlsx', window.__xlsx.name);
     SRETGrid.close(); }
 
   // ============ 2,000 row stress ============
@@ -1037,6 +1428,10 @@ try{
     const msgs=[M.describe(mv),M.describe(u),M.describe(M.tempAdd(st,['q'])),M.describe(M.tempRemove(st,['q'])),M.describe(M.tempClear(st))];
     ok('module: user-facing sentences have no em or en dashes', msgs.every(m=>!/[–—]/.test(m)), msgs); }
 }catch(err){ ok('probe ran without throwing', false, String(err&&err.stack||err)); }
+const net=performance.getEntriesByType('resource').map(e=>e.name).filter(n=>!/^(file|data|blob):/.test(n));
+ok('no network requests: nothing fetched while the whole probe ran (TD-216; the embedded SheetJS, when vendored, is used as is)',
+   !net.length && !$$('script[src]').length, net.concat($$('script[src]').map(s=>s.src)));
+R.notes.sheetjs=window.__realXLSX&&window.__realXLSX.version?'embedded '+window.__realXLSX.version:'not vendored (stubbed)';
 ok('no uncaught page errors', window.__errs.length===0, window.__errs);
 const pre=document.createElement('pre'); pre.id='grid-view-out'; pre.textContent=JSON.stringify(R); document.body.appendChild(pre);
 })();
@@ -1046,7 +1441,10 @@ const pre=document.createElement('pre'); pre.id='grid-view-out'; pre.textContent
 
 def probe(html_text: str) -> dict:
     js = HARNESS.replace("__OPEN__", str(OPEN_BUDGET_MS)).replace("__FILTER__", str(FILTER_BUDGET_MS))
-    html = html_text.replace("<head>", "<head>" + STUB, 1).replace("</body>", TIMING + js + "</body>")
+    # The last </body>: embedded libraries (SheetJS) carry the string too.
+    html = html_text.replace("<head>", "<head>" + STUB, 1)
+    i = html.rindex("</body>")
+    html = html[:i] + TIMING + js + html[i:]
     with tempfile.TemporaryDirectory() as td:
         f = pathlib.Path(td) / "grid_view_probe.html"
         f.write_text(html, encoding="utf-8")
@@ -1074,6 +1472,8 @@ def subprocess_checks(html_path: pathlib.Path) -> list:
     for label, cmd in [
         ("colour_audit.py --strict on demo.html", [sys.executable, str(ROOT / "tools" / "colour_audit.py"), str(html_path), "--strict"]),
         ("palette_swap_check.py on demo.html", [sys.executable, str(ROOT / "tools" / "palette_swap_check.py"), str(html_path)]),
+        ("grid_view_responsive.py on demo.html (390/768/1440, mouse and touch)", [sys.executable, str(ROOT / "tools" / "grid_view_responsive.py"), "--html", str(html_path)]),
+        ("grid_view_modular.py (core alone, feature subsets, setup)", [sys.executable, str(ROOT / "tools" / "grid_view_modular.py")]),
     ]:
         p = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
         tail = [ln for ln in p.stdout.strip().splitlines() if ln.strip()][-1:] or [p.stderr.strip()[-200:]]

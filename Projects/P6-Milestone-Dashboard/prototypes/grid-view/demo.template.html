@@ -9,7 +9,9 @@
 <style>
 /*@TOKENS@*/
 /*@GRID_CSS@*/
+/*@GRID_FEATURES_CSS@*/
 /*@USER_CSS@*/
+/*@ICON_CSS@*/
 /* ---- demo page only: stands in for the app header and board ---- */
 body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--color-bg-panel);color:var(--color-text-primary);
   height:100vh;display:flex;flex-direction:column}
@@ -30,6 +32,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
 .demo-ms{display:grid;grid-template-columns:minmax(0,140px) minmax(0,1fr);gap:var(--space-2) var(--group-gap);margin:0}
 .demo-ms dt{font-weight:600;color:var(--color-text-muted)}
 .demo-ms dd{margin:0}
+.demo-h{margin:var(--group-gap) 0 var(--ctl-gap);font-size:var(--text-lg);font-weight:600}
 .demo-log{font-family:var(--font-mono);font-size:var(--text-sm);background:var(--color-bg-elevated);border:1px solid var(--color-border-panel);
   border-radius:var(--radius-md);padding:var(--space-4);max-height:40vh;overflow:auto;white-space:pre-wrap;color:var(--color-text-small)}
 </style>
@@ -38,17 +41,18 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
 </style>
 </head>
 <body>
+<!--@ICON_DEFS@-->
 <header class="demo-hd"><b>SRET grid view prototype</b>
   <span class="demo-hd-r"><span class="demo-user" id="demo-user" data-sg="demo-user"></span>
   <button type="button" id="demo-settings" data-sg="demo-settings">Data settings</button>
   <button type="button" id="demo-theme" aria-pressed="false">Dark theme</button></span></header>
 <main class="demo-board" id="demo-board">
   <h1>Grid view (D-09)</h1>
-  <p>Stand-in for the board area. In the app each button below is an entry point: Workspace, User milestones, View items; Workspace, Comments and markups, a collection row; Data and view, Schedule activities.</p>
+  <p>Stand-in for the board area. In the app each button below is an entry point: Workspace, User tasks, View items; Workspace, Comments and markups, a collection row; Data and view, Schedule activities.</p>
   <div class="demo-launch">
-    <button type="button" class="sg-btn" id="go-userms">User milestones</button>
+    <button type="button" class="sg-btn" id="go-usertasks">User tasks</button>
     <button type="button" class="sg-btn" id="go-annot">Comments and markups: W/E 27-Sep-26</button>
-    <button type="button" class="sg-btn" id="go-sched">Schedule activities</button>
+    <button type="button" class="sg-btn" id="go-sched">Schedule milestones</button>
     <button type="button" class="sg-btn" id="go-stress">Stress test: 2,000 rows</button>
   </div>
   <section class="demo-settings" id="demo-settings-box" aria-label="Data settings (stand-in)"></section>
@@ -57,12 +61,18 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
 <script id="vendor-slickgrid">
 /*@VENDOR_JS@*/
 </script>
+<script id="vendor-sheetjs">
+/*@SHEETJS_JS@*/
+</script>
 <script id="app-script">
 /*@GRID_JS@*/
+/*@GRID_FEATURES_JS@*/
 /*@COLLECTIONS_JS@*/
 /*@DATES_JS@*/
 /*@USER_JS@*/
 /*@COMPARE_JS@*/
+/*@IDS_JS@*/
+/*@MIGRATE_JS@*/
 /*@MSIMPORT_JS@*/
 /*@FIXTURES@*/
 (function(){
@@ -75,18 +85,15 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
     logEl.textContent=LOG.map(function(e){ return e.kind+' '+JSON.stringify(e.args); }).join('\n');
   }
   // The demo's own stores stand in for USER_MILESTONES and the annotation stores.
-  var store={userms:F.userms.slice(),annot:F.annot.slice(),sched:F.sched.slice()};
+  var store={usertasks:F.usertasks.slice(),annot:F.annot.slice(),sched:F.sched.slice()};
   window.DEMO_STORE=function(){ return store; };   // test hook: the demo's app-side stores
-  // Mirror of the app's ensureXLSX(): SheetJS from the same CDN, on demand.
+  // Every user task carries a GUID (Matt, 2026-09-29): tasks loaded without one get it now.
+  SRETIds.ensureGuids(store.usertasks);
+  // The app's ensureXLSX() after TD-216: SheetJS is embedded above
+  // (vendor/sheetjs/, mini build), so nothing is ever fetched.
   function ensureXLSX(){
-    return new Promise(function(res,rej){
-      if(typeof XLSX!=='undefined') return res();
-      var s=document.createElement('script');
-      s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
-      s.onload=function(){ res(); };
-      s.onerror=function(){ rej(new Error('Excel export needs the SheetJS library, which is fetched from a CDN the first time it is used, and that request was blocked or failed.')); };
-      document.head.appendChild(s);
-    });
+    return window.XLSX&&window.XLSX.utils?Promise.resolve(window.XLSX)
+      :Promise.reject(new Error('The Excel library is missing from this file, so Excel files cannot be read or written.'));
   }
   function patch(list,keyName,key,field,value){
     for(var i=0;i<list.length;i++) if(list[i][keyName]===key){ list[i]=Object.assign({},list[i]); list[i][field]=value; return; }
@@ -100,7 +107,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
   SRETCollections.create(lstore,'Owner review items','2026-09-27T00:00:00Z');
   // Names for the temp list panel, from any screen's data (the app would read its stores).
   var LABELS={};
-  F.sched.concat(F.userms).forEach(function(r){ LABELS['activity:'+r.id]=r.id+'  '+r.name; });
+  F.sched.concat(F.usertasks).forEach(function(r){ LABELS['activity:'+r.id]=r.id+'  '+r.name; });
   F.annot.forEach(function(r){ LABELS['annot:'+r.aid]=r.aid+'  '+r.kind+' on '+r.target; });
   function labelOf(ref){ return LABELS[ref]||(/^activity:(.*)-\d\d$/.test(ref)?LABELS[ref.replace(/-\d\d$/,'')]+' (stress copy)':''); }
   function listsOpt(refOf){ return {store:lstore,refOf:refOf,labelOf:labelOf,onChange:function(r){ log('onListsChange',[r.kind||'create']); }}; }
@@ -108,10 +115,12 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
   // Next user milestone ID: one above the highest USR number in the store,
   // the rule the app's nextUserMsId() follows, shared by Add row and import.
   // taken: IDs already handed out in the same import, not yet in the store.
-  function nextUsr(taken){
-    var max=0; store.userms.map(function(r){ return r.id; }).concat(taken||[]).forEach(function(id){ var m=/^USR-(\d+)$/.exec(id); if(m) max=Math.max(max,+m[1]); });
-    return 'USR-'+String(max+1).padStart(3,'0');
-  }
+  // New user task IDs: the user's prefix + number (Matt, 2026-09-29). Default
+  // prefix U + initials (UDU for Demo user); the user can set e.g. A100.
+  function taskIds(){ return store.usertasks.map(function(r){ return r.id; }); }
+  function nextUsr(taken){ return SRETIds.next(taskIds(),USERS.idPrefix(),taken); }
+  var PREFIX_OPTS={nextId:function(p){ return SRETIds.next(taskIds(),p); },scheduleIds:function(){ return F.sched.map(function(r){ return r.id; }); }};
+  function openPrefix(){ SRETGrid.dialog('Task ID prefix',function(body){ return SRETUser.buildPrefixField(body,USERS,Object.assign({heading:false},PREFIX_OPTS)).destroy; }); }
   var TODAY=new Date().toISOString().slice(0,10);
   // Who is using the file (SRETUser). The fixture file was last saved by
   // someone else, as when a published file is shared and opened elsewhere.
@@ -122,7 +131,7 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
   USERS.onChange(showUser);
   // Stand-in for Data and view > Data settings: the name field, the save history and a Save.
   function settingsInto(body){
-    var f=SRETUser.buildField(body,USERS);
+    var f=SRETUser.buildField(body,USERS,{prefix:PREFIX_OPTS});
     var save=document.createElement('button'); save.type='button'; save.className='sg-btn'; save.textContent='Save file (demo)';
     save.setAttribute('data-sg','demo-save'); save.addEventListener('click',function(){ var e=USERS.recordSave({version:'grid demo'}); log('onSave',[e.by]); });
     body.appendChild(save);
@@ -136,10 +145,10 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
   // Stand-in for the app's milestone dialog (openMsDialog), opened by double-clicking an ID.
   function openMilestone(id){
     log('onOpenItem',[id]);
-    var r=store.userms.filter(function(x){ return x.id===id; })[0]; if(!r) return;
-    SRETGrid.dialog('Milestone '+id,function(body){
+    var r=store.usertasks.filter(function(x){ return x.id===id; })[0]; if(!r) return;
+    SRETGrid.dialog('Task '+id,function(body){
       var dl=document.createElement('dl'); dl.className='demo-ms'; dl.setAttribute('data-sg','demo-ms-form');
-      F.cols.userms.forEach(function(c){
+      F.cols.usertasks.forEach(function(c){
         var dt=document.createElement('dt'); dt.textContent=c.label;
         var dd=document.createElement('dd'); var v=r[c.key];
         dd.textContent=v==null||v===''?'Not set':(c.options?((c.options.filter(function(o){ return String(o.value!=null?o.value:o)===String(v); })[0]||{}).label||v):v);
@@ -151,103 +160,159 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
     });
   }
   var back=function(){ log('onBack',[]); };
+  // Deployment setup (docs/grid-view-integration.md section 6): once, before
+  // any screen opens. What the SRET dashboard needs on every screen; each
+  // screen below passes only its own data and callbacks.
+  window.DEMO_SETUP=SRETGrid.setup({
+    features:['refs','marks','bulk-edit','lists','xlsx','import'],
+    defaults:{host:host,ensureXLSX:ensureXLSX,onBack:back,pin:['id','name'],pinPhone:['id'],symbolClass:'ms-icon filled'},
+    text:{readOnlyCell:'This value comes from the schedule and cannot be edited here.',
+          noun:['milestone','milestones'],
+          refsPlaceholder:'Type an ID or name, e.g. S, 117 or pump',
+          refsUnknown:'not found in the schedule or the user tasks'}
+  });
   // Views reached from the title (Matt, 2026-09-28). Schedule milestones are
   // zero-duration activities; Schedule updates are schedule rows carrying an
   // annotation (short title, health or comment).
-  function isSchedMs(r){ return r.dur===0; }
   function hasAnnot(r){ return !!(r.short||r.comment||(r.health!=null&&r.health!=='')); }
   // Schedule changes: earlier imports kept as snapshots (SRETCompare). The
   // current project update is the live schedule store.
   var C=window.SRETCompare;
-  function snaps(){
-    var cur=C.snapshot({id:'pu-0829',role:'project',name:'Project schedule',dataDate:'2026-08-29',file:'103787-13_PFS_Weekly_Update_DD-2026-08-29.xlsx',importedAt:'2026-08-31T08:00:00Z'},store.sched);
-    return F.snaps.map(function(x){ return C.snapshot(x.meta,x.rows); }).concat([cur]);
-  }
-  var CMP={cur:'pu-0829',basis:null};   // basis null = the default for the chosen schedule
+  // Loaded schedules: three per schedule line plus the embedded baseline.
+  // The live 29-Aug update is imported last as the latest.
+  var CST=window.DEMO_CMP=C.newStore();
+  F.snaps.forEach(function(x){ C.receive(CST,x.meta,x.rows,x.slot); });
+  var LOADED=C.receive(CST,{id:'pu-0829',role:'project',dataDate:'2026-08-29',file:'103787-13_PFS_Weekly_Update_DD-2026-08-29.xlsx',
+    path:'P:\\103787 SRET\\05 Controls\\Schedule\\Weekly updates',snapshotAt:'2026-08-31T08:00:00Z'},store.sched,'primary');
+  log('onScheduleLoaded',['pu-0829','released '+(LOADED.released.map(function(x){ return x.id; }).join(',')||'none')]);
+  var CMP=window.DEMO_CMP_STATE={cur:'pu-0829',basis:null};   // basis null = the default for the chosen schedule
   function changesData(){
-    var all=snaps(), cur=all.filter(function(s){ return s.id===CMP.cur; })[0];
-    var bs=C.bases(all,cur), basis=CMP.basis?(bs.filter(function(b){ return b.snap.id===CMP.basis; })[0]||{}).snap:C.defaultBasis(all,cur);
+    var all=C.list(CST), cur=all.filter(function(s){ return s.id===CMP.cur; })[0];
+    var bs=C.bases(CST,cur), basis=CMP.basis?(bs.filter(function(b){ return b.snap.id===CMP.basis; })[0]||{}).snap:C.defaultBasis(CST,cur);
     return {all:all,cur:cur,bases:bs,basis:basis,result:C.compare(basis,cur)};
   }
   var CHANGE_COLS=[{key:'id',label:'Activity ID',type:'text',width:110},{key:'name',label:'Name',type:'text',width:240},
-    {key:'change',label:'Change',type:'text',width:100,tones:{Later:'crit',Earlier:'track',Completed:'done',New:'future',Removed:'risk','Float only':'future'}},
+    {key:'change',label:'Change',type:'text',width:100,tones:{Later:'crit',Earlier:'track',Completed:'done',New:'future',Removed:'risk','Float only':'future','Only in interim':'future'}},
     {key:'finishWas',label:'Finish was',type:'date',width:96},{key:'finishNow',label:'Finish now',type:'date',width:96},
     {key:'finishSlip',label:'Finish moved (days)',type:'number',width:110},
     {key:'startWas',label:'Start was',type:'date',width:96},{key:'startNow',label:'Start now',type:'date',width:96},
     {key:'startSlip',label:'Start moved (days)',type:'number',width:110},
     {key:'floatWas',label:'Float was',type:'number',width:80},{key:'floatNow',label:'Float now',type:'number',width:80},
     {key:'floatChange',label:'Float change',type:'number',width:90}];
+  var MONS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function dmy(iso){ if(!iso) return ''; var p=iso.slice(0,10).split('-'); return (+p[2])+'-'+MONS[+p[1]-1]+'-'+p[0].slice(2); }
+  // Stored uploads and the reference table that designates them (Matt,
+  // 2026-09-28: "set this source as the primary" is one row in a table).
+  var DES_LABEL={primary:'Primary',secondary:'Secondary',alternate:'Alternate',interim:'Not designated (interim)',none:'Not designated',baseline:'Baseline (embedded)'};
+  function openLoaded(){
+    SRETGrid.dialog('Loaded schedules',function(body){
+      function el(tag,cls,text){ var e=document.createElement(tag); if(cls) e.className=cls; if(text!=null) e.textContent=text; return e; }
+      function render(){
+        body.innerHTML='';
+        var h1=el('h4','demo-h','Designations'); body.appendChild(h1);
+        var rt=el('table','sg-itable'); rt.setAttribute('data-sg','ref-table');
+        rt.innerHTML='<thead><tr><th>Schedule</th><th>Designation</th><th>Upload</th></tr></thead>';
+        var rb=el('tbody');
+        C.table(CST).forEach(function(r){ var tr=el('tr'), up=r.upload&&CST.uploads[r.upload];
+          [r.lineName,DES_LABEL[r.designation],up?up.file+', DD '+dmy(up.dataDate):'None'].forEach(function(v){ tr.appendChild(el('td',null,v)); }); rb.appendChild(tr); });
+        rt.appendChild(rb); body.appendChild(rt);
+        body.appendChild(el('h4','demo-h','Stored uploads'));
+        var t=el('table','sg-itable'); t.setAttribute('data-sg','loaded-table');
+        var hd=['Upload','Covers','Data date','Snapshot taken','File','Location','Activities','Set as'];
+        t.innerHTML='<thead><tr>'+hd.map(function(x){ return '<th>'+x+'</th>'; }).join('')+'</tr></thead>';
+        var tb=el('tbody');
+        C.record(CST).forEach(function(r){ var tr=el('tr'), up=CST.uploads[r.id];
+          [r.id,r.partial?'Part: '+up.scope:'Full schedule',dmy(r.dataDate),dmy(r.snapshotAt)+' '+r.snapshotAt.slice(11,16),r.file,r.path,String(r.activities)].forEach(function(v){ tr.appendChild(el('td',null,v)); });
+          var td=el('td'), sel=el('select','sg-select'); sel.setAttribute('data-sg','set-as-'+r.id); sel.setAttribute('aria-label','Set '+r.file+' as');
+          if(r.designation==='baseline'){ sel.appendChild(el('option',null,DES_LABEL.baseline)); sel.disabled=true; }
+          else [['primary','Primary'],['secondary','Secondary'],['alternate','Alternate'],['','Not designated']].forEach(function(o){
+            var op=el('option',null,o[1]); op.value=o[0]; if(o[0]==='primary'&&up.partial) op.disabled=true;
+            if(o[0]===r.designation||(!o[0]&&(r.designation==='none'||r.designation==='interim'))) op.selected=true; sel.appendChild(op); });
+          sel.addEventListener('change',function(){
+            var res=C.designate(CST,r.id,sel.value||null); log('onDesignate',[r.id,sel.value||'none',res.ok?'ok':res.error]);
+            render(); if(!res.ok){ var m=body.querySelector('[data-sg=designate-error]'); m.hidden=false; m.textContent=res.error; } });
+          td.appendChild(sel); tr.appendChild(td); tb.appendChild(tr); });
+        t.appendChild(tb); body.appendChild(t);
+        var err=el('p','demo-import-note'); err.setAttribute('data-sg','designate-error'); err.setAttribute('role','alert'); err.hidden=true; body.appendChild(err);
+        body.appendChild(el('p','demo-import-note','Designations point at stored uploads; changing one moves nothing. Importing a new primary makes the old primary the secondary. On each import, uploads with no designation are released, except the latest interim of each scope. An interim covers part of the schedule and cannot be the primary.'));
+      }
+      render();
+      // Views read the table when they open: refresh Schedule changes on close.
+      return function(){ var all=C.list(CST); if(!all.some(function(s){ return s.id===CMP.cur; })) CMP.cur=(C.list(CST)[0]||{}).id; CMP.basis=null; setTimeout(function(){ if(SRETGrid.isOpen()){ var c=CONFIGS.changes(); window.DEMO_LAST_ROWS=c.rows; SRETGrid.refresh(c); } },0); };
+    },{wide:true});
+  }
   function changesCfg(){
     var d=changesData();
     return Object.assign({title:'Schedule changes',rowKey:'id',editable:false,exportName:'Schedule changes',
       columns:CHANGE_COLS,rows:d.result.rows,lists:listsOpt(ACT),
+      toolsItems:[{label:'Loaded schedules…',sg:'loaded',onSelect:openLoaded}],
       pickers:[
-        {sg:'cmp-cur',label:'Schedule',items:d.all.filter(function(s){ return s.role!=='baseline'; })
-          .sort(function(a,b){ return a.lineage===b.lineage?(a.dataDate<b.dataDate?1:-1):(a.lineage==='project'?-1:1); })
+        {sg:'cmp-cur',label:'Schedule',items:d.all.filter(function(s){ return s.slot!=='baseline'; })
           .map(function(s){ return {id:s.id,label:C.label(s),checked:s.id===d.cur.id}; }),
           onSelect:function(id){ CMP.cur=id; CMP.basis=null; log('onCompare',[id,'default']); window.DEMO_OPEN('changes'); }},
         {sg:'cmp-basis',label:'Compared with',items:d.bases.map(function(b){ return {id:b.snap.id,label:b.label+(b.isDefault?' (default)':''),checked:b.snap===d.basis}; }),
           onSelect:function(id){ CMP.basis=id; log('onCompare',[CMP.cur,id]); window.DEMO_OPEN('changes'); }}],
-      note:d.basis?C.summary(d.result)+' Calendar days; positive is later.':'This is the first import of this schedule, so there is nothing to compare it with yet.',
-      onBack:back,ensureXLSX:ensureXLSX,host:host},viewsOpt('changes'));
+      note:d.basis?C.summary(d.result)+' Calendar days; positive is later.':d.bases.length?'Nothing older is loaded for this schedule. Choose a schedule under Compared with.':'Nothing loaded to compare this schedule with yet.',},viewsOpt('changes'));
   }
+  // Schedule milestones: every activity from an uploaded schedule (the board
+  // plots each as a milestone). User tasks are the user's own items.
   function viewsOpt(cur){
     return {view:cur,onView:function(id){ log('onView',[id]); window.DEMO_OPEN(id); },
-      views:[{id:'userms',label:'User milestones',count:store.userms.length},
-             {id:'schedms',label:'Schedule milestones',count:store.sched.filter(isSchedMs).length},
+      views:[{id:'usertasks',label:'User tasks',count:store.usertasks.length},
+             {id:'schedms',label:'Schedule milestones',count:store.sched.length},
              {id:'schedupd',label:'Schedule updates',count:store.sched.filter(hasAnnot).length},
-             {id:'sched',label:'All schedule activities',count:store.sched.length},
              {id:'changes',label:'Schedule changes',count:changesData().result.rows.length},
              {id:'annot',label:'Comments and markups',count:store.annot.length}]};
   }
   function schedView(title,rows,cur){ return Object.assign({
       title:title,rowKey:'id',editable:true,exportName:title,
       columns:F.cols.sched,rows:rows,lists:listsOpt(ACT),
-      onEdit:function(k,f,v){ log('onEdit',[k,f,v]); patch(store.sched,'id',k,f,v); },
-      onBack:back,ensureXLSX:ensureXLSX,host:host},viewsOpt(cur)); }
+      onEdit:function(k,f,v){ log('onEdit',[k,f,v]); patch(store.sched,'id',k,f,v); },},viewsOpt(cur)); }
   var CONFIGS={
-    userms:function(){ return {
-      title:'User milestones',rowKey:'id',editable:true,exportName:'User milestones',
-      columns:F.cols.userms,rows:store.userms.slice(),lists:listsOpt(ACT),
+    usertasks:function(){ return {
+      title:'User tasks',rowKey:'id',editable:true,exportName:'User tasks',
+      columns:F.cols.usertasks,rows:store.usertasks.slice(),lists:listsOpt(ACT),
       onEdit:function(k,f,v){ log('onEdit',[k,f,v]);
         if(f==='progress' && v!=null && (v<0||v>100)) return false;   // app-side rule: 0 to 100
-        patch(store.userms,'id',k,f,v); },
-      onAdd:function(){ var id=nextUsr(); var r={id:id,name:'New milestone',type:'MS',state:'FUTURE',progress:0,
-          start:null,finish:null,band:'User Defined Milestones',wbs:'',pred:'',succ:'',comment:'',created:TODAY,createdBy:userName(),health:0};
-        store.userms.push(r); log('onAdd',[id]); return r; },
-      onDelete:function(keys){ log('onDelete',[keys]); store.userms=store.userms.filter(function(r){ return keys.indexOf(r.id)<0; }); },
-      openColumn:'id',onOpenItem:openMilestone,view:'userms',views:viewsOpt('userms').views,onView:viewsOpt('userms').onView,
-      importer:{idKey:'id',depKeys:{pred:'Predecessors',succ:'Successors'},user:userName,log:IMPORT_LOG,nextId:nextUsr,
+        patch(store.usertasks,'id',k,f,v); },
+      onAdd:function(){ var id=nextUsr(); var r={id:id,guid:SRETIds.guid(),name:'New task',type:'MS',state:'FUTURE',progress:0,
+          start:null,finish:null,band:'User Tasks',wbs:'',pred:'',succ:'',comment:'',created:TODAY,createdBy:userName(),health:0};
+        store.usertasks.push(r); log('onAdd',[id]); return r; },
+      onDelete:function(keys){ log('onDelete',[keys]); store.usertasks=store.usertasks.filter(function(r){ return keys.indexOf(r.id)<0; }); },
+      toolsItems:[{label:'Task ID prefix…',sg:'prefix',onSelect:openPrefix}],
+      // IDs a predecessor or successor may name: the schedule and the user tasks.
+      refOptions:function(){ return F.sched.map(function(r){ return {id:r.id,name:r.name}; })
+        .concat(store.usertasks.map(function(r){ return {id:r.id,name:r.name}; })); },
+      openColumn:'id',onOpenItem:openMilestone,view:'usertasks',views:viewsOpt('usertasks').views,onView:viewsOpt('usertasks').onView,
+      importer:{noun:['task','tasks'],idKey:'id',depKeys:{pred:'Predecessors',succ:'Successors'},user:userName,log:IMPORT_LOG,nextId:nextUsr,
         // IDs a dependency may name: every schedule activity and user milestone the app knows.
-        knownIds:function(){ return F.sched.map(function(r){ return r.id; }).concat(store.userms.map(function(r){ return r.id; })); },
+        knownIds:function(){ return F.sched.map(function(r){ return r.id; }).concat(store.usertasks.map(function(r){ return r.id; })); },
         onCommit:function(rows){
-          var out=rows.map(function(r){ var o=Object.assign({name:'',type:'MS',state:'FUTURE',progress:0,band:'User Defined Milestones',
-            wbs:'',pred:'',succ:'',comment:'',health:0},r); o.created=TODAY; o.createdBy=userName(); if(o.health==null) o.health=0;
-            if(!o.band) o.band='User Defined Milestones'; return o; });
-          out.forEach(function(o){ store.userms.push(o); });
+          var out=rows.map(function(r){ var o=Object.assign({name:'',type:'MS',state:'FUTURE',progress:0,band:'User Tasks',
+            wbs:'',pred:'',succ:'',comment:'',health:0},r); o.created=TODAY; o.createdBy=userName(); o.guid=SRETIds.guid(); if(o.health==null) o.health=0;
+            if(!o.band) o.band='User Tasks'; return o; });
+          out.forEach(function(o){ store.usertasks.push(o); });
           log('onImportCommit',[out.map(function(o){ return o.id; })]);
-          return out; }},
-      onBack:back,ensureXLSX:ensureXLSX,host:host}; },
+          return out; }}}; },
     annot:function(){ return {
       title:'Comments and markups: W/E 27-Sep-26',rowKey:'aid',editable:true,exportName:'Comments and markups W-E 27-Sep-26',
       columns:F.cols.annot,rows:store.annot.slice(),lists:listsOpt(ANN),
       onEdit:function(k,f,v){ log('onEdit',[k,f,v]); patch(store.annot,'aid',k,f,v); },
       onDelete:function(keys){ log('onDelete',[keys]); store.annot=store.annot.filter(function(r){ return keys.indexOf(r.aid)<0; }); },
-      onBack:back,ensureXLSX:ensureXLSX,host:host,view:'annot',views:viewsOpt('annot').views,onView:viewsOpt('annot').onView}; },
+      view:'annot',views:viewsOpt('annot').views,onView:viewsOpt('annot').onView}; },
     changes:changesCfg,
-    sched:function(){ return schedView('Schedule activities',store.sched.slice(),'sched'); },
-    schedms:function(){ return schedView('Schedule milestones',store.sched.filter(isSchedMs),'schedms'); },
+    sched:function(){ return schedView('Schedule milestones',store.sched.slice(),'schedms'); },
+    schedms:function(){ return schedView('Schedule milestones',store.sched.slice(),'schedms'); },
     schedupd:function(){ return schedView('Schedule updates',store.sched.filter(hasAnnot),'schedupd'); },
     stress:function(){ return {
-      title:'Schedule activities (2,000 row stress set)',rowKey:'id',editable:true,exportName:'Stress',
+      title:'Schedule milestones (2,000 row stress set)',rowKey:'id',editable:true,exportName:'Stress',
       columns:F.cols.sched,rows:window.SRET_STRESS(2000),lists:listsOpt(ACT),
-      onEdit:function(k,f,v){ log('onEdit',[k,f,v]); },
-      onBack:back,ensureXLSX:ensureXLSX,host:host}; }
+      onEdit:function(k,f,v){ log('onEdit',[k,f,v]); }}; }
   };
   // DEMO_LAST_ROWS is the exact array handed to open(), so the check can prove
   // the grid never mutates the caller's objects.
   window.DEMO_OPEN=function(name){ var c=CONFIGS[name](); window.DEMO_LAST_ROWS=c.rows; return SRETGrid.open(c); };
-  ['userms','annot','sched','stress'].forEach(function(n){
+  ['usertasks','annot','sched','stress'].forEach(function(n){
     document.getElementById('go-'+n).addEventListener('click',function(){ window.DEMO_OPEN(n); });
   });
   var tb=document.getElementById('demo-theme');
@@ -256,11 +321,11 @@ body{font-family:var(--font-sans);font-size:var(--text-md);background:var(--colo
     document.documentElement.setAttribute('data-theme',dark?'dark':'light');
     tb.setAttribute('aria-pressed',String(dark)); tb.textContent=dark?'Light theme':'Dark theme';
   });
-  // Opens on User milestones so a reviewer (and the palette swap check) sees
+  // Opens on User tasks so a reviewer (and the palette swap check) sees
   // the grid at load; #home opens the launcher instead.
   document.getElementById('demo-settings').addEventListener('click',function(){ openSettings(); });
   showUser();
-  if(location.hash!=='#home') window.DEMO_OPEN('userms');
+  if(location.hash!=='#home') window.DEMO_OPEN('usertasks');
   // First use on this computer: ask for the name (confirm or change it later in Data settings).
   if(USERS.status().state==='unset') openSettings('Who is using this file?');
 })();

@@ -8,3 +8,5 @@
 .su-error[hidden]{display:none}
 .su-box p.su-help{margin:var(--space-2) 0 0;color:var(--color-text-muted);font-size:var(--text-sm)}
 .su-h{margin:var(--group-gap) 0 var(--ctl-gap);font-size:var(--text-lg);font-weight:600}
+.su-prefix{width:160px;max-width:100%;text-transform:uppercase}
+.su-box p.su-error[data-kind=warning]{color:var(--color-text-primary)}

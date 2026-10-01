@@ -3198,7 +3198,7 @@ No other check changed.
 
 ## TEST-66: P65 entries as the record of every milestone update (v3.1.0-P65)
 
-TD-225. No visible change: the board, card and tables read the same stores, now projected from `ENTRIES`.
+TD-230. No visible change: the board, card and tables read the same stores, now projected from `ENTRIES`.
 
 **Module tests (Node, re-run by the orchestrator, not taken from the agents' reports):**
 - `tools/notes_store_test.mjs` 119/119: latest-wins over 3 entries and fallback on removal, `to:null`, progress and fields equal to source not projected, health 0 projected, coalescing at window-1, window, window+1, text-loss guard, clears, USR keys, and the round trip `project(migrate(p))` equal to the stores for two real P64 fixtures (`tools/fixtures/p65/`, rebuilt by `tools/p65_fixtures.py`), idempotent re-import.
@@ -3222,7 +3222,7 @@ TD-225. No visible change: the board, card and tables read the same stores, now 
 
 ## TEST-67: P66 milestone card to the Claude Design dialog, update history in the card and the Notes panel (v3.1.0-P66)
 
-TD-226. Design reference: `docs/mockups/P66/milestone-dialog.dc.html` and `milestone-dialog.png`.
+TD-231. Design reference: `docs/mockups/P66/milestone-dialog.dc.html` and `milestone-dialog.png`.
 
 **Module, re-run by the orchestrator:** `tools/notes_history_check.py` 71/71. It checks newest-first order, labels in the design's order with the comment last, the from and to roles, a pencil on exactly the editable entries (N=3) placed right of the pill, the edit round trip (Save, Cancel, Esc, Ctrl+Enter), groups with heading, summary, count and collapse, escaping, both themes and a 360px fit.
 
@@ -3241,7 +3241,7 @@ TD-226. Design reference: `docs/mockups/P66/milestone-dialog.dc.html` and `miles
 
 ## TEST-68: P67 filter bar phone shape and header filter toggle (v3.1.0-P67)
 
-TD-227. Markup: `docs/mockups/P67/filter-markup.png`. Implementation screenshots: `docs/mockups/P67/impl-*.png`.
+TD-232. Markup: `docs/mockups/P67/filter-markup.png`. Implementation screenshots: `docs/mockups/P67/impl-*.png`.
 
 **New check `tools/p67_check.py`** (headless Chromium, network unresolvable), at 390x844 and at 767 / 768 (both sides of the phone breakpoint), light and dark:
 - Find collapsed by default shows the name search only; the chevron expands and collapses Banding and Activity ID(s); the hidden-filter dot shows when one is set.

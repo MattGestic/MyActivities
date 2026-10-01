@@ -1,0 +1,13 @@
+/* =====================================================================
+   SRET grid feature CSS: bulk-edit. Load after grid-view.css, with features/bulk-edit.js.
+   The bulk edit dialog.
+   ===================================================================== */
+.sg-bulk{display:grid;grid-template-columns:minmax(0,160px) minmax(0,1fr);gap:var(--ctl-gap) var(--group-gap);align-items:center;margin:var(--ctl-gap) 0 var(--group-gap)}
+.sg-bulk-lbl{display:flex;align-items:center;gap:var(--ctl-gap);color:var(--color-text-label);cursor:pointer}
+.sg-bulk-lbl input{width:16px;height:16px;margin:0;accent-color:var(--color-accent)}
+.sg-bulk-ctl{min-width:0}
+.sg-bulk-ctl .sg-select,.sg-bulk-input{width:100%;max-width:none}
+.sg-bulk-refs{display:flex;flex-direction:column;gap:var(--space-2);padding:var(--space-2);border:1px solid var(--color-line-default);border-radius:var(--radius-ctl)}
+.sg-dialog .sg-import-status p.sg-bulk-err,.sg-dialog p.sg-bulk-err{color:var(--color-crit-text)}
+.sg-bulk-err[hidden]{display:none}
+@media (max-width:767px){ .sg-bulk{grid-template-columns:minmax(0,1fr)} .sg-bulk-ctl{margin-bottom:var(--ctl-gap)} }
