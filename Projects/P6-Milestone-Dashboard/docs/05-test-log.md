@@ -3367,3 +3367,13 @@ TD-239. Screenshots: `docs/mockups/P74/empty-state_1440_light.png`, `_1440_dark.
 **Reference copy:** `data/published/Eskay_Snip_PFS_Dashboard_2026-08-15_empty-state.html` was a copy of the embedded baseline; it is now a truly empty dashboard, so it was regenerated from P74 by `p71_check --save` and renamed `data/published/Milestone_Dashboard_empty.html` (the name publish gives an empty dashboard).
 
 **Checks run:** `tools/run_checks.py --all --jobs 3`: 60 selected, 60 passed, 0 failed. Also with no fixture: `palette_swap_check` 0 escapes on the empty state.
+
+## TEST-77: P74 an imported schedule brings its own links (v3.1.0-P74)
+
+TD-240. **New `tools/p74_deps_check.py`** (no fixture, 1440x900): a real import of the 29-Aug reference file through the app's import path, then:
+- SNIP-155 takes the export's own links (predecessors SNIP-147, SNIP-133; successors SNIP-255, SNIP-161) with the relationship text kept (`SNIP-147: SS 5`, `SNIP-255: FF`, ...); the source holds them and so does the baseline copied from it; the card's chips list them in that order.
+- Lines: with every link on, the SVG holds dependency paths and SNIP-155 has a line from each on-board predecessor and to each on-board successor; all off clears them.
+- Counts beside the marker equal the export's columns for N=3 milestones (SNIP-155 and the next two activities with both columns filled, chosen from the file by the check).
+- Turning the source off empties the schedule's set and takes SNIP-155's links off the board; on brings them back.
+- A user milestone linked after SNIP-155 shows as its successor while the schedule's set, the source's and the baseline's stay free of USR- IDs.
+- The model export carries the source's links and the board's set; the published state block carries them; reopened, the published file has the same links, chips and lines, and the Baseline view shows the baseline's. No console errors.

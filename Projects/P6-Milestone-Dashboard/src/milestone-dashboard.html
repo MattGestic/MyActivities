@@ -7006,6 +7006,79 @@ const DEP_DATA=(PREBOOT&&PREBOOT.depData&&typeof PREBOOT.depData==='object')
 // and a published file carries the schedule's own links (P74), so a user
 // link can never be baked into schedule data.
 const DEP_DATA_SCHEDULE=JSON.parse(JSON.stringify(DEP_DATA));
+// ---- P74 follow-up (TD-240): an import's own links ----------------------
+// With nothing embedded, the links come from the schedules themselves. Each
+// imported source keeps the set its Predecessor Details / Successor Details
+// columns give (src.deps), the baseline keeps its own (BASELINE_DEPS: the
+// pre-boot hook's, a published file's, or a copy of the first import's), and
+// DEP_DATA_SCHEDULE is rebuilt from the one the board is showing: the Update
+// view takes the union of the ENABLED sources, the Baseline view the
+// baseline's. A source turned off takes its links with it. User links are
+// layered on afterwards by applyUserDeps() and never written into these.
+//
+// Record shape, as DEP_DATA always had: {pred:'ID,ID', succ:'ID,ID'}, plus the
+// export's own relationship text, predRel/succRel ('PRJ-147: SS 5, ...').
+function depsFromActivities(acts){
+  const out={};
+  const parse=function(raw){
+    const ids=[], rel=[], seen={};
+    String(raw||'').split(/[,;]+/).forEach(function(tok){
+      const t=tok.trim(), id=depRefId(t);
+      if(!id||seen[id]) return;
+      seen[id]=1; ids.push(id); rel.push(t);
+    });
+    return {ids:ids, rel:rel};
+  };
+  (acts||[]).forEach(function(a){
+    if(!a||!a.id||/^USR-\d+$/.test(a.id)) return;
+    const p=parse(a.predRaw), q=parse(a.succRaw);
+    if(!p.ids.length&&!q.ids.length) return;
+    out[a.id]={pred:p.ids.join(','),succ:q.ids.join(','),predRel:p.rel.join(', '),succRel:q.rel.join(', ')};
+  });
+  return out;
+}
+// Union, per Activity ID and direction, keeping each ID once.
+function mergeDepSet(into,from){
+  Object.keys(from||{}).forEach(function(id){
+    const f=from[id]; if(!f) return;
+    const d=into[id];
+    if(!d){ into[id]=Object.assign({},f); return; }
+    ['pred','succ'].forEach(function(k){
+      const have=parseIds(d[k]);
+      parseIds(f[k]).forEach(function(x){ if(have.indexOf(x)<0) have.push(x); });
+      d[k]=have.join(',');
+      const rk=k+'Rel';
+      if(f[rk]) d[rk]=d[rk]?(d[rk]+', '+f[rk]):f[rk];
+    });
+  });
+  return into;
+}
+// An appended schedule's colliding IDs are suffixed (dedupeIncomingIds()); its
+// links follow the same map, both the keys and the IDs they list.
+function remapDepSet(deps,idMap){
+  if(!idMap||!Object.keys(idMap).length) return deps;
+  const m=function(id){ return idMap[id]||id; };
+  const out={};
+  Object.keys(deps).forEach(function(id){
+    const d=deps[id];
+    out[m(id)]={pred:parseIds(d.pred).map(m).join(','),succ:parseIds(d.succ).map(m).join(','),
+                predRel:d.predRel||'',succRel:d.succRel||''};
+  });
+  return out;
+}
+function scheduleDepsShown(){
+  if(VIEW_MODE==='update'&&PRIMARY_SOURCES.length){
+    const out={};
+    PRIMARY_SOURCES.forEach(function(src){ if(src.enabled!==false&&src.deps) mergeDepSet(out,src.deps); });
+    return out;
+  }
+  return BASELINE_DEPS;
+}
+function rebuildScheduleDeps(){
+  const from=scheduleDepsShown()||{};
+  Object.keys(DEP_DATA_SCHEDULE).forEach(function(k){ delete DEP_DATA_SCHEDULE[k]; });
+  Object.keys(from).forEach(function(k){ DEP_DATA_SCHEDULE[k]=Object.assign({},from[k]); });
+}
 // 'M-1010: FS' -> 'M-1010'. A relationship kept after an ID (the grid's
 // refs format) is not part of the ID the board resolves.
 function depRefId(tok){ return String(tok||'').split(/[:\s]/)[0].trim(); }
@@ -7018,10 +7091,15 @@ function userDepIds(v){
   return out;
 }
 function applyUserDeps(){
+  // P74 follow-up: the schedule's own set is rebuilt from where it now lives
+  // (the shown view's sources, or the baseline) before the user links go on.
+  rebuildScheduleDeps();
   Object.keys(DEP_DATA).forEach(function(k){ delete DEP_DATA[k]; });
   Object.keys(DEP_DATA_SCHEDULE).forEach(function(k){
     const d=DEP_DATA_SCHEDULE[k];
     DEP_DATA[k]={pred:d.pred,succ:d.succ};
+    if(d.predRel) DEP_DATA[k].predRel=d.predRel;
+    if(d.succRel) DEP_DATA[k].succRel=d.succRel;
   });
   // Hidden user milestones are off the board, and so are their links.
   if(!USER_MS_ENABLED) return;
@@ -12892,6 +12970,8 @@ let BASELINE_LABEL_TEXT=String(PREBOOT_META.baselineLabel||'');
 // a copy of a schedule the user has just taken off it.
 let BASELINE_ORIGIN=(BASELINE_TASKS.length||BASELINE_MILESTONES.length)?'preboot':null;
 let BASELINE_FROM_SOURCE=null, BASELINE_SOURCE_REMOVED=false;
+// The baseline's own links (TD-240): the pre-boot hook's at boot.
+let BASELINE_DEPS=JSON.parse(JSON.stringify(DEP_DATA));
 let UPDATE_TASKS=null, UPDATE_MILESTONES=null, UPDATE_TIMELINE=null, UPDATE_SOURCE=null;
 
 // ---- P74 (TD-239): no embedded baseline ---------------------------------
@@ -12933,6 +13013,7 @@ function captureBaseline(src,tl,origin){
   BASELINE_ORIGIN=origin||'import';
   BASELINE_FROM_SOURCE=src.id||null;
   BASELINE_SOURCE_REMOVED=false;
+  BASELINE_DEPS=cloneData(src.deps||{});
   BASELINE_ID_INDEX=null;
 }
 function clearBaseline(){
@@ -12941,6 +13022,7 @@ function clearBaseline(){
   BASELINE_SOURCE.label=''; BASELINE_SOURCE.dataDate=null; BASELINE_SOURCE.file='';
   BASELINE_LABEL_TEXT='';
   BASELINE_ORIGIN=null; BASELINE_FROM_SOURCE=null; BASELINE_SOURCE_REMOVED=false;
+  BASELINE_DEPS={};
   BASELINE_ID_INDEX=null;
   BASELINE_TIMELINE=freeTimeline();
 }
@@ -12963,6 +13045,7 @@ function restoreBaseline(b){
   BASELINE_ORIGIN=b.origin||'published';
   BASELINE_FROM_SOURCE=b.fromSource||null;
   BASELINE_SOURCE_REMOVED=!!b.sourceRemoved;
+  if(b.deps&&typeof b.deps==='object') BASELINE_DEPS=cloneData(b.deps);
   BASELINE_ID_INDEX=null;
   return true;
 }
@@ -12972,7 +13055,7 @@ function baselinePayload(){
   return {origin:BASELINE_ORIGIN,fromSource:BASELINE_FROM_SOURCE,sourceRemoved:BASELINE_SOURCE_REMOVED,
     name:BASELINE_SOURCE_NAME,label:BASELINE_LABEL_TEXT,sourceLabel:BASELINE_SOURCE.label,
     dataDate:isoDay(BASELINE_SOURCE.dataDate),file:BASELINE_SOURCE.file||'',
-    tasks:BASELINE_TASKS,milestones:BASELINE_MILESTONES,
+    tasks:BASELINE_TASKS,milestones:BASELINE_MILESTONES,deps:BASELINE_DEPS,
     timeline:tl?{labels:tl.labels.slice(),dates:tl.dates.map(function(d){ return d.toISOString(); }),
                  months:tl.months.slice(),nowCol:tl.nowCol}:null};
 }
@@ -13030,6 +13113,7 @@ function restorePrimarySources(p){
             rows:man.rows||b.milestones.length,
             importedAt:man.importedAt?new Date(man.importedAt):null,
             suffixed:man.suffixed||0,
+            deps:(man.deps&&typeof man.deps==='object')?man.deps:null,
             enabled:man.enabled!==false};
   });
   USER_MS_ENABLED=(p.userMsEnabled!==false);
@@ -13118,6 +13202,7 @@ function dedupeIncomingIds(agg,taken){
       }).join(', ');
     }
   });
+  suffixed.idMap=idMap;   // TD-240: the appended links follow it
   return suffixed;
 }
 let VIEW_MODE='baseline';
@@ -14367,6 +14452,8 @@ function runIngest(){
     PRIMARY_SOURCES.push({
       id:'src-'+(++SOURCE_SEQ), name:srcName, kind:'primary',
       tasks:agg.tasks, milestones:agg.milestones,
+      // TD-240: the export's own predecessor and successor links.
+      deps:remapDepSet(depsFromActivities(acts),suffixed.idMap),
       dataDate:dd, file:PENDING_IMPORT_FILE||'(pasted data)',
       rows:acts.length, importedAt:new Date(), suffixed:suffixed.length,
       enabled:true
@@ -16157,7 +16244,7 @@ function publishStatePayload(){
               dataDate:isoDay(src.dataDate),rows:src.rows,
               tasks:src.tasks.length,milestones:src.milestones.length,
               importedAt:src.importedAt?src.importedAt.toISOString():null,
-              suffixed:src.suffixed||0,enabled:src.enabled!==false};
+              suffixed:src.suffixed||0,enabled:src.enabled!==false,deps:src.deps||null};
     }),
     // Whether user-defined milestones show on the board. Not folded into a
     // source's own enabled flag, because User-defined is never a
@@ -16246,10 +16333,12 @@ function applyPublishedState(){
     restorePrimarySources(p);
     const pubDD=(p.source&&p.source.dataDate)?new Date(p.source.dataDate+'T00:00:00'):null;
     // P74 (TD-239): the schedule's own links, which the app no longer embeds.
-    if(p.scheduleDependencies&&typeof p.scheduleDependencies==='object'){
-      Object.keys(DEP_DATA_SCHEDULE).forEach(function(k){ delete DEP_DATA_SCHEDULE[k]; });
-      Object.assign(DEP_DATA_SCHEDULE,cloneData(p.scheduleDependencies));
-    }
+    // TD-240: each source carries its own; a source from a file that carried
+    // only the board's set (a source without deps) takes that set, as does a
+    // baseline without its own.
+    const pubDeps=(p.scheduleDependencies&&typeof p.scheduleDependencies==='object')?p.scheduleDependencies:null;
+    PRIMARY_SOURCES.forEach(function(src){ if(!src.deps) src.deps=cloneData(pubDeps||{}); });
+    if(pubDeps&&!(p.baseline&&p.baseline.deps)) BASELINE_DEPS=cloneData(pubDeps);
     // The baseline the file carries. A file from before P74 carries none (its
     // baseline was the embedded one), so its published schedule becomes it,
     // the same rule as a first import.
@@ -16257,6 +16346,7 @@ function applyPublishedState(){
       const one=PRIMARY_SOURCES.length===1?PRIMARY_SOURCES[0]:null;
       captureBaseline({id:one?one.id:null,name:one?one.name:'Published schedule',
         tasks:UPDATE_TASKS||[],milestones:UPDATE_MILESTONES||[],dataDate:pubDD,
+        deps:PRIMARY_SOURCES.reduce(function(acc,src){ return mergeDepSet(acc,src.deps); },{}),
         file:(p.source&&p.source.file)||'(published)'},tl,'import');
     }
     if(!BASELINE_TIMELINE||!BASELINE_TIMELINE.labels||!BASELINE_TIMELINE.labels.length) BASELINE_TIMELINE=tl;
@@ -16451,8 +16541,10 @@ function exportModel(){
                            dataDate:isoDay(src.dataDate),rows:src.rows,
                            tasks:src.tasks.length,milestones:src.milestones.length,
                            importedAt:src.importedAt?src.importedAt.toISOString():null,
-                           suffixed:src.suffixed||0,enabled:src.enabled!==false};
+                           suffixed:src.suffixed||0,enabled:src.enabled!==false,deps:src.deps||null};
                  }),
+                 // TD-240: the links the board was showing, as publish carries them.
+                 scheduleDependencies:DEP_DATA_SCHEDULE,
                  userMsEnabled:USER_MS_ENABLED,
                  overrides:snapshotOverrides(),diagnostics:DIAG,
                  // Previously missing entirely — dependency line visibility, per-milestone
