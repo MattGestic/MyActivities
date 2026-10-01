@@ -3238,3 +3238,17 @@ TD-226. Design reference: `docs/mockups/P66/milestone-dialog.dc.html` and `miles
 
 **Full suite, sequential:** see the PR for the run on the release commit.
 
+
+## TEST-68: P67 filter bar phone shape and header filter toggle (v3.1.0-P67)
+
+TD-227. Markup: `docs/mockups/P67/filter-markup.png`. Implementation screenshots: `docs/mockups/P67/impl-*.png`.
+
+**New check `tools/p67_check.py`** (headless Chromium, network unresolvable), at 390x844 and at 767 / 768 (both sides of the phone breakpoint), light and dark:
+- Find collapsed by default shows the name search only; the chevron expands and collapses Banding and Activity ID(s); the hidden-filter dot shows when one is set.
+- No section headings; Date range and the Status, Float and Notes triggers sit in one tile; Weeks is narrower than its tile; Mode and Fit share a row.
+- Status trigger opens the chip panel; two statuses picked read on the trigger; visible marker counts equal the desktop counts for the same chips (N=3 combinations); Float Custom works inside the panel; Esc closes; panel stays inside the viewport; no horizontal page scroll.
+- 1440x900: layout unchanged (chips inline, headings shown, no triggers); the toggle sits immediately left of + Milestone; it hides and shows the bar with `aria-expanded` following; no bottom × at either width.
+
+**Existing checks changed for the new layout, same intent:** `p39_check`, `p32_check`, `p59_check` C-03, `d15a_check` (d), (h), (i), `ds_check` phone field width. Before and after listed in the PR.
+
+**Full suite, sequential:** see the PR for the run on the release commit.
