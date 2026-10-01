@@ -136,14 +136,14 @@ line,property,value,px_literals,also_uses_space_token,source
 2374,padding,3px 4px,3px|4px,False,style-block
 2381,gap,6px 16px,6px|16px,False,style-block
 2382,gap,6px,6px,False,style-block
-3913,padding,4px 5px,4px|5px,False,inline-style
-3914,padding,4px 5px,4px|5px,False,inline-style
-3915,padding,4px 5px,4px|5px,False,inline-style
-3916,padding,4px 5px,4px|5px,False,inline-style
 3917,padding,4px 5px,4px|5px,False,inline-style
 3918,padding,4px 5px,4px|5px,False,inline-style
 3919,padding,4px 5px,4px|5px,False,inline-style
 3920,padding,4px 5px,4px|5px,False,inline-style
 3921,padding,4px 5px,4px|5px,False,inline-style
 3922,padding,4px 5px,4px|5px,False,inline-style
-10508,gap,8px,8px,False,inline-style
+3923,padding,4px 5px,4px|5px,False,inline-style
+3924,padding,4px 5px,4px|5px,False,inline-style
+3925,padding,4px 5px,4px|5px,False,inline-style
+3926,padding,4px 5px,4px|5px,False,inline-style
+10530,gap,8px,8px,False,inline-style
