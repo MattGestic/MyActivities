@@ -25,7 +25,9 @@ Well-Architected trade-offs behind that:
 |---|---|---|
 | `APP_VERSION` | Single source of truth for the version string | Read by the title, the tool-name label (`#ib-label`, at the foot of Data & view since P64), and the export payload. Never hand-edit any of the three. |
 | `REPORT_META` | Report meta: `title`, `reportDate`, `projectNo`, `projectNoFromFile` | `projectNo` added at P64 (TD-224). One writer, `setProjectNo()`. Carried by publish (`projectNo`, `projectNoFromFile`), the model export (`projectNo`) and the `reportMeta` mount category. Files from before P64 carry none and keep the current value. |
-| `renderInfoBar()` | The schedule info bar (`#info-hdr`), top row of the board's timeline header | Called from `updateHeaderMeta()`. Chips from `PRIMARY_SOURCES` (the embedded baseline when nothing is imported); current is the enabled schedule with the latest data date. Tints that schedule's data-date week (`th.dd-wk`). |
+| `renderInfoBar()` | The schedule info bar (`#info-hdr`), top row of the board's timeline header | Called from `updateHeaderMeta()`. Chips from `PRIMARY_SOURCES` (the baseline when nothing is imported, none when there is no baseline: P74); current is the enabled schedule with the latest data date. Tints that schedule's data-date week (`th.dd-wk`). |
+| `window.__SRET_FIXTURE__` (`PREBOOT`) | Pre-boot dataset hook, P74 (TD-239). The test and embedding hook | Read once, at the top of the app script, if defined before it runs. Seeds `SEED_TASKS`, `SEED_MILESTONES`, `DEP_DATA`, the timeline, `BASELINE_SOURCE` and its label, `REPORT_META.projectNo`, the "updated by" name and the heading, exactly as the P73 literals did. Unset in a shipped build. Contract in the Decisions Log, P74. |
+| `syncEmptyState()` | The empty state's one writer, P74 (TD-239) | Called at the end of `rerender()` and at INIT. Shows `#empty-state` and sets `body.is-empty` while `isDashboardEmpty()` (no baseline, no imported source, no user milestone). |
 | `INGEST_CONFIG` | Header aliases, actual-flag regex, ingest tuning | `headerAliases` is exact-match after normalization, not fuzzy. Accepted gap. |
 | `Parse.workbook()` / `Parse.delimited()` | Entry points for `.xlsx` and paste/CSV/TSV | `.xlsx` path loads SheetJS from CDN on demand, `cellDates:false`. |
 | `parseLooseDate()` | Date normalization | Handles `dd-MMM-yy`, `dd-MMM-yyyy`, `dd MMM yy`, ISO, `dd/mm/yyyy`, and bare Excel serial. Strips and records the ` A` actualised suffix and the `*` constrained suffix separately. |
@@ -53,13 +55,13 @@ Well-Architected trade-offs behind that:
 
 **Reference sample:** `data/schedules/103787-13_PFS_Weekly_Update_DD-2026-08-29.xlsx` — data date 29-Aug-2026, 192 rows, 146 leaf activities, 46 band/group rows.
 
-**Baked-in baseline:** 15-Aug-2026 P6 export, 159 tasks / 198 milestones, embedded in the file.
+**Baked-in baseline:** none since P74 (TD-239). Until P73 a 15-Aug-2026 P6 export was embedded as literals; it is now the check suite's reference fixture, `tools/fixtures/baseline/eskay-p73.json`, and never part of the app.
 
 ## State Model
 
 Three layers, kept strictly separate. Display state must never mutate schedule data.
 
-1. **Schedule data** — the baked-in baseline, or an import overlaying it. An import does not touch the baseline.
+1. **Schedule data** — the baseline (the first schedule imported, a published file's own, or the pre-boot hook's; none in a fresh copy) and the imported update over it. A later import does not touch the baseline.
 2. **Annotation layer** — health overrides, progress overrides, comments, short titles, row remarks. Exported.
 3. **Display state** — column visibility, text scale multipliers, dependency line visibility and thickness, filters, theme. Session-scoped. Not exported except dependency visibility.
 
@@ -171,6 +173,7 @@ The version lives only in `APP_VERSION`. The working file keeps a stable filenam
 | A control that cannot act is disabled AND made unhittable, not just dimmed | Dim it only; hide it entirely; leave it live and let it scale invisible text | Dimming alone still lets the control be dragged, which is the state it was already in when it read as broken. Hiding it makes the panel jump as toggles flip and removes the affordance that says the setting exists. `disabled` is the real barrier, but it is invisible to any test that can be written, so `pointer-events:none` sits beside it: a second barrier that a hit test can actually measure. The row keeps its own pointer events so the tooltip still explains why. | 2026-09-22 |
 | The baseline overlay toggle lives beside the View toggle, and the action bar above the tabs | Leave both where they were; duplicate the baseline toggle into the heading; keep the action bar sticky and offset it against the drawer header | A control belongs next to the thing it depends on: the overlay only means anything in the Update view. A duplicate would need a second writer or a sync between two copies, which is the drift shape this file has paid for four times. The action bar sat below the tables that feed it, so the drawer read machinery first and outcome last; above the tabs it is the first thing seen, and it stops being sticky because `.sd-hd` already occupies `top:0` and there is no measured header height to offset a second sticky element against. | 2026-09-22 |
 | The filter row is two containers that wrap as whole columns | One wrapping row (as before); a fixed two-column grid; a media query breakpoint | One row gives a continuum of shapes, most of which break a label away from its control. A fixed grid cannot collapse at phone width. A media query puts the break at a width someone typed rather than where the content stops fitting. A flex basis gives exactly two shapes, and the check asserts it is in one of them rather than asserting which. | 2026-09-22 |
+| No schedule is embedded in the app; the first import becomes the baseline; tests seed their reference data through a pre-boot hook injected centrally (P74, TD-239, Matt 2026-10-01) | Keep the embedded baseline and add an empty state beside it; seed tests through the published-state block; edit every check to import its data | The app is distributed beyond the client whose schedule it carried. The published-state block would make every check's page a published file and change what those checks assert about "published". Per-check imports would rewrite most of the suite and its fixed counts. Detail below. | 2026-10-01 |
 | Stable filename + git tags for versioning | Keep versioned filenames | Versioned filenames make every change a whole-file add, defeating the point of migrating to git. | 2026-09-09 |
 | **D-23 (detail of the embedding decision above):** the embedded SheetJS block sits last inside `<body>`, and whole-file audits skip `vendor-*` blocks | After `</body>` (parse error; the parser moves it into the body anyway); before `#app-script` (parses a library most sessions never use ahead of the app) | Placement verified in Chromium 2026-09-27. The embed, version and build choice are TD-216. | 2026-09-28 |
 | **Proposed, D-25/D-26:** schedule model plus batch rendering. Revisits "`scheduleRerender()` debounce over incremental DOM diffing", whose stated trigger ("revisit only if it resurfaces") has now been met. | Milestones-only import (rejected by Matt: all activities and headings are required); row virtualisation (breaks print, sticky headers and off-screen dependency stubs); a charting or grid library for the board | The measured cause is cell count (rows x weeks) and layout reads in dependency drawing, not the debounce. One timeline cell per row, class-only filters and data-derived geometry remove both without changing what the user sees. TD-219, TEST-59. | 2026-09-27 |
@@ -183,6 +186,37 @@ The version lives only in `APP_VERSION`. The working file keeps a stable filenam
 **Rules:**
 - Amend on architecture-impacting changes only.
 - If a backlog item conflicts with a decision here, flag it before building.
+
+### No embedded baseline, the pre-boot hook, and central fixture injection (v3.1.0-P74)
+
+TD-239, TEST-76. Matt, 2026-10-01: remove the embedded baseline and open on an empty state.
+
+**What the app holds at boot.** Nothing. `SEED_TASKS`, `SEED_MILESTONES`, `DEP_DATA` and the timeline are empty unless the pre-boot hook supplies them, and INIT gives an empty board a window of weeks around today (`freeTimeline()`: four weeks before, 22 after, widened to take every user milestone) so the first user milestone has somewhere to land. The heading is "Milestone Dashboard" and stays editable in place.
+
+**Where the baseline comes from.** One of, in order: a published file's own (`p.baseline`, restored by `restoreBaseline()`); the pre-boot hook's seeds; or a deep copy of the first schedule imported (`captureBaseline()`, called from `runIngest()` when `hasBaseline()` is false). `BASELINE_ORIGIN` records which (`published`, `preboot`, `import`) and `BASELINE_FROM_SOURCE` the source id a captured one came from. The Sources semantics are unchanged: the first import is still a primary source and the board shows it in the Update view; the baseline is a separate copy behind it.
+
+**When there is something to compare.** `canCompareBaseline()`: a baseline and an update exist, and the update is not simply the import the baseline was copied from. Until then the Baseline / Update toggle and the baseline shadow switch (one group, `.rpt-sub-view`) are hidden; a second import (replace or append) shows them. A pre-P74 published file carries no baseline, so its published schedule becomes the baseline by the same rule.
+
+**Removing.** Discarding the update falls back to the baseline, as before, unless the baseline is a copy of a schedule being removed (or already removed) with nothing else mounted; then the board empties and the empty state returns (`baselineGoesWithSources()`, and the inline confirmation says so).
+
+**What a published file carries now.** The literals used to travel inside the app script. Publish now writes them into the state block: `baseline` (null when there is none) and `scheduleDependencies` (the schedule's own links, `DEP_DATA_SCHEDULE`). A published empty dashboard opens on the empty state.
+
+**The pre-boot hook (test and embedding hook).** `window.__SRET_FIXTURE__`, read once, at the top of the app script, only if defined before `<script id="app-script">` runs. Shape (`kind: "sret-preboot-fixture"`, `schemaVersion: 1`):
+
+| Field | Seeds |
+|---|---|
+| `tasks`, `milestones` | `SEED_TASKS`, `SEED_MILESTONES` (copied), and through them the baseline |
+| `depData` | `DEP_DATA` and its pristine copy `DEP_DATA_SCHEDULE` |
+| `timeline` | `labels`, `dates` (ISO `YYYY-MM-DD`, read as local midnight), `months`, `nowCol` |
+| `meta` | `title` and `documentTitle` (heading and tab title), `projectNo`, `sourceName`, `baselineLabel`, `sourceLabel`, `dataDate`, `file`, `updatedBy` |
+
+A malformed value is ignored rather than thrown on. The published-state block was considered for this and rejected: a page seeded through it IS a published file (`PUBLISHED_META`, the update view, the "published" badge and chain), which would change what most of the suite asserts about published copies. The hook's own `<script id="sret-fixture">` is removed from anything `publishDashboard()` writes; what it seeded travels in the state block like any other schedule.
+
+**Central injection.** `tools/check_map/chrome_fixture.py` stands in for Chromium. Every check's `find_chrome()` (`tools/import_check.py` and the local copies in `d01_render`, `d16_check`, `p65_fixtures`, `palette_swap_check`, `persist_check`, `theme_check`, plus the launcher lists in `p70_check` and `grid_view_responsive`) returns it whether or not `SRET_CHROME` is set, so a check run standalone is seeded the same way as one run by `tools/run_checks.py`. It injects `tools/fixtures/baseline/eskay-p73.json` immediately before the app script when the page is the current app (`#app-script` and the same `APP_VERSION` as `src/`), carries no data of its own (no `window.__PUBLISHED_STATE__={` and no `window.__SRET_FIXTURE__={`), and the check has not opted out (a `sret:no-fixture` marker in the page, or `SRET_NO_FIXTURE` in the environment). A page inside the repo is copied to a temp file first, so a tracked file is never written. It then hands the launch on to `$SRET_CHROME` (the coverage wrapper, `chrome_cov.py`, which instruments the seeded page) or to the real Chromium. `releases/` snapshots are another version and are never seeded. `tools/scale_bench.mjs` (Playwright) seeds the same file with `addInitScript`. `tools/check_map/run_one.py` records the fixture as an input of every seeded check, and ignores the wrapper's read of the app file, which is mapped by coverage instead.
+
+**Schedule links (TD-240).** The dependency layer reads `DEP_DATA`, the schedule's links plus the user's (`applyUserDeps()`). The schedule's part, `DEP_DATA_SCHEDULE`, is no longer a literal: it is rebuilt by `rebuildScheduleDeps()` at the start of every `applyUserDeps()` from the view shown. Update view: the union of the enabled sources' `src.deps`, each built at import from that file's Predecessor Details / Successor Details (`depsFromActivities()`). Baseline view: `BASELINE_DEPS` (the pre-boot hook's, a published file's `baseline.deps`, or a copy of the first import's). Publish and the model export write `deps` on each source in the manifest, `baseline.deps`, and the board's set as `scheduleDependencies`; a source from a file that carried only the board's set takes that set on reopen.
+
+**The fixture** is the P73 baseline exactly, extracted from commit `e24d02a` by `tools/fixtures/baseline/extract_p73.py` (`--check` compares the committed file with a fresh extraction). It is the repo's own test data and never part of the app.
 
 ### Marker placement (v3.1.0-P34)
 
@@ -325,6 +359,25 @@ Matt's marked-up phone screenshot (`docs/mockups/P67/filter-markup.png`, 2026-10
 - Box titles and row labels are hidden. Each box keeps `role=group` and an `aria-label`.
 
 At every width, the header toggle `#btn-filter-expand` (the old expand-only icon's id, kept for the checks) sits left of + Milestone, always shown, pressed while the row is open, and is the row's only show/hide control. The bar's own close x `#btn-filter-hide` is gone. `toggleTopFilterBar()` is still the one writer of both states.
+
+### The filter panel collapses to the search field; the heading scrolls away (P72)
+
+TD-236, from Matt's phone screenshots (2026-10-01). Builds on the P67 phone shape above.
+
+**Panel (below 768px, `FB_PHONE_MQ`).** The P67 chevron is now a funnel (same id, `#fb-find-more-btn`; same state `FB_FIND_OPEN`, `setFindMore()` / `toggleFindMore()` / `syncFindMore()`; same storage key `sret-fb-find-more`), and it folds the whole panel, not only Banding and IDs. `syncFbShape()` moves `#tfb-when` (with `#tfb-crit` already inside it) into `#tfb-find` straight after the search field, so the DOM order, and so the tab order, is the visual order: search; Weeks, Mode, Fit; Status, Float, Notes, x; Banding, Source; Activity ID(s). On desktop it goes back into `.fb-top` beside Find. Find's search row is `display:contents` at phone width so its children and the moved tile are Find's own flex items. The dot reads `fbHiddenFilterSet()`, every filter except the name search, from the same state `applyFilter()` reads.
+
+**Heading (below 1024px, `CHROME_AWAY_MQ`).** Every width has two scrollers: the board inside `#scroll-wrap` and the window for whatever the heading pushes past `100vh - 150px`. `onBoardScrollForChrome()` (a passive listener on `#scroll-wrap`) sets `html.chrome-away` after 12px of travel down once the board is past its own info row plus 24px, and clears it after 12px up or back near the top. `setChromeAway()`:
+- puts a negative top margin of the board's measured document offset on `#icon-bar` (`--chrome-shift`, set on `#icon-bar` and `.ws-toggle` only), so icon bar, heading, filter bar and board move up together with nothing re-laid between them; a window already scrolled part way is folded into the shift first, so nothing jumps;
+- makes the board as tall as the viewport while any shift applies (`html.chrome-shift`), set at the start of hiding and cleared at the end of showing, when its bottom edge is below the viewport either way;
+- sticks the info row cells at minus `--hdr-info-h` (just above the board's top edge) and the bands at 0 and `--hdr-phase-h`, the measured variables `watchStickyHeights()` already writes; the info row stays in the table, so nothing re-measures;
+- animates only while `html.chrome-anim` is set (200ms), never under `prefers-reduced-motion`.
+
+Three findings that shaped it, each measured on the reference board at 390px:
+- **Classes on `<html>`, not `<body>`.** A change to the body's classes re-runs `syncInfoBarWidth()` through its MutationObserver, about 0.3s, which stalled the slide's first frame.
+- **No custom property on `:root` per change.** Setting one restyles the whole document, about 0.1s.
+- **The info strip's ResizeObserver now acts on width changes only.** The scroll-away changes the board's height; a height change cannot change the strip's width.
+
+`chromeAwayBlocked()` freezes the state both ways while any `[aria-haspopup][aria-expanded="true"]` exists (every dropdown, menu and popover reports this), while the milestone card, the add, PDF or annotation dialogs, a dependency comment panel, the ID suggestions or the float Custom card are shown, while the settings drawer or Workspace panel is open, or while a field in the heading has focus (the phone keyboard). The card is `position:fixed` and is never inside a moved or transformed box. Grid view and print mode are excluded in the CSS selectors and in `chromeAwayEligible()`. Display state only, never stored.
 
 ### The milestone Progress override (v3.1.0-P35)
 

@@ -101,16 +101,19 @@
     var h = '<div class="nh-entry" data-eid="' + esc(v.eid) + '" data-status="' + esc(v.status) +
       '" data-text="' + esc(v.text) + '">' +
       '<div class="nh-head"><span class="nh-meta"><span class="nh-when">' + esc(v.when) + '</span>' +
-      (v.who ? '<span class="nh-who">' + esc(v.who) + '</span>' : '') + '</span>' +
+      (v.who ? ' <span class="nh-who">' + esc(v.who) + '</span>' : '') + '</span> ' +
       '<span class="nh-right"><span class="nh-fu ' + v.fuClass + '">' + esc(v.followUp) + '</span>' +
-      (v.canEdit ? '<button type="button" class="nh-edit" data-act="edit" aria-label="Edit entry" title="Edit entry">' + PENCIL + '</button>' : '') +
+      (v.canEdit ? ' <button type="button" class="nh-edit" data-act="edit" aria-label="Edit entry" title="Edit entry">' + PENCIL + '</button>' : '') +
       '</span></div><div class="nh-changes">';
     for (var i = 0; i < v.changes.length; i++){
       var c = v.changes[i];
-      h += '<div class="nh-row"><span class="nh-lbl">' + esc(c.label) + '</span>';
+      // Real spaces between the parts (P72): ignored by the grid and flex
+      // layout, but the row still reads "Health none → Done" if a viewer
+      // shows it without the stylesheet.
+      h += '<div class="nh-row"><span class="nh-lbl">' + esc(c.label) + '</span> ';
       if (c.isComment) h += '<span class="nh-text">' + esc(c.text) + '</span>';
       else h += '<span class="nh-delta"><span class="nh-from">' + esc(c.from) + '</span>' +
-        '<span class="nh-arrow">→</span><span class="nh-to">' + esc(c.to) + '</span></span>';
+        ' <span class="nh-arrow">→</span> <span class="nh-to">' + esc(c.to) + '</span></span>';
       h += '</div>';
     }
     return h + '</div></div>';
@@ -159,7 +162,7 @@
       '<textarea class="nh-ta" aria-label="Entry text">' + esc(text) + '</textarea>' +
       '<div class="nh-fuwrap"><span class="nh-lbl">Follow-up</span>' +
       '<select class="nh-sel" aria-label="Follow-up status">' + opts + '</select></div>' +
-      '<div class="nh-actions"><button type="button" class="nh-btn" data-act="cancel" aria-label="Cancel edit">Cancel</button>' +
+      '<div class="nh-actions"><button type="button" class="nh-btn" data-act="cancel" aria-label="Cancel edit">Cancel</button> ' +
       '<button type="button" class="nh-btn nh-btn-primary" data-act="save" aria-label="Save entry">Save</button></div></div>';
   }
 

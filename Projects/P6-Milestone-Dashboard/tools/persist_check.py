@@ -80,13 +80,13 @@ STAGE1 = r"""
     window.confirm=function(){ return true; };
 
     // --- pick a milestone that carries a real id, and a different target row
-    const withId=MILESTONES.filter(function(m){ return extractSnipId(m.notes); });
+    const withId=MILESTONES.filter(function(m){ return extractActivityId(m.notes); });
     if(!withId.length) throw new Error('no milestone carries a SNIP id');
     const ms=withId[0];
     const fromRef=ms.ref;
     const otherRow=TASKS.filter(function(t){ return t.ref!==fromRef; })[0];
     if(!otherRow) throw new Error('only one row on the board');
-    R.msId=extractSnipId(ms.notes); R.fromRef=fromRef; R.toRef=otherRow.ref;
+    R.msId=extractActivityId(ms.notes); R.fromRef=fromRef; R.toRef=otherRow.ref;
     say('picked milestone', R.msId+' on '+fromRef+' -> '+otherRow.ref);
 
     // --- 1. drag the milestone to another row (the real move path)
@@ -181,7 +181,7 @@ STAGE2 = r"""
         R.markupCount  = MARKUP_COUNT;
         // Where the milestone actually sits in the published data, not where a
         // record says it should be.
-        const m=MILESTONES.filter(function(x){ return extractSnipId(x.notes)===E.msId; })[0];
+        const m=MILESTONES.filter(function(x){ return extractActivityId(x.notes)===E.msId; })[0];
         R.msRef        = m?m.ref:null;
         R.delRowGone   = E.delRef? !TASKS.some(function(t){return t.ref===E.delRef;}) : null;
         const tr=document.querySelector('tr[data-ref="'+E.ovRef+'"]');
@@ -216,7 +216,7 @@ STAGE3 = r"""
       try{
         // State of the clean board BEFORE the import, so "it was already there"
         // cannot be mistaken for "the replay worked".
-        const before=MILESTONES.filter(function(x){ return extractSnipId(x.notes)===E.msId; })[0];
+        const before=MILESTONES.filter(function(x){ return extractActivityId(x.notes)===E.msId; })[0];
         R.refBefore = before?before.ref:null;
         R.rowPresentBefore = E.delRef? TASKS.some(function(t){return t.ref===E.delRef;}) : null;
         R.categories = ANNOT_CATEGORIES.map(function(c){ return c.key+'='+c.count(P); });
@@ -226,7 +226,7 @@ STAGE3 = r"""
 
         setTimeout(function(){
           try{
-            const after=MILESTONES.filter(function(x){ return extractSnipId(x.notes)===E.msId; })[0];
+            const after=MILESTONES.filter(function(x){ return extractActivityId(x.notes)===E.msId; })[0];
             R.refAfter  = after?after.ref:null;
             R.rowPresentAfter = E.delRef? TASKS.some(function(t){return t.ref===E.delRef;}) : null;
             R.depComment= DEP_COMMENTS[E.depKey]||null;
@@ -238,7 +238,7 @@ STAGE3 = r"""
             // Replaying twice must not double-move or re-delete.
             const n1=MS_MOVES.length;
             ANNOT_CATEGORIES.forEach(function(c){ c.apply(P); });
-            const again=MILESTONES.filter(function(x){ return extractSnipId(x.notes)===E.msId; })[0];
+            const again=MILESTONES.filter(function(x){ return extractActivityId(x.notes)===E.msId; })[0];
             R.refAfterSecond = again?again.ref:null;
             R.movesAdded = MS_MOVES.length-n1;
             R.ok=true;
@@ -253,13 +253,13 @@ STAGE3 = r"""
 
 
 def find_chrome() -> str:
-    import os  # SRET_CHROME overrides the lookup (tools/run_checks.py coverage capture)
-    if os.environ.get("SRET_CHROME"):
-        return os.environ["SRET_CHROME"]
-    for c in CHROME_CANDIDATES:
-        if pathlib.Path(c).exists():
-            return c
-    sys.exit("No headless Chromium found. Checked: " + ", ".join(CHROME_CANDIDATES))
+    # P74 (TD-239): every launch goes through tools/check_map/chrome_fixture.py,
+    # which seeds the reference baseline into the current app (the app ships
+    # with none) and hands on to $SRET_CHROME (tools/run_checks.py coverage
+    # capture) when set, else to the real Chromium.
+    sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent / "check_map"))
+    import chrome_fixture
+    return chrome_fixture.launcher()
 
 
 def render(html: str, budget: int = 30000, b64: bool = True) -> dict:

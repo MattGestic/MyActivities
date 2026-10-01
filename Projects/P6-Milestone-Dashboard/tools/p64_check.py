@@ -496,7 +496,10 @@ def main() -> int:
         oldpub = re.sub(r'"projectNoFromFile":(?:true|false),', "", oldpub)
         checks.append({"name": "[R2 old] the stripped payload really has no projectNo",
                        "pass": '"projectNo"' not in oldpub and '"projectNoFromFile"' not in oldpub, "detail": ""})
-        stage2c = STAGE2.replace("__TAG__", "R2 old publish").replace("__WANT__", json.dumps("103787-13"))
+        # P74 (TD-239): a file from before P64 used to keep the number the app
+        # had embedded. Nothing is embedded now, so it has none to keep and
+        # shows the "Project No. not set" link, the same as a blank one.
+        stage2c = STAGE2.replace("__TAG__", "R2 old publish").replace("__WANT__", json.dumps(""))
         checks += render(inject(oldpub, stage2c), (1440, 900))["checks"]
         stage3 = STAGE3.replace("__MODEL__", cap["model"].replace("</", "<\\/"))
         checks += render(inject(src, stage3), (1440, 900))["checks"]

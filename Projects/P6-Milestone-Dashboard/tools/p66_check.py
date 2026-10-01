@@ -232,12 +232,12 @@ PROBE = r"""
     ck('chips: the count reads "N pred · N succ"',
        $('ms-dep-count').textContent===P.length+' pred · '+Q.length+' succ', $('ms-dep-count').textContent);
     const bad=pc.concat(qc).filter(function(c){
-      const lm=findMilestoneBySnip(c.getAttribute('data-id'));
+      const lm=findMilestoneById(c.getAttribute('data-id'));
       const want=lm?statusClassOf(effectiveState(lm)):'future';
       return c.querySelector('.ms-chip-dot').getAttribute('data-st')!==want; });
     ck('chips: each dot is the linked milestone’s effective state', bad.length===0&&pc.length+qc.length>0,
        bad.map(c=>c.getAttribute('data-id')).join(',')||'all '+(pc.length+qc.length)+' agree');
-    const lm0=findMilestoneBySnip((pc[0]||qc[0]).getAttribute('data-id'));
+    const lm0=findMilestoneById((pc[0]||qc[0]).getAttribute('data-id'));
     ck('chips: the title is the linked milestone’s name', !!lm0&&(pc[0]||qc[0]).title.indexOf(lm0.actName||'')===0, (pc[0]||qc[0]).title);
     ck('chips: the raw ID textareas are kept, hidden, with the same values',
        $('ms-dep-pred-list').value===P.join(', ')&&$('ms-dep-succ-list').value===Q.join(', ')&&

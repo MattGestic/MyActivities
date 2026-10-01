@@ -336,6 +336,11 @@ PROBE = r"""
     // width beneath everything, and there is still exactly one free-text
     // name field alongside the Activity ID field.
     toggleTopFilterBar(true); await settle(); await settle();
+    // P72 (Matt 2026-10-01): below 768px the panel folds to the search field
+    // behind its funnel; the structure below is measured with it open (and
+    // it is folded again at the end of this section, its default).
+    const phoneShape=window.innerWidth<768;
+    if(phoneShape){ setFindMore(true); await settle(); await settle(); }
     const bar=$('top-filter-bar');
     const boxes=bar.querySelectorAll(':scope > .fb-top > .fb-box, :scope > .fb-box.crit');
     const foot=bar.querySelector('.fb-foot');
@@ -346,12 +351,12 @@ PROBE = r"""
                        textInputs:document.querySelectorAll('#top-filter-bar input[type=text]').length};
     // P67 (Matt 2026-10-01): below 768px the Critical path box is moved
     // INTO the When box, so Date range and status are one tile; at 768 and up
-    // the three boxes are unchanged.
-    const phoneShape=window.innerWidth<768;
+    // the three boxes are unchanged. P72: that tile in turn moves into Find,
+    // the one bordered panel, right after the search field.
     if(phoneShape){
-      ck('filter row (P67 phone): Find and the Date range tile are each their own bordered box, Critical path inside the tile',
-         boxes.length===2&&!!findBox&&!!whenBox&&!!critBox&&whenBox.contains(critBox)&&critBox.parentElement!==bar,
-         boxes.length+' boxes, crit in '+(critBox&&critBox.parentElement.id));
+      ck('filter row (P72 phone): Find is the one bordered panel, the Date range tile inside it, Critical path inside the tile',
+         boxes.length===1&&!!findBox&&!!whenBox&&!!critBox&&findBox.contains(whenBox)&&whenBox.contains(critBox)&&critBox.parentElement!==bar,
+         boxes.length+' boxes, when in '+(whenBox&&whenBox.parentElement.className)+', crit in '+(critBox&&critBox.parentElement.id));
     } else {
       ck('filter row: Find, When and Critical path are each their own bordered box',
          boxes.length===3&&!!findBox&&!!whenBox&&!!critBox, boxes.length+' boxes');
@@ -363,7 +368,12 @@ PROBE = r"""
     const sideBySide=Math.abs(box(findBox).t-box(whenBox).t)<=2 &&
                       box(whenBox).l>=box(findBox).r-2;
     R.notes.filterRow.sideBySide=sideBySide;
-    if(window.innerWidth>=1280){
+    const fwrapBox=box($('filter-title').closest('.ds-fwrap'));
+    if(phoneShape){
+      ck('filter row (P72 phone): the Date range tile stacks below the search field, as wide as it',
+         box(whenBox).t>fwrapBox.b-2&&Math.abs(fwrapBox.w-box(whenBox).w)<=2,
+         'search bottom '+fwrapBox.b+', when top '+box(whenBox).t+', widths '+fwrapBox.w+'/'+box(whenBox).w);
+    } else if(window.innerWidth>=1280){
       ck('filter row: Find and When sit side by side at 1440',
          sideBySide, 'find right '+box(findBox).r+', when left '+box(whenBox).l+
          ', find top '+box(findBox).t+', when top '+box(whenBox).t);
@@ -376,8 +386,8 @@ PROBE = r"""
     // Critical path is always its own row, below both (or below whichever of
     // Find/When is lower, when they are side by side).
     if(phoneShape){
-      ck('filter row (P67 phone): Critical path sits below Find, inside the Date range tile',
-         box(critBox).t>=box(findBox).b-2&&box(critBox).t>=box(whenBox).t&&box(critBox).b<=box(whenBox).b+0.5&&
+      ck('filter row (P72 phone): Critical path sits below the search field and the Weeks row, inside the Date range tile',
+         box(critBox).t>=fwrapBox.b-2&&box(critBox).t>=box($('wr-field')).b-2&&box(critBox).t>=box(whenBox).t&&box(critBox).b<=box(whenBox).b+0.5&&
          box(critBox).l>=box(whenBox).l&&box(critBox).r<=box(whenBox).r+0.5,
          'crit '+JSON.stringify(box(critBox))+' when '+JSON.stringify(box(whenBox)));
     } else {
@@ -406,6 +416,7 @@ PROBE = r"""
     R.notes.filterRow.contentH=r1(inner); R.notes.filterRow.boxH=box(bar).h;
     ck('filter row: the open bar is tall enough for its own content',
        box(bar).h>=inner-2, 'box '+box(bar).h+' against content '+r1(inner));
+    if(phoneShape){ setFindMore(false); await settle(); }
     // Collapsed, the heading offers a one-click way back. P67 (Matt
     // 2026-10-01): it is now the row's only toggle, so it shows in both
     // states and says which one it is in (aria-expanded) instead of hiding
@@ -540,8 +551,10 @@ def main():
         f"{src.count('syncLabelScaleEnabled();')} call sites"))
     checks.append((
         "source: the baseline note text lives in one place, as the tooltip",
-        src.count("Matches the embedded baseline") == 1,
-        f"{src.count('Matches the embedded baseline')} copies"))
+        # P74 (TD-239): the baseline is no longer embedded, so the tooltip says
+        # "the baseline"; still one copy, in the tooltip.
+        src.count("Matches the baseline to the imported schedule") == 1,
+        f"{src.count('Matches the baseline to the imported schedule')} copies"))
     # P56/D-20b: the sd-actions-main/-exports/-right containers were retired
     # with the row they built (see the "drawer's action bar" note above), so
     # this source check is retargeted to their replacement: the Workspace

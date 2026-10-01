@@ -31,6 +31,10 @@ result rather than a source read (CLAUDE.md "Verification standard"):
       (.fb-top / .fb-box.crit / .fb-foot) is equal within 2px, and no gap
       exceeds twice that typical gap. P67: .fb-top counts as its boxes when
       they stack, since below 768px .fb-box.crit lives inside the date box.
+      P72: below 768px the date box lives inside Find, the one panel, so the
+      groups there are the panel's stacked sections (the search field, the
+      date tile, the Banding / Source / Activity ID(s) block) and then the
+      footer, whose gap is measured from the panel's own bottom edge.
   (e) #top-filter-bar.open's max-height is at least its scrollHeight: the
       bar is not silently clipped short of its own content (the D-15a root
       cause: max-height:var(--tfb-h,160px) with max-height itself in the
@@ -64,6 +68,10 @@ contract:
       .wr-field has width >= 90% of its own field-row container (.fb-line),
       except where more than one control shares a .fb-line (Find's name +
       banding + source row) - there, their widths must SUM to >= 90% of it.
+      P72: a .fb-line laid out as display:contents has no box of its own;
+      its controls are measured against the nearest ancestor with one, and
+      summed per visual row (the name field and Banding are on two rows
+      there).
   (i) the footer close button (#btn-filter-hide) has computed border-style
       'none' or border-width 0. P67 removed that button: (i) now asserts the
       footer carries no close control at all.
@@ -224,7 +232,9 @@ PROBE = r"""
       return getComputedStyle(el).display!=='none' && el.getBoundingClientRect().height>0;
     };
     const topKids=[];
-    Array.prototype.filter.call(bar.children,shownEl).forEach(function(el){
+    const findP=document.getElementById('tfb-find'), whenP=document.getElementById('tfb-when');
+    const panelShape=!!(findP&&whenP&&findP.contains(whenP));
+    if(!panelShape) Array.prototype.filter.call(bar.children,shownEl).forEach(function(el){
       if(el.classList.contains('fb-top')){
         const sub=Array.prototype.filter.call(el.children,shownEl);
         const stacked=sub.length>1&&sub.every(function(c,i){
@@ -238,6 +248,17 @@ PROBE = r"""
       const prevBottom=topKids[i-1].getBoundingClientRect().bottom;
       const curTop=topKids[i].getBoundingClientRect().top;
       gaps.push(Math.round((curTop-prevBottom)*10)/10);
+    }
+    if(panelShape){
+      // P72 phone: the panel's sections, then the footer below the panel.
+      const fwrapP=document.getElementById('filter-title').closest('.ds-fwrap');
+      const more=Array.prototype.filter.call(findP.querySelectorAll('.fb-more'),shownEl).map(function(e){ return e.getBoundingClientRect(); });
+      const secs=[fwrapP.getBoundingClientRect(),whenP.getBoundingClientRect()];
+      if(more.length) secs.push({top:Math.min.apply(null,more.map(function(r){ return r.top; })),bottom:Math.max.apply(null,more.map(function(r){ return r.bottom; }))});
+      for(let i=1;i<secs.length;i++) gaps.push(Math.round((secs[i].top-secs[i-1].bottom)*10)/10);
+      const footP=bar.querySelector('.fb-foot');
+      if(footP&&shownEl(footP)) gaps.push(Math.round((footP.getBoundingClientRect().top-findP.getBoundingClientRect().bottom)*10)/10);
+      topKids.push(findP); if(footP) topKids.push(footP);
     }
     R.notes.groupGaps={kids:topKids.map(function(k){return k.className;}),gaps:gaps};
     const gMin=Math.min.apply(null,gaps), gMax=Math.max.apply(null,gaps);
@@ -297,13 +318,23 @@ PROBE = r"""
       const widthResults=[];
       let widthOk=true;
       byCtrl.forEach(function(els,ctrl){
-        const cw=ctrl.getBoundingClientRect().width;
-        const sum=els.reduce(function(s,el){ return s+el.getBoundingClientRect().width; },0);
-        const ratio=cw>0?sum/cw:0;
-        const ok=ratio>=0.9;
-        if(!ok) widthOk=false;
-        widthResults.push({ctrl:ctrl.id||ctrl.className,n:els.length,sum:Math.round(sum),
-          containerW:Math.round(cw),ratio:Math.round(ratio*100)});
+        // P72: a display:contents row has no box; measure against the
+        // nearest ancestor that has one (its content box), per visual row.
+        let host=ctrl;
+        while(host&&getComputedStyle(host).display==='contents') host=host.parentElement;
+        const hcs=getComputedStyle(host);
+        const cw=host===ctrl?ctrl.getBoundingClientRect().width:
+          host.getBoundingClientRect().width-parseFloat(hcs.paddingLeft)-parseFloat(hcs.paddingRight)-parseFloat(hcs.borderLeftWidth)-parseFloat(hcs.borderRightWidth);
+        const rows=new Map();
+        els.forEach(function(el){ const t=Math.round(el.getBoundingClientRect().top); if(!rows.has(t)) rows.set(t,[]); rows.get(t).push(el); });
+        rows.forEach(function(rowEls){
+          const sum=rowEls.reduce(function(s,el){ return s+el.getBoundingClientRect().width; },0);
+          const ratio=cw>0?sum/cw:0;
+          const ok=ratio>=0.9;
+          if(!ok) widthOk=false;
+          widthResults.push({ctrl:(ctrl.id||ctrl.className)+(host!==ctrl?' (in '+(host.id||host.className)+')':''),n:rowEls.length,sum:Math.round(sum),
+            containerW:Math.round(cw),ratio:Math.round(ratio*100)});
+        });
       });
       R.notes.fieldWidths=widthResults;
       ck('every field fills (or, sharing a .fb-line row, together fill) >=90% of its row container',
@@ -379,6 +410,9 @@ PROBE_COARSE = r"""
   try{
     const bar=document.getElementById('top-filter-bar');
     if(!bar) throw new Error('#top-filter-bar not found');
+    // P72: at phone width the panel folds to the search field behind its
+    // funnel; every control is measured, so open it first (no-op at 768 up).
+    if(typeof setFindMore==='function') setFindMore(true);
     const ctlH=parseFloat(getComputedStyle(bar).getPropertyValue('--ctl-h'));
     const hitTouch=parseFloat(getComputedStyle(bar).getPropertyValue('--ctl-hit-touch'))||40;
     const els=Array.prototype.filter.call(

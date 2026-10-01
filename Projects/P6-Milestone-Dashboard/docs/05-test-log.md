@@ -3293,3 +3293,87 @@ TD-229. The app embedded the grid module as merged in PR #20 (P61). The module h
 
 **Published:** `releases/v3.1.0-P70_grid-core-features.html`
 
+## TEST-72: P71 saved copy keeps the embedded libraries; empty-state baseline copy (v3.1.0-P71)
+
+TD-235.
+
+**Before the fix (reproduced):** a copy saved from v3.1.0-P69 was 1.25 MB against the app's 2.7 MB and held no `#vendor-sheetjs` or `#vendor-slickgrid` script (count 0 each); only the SlickGrid CSS survived.
+
+**New check `tools/p71_check.py`** (fresh profile each stage):
+- Baseline load: every annotation store empty (entries, comments, health, progress, field edits, notes, user milestones, short titles, dependency comments); not a published copy; XLSX and Slick defined.
+- Saved file: one each of `#app-script`, `#vendor-sheetjs`, `#vendor-slickgrid`, `#vendor-slickgrid-css`, `#published-state`; a foreign script injected before saving is dropped, and so is the check's own probe; one `</body>`; one `APP_VERSION` literal; script order kept; saved state has no entries and no legacy annotation fields.
+- Saved copy reopened: reports published; XLSX and Slick defined; 159 rows, 198 milestones and the same marker count as the baseline; every annotation store still empty; the foreign script never ran.
+
+**Checks run:** by `tools/run_checks.py` (change-scoped). Results in the PR.
+
+## TEST-73: P72 collapsible phone filter panel and the heading that scrolls away (working copy on v3.1.0-P71)
+
+TD-236. Matt's phone screenshots were the brief. Implementation screenshots: `docs/mockups/P72/impl-390-collapsed.png`, `impl-390-expanded.png`, `impl-390-scrolled.png`.
+
+**Measured before building:** at every width the board scrolls inside `#scroll-wrap` (`max-height: calc(100vh - 150px)`) and the window scrolls whatever the header, icon bar and filter bar push past that; the info row, the month band and the week band are sticky cells inside the scroller (top 0, `--hdr-info-h`, `--hdr-info-h + --hdr-phase-h`); nothing above the board is sticky or fixed. 768 to 1023px has the same two scrollers as the phone, with the tallest heading share of the viewport, so the scroll-away applies below 1024px.
+
+**New check `tools/p72_filter_scroll_check.py`** (headless Chromium, network unresolvable), at 390x844 light and dark (dark with reduced motion), 767 / 768 (both sides of the phone breakpoint), 1023 / 1024 (both sides of the scroll-away query) and 1440x900 light and dark:
+- Collapsed: only the search field and the funnel show in the bar; the funnel sits inside the field's right end; `aria-expanded`, pressed look, stored state, and a fresh load of the page (an iframe of the same file) reads it back, open and closed.
+- Expanded: row 1 Weeks, Mode, Fit (tops within 4px, left to right, still one row with a week range set); row 2 Status, Float, Notes and the x on one line; then Banding (with Source beside it when shown) and Activity ID(s); labels hidden, accessible names kept; not clipped.
+- Dot: status, float, notes, week range, banding and IDs each show it alone while collapsed, not while expanded, not once cleared.
+- Filters: three combinations set through the phone dropdowns give the same visible marker count as on desktop at every width.
+- Scroll-away (below 1024): heading, filter bar and info row out of view; month band cells within 2px of the viewport top and the week band within 2px under them; still there scrolling further; also from a window already scrolled part way; scrolling up restores every position; an open filter dropdown, the week-range popover and the milestone card each block it, both ways, and the card does not move; reduced motion sets no transition class.
+- 1024 and 1440: scrolling the board changes nothing above it, the bands stick as before, the board keeps its max-height.
+- No horizontal page scroll anywhere.
+
+**`tools/p67_check.py` updated, same intent:** the collapsed and expanded control-state assertions read the funnel's pressed look instead of the chevron's rotation; the tile assertions run with the panel expanded and read P72's order (Mode and Fit on the Weeks row, the triggers on the row below). Before and after listed in the hand-off.
+
+**Checks run:** by `tools/run_checks.py` (change-scoped, 3 jobs). Results in the hand-off.
+
+## TEST-74: P72 WBS summaries out of the baseline, user milestone links, float read-only, history and edited-mark fixes (v3.1.0-P72)
+
+TD-237.
+
+**New `tools/p72_board_check.py`** (1440x900, 390x844): every baseline milestone has an Activity ID; none is a P6 WBS node; no row is a WBS node; the three mixed activity rows keep only real IDs; every row keeps a milestone; 120/151. Edited mark on N=3 markers (one sharing its cell) sits outside the icon's top-left at one offset. History: `Label from → to` and `Label text` with spaces; date and pill separated; pill and pencil anchored right, pencil after the pill.
+
+**New `tools/p72_deps_check.py`** (agent, 232/232): user milestone links added and removed on the card, shown both ways, drawn as lines, counted, recorded in history; discard keeps nothing; publish and model import round trips keep links and leave the schedule's own `DEP_DATA` byte-identical; user milestone float "-" and read-only, schedule float read-only, a stored float override no longer moves the board; N=3 chained user milestones.
+
+**Existing checks changed, same intent:** `p29` baseline pins 159/196/159/198 to 120/149/120/151 and `p30` 198 to 151 (the WBS rows are gone by design); `d18` source assertion moves the mark's negative offset from top/right to top/left; `p43`, `p44` editable-field list without `floatD`.
+
+**Checks run:** `tools/run_checks.py` (change-scoped). Results in the PR.
+
+## TEST-75: P73 update history stylesheet restored; base P70 merged (v3.1.0-P73)
+
+TD-238. **Reproduced:** after merging the base (P70), `.nh-head` computed `display:block` and only `*` and `.ms-dialog *` matched it; 52 `.nh-*` and Notes-group selectors were missing from the stylesheet (diffed against the P72 head). **Fixed:** `p72_board_check` 36/36 including the new source assertion that `.nh-head{` precedes the GRID VIEW banner; `p66_check` 101/101; `notes_history_check` 71/71; `grid_view_embed.py --check` clean. **Change-scoped run:** 58 selected, 58 passed (p61 now passes with TD-229 in the base). Empty-state copy regenerated from P73, `p71_check` 27/27.
+
+## TEST-76: P74 no embedded baseline, the empty state, and the test fixture (v3.1.0-P74)
+
+TD-239. Screenshots: `docs/mockups/P74/empty-state_1440_light.png`, `_1440_dark.png`, `_390_light.png`, `_390_dark.png` (written by `tools/p74_check.py --screenshots`).
+
+**New `tools/p74_check.py`** runs the app as it ships, with no fixture (`sret:no-fixture` in its page), at 390x844 and 1440x900, light and dark:
+- Source: none of `Eskay`, `Snip`, `SNIP-`, `103787`, `Matthew`, `Garrett`, `Ausenco`, `Bronson`, `SRK` anywhere in the file (and no `eskay` in any case); one version literal; no seed or dependency literal; the hook read once.
+- Boot: nothing seeded, nothing on the board, neutral heading and tab title, weeks around today. The empty state shows its heading, its one line, the example (four `M-` rows, markers from `renderIcon()` in Complete, On track, At risk and Critical with the board's own status colour, six weeks, one edited mark, one readable note, one dependency line measured from the first marker to the second) and both calls to action (Import schedule primary, Add milestone secondary). Filter bar, board, info bar, legend, view toggle and shadow switch hidden; header and icon bar kept; no horizontal scroll; the card inside the viewport. Sources says what will become the baseline.
+- Zero data, every path: each Data & view tab, View controls, each Workspace section, Notes tabs, histogram, filters, dependency lines, info bar, print preview, the grid view, model export (neutral file name), status CSV, remarks workbook, diagnostics export (the one notice: nothing to export), a rebuild. No exception, and still the empty state.
+- (1440 light) Publish of the empty dashboard: named `Milestone_Dashboard_empty.html`, no schedule and no baseline in its state block; reopened, it is a published file on the empty state with no console error.
+- Add milestone: the call to action opens the dialog; saving shows the board with the marker under User-defined, the toggle still hidden; a date 60 weeks out widens the weeks; Sources > User-defined > Remove brings the empty state back.
+- Import schedule: the call to action opens Data & view at Import; a real import of the 29-Aug reference file through `Parse.workbook()`, `showMapper()` and `runIngest()` (`import_check.build_aoa`) hides the empty state and draws 105 rows and 146 milestones; the first import is the baseline (a copy, labelled with its data date), toggle still hidden, project number filled from the file name; a second import shows the toggle; the Baseline view shows the first; discarding the update falls back to it; one import removed from Sources warns, then empties the board and the empty state returns.
+- No console error in any run. A `ResizeObserver loop` notification (an error event Chromium raises when the board's sticky-header observers re-lay out as the board appears; not an exception and not on the console) is counted, not failed.
+
+**Fixture and injection:** `tools/fixtures/baseline/extract_p73.py --check` reports the committed fixture matches a fresh extraction from `e24d02a`. Every other check runs on it through `tools/check_map/chrome_fixture.py`.
+
+**Existing checks changed, same intent (before → after):**
+- `p39_check` source: one copy of "Matches the embedded baseline" → one copy of "Matches the baseline to the imported schedule" (the tooltip no longer says embedded).
+- `p59_check` A-02: `vt-baseline`, `vt-update` and the shadow switch measured as shown at boot → measured with their group shown for the measurement and restored (hidden until there is something to compare, which the fixture board, one baseline, does not have). Before P74 these were measured; the toggles are measured again rather than skipped.
+- `p64_check` R2 old publish: a pre-P64 published file keeps the embedded number `103787-13` ("survives the round trip", "the bar shows it") → it has no number to keep and shows the "Project No. not set" link (the blank branch: value empty, link present, text shown).
+- `p71_check` (no fixture now): "baseline load" assertions → "fresh load"; added "fresh load opens on the empty state, with no schedule"; "saved copy opens: same rows and milestones as the baseline" → "as the fresh load" (none); "saved copy opens: the board draws its markers" (more than none, same as the load) → "saved copy opens on the empty state, like the fresh load, with no markers".
+- `p72_deps_check`: "one schedule DEP_DATA literal" → "no embedded literal, one declaration seeded by the pre-boot hook"; the six "== source literal" comparisons → "== the fixture's schedule links"; "the published DEP_DATA literal is byte identical to the source" and "carries no user link in its schedule literal" → the published state block's `scheduleDependencies` equal the fixture's and carry no user link.
+- Renames only, no assertion changed: `findMilestoneBySnip` → `findMilestoneById` and `extractSnipId` → `extractActivityId` in the probes of `p30`, `p35`, `p40`, `p61`, `p62`, `p63`, `p66`, `p72_board`, `p72_deps`, `persist`.
+
+**Reference copy:** `data/published/Eskay_Snip_PFS_Dashboard_2026-08-15_empty-state.html` was a copy of the embedded baseline; it is now a truly empty dashboard, so it was regenerated from P74 by `p71_check --save` and renamed `data/published/Milestone_Dashboard_empty.html` (the name publish gives an empty dashboard).
+
+**Checks run:** `tools/run_checks.py --all --jobs 3`: 60 selected, 60 passed, 0 failed. Also with no fixture: `palette_swap_check` 0 escapes on the empty state.
+
+## TEST-77: P74 an imported schedule brings its own links (v3.1.0-P74)
+
+TD-240. **New `tools/p74_deps_check.py`** (no fixture, 1440x900): a real import of the 29-Aug reference file through the app's import path, then:
+- SNIP-155 takes the export's own links (predecessors SNIP-147, SNIP-133; successors SNIP-255, SNIP-161) with the relationship text kept (`SNIP-147: SS 5`, `SNIP-255: FF`, ...); the source holds them and so does the baseline copied from it; the card's chips list them in that order.
+- Lines: with every link on, the SVG holds dependency paths and SNIP-155 has a line from each on-board predecessor and to each on-board successor; all off clears them.
+- Counts beside the marker equal the export's columns for N=3 milestones (SNIP-155 and the next two activities with both columns filled, chosen from the file by the check).
+- Turning the source off empties the schedule's set and takes SNIP-155's links off the board; on brings them back.
+- A user milestone linked after SNIP-155 shows as its successor while the schedule's set, the source's and the baseline's stay free of USR- IDs.
+- The model export carries the source's links and the board's set; the published state block carries them; reopened, the published file has the same links, chips and lines, and the Baseline view shows the baseline's. No console errors.

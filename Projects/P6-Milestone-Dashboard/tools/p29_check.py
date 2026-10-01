@@ -46,7 +46,9 @@ OUT_RE = re.compile(r'<pre id="p29-out">(.*?)</pre>', re.S)
 
 # The board as P28 left it. Hard-coded on purpose: this partial must not move
 # any of them, so a changed number is a failure, not a new baseline.
-EXPECT_BASELINE = {"rows": 159, "markers": 196, "tasks": 159, "milestones": 198}
+# P72 (TD-237): the embedded baseline lost its 39 WBS summary rows and 47 WBS
+# summary "milestones" (P6 WBS nodes with no Activity ID), 159/198 -> 120/151.
+EXPECT_BASELINE = {"rows": 120, "markers": 149, "tasks": 120, "milestones": 151}
 # And the same workbook through the same pipeline. Rows and milestones here are
 # what tools/order_check.py derives independently from the sheet, so these two
 # are cross-checked rather than self-reported.

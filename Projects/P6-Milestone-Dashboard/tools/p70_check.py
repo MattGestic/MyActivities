@@ -117,8 +117,11 @@ def render(html: str, width: int, height: int) -> list:
     with tempfile.NamedTemporaryFile("w", suffix=".html", delete=False, encoding="utf-8") as f:
         f.write(html)
         path = f.name
-    # SRET_CHROME overrides the lookup (tools/run_checks.py coverage capture).
-    exe = os.environ.get("SRET_CHROME") or (str(SHELLS[-1]) if SHELLS else "chromium")
+    # P74 (TD-239): through tools/check_map/chrome_fixture.py, which seeds the
+    # reference baseline and hands on to $SRET_CHROME (coverage) or Chromium.
+    sys.path.insert(0, str(ROOT / "tools" / "check_map"))
+    import chrome_fixture
+    exe = chrome_fixture.launcher()
     out = subprocess.run([exe, "--headless", "--no-sandbox", "--disable-gpu",
                           "--host-resolver-rules=MAP * ~NOTFOUND",
                           f"--window-size={width},{height}", "--virtual-time-budget=40000",

@@ -21,7 +21,7 @@ needs Chrome DevTools Protocol metrics (layout and style-recalc time) and
 setInputFiles, which Playwright gives directly.
 
 Usage:
-  NODE_PATH=$(npm root -g) node tools/scale_bench.mjs [--html FILE] [--activities 2857,5714] [--cpu 1] [--json OUT]
+  NODE_PATH=$(npm root -g) node tools/scale_bench.mjs [--html FILE] [--activities 2857,5714] [--cpu 1] [--json OUT] [--fixture FILE | --no-fixture]
 */
 import { createRequire } from 'module';
 import fs from 'fs';
@@ -35,6 +35,9 @@ const here = path.dirname(new URL(import.meta.url).pathname);
 const HTML = path.resolve(args.html || path.join(here, '..', 'src', 'milestone-dashboard.html'));
 const SIZES = (args.activities || '2857,5714').split(',').map(Number);
 const CPU = Number(args.cpu || 1);
+const NO_FIXTURE = process.argv.includes('--no-fixture');
+const FIXTURE = NO_FIXTURE ? null
+  : fs.readFileSync(args.fixture || path.join(here, 'fixtures', 'baseline', 'eskay-p73.json'), 'utf8');
 
 // ---- Synthetic schedule, deterministic ------------------------------------
 function rng(seed) { let s = seed >>> 0; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); }
@@ -79,6 +82,13 @@ for (const n of SIZES) {
   p.on('pageerror', e => errs.push(e.message));
   await cdp.send('Performance.enable');
   if (CPU > 1) await cdp.send('Emulation.setCPUThrottlingRate', { rate: CPU });
+  // P74 (TD-239): the app ships with no schedule. The benchmark was measured
+  // with the reference baseline behind the import (the import is the update),
+  // so it seeds that baseline before boot, through the app's own pre-boot
+  // hook, the way tools/check_map/chrome_fixture.py does for every Python
+  // check. --no-fixture measures the empty app instead (the import is then
+  // the first schedule and also becomes the baseline).
+  if (FIXTURE) await p.addInitScript({ content: 'window.__SRET_FIXTURE__=' + FIXTURE + ';' });
   await p.goto('file://' + HTML); await p.waitForTimeout(1500);
   // Time every rerender() including the forced layout that follows it
   await p.evaluate(() => { window.__rt = []; const o = window.rerender; window.rerender = function () { const t = performance.now(); const r = o.apply(this, arguments); document.body.offsetHeight; window.__rt.push(performance.now() - t); return r; }; });

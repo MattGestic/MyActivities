@@ -207,7 +207,7 @@ PROBE = r"""
     UPDATE_MILESTONES.forEach(function(m){
       const id=msId(m);
       if(!/_\d+$/.test(id)) return;
-      const fromNotes=extractSnipId(m.notes);
+      const fromNotes=extractActivityId(m.notes);
       if(fromNotes!==id) drift.push('notes '+fromNotes+' vs id '+id);
     });
     R.notes.drift=drift.slice(0,6);
@@ -236,7 +236,7 @@ PROBE = r"""
     // its unsuffixed twin. This is the whole reason the suffix exists.
     const twin=UPDATE_MILESTONES.filter(function(m){ return /_1$/.test(msId(m)); })[0];
     const baseId=twin?msId(twin).replace(/_1$/,''):null;
-    const original=baseId?findMilestoneBySnip(baseId):null;
+    const original=baseId?findMilestoneById(baseId):null;
     MS_COMMENTS[msKeyFor(twin)]='note on the appended copy';
     R.notes.twinId=twin?msId(twin):null;
     ck('dedupe: a suffixed milestone and its twin both resolve', !!twin&&!!original&&twin!==original,
@@ -320,7 +320,7 @@ PROBE = r"""
     const baseCount=MILESTONES.length;
     setViewMode('update'); await settle(); await settle();
     R.notes.afterViewSwitch={baseline:baseCount,update:MILESTONES.length};
-    ck('view switch: the baseline is still the embedded one', baseCount===198, baseCount);
+    ck('view switch: the baseline is still the embedded one', baseCount===151, baseCount);  // P72: 198 less 47 WBS summaries
     ck('view switch: both appended sources survive a round trip to baseline',
        MILESTONES.length===MS_ONE*2 && TASKS.length===TASK_ONE*2,
        TASKS.length+' / '+MILESTONES.length);

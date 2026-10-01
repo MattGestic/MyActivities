@@ -263,7 +263,7 @@ PROBE = r"""
     ck('the deleted milestone\'s row is gone and the added one is on the board',
        !document.querySelector('tr[data-type="row"][data-ref="'+B+'"]')&&!!document.querySelector('tr[data-type="row"][data-ref="'+nextId+'"]'));
     ck('the board milestones follow the store',
-       !!findMilestoneBySnip(A)&&findMilestoneBySnip(A).actName==='Renamed in grid'&&!findMilestoneBySnip(B)&&!!findMilestoneBySnip(nextId));
+       !!findMilestoneById(A)&&findMilestoneById(A).actName==='Renamed in grid'&&!findMilestoneById(B)&&!!findMilestoneById(nextId));
     ck('the User milestones count follows (3)', ($('ws-userms-count')||{}).textContent==='3', ($('ws-userms-count')||{}).textContent);
 
     const net=performance.getEntriesByType('resource').map(e=>e.name).filter(u=>/^https?:/i.test(u));

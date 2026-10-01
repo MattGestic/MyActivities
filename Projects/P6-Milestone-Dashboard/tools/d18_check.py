@@ -328,10 +328,10 @@ def main():
         "ms-edited-mark m-board-edit-mark" in src,
         "renderMarker does not append the shared class pair"))
     checks.append((
-        "source: the mark sits outside the icon box (negative offsets, not inside it)",
+        "source: the mark sits outside the icon box, at its top-left (negative offsets; P72 moved it from top-right)",
         bool(re.search(r"\.m-board-edit-mark\{[^}]*top:-\d", nospace)) and
-        bool(re.search(r"\.m-board-edit-mark\{[^}]*right:-\d", nospace)),
-        "no negative top/right offset found on .m-board-edit-mark"))
+        bool(re.search(r"\.m-board-edit-mark\{[^}]*left:-\d", nospace)),
+        "no negative top/left offset found on .m-board-edit-mark"))
     checks.append((
         "source: the edit ghost is a distinct class from the baseline ghost",
         "m-edit-ghost" in nospace and ".m-ghost.m-wrap" in nospace,

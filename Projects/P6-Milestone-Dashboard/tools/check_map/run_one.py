@@ -61,6 +61,12 @@ def run(cmd, timeout=1800, capture=True):
             argv0 = (r.get("argv") or [""])[0]
             if argv0.endswith("chrome_cov.py"):
                 continue   # the wrapper's own reads are not the check's inputs
+            if argv0.endswith("chrome_fixture.py"):
+                # P74: the fixture it seeds IS an input of the check. The app
+                # file it reads only for its version is not: the check's use
+                # of the app is mapped region by region from coverage.
+                reads.update(x for x in r.get("reads", []) if not x.endswith(os.sep + os.path.join("src", "milestone-dashboard.html")))
+                continue
             reads.update(r.get("reads", []))
             writes.update(r.get("writes", []))
             procs.append({"argv": r.get("argv"), "reads": sorted(os.path.relpath(x, ROOT) for x in r.get("reads", []))})

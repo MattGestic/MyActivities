@@ -103,6 +103,12 @@ PROBE = r"""
       pill.style.display='';
 
       // ---------- A-02 ----------
+      // P74 (TD-239): the view toggle and the shadow switch are hidden until
+      // there are two schedules to compare, which this board (one baseline,
+      // no update) does not have. They are measured as they show once there
+      // are: the group's display put back for the measurement, then restored.
+      const vgrp=document.querySelector('.rpt-sub-view'), vwas=vgrp.style.display;
+      vgrp.style.display='';
       ['vt-baseline','vt-update','btn-add-ms','btn-filter-expand'].forEach(function(id){
         const e=$(id); if(!e||!e.offsetParent) return;
         ck('A-02 '+id+' is --ctl-h tall', Math.abs(rc(e).height-ctlH)<0.6, rc(e).height);
@@ -110,6 +116,7 @@ PROBE = r"""
       const sw=document.querySelector('.bl-shadow .toggle-switch');
       if(sw) ck('A-02 the Baseline shadow switch is 32x16', Math.round(rc(sw).width)===32&&Math.round(rc(sw).height)===16,
                 rc(sw).width+'x'+rc(sw).height);
+      vgrp.style.display=vwas;
 
       // ---------- B-02 / B-01 transitions ----------
       const title=$('rpt-title-text');
@@ -253,10 +260,12 @@ PROBE = r"""
         ck('C-03 (P67) '+p[0]+' has no visible label at phone width and names itself',
            (!lb||lb.getClientRects().length===0)&&!!f.getAttribute(p[1]), f.getAttribute(p[1]));
       });
-      if(typeof setFindMore==='function') setFindMore(false);
       // ---------- C-05 ----------
+      // P72: the date tile is inside the funnel's panel, so it is measured
+      // with the panel open (it was folded again before this point).
       const seg=$('wr-mode-seg'), card=$('tfb-when');
       ck('C-05 the Mode toggle keeps its natural width', rc(seg).width<rc(card).width*0.8, Math.round(rc(seg).width)+'/'+Math.round(rc(card).width));
+      if(typeof setFindMore==='function') setFindMore(false);
       // B-02 on a phone: the toggle and the title do not overlap.
       const tg=$('ws-toggle'), title=$('rpt-title-text');
       ck('B-02 phone: the toggle does not overlap the title', rc(tg).right<=rc(title).left+0.5, rc(tg).right+' vs '+rc(title).left);

@@ -14,7 +14,7 @@ Reporting and review tool only. It never writes back to P6.
 
 Open `src/milestone-dashboard.html` in a browser. That is the whole procedure.
 
-No install, no server, no build step. A baked-in baseline schedule (15-Aug-2026 P6 export, 159 tasks / 198 milestones) loads on open, so the file is useful with zero setup.
+No install, no server, no build step. A fresh copy carries no schedule and opens on an empty state with two actions: Import schedule and Add milestone (P74). The first schedule imported becomes the baseline.
 
 ## Import a schedule update
 
@@ -27,7 +27,7 @@ Expected P6 export columns: `Activity ID`, `Activity Name`, `Duration`, `Start`,
 
 Hierarchy comes from the Activity ID column: leading whitespace plus the leaf pattern (no whitespace, contains a digit) marks an activity; anything else is treated as a group/band header.
 
-An import overlays the view. It does not modify the baked-in baseline.
+The first import becomes the baseline. A later import is the update and overlays the view; it does not modify the baseline, and the Baseline / Update toggle appears once there are two to compare.
 
 A reference export is committed at `data/schedules/103787-13_PFS_Weekly_Update_DD-2026-08-29.xlsx` (data date 29-Aug-2026, 192 rows).
 
