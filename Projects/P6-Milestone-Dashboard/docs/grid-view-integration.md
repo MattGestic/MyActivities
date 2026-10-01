@@ -255,6 +255,38 @@ While a filter is on, a pill in row 3 names it ("My temp list only" or "List: <n
   - "Limit items to a single list", when it becomes a setting, belongs in Data & view > Data settings and just sets `USER_LISTS.settings.singleList`.
 - **Relationship to week collections (P58, D-19a).** These are separate. A note keeps its reporting week; lists are the user's own working groups.
 
+### Lists across both screens: handoff spec (Matt, 2026-09-30)
+
+The list selection feature is used by both the grid and the dashboard. They share one store and one set of rules; neither screen keeps a copy of either. This is the contract both sides build to.
+
+**One store, one module.** `USER_LISTS = SRETCollections.newStore()`, an app global. Every read and write on either screen goes through `SRETCollections` (`src/modules/collections/collections.js`). Saved lists (`USER_LISTS.list`) are annotation-layer data and are persisted with the annotations; My temp list (`USER_LISTS.temp`) is session state and never saved.
+
+**Item refs.** `'activity:'+activityId` for schedule activities and user tasks (the same activity from the board or any grid view is one item), `'note:'+nid` for notes, `'annot:'+entryId` for other annotation entries. Refs are keyed by activity ID, so they survive a schedule re-import; an activity missing from the current schedule stays in its lists and shows as "not in this schedule".
+
+**Module API** (all return a result object; show `describe(result)` as the message; persist after any result without `error`):
+
+| Call | Does | Used by |
+|---|---|---|
+| `tempAdd(store, refs)` / `tempRemove(store, refs)` / `tempClear(store)` | Build and trim My temp list | Grid Add to temp list; dashboard Notes bulk bar, board selection, list panel |
+| `temp(store)`, `inTemp(store, ref)` | Read the temp list | Both panels, the grid's row mark |
+| `create(store, name)` | New empty saved list (name rules: not blank, 60 characters, unique, not "My temp list") | Both panels |
+| `addFromTemp(store, listId, refs)` / `saveFromTemp(store, name, refs)` | Step 2: ticked temp items into an existing or new list; the temp list stays | Both panels |
+| `assign(store, listId, refs)` | Straight into a list, skipping the temp list | Grid "Add to "<list>"" |
+| `removeFromList(store, listId, refs)`, `unassign(store, refs)`, `deleteList(store, listId)` | Take items out of one list, of every list, or delete a list (items unchanged) | Both panels |
+| `list(store)` -> `[{id, label, count}]`, `itemsOf(store, listId)`, `membership(store, ref)` -> names, `listIdsOf(store, ref)` | Reads for selectors, item lists and the List column | Both |
+| `describe(result)` | The one user-facing sentence for any result | Both |
+
+**Keeping the two screens in step.** The grid reads the store when a screen opens and after each of its own changes (`lists.onChange`). A change made on the dashboard while a grid is open calls `SRETGrid.refresh(currentConfig)` (or `patchRows`) so the List column, row marks, pill and panel follow. A change made in the grid calls the dashboard's list panel render in `lists.onChange`, beside `noteMarkup()`. Rule for both: whoever changes the store tells the other screen; nothing polls.
+
+**Dashboard: the list selector in the Workspace panel (Matt, 2026-09-30).** The Workspace (left, annotation side, D-20) gets a **Lists** section with the same selector the grid panel has:
+- A header dropdown choosing **My temp list** or any saved list (`list(store)`, with counts), the same control as the grid's Saved lists header, plus the temp list's session-only hint on hover.
+- The selected list's items, each with a checkbox, the activity ID and name (`refLabel`), and the lists it is in (`membership`).
+- The grid panel's actions, in the same places: temp list: **Add to list ▾** (saved lists, New list…), **Remove**, **More ▾** (Show only these on the board, Clear temp list…); saved list: **Remove from list**, **More ▾** (Show only these on the board, Open in table, Delete list…).
+- **Show only these on the board** is the dashboard's counterpart of the grid's scope filter: a display-state filter on the board to the list's activities, shown as a pill in the Top filter bar and cleared from it. It never changes schedule data.
+- **Open in table** opens the grid's Schedule milestones view scoped to that list, so the user moves between the two screens with the same selection.
+- Entry points that feed it: the Notes bulk bar ("Add to temp list"), a board selection if P59 adds one, and a milestone dialog action "Add to temp list".
+- Acceptance: a list made in the grid appears in the dashboard selector with the same count without a reload, and the reverse; deleting a list on either side removes it from both; the temp list empties on reload on both; `describe()` wording is identical on both. TD-219.
+
 ### 3. Views from the title (Matt, 2026-09-28)
 
 The grid's title is a view switcher (`views`, `view`, `onView`). Back returns to where the grid was first opened.
@@ -420,6 +452,42 @@ It returns the settings in force. Mistakes fail at setup or at the first `open()
 **Writing a feature.** `SRETGrid.feature(name, function(kit){ return hooks; })`. The hook list is in the header of `grid-view.js`; the six features are the worked examples. A feature reaches the open screen through `kit.s()`, shares helpers with others through `kit.provide()` and `kit.get()`, and adds row-derived fields through `prepare(item)`, which every row copy passes through (load, edit, bulk edit, import, `patchRows`).
 
 **Proof.** `tools/grid_view_modular.py` (part of `grid_view_check.py`) builds bare pages with no demo code: the core alone (opens, edits, filters, adds, deletes; no feature controls; missing features named at open), refs and bulk edit without the others, and all features under different `setup()` calls (fail-fast cases, defaults and overrides, text, a different date format, layout, `symbolClass`). It has its own `--prove-fails`.
+
+### 7. Dependency management screen: proposal and estimate (Matt, 2026-09-30; not started)
+
+**Purpose.** Help the user understand the relationships around one activity or a group, in sequence rather than against the timeline, and record update notes against them.
+
+**Shape.** A grid screen built on the embedded engine (SlickGrid) and the `marks` feature, opened for one activity (row, board marker or milestone dialog), a selection, or a saved list:
+
+| Column | Content |
+|---|---|
+| Sequence | Level relative to the focus (-2, -1, 0, +1, +2) with indent and connector glyphs; expand and collapse each branch |
+| Icon | The board's mark (with any override), coloured by status |
+| ID, Name | From the schedule or user tasks; "not in this schedule" when the export does not include it |
+| Link | Relationship to the row it hangs from (FS, SS, FF, SF), from the export's `ID: TYPE` entries |
+| Start, Finish, Float, Status | Read only, toned as elsewhere |
+| Notes | Editable update note per activity, saved through `onEdit` to the annotation layer (never schedule data); bulk notes through Edit N rows |
+
+Header: direction (Upstream, Downstream, Both), depth (1, 2, 3, All), "Show only driving" later if float data allows. Double-click re-focuses on that activity; Back returns along the path. An activity reached by two paths is listed once, at its nearest level, with "also via ..."; a loop is cut and flagged.
+
+**Build.**
+
+| Part | Size |
+|---|---|
+| `SRETDeps` module: dependency index from schedule Predecessors/Successors and user task refs, levels by breadth-first walk, cycle guard, missing-activity flags, unit checks | Small: about half a working session |
+| `deps` grid feature: sequence column, tree expand and collapse, direction and depth pickers, re-focus and back path | Medium: about one session |
+| Notes column and annotation wiring, bulk notes | Small: about a third of a session |
+| Demo views, main, responsive and modular checks with mutations, docs | Small to medium: half to one session |
+| **Branch total** | **About 2.5 to 3 sessions** (on the scale of this branch's rounds) |
+| At merge: entry points (milestone dialog, board selection, Lists panel "Show dependencies"), note storage beside comments | About half a session |
+
+Code size: roughly that of the `lists` feature. Runtime: the index is built once per screen open, linear in activities plus links.
+
+**Risks and decisions.**
+- Exports may list predecessors outside the filtered set (seen in the reference export); those show as "not in this schedule" rather than being dropped. A full XER import would close the gap.
+- Lags are not in the reference export; the Link column shows the type only until they are.
+- Large fan-out (one activity with dozens of successors): branches start collapsed past the first level, and the depth picker defaults to 2.
+- Decision needed: whether notes are one per activity (shared with the board's comments) or per relationship. Per activity is the smaller build and matches the existing comment store.
 
 ## Verification at merge
 
