@@ -9,6 +9,7 @@ Read this before touching any file in this project. It is the short form; `docs/
 | `src/milestone-dashboard.html` | **The application.** One file. Always the current working version. |
 | `releases/` | Point-in-time snapshots named by version. Never edited. |
 | `data/schedules/` | Reference P6 exports for ingest testing. |
+| `data/published/` | Saved copies of the dashboard (Save / publish output) kept as reference files, e.g. the empty-state baseline copy. Never edited. |
 | `docs/00-project-context.md` | Baseline, decisions, constraints, what not to change |
 | `docs/01-requirements.md` | Personas, `US-##` stories, `UX-##` component requirements |
 | `docs/02-backlog.md` | `EPIC-##` / `FEAT-##` / `TASK-##` |

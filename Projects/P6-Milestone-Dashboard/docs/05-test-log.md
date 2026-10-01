@@ -3276,3 +3276,16 @@ TD-234.
 **`tools/form_to_entry_test.mjs`:** 7 new cases for the A flag (75 total).
 
 **Checks run:** by `tools/run_checks.py` (change-scoped, 3 jobs). Results in the PR.
+
+## TEST-71: P71 saved copy keeps the embedded libraries; empty-state baseline copy (v3.1.0-P71)
+
+TD-235.
+
+**Before the fix (reproduced):** a copy saved from v3.1.0-P69 was 1.25 MB against the app's 2.7 MB and held no `#vendor-sheetjs` or `#vendor-slickgrid` script (count 0 each); only the SlickGrid CSS survived.
+
+**New check `tools/p71_check.py`** (fresh profile each stage):
+- Baseline load: every annotation store empty (entries, comments, health, progress, field edits, notes, user milestones, short titles, dependency comments); not a published copy; XLSX and Slick defined.
+- Saved file: one each of `#app-script`, `#vendor-sheetjs`, `#vendor-slickgrid`, `#vendor-slickgrid-css`, `#published-state`; a foreign script injected before saving is dropped, and so is the check's own probe; one `</body>`; one `APP_VERSION` literal; script order kept; saved state has no entries and no legacy annotation fields.
+- Saved copy reopened: reports published; XLSX and Slick defined; 159 rows, 198 milestones and the same marker count as the baseline; every annotation store still empty; the foreign script never ran.
+
+**Checks run:** by `tools/run_checks.py` (change-scoped). Results in the PR.
