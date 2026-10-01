@@ -253,10 +253,12 @@ PROBE = r"""
         ck('C-03 (P67) '+p[0]+' has no visible label at phone width and names itself',
            (!lb||lb.getClientRects().length===0)&&!!f.getAttribute(p[1]), f.getAttribute(p[1]));
       });
-      if(typeof setFindMore==='function') setFindMore(false);
       // ---------- C-05 ----------
+      // P72: the date tile is inside the funnel's panel, so it is measured
+      // with the panel open (it was folded again before this point).
       const seg=$('wr-mode-seg'), card=$('tfb-when');
       ck('C-05 the Mode toggle keeps its natural width', rc(seg).width<rc(card).width*0.8, Math.round(rc(seg).width)+'/'+Math.round(rc(card).width));
+      if(typeof setFindMore==='function') setFindMore(false);
       // B-02 on a phone: the toggle and the title do not overlap.
       const tg=$('ws-toggle'), title=$('rpt-title-text');
       ck('B-02 phone: the toggle does not overlap the title', rc(tg).right<=rc(title).left+0.5, rc(tg).right+' vs '+rc(title).left);
