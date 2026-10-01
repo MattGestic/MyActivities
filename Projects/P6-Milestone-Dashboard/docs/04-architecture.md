@@ -314,6 +314,17 @@ Every filter used to be a sibling in one wrapping flex row, so at any width betw
 
 The basis is a flex basis rather than a media query, so the break happens when the content genuinely stops fitting instead of at a width someone typed, and the assertion is "side by side XOR cleanly stacked" with which one decided by measured room.
 
+### The filter row's phone shape (P67)
+
+Matt's marked-up phone screenshot (`docs/mockups/P67/filter-markup.png`, 2026-10-01). Below 768px, the breakpoint the stacked phone layout already used (`@media (max-width:767px)`, the design standard's <768 field-row rule), and only there:
+
+- Find shows the name field alone. A chevron inside its right end (`#fb-find-more-btn`, `toggleFindMore()`) opens Banding, Source and Activity IDs (`.fb-more`). The open state is display state in `localStorage` (`sret-fb-find-more`). The chevron carries a dot while a filter it is hiding is set.
+- Date range and status are **one tile**. CSS cannot put children of two boxes on one flex row, so `syncFbShape()` moves `#tfb-crit` into `#tfb-when` while `FB_PHONE_MQ` (the same query string as the CSS) matches, and back into the bar when it does not. The chips, their ids and their handlers move unchanged, so every filter function and check that clicks a chip still works.
+- Status, Total float and Annotations are dropdowns. Each trigger (`.fb-dd-trig`) opens the group's **existing** chips (`.fb-dd-panel`) as a fixed popover placed by `placeFbDropdown()` inside the viewport. The triggers read from the chips' pressed state in `syncFbDropdownTriggers()`, called from `syncStatusFilterUI()`, which every filter change already passes through.
+- Box titles and row labels are hidden. Each box keeps `role=group` and an `aria-label`.
+
+At every width, the header toggle `#btn-filter-expand` (the old expand-only icon's id, kept for the checks) sits left of + Milestone, always shown, pressed while the row is open, and is the row's only show/hide control. The bar's own close x `#btn-filter-hide` is gone. `toggleTopFilterBar()` is still the one writer of both states.
+
 ### The milestone Progress override (v3.1.0-P35)
 
 Progress is the first **editable number** in the annotation layer. Everything before it was a colour, a comment or a piece of text, none of which anything else computed from.

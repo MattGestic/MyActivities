@@ -29,7 +29,8 @@ result rather than a source read (CLAUDE.md "Verification standard"):
       input's bounding box, on every pointer type.
   (d) the vertical gap between consecutive top-level children of the bar
       (.fb-top / .fb-box.crit / .fb-foot) is equal within 2px, and no gap
-      exceeds twice that typical gap.
+      exceeds twice that typical gap. P67: .fb-top counts as its boxes when
+      they stack, since below 768px .fb-box.crit lives inside the date box.
   (e) #top-filter-bar.open's max-height is at least its scrollHeight: the
       bar is not silently clipped short of its own content (the D-15a root
       cause: max-height:var(--tfb-h,160px) with max-height itself in the
@@ -64,7 +65,8 @@ contract:
       except where more than one control shares a .fb-line (Find's name +
       banding + source row) - there, their widths must SUM to >= 90% of it.
   (i) the footer close button (#btn-filter-hide) has computed border-style
-      'none' or border-width 0.
+      'none' or border-width 0. P67 removed that button: (i) now asserts the
+      footer carries no close control at all.
   (j) at 1440px, for each field-label pair inside #tfb-find (Find) — a
       `label` immediately followed by its `.fb-line` in the box's 2-column
       grid — the horizontal gap between the label's right edge and its
@@ -144,6 +146,10 @@ PROBE = r"""
     const bar=document.getElementById('top-filter-bar');
     if(!bar) throw new Error('#top-filter-bar not found');
     R.notes.viewport=window.innerWidth+'x'+window.innerHeight;
+    // P67: at phone width Find shows only the name field until its chevron
+    // is opened. Every field is measured here, so open it first (a no-op
+    // at 768 and up, where the fields always show).
+    if(typeof setFindMore==='function') setFindMore(true);
 
     // ---- (a) nothing inside the bar overflows the viewport horizontally ----
     const overflowers=[];
@@ -208,8 +214,24 @@ PROBE = r"""
        JSON.stringify(fieldChecks));
 
     // ---- (d) equal vertical gaps between consecutive top-level groups ----
-    const topKids=Array.prototype.filter.call(bar.children,function(el){
+    // P67: below 768px the Critical path box moves INTO the Date range box
+    // (one tile), so the bar's own children there are just .fb-top and the
+    // footer. The groups are still Find, the date tile and the footer, so
+    // .fb-top is counted as its boxes whenever they stack (any width below
+    // 1280px), and as one group when they sit side by side (1440), exactly
+    // as before.
+    const shownEl=function(el){
       return getComputedStyle(el).display!=='none' && el.getBoundingClientRect().height>0;
+    };
+    const topKids=[];
+    Array.prototype.filter.call(bar.children,shownEl).forEach(function(el){
+      if(el.classList.contains('fb-top')){
+        const sub=Array.prototype.filter.call(el.children,shownEl);
+        const stacked=sub.length>1&&sub.every(function(c,i){
+          return i===0||c.getBoundingClientRect().top>=sub[i-1].getBoundingClientRect().bottom-1; });
+        if(stacked){ sub.forEach(function(c){ topKids.push(c); }); return; }
+      }
+      topKids.push(el);
     });
     const gaps=[];
     for(let i=1;i<topKids.length;i++){
@@ -250,8 +272,19 @@ PROBE = r"""
     // ---- (h) at 390: control width >= 90% of its .fb-line row container,
     //          summed across a shared multi-control row ----
     if(window.innerWidth<=390){
+      // P67 (Matt 2026-10-01): the Weeks field is a compact dropdown at
+      // phone width, sized to its content with the status triggers beside
+      // it, so it is held to that instead: narrower than its tile, and
+      // still inside it.
+      const wrF=document.getElementById('wr-field'), wrTile=wrF?wrF.closest('.fb-box'):null;
+      if(wrF&&wrTile){
+        const wr=wrF.getBoundingClientRect(), tr=wrTile.getBoundingClientRect();
+        ck('the Weeks field is a compact control inside its tile (narrower than it, not past it)',
+           wr.width>0&&wr.width<tr.width*0.6&&wr.left>=tr.left&&wr.right<=tr.right+0.5,
+           Math.round(wr.width)+' of '+Math.round(tr.width));
+      }
       const wideCtrls=Array.prototype.filter.call(
-        bar.querySelectorAll('.ds-field,.ds-select,.wr-field'),
+        bar.querySelectorAll('.ds-field,.ds-select'),
         function(el){ return getComputedStyle(el).display!=='none' &&
                               el.getBoundingClientRect().width>0; });
       const byCtrl=new Map();
@@ -312,14 +345,13 @@ PROBE = r"""
     }
 
     // ---- (i) footer close button is borderless ----
+    // P67 (Matt 2026-10-01): the footer close x was removed outright; the
+    // header toggle (#btn-filter-expand) is the row's one show/hide control.
+    // So the footer carries no close control at all, bordered or not.
     const hideBtn=document.getElementById('btn-filter-hide');
-    if(hideBtn){
-      const hcs=getComputedStyle(hideBtn);
-      R.notes.hideBtnBorder={borderStyle:hcs.borderStyle,borderWidth:hcs.borderWidth};
-      ck('#btn-filter-hide is borderless (border-style none or border-width 0)',
-         hcs.borderStyle==='none'||parseFloat(hcs.borderWidth)===0,
-         'border-style '+hcs.borderStyle+', border-width '+hcs.borderWidth);
-    }
+    const footBtns=bar.querySelectorAll('.fb-foot button');
+    ck('the footer carries no close control (#btn-filter-hide removed, P67)',
+       !hideBtn&&footBtns.length===0, (hideBtn?'#btn-filter-hide present; ':'')+footBtns.length+' footer buttons');
 
     // ---- (k) viewport meta carries maximum-scale=1 ----
     const vpMeta=document.querySelector('meta[name="viewport"]');

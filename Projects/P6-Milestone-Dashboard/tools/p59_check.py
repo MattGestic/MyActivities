@@ -234,12 +234,26 @@ PROBE = r"""
       if(!$('filter-bar').classList.contains('open')) toggleFilterBar();
       await settle();
       // ---------- C-03 ----------
-      [['filter-title','.ds-fwrap'],['filter-ids','.ds-fwrap'],['wr-field',null]].forEach(function(p){
+      // P67 (Matt 2026-10-01): at phone width the Activity name and Weeks
+      // labels are dropped (headings "just take up space"); those fields
+      // carry their name themselves. The labels that remain (Banding,
+      // Activity ID(s), in Find's expanded part) still sit just above their
+      // fields.
+      if(typeof setFindMore==='function') setFindMore(true);
+      await settle();
+      [['filter-band',null],['filter-ids','.ds-fwrap']].forEach(function(p){
         const f=$(p[0]); const box=p[1]?f.closest(p[1]):f;
         const lb=document.querySelector('label[for="'+p[0]+'"]');
         const gap=rc(box).top-rc(lb).bottom;
         ck('C-03 '+p[0]+' label sits just above its field', gap>=0&&gap<=6, gap.toFixed(1));
       });
+      [['filter-title','aria-label'],['wr-field','aria-label']].forEach(function(p){
+        const f=$(p[0]);
+        const lb=document.querySelector('label[for="'+p[0]+'"]');
+        ck('C-03 (P67) '+p[0]+' has no visible label at phone width and names itself',
+           (!lb||lb.getClientRects().length===0)&&!!f.getAttribute(p[1]), f.getAttribute(p[1]));
+      });
+      if(typeof setFindMore==='function') setFindMore(false);
       // ---------- C-05 ----------
       const seg=$('wr-mode-seg'), card=$('tfb-when');
       ck('C-05 the Mode toggle keeps its natural width', rc(seg).width<rc(card).width*0.8, Math.round(rc(seg).width)+'/'+Math.round(rc(card).width));

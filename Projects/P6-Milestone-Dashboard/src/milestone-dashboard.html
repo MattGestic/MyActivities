@@ -1271,6 +1271,71 @@ select.ds-select{cursor:pointer}
   .wr-range-edit input[type=date]{width:100%}
 }
 
+/* ---- P67 (Matt 2026-10-01): the filter bar's phone shape -----------------
+   Same breakpoint as the stacked phone layout above (max-width:767px, the
+   design standard's <768 field-row rule); nothing here applies at 768 and
+   up, where the desktop row is unchanged. syncFbShape() reads the same
+   query (FB_PHONE_MQ) to move #tfb-crit into #tfb-when, so the CSS and the
+   DOM move can never disagree about which shape is showing.
+   Outside the query the phone-only controls simply do not render. */
+#top-filter-bar .fb-chev,#top-filter-bar .fb-dd-trig{display:none}
+#top-filter-bar .fb-modefit{display:contents}
+@media (max-width:767px){
+  /* Headings go: the box titles, the row labels the dropdown triggers now
+     carry, and the labels of the fields whose placeholder or aria-label
+     names them. Banding and Activity ID(s) keep theirs, in the expanded
+     part of Find. Each box keeps role=group and an aria-label. */
+  #top-filter-bar .fb-title,
+  #top-filter-bar #tfb-find>.fb-name-lbl,
+  #top-filter-bar #tfb-when>.fb-lbl,
+  #top-filter-bar #tfb-when .fb-modefit .fb-inline>label,
+  #top-filter-bar #tfb-crit .fb-dd>label,
+  #top-filter-bar #tfb-crit .fb-sep{display:none}
+
+  /* 1. Find: the name field alone until the chevron opens the rest. */
+  #top-filter-bar #tfb-find:not(.fb-more-open) .fb-more{display:none}
+  #top-filter-bar .fb-chev{display:inline-flex;position:absolute;right:0;top:50%;transform:translateY(-50%)}
+  #top-filter-bar .fb-chev .fb-chev-ico{display:inline-block;transition:transform .16s ease}
+  #top-filter-bar .fb-chev[aria-expanded="true"] .fb-chev-ico{transform:rotate(180deg)}
+  #top-filter-bar .fb-chev .fb-dot{display:none;position:absolute;top:var(--space-1);right:var(--space-1);width:6px;height:6px;border-radius:50%;background:var(--color-accent);pointer-events:none}
+  #top-filter-bar .fb-chev.has-dot .fb-dot{display:block}
+  #top-filter-bar .ds-fwrap.has-chev .ds-field{padding-right:calc(var(--space-7) + var(--icon-btn))}
+  #top-filter-bar .ds-fwrap.has-chev .clr{right:var(--icon-btn)}
+
+  /* 2-5. One tile: Weeks sized to its content with the status, float and
+     notes triggers to its right (wrapping inside their own group), then Mode
+     and Fit on one row. row-gap 0 on the tile, the rows take their spacing
+     from .fb-modefit's margin, so the tile has exactly two rows. */
+  #top-filter-bar #tfb-when{flex-direction:row;flex-wrap:wrap;align-items:flex-start;gap:0 var(--ctl-gap)}
+  #top-filter-bar #tfb-when>.fb-row-1{display:contents}
+  #top-filter-bar #tfb-when #wr-field{order:1;flex:0 1 auto;width:auto;min-width:0;max-width:100%}
+  #top-filter-bar #tfb-when #tfb-crit{order:2;flex:1 1 0;min-width:0;display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;gap:var(--ctl-gap-tight);border:0;padding:0;background:none;border-radius:0}
+  #top-filter-bar #tfb-when .fb-modefit{order:3;flex:1 1 100%;display:flex;align-items:center;gap:var(--ctl-gap);margin-top:var(--ctl-gap)}
+  #top-filter-bar #tfb-when .fb-modefit .fb-inline{flex:0 0 auto}
+  #top-filter-bar #tfb-crit .fb-dd{flex:0 1 auto;min-width:0;flex-direction:row}
+  #top-filter-bar #tfb-crit .crit-clear{position:static;margin-left:0}
+
+  /* Dropdown triggers: a compact field-like button with the choice in it. */
+  #top-filter-bar .fb-dd-trig{display:inline-flex;align-items:center;gap:var(--space-2);max-width:100%;min-width:0;padding:0 var(--space-3)}
+  #top-filter-bar .fb-dd-trig .fb-dd-txt{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #top-filter-bar .fb-dd-trig .fb-dd-caret{flex:0 0 auto;color:var(--color-text-muted);font-size:10px}
+  #top-filter-bar .fb-dd-trig.is-set{border-color:var(--color-accent);background:var(--color-accent-tint-bg);color:var(--color-accent-ink);font-weight:600}
+  #top-filter-bar .fb-dd-trig[aria-expanded="true"] .fb-dd-caret{transform:rotate(180deg)}
+
+  /* The chips' own panel. Fixed, so the bar's max-height/overflow clip does
+     not reach it (same reason as .id-suggest-dropdown); placed by
+     placeFbDropdown() against its trigger, never past the viewport. */
+  #top-filter-bar .fb-dd:not(.open) .fb-dd-panel{display:none}
+  #top-filter-bar .fb-dd.open .fb-dd-panel{position:fixed;z-index:2147483000;box-sizing:border-box;width:min(320px,calc(100vw - 2 * var(--space-4)));max-width:calc(100vw - 2 * var(--space-4));max-height:calc(100vh - 2 * var(--space-4));overflow-y:auto;border:var(--stroke-ctl) solid var(--color-filter-border);border-radius:var(--radius-overlay);background:var(--color-bg-elevated);box-shadow:0 8px 24px var(--color-shadow-dialog-far);padding:var(--space-4)}
+  #top-filter-bar .fb-dd.open .ds-seg.chips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--ctl-gap-tight);width:auto}
+  #top-filter-bar #fb-dd-annot.open .ds-seg.chips{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #top-filter-bar .fb-dd.open .ds-seg.chips button{min-width:0;overflow:hidden;text-overflow:ellipsis}
+  #top-filter-bar #fb-dd-float.open .fb-dd-panel{display:flex;flex-direction:column;align-items:stretch;gap:var(--ctl-gap)}
+  /* Custom... opens inside the float panel rather than as a second floating
+     card off its edge. */
+  #top-filter-bar #fb-dd-float .pop-card{position:static;width:auto;max-width:none;box-shadow:none;padding:var(--space-4) 0 0;border:0;border-top:var(--stroke-ctl) solid var(--color-filter-border);border-radius:0}
+}
+
 /* Footer: hint left, the bar's own close control right, on one row. */
 #top-filter-bar .fb-foot{display:flex;align-items:center;gap:var(--ctl-gap);
   border-top:1px solid var(--color-filter-border);padding-top:var(--space-3);margin-top:0}
@@ -1498,6 +1563,11 @@ body.print-mode .pm-banner{display:block}
   padding:0 var(--ctl-pad-x);line-height:1}
 .rpt-hd-btn:hover{background:var(--color-bg-header-hover)}
 .rpt-hd-btn[hidden]{display:none}
+/* P67: the filter row's toggle. Icon only, a --ctl-h square, and pressed
+   (filled) while the row is open: a control that sets state shows it. */
+.rpt-hd-btn.rpt-hd-ico{width:var(--ctl-h);padding:0;justify-content:center}
+.rpt-hd-btn.rpt-hd-ico svg{display:block;flex:0 0 auto}
+.rpt-hd-btn[aria-pressed="true"]{background:var(--color-bg-header-hover);border-color:var(--color-text-on-header)}
 .rpt-sub-divider{color:var(--color-text-on-header-muted);opacity:.6;flex:0 0 auto}
 .view-toggle{display:inline-flex;border:1px solid var(--color-vt-divider);border-radius:var(--radius-ctl);overflow:hidden;vertical-align:middle;margin-left:2px}
 .vt-btn{font-size:var(--text-sm);height:var(--ctl-h);display:inline-flex;align-items:center;padding:0 var(--ctl-pad-x);border:none;background:var(--color-bg-panel);color:var(--color-text-on-panel-muted);cursor:pointer;font-weight:600}
@@ -3544,13 +3614,15 @@ button.sg-hdot:hover{transform:scale(1.25)}
       <!-- A sibling of the detail groups, not a child of the View group: its
            margin-left:auto has to measure against the whole details row, and
            inside .rpt-sub-view it would only have pushed against the Baseline
-           shadow switch. Top right of the project details row, as asked. The
-           add button is always there; the expand icon appears only while the
-           filter row is collapsed, because a control that brings something back
-           is noise while that thing is already on screen. -->
+           shadow switch. Top right of the project details row, as asked.
+           P67 (Matt 2026-10-01): the filter row's show/hide toggle sits
+           immediately left of + Milestone at every width and is always shown,
+           pressed while the row is open. It replaced the expand-only icon and
+           the bar's own close x, so it is now the one control for the row; it
+           keeps the expand icon's id (#btn-filter-expand) that checks read. -->
       <span class="rpt-hd-actions">
+        <button class="rpt-hd-btn rpt-hd-ico" id="btn-filter-expand" onclick="toggleTopFilterBar()" title="Show or hide the filter row" aria-label="Filters" aria-controls="top-filter-bar" aria-expanded="true" aria-pressed="true"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false"><path d="M2 3h12l-4.6 5.4v4.4l-2.8 1.4V8.4z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
         <button class="rpt-hd-btn" id="btn-add-ms" onclick="openAddMilestone(null,null)" title="Add a milestone. Double click any week cell to add one on that row and date instead.">&#43; Milestone</button>
-        <button class="rpt-hd-btn" id="btn-filter-expand" onclick="toggleTopFilterBar(true)" title="Show the filter row" aria-label="Expand the filter row" hidden>&#128269; Expand filters</button>
       </span>
   </div>
 </div>
@@ -3600,28 +3672,32 @@ button.sg-hdot:hover{transform:scale(1.25)}
        spill into a third row once Source is visible (docs/03-todo.md
        TD-202); the name field is the one that shrinks (a sensible min), the
        two selects hold their natural width. -->
-  <div class="fb-box find" id="tfb-find">
+  <!-- P67: at phone width only the name field shows; the chevron inside its
+       right end (#fb-find-more-btn) expands the .fb-more rows below it, and
+       carries a dot while one of them holds a filter it is hiding. -->
+  <div class="fb-box find" id="tfb-find" role="group" aria-label="Find">
    <p class="fb-title">Find</p>
-   <div class="fb-line fb-lbl"><label for="filter-title">Activity name</label></div>
+   <div class="fb-line fb-lbl fb-name-lbl"><label for="filter-title">Activity name</label></div>
    <div class="fb-line fb-row-1">
-    <span class="ds-fwrap has-lead has-clr grow narrow">
+    <span class="ds-fwrap has-lead has-clr has-chev grow narrow">
      <span class="lead" aria-hidden="true">&#128269;</span>
-     <input type="text" id="filter-title" class="ds-field" placeholder="Search activity name" oninput="onTitleFilterInput(this)">
+     <input type="text" id="filter-title" class="ds-field" placeholder="Search activity name" aria-label="Activity name" oninput="onTitleFilterInput(this)">
      <button class="clr" id="sticky-title-clear" onclick="clearOneFilter('filter-title')" title="Clear this filter" aria-label="Clear title search" style="display:none">&#10005;</button>
+     <button type="button" class="ds-ico fb-chev" id="fb-find-more-btn" onclick="toggleFindMore()" aria-expanded="false" aria-controls="tfb-find" aria-label="Show Banding and Activity IDs" title="Banding and Activity IDs"><span class="fb-chev-ico" aria-hidden="true">&#9662;</span><span class="fb-dot" aria-hidden="true"></span></button>
     </span>
-    <span class="fb-inline fb-fixed"><label for="filter-band">Banding</label>
+    <span class="fb-inline fb-fixed fb-more"><label for="filter-band">Banding</label>
      <select id="filter-band" class="ds-select" onchange="applyFilter()">
       <option value="">All bands</option>
      </select>
     </span>
-    <span class="fb-inline fb-fixed tfb-group" id="tfb-source-group"><label for="filter-source">Source</label>
+    <span class="fb-inline fb-fixed tfb-group fb-more" id="tfb-source-group"><label for="filter-source">Source</label>
      <select id="filter-source" class="ds-select" onchange="applyFilter()" title="The schedule each row was imported from">
       <option value="">All sources</option>
      </select>
     </span>
    </div>
-   <div class="fb-line fb-lbl"><label for="filter-ids">Activity ID(s)</label></div>
-   <div class="fb-line">
+   <div class="fb-line fb-lbl fb-more"><label for="filter-ids">Activity ID(s)</label></div>
+   <div class="fb-line fb-more">
     <span class="ds-fwrap has-clr grow" id="activity-id-picker-wrap">
      <input type="text" id="filter-ids" class="ds-field" placeholder="e.g. SNIP-101, SNIP-115" oninput="onActivityIdInput(this)" onfocus="renderIdSuggestions()" autocomplete="off">
      <button class="clr" onclick="clearOneFilter('filter-ids')" title="Clear this filter" aria-label="Clear Activity ID filter">&#10005;</button>
@@ -3636,13 +3712,18 @@ button.sg-hdot:hover{transform:scale(1.25)}
        control + a button, and design-standard.md's field-row pattern does
        not require a control to start its own line just because it has a
        label of its own. -->
-  <div class="fb-box when" id="tfb-when">
+  <!-- P67: at phone width this box is the ONE date-range-and-status tile:
+       syncFbShape() moves #tfb-crit in here, the Weeks field shrinks to its
+       content with the status, float and notes triggers to its right, and
+       Mode and Fit share the row below (.fb-modefit). -->
+  <div class="fb-box when" id="tfb-when" role="group" aria-label="Date range">
    <p class="fb-title">Date range</p>
    <div class="fb-line fb-lbl"><label id="wr-field-label" for="wr-field">Weeks</label></div>
    <div class="fb-line fb-row-1">
     <button type="button" class="wr-field grow empty narrow" id="wr-field" onclick="toggleWeekRangePopover()" aria-haspopup="dialog" aria-expanded="false" aria-label="All weeks">
      <span class="wr-ico" aria-hidden="true">&#128197;</span><span class="wr-txt">All weeks</span><span class="wr-caret" aria-hidden="true">&#9662;</span>
     </button>
+    <span class="fb-modefit">
     <span class="fb-inline fb-fixed"><label>Mode</label>
      <span class="ds-seg" role="group" aria-label="Week filter mode" id="wr-mode-seg">
       <button type="button" aria-pressed="true" onclick="setWeekFilterModeUI('highlight')" title="Weeks stay on the board and are marked">Highlight</button>
@@ -3650,6 +3731,7 @@ button.sg-hdot:hover{transform:scale(1.25)}
      </span>
     </span>
     <button type="button" class="ds-btn" id="btn-fit-screen-inline" onclick="fitToScreen()" title="Fit visible week columns to the available screen width" aria-label="Fit columns to screen"><span aria-hidden="true">&#8596;</span> Fit</button>
+    </span>
    </div>
   </div>
  </div>
@@ -3658,15 +3740,20 @@ button.sg-hdot:hover{transform:scale(1.25)}
       line at >=1280px. P53: the box's own title was removed (its contents
       are self-explanatory chip groups, and every other title-less box in
       this bar already reads fine without one). -->
- <div class="fb-box crit" id="tfb-crit">
+ <!-- P67: at phone width each group below is a dropdown. Its .fb-dd-trig
+      shows the current choice and opens the group's own chips (.fb-dd-panel)
+      as a popover; the chips and their handlers are the same ones the
+      desktop row shows inline, where the triggers do not render. -->
+ <div class="fb-box crit" id="tfb-crit" role="group" aria-label="Status, float and annotations">
   <!-- Multi-select as a chip group rather than a <select multiple>, which
        needs a modifier key nobody discovers and cannot be read at a glance.
        Each chip is one of the five states the board already paints, so this
        filter adds no new vocabulary. Empty selection means no constraint,
        which is not the same as all five selected and is why the buttons are
        not pre-filled. -->
-  <span class="fb-inline"><label>Status</label>
-   <span class="ds-seg chips" role="group" aria-label="Filter by status" id="filter-status-group">
+  <span class="fb-inline fb-dd" id="fb-dd-status"><label>Status</label>
+   <button type="button" class="ds-btn fb-dd-trig" id="fb-dd-status-trig" onclick="toggleFbDropdown('status')" aria-haspopup="true" aria-expanded="false" aria-controls="filter-status-group"><span class="fb-dd-txt">Status: Any</span><span class="fb-dd-caret" aria-hidden="true">&#9662;</span></button>
+   <span class="ds-seg chips fb-dd-panel" role="group" aria-label="Filter by status" id="filter-status-group">
     <button class="st-chip st-crit" id="fs-CRIT" onclick="toggleStatusFilter('CRIT')" aria-pressed="false" title="Critical: total float at or below the CRIT threshold">Critical</button>
     <button class="st-chip st-risk" id="fs-RISK" onclick="toggleStatusFilter('RISK')" aria-pressed="false" title="At risk: total float at or below the RISK threshold">At risk</button>
     <button class="st-chip st-track" id="fs-TRACK" onclick="toggleStatusFilter('TRACK')" aria-pressed="false" title="On track">On track</button>
@@ -3679,8 +3766,9 @@ button.sg-hdot:hover{transform:scale(1.25)}
   <!-- Total float: Any / 0d / <10d / <3 wk / <5 wk / Custom, single-select.
        Custom opens a small popover (comparison, value, unit) and then shows
        as its own chip, e.g. "<= 15d". -->
-  <span class="fb-inline"><label>Total float</label>
-   <span class="pop" id="float-pop-wrap">
+  <span class="fb-inline fb-dd" id="fb-dd-float"><label>Total float</label>
+   <button type="button" class="ds-btn fb-dd-trig" id="fb-dd-float-trig" onclick="toggleFbDropdown('float')" aria-haspopup="true" aria-expanded="false" aria-controls="float-pop-wrap"><span class="fb-dd-txt">Float: Any</span><span class="fb-dd-caret" aria-hidden="true">&#9662;</span></button>
+   <span class="pop fb-dd-panel" id="float-pop-wrap">
     <span class="ds-seg chips" role="group" aria-label="Total float" id="float-chip-group">
      <button type="button" aria-pressed="true" id="float-chip-any" onclick="setFloatPreset('any')">Any</button>
      <button type="button" aria-pressed="false" id="float-chip-0d" onclick="setFloatPreset('0d')" title="Total float of zero or less: the critical path">0d</button>
@@ -3712,8 +3800,9 @@ button.sg-hdot:hover{transform:scale(1.25)}
        the milestone (MS_COMMENTS) or a row remark; Edited = any user
        override (date, health/status, progress — msEditedFields() plus the
        health/progress stores, reusing D-18's own definition of "edited"). -->
-  <span class="fb-inline"><label>Annotations</label>
-   <span class="ds-seg chips" role="group" aria-label="Filter by annotation" id="annot-chip-group">
+  <span class="fb-inline fb-dd" id="fb-dd-annot"><label>Annotations</label>
+   <button type="button" class="ds-btn fb-dd-trig" id="fb-dd-annot-trig" onclick="toggleFbDropdown('annot')" aria-haspopup="true" aria-expanded="false" aria-controls="annot-chip-group"><span class="fb-dd-txt">Notes: Any</span><span class="fb-dd-caret" aria-hidden="true">&#9662;</span></button>
+   <span class="ds-seg chips fb-dd-panel" role="group" aria-label="Filter by annotation" id="annot-chip-group">
     <button type="button" aria-pressed="true" data-key="any" onclick="setAnnotFilter('any')">Any</button>
     <button type="button" aria-pressed="false" data-key="commented" onclick="setAnnotFilter('commented')" title="Has a comment on the milestone or a row remark">Commented</button>
     <button type="button" aria-pressed="false" data-key="edited" onclick="setAnnotFilter('edited')" title="Has a user override: date, status, or progress">Edited</button>
@@ -3760,10 +3849,10 @@ button.sg-hdot:hover{transform:scale(1.25)}
   </select>
  </div>
 
- <!-- Footer: hint left, the bar's own close control right. -->
+ <!-- Footer: the filter summary line. P67 removed the bar's own close x:
+      the header toggle (#btn-filter-expand) is the one control for the row. -->
  <div class="fb-foot">
    <span class="filter-info" id="filter-info"></span>
-   <button class="ds-ico" id="btn-filter-hide" onclick="toggleTopFilterBar(false)" title="Hide the filter row. The magnifier in the header brings it back." aria-label="Hide the filter row">&#10005;</button>
  </div>
 </div>
 
@@ -10769,8 +10858,187 @@ function toggleTopFilterBar(force){
   // offering to do what has already been done. Written here, in the one
   // function that decides the bar's state, rather than anywhere that could
   // disagree with it.
+  // P67 (Matt 2026-10-01): that heading control is now the row's only
+  // toggle, shown at all times beside + Milestone and pressed while the row
+  // is open, so it says which state it is in rather than hiding itself.
   const exp=document.getElementById('btn-filter-expand');
-  if(exp) exp.hidden=open;
+  if(exp){
+    exp.hidden=false;
+    exp.setAttribute('aria-expanded',String(open));
+    exp.setAttribute('aria-pressed',String(open));
+    exp.title=open?'Hide the filter row':'Show the filter row';
+  }
+  if(!open) closeFbDropdown();
+}
+// ===== P67 (Matt 2026-10-01): the filter bar's phone shape =====
+// One query, the one the CSS uses for the stacked phone layout. The CSS lays
+// the phone shape out; syncFbShape() does the one thing CSS cannot, moving
+// the status/float/notes box into the date-range box so the two are ONE tile
+// with the triggers beside the Weeks field. The chips, their ids and their
+// handlers move with it unchanged, so no filter behaves differently.
+var FB_PHONE_MQ='(max-width:767px)';
+function fbIsPhone(){ return window.matchMedia(FB_PHONE_MQ).matches; }
+function syncFbShape(){
+  const bar=document.getElementById('top-filter-bar');
+  const when=document.getElementById('tfb-when');
+  const crit=document.getElementById('tfb-crit');
+  const hidden=document.getElementById('fb-hidden-state');
+  if(!bar||!when||!crit) return;
+  const phone=fbIsPhone();
+  if(phone&&crit.parentElement!==when) when.appendChild(crit);
+  else if(!phone&&crit.parentElement!==bar) bar.insertBefore(crit,hidden);
+  bar.classList.toggle('fb-phone',phone);
+  if(!phone) closeFbDropdown();
+  syncFindMore();
+}
+try{ window.matchMedia(FB_PHONE_MQ).addEventListener('change',syncFbShape); }catch(e){}
+// Find's chevron. Display state (it changes what is shown, never what is
+// filtered), kept per browser like the rail and the settings tab.
+var FB_FIND_OPEN=false;
+try{ FB_FIND_OPEN=localStorage.getItem('sret-fb-find-more')==='open'; }catch(e){}
+function setFindMore(open){
+  FB_FIND_OPEN=!!open;
+  try{ localStorage.setItem('sret-fb-find-more',FB_FIND_OPEN?'open':'closed'); }catch(e){}
+  syncFindMore();
+  // The open bar is capped at --tfb-h (watchStickyHeights' measure, with the
+  // same 40px overshoot). Expanding Find can outgrow that cap in one step,
+  // so it is re-measured here rather than left to the observer's next pass.
+  const bar=document.getElementById('top-filter-bar');
+  if(bar) document.documentElement.style.setProperty('--tfb-h',(bar.scrollHeight+40).toFixed(2)+'px');
+}
+function toggleFindMore(){ setFindMore(!FB_FIND_OPEN); }
+// Also run on every applyFilter pass, so the dot follows the filters.
+function syncFindMore(){
+  const box=document.getElementById('tfb-find');
+  const btn=document.getElementById('fb-find-more-btn');
+  if(!box||!btn) return;
+  box.classList.toggle('fb-more-open',FB_FIND_OPEN);
+  btn.setAttribute('aria-expanded',String(FB_FIND_OPEN));
+  const val=function(id){ const el=document.getElementById(id); return el?String(el.value||'').trim():''; };
+  const srcGrp=document.getElementById('tfb-source-group');
+  const srcOn=!!(srcGrp&&srcGrp.style.display!=='none'&&val('filter-source'));
+  const hiddenActive=!FB_FIND_OPEN&&!!(val('filter-band')||val('filter-ids')||srcOn);
+  btn.classList.toggle('has-dot',hiddenActive);
+  btn.setAttribute('aria-label',(FB_FIND_OPEN?'Hide':'Show')+' Banding and Activity IDs'+(hiddenActive?' (a filter is set)':''));
+  btn.title=hiddenActive?'Banding and Activity IDs: a filter is set':'Banding and Activity IDs';
+}
+// Status / Float / Notes dropdowns. The panel IS the existing chip group (or
+// the float chips with their Custom card), shown as a popover from its
+// trigger at phone width and inline as before on desktop.
+var FB_DD={
+  status:{wrap:'fb-dd-status',trig:'fb-dd-status-trig',panel:'filter-status-group'},
+  float:{wrap:'fb-dd-float',trig:'fb-dd-float-trig',panel:'float-pop-wrap'},
+  annot:{wrap:'fb-dd-annot',trig:'fb-dd-annot-trig',panel:'annot-chip-group'}
+};
+var FB_DD_OPEN=null;
+function toggleFbDropdown(key){
+  if(FB_DD_OPEN===key) closeFbDropdown(true); else openFbDropdown(key);
+}
+function openFbDropdown(key){
+  const d=FB_DD[key]; if(!d||!fbIsPhone()) return;
+  closeFbDropdown();
+  const wrap=document.getElementById(d.wrap), trig=document.getElementById(d.trig), panel=document.getElementById(d.panel);
+  if(!wrap||!trig||!panel) return;
+  FB_DD_OPEN=key;
+  wrap.classList.add('open');
+  trig.setAttribute('aria-expanded','true');
+  placeFbDropdown();
+  const first=panel.querySelector('button[aria-pressed="true"]')||panel.querySelector('button');
+  if(first) try{ first.focus({preventScroll:true}); }catch(e){ first.focus(); }
+  document.addEventListener('keydown',fbDropdownKeydown,true);
+  document.addEventListener('click',fbDropdownOutsideClick,true);
+  window.addEventListener('resize',placeFbDropdown);
+  window.addEventListener('scroll',placeFbDropdown,true);
+}
+function closeFbDropdown(refocus){
+  const key=FB_DD_OPEN; FB_DD_OPEN=null;
+  document.removeEventListener('keydown',fbDropdownKeydown,true);
+  document.removeEventListener('click',fbDropdownOutsideClick,true);
+  window.removeEventListener('resize',placeFbDropdown);
+  window.removeEventListener('scroll',placeFbDropdown,true);
+  if(!key) return;
+  const d=FB_DD[key];
+  const wrap=document.getElementById(d.wrap), trig=document.getElementById(d.trig), panel=document.getElementById(d.panel);
+  if(key==='float'&&typeof closeFloatCustomPopover==='function') closeFloatCustomPopover();
+  if(wrap) wrap.classList.remove('open');
+  if(panel){ panel.style.left=''; panel.style.top=''; }
+  if(trig){ trig.setAttribute('aria-expanded','false'); if(refocus) trig.focus(); }
+}
+// Below the trigger, left-aligned to it, clamped inside the viewport; above
+// it when there is no room below.
+function placeFbDropdown(){
+  if(!FB_DD_OPEN) return;
+  const d=FB_DD[FB_DD_OPEN];
+  const trig=document.getElementById(d.trig), panel=document.getElementById(d.panel);
+  if(!trig||!panel) return;
+  const cs=getComputedStyle(document.documentElement);
+  const m=parseFloat(cs.getPropertyValue('--space-4'))||8;
+  const g=parseFloat(cs.getPropertyValue('--space-2'))||4;
+  const vw=document.documentElement.clientWidth, vh=window.innerHeight;
+  const t=trig.getBoundingClientRect();
+  const pw=panel.offsetWidth, ph=panel.offsetHeight;
+  const left=Math.max(m,Math.min(t.left,vw-m-pw));
+  let top=t.bottom+g;
+  if(top+ph>vh-m) top=(t.top-g-ph>=m)?t.top-g-ph:Math.max(m,vh-m-ph);
+  panel.style.left=left+'px'; panel.style.top=top+'px';
+}
+function fbDropdownKeydown(e){
+  if(e.key!=='Escape') return;
+  // The Custom float card is inside the float panel and closes first.
+  const fc=document.getElementById('float-custom-pop');
+  if(fc&&!fc.hidden) return;
+  e.stopPropagation();
+  closeFbDropdown(true);
+}
+function fbDropdownOutsideClick(e){
+  if(!FB_DD_OPEN) return;
+  const wrap=document.getElementById(FB_DD[FB_DD_OPEN].wrap);
+  if(wrap&&!wrap.contains(e.target)) closeFbDropdown(false);
+}
+// A single-select choice (a float preset, Apply on Custom, a notes option)
+// is the whole interaction, so the panel closes on it; Status is
+// multi-select and stays open until Esc, click-away or its trigger. Bound
+// once, to the panels, alongside the chips' own onclick handlers.
+(function(){
+  const after=function(key,e){
+    if(FB_DD_OPEN!==key) return;
+    const b=e.target.closest&&e.target.closest('button');
+    if(!b) return;
+    let done=false;
+    if(key==='annot') done=true;
+    if(key==='float'){
+      if(b.closest('#float-chip-group')&&b.id!=='float-chip-custom') done=true;
+      if(b.closest('#float-custom-pop')&&b.classList.contains('primary')) done=true;
+    }
+    if(done) closeFbDropdown(true);
+    else setTimeout(placeFbDropdown,0);
+  };
+  ['float','annot','status'].forEach(function(key){
+    const panel=document.getElementById(FB_DD[key].panel);
+    if(panel) panel.addEventListener('click',function(e){ after(key,e); });
+  });
+})();
+// Trigger text from the chips' own pressed state, so it reads whatever the
+// filter holds however it was set. Called from syncStatusFilterUI(), which
+// every filter change already passes through.
+function syncFbDropdownTriggers(){
+  const put=function(id,txt,set){
+    const t=document.getElementById(id); if(!t) return;
+    const s=t.querySelector('.fb-dd-txt'); if(s) s.textContent=txt;
+    t.classList.toggle('is-set',!!set);
+  };
+  // The pressed chips, in their own order (syncStatusFilterUI wrote them
+  // from STATUS_FILTER just before this runs).
+  const names=Array.prototype.map.call(
+    document.querySelectorAll('#filter-status-group .st-chip[aria-pressed="true"]'),
+    function(b){ return b.textContent.trim(); });
+  put('fb-dd-status-trig','Status: '+(names.length===0?'Any':(names.length<=2?names.join(', '):names.length+' selected')),names.length>0);
+  const fp=document.querySelector('#float-chip-group button[aria-pressed="true"]');
+  const ft=fp?fp.textContent.trim():'Any';
+  put('fb-dd-float-trig','Float: '+ft,!!fp&&fp.id!=='float-chip-any');
+  const ap=document.querySelector('#annot-chip-group button[aria-pressed="true"]');
+  const at=ap?ap.textContent.trim():'Any';
+  put('fb-dd-annot-trig','Notes: '+at,!!ap&&ap.getAttribute('data-key')!=='any');
 }
 // ---- Report meta (title / data date / report date) ----
 // P64 (TD-224): projectNo joins the report meta. It was a literal in the
@@ -12227,6 +12495,7 @@ function applyFilter(){
   const critActive=!!(STATUS_FILTER.size||critSpec);
   const annotActive=ANNOT_FILTER!=='any';
   syncStatusFilterUI();
+  if(typeof syncFindMore==='function') syncFindMore();
   const anyExtra=idList.length||bandVal||srcVal||titleVal||rangeActive||ZERO_FILTER_MODE!=='all'||critActive||annotActive;
 
   document.querySelectorAll('th.filter-wk, td.filter-col, th.filter-mo').forEach(el=>{el.classList.remove('filter-wk');el.classList.remove('filter-col');el.classList.remove('filter-mo');});
@@ -16778,6 +17047,7 @@ function syncStatusFilterUI(){
   if(clr) clr.style.visibility=(STATUS_FILTER.size||floatFilterSpec()||ANNOT_FILTER!=='any')?'visible':'hidden';
   syncFloatChipUI();
   syncAnnotChipUI();
+  if(typeof syncFbDropdownTriggers==='function') syncFbDropdownTriggers();
 }
 // ---- P53: Annotations filter (Any/Commented/Edited/Either) --------------
 // Single-select, same chip pattern as Total float. "Commented" reuses the
@@ -17592,6 +17862,7 @@ function watchStickyHeights(){
   renderResetMarksRow();
   renderNotes();
   syncFbNarrow();
+  syncFbShape();
   try{ const ws=localStorage.getItem('sret-ws-section'); if(ws&&WS_SECTIONS.indexOf(ws)>=0) WS_SECTION=ws; }catch(e){}
   document.querySelectorAll('#ws-panel .ws-sec').forEach(function(el){ el.hidden=(el.getAttribute('data-sec')!==WS_SECTION); });
   const wt=document.getElementById('ws-hd-title'); if(wt) wt.textContent=WS_TITLES[WS_SECTION];
