@@ -175,23 +175,40 @@ PROBE = r"""
       ck('D the board has milestones to open', wraps.length>0, wraps.length);
       await openCard(wraps[0]);
       const d=rc(dlg);
-      ck('D-01 the card is 340px wide', Math.round(d.width)===340, d.width);
+      // P66 (Matt's approved card design) supersedes D-01's 340px with 380px.
+      ck('D-01 (P66) the card is 380px wide', Math.round(d.width)===380, d.width);
       ck('X-01 the card background is opaque', /^rgb\(/.test(cs(dlg).backgroundColor)||/, 1\)$/.test(cs(dlg).backgroundColor),
          cs(dlg).backgroundColor);
       const hd=dlg.querySelector('.ms-heading'), ib=$('ms-icon-btn'), code=$('ms-code'), st=$('ms-status'), fc=$('ms-float-col');
+      // P66: the card has no padding of its own; each section carries it.
+      const secPad=parseFloat(cs(dlg.querySelector('.ms-title-row')).paddingLeft);
+      const hpill=$('ms-health-pill');
       ck('D-02 icon 15px in an --icon-btn button', Math.round(rc(ib.querySelector('svg')).width)===15&&Math.round(rc(ib).width)===iconBtn,
          rc(ib).width);
-      ck('D-02 icon sits further left than the card padding', rc(ib).left-d.left<=parseFloat(cs(dlg).paddingLeft), rc(ib).left-d.left);
-      ck('D-02 icon to ID gap is tight', rc(code).left-rc(ib).right<=5, (rc(code).left-rc(ib).right).toFixed(1));
-      ck('D-03 float sits between the ID and the status', fc.parentElement===hd&&rc(fc).left>rc(code).right&&rc(fc).right<=rc(st).left,
-         [rc(code).right,rc(fc).left,rc(fc).right,rc(st).left].map(Math.round).join(','));
+      ck('D-02 icon sits further left than the section padding', rc(ib).left-d.left<=secPad, rc(ib).left-d.left);
+      // P66: the design spaces the mark and the ID by 8px; "tight" is now
+      // that gap, no wider.
+      ck('D-02 icon to ID gap is tight (P66: at most the 8px of the design)', rc(code).left-rc(ib).right<=8, (rc(code).left-rc(ib).right).toFixed(1));
+      // P66: the float moved off the meta line into the Duration column,
+      // "(Nd float)", below the meta line.
+      ck('D-03 (P66) float sits in the Duration column, under the meta line', !!$('ms-dur-field')&&$('ms-dur-field').contains(fc)&&rc(fc).top>=rc(hd).bottom,
+         [rc(hd).bottom,rc(fc).top].map(Math.round).join(','));
       ck('D-03 a blank float shows "-"', $('ms-float-val').getAttribute('placeholder')==='-');
-      ck('D-04 status is right-aligned', Math.abs(rc(st).right-rc(hd).right)<=1, (rc(hd).right-rc(st).right).toFixed(1));
-      ck('D-04 the heading is underlined', parseFloat(cs(hd).borderBottomWidth)>=1);
+      // P66: the status is the health pill; the pill is what is right-aligned.
+      ck('D-04 status is right-aligned (P66: the health pill holding it)', hpill.contains(st)&&Math.abs(rc(hpill).right-rc(hd).right)<=1, (rc(hd).right-rc(hpill).right).toFixed(1));
+      // P66: the hairline moved from under the heading to above the
+      // Start / Duration / Finish grid, below the title.
+      const schedEl=dlg.querySelector('.ms-schedule');
+      ck('D-04 (P66) the hairline sits above the date grid, below the title', parseFloat(cs(schedEl).borderTopWidth)>=1&&rc(schedEl).top>=rc($('ms-title')).bottom);
       const t=$('ms-title'), stl=dlg.querySelector('.ms-shorttitle-lbl');
-      ck('D-06 the title spans the card', rc(t).width>=d.width-2*parseFloat(cs(dlg).paddingLeft)-2, rc(t).width);
-      ck('D-06 the title has a background', cs(t).backgroundColor!=='rgba(0, 0, 0, 0)', cs(t).backgroundColor);
-      ck('D-07 "Display label:" sits above the title', stl&&stl.textContent==='Display label:'&&rc(stl).bottom<=rc(t).top,
+      ck('D-06 the title spans the card', rc(t).width>=d.width-2*secPad-2, rc(t).width);
+      // P66 "read first, edit on touch": the title is the plain value at rest
+      // (no fill), and shows a fill only on hover or focus.
+      ck('D-06 (P66) the title has no background at rest', cs(t).backgroundColor==='rgba(0, 0, 0, 0)', cs(t).backgroundColor);
+      // P66: the display label has no place in the design, so it is kept in
+      // the collapsed "More fields" fold, after the progress row.
+      ck('D-07 (P66) "Display label:" is kept, in the More fields fold below progress', stl&&stl.textContent==='Display label:'&&
+         $('ms-metrics-fold').contains(stl)&&rc($('ms-metrics-fold')).top>=rc($('ms-prog-field')).bottom,
          stl&&stl.textContent);
       $('ms-title').value=$('ms-title').value+' x'; $('ms-title').dispatchEvent(new Event('input',{bubbles:true}));
       await settle();
@@ -217,12 +234,26 @@ PROBE = r"""
       if(!$('filter-bar').classList.contains('open')) toggleFilterBar();
       await settle();
       // ---------- C-03 ----------
-      [['filter-title','.ds-fwrap'],['filter-ids','.ds-fwrap'],['wr-field',null]].forEach(function(p){
+      // P67 (Matt 2026-10-01): at phone width the Activity name and Weeks
+      // labels are dropped (headings "just take up space"); those fields
+      // carry their name themselves. The labels that remain (Banding,
+      // Activity ID(s), in Find's expanded part) still sit just above their
+      // fields.
+      if(typeof setFindMore==='function') setFindMore(true);
+      await settle();
+      [['filter-band',null],['filter-ids','.ds-fwrap']].forEach(function(p){
         const f=$(p[0]); const box=p[1]?f.closest(p[1]):f;
         const lb=document.querySelector('label[for="'+p[0]+'"]');
         const gap=rc(box).top-rc(lb).bottom;
         ck('C-03 '+p[0]+' label sits just above its field', gap>=0&&gap<=6, gap.toFixed(1));
       });
+      [['filter-title','aria-label'],['wr-field','aria-label']].forEach(function(p){
+        const f=$(p[0]);
+        const lb=document.querySelector('label[for="'+p[0]+'"]');
+        ck('C-03 (P67) '+p[0]+' has no visible label at phone width and names itself',
+           (!lb||lb.getClientRects().length===0)&&!!f.getAttribute(p[1]), f.getAttribute(p[1]));
+      });
+      if(typeof setFindMore==='function') setFindMore(false);
       // ---------- C-05 ----------
       const seg=$('wr-mode-seg'), card=$('tfb-when');
       ck('C-05 the Mode toggle keeps its natural width', rc(seg).width<rc(card).width*0.8, Math.round(rc(seg).width)+'/'+Math.round(rc(card).width));

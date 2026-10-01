@@ -315,6 +315,17 @@ Every filter used to be a sibling in one wrapping flex row, so at any width betw
 
 The basis is a flex basis rather than a media query, so the break happens when the content genuinely stops fitting instead of at a width someone typed, and the assertion is "side by side XOR cleanly stacked" with which one decided by measured room.
 
+### The filter row's phone shape (P67)
+
+Matt's marked-up phone screenshot (`docs/mockups/P67/filter-markup.png`, 2026-10-01). Below 768px, the breakpoint the stacked phone layout already used (`@media (max-width:767px)`, the design standard's <768 field-row rule), and only there:
+
+- Find shows the name field alone. A chevron inside its right end (`#fb-find-more-btn`, `toggleFindMore()`) opens Banding, Source and Activity IDs (`.fb-more`). The open state is display state in `localStorage` (`sret-fb-find-more`). The chevron carries a dot while a filter it is hiding is set.
+- Date range and status are **one tile**. CSS cannot put children of two boxes on one flex row, so `syncFbShape()` moves `#tfb-crit` into `#tfb-when` while `FB_PHONE_MQ` (the same query string as the CSS) matches, and back into the bar when it does not. The chips, their ids and their handlers move unchanged, so every filter function and check that clicks a chip still works.
+- Status, Total float and Annotations are dropdowns. Each trigger (`.fb-dd-trig`) opens the group's **existing** chips (`.fb-dd-panel`) as a fixed popover placed by `placeFbDropdown()` inside the viewport. The triggers read from the chips' pressed state in `syncFbDropdownTriggers()`, called from `syncStatusFilterUI()`, which every filter change already passes through.
+- Box titles and row labels are hidden. Each box keeps `role=group` and an `aria-label`.
+
+At every width, the header toggle `#btn-filter-expand` (the old expand-only icon's id, kept for the checks) sits left of + Milestone, always shown, pressed while the row is open, and is the row's only show/hide control. The bar's own close x `#btn-filter-hide` is gone. `toggleTopFilterBar()` is still the one writer of both states.
+
 ### The milestone Progress override (v3.1.0-P35)
 
 Progress is the first **editable number** in the annotation layer. Everything before it was a colour, a comment or a piece of text, none of which anything else computed from.
@@ -351,6 +362,27 @@ Three rules that are load-bearing here:
 - **The filter bar's cap over-estimates on purpose.** `scrollHeight` is read from whichever state the bar is in, and while it is closed its vertical padding has transitioned away, so an exact figure taken then would be short by that padding and clip on the way back open. A `max-height` that overshoots costs nothing visible; it is a cap, not a height.
 
 Both literals these replaced were wrong and had been for some time: the week band sat 3.5px below a 16px row, and the filter bar's 160px cap cut 43px off its own content at phone width.
+
+### The milestone card is the Claude Design dialog; history is one gallery (v3.1.0-P66)
+
+TD-231. Matt's design (`docs/mockups/P66/`) is the source for the card's layout; the app keeps its own fonts, tokens and control sizes (D-16), since it is offline and colour-audited.
+
+- **Every element id the card had is kept,** so its form logic (`msReadForm`, `msDirty`, `saveMsDialog`, the edited marks) is unchanged; the re-lay is CSS and markup order. Fields the design does not show sit in a collapsed More fields fold.
+- **The comment box is a new remark, always empty on open.** Earlier remarks are in the history. Saving appends an entry; the follow-up select sets its status, also when the save merges into the previous card entry.
+- **One gallery, two places.** `SRETHistory` (module `src/modules/notes-history/`) renders entries for the card (one milestone) and for the Notes panel (grouped per milestone). Both containers stop click propagation: the gallery rebuilds its own markup in its click handlers, and the card's document-level click-away would otherwise close the card (CLAUDE.md trap).
+- **Edits from the pencil go through `SRETEntries.edit`,** which refuses entries outside the current report, then the stores are re-projected.
+
+### Entries are the record; the stores are projections (v3.1.0-P65)
+
+Matt's decision of 2026-09-30 (TD-230): every update to a milestone is its own entry, and a roll-up gives the compiled view.
+
+- **One writer path.** Remarks, notes and card or grid edits append or change entries in `ENTRIES` (module `SRETEntries`). `projectEntryStores()` rebuilds `MS_COMMENTS`, `MS_HEALTH_OVERRIDE`, `MS_PROGRESS_OVERRIDE`, `MS_FIELD_OVERRIDE` and `NOTES` from it. Readers were left alone; only writers changed.
+- **Latest wins per field**, ordered by `at` then eid. `to:null` is "back to the schedule". Removing an entry falls back to the one before.
+- **Projection runs on an entry change, never inside `renderRows`,** so `previewEffState`'s temporary health write and any render path stay as they were.
+- **Direct store writes are adopted, not lost.** `adoptStoreDrift()` runs before every writer and projection, compares the stores with the last projection, and turns any difference into an entry with origin `direct`. It exists for older code paths and harnesses; the app's own writers never trip it (`p65_check` asserts 0).
+- **Files keep `schemaVersion` 1.** `entries` is added beside the legacy store fields, which are still written (as projections), so a P64 build still opens a P65 file. A file without `entries` is migrated: one carried entry per milestone key.
+- **Short titles, dependency comments and row remarks keep their own stores in P65.** Short titles are a display setting and stay that way; dependency and row remarks become entries in P67.
+- **Modules.** `src/modules/notes-store/`, `src/modules/notes-card/`, `src/modules/notes-export/`, each with a Node test, pasted unchanged into the app script after the grid view module.
 
 ### Schedule info bar and report meta (v3.1.0-P64)
 

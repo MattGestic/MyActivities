@@ -63,6 +63,9 @@ DIFF_TOLERANCE = 0.001     # fraction of pixels allowed to exceed that and still
 
 
 def find_chrome() -> str:
+    import os  # SRET_CHROME overrides the lookup (tools/run_checks.py coverage capture)
+    if os.environ.get("SRET_CHROME"):
+        return os.environ["SRET_CHROME"]
     for c in CHROME_CANDIDATES:
         if pathlib.Path(c).exists():
             return c

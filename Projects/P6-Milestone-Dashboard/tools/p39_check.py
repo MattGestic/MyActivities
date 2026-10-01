@@ -344,8 +344,18 @@ PROBE = r"""
                        find:box(findBox), when:box(whenBox), crit:box(critBox),
                        foot:box(foot),
                        textInputs:document.querySelectorAll('#top-filter-bar input[type=text]').length};
-    ck('filter row: Find, When and Critical path are each their own bordered box',
-       boxes.length===3&&!!findBox&&!!whenBox&&!!critBox, boxes.length+' boxes');
+    // P67 (Matt 2026-10-01): below 768px the Critical path box is moved
+    // INTO the When box, so Date range and status are one tile; at 768 and up
+    // the three boxes are unchanged.
+    const phoneShape=window.innerWidth<768;
+    if(phoneShape){
+      ck('filter row (P67 phone): Find and the Date range tile are each their own bordered box, Critical path inside the tile',
+         boxes.length===2&&!!findBox&&!!whenBox&&!!critBox&&whenBox.contains(critBox)&&critBox.parentElement!==bar,
+         boxes.length+' boxes, crit in '+(critBox&&critBox.parentElement.id));
+    } else {
+      ck('filter row: Find, When and Critical path are each their own bordered box',
+         boxes.length===3&&!!findBox&&!!whenBox&&!!critBox, boxes.length+' boxes');
+    }
     // Find and When sit side by side at 1440 (plenty of room for both at
     // their 520px flex-basis); stack at 390 (each is 100% width below
     // 1280px per the design standard). Measured, not assumed from the
@@ -365,9 +375,16 @@ PROBE = r"""
     }
     // Critical path is always its own row, below both (or below whichever of
     // Find/When is lower, when they are side by side).
-    ck('filter row: Critical path sits below Find and When',
-       box(critBox).t>=Math.max(box(findBox).b,box(whenBox).b)-2,
-       'crit top '+box(critBox).t+' against find/when bottoms '+box(findBox).b+'/'+box(whenBox).b);
+    if(phoneShape){
+      ck('filter row (P67 phone): Critical path sits below Find, inside the Date range tile',
+         box(critBox).t>=box(findBox).b-2&&box(critBox).t>=box(whenBox).t&&box(critBox).b<=box(whenBox).b+0.5&&
+         box(critBox).l>=box(whenBox).l&&box(critBox).r<=box(whenBox).r+0.5,
+         'crit '+JSON.stringify(box(critBox))+' when '+JSON.stringify(box(whenBox)));
+    } else {
+      ck('filter row: Critical path sits below Find and When',
+         box(critBox).t>=Math.max(box(findBox).b,box(whenBox).b)-2,
+         'crit top '+box(critBox).t+' against find/when bottoms '+box(findBox).b+'/'+box(whenBox).b);
+    }
     // Every .fb-box is bordered on all four sides (the sheet's card look),
     // rather than the old rule-above/rule-below-only treatment.
     const boxBordersOk=Array.prototype.every.call(boxes,function(b){
@@ -389,15 +406,20 @@ PROBE = r"""
     R.notes.filterRow.contentH=r1(inner); R.notes.filterRow.boxH=box(bar).h;
     ck('filter row: the open bar is tall enough for its own content',
        box(bar).h>=inner-2, 'box '+box(bar).h+' against content '+r1(inner));
-    // Collapsed, the heading offers a one-click way back. Open, it does not.
+    // Collapsed, the heading offers a one-click way back. P67 (Matt
+    // 2026-10-01): it is now the row's only toggle, so it shows in both
+    // states and says which one it is in (aria-expanded) instead of hiding
+    // itself while the bar is open.
     toggleTopFilterBar(false); await settle();
     const expClosed=$('btn-filter-expand').hidden;
+    const ariaClosed=$('btn-filter-expand').getAttribute('aria-expanded');
     toggleTopFilterBar(true); await settle();
     const expOpen=$('btn-filter-expand').hidden;
-    R.notes.filterRow.expandIcon={hiddenWhenClosed:expClosed,hiddenWhenOpen:expOpen};
-    ck('filter row: the expand control shows only while the bar is collapsed',
-       expClosed===false&&expOpen===true,
-       'hidden when collapsed '+expClosed+', hidden when open '+expOpen);
+    const ariaOpen=$('btn-filter-expand').getAttribute('aria-expanded');
+    R.notes.filterRow.expandIcon={hiddenWhenClosed:expClosed,hiddenWhenOpen:expOpen,ariaClosed:ariaClosed,ariaOpen:ariaOpen};
+    ck('filter row: the toggle shows in both states and reports the bar\'s state (aria-expanded)',
+       expClosed===false&&expOpen===false&&ariaClosed==='false'&&ariaOpen==='true',
+       'hidden when collapsed '+expClosed+', hidden when open '+expOpen+', aria '+ariaClosed+'/'+ariaOpen);
 
     // ============ 8. Dependency lines, the refuted report ============
     const depLines=()=>document.querySelectorAll('#dep-lines-g path.dep-line').length;

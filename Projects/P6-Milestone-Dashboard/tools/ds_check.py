@@ -121,6 +121,10 @@ PROBE_STATIC = r"""
     const bar=document.getElementById('top-filter-bar');
     if(!bar) throw new Error('#top-filter-bar not found');
     if(!bar.classList.contains('open')) bar.classList.add('open');
+    // P67: at phone width Find shows only the name field until its chevron
+    // opens Banding and Activity IDs. Every control's tokens are checked, so
+    // open it (a no-op at 768 and up).
+    if(typeof setFindMore==='function') setFindMore(true);
     R.notes.viewport=window.innerWidth+'x'+window.innerHeight;
     R.notes.theme=ARGS.theme; R.notes.coarse=coarse;
 
@@ -212,9 +216,19 @@ PROBE_STATIC = r"""
     }
 
     // ---- phone: full-width fields ----
+    // P67 (Matt 2026-10-01): the Weeks field (.wr-field) is a compact
+    // dropdown at phone width, with the status triggers to its right, so it
+    // is checked for that (narrower than its tile, inside it) and every other
+    // field stays full width.
     if(window.innerWidth<768){
+      const wrF=document.getElementById('wr-field'), wrTile=wrF&&wrF.closest('.fb-box');
+      if(wrF&&wrTile&&visible(wrF)){
+        const wr=wrF.getBoundingClientRect(), tr=wrTile.getBoundingClientRect();
+        ck('phone: the Weeks field is compact (narrower than its tile, inside it)',
+           wr.width<tr.width*0.6&&wr.left>=tr.left-0.5&&wr.right<=tr.right+0.5, Math.round(wr.width)+' of '+Math.round(tr.width));
+      } else ck('phone: the Weeks field is compact (narrower than its tile, inside it)', false, 'not shown');
       let fwOk=true, fwDetail=[];
-      Array.prototype.filter.call(bar.querySelectorAll('.ds-field,.ds-select,.wr-field'),visible)
+      Array.prototype.filter.call(bar.querySelectorAll('.ds-field,.ds-select'),visible)
         .forEach(function(el){
           const line=el.closest('.fb-line')||el.closest('.ds-fwrap')&&el.closest('.ds-fwrap').closest('.fb-line');
           if(!line) return;

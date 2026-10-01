@@ -3195,3 +3195,84 @@ No other check changed.
 - The version grep returns 1.
 
 **Published:** `releases/v3.1.0-P64_schedule-info-bar.html`
+
+## TEST-66: P65 entries as the record of every milestone update (v3.1.0-P65)
+
+TD-230. No visible change: the board, card and tables read the same stores, now projected from `ENTRIES`.
+
+**Module tests (Node, re-run by the orchestrator, not taken from the agents' reports):**
+- `tools/notes_store_test.mjs` 119/119: latest-wins over 3 entries and fallback on removal, `to:null`, progress and fields equal to source not projected, health 0 projected, coalescing at window-1, window, window+1, text-loss guard, clears, USR keys, and the round trip `project(migrate(p))` equal to the stores for two real P64 fixtures (`tools/fixtures/p65/`, rebuilt by `tools/p65_fixtures.py`), idempotent re-import.
+- `tools/form_to_entry_test.mjs` 68/68: every card field, blank, unreadable date, progress 0/100/101/equal to schedule, health -1/0/4, read-only float.
+- `tools/notes_export_test.mjs` 45/45: Summary and Log row counts and cells, and a SheetJS write and read-back (not wired into the app until P67).
+
+**`tools/p65_check.py` (new) 90/90,** headless with the network unresolvable, every edit through the app's own writers:
+- Card: 3 finish saves (T, T+11 min, next report) give 3 entries and the marker moves each time; removing entries falls back 3rd to 2nd to 1st to none, measured on the marker cell.
+- Coalescing at +599999, +600000 (merge) and +600001 ms (new entry).
+- Remark, clear, remark again; health 0 kept, automatic removes the key; progress equal to schedule leaves no override.
+- Grid writers (`annotWrite`, user-milestone grid under a USR key) and note actions mirror into the stores.
+- Drift: 0 adopted after every flow; stores identical to a fresh projection; a deliberate direct write is adopted, not lost.
+- Publish and reload: entries and all five stores identical.
+- A real P64 model file mounted into a clean app gives stores equal to the file, and a second mount adds nothing.
+- The same file mounted into the P64 release and into this build gives identical boards: marker classes, edit marks and titles, edit ghosts, cells.
+- A file exported by this build mounts to the same 3 entries, twice.
+
+**Existing checks changed:** `p43_check` source assertions now look for the entry wiring (mount staging, `entries` in the payload, entry re-keying at both move sites). Same intent.
+
+**Full suite, sequential:** every tool exits 0, `colour_audit --strict` 0 violations, `palette_swap_check` 0 escapes, `spacing_audit` at its ceiling, `grid_view_assemble --check` current.
+
+## TEST-67: P66 milestone card to the Claude Design dialog, update history in the card and the Notes panel (v3.1.0-P66)
+
+TD-231. Design reference: `docs/mockups/P66/milestone-dialog.dc.html` and `milestone-dialog.png`.
+
+**Module, re-run by the orchestrator:** `tools/notes_history_check.py` 71/71. It checks newest-first order, labels in the design's order with the comment last, the from and to roles, a pencil on exactly the editable entries (N=3) placed right of the pill, the edit round trip (Save, Cancel, Esc, Ctrl+Enter), groups with heading, summary, count and collapse, escaping, both themes and a 360px fit.
+
+**`tools/p66_check.py` 101/101, at 1440x900 and 390x844,** driving the real card:
+- Save controls disabled while clean, the Saved flash, an empty remark box on every open, the follow-up status reaching the entry.
+- Health popover with Esc, changed-dot size, colour and titles, duration including after a typed date.
+- Dependency chips matching the schedule and coloured by state; a chip opens that milestone's card.
+- History: this milestone's entries newest first with the count; a pencil on each current-report entry and none on an earlier one (N=3); the pencil sits right of the pill; Save writes text and follow-up through the store and the board's remark follows; the card stays open.
+- Notes panel: a heading groups the milestone's entries with ID, count and roll-up line, and opens to the same entries with the pencil.
+- Drift: nothing adopted across the card, pencil and panel flows. A milestone with no entries shows "No updates yet".
+
+**Existing checks changed for the new layout, same intent (listed with before and after in the P66 agent report and the PR):** `p43_check`, `p44_check`, `p35_check`, `p59_check`, `p65_check` A3 (the box opens empty, so emptying it is no longer a clear; clearing is covered by the grid path).
+
+**Full suite, sequential:** see the PR for the run on the release commit.
+
+
+## TEST-68: P67 filter bar phone shape and header filter toggle (v3.1.0-P67)
+
+TD-232. Markup: `docs/mockups/P67/filter-markup.png`. Implementation screenshots: `docs/mockups/P67/impl-*.png`.
+
+**New check `tools/p67_check.py`** (headless Chromium, network unresolvable), at 390x844 and at 767 / 768 (both sides of the phone breakpoint), light and dark:
+- Find collapsed by default shows the name search only; the chevron expands and collapses Banding and Activity ID(s); the hidden-filter dot shows when one is set.
+- No section headings; Date range and the Status, Float and Notes triggers sit in one tile; Weeks is narrower than its tile; Mode and Fit share a row.
+- Status trigger opens the chip panel; two statuses picked read on the trigger; visible marker counts equal the desktop counts for the same chips (N=3 combinations); Float Custom works inside the panel; Esc closes; panel stays inside the viewport; no horizontal page scroll.
+- 1440x900: layout unchanged (chips inline, headings shown, no triggers); the toggle sits immediately left of + Milestone; it hides and shows the bar with `aria-expanded` following; no bottom × at either width.
+
+**Existing checks changed for the new layout, same intent:** `p39_check`, `p32_check`, `p59_check` C-03, `d15a_check` (d), (h), (i), `ds_check` phone field width. Before and after listed in the PR.
+
+**Full suite, sequential:** see the PR for the run on the release commit.
+
+## TEST-69: P68 card fold memory, back step and double-click collection (v3.1.0-P68)
+
+TD-233. Screenshots: `docs/mockups/P68/impl-390.png`, `impl-1440.png`.
+
+**New check `tools/p68_check.py`** (headless Chromium, real marker clicks, 1440x900 and 390x844):
+- Folds: defaults on first card; toggled state stored and carried to N=3 further cards; set back, followed again.
+- Back: hidden from a board open; chip jump shows it named for the source card, top left beside close; using it returns and clears it; a second jump replaces it; a board open clears it.
+- Collection: double click on the open card's marker and on a closed one both add and leave the card open; repeat adds nothing; three markers give three chips in order; a single click after the window still opens and closes and collects nothing.
+- Row: above Start / Duration / Finish; Add to list left (aria-disabled), copy right; 15 chips stay on one line and scroll sideways; card width and page width unchanged; cross removes one ID; copy writes `A,C`; chip opens its card; markers `touch-action: manipulation`.
+
+**Full suite, sequential:** see the PR for the run on the release commit.
+
+## TEST-70: P69 collection strip, date picker with Actual, change-scoped checks (v3.1.0-P69)
+
+TD-234.
+
+**New check `tools/p69_check.py`** (1440x900 and 390x844): calendar buttons in both labels; picker opens on the field's own date and month, inside the viewport, Actual unticked by default and in the heading; forecast pick writes no A and is not green; ticked pick writes `<date> A` and is green at once (computed colour = `--color-status-done`); save records `date` and `actual` in one entry, projects to `MS_FIELD_OVERRIDE`, sets `m.actual`, reopens with A and green, history reads Forecast to Actual; unticked back to the schedule forecast clears the flag override; Clear restores the schedule date; start pick saves `startActual` only; month nav, focus on open, ArrowRight / ArrowDown / PageDown, Esc closes the picker before the card, Alt+Down opens, a click elsewhere in the card closes only the picker, a touch tap opens it without the keyboard and its own click does not close it; suffixes `A *`, `*`, and no space; row-health dots h-3 and h-4 computed against their tokens.
+
+**`tools/p68_check.py` updated, same intent:** the collection row assertions now find the strip on the main page: in the info row, not the card; directly above the date bands; the bands' sticky offset equals the taller row; strip no wider than the scroller; a strip chip shows no back arrow.
+
+**`tools/form_to_entry_test.mjs`:** 7 new cases for the A flag (75 total).
+
+**Checks run:** by `tools/run_checks.py` (change-scoped, 3 jobs). Results in the PR.

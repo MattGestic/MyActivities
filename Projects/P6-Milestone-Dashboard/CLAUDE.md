@@ -22,6 +22,8 @@ Read this before touching any file in this project. It is the short form; `docs/
 | `docs/handoff/` | Archive of the original claude.ai chat-to-code handoff |
 | `docs/decisions/` | One file per design decision too large for a kit row, named `D-NN-<subject>.md`; kit rows reference them by D number |
 | `docs/perf/Scale_Measurement_Log.md` | Append-only scale and performance figures (TD-219, TEST-59) |
+| `tools/run_checks.py` | Change-scoped check runner. Runs only the checks whose covered code changed since their last pass; `--all` for everything, `--dry-run` to see why. How it works and its limits: `docs/check-map.md` |
+| `docs/component-register.md` | Generated. Every function's tie-ins, globals, DOM ids, covering checks and when each last passed |
 | `tools/scale_bench.mjs` | Scale benchmark on a synthetic schedule through the real import path. Node + Playwright: `NODE_PATH=$(npm root -g) node tools/scale_bench.mjs` |
 
 Read `docs/03-todo.md` first in any session. One fact lives in one file — reference by ID, do not restate.
@@ -51,6 +53,7 @@ Any proposal that breaks one of these conflicts with `docs/04-architecture.md`. 
 - `drawDepLines()` is the single choke point for dependency rendering. Its defensive reset of SVG layer visibility and stuck drag state on every run is load-bearing.
 - The Activity ID autocomplete uses `onmousedown` + `event.preventDefault()`. Load-bearing. Removing it reintroduces a focus-stealing bug.
 - Call `scheduleRerender(true)`, not `rerender(true)`, after a user action needing a rebuild.
+- **Never write `MS_COMMENTS`, `MS_HEALTH_OVERRIDE`, `MS_PROGRESS_OVERRIDE`, `MS_FIELD_OVERRIDE` or `NOTES` directly** (P65, TD-230). They are projections of `ENTRIES`: add an entry (`addEntry`, `addFieldEntry`, `addRemarkEntry`, or the note functions) and they are rebuilt. A direct write is adopted as an `origin:'direct'` entry by the safety net, and `tools/p65_check.py` fails if an app flow does that.
 - Sticky corner search and Top Filter Bar Title field are two-way synced.
 - Two sides plus the filter bar (P56, D-20, directed by Matt): **Workspace** (left rail `#ws-rail` + `#ws-panel`, the annotation layer: notes, comments and markups, user milestones) and **Data & view** (right, `#settings-drawer`: View controls, Sources, Import, Data settings, Diagnostics, Help, About), plus the **Top filter bar**. Annotation content belongs on the left, schedule and format content on the right. Do not conflate them. `toggleFilterBar()` / `toggleSettingsDrawer()` / `setSettingsTab()` / `setWorkspaceSection()` are the entry points; old ids are kept.
 

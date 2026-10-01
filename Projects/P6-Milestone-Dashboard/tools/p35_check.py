@@ -209,21 +209,28 @@ PROBE = r"""
     // ============ 2. The shrink ============================================
     // P59 (D-01, Matt 2026-09-27) widened the card back to 340px so an
     // actualised date no longer truncates; that supersedes P35's 306px cap.
-    const capped=Math.min(340,window.innerWidth-24);
-    ck('width: the card renders at the P59 340px cap',
+    // P66 (Matt's approved card design) widens it again, to 380px; the phone
+    // rule is unchanged (100vw less 24px).
+    const capped=Math.min(380,window.innerWidth-24);
+    ck('width: the card renders at the P66 380px cap',
        Math.abs(R.notes.card.w-capped)<=0.5, R.notes.card.w+'px against '+capped);
 
-    // ============ 3. Start / Finish / Progress on one row ==================
+    // ============ 3. Start / Duration / Finish on one row ==================
+    // P66: the design puts Start, Duration and Finish in one row of three
+    // equal tracks and Progress on its own row UNDER it (label and figure,
+    // then the bar). Same intent as before: the schedule values read as one
+    // row of facts at one text size, and Progress has a fixed place of its own.
     const startField=document.getElementById('ms-start-field');
     const startShown=startField&&getComputedStyle(startField).display!=='none';
     const fin=rect(document.getElementById('ms-date'));
+    const dur=rect(document.getElementById('ms-duration'));
     const prog=rect(document.getElementById('ms-progress-input'));
     const progField=document.getElementById('ms-prog-field')||
                     document.querySelector('.ms-prog-field');
     const pf=rect(progField);
-    const boxes=[{n:'finish',r:fin},{n:'progress',r:prog}];
+    const boxes=[{n:'duration',r:dur},{n:'finish',r:fin}];
     if(startShown) boxes.unshift({n:'start',r:rect(document.getElementById('ms-start-date'))});
-    R.notes.row={startShown:!!startShown,boxes:boxes};
+    R.notes.row={startShown:!!startShown,boxes:boxes,progress:prog};
     // One row means every box overlaps every other vertically. Comparing only
     // against the first would pass for a box that had dropped below the second.
     let notOverlapping=[];
@@ -231,21 +238,21 @@ PROBE = r"""
       const a=boxes[i].r,b=boxes[j].r;
       if(!(a.t<b.b-0.5&&b.t<a.b-0.5)) notOverlapping.push(boxes[i].n+'/'+boxes[j].n);
     }
-    ck('row: Start, Finish and Progress all sit on one row',
+    ck('row: Start, Duration and Finish all sit on one row',
        boxes.length>=2&&notOverlapping.length===0,
        boxes.length+' fields shown, not sharing a row: '+(notOverlapping.join(', ')||'none'));
-    ck('row: Progress is the right-hand field of that row',
-       prog.l>fin.r, 'finish ends '+fin.r+', progress starts '+prog.l);
+    ck('row: Finish is the right-hand field of that row',
+       fin.r>dur.r&&fin.l>dur.l, 'duration ends '+dur.r+', finish ends '+fin.r);
 
-    // The divider, as geometry: a real left border on the Progress field whose
-    // edge falls between Finish and Progress.
-    const bw=parseFloat(getComputedStyle(progField).borderLeftWidth)||0;
-    R.notes.divider={borderLeftWidth:bw,edge:pf.l,finishRight:fin.r,progressLeft:prog.l};
-    ck('row: a column divider separates Finish from Progress',
-       bw>0&&pf.l>=fin.r-0.5&&pf.l<=prog.l+0.5,
-       bw+'px border at x='+pf.l+', between '+fin.r+' and '+prog.l);
+    // The separation, as geometry: Progress's own row starts below the
+    // bottom of every box in the date row.
+    const rowBottom=Math.max.apply(null,boxes.map(function(x){ return x.r.b; }));
+    R.notes.divider={rowBottom:rowBottom,progressRowTop:pf.t,progressTop:prog.t};
+    ck('row: Progress sits on its own row, below Start / Duration / Finish',
+       pf.t>=rowBottom-0.5&&prog.t>=rowBottom-0.5,
+       'date row ends '+rowBottom+', progress row starts '+pf.t);
 
-    const sizes={finish:size('ms-date'),progress:size('ms-progress-input'),
+    const sizes={finish:size('ms-date'),duration:size('ms-duration'),
                  start:startShown?size('ms-start-date'):null};
     R.notes.sizes=sizes;
     const shown=Object.keys(sizes).filter(function(k){ return sizes[k]!=null; });
@@ -269,11 +276,12 @@ PROBE = r"""
     if(withStart&&openCardFor(msId(withStart))){
       await settle();
       const sf=document.getElementById('ms-start-field');
+      // P66: the row's three fields are Start, Duration, Finish.
       const three=[{n:'start',r:rect(document.getElementById('ms-start-date'))},
-                   {n:'finish',r:rect(document.getElementById('ms-date'))},
-                   {n:'progress',r:rect(document.getElementById('ms-progress-input'))}];
-      const s3={start:size('ms-start-date'),finish:size('ms-date'),
-                progress:size('ms-progress-input')};
+                   {n:'duration',r:rect(document.getElementById('ms-duration'))},
+                   {n:'finish',r:rect(document.getElementById('ms-date'))}];
+      const s3={start:size('ms-start-date'),duration:size('ms-duration'),
+                finish:size('ms-date')};
       let split=[];
       for(let i=0;i<three.length;i++) for(let j=i+1;j<three.length;j++){
         const A=three[i].r,B=three[j].r;
@@ -286,8 +294,8 @@ PROBE = r"""
          split.length===0,
          '3 boxes, not sharing a row: '+(split.join(', ')||'none'));
       ck('row: and all three are the same text size',
-         s3.start===s3.finish&&s3.finish===s3.progress, JSON.stringify(s3));
-      ck('row: left to right it reads Start, Finish, Progress',
+         s3.start===s3.finish&&s3.finish===s3.duration, JSON.stringify(s3));
+      ck('row: left to right it reads Start, Duration, Finish',
          three[0].r.l<three[1].r.l&&three[1].r.r<three[2].r.l,
          three.map(function(b){ return b.n+'@'+b.r.l; }).join(' '));
       closeMsDialog(); await settle();
@@ -563,8 +571,8 @@ def main():
     m = re.search(r"\.ms-dialog\{([^}]*)\}", src)
     if m:
         ms_rule = m.group(1)
-    checks.append(("source: the card's width cap is the P59 340px (D-01)",
-                   "width:min(340px," in ms_rule,
+    checks.append(("source: the card's width cap is the P66 380px",
+                   "width:min(380px," in ms_rule,
                    f"the .ms-dialog rule reads: {ms_rule[:80]!r}"))
     checks.append(("source: the rollup reads effectiveProgress, not the record",
                    "m.weight*(effectiveProgress(m)||0)" in src
