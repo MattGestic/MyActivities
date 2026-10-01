@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Re-paste the grid view module into the app (TD-229, P65).
+"""Re-paste the grid view module into the app (TD-229, P70).
 
 The app embeds src/modules/grid-view/ by pasting, not by a build: the core
 and the features the app uses, each file unchanged, in load order, between
@@ -50,7 +50,7 @@ def parts(ext):
 def css_block():
     names = ", ".join(n for n, _ in parts("css"))
     head = ("/* ============================================================\n"
-            "   GRID VIEW (D-09, P61; core and features P65, TD-229): " + names + ",\n"
+            "   GRID VIEW (D-09, P61; core and features P70, TD-229): " + names + ",\n"
             "   pasted unchanged by tools/grid_view_embed.py. Tier 3 component styles on\n"
             "   --color-* roles and D-16 tokens. Edit the module files and re-run the tool.\n"
             "   ============================================================ */")
@@ -60,7 +60,7 @@ def css_block():
 def js_block():
     names = ", ".join(n for n, _ in parts("js"))
     head = ("// ============================================================\n"
-            "// GRID VIEW MODULE (D-09, P61; core and features P65, TD-229): " + names + ",\n"
+            "// GRID VIEW MODULE (D-09, P61; core and features P70, TD-229): " + names + ",\n"
             "// pasted unchanged by tools/grid_view_embed.py. The core defines window.SRETGrid;\n"
             "// each feature registers itself with it. No app global is read. The app's\n"
             "// setup() call and adapters (openGridView) live beside the Workspace code.\n"

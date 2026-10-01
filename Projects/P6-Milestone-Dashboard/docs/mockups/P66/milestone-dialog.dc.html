@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;450;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet"><style>*,*::before,*::after{box-sizing:border-box}body{margin:0;background:#ecebe8;font-family:"IBM Plex Sans",system-ui,sans-serif;color:#17191c;padding:40px}a{color:#2f6fed}a:hover{color:#1b4fb8}button{font-family:inherit}</style></helmet>
+
+<sc-if value="{{ isClosed }}" hint-placeholder-val="{{ false }}">
+  <button onClick="{{ reopen }}" style="border:1px solid #d4d3ce;background:#fdfdfc;border-radius:8px;padding:9px 14px;font:500 12px/1 'IBM Plex Sans',sans-serif;color:#17191c;cursor:pointer">Reopen dialog (demo)</button>
+</sc-if>
+
+<sc-if value="{{ isOpen }}" hint-placeholder-val="{{ true }}">
+<div style="width:380px;white-space:nowrap;background:#fdfdfc;border:1px solid #e3e2de;border-radius:12px;box-shadow:0 1px 2px rgba(23,25,28,.05),0 12px 32px rgba(23,25,28,.08);overflow:hidden">
+
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px 8px 8px;border-bottom:1px solid #eeede9">
+    <button onClick="{{ close }}" title="Close without saving" style="width:30px;height:30px;display:grid;place-items:center;border:0;border-radius:7px;background:transparent;color:#6f7480;cursor:pointer" style-hover="background:#f0efec;color:#17191c"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 3l8 8M11 3l-8 8"></path></svg></button>
+    <div style="display:flex;align-items:center;gap:6px">
+      <sc-if value="{{ saved }}" hint-placeholder-val="{{ false }}"><span style="font:500 11px/1 'IBM Plex Sans',sans-serif;color:#1f7a45;padding-right:4px">Saved</span></sc-if>
+      <button onClick="{{ save }}" title="Save" style="width:30px;height:30px;display:grid;place-items:center;border:1px solid #e3e2de;border-radius:7px;background:#fdfdfc;color:#3b3f47;cursor:pointer" style-hover="background:#f0efec;color:#17191c"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><path d="M2.5 2.5h9l2 2v9h-11z"></path><path d="M5 2.5v3.5h5V2.5"></path><rect x="5" y="9" width="6" height="4.5"></rect></svg></button>
+      <button onClick="{{ saveClose }}" style="height:30px;border:0;border-radius:7px;background:#17191c;color:#fdfdfc;font:500 12px/1 'IBM Plex Sans',sans-serif;padding:0 12px;cursor:pointer" style-hover="background:#3b3f47">Save &amp; close</button>
+    </div>
+  </div>
+
+  <div style="padding:14px 16px 0">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <div style="display:flex;align-items:center;gap:8px"><span style="width:9px;height:9px;background:#b8770c;transform:rotate(45deg);border-radius:1px"></span><span style="font:600 12px/1 'IBM Plex Mono',monospace;color:#17191c">SNIP-103</span><span style="font:450 11px/1 'IBM Plex Sans',sans-serif;color:#848994">Process · Milestone</span></div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span title="Updated · was On track" style="width:6px;height:6px;border-radius:50%;background:#2f6fed;box-shadow:0 0 0 2px rgba(47,111,237,.15);cursor:help"></span>
+        <div title="Previous: On track" style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:99px;background:rgba(184,119,12,.1);font:500 11px/1 'IBM Plex Sans',sans-serif;color:#8a5708;cursor:default"><span style="width:6px;height:6px;border-radius:50%;background:#b8770c"></span>At risk</div>
+      </div>
+    </div>
+    <h2 style="white-space:normal;margin:10px 0 0;font:600 16px/1.3 'IBM Plex Sans',sans-serif;letter-spacing:-.015em;text-wrap:pretty">Receipt of testwork results and MRE</h2>
+  </div>
+
+  <div style="margin:14px 16px 0;padding-top:12px;border-top:1px solid #eeede9;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px">
+    <div title="Started 14-Sep-26" style="cursor:default">
+      <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#8a8f99;margin-bottom:6px">Start</div>
+      <div style="font:600 14px/1 'IBM Plex Sans',sans-serif;font-variant-numeric:tabular-nums">14-Sep-26</div>
+      <div style="margin-top:5px;font:500 10.5px/1 'IBM Plex Sans',sans-serif;color:#2f6fed">Started</div>
+    </div>
+    <div title="Previous: 45d (26d float)" style="cursor:default">
+      <div style="display:flex;align-items:center;gap:5px;font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#8a8f99;margin-bottom:6px">Duration<span style="width:6px;height:6px;border-radius:50%;background:#2f6fed;box-shadow:0 0 0 2px rgba(47,111,237,.15)"></span></div>
+      <div style="font:600 14px/1 'IBM Plex Sans',sans-serif;font-variant-numeric:tabular-nums">59d</div>
+      <div style="margin-top:5px;font:450 10.5px/1 'IBM Plex Sans',sans-serif;color:#6f7480">(12d float)</div>
+    </div>
+    <div title="Previous: 29-Oct-26" style="cursor:default;text-align:right">
+      <div style="display:flex;align-items:center;justify-content:flex-end;gap:5px;font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#8a8f99;margin-bottom:6px"><span style="width:6px;height:6px;border-radius:50%;background:#2f6fed;box-shadow:0 0 0 2px rgba(47,111,237,.15)"></span>Finish</div>
+      <div style="font:600 14px/1 'IBM Plex Sans',sans-serif;font-variant-numeric:tabular-nums">12-Nov-26</div>
+    </div>
+  </div>
+  <div title="60% · In progress · was 45%" style="margin:14px 16px 0;cursor:default">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <span style="display:flex;align-items:center;gap:5px;font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#8a8f99">Progress<span style="width:6px;height:6px;border-radius:50%;background:#2f6fed;box-shadow:0 0 0 2px rgba(47,111,237,.15)"></span></span>
+      <span style="font:600 12px/1 'IBM Plex Sans',sans-serif;font-variant-numeric:tabular-nums">60% <span style="font-weight:450;color:#6f7480">In progress</span></span>
+    </div>
+    <div style="height:3px;border-radius:99px;background:#e6e5e1;overflow:hidden"><div style="width:60%;height:100%;background:#b8770c"></div></div>
+  </div>
+
+  <div style="margin:16px 0 0;padding:12px 16px 14px;border-top:1px solid #eeede9">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <span style="font:600 11px/1 'IBM Plex Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#3b3f47">New update</span>
+      <select style="border:1px solid #e3e2de;border-radius:6px;background:#fdfdfc;font:450 11.5px/1 'IBM Plex Sans',sans-serif;color:#3b3f47;padding:4px 6px;cursor:pointer"><option>Follow-up: Open</option><option>Follow-up: Sent</option><option>Follow-up: Done</option></select>
+    </div>
+    <textarea placeholder="Add a comment" rows="2" style="white-space:pre-wrap;display:block;width:100%;resize:vertical;border:1px solid #e3e2de;border-radius:8px;background:#f7f7f5;padding:9px 11px;font:450 12.5px/1.45 'IBM Plex Sans',sans-serif;color:#17191c;outline:none" style-focus="border-color:#9aa0aa;background:#fdfdfc"></textarea>
+  </div>
+
+  <div style="border-top:1px solid #eeede9">
+    <button onClick="{{ toggleLinks }}" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 16px;border:0;background:transparent;cursor:pointer;text-align:left" style-hover="background:#f7f7f5">
+      <span style="display:flex;align-items:center;gap:8px;font:600 11px/1 'IBM Plex Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#3b3f47"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" style="transform:{{ linksRot }};transition:transform .15s"><path d="M3.5 2l3 3-3 3"></path></svg>Predecessors &amp; successors</span>
+      <span style="font:450 11px/1 'IBM Plex Mono',monospace;color:#848994">{{ predCount }} · {{ succCount }}</span>
+    </button>
+    <sc-if value="{{ linksOpen }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:2px 16px 14px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px">
+        <div>
+          <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#8a8f99;margin-bottom:8px">Predecessors</div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px">
+            <sc-for list="{{ preds }}" as="p" hint-placeholder-count="2">
+              <span title="{{ p.name }}" style="display:flex;align-items:center;gap:5px;padding:4px 7px;border:1px solid #e3e2de;border-radius:6px;background:#f7f7f5;font:500 11px/1 'IBM Plex Mono',monospace;color:#3b3f47;cursor:default"><span style="width:6px;height:6px;border-radius:50%;background:{{ p.color }}"></span>{{ p.id }}</span>
+            </sc-for>
+          </div>
+        </div>
+        <div>
+          <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#8a8f99;margin-bottom:8px">Successors</div>
+          <div style="display:flex;flex-wrap:wrap;gap:5px">
+            <sc-for list="{{ succs }}" as="p" hint-placeholder-count="2">
+              <span title="{{ p.name }}" style="display:flex;align-items:center;gap:5px;padding:4px 7px;border:1px solid #e3e2de;border-radius:6px;background:#f7f7f5;font:500 11px/1 'IBM Plex Mono',monospace;color:#3b3f47;cursor:default"><span style="width:6px;height:6px;border-radius:50%;background:{{ p.color }}"></span>{{ p.id }}</span>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+
+  <div style="border-top:1px solid #eeede9">
+    <button onClick="{{ toggleHist }}" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 16px;border:0;background:transparent;cursor:pointer;text-align:left" style-hover="background:#f7f7f5">
+      <span style="display:flex;align-items:center;gap:8px;font:600 11px/1 'IBM Plex Sans',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#3b3f47"><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" style="transform:{{ histRot }};transition:transform .15s"><path d="M3.5 2l3 3-3 3"></path></svg>Update history</span>
+      <span style="font:450 11px/1 'IBM Plex Mono',monospace;color:#848994">{{ histCount }}</span>
+    </button>
+    <sc-if value="{{ histOpen }}" hint-placeholder-val="{{ true }}">
+      <div style="padding:0 16px 8px">
+        <sc-for list="{{ history }}" as="h" hint-placeholder-count="3">
+          <div style="padding:10px 0 12px;border-top:1px solid #eeede9">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
+              <span style="display:flex;align-items:center;gap:8px"><span style="font:600 11.5px/1 'IBM Plex Sans',sans-serif;color:#17191c">{{ h.when }}</span><span style="font:450 11px/1 'IBM Plex Sans',sans-serif;color:#848994">{{ h.who }}</span></span>
+              <span style="padding:3px 7px;border-radius:99px;background:{{ h.fuBg }};font:500 10.5px/1 'IBM Plex Sans',sans-serif;color:{{ h.fuFg }}">{{ h.followUp }}</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;padding-left:10px;border-left:2px solid #e6e5e1">
+              <sc-for list="{{ h.changes }}" as="c" hint-placeholder-count="2">
+                <div style="display:grid;grid-template-columns:72px minmax(0,1fr);gap:8px;align-items:baseline">
+                  <span style="font:500 10px/1.3 'IBM Plex Sans',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#8a8f99">{{ c.label }}</span>
+                  <sc-if value="{{ c.isComment }}" hint-placeholder-val="{{ false }}">
+                    <span style="white-space:normal;font:450 12.5px/1.45 'IBM Plex Sans',sans-serif;color:#17191c;text-wrap:pretty">{{ c.text }}</span>
+                  </sc-if>
+                  <sc-if value="{{ c.isDelta }}" hint-placeholder-val="{{ true }}">
+                    <span style="display:flex;align-items:baseline;gap:6px;font:450 12px/1.3 'IBM Plex Sans',sans-serif;font-variant-numeric:tabular-nums"><span style="color:#8a8f99">{{ c.from }}</span><span style="color:#b5b4af">→</span><span style="font-weight:600;color:#17191c">{{ c.to }}</span></span>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+  </div>
+</div>
+</sc-if>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:460,&quot;height&quot;:900}}">
+class Component extends DCLogic {
+  state = { open: true, linksOpen: false, histOpen: true, saved: false };
+  ORDER = ['status', 'health', 'progress', 'end', 'start', 'comment'];
+  LABELS = { status: 'Status', health: 'Health', progress: 'Progress', end: 'End date', start: 'Start date', comment: 'Comments' };
+  FU = { Open: ['rgba(184,119,12,.1)', '#8a5708'], Sent: ['rgba(47,111,237,.09)', '#1f55c2'], Done: ['#eeede9', '#4c515c'] };
+  entries = [
+    { when: 'Thu 01-Oct 09:12', who: 'M. Gray', followUp: 'Open', changes: { comment: 'Lab confirmed results due Fri 07-Nov. MRE date to follow.' } },
+    { when: 'Tue 29-Sep 14:40', who: 'M. Gray', followUp: 'Sent', changes: { comment: 'Lab results a week late. Confirm the revised MRE date with process.', end: ['29-Oct-26', '12-Nov-26'], progress: ['45%', '60%'] } },
+    { when: 'Mon 28-Sep 08:05', who: 'M. Gray', followUp: 'Done', changes: { health: ['On track', 'At risk'] } },
+    { when: 'Mon 14-Sep 10:30', who: 'M. Gray', followUp: 'Done', changes: { start: ['—', '14-Sep-26'], status: ['Not started', 'In progress'] } }
+  ];
+  preds = [
+    { id: 'SNIP-098', name: 'Testwork sample preparation', color: '#1f9d55' },
+    { id: 'SNIP-101', name: 'Lab programme award', color: '#1f9d55' }
+  ];
+  succs = [
+    { id: 'SNIP-121', name: 'Process Design Criteria', color: '#2f6fed' },
+    { id: 'SNIP-140', name: 'Mass balance', color: '#b5b4af' },
+    { id: 'SNIP-167', name: 'Mechanical Equipment List', color: '#b8770c' }
+  ];
+  renderVals() {
+    const s = this.state;
+    const history = this.entries.map(e => {
+      const [bg, fg] = this.FU[e.followUp];
+      const changes = this.ORDER.filter(k => e.changes[k] != null).map(k => {
+        const v = e.changes[k];
+        return k === 'comment'
+          ? { label: this.LABELS[k], isComment: true, isDelta: false, text: v }
+          : { label: this.LABELS[k], isComment: false, isDelta: true, from: v[0], to: v[1] };
+      });
+      return { ...e, fuBg: bg, fuFg: fg, changes };
+    });
+    return {
+      isOpen: s.open, isClosed: !s.open, saved: s.saved,
+      linksOpen: s.linksOpen, histOpen: s.histOpen,
+      linksRot: s.linksOpen ? 'rotate(90deg)' : 'none',
+      histRot: s.histOpen ? 'rotate(90deg)' : 'none',
+      preds: this.preds, succs: this.succs,
+      predCount: this.preds.length + ' pred', succCount: this.succs.length + ' succ',
+      history, histCount: history.length + ' entries',
+      close: () => this.setState({ open: false, saved: false }),
+      reopen: () => this.setState({ open: true }),
+      save: () => { this.setState({ saved: true }); clearTimeout(this._t); this._t = setTimeout(() => this.setState({ saved: false }), 1600); },
+      saveClose: () => this.setState({ open: false, saved: false }),
+      toggleLinks: () => this.setState({ linksOpen: !s.linksOpen }),
+      toggleHist: () => this.setState({ histOpen: !s.histOpen })
+    };
+  }
+}
+</script>
+</body>
+</html>

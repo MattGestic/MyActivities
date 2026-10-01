@@ -153,7 +153,9 @@ PROBE = r"""
         const m=msDialogMs;
         $('ms-title').value='Probe field title';
         const d=new Date(m.date+'T00:00:00'); d.setDate(d.getDate()+7);
-        $('ms-date').value=fmtTipDate(d);
+        // P69: keep the milestone's own A, so this stays a date edit only
+        // (a date typed without the A now also saves the finish as a forecast).
+        $('ms-date').value=fmtTipDate(d)+(m.actual?' A':'');
         $('ms-weight').value=String(m.weight===7.5?8.5:7.5);
         onMsFieldInput();
       }

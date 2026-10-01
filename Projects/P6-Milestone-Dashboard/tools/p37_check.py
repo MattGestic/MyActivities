@@ -209,6 +209,10 @@ PROBE = r"""
 
     // ============ 4. ID suggestions ============
     toggleTopFilterBar(true); await settle(); await settle();
+    // P67: at phone width the Activity ID field sits in Find's collapsed
+    // part; a user opens it with the chevron first, so the probe does too.
+    // (No-op at desktop widths, where it is always shown.)
+    if(typeof setFindMore==='function'){ setFindMore(true); await settle(); }
     const inp=$('filter-ids');
     inp.focus(); renderIdSuggestions(); await settle();
     const sug=$('id-suggest-dropdown');

@@ -441,7 +441,7 @@ def source_checks(src: str) -> list:
 
     vjs = (VENDOR / "slickgrid.subset.min.js").read_text(encoding="utf-8").rstrip("\n")
     vcss = (VENDOR / "dist" / "slick.grid.css").read_text(encoding="utf-8").rstrip("\n")
-    # P65 (TD-229): the module is a core plus features; the app pastes the core and
+    # P70 (TD-229): the module is a core plus features; the app pastes the core and
     # the features it uses (tools/grid_view_embed.py APP_FEATURES), each unchanged.
     import grid_view_embed as GE
     gcss_parts = GE.parts("css")

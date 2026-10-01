@@ -367,25 +367,37 @@ PROBE = r"""
     ck('defect A: and that check still FAILS when the toggle is trapped in the bar',
        trappedVerdict===false, 'trapped visible height '+trappedVisibleH+
        'px, verdict '+trappedVerdict);
-    ck('defect A: the toggle shows the state it sets (hidden once the bar is open)',
-       expandBtn && expandBtn.hidden===false,
-       expandBtn?('hidden='+expandBtn.hidden):'');
+    // P67: the toggle no longer hides itself; it shows its state instead.
+    ck('defect A: the toggle shows the state it sets (collapsed: shown, aria-expanded=false)',
+       expandBtn && expandBtn.hidden===false && expandBtn.getAttribute('aria-expanded')==='false',
+       expandBtn?('hidden='+expandBtn.hidden+' aria-expanded='+expandBtn.getAttribute('aria-expanded')):'');
     expandBtn.click();
     await settle();
     ck('defect A: clicking it brings the row back',
        bar.getBoundingClientRect().height>20, bar.getBoundingClientRect().height+'px');
-    ck('defect A: and the expand button hides itself again once the row is back',
-       expandBtn.hidden===true, 'hidden='+expandBtn.hidden);
+    // P67 (Matt 2026-10-01): the header toggle is now the row's ONLY show/
+    // hide control. It stays on screen with the row open and reports it
+    // (aria-expanded=true) rather than hiding itself, and the bar's own
+    // close x is gone, so the same toggle must be the one that hides the
+    // row again, from the right-hand side of the header.
+    ck('defect A: and the toggle stays on screen reporting the row is back (aria-expanded=true)',
+       expandBtn.hidden===false&&expandBtn.getAttribute('aria-expanded')==='true',
+       'hidden='+expandBtn.hidden+' aria-expanded='+expandBtn.getAttribute('aria-expanded'));
     const hideBtn=document.getElementById('btn-filter-hide');
     // getComputedStyle reports the USED value of margin-left, a pixel number,
     // never the literal 'auto'. Right-alignment is a position, so it is
-    // measured as one: within a few px of the bar's own right edge.
-    const hr=hideBtn?hideBtn.getBoundingClientRect():null;
-    const br=bar.getBoundingClientRect();
-    ck('defect A: the bar also carries its own hide control',
-       !!hideBtn && hr.width>0, hideBtn?(hr.width+'px wide'):'missing');
-    ck('defect A: and that control sits on the right-hand side',
-       !!hr && (br.right-hr.right)<24, hr?Math.round(br.right-hr.right)+'px from the right edge':'n/a');
+    // measured as one: within a few px of the header's own right edge.
+    const hr=expandBtn.getBoundingClientRect();
+    const hdr=expandBtn.closest('.rpt-hd').getBoundingClientRect();
+    ck('defect A: the bar carries no close x of its own; the header toggle hides the row again',
+       !hideBtn && (expandBtn.click(), true), hideBtn?'#btn-filter-hide still present':'');
+    await settle();
+    ck('defect A: (the toggle collapses the row it brought back)',
+       bar.getBoundingClientRect().height<2 && expandBtn.getAttribute('aria-expanded')==='false',
+       bar.getBoundingClientRect().height+'px');
+    expandBtn.click(); await settle();
+    ck('defect A: and that control sits on the right-hand side (of the header)',
+       (hdr.right-hr.right)<160 && hr.left>hdr.left+hdr.width/2, Math.round(hdr.right-hr.right)+'px from the header\'s right edge');
 
     // ============ 6. Defect B: one field, one filter ============
     const titleFields=Array.from(document.querySelectorAll('#top-filter-bar input[type="text"]'))
