@@ -1292,45 +1292,28 @@ select.ds-select{cursor:pointer}
   #top-filter-bar #tfb-crit .fb-dd>label,
   #top-filter-bar #tfb-crit .fb-sep{display:none}
 
-  /* 1. P72 (Matt 2026-10-01): the panel collapses to the search field. The
-     funnel inside its right end (#fb-find-more-btn, P67's chevron id kept)
-     opens everything else; syncFbShape() moves the date tile into Find, right
-     after the search field, so DOM order (and so tab order) is the visual
-     order: search, row 1, row 2, then Banding, Source, Activity ID(s). The
-     filter summary line goes with the rest while collapsed. */
-  #top-filter-bar #tfb-find:not(.fb-more-open) .fb-more,
-  #top-filter-bar #tfb-find:not(.fb-more-open) #tfb-when,
-  #top-filter-bar.fb-phone:not(.fb-panel-open) .fb-foot{display:none}
+  /* 1. Find: the name field alone until the chevron opens the rest. */
+  #top-filter-bar #tfb-find:not(.fb-more-open) .fb-more{display:none}
   #top-filter-bar .fb-chev{display:inline-flex;position:absolute;right:0;top:50%;transform:translateY(-50%)}
-  #top-filter-bar .fb-chev .fb-chev-ico{display:inline-flex}
-  #top-filter-bar .fb-chev[aria-expanded="true"]{background:var(--color-accent-tint-bg);color:var(--color-accent-ink);box-shadow:inset 0 0 0 var(--stroke-ctl) var(--color-accent)}
+  #top-filter-bar .fb-chev .fb-chev-ico{display:inline-block;transition:transform .16s ease}
+  #top-filter-bar .fb-chev[aria-expanded="true"] .fb-chev-ico{transform:rotate(180deg)}
   #top-filter-bar .fb-chev .fb-dot{display:none;position:absolute;top:var(--space-1);right:var(--space-1);width:6px;height:6px;border-radius:50%;background:var(--color-accent);pointer-events:none}
   #top-filter-bar .fb-chev.has-dot .fb-dot{display:block}
   #top-filter-bar .ds-fwrap.has-chev .ds-field{padding-right:calc(var(--space-7) + var(--icon-btn))}
   #top-filter-bar .ds-fwrap.has-chev .clr{right:var(--icon-btn)}
 
-  /* Find is the whole panel: its search row's children and the moved date
-     tile are its own flex items. Banding and Source share a row. */
-  #top-filter-bar #tfb-find{flex-direction:row;flex-wrap:wrap;align-items:center;gap:var(--ctl-gap)}
-  #top-filter-bar #tfb-find>.fb-row-1,#top-filter-bar #tfb-find>.fb-row-1.has-source{display:contents}
-  #top-filter-bar #tfb-find>.fb-row-1>.ds-fwrap{flex:1 1 100%}
-  #top-filter-bar #tfb-find>.fb-row-1>.fb-more{flex:1 1 0;min-width:0}
-  #top-filter-bar #tfb-find>.fb-line{flex:1 1 100%}
-  /* A label sits just above its own field (P59 C-03): the panel's row gap
-     less the label-to-field gap. */
-  #top-filter-bar #tfb-find>.fb-line.fb-lbl{margin-bottom:calc(var(--space-2) - var(--ctl-gap))}
-
-  /* 2. The date tile inside Find, no tile of its own. Row 1: Weeks, Mode,
-     Fit on one line (nowrap; Weeks is the one that gives, with an ellipsis).
-     Row 2: Status, Float, Notes and the clear x on one line. */
-  #top-filter-bar #tfb-find #tfb-when{flex:1 1 100%;min-width:0;display:flex;flex-direction:column;align-items:stretch;gap:var(--ctl-gap);border:0;padding:0;background:none;border-radius:0}
-  #top-filter-bar #tfb-when>.fb-row-1{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:var(--ctl-gap);min-width:0}
-  #top-filter-bar #tfb-when #wr-field{flex:0 1 auto;width:auto;min-width:0;max-width:100%;overflow:hidden}
-  #top-filter-bar #tfb-when .fb-modefit{flex:0 0 auto;display:flex;align-items:center;gap:var(--ctl-gap);margin:0}
+  /* 2-5. One tile: Weeks sized to its content with the status, float and
+     notes triggers to its right (wrapping inside their own group), then Mode
+     and Fit on one row. row-gap 0 on the tile, the rows take their spacing
+     from .fb-modefit's margin, so the tile has exactly two rows. */
+  #top-filter-bar #tfb-when{flex-direction:row;flex-wrap:wrap;align-items:flex-start;gap:0 var(--ctl-gap)}
+  #top-filter-bar #tfb-when>.fb-row-1{display:contents}
+  #top-filter-bar #tfb-when #wr-field{order:1;flex:0 1 auto;width:auto;min-width:0;max-width:100%}
+  #top-filter-bar #tfb-when #tfb-crit{order:2;flex:1 1 0;min-width:0;display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;gap:var(--ctl-gap-tight);border:0;padding:0;background:none;border-radius:0}
+  #top-filter-bar #tfb-when .fb-modefit{order:3;flex:1 1 100%;display:flex;align-items:center;gap:var(--ctl-gap);margin-top:var(--ctl-gap)}
   #top-filter-bar #tfb-when .fb-modefit .fb-inline{flex:0 0 auto}
-  #top-filter-bar #tfb-when #tfb-crit{min-width:0;display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:var(--ctl-gap-tight);border:0;padding:0;background:none;border-radius:0}
   #top-filter-bar #tfb-crit .fb-dd{flex:0 1 auto;min-width:0;flex-direction:row}
-  #top-filter-bar #tfb-crit .crit-clear{position:static;margin-left:0;flex:0 0 auto}
+  #top-filter-bar #tfb-crit .crit-clear{position:static;margin-left:0}
 
   /* Dropdown triggers: a compact field-like button with the choice in it. */
   #top-filter-bar .fb-dd-trig{display:inline-flex;align-items:center;gap:var(--space-2);max-width:100%;min-width:0;padding:0 var(--space-3)}
@@ -1596,55 +1579,6 @@ body.print-mode .pm-banner{display:block}
 .rpt-sub .today{color:var(--color-text-on-header-accent)}
 
 #scroll-wrap{overflow-x:auto;overflow-y:auto;max-height:calc(100vh - 150px);position:relative}
-/* ---- P72 (Matt 2026-10-01): the screen heading scrolls away -------------
-   Below 1024px only (CHROME_AWAY_MQ). Every width has the same two scrollers:
-   the board scrolls inside #scroll-wrap and the window scrolls whatever the
-   header, icon bar and filter bar push past 100vh - 150px. Scrolling the board
-   down past a small threshold sets html.chrome-away (setChromeAway()):
-   - the icon bar takes a negative top margin of the board's measured offset
-     (--chrome-shift), so the icon bar, heading, filter bar and board all move
-     up together, nothing re-laid between them, and the board's top meets the
-     viewport's (the hamburger, absolutely placed, moves by the same amount);
-   - the board is as tall as the viewport for as long as any shift applies
-     (html.chrome-shift): set at the start of hiding and cleared at the end
-     of showing, its bottom edge is below the viewport both times, so the
-     change is not seen and is not animated (a height that changes every
-     frame re-runs the info strip's width observer every frame);
-   - the info rows stick ABOVE the board's top edge (top: minus their own
-     measured height, --hdr-info-h) and the month and week bands stick at 0
-     and at --hdr-phase-h, so the bands meet the top with nothing between.
-   The info row stays in the table, so no row moves and no measured variable
-   is rewritten. Transitions run only while html.chrome-anim is set (the
-   change itself), so a measured height that changes at any other time still
-   lands at once, as before. The classes go on <html>, not <body>: a change to
-   the body's classes re-runs syncInfoBarWidth() (its MutationObserver), and
-   --chrome-shift is set on the two elements that read it, not on :root,
-   since a :root custom property restyles the whole document (measured on the
-   reference board: about 0.1s and 0.3s per change, at 390px). */
-@media (max-width:1023px){
-  html.chrome-shift body:not(.grid-open):not(.print-mode) #icon-bar{margin-top:calc(-1 * var(--chrome-shift))}
-  html.chrome-shift body:not(.grid-open):not(.print-mode) .ws-toggle{transform:translateY(calc(-1 * var(--chrome-shift)))}
-  html.chrome-shift body:not(.grid-open):not(.print-mode) #scroll-wrap{max-height:100vh;max-height:100dvh}
-  html.chrome-away body:not(.grid-open):not(.print-mode) tr.hdr-info th{top:calc(-1 * var(--hdr-info-h))}
-  html.chrome-away body:not(.grid-open):not(.print-mode) tr.hdr-phase th{top:0}
-  html.chrome-away body:not(.grid-open):not(.print-mode) tr.hdr-wk th{top:var(--hdr-phase-h)}
-  /* Out of the tab order and the accessibility tree while off screen; the
-     delay keeps them painted while they slide. */
-  html.chrome-away body:not(.grid-open):not(.print-mode) #icon-bar,
-  html.chrome-away body:not(.grid-open):not(.print-mode) .rpt-hd,
-  html.chrome-away body:not(.grid-open):not(.print-mode) #top-filter-bar,
-  html.chrome-away body:not(.grid-open):not(.print-mode) .ws-toggle{visibility:hidden}
-  html.chrome-anim #icon-bar{transition:margin-top .2s ease}
-  html.chrome-anim .ws-toggle{transition:transform .2s ease}
-  html.chrome-anim tr.hdr-info th,html.chrome-anim tr.hdr-phase th,html.chrome-anim tr.hdr-wk th{transition:top .2s ease}
-  html.chrome-anim.chrome-away #icon-bar{transition:margin-top .2s ease,visibility 0s linear .2s}
-  html.chrome-anim.chrome-away .rpt-hd,html.chrome-anim.chrome-away #top-filter-bar{transition:visibility 0s linear .2s}
-  html.chrome-anim.chrome-away .ws-toggle{transition:transform .2s ease,visibility 0s linear .2s}
-}
-@media (max-width:1023px) and (prefers-reduced-motion:reduce){
-  html.chrome-anim #icon-bar,html.chrome-anim .ws-toggle,html.chrome-anim .rpt-hd,html.chrome-anim #top-filter-bar,
-  html.chrome-anim tr.hdr-info th,html.chrome-anim tr.hdr-phase th,html.chrome-anim tr.hdr-wk th{transition:none}
-}
 table{border-collapse:separate;border-spacing:0;table-layout:fixed;width:max-content}
 .c-name{width:220px;min-width:220px}
 .c-ref{width:46px;min-width:46px}
@@ -2409,11 +2343,7 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 /* The board draws the plan's * glyph rather than the card's dot: a 5px dot
    beside a marker read as noise and was easy to miss. The card moves to the
    same glyph at D-05, so both surfaces end on one mark. */
-/* P72 (Matt): one placement, tight to the ICON's top-left. The old top-right
-   anchor measured from the whole .m-wrap box, which spans the label on some
-   markers and not others, so the mark landed in two different places. The
-   icon is the wrap's first child at its left edge, so top-left is always it. */
-.m-board-edit-mark{position:absolute;top:-9px;left:-8px;right:auto;margin:0;
+.m-board-edit-mark{position:absolute;top:-11px;right:-8px;left:auto;margin:0;
   width:auto;height:auto;border-radius:0;background:none;z-index:3;
   font-size:var(--text-lg);font-weight:700;line-height:1;
   color:var(--color-accent-ink);
@@ -2572,17 +2502,6 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 .ms-dep-chip:hover{background:var(--color-btn-hover-bg)}
 .ms-dep-chip.is-off{cursor:default;color:var(--color-text-muted)}
 .ms-dep-chip.is-off:hover{background:var(--color-bg-subtle)}
-/* P72: a user milestone's own links carry a remove cross (.collect-x), and
-   a dashed Add field under each list. A link another user milestone made is
-   shown without a cross: it is removed on that milestone's card. */
-.ms-dep-chip.is-own{padding-right:var(--space-1)}
-.ms-dep-add{display:block;width:100%;box-sizing:border-box;height:var(--ctl-h);margin-top:var(--space-3);padding:0 var(--space-3);
-  border:1px dashed var(--color-line-default);font:450 var(--text-base)/1 var(--font-mono);color:var(--color-text-primary)}
-.ms-dep-add[hidden]{display:none}
-.ms-dep-suggest[hidden]{display:none}
-.ms-dep-suggest .id-suggest-item{font-family:var(--font-mono)}
-.ms-dep-suggest .id-suggest-item.is-hl{background:var(--color-btn-secondary-hover-bg)}
-.ms-dep-suggest .ms-dep-sug-name{margin-left:var(--space-3);font-family:var(--font-sans);color:var(--color-text-muted)}
 /* P68/P69: the collection strip in the info bar, above the date bands.
    Sticky at left 0 and as wide as the scroller, like the bar above it. */
 .collect-bar{position:sticky;left:0;width:var(--sib-w,100%);box-sizing:border-box;display:flex;align-items:center;
@@ -3742,10 +3661,9 @@ button.sg-sym:hover{transform:scale(1.2)}
        spill into a third row once Source is visible (docs/03-todo.md
        TD-202); the name field is the one that shrinks (a sensible min), the
        two selects hold their natural width. -->
-  <!-- P67: at phone width only the name field shows. P72: the funnel inside
-       its right end (#fb-find-more-btn, P67's chevron id) expands the whole
-       panel: the date tile (moved in here by syncFbShape()), then the .fb-more
-       rows. It carries a dot while any filter it is hiding is set. -->
+  <!-- P67: at phone width only the name field shows; the chevron inside its
+       right end (#fb-find-more-btn) expands the .fb-more rows below it, and
+       carries a dot while one of them holds a filter it is hiding. -->
   <div class="fb-box find" id="tfb-find" role="group" aria-label="Find">
    <p class="fb-title">Find</p>
    <div class="fb-line fb-lbl fb-name-lbl"><label for="filter-title">Activity name</label></div>
@@ -3754,7 +3672,7 @@ button.sg-sym:hover{transform:scale(1.2)}
      <span class="lead" aria-hidden="true">&#128269;</span>
      <input type="text" id="filter-title" class="ds-field" placeholder="Search activity name" aria-label="Activity name" oninput="onTitleFilterInput(this)">
      <button class="clr" id="sticky-title-clear" onclick="clearOneFilter('filter-title')" title="Clear this filter" aria-label="Clear title search" style="display:none">&#10005;</button>
-     <button type="button" class="ds-ico fb-chev" id="fb-find-more-btn" onclick="toggleFindMore()" aria-expanded="false" aria-controls="tfb-find" aria-label="Show filters" title="Filters"><span class="fb-chev-ico" aria-hidden="true"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false"><path d="M2 3h12l-4.6 5.4v4.4l-2.8 1.4V8.4z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></span><span class="fb-dot" aria-hidden="true"></span></button>
+     <button type="button" class="ds-ico fb-chev" id="fb-find-more-btn" onclick="toggleFindMore()" aria-expanded="false" aria-controls="tfb-find" aria-label="Show Banding and Activity IDs" title="Banding and Activity IDs"><span class="fb-chev-ico" aria-hidden="true">&#9662;</span><span class="fb-dot" aria-hidden="true"></span></button>
     </span>
     <span class="fb-inline fb-fixed fb-more"><label for="filter-band">Banding</label>
      <select id="filter-band" class="ds-select" onchange="applyFilter()">
@@ -4079,7 +3997,7 @@ button.sg-sym:hover{transform:scale(1.2)}
        milestone with no start shows a dash where a date would be. -->
   <div class="ms-schedule">
     <div class="ms-field" id="ms-start-field"><span class="ms-lbl">Start<span class="ms-edited-mark" id="ms-mark-start" data-field="start" hidden></span><button type="button" class="ms-dp-btn" id="ms-dp-btn-start" onclick="openMsDatePicker(event,'ms-start-date')" aria-haspopup="dialog" aria-expanded="false" aria-label="Pick the start date" title="Pick the start date"><svg class="ms-head-ico" viewBox="0 0 14 14" aria-hidden="true"><rect x="2" y="3" width="10" height="9" rx="1"/><path d="M2 6h10M5 1.8v2.4M9 1.8v2.4"/></svg></button></span><input type="text" id="ms-start-date" class="ms-date ms-start-date ms-edit" maxlength="14" autocomplete="off" title="Start date. An A after the date marks it actual. Clear the field to restore the schedule's own value." oninput="onMsFieldInput()" onkeydown="onMsDateKey(event)" onpointerdown="onMsDatePointer(event)"><span class="ms-started" id="ms-started"></span></div>
-    <div class="ms-field ms-dur-field" id="ms-dur-field"><span class="ms-lbl">Duration<span class="ms-edited-mark" id="ms-mark-floatD" data-field="floatD" hidden></span></span><span class="ms-dur-val" id="ms-duration"></span><span class="ms-float-col" id="ms-float-col">(<input type="text" id="ms-float-val" class="ms-float-val ms-edit" maxlength="6" autocomplete="off" placeholder="-" readonly tabindex="-1" title="Total float in days, from the schedule. Not editable." aria-label="Total float in days, from the schedule"><span class="ms-float-lbl">d float)</span></span></div>
+    <div class="ms-field ms-dur-field" id="ms-dur-field"><span class="ms-lbl">Duration<span class="ms-edited-mark" id="ms-mark-floatD" data-field="floatD" hidden></span></span><span class="ms-dur-val" id="ms-duration"></span><span class="ms-float-col" id="ms-float-col">(<input type="text" id="ms-float-val" class="ms-float-val ms-edit" inputmode="decimal" maxlength="6" autocomplete="off" placeholder="-" title="Total float in days" aria-label="Total float in days" oninput="onMsFieldInput()"><span class="ms-float-lbl">d float)</span></span></div>
     <div class="ms-field ms-fin-field"><span class="ms-lbl"><button type="button" class="ms-dp-btn" id="ms-dp-btn-date" onclick="openMsDatePicker(event,'ms-date')" aria-haspopup="dialog" aria-expanded="false" aria-label="Pick the finish date" title="Pick the finish date"><svg class="ms-head-ico" viewBox="0 0 14 14" aria-hidden="true"><rect x="2" y="3" width="10" height="9" rx="1"/><path d="M2 6h10M5 1.8v2.4M9 1.8v2.4"/></svg></button><span class="ms-edited-mark" id="ms-mark-date" data-field="date" hidden></span>Finish</span><input type="text" id="ms-date" class="ms-date ms-edit" maxlength="14" autocomplete="off" title="Finish date. An A after the date marks it actual. Clear the field to restore the schedule's own value." oninput="onMsFieldInput()" onkeydown="onMsDateKey(event)" onpointerdown="onMsDatePointer(event)"></div>
   </div>
   <!-- P69: the date picker for Start and Finish. Inside the card so a click
@@ -4135,17 +4053,12 @@ button.sg-sym:hover{transform:scale(1.2)}
         <div class="ms-dep-col">
           <span class="ms-lbl">Predecessors</span>
           <div class="ms-dep-chips" id="ms-dep-pred-chips"></div>
-          <input type="text" id="ms-dep-add-pred" class="ms-dep-add ms-edit" autocomplete="off" spellcheck="false" placeholder="Add an ID" aria-label="Add a predecessor by Activity ID" aria-autocomplete="list" aria-controls="ms-dep-suggest" hidden oninput="onMsDepAddInput('pred')" onkeydown="onMsDepAddKey(event,'pred')" onfocus="onMsDepAddInput('pred')" onblur="closeMsDepSuggest()">
         </div>
         <div class="ms-dep-col">
           <span class="ms-lbl">Successors</span>
           <div class="ms-dep-chips" id="ms-dep-succ-chips"></div>
-          <input type="text" id="ms-dep-add-succ" class="ms-dep-add ms-edit" autocomplete="off" spellcheck="false" placeholder="Add an ID" aria-label="Add a successor by Activity ID" aria-autocomplete="list" aria-controls="ms-dep-suggest" hidden oninput="onMsDepAddInput('succ')" onkeydown="onMsDepAddKey(event,'succ')" onfocus="onMsDepAddInput('succ')" onblur="closeMsDepSuggest()">
         </div>
       </div>
-      <!-- P72: the Add ID suggestions. Inside the card, so picking one is a
-           click in the card, and fixed-positioned under its field. -->
-      <div class="id-suggest-dropdown ms-dep-suggest" id="ms-dep-suggest" role="listbox" aria-label="Matching Activity IDs" hidden></div>
       <!-- The raw comma lists, kept for anything that reads them; the chips
            above are built from the same values. -->
       <div class="ms-dep-raw" hidden>
@@ -5667,10 +5580,7 @@ button.sg-sym:hover{transform:scale(1.2)}
   var STATUSES=['note','open','sent','review','outstanding','done','closed'];
   var OPEN_STATUSES=['open','sent','review','outstanding'];
   // The milestone's own schedule fields, exactly MS_EDITABLE_FIELDS in the app.
-  // P72: floatD is not one of them. Float is the schedule's result, never a
-  // hand edit, so an old floatD change neither projects nor migrates (it
-  // stays in its entry, for the history).
-  var MS_FIELDS=['actName','start','date','weight','type','marker','actual','startActual'];
+  var MS_FIELDS=['actName','start','date','weight','floatD','type','marker','actual','startActual'];
   var CHANGE_FIELDS=MS_FIELDS.concat(['health','progress','rowHealth','rowRemark']);
   var DEFAULT_WINDOW_MS=10*60*1000;
 
@@ -6443,19 +6353,16 @@ button.sg-sym:hover{transform:scale(1.2)}
     var h = '<div class="nh-entry" data-eid="' + esc(v.eid) + '" data-status="' + esc(v.status) +
       '" data-text="' + esc(v.text) + '">' +
       '<div class="nh-head"><span class="nh-meta"><span class="nh-when">' + esc(v.when) + '</span>' +
-      (v.who ? ' <span class="nh-who">' + esc(v.who) + '</span>' : '') + '</span> ' +
+      (v.who ? '<span class="nh-who">' + esc(v.who) + '</span>' : '') + '</span>' +
       '<span class="nh-right"><span class="nh-fu ' + v.fuClass + '">' + esc(v.followUp) + '</span>' +
-      (v.canEdit ? ' <button type="button" class="nh-edit" data-act="edit" aria-label="Edit entry" title="Edit entry">' + PENCIL + '</button>' : '') +
+      (v.canEdit ? '<button type="button" class="nh-edit" data-act="edit" aria-label="Edit entry" title="Edit entry">' + PENCIL + '</button>' : '') +
       '</span></div><div class="nh-changes">';
     for (var i = 0; i < v.changes.length; i++){
       var c = v.changes[i];
-      // Real spaces between the parts (P72): ignored by the grid and flex
-      // layout, but the row still reads "Health none → Done" if a viewer
-      // shows it without the stylesheet.
-      h += '<div class="nh-row"><span class="nh-lbl">' + esc(c.label) + '</span> ';
+      h += '<div class="nh-row"><span class="nh-lbl">' + esc(c.label) + '</span>';
       if (c.isComment) h += '<span class="nh-text">' + esc(c.text) + '</span>';
       else h += '<span class="nh-delta"><span class="nh-from">' + esc(c.from) + '</span>' +
-        ' <span class="nh-arrow">→</span> <span class="nh-to">' + esc(c.to) + '</span></span>';
+        '<span class="nh-arrow">→</span><span class="nh-to">' + esc(c.to) + '</span></span>';
       h += '</div>';
     }
     return h + '</div></div>';
@@ -6504,7 +6411,7 @@ button.sg-sym:hover{transform:scale(1.2)}
       '<textarea class="nh-ta" aria-label="Entry text">' + esc(text) + '</textarea>' +
       '<div class="nh-fuwrap"><span class="nh-lbl">Follow-up</span>' +
       '<select class="nh-sel" aria-label="Follow-up status">' + opts + '</select></div>' +
-      '<div class="nh-actions"><button type="button" class="nh-btn" data-act="cancel" aria-label="Cancel edit">Cancel</button> ' +
+      '<div class="nh-actions"><button type="button" class="nh-btn" data-act="cancel" aria-label="Cancel edit">Cancel</button>' +
       '<button type="button" class="nh-btn nh-btn-primary" data-act="save" aria-label="Save entry">Save</button></div></div>';
   }
 
@@ -6577,7 +6484,7 @@ button.sg-sym:hover{transform:scale(1.2)}
 // label, and embedded in exported JSON — bump this one place, everything else
 // reads from it, so the three copies can't silently drift apart the way the
 // title/label/export payload just had for a long stretch of unversioned work.
-const APP_VERSION='3.1.0-P72';
+const APP_VERSION='3.1.0-P70';
 // ============================================================
 // TIMELINE
 // ============================================================
@@ -6774,9 +6681,48 @@ const SEED_TASKS=[
   {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"Eskay Single Line Diagram",ref:"A1040",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"A1040, A1050",health:3,remarks:""},
   {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"Eskay Single Line Diagrams-Client Review",ref:"A1060",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"A1060",health:3,remarks:""},
   {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"Eskay  Single Line Diagrams-final Issue-Final Issue",ref:"A1070",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"A1070",health:3,remarks:""},
-  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"PFD",ref:"SNIP-133",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"SNIP-133, SNIP-137, SNIP-145, SNIP-154",health:1,remarks:""},
-  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"Equipment Sizing",ref:"SNIP-155",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"SNIP-155",health:3,remarks:""},
-  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"Financial Model",ref:"SNIP-242",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"SNIP-242, SNIP-252",health:2,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"Eskay Creek PFS - Current",ref:"Eskay Creek PFS - Current",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"Eskay Creek PFS - Current",health:3,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"Key Milestones",ref:"Key Milestones",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"Key Milestones",health:3,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"Inputs From Others",ref:"Inputs From Others",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"Inputs From Others",health:1,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"Project Management",ref:"Project Management",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"Project Management",health:1,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"PFS Baseline Schedule",ref:"PFS Baseline Schedule",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"PFS Baseline Schedule",health:1,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"PFS",ref:"PFS",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"PFS",health:1,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"Engineering",ref:"Engineering",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"Engineering",health:1,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"Process",ref:"Process",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"Process",health:1,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"Metallurgical Testwork Review",ref:"Metallurgical Testwork Review",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"Metallurgical Testwork Review",health:1,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"Design Criteria",ref:"Design Criteria",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"Design Criteria, Design Criteria, Design Criteria, Design Criteria",health:2,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"PFD",ref:"SNIP-133",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"SNIP-133, SNIP-137, SNIP-145, SNIP-154, PFD",health:1,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"Mass  and Water Balance",ref:"Mass  and Water Balance",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"Mass  and Water Balance",health:1,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"Equipment Sizing",ref:"SNIP-155",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"SNIP-155, Equipment Sizing, Equipment Sizing",health:3,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"Mechanical & Piping",ref:"Mechanical & Piping",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"Mechanical & Piping",health:2,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"MEL",ref:"MEL",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"MEL",health:2,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"MTO",ref:"MTO",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"MTO, MTO",health:2,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"Layout",ref:"Layout",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"Layout",health:1,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"Overall Site Plan",ref:"Overall Site Plan",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"Overall Site Plan",health:1,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"NPI Facility Detailed Layout",ref:"NPI Facility Detailed Layout",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"NPI Facility Detailed Layout",health:2,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"Civil",ref:"Civil",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"Civil",health:1,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"On-Site Waste Dump",ref:"On-Site Waste Dump",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"On-Site Waste Dump",health:1,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"SNIP Water Management",ref:"SNIP Water Management",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"SNIP Water Management",health:1,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"3D Model",ref:"3D Model",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"3D Model",health:2,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"Bronson Connector Road Design  Review Memo",ref:"Bronson Connector Road Design  Review Memo",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"Bronson Connector Road Design  Review Memo",health:1,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"Foundation(NPI & Portals )",ref:"Foundation(NPI & Portals )",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"Foundation(NPI & Portals )",health:1,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"Structural & Concrete",ref:"Structural & Concrete",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"Structural & Concrete",health:1,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"Structural Design Criteria",ref:"Structural Design Criteria",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"Structural Design Criteria",health:1,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"Snip Building List",ref:"Snip Building List",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"Snip Building List",health:1,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"Concrete MTO",ref:"Concrete MTO",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"Concrete MTO",health:2,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"Electrical & Instrumentation",ref:"Electrical & Instrumentation",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"Electrical & Instrumentation",health:2,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"Snip Load List",ref:"Snip Load List",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"Snip Load List",health:2,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"Eskay  Load List",ref:"Eskay  Load List",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"Eskay  Load List",health:1,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"Snip HV SLD",ref:"Snip HV SLD",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"Snip HV SLD",health:2,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"Eskay HV SLD",ref:"Eskay HV SLD",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"Eskay HV SLD",health:3,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"Equipment List",ref:"Equipment List",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"Equipment List",health:3,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"Generator Sizing Report",ref:"Generator Sizing Report",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"Generator Sizing Report",health:2,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"Electrical Update",ref:"Electrical Update",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"Electrical Update",health:2,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"Site Services",ref:"Site Services",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"Site Services",health:2,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"Project Execution Plan / Schedule",ref:"Project Execution Plan / Schedule",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"Project Execution Plan / Schedule",health:1,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"Capital and Operating Cost Estimate",ref:"Capital and Operating Cost Estimate",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"Capital and Operating Cost Estimate",health:2,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"Financial Model",ref:"SNIP-242",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"SNIP-242, SNIP-252, Financial Model",health:2,remarks:""},
+  {notes:"Schedule \u2014 ungrouped",disc:"Unassigned",name:"Technical Report",ref:"Technical Report",phaseCls:"pb2",hrs:"",type:"Weighted",doc:"\u2014",task:"\u2014",src:"Technical Report",health:3,remarks:""}
 ];
 const SEED_MILESTONES=[
   {ref:"SNIP-101",type:"MS",date:"2026-05-01",state:"DONE",weight:100,progress:100,id:"SNIP-101",actName:"Study Award",floatD:null,notes:"[SNIP-101] - Study Award",label:"",active:"Yes",marker:"MS - Diamond",actual:true,started:true,start:"2026-05-01",startActual:true,startStarred:false,finishFromStart:true},
@@ -6923,13 +6869,60 @@ const SEED_MILESTONES=[
   {ref:"A1040",type:"CLI",date:"2026-09-21",state:"CRIT",weight:50,progress:0,id:"A1050",actName:"Eskay  Single Line Diagram- Internal Review, Update and Issue for Client Review",floatD:0,notes:"[A1050] - Eskay  Single Line Diagram- Internal Review, Update and Issue for Client Review \u00b7 TF 0d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:false,start:"2026-09-15",startActual:false,startStarred:false,finishFromStart:false},
   {ref:"A1060",type:"RTN",date:"2026-09-23",state:"CRIT",weight:100,progress:0,id:"A1060",actName:"Eskay Single Line Diagrams-Client Review",floatD:0,notes:"[A1060] - Eskay Single Line Diagrams-Client Review \u00b7 TF 0d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:false,start:"2026-09-22",startActual:false,startStarred:false,finishFromStart:false},
   {ref:"A1070",type:"FIN",date:"2026-09-30",state:"CRIT",weight:100,progress:0,id:"A1070",actName:"Eskay  Single Line Diagrams-final Issue-Final Issue",floatD:0,notes:"[A1070] - Eskay  Single Line Diagrams-final Issue-Final Issue \u00b7 TF 0d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:false,start:"2026-09-24",startActual:false,startStarred:false,finishFromStart:false},
+  {ref:"Eskay Creek PFS - Current",type:"MS",date:"2026-11-25",state:"CRIT",weight:100,progress:0,id:"Eskay Creek PFS - Current",actName:"Eskay Creek PFS - Current",floatD:0,notes:"[Eskay Creek PFS - Current] - Eskay Creek PFS - Current \u00b7 TF 0d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:true,start:"2026-05-01",startActual:true,startStarred:false,finishFromStart:false},
+  {ref:"Key Milestones",type:"MS",date:"2026-11-25",state:"CRIT",weight:100,progress:0,id:"Key Milestones",actName:"Key Milestones",floatD:0,notes:"[Key Milestones] - Key Milestones \u00b7 TF 0d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:true,start:"2026-05-01",startActual:true,startStarred:false,finishFromStart:false},
+  {ref:"Inputs From Others",type:"MS",date:"2026-09-01",state:"TRACK",weight:100,progress:0,id:"Inputs From Others",actName:"Inputs From Others",floatD:15,notes:"[Inputs From Others] - Inputs From Others \u00b7 TF 15d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:true,start:"2026-06-11",startActual:true,startStarred:false,finishFromStart:false},
+  {ref:"Project Management",type:"MS",date:"2026-09-29",state:"TRACK",weight:100,progress:0,id:"Project Management",actName:"Project Management",floatD:39,notes:"[Project Management] - Project Management \u00b7 TF 39d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:true,start:"2026-05-05",startActual:true,startStarred:false,finishFromStart:false},
+  {ref:"PFS Baseline Schedule",type:"MS",date:"2026-07-02",state:"DONE",weight:100,progress:100,id:"PFS Baseline Schedule",actName:"PFS Baseline Schedule",floatD:null,notes:"[PFS Baseline Schedule] - PFS Baseline Schedule",label:"",active:"Yes",marker:"MS - Diamond",actual:true,started:true,start:"2026-05-06",startActual:true,startStarred:false,finishFromStart:false},
+  {ref:"PFS",type:"MS",date:"2026-10-13",state:"TRACK",weight:100,progress:0,id:"PFS",actName:"PFS",floatD:30,notes:"[PFS] - PFS \u00b7 TF 30d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:true,start:"2026-06-15",startActual:true,startStarred:false,finishFromStart:false},
+  {ref:"Engineering",type:"MS",date:"2026-10-13",state:"TRACK",weight:100,progress:0,id:"Engineering",actName:"Engineering",floatD:30,notes:"[Engineering] - Engineering \u00b7 TF 30d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:true,start:"2026-06-15",startActual:true,startStarred:false,finishFromStart:false},
+  {ref:"Process",type:"MS",date:"2026-08-26",state:"TRACK",weight:100,progress:0,id:"Process",actName:"Process",floatD:34,notes:"[Process] - Process \u00b7 TF 34d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:true,start:"2026-06-15",startActual:true,startStarred:false,finishFromStart:false},
+  {ref:"Metallurgical Testwork Review",type:"MS",date:"2026-07-10",state:"DONE",weight:100,progress:100,id:"Metallurgical Testwork Review",actName:"Metallurgical Testwork Review",floatD:null,notes:"[Metallurgical Testwork Review] - Metallurgical Testwork Review",label:"",active:"Yes",marker:"MS - Diamond",actual:true,started:true,start:"2026-07-06",startActual:true,startStarred:false,finishFromStart:false},
+  {ref:"Design Criteria",type:"MS",date:"2026-07-07",state:"DONE",weight:25,progress:100,id:"Design Criteria",actName:"Design Criteria",floatD:null,notes:"[Design Criteria] - Design Criteria",label:"",active:"Yes",marker:"MS - Diamond",actual:true,started:true,start:"2026-07-06",startActual:true,startStarred:false,finishFromStart:false},
+  {ref:"Design Criteria",type:"MS",date:"2026-07-16",state:"DONE",weight:25,progress:100,id:"Design Criteria",actName:"Design Criteria",floatD:null,notes:"[Design Criteria] - Design Criteria",label:"",active:"Yes",marker:"MS - Diamond",actual:true,started:true,start:"2026-07-16",startActual:true,startStarred:false,finishFromStart:false},
+  {ref:"Design Criteria",type:"MS",date:"2026-07-16",state:"DONE",weight:25,progress:100,id:"Design Criteria",actName:"Design Criteria",floatD:null,notes:"[Design Criteria] - Design Criteria",label:"",active:"Yes",marker:"MS - Diamond",actual:true,started:true,start:"2026-07-16",startActual:true,startStarred:false,finishFromStart:false},
+  {ref:"Design Criteria",type:"MS",date:"2026-08-20",state:"RISK",weight:25,progress:0,id:"Design Criteria",actName:"Design Criteria",floatD:5,notes:"[Design Criteria] - Design Criteria \u00b7 TF 5d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:true,start:"2026-06-15",startActual:true,startStarred:false,finishFromStart:false},
   {ref:"SNIP-133",type:"INT",date:"2026-07-14",state:"DONE",weight:20,progress:100,id:"SNIP-133",actName:"PFD-Issue for internal Review",floatD:null,notes:"[SNIP-133] - PFD-Issue for internal Review",label:"",active:"Yes",marker:"MS - Diamond",actual:true,started:true,start:"2026-06-26",startActual:true,startStarred:false,finishFromStart:false},
   {ref:"SNIP-133",type:"CLI",date:"2026-08-07",state:"DONE",weight:20,progress:100,id:"SNIP-137",actName:"PFD-Internal Review,Update and Issue for Client Review",floatD:null,notes:"[SNIP-137] - PFD-Internal Review,Update and Issue for Client Review",label:"",active:"Yes",marker:"MS - Diamond",actual:true,started:true,start:"2026-07-15",startActual:true,startStarred:false,finishFromStart:false},
   {ref:"SNIP-133",type:"RTN",date:"2026-08-14",state:"DONE",weight:20,progress:100,id:"SNIP-145",actName:"PFD-Client Review (Not Received)",floatD:null,notes:"[SNIP-145] - PFD-Client Review (Not Received)",label:"",active:"Yes",marker:"MS - Diamond",actual:true,started:true,start:"2026-08-10",startActual:true,startStarred:false,finishFromStart:false},
   {ref:"SNIP-133",type:"FIN",date:"2026-08-20",state:"TRACK",weight:20,progress:0,id:"SNIP-154",actName:"PFD-Final Issue",floatD:38,notes:"[SNIP-154] - PFD-Final Issue \u00b7 TF 38d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:true,start:"2026-08-17",startActual:true,startStarred:false,finishFromStart:false},
+  {ref:"SNIP-133",type:"MS",date:"2026-08-20",state:"TRACK",weight:20,progress:0,id:"PFD",actName:"PFD",floatD:38,notes:"[PFD] - PFD \u00b7 TF 38d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:true,start:"2026-06-26",startActual:true,startStarred:false,finishFromStart:false},
+  {ref:"Mass  and Water Balance",type:"MS",date:"2026-08-20",state:"TRACK",weight:100,progress:0,id:"Mass  and Water Balance",actName:"Mass  and Water Balance",floatD:29,notes:"[Mass  and Water Balance] - Mass  and Water Balance \u00b7 TF 29d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:true,start:"2026-07-06",startActual:true,startStarred:false,finishFromStart:false},
   {ref:"SNIP-155",type:"MS",date:"2026-08-21",state:"RISK",weight:34,progress:0,id:"SNIP-155",actName:"Equipment Sizing",floatD:3,notes:"[SNIP-155] - Equipment Sizing \u00b7 TF 3d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:true,start:"2026-07-27",startActual:true,startStarred:false,finishFromStart:false},
+  {ref:"SNIP-155",type:"MS",date:"2026-08-21",state:"RISK",weight:33,progress:0,id:"Equipment Sizing",actName:"Equipment Sizing",floatD:3,notes:"[Equipment Sizing] - Equipment Sizing \u00b7 TF 3d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:true,start:"2026-07-27",startActual:true,startStarred:false,finishFromStart:false},
+  {ref:"SNIP-155",type:"MS",date:"2026-09-04",state:"CRIT",weight:33,progress:0,id:"Equipment Sizing",actName:"Equipment Sizing",floatD:0,notes:"[Equipment Sizing] - Equipment Sizing \u00b7 TF 0d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:false,start:"2026-08-24",startActual:false,startStarred:false,finishFromStart:false},
+  {ref:"Mechanical & Piping",type:"MS",date:"2026-09-24",state:"RISK",weight:100,progress:0,id:"Mechanical & Piping",actName:"Mechanical & Piping",floatD:8,notes:"[Mechanical & Piping] - Mechanical & Piping \u00b7 TF 8d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:true,start:"2026-07-08",startActual:true,startStarred:false,finishFromStart:false},
+  {ref:"MEL",type:"MS",date:"2026-09-24",state:"RISK",weight:100,progress:0,id:"MEL",actName:"MEL",floatD:8,notes:"[MEL] - MEL \u00b7 TF 8d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:true,start:"2026-07-08",startActual:true,startStarred:false,finishFromStart:false},
+  {ref:"MTO",type:"MS",date:"2026-08-31",state:"TRACK",weight:50,progress:0,id:"MTO",actName:"MTO",floatD:20,notes:"[MTO] - MTO \u00b7 TF 20d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:true,start:"2026-08-11",startActual:true,startStarred:false,finishFromStart:false},
+  {ref:"MTO",type:"MS",date:"2026-10-05",state:"RISK",weight:50,progress:0,id:"MTO",actName:"MTO",floatD:1,notes:"[MTO] - MTO \u00b7 TF 1d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:false,start:"2026-08-24",startActual:false,startStarred:false,finishFromStart:false},
+  {ref:"Layout",type:"MS",date:"2026-09-28",state:"TRACK",weight:100,progress:0,id:"Layout",actName:"Layout",floatD:40,notes:"[Layout] - Layout \u00b7 TF 40d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:true,start:"2026-06-30",startActual:true,startStarred:false,finishFromStart:false},
+  {ref:"Overall Site Plan",type:"MS",date:"2026-09-28",state:"TRACK",weight:100,progress:0,id:"Overall Site Plan",actName:"Overall Site Plan",floatD:40,notes:"[Overall Site Plan] - Overall Site Plan \u00b7 TF 40d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:true,start:"2026-06-30",startActual:true,startStarred:false,finishFromStart:false},
+  {ref:"NPI Facility Detailed Layout",type:"MS",date:"2026-08-21",state:"RISK",weight:100,progress:0,id:"NPI Facility Detailed Layout",actName:"NPI Facility Detailed Layout",floatD:1,notes:"[NPI Facility Detailed Layout] - NPI Facility Detailed Layout \u00b7 TF 1d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:true,start:"2026-08-05",startActual:true,startStarred:false,finishFromStart:false},
+  {ref:"Civil",type:"MS",date:"2026-10-05",state:"TRACK",weight:100,progress:0,id:"Civil",actName:"Civil",floatD:35,notes:"[Civil] - Civil \u00b7 TF 35d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:true,start:"2026-06-30",startActual:true,startStarred:false,finishFromStart:false},
+  {ref:"On-Site Waste Dump",type:"MS",date:"2026-09-14",state:"TRACK",weight:100,progress:0,id:"On-Site Waste Dump",actName:"On-Site Waste Dump",floatD:16,notes:"[On-Site Waste Dump] - On-Site Waste Dump \u00b7 TF 16d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:false,start:"2026-08-17",startActual:false,startStarred:false,finishFromStart:false},
+  {ref:"SNIP Water Management",type:"MS",date:"2026-09-14",state:"TRACK",weight:100,progress:0,id:"SNIP Water Management",actName:"SNIP Water Management",floatD:16,notes:"[SNIP Water Management] - SNIP Water Management \u00b7 TF 16d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:false,start:"2026-08-17",startActual:false,startStarred:false,finishFromStart:false},
+  {ref:"3D Model",type:"MS",date:"2026-09-21",state:"RISK",weight:100,progress:0,id:"3D Model",actName:"3D Model",floatD:6,notes:"[3D Model] - 3D Model \u00b7 TF 6d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:false,start:"2026-08-17",startActual:false,startStarred:false,finishFromStart:false},
+  {ref:"Bronson Connector Road Design  Review Memo",type:"MS",date:"2026-07-28",state:"DONE",weight:100,progress:100,id:"Bronson Connector Road Design  Review Memo",actName:"Bronson Connector Road Design  Review Memo",floatD:null,notes:"[Bronson Connector Road Design  Review Memo] - Bronson Connector Road Design  Review Memo",label:"",active:"Yes",marker:"MS - Diamond",actual:true,started:true,start:"2026-06-30",startActual:true,startStarred:false,finishFromStart:false},
+  {ref:"Foundation(NPI & Portals )",type:"MS",date:"2026-08-21",state:"TRACK",weight:100,progress:0,id:"Foundation(NPI & Portals )",actName:"Foundation(NPI & Portals )",floatD:65,notes:"[Foundation(NPI & Portals )] - Foundation(NPI & Portals ) \u00b7 TF 65d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:true,start:"2026-08-10",startActual:true,startStarred:false,finishFromStart:false},
+  {ref:"Structural & Concrete",type:"MS",date:"2026-10-05",state:"TRACK",weight:100,progress:0,id:"Structural & Concrete",actName:"Structural & Concrete",floatD:35,notes:"[Structural & Concrete] - Structural & Concrete \u00b7 TF 35d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:true,start:"2026-07-15",startActual:true,startStarred:false,finishFromStart:false},
+  {ref:"Structural Design Criteria",type:"MS",date:"2026-07-16",state:"DONE",weight:100,progress:100,id:"Structural Design Criteria",actName:"Structural Design Criteria",floatD:null,notes:"[Structural Design Criteria] - Structural Design Criteria",label:"",active:"Yes",marker:"MS - Diamond",actual:true,started:true,start:"2026-07-16",startActual:true,startStarred:false,finishFromStart:false},
+  {ref:"Snip Building List",type:"MS",date:"2026-09-14",state:"TRACK",weight:100,progress:0,id:"Snip Building List",actName:"Snip Building List",floatD:50,notes:"[Snip Building List] - Snip Building List \u00b7 TF 50d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:true,start:"2026-07-15",startActual:true,startStarred:false,finishFromStart:false},
+  {ref:"Concrete MTO",type:"MS",date:"2026-10-05",state:"RISK",weight:100,progress:0,id:"Concrete MTO",actName:"Concrete MTO",floatD:1,notes:"[Concrete MTO] - Concrete MTO \u00b7 TF 1d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:false,start:"2026-08-17",startActual:false,startStarred:false,finishFromStart:false},
+  {ref:"Electrical & Instrumentation",type:"MS",date:"2026-10-13",state:"RISK",weight:100,progress:0,id:"Electrical & Instrumentation",actName:"Electrical & Instrumentation",floatD:2,notes:"[Electrical & Instrumentation] - Electrical & Instrumentation \u00b7 TF 2d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:true,start:"2026-07-16",startActual:true,startStarred:false,finishFromStart:false},
+  {ref:"Snip Load List",type:"MS",date:"2026-10-01",state:"RISK",weight:100,progress:0,id:"Snip Load List",actName:"Snip Load List",floatD:4,notes:"[Snip Load List] - Snip Load List \u00b7 TF 4d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:false,start:"2026-08-20",startActual:false,startStarred:false,finishFromStart:false},
+  {ref:"Eskay  Load List",type:"MS",date:"2026-09-17",state:"TRACK",weight:100,progress:0,id:"Eskay  Load List",actName:"Eskay  Load List",floatD:14,notes:"[Eskay  Load List] - Eskay  Load List \u00b7 TF 14d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:false,start:"2026-08-20",startActual:false,startStarred:false,finishFromStart:false},
+  {ref:"Snip HV SLD",type:"MS",date:"2026-10-01",state:"RISK",weight:100,progress:0,id:"Snip HV SLD",actName:"Snip HV SLD",floatD:4,notes:"[Snip HV SLD] - Snip HV SLD \u00b7 TF 4d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:false,start:"2026-08-21",startActual:false,startStarred:false,finishFromStart:false},
+  {ref:"Eskay HV SLD",type:"MS",date:"2026-09-30",state:"CRIT",weight:100,progress:0,id:"Eskay HV SLD",actName:"Eskay HV SLD",floatD:0,notes:"[Eskay HV SLD] - Eskay HV SLD \u00b7 TF 0d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:false,start:"2026-09-08",startActual:false,startStarred:false,finishFromStart:false},
+  {ref:"Equipment List",type:"MS",date:"2026-10-07",state:"CRIT",weight:100,progress:0,id:"Equipment List",actName:"Equipment List",floatD:0,notes:"[Equipment List] - Equipment List \u00b7 TF 0d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:true,start:"2026-07-27",startActual:true,startStarred:false,finishFromStart:false},
+  {ref:"Generator Sizing Report",type:"MS",date:"2026-09-10",state:"RISK",weight:100,progress:0,id:"Generator Sizing Report",actName:"Generator Sizing Report",floatD:8,notes:"[Generator Sizing Report] - Generator Sizing Report \u00b7 TF 8d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:false,start:"2026-08-20",startActual:false,startStarred:false,finishFromStart:false},
+  {ref:"Electrical Update",type:"MS",date:"2026-10-13",state:"RISK",weight:100,progress:0,id:"Electrical Update",actName:"Electrical Update",floatD:2,notes:"[Electrical Update] - Electrical Update \u00b7 TF 2d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:false,start:"2026-10-06",startActual:false,startStarred:false,finishFromStart:false},
+  {ref:"Site Services",type:"MS",date:"2026-09-16",state:"RISK",weight:100,progress:0,id:"Site Services",actName:"Site Services",floatD:4,notes:"[Site Services] - Site Services \u00b7 TF 4d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:false,start:"2026-08-19",startActual:false,startStarred:false,finishFromStart:false},
+  {ref:"Project Execution Plan / Schedule",type:"MS",date:"2026-09-17",state:"TRACK",weight:100,progress:0,id:"Project Execution Plan / Schedule",actName:"Project Execution Plan / Schedule",floatD:46,notes:"[Project Execution Plan / Schedule] - Project Execution Plan / Schedule \u00b7 TF 46d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:false,start:"2026-08-20",startActual:false,startStarred:false,finishFromStart:false},
+  {ref:"Capital and Operating Cost Estimate",type:"MS",date:"2026-11-10",state:"RISK",weight:100,progress:0,id:"Capital and Operating Cost Estimate",actName:"Capital and Operating Cost Estimate",floatD:10,notes:"[Capital and Operating Cost Estimate] - Capital and Operating Cost Estimate \u00b7 TF 10d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:true,start:"2026-07-14",startActual:true,startStarred:false,finishFromStart:false},
   {ref:"SNIP-242",type:"CLI",date:"2026-10-23",state:"RISK",weight:34,progress:0,id:"SNIP-242",actName:"Financial Model - Issue for Client Review",floatD:5,notes:"[SNIP-242] - Financial Model - Issue for Client Review \u00b7 TF 5d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:false,start:"2026-09-25",startActual:false,startStarred:false,finishFromStart:false},
   {ref:"SNIP-242",type:"RTN",date:"2026-11-05",state:"RISK",weight:33,progress:0,id:"SNIP-252",actName:"Financial Model - Client Review",floatD:1,notes:"[SNIP-252] - Financial Model - Client Review \u00b7 TF 1d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:false,start:"2026-10-30",startActual:false,startStarred:false,finishFromStart:false},
+  {ref:"SNIP-242",type:"MS",date:"2026-11-09",state:"TRACK",weight:33,progress:0,id:"Financial Model",actName:"Financial Model",floatD:11,notes:"[Financial Model] - Financial Model \u00b7 TF 11d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:false,start:"2026-09-25",startActual:false,startStarred:false,finishFromStart:false},
+  {ref:"Technical Report",type:"MS",date:"2026-11-25",state:"CRIT",weight:100,progress:0,id:"Technical Report",actName:"Technical Report",floatD:0,notes:"[Technical Report] - Technical Report \u00b7 TF 0d",label:"",active:"Yes",marker:"MS - Diamond",actual:false,started:false,start:"2026-08-17",startActual:false,startStarred:false,finishFromStart:false}
 ];
 let TASKS=SEED_TASKS.slice();
 let MILESTONES=SEED_MILESTONES.slice();
@@ -7095,58 +7088,6 @@ function applyFieldOverrides(){
 }
 // ===== Real predecessor/successor data, parsed from the 22-Aug-26 P6 schedule export =====
 const DEP_DATA={"SNIP-101": {"pred": "", "succ": "SNIP-249,SNIP-258,SNIP-248,SNIP-255,SNIP-103,SNIP-115,SNIP-134,SNIP-105"}, "SNIP-104": {"pred": "", "succ": "SNIP-159"}, "SNIP-102": {"pred": "", "succ": "SNIP-115,SNIP-118"}, "SNIP-113": {"pred": "SNIP-111", "succ": ""}, "SNIP-103": {"pred": "SNIP-101", "succ": "SNIP-118"}, "SNIP-110": {"pred": "SNIP-111,SNIP-105", "succ": "SNIP-182"}, "SNIP-153": {"pred": "SNIP-154,SNIP-133", "succ": "SNIP-234"}, "SNIP-117": {"pred": "", "succ": "SNIP-242"}, "SNIP-182": {"pred": "SNIP-166,SNIP-110", "succ": "SNIP-234"}, "SNIP-207": {"pred": "SNIP-166", "succ": "SNIP-261"}, "SNIP-233": {"pred": "SNIP-231", "succ": "SNIP-261"}, "SNIP-219": {"pred": "SNIP-218", "succ": "SNIP-261"}, "SNIP-221": {"pred": "SNIP-220", "succ": "SNIP-234"}, "SNIP-234": {"pred": "SNIP-221,SNIP-182,SNIP-161,SNIP-215,SNIP-230,SNIP-223,SNIP-153,SNIP-237,SNIP-220,SNIP-105,SNIP-166,SNIP-133,SNIP-115,SNIP-229,A1070", "succ": "SNIP-255,SNIP-235"}, "SNIP-238": {"pred": "SNIP-239,SNIP-237,SNIP-220,SNIP-105,SNIP-166,SNIP-133,SNIP-115,SNIP-229,SNIP-230,A1070", "succ": "SNIP-261"}, "SNIP-235": {"pred": "SNIP-224,SNIP-234", "succ": "SNIP-241"}, "SNIP-226": {"pred": "SNIP-224", "succ": "SNIP-241"}, "SNIP-245": {"pred": "SNIP-255", "succ": "SNIP-256"}, "SNIP-246": {"pred": "SNIP-250,SNIP-244", "succ": "SNIP-261"}, "SNIP-247": {"pred": "SNIP-251,SNIP-244", "succ": "SNIP-261"}, "SNIP-248": {"pred": "SNIP-101,SNIP-111,SNIP-241,SNIP-250", "succ": "SNIP-261"}, "SNIP-249": {"pred": "SNIP-101,SNIP-111,SNIP-241,SNIP-250,SNIP-244", "succ": "SNIP-261"}, "SNIP-256": {"pred": "SNIP-245,SNIP-255", "succ": "SNIP-258"}, "SNIP-260": {"pred": "SNIP-259", "succ": "SNIP-261"}, "SNIP-261": {"pred": "SNIP-207,SNIP-238,SNIP-219,SNIP-233,SNIP-249,SNIP-248,SNIP-247,SNIP-246,SNIP-260", "succ": ""}, "SNIP-136": {"pred": "", "succ": "SNIP-159"}, "SNIP-127": {"pred": "", "succ": "SNIP-166,SNIP-138,SNIP-201"}, "SNIP-106": {"pred": "", "succ": "SNIP-166,SNIP-126,SNIP-201,SNIP-188"}, "SNIP-203": {"pred": "", "succ": "SNIP-270,SNIP-240,SNIP-310"}, "SNIP-204": {"pred": "", "succ": "SNIP-240"}, "SNIP-320": {"pred": "", "succ": "SNIP-240"}, "SNIP-105": {"pred": "SNIP-101", "succ": "SNIP-158,SNIP-183,SNIP-120,SNIP-116,SNIP-115,SNIP-124,SNIP-166,SNIP-111,SNIP-110,SNIP-142,SNIP-112,SNIP-128,SNIP-237,SNIP-240,SNIP-238,SNIP-234"}, "SNIP-111": {"pred": "SNIP-105,SNIP-112", "succ": "SNIP-249,SNIP-258,SNIP-248,SNIP-255,SNIP-115,SNIP-110,SNIP-113"}, "SNIP-148": {"pred": "SNIP-166", "succ": ""}, "SNIP-158": {"pred": "SNIP-105", "succ": ""}, "SNIP-191": {"pred": "SNIP-133,SNIP-166,SNIP-214", "succ": ""}, "SNIP-223": {"pred": "SNIP-220", "succ": "SNIP-234"}, "SNIP-112": {"pred": "SNIP-105", "succ": "SNIP-132,SNIP-111"}, "SNIP-132": {"pred": "SNIP-112", "succ": ""}, "SNIP-157": {"pred": "SNIP-156", "succ": "SNIP-242"}, "SNIP-215": {"pred": "SNIP-166,SNIP-120", "succ": "SNIP-125,SNIP-185,SNIP-240,SNIP-239,SNIP-234"}, "SNIP-202": {"pred": "SNIP-166", "succ": "SNIP-270,SNIP-240"}, "SNIP-118": {"pred": "SNIP-102,SNIP-103", "succ": "SNIP-129"}, "SNIP-115": {"pred": "SNIP-102,SNIP-101,SNIP-111,SNIP-105", "succ": "SNIP-123,SNIP-116,SNIP-124,SNIP-128,SNIP-133,SNIP-134,SNIP-259,SNIP-237,SNIP-240,SNIP-238,SNIP-234,SNIP-161"}, "SNIP-123": {"pred": "SNIP-115", "succ": "SNIP-133,SNIP-129,SNIP-128"}, "SNIP-129": {"pred": "SNIP-118,SNIP-123", "succ": "SNIP-134"}, "SNIP-134": {"pred": "SNIP-129,SNIP-101,SNIP-115", "succ": "SNIP-161,SNIP-255,SNIP-143"}, "SNIP-133": {"pred": "SNIP-123,SNIP-115", "succ": "SNIP-137,SNIP-155,SNIP-191,SNIP-153,SNIP-154,SNIP-138,SNIP-144,SNIP-259,SNIP-237,SNIP-240,SNIP-238,SNIP-234"}, "SNIP-137": {"pred": "SNIP-133", "succ": "SNIP-145,SNIP-271"}, "SNIP-145": {"pred": "SNIP-137", "succ": "SNIP-154"}, "SNIP-154": {"pred": "SNIP-145,SNIP-133", "succ": "SNIP-255,SNIP-153,SNIP-227"}, "SNIP-138": {"pred": "SNIP-127,SNIP-133", "succ": "SNIP-147,SNIP-156"}, "SNIP-147": {"pred": "SNIP-138", "succ": "SNIP-144,SNIP-155,SNIP-150"}, "SNIP-150": {"pred": "SNIP-147", "succ": "SNIP-156"}, "SNIP-156": {"pred": "SNIP-150,SNIP-138", "succ": "SNIP-157,SNIP-240"}, "SNIP-155": {"pred": "SNIP-147,SNIP-133", "succ": "SNIP-255,SNIP-161"}, "SNIP-128": {"pred": "SNIP-115,SNIP-105,SNIP-123", "succ": "SNIP-161"}, "SNIP-201": {"pred": "SNIP-106,SNIP-127", "succ": "SNIP-281,SNIP-190"}, "SNIP-271": {"pred": "SNIP-137", "succ": "SNIP-281,A1000,SNIP-200"}, "SNIP-281": {"pred": "SNIP-271,SNIP-201", "succ": "SNIP-161,A1000"}, "SNIP-161": {"pred": "SNIP-134,SNIP-128,SNIP-155,SNIP-115,SNIP-281", "succ": "SNIP-144,SNIP-143,SNIP-167,SNIP-186,SNIP-234,SNIP-165,SNIP-236,SNIP-259"}, "SNIP-143": {"pred": "SNIP-161,SNIP-134", "succ": "SNIP-180,SNIP-240,SNIP-228"}, "SNIP-167": {"pred": "SNIP-161", "succ": "SNIP-172"}, "SNIP-172": {"pred": "SNIP-167", "succ": "SNIP-231"}, "SNIP-231": {"pred": "SNIP-172", "succ": "SNIP-228,SNIP-240,SNIP-233"}, "SNIP-195": {"pred": "SNIP-166", "succ": "SNIP-240"}, "SNIP-144": {"pred": "SNIP-173,SNIP-147,SNIP-161,SNIP-133", "succ": "SNIP-200"}, "SNIP-176": {"pred": "", "succ": "SNIP-300"}, "SNIP-300": {"pred": "SNIP-176", "succ": "SNIP-189"}, "SNIP-166": {"pred": "SNIP-106,SNIP-127,SNIP-105", "succ": "SNIP-202,SNIP-178,SNIP-179,SNIP-148,SNIP-159,SNIP-168,SNIP-217,SNIP-173,SNIP-215,SNIP-207,SNIP-237,SNIP-191,SNIP-182,SNIP-220,SNIP-185,SNIP-195,SNIP-237,SNIP-240,SNIP-238,SNIP-234"}, "SNIP-173": {"pred": "SNIP-166", "succ": "SNIP-144,SNIP-189,SNIP-330"}, "SNIP-330": {"pred": "SNIP-173", "succ": ""}, "SNIP-189": {"pred": "SNIP-300,SNIP-173", "succ": "SNIP-220"}, "SNIP-220": {"pred": "SNIP-189,SNIP-166", "succ": "SNIP-239,SNIP-221,SNIP-223,SNIP-237,SNIP-240,SNIP-238,SNIP-234"}, "SNIP-168": {"pred": "SNIP-166", "succ": "SNIP-240"}, "SNIP-178": {"pred": "SNIP-166", "succ": "SNIP-240"}, "SNIP-179": {"pred": "SNIP-166", "succ": "SNIP-240"}, "SNIP-146": {"pred": "SNIP-217", "succ": "SNIP-162"}, "SNIP-162": {"pred": "SNIP-146", "succ": "SNIP-240"}, "SNIP-140": {"pred": "SNIP-217", "succ": "SNIP-160"}, "SNIP-160": {"pred": "SNIP-140", "succ": "SNIP-240"}, "SNIP-116": {"pred": "SNIP-115,SNIP-105", "succ": "SNIP-125,SNIP-120,SNIP-237"}, "SNIP-217": {"pred": "SNIP-166", "succ": "SNIP-237,SNIP-146,SNIP-140,SNIP-222"}, "SNIP-159": {"pred": "SNIP-136,SNIP-104,SNIP-166", "succ": "SNIP-164"}, "SNIP-164": {"pred": "SNIP-159", "succ": "SNIP-169"}, "SNIP-169": {"pred": "SNIP-164", "succ": "SNIP-174"}, "SNIP-174": {"pred": "SNIP-169", "succ": "SNIP-198"}, "SNIP-125": {"pred": "SNIP-215,SNIP-116", "succ": ""}, "SNIP-198": {"pred": "SNIP-174", "succ": "SNIP-240"}, "SNIP-222": {"pred": "SNIP-217", "succ": "SNIP-237"}, "SNIP-237": {"pred": "SNIP-217,SNIP-222,SNIP-116,SNIP-166,SNIP-220,SNIP-105,SNIP-166,SNIP-133,SNIP-115", "succ": "SNIP-240,SNIP-238,SNIP-234"}, "SNIP-120": {"pred": "SNIP-116,SNIP-105", "succ": "SNIP-215"}, "SNIP-188": {"pred": "SNIP-106", "succ": "SNIP-197"}, "SNIP-197": {"pred": "SNIP-188", "succ": "SNIP-208"}, "SNIP-208": {"pred": "SNIP-197", "succ": "SNIP-212"}, "SNIP-212": {"pred": "SNIP-208", "succ": ""}, "SNIP-185": {"pred": "SNIP-215,SNIP-166", "succ": "SNIP-239"}, "SNIP-239": {"pred": "SNIP-220,SNIP-215,SNIP-185", "succ": "SNIP-238,SNIP-240"}, "SNIP-124": {"pred": "SNIP-115,SNIP-105", "succ": "SNIP-165"}, "SNIP-165": {"pred": "SNIP-124,SNIP-161", "succ": "SNIP-126,SNIP-171,SNIP-186,SNIP-170"}, "SNIP-171": {"pred": "SNIP-165", "succ": "SNIP-186"}, "SNIP-186": {"pred": "SNIP-161,SNIP-171,SNIP-165", "succ": "SNIP-228"}, "SNIP-228": {"pred": "SNIP-231,SNIP-186,SNIP-143", "succ": "SNIP-227,SNIP-229"}, "SNIP-170": {"pred": "SNIP-165,SNIP-190", "succ": "SNIP-181,SNIP-180,SNIP-229"}, "SNIP-181": {"pred": "SNIP-170", "succ": "SNIP-192"}, "SNIP-192": {"pred": "SNIP-181", "succ": "SNIP-229"}, "SNIP-229": {"pred": "SNIP-192,SNIP-228,SNIP-170,A1030", "succ": "SNIP-230,SNIP-238,SNIP-234"}, "SNIP-190": {"pred": "SNIP-201", "succ": "SNIP-180,SNIP-170"}, "SNIP-200": {"pred": "SNIP-271,SNIP-144", "succ": "SNIP-180,A1040"}, "SNIP-180": {"pred": "SNIP-143,SNIP-170,SNIP-190,SNIP-200", "succ": "SNIP-193,SNIP-230,SNIP-194"}, "SNIP-193": {"pred": "SNIP-180", "succ": "SNIP-205"}, "SNIP-205": {"pred": "SNIP-193", "succ": "SNIP-230"}, "SNIP-194": {"pred": "SNIP-126,SNIP-180", "succ": "SNIP-206,SNIP-240"}, "SNIP-230": {"pred": "SNIP-205,SNIP-229,SNIP-180,A1070", "succ": "SNIP-234,SNIP-240,SNIP-238"}, "SNIP-126": {"pred": "SNIP-165,SNIP-106", "succ": "SNIP-206,SNIP-194"}, "SNIP-206": {"pred": "SNIP-126,SNIP-194", "succ": "SNIP-224"}, "SNIP-214": {"pred": "SNIP-236", "succ": "SNIP-191"}, "SNIP-218": {"pred": "SNIP-236", "succ": "SNIP-219,SNIP-255"}, "SNIP-236": {"pred": "SNIP-161", "succ": "SNIP-240,SNIP-214,SNIP-218"}, "SNIP-152": {"pred": "SNIP-142", "succ": "SNIP-240"}, "SNIP-142": {"pred": "SNIP-105", "succ": "SNIP-152"}, "SNIP-310": {"pred": "SNIP-203", "succ": "SNIP-227"}, "SNIP-211": {"pred": "SNIP-240", "succ": "SNIP-241,SNIP-244,SNIP-224"}, "SNIP-270": {"pred": "SNIP-203,SNIP-202", "succ": "SNIP-240"}, "SNIP-227": {"pred": "SNIP-228,SNIP-154,SNIP-310", "succ": "SNIP-224"}, "SNIP-224": {"pred": "SNIP-206,SNIP-227,SNIP-211", "succ": "SNIP-226,SNIP-235,SNIP-241,SNIP-232"}, "SNIP-232": {"pred": "SNIP-224", "succ": "SNIP-244,SNIP-241,SNIP-253"}, "SNIP-240": {"pred": "SNIP-270,SNIP-204,SNIP-203,SNIP-178,SNIP-168,SNIP-179,SNIP-202,SNIP-198,SNIP-156,SNIP-195,SNIP-162,SNIP-236,SNIP-194,SNIP-231,SNIP-215,SNIP-237,SNIP-239,SNIP-143,SNIP-152,SNIP-160,SNIP-220,SNIP-105,SNIP-166,SNIP-133,SNIP-115,SNIP-230,SNIP-320", "succ": "SNIP-242,SNIP-241,SNIP-244,SNIP-211"}, "SNIP-241": {"pred": "SNIP-211,SNIP-240,SNIP-224,SNIP-235,SNIP-226,SNIP-232", "succ": "SNIP-249,SNIP-258,SNIP-248,SNIP-255,SNIP-244"}, "SNIP-244": {"pred": "SNIP-211,SNIP-240,SNIP-241,SNIP-232", "succ": "SNIP-280,SNIP-252,SNIP-249,SNIP-255,SNIP-251,SNIP-250,SNIP-247,SNIP-246,SNIP-258"}, "SNIP-250": {"pred": "SNIP-244", "succ": "SNIP-249,SNIP-258,SNIP-248,SNIP-255,SNIP-253,SNIP-246"}, "SNIP-251": {"pred": "SNIP-244", "succ": "SNIP-253,SNIP-247"}, "SNIP-253": {"pred": "SNIP-251,SNIP-250,SNIP-232", "succ": "SNIP-255"}, "SNIP-290": {"pred": "SNIP-242", "succ": ""}, "SNIP-242": {"pred": "SNIP-117,SNIP-157,SNIP-240", "succ": "SNIP-290,SNIP-254,SNIP-252"}, "SNIP-254": {"pred": "SNIP-242", "succ": "SNIP-257"}, "SNIP-252": {"pred": "SNIP-244,SNIP-242", "succ": "SNIP-257,SNIP-255"}, "SNIP-257": {"pred": "SNIP-252,SNIP-254", "succ": "SNIP-280,SNIP-255"}, "SNIP-183": {"pred": "SNIP-105", "succ": "SNIP-255"}, "SNIP-280": {"pred": "SNIP-257,SNIP-244", "succ": "SNIP-259"}, "SNIP-255": {"pred": "SNIP-257,SNIP-252,SNIP-244,SNIP-101,SNIP-111,SNIP-250,SNIP-183,SNIP-155,SNIP-134,SNIP-154,SNIP-241,SNIP-234,SNIP-218,SNIP-253", "succ": "SNIP-245,SNIP-256,SNIP-258"}, "SNIP-258": {"pred": "SNIP-101,SNIP-111,SNIP-241,SNIP-250,SNIP-244,SNIP-255,SNIP-256", "succ": "SNIP-259"}, "SNIP-259": {"pred": "SNIP-258,SNIP-133,SNIP-115,SNIP-161,SNIP-280", "succ": "SNIP-260"}};
-// P72 (Matt, 2026-10-01): user milestones carry predecessors and successors
-// of their own (rec.pred / rec.succ on the USER_MILESTONES record, the same
-// comma-separated Activity ID text, field names and format the grid view's
-// refs picker writes for user tasks: 'SNIP-102, USR-002'). DEP_DATA is what
-// every reader reads, so it holds the EFFECTIVE set: the schedule's own links
-// plus every user link in both directions. Restore-then-apply, the
-// applyFieldOverrides() pattern: DEP_DATA_SCHEDULE is the pristine schedule
-// copy, and applyUserDeps() rebuilds DEP_DATA from it on every renderRows()
-// and every user milestone change. DEP_DATA is never written anywhere else,
-// and a published file carries the schedule's own literal above, so a user
-// link can never be baked into schedule data.
-const DEP_DATA_SCHEDULE=JSON.parse(JSON.stringify(DEP_DATA));
-// 'SNIP-101: FS' -> 'SNIP-101'. A relationship kept after an ID (the grid's
-// refs format) is not part of the ID the board resolves.
-function depRefId(tok){ return String(tok||'').split(/[:\s]/)[0].trim(); }
-function userDepIds(v){
-  const seen={}, out=[];
-  String(v==null?'':v).split(/[,;]+/).forEach(function(t){
-    const id=depRefId(t);
-    if(id&&!seen[id]){ seen[id]=1; out.push(id); }
-  });
-  return out;
-}
-function applyUserDeps(){
-  Object.keys(DEP_DATA).forEach(function(k){ delete DEP_DATA[k]; });
-  Object.keys(DEP_DATA_SCHEDULE).forEach(function(k){
-    const d=DEP_DATA_SCHEDULE[k];
-    DEP_DATA[k]={pred:d.pred,succ:d.succ};
-  });
-  // Hidden user milestones are off the board, and so are their links.
-  if(!USER_MS_ENABLED) return;
-  const add=function(id,kind,other){
-    if(!id||!other||id===other) return;
-    const d=DEP_DATA[id]||(DEP_DATA[id]={pred:'',succ:''});
-    const have=parseIds(d[kind]);
-    if(have.indexOf(other)>=0) return;
-    have.push(other);
-    d[kind]=have.join(',');
-  };
-  // a before b: a lists b as a successor, b lists a as a predecessor.
-  const link=function(a,b){ add(a,'succ',b); add(b,'pred',a); };
-  USER_MILESTONES.forEach(function(r){
-    if(!r||!r.id) return;
-    userDepIds(r.pred).forEach(function(p){ link(p,r.id); });
-    userDepIds(r.succ).forEach(function(x){ link(r.id,x); });
-  });
-}
-// A milestone a person added: no float, editable links.
-function isUserMs(m){
-  if(!m) return false;
-  return (m.source||'')===USER_BAND_SOURCE||m.userAdded===true||!!umsRecord(msId(m));
-}
 function extractSnipId(notes){ const m=/\[([A-Za-z0-9\-_]+)\]/.exec(notes||""); return m?m[1]:null; }
 // The milestone object has carried its own `id` since the seeds were written,
 // but four separate readers re-derived it by running a regex over `notes`
@@ -8504,8 +8445,7 @@ function buildMsTip(m,total,isLoE){
   const finLbl=(isActual?'ACT Finish: ':'PLN Finish: ')+fmtTipDate(m.date);
   const startIsActual=!!m.startActual;
   const startLbl=m.start?((startIsActual?'ACT Start: ':'PLN Start: ')+fmtTipDate(m.start)):'';
-  // P72: a user milestone has no float to show, whatever its record holds.
-  const floatPart=(m.floatD!=null&&!isUserMs(m))?(' (Float: '+m.floatD+'d)'):'';
+  const floatPart=(m.floatD!=null)?(' (Float: '+m.floatD+'d)'):'';
 
   let tip='['+m.type+'] '+tyLbl+'  - '+stLbl;
   tip+='\n['+m.id+']   - '+(m.actName||m.notes||m.label||'');
@@ -8664,11 +8604,7 @@ const MS_FIELD_OVERRIDE={};
 // owns, and the ID is the key every annotation store is filed under, so
 // editing it would orphan the comment, health, progress and short title
 // already attached to that milestone.
-// P72 (Matt, 2026-10-01): float (floatD) is out too. The schedule computes it
-// from this activity's finish and its network; it is not set by hand. A float
-// override stored by an older file is therefore no longer laid over the
-// board, which shows the schedule's own float again.
-const MS_EDITABLE_FIELDS=['actName','start','date','weight','type','marker','actual','startActual'];
+const MS_EDITABLE_FIELDS=['actName','start','date','weight','floatD','type','marker','actual','startActual'];
 function effectiveState(m){
   const key=msKeyFor(m);
   if(!(key in MS_HEALTH_OVERRIDE)) return m.state; // never set — fully automatic
@@ -9347,9 +9283,6 @@ function renderRows(){
   // on the board yet. Same reasoning as the merge itself: one function, every
   // build path, idempotent.
   applyFieldOverrides();
-  // P72: and the user milestones' links over the schedule's, from the records,
-  // so every DEP_DATA reader in this build sees the same effective set.
-  applyUserDeps();
   // Fresh per rebuild: the board is built from MILESTONES and anything that
   // changed it since the last paint must not be served from a stale index.
   invalidateMsIndexes();
@@ -10437,29 +10370,12 @@ function bindHistory(el){
     }
   });
 }
-// P72: a user milestone's link changes are stored as changes.pred and
-// changes.succ, keys the history module has no label for (it shows an
-// unknown key by its name). They are shown in the card's words, on copies of
-// the entries, so neither the module nor the stored entries change.
-const HISTORY_DEP_LABELS={pred:'Predecessors',succ:'Successors'};
-function historyEntriesView(list){
-  return list.map(function(e){
-    const ch=e&&e.changes;
-    if(!ch||!(('pred' in ch)||('succ' in ch))) return e;
-    const out={}, v=function(x){ return (x==null||x==='')?'none':String(x); };
-    Object.keys(ch).forEach(function(f){
-      if(f in HISTORY_DEP_LABELS) out[HISTORY_DEP_LABELS[f]]={from:v(ch[f].from),to:v(ch[f].to)};
-      else out[f]=ch[f];
-    });
-    return Object.assign({},e,{changes:out});
-  });
-}
 function renderMsHistory(){
   const el=document.getElementById('ms-history');
   if(!el||!msDialogFor) return;
   bindHistory(el);
   const list=msEntriesFor(msDialogFor);
-  el.innerHTML=list.length?SRETHistory.renderEntries(historyEntriesView(list),historyCtx())
+  el.innerHTML=list.length?SRETHistory.renderEntries(list,historyCtx())
                           :'<p class="ms-hist-empty">No updates yet</p>';
   const c=document.getElementById('ms-hist-count');
   if(c) c.textContent=list.length?list.length+' entr'+(list.length===1?'y':'ies'):'';
@@ -10494,7 +10410,6 @@ function renderNotesMsGroups(){
   const groups=order.map(function(k){
     const g=byKey[k];
     g.count=g.entries.length; g.summary=historySummary(k); g.open=!!NOTES_GROUP_OPEN[k];
-    g.entries=historyEntriesView(g.entries);
     return g;
   }).sort(function(a,b){ return String(a.id).localeCompare(String(b.id),undefined,{numeric:true}); });
   box.innerHTML=groups.length?SRETHistory.renderGroups(groups,historyCtx()):'';
@@ -11017,22 +10932,13 @@ function syncFbShape(){
   const phone=fbIsPhone();
   if(phone&&crit.parentElement!==when) when.appendChild(crit);
   else if(!phone&&crit.parentElement!==bar) bar.insertBefore(crit,hidden);
-  // P72: the date tile (with the status box inside it) goes into Find right
-  // after the search field, so the funnel's panel reads search, Weeks/Mode/Fit,
-  // Status/Float/Notes, then Banding, Source and Activity ID(s), in DOM order
-  // as well as on screen. Back beside Find, in .fb-top, on desktop.
-  const find=document.getElementById('tfb-find');
-  const sw=find&&find.querySelector('.fb-row-1>.ds-fwrap');
-  if(phone&&sw&&sw.nextElementSibling!==when) sw.parentNode.insertBefore(when,sw.nextElementSibling);
-  else if(!phone&&find&&when.parentElement!==find.parentElement) find.parentNode.insertBefore(when,find.nextElementSibling);
   bar.classList.toggle('fb-phone',phone);
   if(!phone) closeFbDropdown();
   syncFindMore();
 }
 try{ window.matchMedia(FB_PHONE_MQ).addEventListener('change',syncFbShape); }catch(e){}
-// Find's funnel (P67's chevron, P72's whole-panel toggle; the id, the state
-// and its storage key are P67's). Display state (it changes what is shown,
-// never what is filtered), kept per browser like the rail and the settings tab.
+// Find's chevron. Display state (it changes what is shown, never what is
+// filtered), kept per browser like the rail and the settings tab.
 var FB_FIND_OPEN=false;
 try{ FB_FIND_OPEN=localStorage.getItem('sret-fb-find-more')==='open'; }catch(e){}
 function setFindMore(open){
@@ -11052,137 +10958,15 @@ function syncFindMore(){
   const btn=document.getElementById('fb-find-more-btn');
   if(!box||!btn) return;
   box.classList.toggle('fb-more-open',FB_FIND_OPEN);
-  const bar=document.getElementById('top-filter-bar');
-  if(bar) bar.classList.toggle('fb-panel-open',FB_FIND_OPEN);
   btn.setAttribute('aria-expanded',String(FB_FIND_OPEN));
-  const hiddenActive=!FB_FIND_OPEN&&fbHiddenFilterSet();
-  btn.classList.toggle('has-dot',hiddenActive);
-  btn.setAttribute('aria-label',(FB_FIND_OPEN?'Hide':'Show')+' filters'+(hiddenActive?' (a filter is set)':''));
-  btn.title=hiddenActive?'Filters: a filter is set':'Filters';
-}
-// Every filter the collapsed panel hides: everything but the name search.
-// Read from the same state applyFilter() reads, so the dot cannot disagree
-// with what the board is showing.
-function fbHiddenFilterSet(){
   const val=function(id){ const el=document.getElementById(id); return el?String(el.value||'').trim():''; };
   const srcGrp=document.getElementById('tfb-source-group');
   const srcOn=!!(srcGrp&&srcGrp.style.display!=='none'&&val('filter-source'));
-  let weeks=false, crit=false;
-  try{ weeks=!!(typeof currentWeekRange==='function'&&currentWeekRange())||!!(val('filter-date-from')||val('filter-date-to')); }catch(e){}
-  try{ crit=!!((typeof STATUS_FILTER!=='undefined'&&STATUS_FILTER.size)||(typeof floatFilterSpec==='function'&&floatFilterSpec())); }catch(e){}
-  const annot=typeof ANNOT_FILTER!=='undefined'&&ANNOT_FILTER!=='any';
-  return !!(val('filter-band')||val('filter-ids')||srcOn||weeks||crit||annot);
+  const hiddenActive=!FB_FIND_OPEN&&!!(val('filter-band')||val('filter-ids')||srcOn);
+  btn.classList.toggle('has-dot',hiddenActive);
+  btn.setAttribute('aria-label',(FB_FIND_OPEN?'Hide':'Show')+' Banding and Activity IDs'+(hiddenActive?' (a filter is set)':''));
+  btn.title=hiddenActive?'Banding and Activity IDs: a filter is set':'Banding and Activity IDs';
 }
-// ===== P72 (Matt 2026-10-01): the screen heading scrolls away =====
-// Below 1024px, scrolling the board down past a small threshold hides the
-// icon bar, the heading, the filter bar and the board's info rows, so only
-// the month and week bands stay pinned above the board; scrolling up brings
-// them back. The CSS beside #scroll-wrap does the moving; this decides when.
-// Display state only, never stored: every load starts with the heading shown.
-var CHROME_AWAY_MQ='(max-width:1023px)';
-var CHROME_AWAY=false;
-var CHROME_LAST_Y=0, CHROME_ACC=0, CHROME_HOLD_UNTIL=0, CHROME_TIMER=0;
-var CHROME_DELTA=12;          // px of travel in one direction before it acts
-var CHROME_ANIM_MS=200;       // the CSS transitions' duration
-function chromeAwayEligible(){
-  const b=document.body;
-  return !!b&&window.matchMedia(CHROME_AWAY_MQ).matches&&!b.classList.contains('grid-open')&&!b.classList.contains('print-mode');
-}
-// Nothing moves while something is open over or under the board: a dialog
-// (the milestone card is position:fixed and must not move with the board
-// under it), a drawer, a dropdown or popover (every one of them carries
-// aria-haspopup and reports aria-expanded), or a field in the heading or the
-// filter bar that has focus (the phone keyboard is up).
-function chromeAwayBlocked(){
-  if(typeof FB_DD_OPEN!=='undefined'&&FB_DD_OPEN) return true;
-  const shown=function(id){ const el=document.getElementById(id); return !!el&&!el.hidden&&el.getClientRects().length>0; };
-  if(['ms-dialog','add-ms-dialog','pdf-dialog','annot-dialog','dep-comment-panel','id-suggest-dropdown','float-custom-pop'].some(shown)) return true;
-  const open=function(id){ const el=document.getElementById(id); return !!el&&el.classList.contains('open'); };
-  if(open('settings-drawer')||open('ws-panel')) return true;
-  if(document.querySelector('[aria-haspopup][aria-expanded="true"]')) return true;
-  const ae=document.activeElement;
-  if(ae&&ae!==document.body&&/^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName)&&chromeAwayContains(ae)) return true;
-  return false;
-}
-function chromeAwayContains(el){
-  return ['icon-bar','top-filter-bar','ws-toggle'].some(function(id){ const c=document.getElementById(id); return !!c&&c.contains(el); })||
-    !!(el.closest&&el.closest('.rpt-hd'));
-}
-// The board must be scrolled past its own info rows before they can go, so
-// the bands never stick over a partly visible info row.
-// Read from the inline value watchStickyHeights() writes, not computed style:
-// this runs on every scroll event.
-function chromeAwayThreshold(){
-  const v=parseFloat(document.documentElement.style.getPropertyValue('--hdr-info-h'))||0;
-  return v+2*CHROME_DELTA;
-}
-function setChromeAway(on,instant){
-  on=!!on;
-  if(on===CHROME_AWAY) return;
-  const html=document.documentElement;
-  const sw=document.getElementById('scroll-wrap');
-  if(!sw) return;
-  // --chrome-shift lives on the two elements that read it (see the CSS).
-  const movers=[document.getElementById('icon-bar'),document.getElementById('ws-toggle')].filter(Boolean);
-  const shift=function(px){ movers.forEach(function(el){ if(px===null) el.style.removeProperty('--chrome-shift'); else el.style.setProperty('--chrome-shift',px.toFixed(2)+'px'); }); };
-  const anim=!instant&&!window.matchMedia('(prefers-reduced-motion:reduce)').matches;
-  clearTimeout(CHROME_TIMER);
-  if(on){
-    // The board's top in document terms with no shift applied. The window may
-    // already be scrolled part of the way (the old page scroll): that much is
-    // taken into the shift first, with the window put back to 0, so nothing
-    // moves on screen at the start, then the shift eases to the full offset.
-    const cur=html.classList.contains('chrome-shift')&&movers[0]?(parseFloat(movers[0].style.getPropertyValue('--chrome-shift'))||0):0;
-    const y=window.scrollY||0;
-    const H=sw.getBoundingClientRect().top+y+cur;
-    html.classList.remove('chrome-anim');
-    shift(cur+y);
-    html.classList.add('chrome-shift');
-    if(y) window.scrollTo(0,0);
-    void sw.offsetHeight;
-    if(anim) html.classList.add('chrome-anim');
-    shift(Math.max(0,H));
-    html.classList.add('chrome-away');
-  } else {
-    html.classList.toggle('chrome-anim',anim);
-    shift(0);
-    html.classList.remove('chrome-away');
-  }
-  CHROME_AWAY=on;
-  // Growing the board can clamp its scrollTop at the bottom, which reads as a
-  // scroll up: scroll events during the change only re-base the position.
-  const ms=anim?CHROME_ANIM_MS+40:0;
-  CHROME_HOLD_UNTIL=performance.now()+ms+20;
-  const done=function(){
-    html.classList.remove('chrome-anim');
-    if(!CHROME_AWAY){ html.classList.remove('chrome-shift'); shift(null); }
-    CHROME_LAST_Y=sw.scrollTop; CHROME_ACC=0;
-  };
-  if(ms) CHROME_TIMER=setTimeout(done,ms); else done();
-}
-function onBoardScrollForChrome(){
-  const sw=document.getElementById('scroll-wrap');
-  if(!sw) return;
-  const y=sw.scrollTop, dy=y-CHROME_LAST_Y;
-  CHROME_LAST_Y=y;
-  if(performance.now()<CHROME_HOLD_UNTIL||!dy) return;
-  if(!chromeAwayEligible()){ if(CHROME_AWAY) setChromeAway(false,true); return; }
-  if((dy>0)!==(CHROME_ACC>0)) CHROME_ACC=0;
-  CHROME_ACC+=dy;
-  const t=chromeAwayThreshold();
-  const hide=!CHROME_AWAY&&CHROME_ACC>=CHROME_DELTA&&y>t;
-  const show=CHROME_AWAY&&(CHROME_ACC<=-CHROME_DELTA||y<=t);
-  // The blocking test reads layout, so it runs only when a change is due.
-  if((hide||show)&&!chromeAwayBlocked()) setChromeAway(hide);
-}
-(function(){
-  const sw=document.getElementById('scroll-wrap');
-  if(sw){ sw.addEventListener('scroll',onBoardScrollForChrome,{passive:true}); CHROME_LAST_Y=sw.scrollTop; }
-  // Leaving the narrow layout, or focus arriving in the hidden heading (Tab,
-  // a shortcut), brings it back at once.
-  try{ window.matchMedia(CHROME_AWAY_MQ).addEventListener('change',function(){ if(!chromeAwayEligible()) setChromeAway(false,true); }); }catch(e){}
-  document.addEventListener('focusin',function(e){ if(CHROME_AWAY&&chromeAwayContains(e.target)) setChromeAway(false,true); });
-})();
 // Status / Float / Notes dropdowns. The panel IS the existing chip group (or
 // the float chips with their Custom card), shown as a popover from its
 // trigger at phone width and inline as before on desktop.
@@ -13639,14 +13423,7 @@ function watchInfoBar(){
     new MutationObserver(syncInfoBarWidth).observe(document.body,{attributes:true,attributeFilter:['class']});
   }
   const sw=document.getElementById('scroll-wrap');
-  // Width changes only. P72's scroll-away changes the scroller's HEIGHT, and
-  // a full re-measure of the board costs about 0.3s on the reference board
-  // at phone width, which stalled the slide's first frame.
-  let swW=-1;
-  if(sw&&window.ResizeObserver) new ResizeObserver(function(){
-    if(sw.clientWidth===swW) return;
-    swW=sw.clientWidth; syncInfoBarWidth();
-  }).observe(sw);
+  if(sw&&window.ResizeObserver) new ResizeObserver(syncInfoBarWidth).observe(sw);
   window.addEventListener('resize',syncInfoBarWidth);
   syncInfoBarSpan();
   syncInfoBarWidth();
@@ -15792,10 +15569,8 @@ const USER_DEFINED_EXPORT_HEADER=['Activity ID','Activity Name','Start','Finish'
 function userDefinedExportRows(){
   const rows=[USER_DEFINED_EXPORT_HEADER];
   USER_MILESTONES.forEach(function(m){
-    // P72: no float on a user milestone; its own links in the two
-    // relationship columns, in the record's comma-separated form.
-    rows.push([m.id||m.ref, m.actName||'', m.start||'', m.date||'', '',
-      STATE_LABELS[m.state]||m.state||'', m.pred||'', m.succ||'', USER_BAND, '', m.progress||0]);
+    rows.push([m.id||m.ref, m.actName||'', m.start||'', m.date||'', m.floatD!=null?m.floatD:'',
+      STATE_LABELS[m.state]||m.state||'', '', '', USER_BAND, '', m.progress||0]);
   });
   return rows;
 }
@@ -15973,12 +15748,8 @@ function applyAnnotSelection(){
 // Containers the app fills at runtime. A published file must ship with these
 // empty or it carries a stale copy of the board as dead markup — measured at
 // 603 KB of a 1,038 KB serialisation, more than half the file.
-// P72: the dependency layer's drawn lines (#dep-lines-g), not the whole
-// #dep-line-layer. Emptying the layer took its <defs> (the arrow markers) and
-// the <g> drawDepLines() draws into, so since P14 no published copy could
-// draw a dependency line at all.
 const PUBLISH_CLEAR_IDS=['tbody','mount-body','import-summary-wrap','import-error-wrap',
-  'map-wrap','diag-body','annot-dialog-body','current-import-advanced','dep-lines-g',
+  'map-wrap','diag-body','annot-dialog-body','current-import-advanced','dep-line-layer',
   'sib-left','sib-right'];
 
 // D-17a: a disabled source's rows are not in TASKS/MILESTONES (that is what
@@ -16218,13 +15989,9 @@ function publishDashboard(){
     // third party's code into a file that gets uploaded to SharePoint and opened
     // by other people is not acceptable. Caught by a test harness whose own
     // injected script was cloned into a published file and re-ran on load.
-    // P71: the embedded libraries are part of this file too (SheetJS for
-    // .xlsx, SlickGrid for the grid view; CLAUDE.md hard constraints). Before
-    // this allowlist every saved copy lost both.
-    const KEEP_SCRIPTS=['app-script','vendor-sheetjs','vendor-slickgrid'];
     let dropped=0;
     root.querySelectorAll('script').forEach(function(sc){
-      if(KEEP_SCRIPTS.indexOf(sc.id)<0){ sc.remove(); dropped++; }
+      if(sc.id!=='app-script'){ sc.remove(); dropped++; }
     });
     if(dropped) diag('pipeline','info','Publish removed '+dropped+' script(s) that are not part of this file','');
 
@@ -17547,8 +17314,6 @@ function msMatchesFloat(m,spec){
   // A milestone with no recorded float is not "zero float", it is unknown, so
   // it never satisfies a float constraint in either direction. Reporting an
   // unknown as critical is the kind of wrong that reaches a client.
-  // P72: a user milestone has no float, so it is unknown here too.
-  if(isUserMs(m)) return false;
   const f=(m&&m.floatD!=null&&m.floatD!=='')?parseFloat(m.floatD):NaN;
   if(isNaN(f)) return false;
   if(spec.op==='lt') return f<spec.days;
@@ -18210,19 +17975,16 @@ function openMsDialog(m, snipId, anchorEl, hd, task){
   const hasFloat=(m.floatD!=null&&!isNaN(m.floatD));
   const floatCol=document.getElementById('ms-float-col');
   if(floatCol){
-    // Always on screen; a dash says "none recorded" in the same place.
+    // The column no longer hides itself when the schedule carries no float. It
+    // is a field a person can fill in now, and a field that is not on screen
+    // cannot be filled in; a dash says "none recorded" in the same place.
     floatCol.style.display='';
-    // P72 (Matt, 2026-10-01): float is display only on every milestone. It
-    // is the schedule's result of this activity's finish and its network, not
-    // a figure a person sets, so the field is read only. P59 (D-03): a
-    // completed milestone reads "-". A user milestone has no float at all:
-    // nothing computes one for it, so it always reads "-".
+    // P59 (D-03): a completed milestone has no float to speak of, so it reads
+    // "-" and is not editable; a blank one shows the same "-" placeholder.
     const fEl=document.getElementById('ms-float-val');
     const st=effectiveState(m), isDone=(st==='DONE'||st==='DONEUSER');
-    const userMs=isUserMs(m);
-    fEl.readOnly=true;
-    fEl.value=(hasFloat&&!isDone&&!userMs)?String(Math.round(m.floatD)):'';
-    fEl.title=userMs?'A user milestone carries no float.':'Total float in days, from the schedule. Not editable.';
+    fEl.readOnly=isDone;
+    fEl.value=(hasFloat&&!isDone)?String(Math.round(m.floatD)):'';
   }
   // "Unassigned" tells the reader nothing they can act on — a real discipline name
   // is worth showing, an empty/unassigned one isn't, so the line just doesn't
@@ -18301,13 +18063,6 @@ function openMsDialog(m, snipId, anchorEl, hd, task){
     dot.classList.toggle('selected', parseInt(dot.getAttribute('data-val'),10)===msFormHealth);
   });
 
-  // P72: a user milestone's own links are a form field like any other,
-  // held here until Save. null for a schedule milestone, whose links are the
-  // schedule's and read only.
-  const umsRec=(snipId&&isUserMs(m))?umsRecord(snipId):null;
-  msFormDeps=umsRec?{pred:userDepIds(umsRec.pred),succ:userDepIds(umsRec.succ)}:null;
-  closeMsDepSuggest();
-  ['pred','succ'].forEach(function(k){ const a=document.getElementById('ms-dep-add-'+k); if(a) a.value=''; });
   fillMsDepLists(snipId);
   if(snipId){
     const flags=depFlags(snipId);
@@ -18480,116 +18235,6 @@ function pickMsType(code){
   closeMsTypeMenu();
   onMsFieldInput();
 }
-// ===== P72: a user milestone's predecessors and successors on its card =====
-// msFormDeps holds the pending lists ({pred:[ids], succ:[ids]}) while a user
-// milestone's card is open, null otherwise. Save writes them to the record;
-// Discard drops them with the rest of the form.
-let msFormDeps=null;
-function removeMsDep(kind,id){
-  if(!msFormDeps) return;
-  msFormDeps[kind]=msFormDeps[kind].filter(function(x){ return x!==id; });
-  fillMsDepLists(msDialogFor);
-  onMsFieldInput();
-}
-function addMsDep(kind,id){
-  if(!msFormDeps||!id||id===msDialogFor) return false;
-  if(msFormDeps[kind].indexOf(id)>=0) return false;
-  msFormDeps[kind].push(id);
-  fillMsDepLists(msDialogFor);
-  onMsFieldInput();
-  return true;
-}
-// Every Activity ID a link may point at: the board's, and the user
-// milestones' (a record added while the grid is open is not on the board yet).
-function msDepOptions(){
-  const seen={}, out=[];
-  const put=function(id,name){ if(id&&!seen[id]){ seen[id]=1; out.push({id:id,name:name||''}); } };
-  allMilestoneIds().forEach(function(id){
-    const m=findMilestoneBySnip(id);
-    put(id,m?(m.actName||String(m.notes||'').replace(/^\[[^\]]+\]\s*-\s*/,'')):'');
-  });
-  USER_MILESTONES.forEach(function(r){ put(r.id,r.actName); });
-  return out;
-}
-// The same matching as the Activity ID filter: the typed text anywhere in
-// the ID, IDs that start with it first. Nothing is listed for an empty box.
-let MS_DEP_SUG={kind:null,ids:[],hl:0};
-function msDepMatches(kind,q){
-  q=String(q||'').trim().toUpperCase();
-  if(!q||!msFormDeps) return [];
-  const taken=msFormDeps[kind];
-  return msDepOptions().filter(function(o){
-    return o.id!==msDialogFor&&taken.indexOf(o.id)<0&&o.id.toUpperCase().indexOf(q)>=0;
-  }).sort(function(a,b){
-    const sa=a.id.toUpperCase().indexOf(q)===0?0:1, sb=b.id.toUpperCase().indexOf(q)===0?0:1;
-    return sa-sb||a.id.localeCompare(b.id,undefined,{numeric:true});
-  }).slice(0,30);
-}
-// Hidden, not emptied: it is called from a suggestion's own click, and an
-// item detached under its click reaches the document as a click away from
-// the card (which saves and closes it). The next list replaces the items.
-function closeMsDepSuggest(){
-  const dd=document.getElementById('ms-dep-suggest');
-  if(dd) dd.hidden=true;
-  MS_DEP_SUG={kind:null,ids:[],hl:0};
-}
-function onMsDepAddInput(kind){
-  const input=document.getElementById('ms-dep-add-'+kind);
-  const dd=document.getElementById('ms-dep-suggest');
-  if(!input||!dd||!msFormDeps) return;
-  const list=msDepMatches(kind,input.value);
-  MS_DEP_SUG={kind:kind,ids:list.map(function(o){ return o.id; }),hl:0};
-  if(!list.length){ dd.hidden=true; dd.innerHTML=''; return; }
-  // onmousedown + preventDefault, the Activity ID filter's rule: the field
-  // keeps focus, so its blur cannot close the list before the pick lands.
-  dd.innerHTML=list.map(function(o,i){
-    return '<div class="id-suggest-item'+(i===0?' is-hl':'')+'" role="option" data-kind="'+kind+'" data-id="'+escapeHtml(o.id)+'"'+
-      ' onmousedown="event.preventDefault();pickMsDepSuggestion(this)" onclick="closeMsDepSuggest()">'+
-      escapeHtml(o.id)+(o.name?'<span class="ms-dep-sug-name">'+escapeHtml(o.name)+'</span>':'')+'</div>';
-  }).join('');
-  dd.hidden=false;
-  dd.style.width=Math.max(input.getBoundingClientRect().width,220)+'px';
-  positionFixedPopup(dd,input,'left');
-}
-// Picked on mousedown. The list is left in place until the click that
-// follows, so that click lands inside the card rather than on whatever
-// was under the list (which would read as a click away and close the card).
-function pickMsDepSuggestion(el){
-  const kind=el.getAttribute('data-kind'), id=el.getAttribute('data-id');
-  addMsDep(kind,id);
-  const input=document.getElementById('ms-dep-add-'+kind);
-  if(input){ input.value=''; input.focus(); }
-}
-function onMsDepAddKey(e,kind){
-  const dd=document.getElementById('ms-dep-suggest');
-  const open=dd&&!dd.hidden&&MS_DEP_SUG.kind===kind&&MS_DEP_SUG.ids.length;
-  if(e.key==='ArrowDown'||e.key==='ArrowUp'){
-    if(!open) return;
-    e.preventDefault();
-    const n=MS_DEP_SUG.ids.length;
-    MS_DEP_SUG.hl=(MS_DEP_SUG.hl+(e.key==='ArrowDown'?1:n-1))%n;
-    dd.querySelectorAll('.id-suggest-item').forEach(function(it,i){ it.classList.toggle('is-hl',i===MS_DEP_SUG.hl); });
-    return;
-  }
-  if(e.key==='Enter'){
-    e.preventDefault();
-    const input=e.target;
-    // The highlighted match, or an exact known ID typed in full.
-    let id=open?MS_DEP_SUG.ids[MS_DEP_SUG.hl]:null;
-    if(!id){
-      const q=String(input.value||'').trim().toUpperCase();
-      const hit=msDepOptions().filter(function(o){ return o.id.toUpperCase()===q; })[0];
-      id=hit?hit.id:null;
-    }
-    if(id&&addMsDep(kind,id)){ input.value=''; closeMsDepSuggest(); }
-    return;
-  }
-  if(e.key==='Escape'&&open){
-    // Closes the list only; Escape again leaves the card as usual.
-    e.preventDefault(); e.stopPropagation();
-    closeMsDepSuggest();
-  }
-}
 // The raw relationship IDs for this milestone, comma separated. DEP_DATA
 // stores them comma packed with no spaces, which is unreadable in a narrow
 // box, so they are re-joined with a separator that wraps.
@@ -18598,42 +18243,19 @@ function fillMsDepLists(snipId){
   const succ=document.getElementById('ms-dep-succ-list');
   const wrap=document.getElementById('ms-dep-lists');
   if(!pred||!succ||!wrap) return;
-  // DEP_DATA is the effective set (applyUserDeps()): a schedule milestone
-  // a user milestone links to lists that user milestone here too.
   const d=(snipId&&DEP_DATA[snipId])?DEP_DATA[snipId]:null;
-  let lists={pred:d?parseIds(d.pred):[],succ:d?parseIds(d.succ):[]};
-  let own=null;
-  if(msFormDeps&&snipId){
-    // P72: a user milestone. Its own links come from the FORM (pending until
-    // Save) and carry a remove cross; a link another user milestone made to
-    // this one, or the schedule's own, is listed after them without one.
-    own=msFormDeps;
-    const inbound={pred:[],succ:[]};
-    const sch=DEP_DATA_SCHEDULE[snipId];
-    if(sch){ inbound.pred=parseIds(sch.pred); inbound.succ=parseIds(sch.succ); }
-    if(USER_MS_ENABLED) USER_MILESTONES.forEach(function(r){
-      if(!r||r.id===snipId) return;
-      if(userDepIds(r.succ).indexOf(snipId)>=0) inbound.pred.push(r.id);
-      if(userDepIds(r.pred).indexOf(snipId)>=0) inbound.succ.push(r.id);
-    });
-    lists={};
-    ['pred','succ'].forEach(function(k){
-      const out=own[k].slice();
-      inbound[k].forEach(function(id){ if(out.indexOf(id)<0) out.push(id); });
-      lists[k]=out;
-    });
-  }
-  pred.value=lists.pred.join(', ');
-  succ.value=lists.succ.join(', ');
-  // P66: the same values as chips, built from the same lists, so the chips
-  // and the raw lists cannot disagree.
-  const pIds=lists.pred, sIds=lists.succ;
-  fillMsDepChips('ms-dep-pred-chips',pIds,own?{kind:'pred',own:own.pred}:null);
-  fillMsDepChips('ms-dep-succ-chips',sIds,own?{kind:'succ',own:own.succ}:null);
-  ['pred','succ'].forEach(function(k){
-    const a=document.getElementById('ms-dep-add-'+k);
-    if(a) a.hidden=!own;
-  });
+  const fmt=function(v){
+    return String(v||'').split(',').map(function(x){return x.trim();})
+           .filter(Boolean).join(', ');
+  };
+  pred.value=d?fmt(d.pred):'';
+  succ.value=d?fmt(d.succ):'';
+  // P66: the same values as chips. Built from the textareas' own lists, so
+  // the chips and the raw lists cannot disagree.
+  const ids=function(v){ return String(v||'').split(',').map(function(x){return x.trim();}).filter(Boolean); };
+  const pIds=ids(pred.value), sIds=ids(succ.value);
+  fillMsDepChips('ms-dep-pred-chips',pIds);
+  fillMsDepChips('ms-dep-succ-chips',sIds);
   const cnt=document.getElementById('ms-dep-count');
   if(cnt) cnt.textContent=pIds.length+' pred \u00B7 '+sIds.length+' succ';
   // A milestone with no id carries no relationships to show at all.
@@ -18644,9 +18266,7 @@ function fillMsDepLists(snipId){
 // One chip per linked ID: a dot in the linked milestone's effective state
 // colour (the board's own --color-icon-* roles), its name as the tooltip.
 // Built with DOM calls, not innerHTML, since an ID is schedule text.
-// P72: edit = {kind, own:[ids]} on a user milestone's card; the ids in own
-// get a remove cross.
-function fillMsDepChips(hostId,list,edit){
+function fillMsDepChips(hostId,list){
   const host=document.getElementById(hostId);
   if(!host) return;
   host.innerHTML='';
@@ -18671,19 +18291,6 @@ function fillMsDepChips(hostId,list,edit){
     b.appendChild(dot);
     b.appendChild(document.createTextNode(id));
     b.onclick=function(ev){ onMsDepChip(ev,id); };
-    if(edit&&edit.own.indexOf(id)>=0){
-      b.classList.add('is-own');
-      const x=document.createElement('span');
-      x.className='collect-x ms-dep-x'; x.setAttribute('role','button'); x.tabIndex=0;
-      x.setAttribute('aria-label','Remove '+id); x.title='Remove '+id;
-      x.textContent='\u2715';
-      // stopPropagation: the chips are rebuilt under this click, and a click
-      // reaching the document from a detached node reads as a click away.
-      const rm=function(ev){ ev.stopPropagation(); ev.preventDefault(); removeMsDep(edit.kind,id); };
-      x.onclick=rm;
-      x.onkeydown=function(ev){ if(ev.key==='Enter'||ev.key===' ') rm(ev); };
-      b.appendChild(x);
-    }
     host.appendChild(b);
   });
 }
@@ -18967,8 +18574,6 @@ function closeMsDialog(){
   msFormTypeVal=null;
   msFormMarkerVal=null;
   msFormHealth=-1;
-  msFormDeps=null;
-  closeMsDepSuggest();
   msDraftClean=null;
 }
 // ===== The card is a form =====
@@ -18999,11 +18604,7 @@ function msReadForm(){
     marker:msFormMarker(),
     progress:g('ms-progress-input').trim(),
     comment:g('ms-comment-text'),
-    health:msFormHealth,
-    // P72: a user milestone's own links, pending until Save. Always '' on a
-    // schedule milestone, whose links are not editable.
-    pred:msFormDeps?msFormDeps.pred.join(', '):'',
-    succ:msFormDeps?msFormDeps.succ.join(', '):''
+    health:msFormHealth
   };
 }
 // The pending health, held on the form like everything else rather than
@@ -19156,10 +18757,9 @@ function saveMsDialog(alsoClose){
       return m[f];
     },
     scheduleProgress:m.progress,
-    // P72: float is read only on every milestone, so the card never asks
-    // for a float change. flEl.readOnly is always true now; kept as the
-    // source so the rule stays where the field is.
-    floatReadOnly:!flEl||flEl.readOnly!==false,
+    // A completed milestone's float field is a read-only "-": never a request
+    // to clear a stored float.
+    floatReadOnly:!!(flEl&&flEl.readOnly),
     parseDate:parseMsDate
   });
 
@@ -19179,26 +18779,6 @@ function saveMsDialog(alsoClose){
   if(oldText&&!newText){
     draft=draft||{target:{kind:'ms',key:key},changes:{},origin:'card',status:'open'};
     draft.text=''; draft.clearText=true;
-  }
-  // P72: a user milestone's links. The record is where they live (like the
-  // grid's edits to the same record), and the change goes into the same
-  // entry as the rest of this save, as changes.pred / changes.succ, so the
-  // update history shows it. The store keeps unknown change fields and
-  // never projects them, so nothing else reads them as an override.
-  const depRec=msFormDeps?umsRecord(key):null;
-  if(depRec){
-    const depCh={};
-    ['pred','succ'].forEach(function(k){
-      if(now[k]===clean[k]) return;
-      depCh[k]={from:clean[k],to:now[k]};
-      depRec[k]=now[k];
-      m[k]=now[k];
-    });
-    if(Object.keys(depCh).length){
-      draft=draft||{target:{kind:'ms',key:key},text:'',changes:{},origin:'card',status:'open'};
-      draft.changes=Object.assign({},draft.changes||{},depCh);
-      applyUserDeps();
-    }
   }
   // P66: the follow-up select sets the entry's status (open/sent/done).
   if(draft){
@@ -19235,8 +18815,6 @@ function saveMsDialog(alsoClose){
     const fuEl=document.getElementById('ms-followup');
     if(fuEl) fuEl.value='open';
     renderMsDuration();
-    // P72: the links just saved, with the other side's view rebuilt.
-    if(msFormDeps) fillMsDepLists(key);
     // Stays open, so the baseline has to move with it or the save pair would
     // never go away. This is the reported defect, stated once for every field
     // instead of once for the short title.

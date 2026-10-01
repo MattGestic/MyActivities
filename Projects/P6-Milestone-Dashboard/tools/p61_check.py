@@ -441,8 +441,11 @@ def source_checks(src: str) -> list:
 
     vjs = (VENDOR / "slickgrid.subset.min.js").read_text(encoding="utf-8").rstrip("\n")
     vcss = (VENDOR / "dist" / "slick.grid.css").read_text(encoding="utf-8").rstrip("\n")
-    gjs = (MOD / "grid-view.js").read_text(encoding="utf-8").rstrip("\n")
-    gcss = (MOD / "grid-view.css").read_text(encoding="utf-8").rstrip("\n")
+    # P70 (TD-229): the module is a core plus features; the app pastes the core and
+    # the features it uses (tools/grid_view_embed.py APP_FEATURES), each unchanged.
+    import grid_view_embed as GE
+    gcss_parts = GE.parts("css")
+    gjs_parts = GE.parts("js")
     lic = (VENDOR / "LICENSE").read_text(encoding="utf-8")
     ck("the vendor JS holds no </script and the vendor CSS no </style",
        "</script" not in vjs.lower() and "</style" not in vcss.lower())
@@ -466,11 +469,19 @@ def source_checks(src: str) -> list:
     ck("it follows the main </style> directly",
        src[first_close + len("</style>"):].lstrip().startswith('<style id="vendor-slickgrid-css">'))
     main_style = src[:first_close]
-    ck("grid-view.css is inside the main <style>, unchanged", gcss in main_style)
+    ck("grid-view.css and its features are inside the main <style>, unchanged, in order",
+       all(t in main_style for _, t in gcss_parts) and
+       [main_style.find(t) for _, t in gcss_parts] == sorted(main_style.find(t) for _, t in gcss_parts),
+       [n for n, t in gcss_parts if t not in main_style])
     app = src[src.find('<script id="app-script">'):]
     app = app[:app.find("</script>")]
-    ck("grid-view.js is at the top of the app script, unchanged",
-       gjs in app and app.find(gjs) < app.find("const APP_VERSION"))
+    ck("grid-view.js and its features are at the top of the app script, unchanged, in order",
+       all(t in app and app.find(t) < app.find("const APP_VERSION") for _, t in gjs_parts) and
+       [app.find(t) for _, t in gjs_parts] == sorted(app.find(t) for _, t in gjs_parts),
+       [n for n, t in gjs_parts if t not in app])
+    m_set = re.search(r"SRETGrid\.setup\(\{\s*features:\[([^\]]*)\]", app)
+    ck("the app's setup() enables exactly the pasted features (grid_view_embed APP_FEATURES)",
+       bool(m_set) and re.findall(r"'([^']+)'", m_set.group(1)) == GE.APP_FEATURES, m_set and m_set.group(1))
     ck("collections, ms-import, dates and user modules are not embedded",
        not re.search(r"root\.SRETCollections\s*=|SRETMsImport\s*=|SRETDates\s*=|SRETUser\s*=", src))
     scripts = re.findall(r"<script[^>]*>(.*?)</script>", src, re.S)

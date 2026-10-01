@@ -419,7 +419,7 @@ Plus the embedded **Project baseline**. A vendor or contractor schedule is its o
 
 ### 6. Reuse: core, features and setup (Matt, 2026-09-30)
 
-**The app embeds the pre-split module** (PR #20, TD-221). Moving it to this structure is TD-229; the app's view configs then lose the options `setup()` now holds.
+**In the app since P70 (TD-229):** the core plus `marks`, `bulk-edit` and `xlsx`, pasted unchanged by `tools/grid_view_embed.py` (its `APP_FEATURES` names the set; `--check` reports a stale paste). `lists` and `import` are not pasted: the app has no lists or import screens yet, and their helper modules are not embedded. One `SRETGrid.setup()` call sits above `openGridView()`; `tools/p61_check.py` and `tools/p65_check.py` verify the paste and the behaviour.
 
 The grid is a core plus optional features, so another screen, or another app, takes only what it needs and configures it once.
 
