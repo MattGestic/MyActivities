@@ -320,7 +320,7 @@ PROBE = r"""
     const baseCount=MILESTONES.length;
     setViewMode('update'); await settle(); await settle();
     R.notes.afterViewSwitch={baseline:baseCount,update:MILESTONES.length};
-    ck('view switch: the baseline is still the embedded one', baseCount===198, baseCount);
+    ck('view switch: the baseline is still the embedded one', baseCount===151, baseCount);  // P72: 198 less 47 WBS summaries
     ck('view switch: both appended sources survive a round trip to baseline',
        MILESTONES.length===MS_ONE*2 && TASKS.length===TASK_ONE*2,
        TASKS.length+' / '+MILESTONES.length);

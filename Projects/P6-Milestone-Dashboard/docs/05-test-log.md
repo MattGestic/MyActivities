@@ -3308,3 +3308,15 @@ TD-236. Matt's phone screenshots were the brief. Implementation screenshots: `do
 **`tools/p67_check.py` updated, same intent:** the collapsed and expanded control-state assertions read the funnel's pressed look instead of the chevron's rotation; the tile assertions run with the panel expanded and read P72's order (Mode and Fit on the Weeks row, the triggers on the row below). Before and after listed in the hand-off.
 
 **Checks run:** by `tools/run_checks.py` (change-scoped, 3 jobs). Results in the hand-off.
+
+## TEST-73: P72 WBS summaries out of the baseline, user milestone links, float read-only, history and edited-mark fixes (v3.1.0-P72)
+
+TD-237.
+
+**New `tools/p72_board_check.py`** (1440x900, 390x844): every baseline milestone has an Activity ID; none is a P6 WBS node; no row is a WBS node; the three mixed activity rows keep only real IDs; every row keeps a milestone; 120/151. Edited mark on N=3 markers (one sharing its cell) sits outside the icon's top-left at one offset. History: `Label from → to` and `Label text` with spaces; date and pill separated; pill and pencil anchored right, pencil after the pill.
+
+**New `tools/p72_deps_check.py`** (agent, 232/232): user milestone links added and removed on the card, shown both ways, drawn as lines, counted, recorded in history; discard keeps nothing; publish and model import round trips keep links and leave the schedule's own `DEP_DATA` byte-identical; user milestone float "-" and read-only, schedule float read-only, a stored float override no longer moves the board; N=3 chained user milestones.
+
+**Existing checks changed, same intent:** `p29` baseline pins 159/196/159/198 to 120/149/120/151 and `p30` 198 to 151 (the WBS rows are gone by design); `d18` source assertion moves the mark's negative offset from top/right to top/left; `p43`, `p44` editable-field list without `floatD`.
+
+**Checks run:** `tools/run_checks.py` (change-scoped). Results in the PR.

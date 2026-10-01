@@ -117,14 +117,14 @@ line,property,value,px_literals,also_uses_space_token,source
 2260,gap,8px,8px,False,style-block
 2263,gap,6px,6px,False,style-block
 2268,padding,14px 16px,14px|16px,False,style-block
-4271,padding,4px 5px,4px|5px,False,inline-style
-4272,padding,4px 5px,4px|5px,False,inline-style
-4273,padding,4px 5px,4px|5px,False,inline-style
-4274,padding,4px 5px,4px|5px,False,inline-style
 4275,padding,4px 5px,4px|5px,False,inline-style
 4276,padding,4px 5px,4px|5px,False,inline-style
 4277,padding,4px 5px,4px|5px,False,inline-style
 4278,padding,4px 5px,4px|5px,False,inline-style
 4279,padding,4px 5px,4px|5px,False,inline-style
 4280,padding,4px 5px,4px|5px,False,inline-style
-12540,gap,8px,8px,False,inline-style
+4281,padding,4px 5px,4px|5px,False,inline-style
+4282,padding,4px 5px,4px|5px,False,inline-style
+4283,padding,4px 5px,4px|5px,False,inline-style
+4284,padding,4px 5px,4px|5px,False,inline-style
+12461,gap,8px,8px,False,inline-style

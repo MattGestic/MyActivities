@@ -724,7 +724,16 @@ def main():
     R4b = probe(html, STAGE4, extras=data_block("p65-data", fixture), budget=45000)
     take(R4b, "stage 4 (A11, current app)")
     if R4a.get("ok") and R4b.get("ok"):
-        sa, sb = R4a["sig"], R4b["sig"]
+        sa_all, sb = R4a["sig"], R4b["sig"]
+        # P72 (TD-237): the embedded baseline no longer carries the P6 export's
+        # WBS summary rows as milestones. The P64 board still draws them, so
+        # they are set aside here, and asserted to be exactly those, before the
+        # marker-for-marker comparison of everything the two boards share.
+        WBS = set(["3D Model", "Bronson Connector Road Design  Review Memo", "Capital and Operating Cost Estimate", "Civil", "Concrete MTO", "Design Criteria", "Electrical & Instrumentation", "Electrical Update", "Engineering", "Equipment List", "Equipment Sizing", "Eskay  Load List", "Eskay Creek PFS - Current", "Eskay HV SLD", "Financial Model", "Foundation(NPI & Portals )", "Generator Sizing Report", "Inputs From Others", "Key Milestones", "Layout", "MEL", "MTO", "Mass  and Water Balance", "Mechanical & Piping", "Metallurgical Testwork Review", "NPI Facility Detailed Layout", "On-Site Waste Dump", "Overall Site Plan", "PFD", "PFS", "PFS Baseline Schedule", "Process", "Project Execution Plan / Schedule", "Project Management", "SNIP Water Management", "Site Services", "Snip Building List", "Snip HV SLD", "Snip Load List", "Structural & Concrete", "Structural Design Criteria", "Technical Report"])
+        dropped = [x["id"] for x in sa_all if x["id"] in WBS]
+        sa = [x for x in sa_all if x["id"] not in WBS]
+        add("A11 (setup) the only P64 markers missing now are P6 WBS summaries",
+            len(dropped) >= 1 and all(x["id"] not in WBS for x in sb), f"{len(dropped)} WBS markers set aside")
         edited = [s for s in sb if s["editMark"]]
         add("A11 (setup) the P64 release is what its label says", "P64" in (R4a.get("version") or ""),
             R4a.get("version"))

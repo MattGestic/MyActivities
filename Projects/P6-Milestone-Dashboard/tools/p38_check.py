@@ -122,16 +122,16 @@ PROBE = r"""
     ck('defaults: the board renders a short-title label on every milestone at first paint',
        R.notes.defaults.shownTitles>100&&R.notes.defaults.shownTitles===R.notes.defaults.shortTitles,
        R.notes.defaults.shownTitles+' shown of '+R.notes.defaults.shortTitles+' rendered');
-    // NOT "every label starts with #". 38 of the 196 milestones on the seeded
-    // board carry no Activity ID, and formatShortTitleDisplay() falls back to
-    // the title for those, which is correct. What distinguishes 'id' from the
-    // other two modes is that no label carries the ' _ ' that 'both' inserts,
-    // and that most of them are IDs.
+    // P72: the seeded board's ID-less "milestones" were P6 WBS summaries and
+    // are gone (TD-237), so every label is now an Activity ID. Before, 38 of
+    // 196 fell back to the title and this asserted "most" (>150). What
+    // distinguishes 'id' from the other two modes is still that no label
+    // carries the ' _ ' that 'both' inserts.
     const joiner=Array.prototype.filter.call(shortTitles,function(e){
       return e.textContent.indexOf(' _ ')>=0; }).length;
     R.notes.defaults.joiner=joiner;
     ck('defaults: the labels are Activity IDs, and none is an ID+title pair',
-       R.notes.defaults.idLike>150&&joiner===0&&SHORT_TITLE_MODE==='id',
+       R.notes.defaults.idLike>100&&R.notes.defaults.idLike===R.notes.defaults.shortTitles&&joiner===0&&SHORT_TITLE_MODE==='id',
        R.notes.defaults.idLike+' of '+R.notes.defaults.shortTitles+
        ' start with #, '+joiner+' carry the ID+title joiner, mode '+SHORT_TITLE_MODE);
     // NEGATIVE CONTROL for the mode. If the joiner count could not tell 'id'
@@ -146,7 +146,7 @@ PROBE = r"""
       function(e){ return e.textContent.indexOf(' _ ')>=0; }).length;
     R.notes.defaults.modeControl={both:bothJoin,backToId:backJoin};
     ck('defaults NEGATIVE CONTROL: the same measurement sees ID+title when that mode is set',
-       bothJoin>150&&backJoin===0,
+       bothJoin>100&&bothJoin===R.notes.defaults.shortTitles&&backJoin===0,
        bothJoin+' paired in both-mode, '+backJoin+' back in id-mode');
     ck('defaults: the control says ID, matching what is on the board',
        R.notes.defaults.idBtnActive&&!R.notes.defaults.offBtnActive,
