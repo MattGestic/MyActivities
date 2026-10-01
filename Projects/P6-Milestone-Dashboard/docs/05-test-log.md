@@ -3276,3 +3276,20 @@ TD-234.
 **`tools/form_to_entry_test.mjs`:** 7 new cases for the A flag (75 total).
 
 **Checks run:** by `tools/run_checks.py` (change-scoped, 3 jobs). Results in the PR.
+
+## TEST-71: P70 the grid view as a core plus features (v3.1.0-P70)
+
+TD-229. The app embedded the grid module as merged in PR #20 (P61). The module has since become a core plus optional features configured once with `SRETGrid.setup()` (PR #30). P70 re-pastes it: the core and the three features the app uses (`marks` for the health dot, `bulk-edit`, `xlsx` for export and the template), each file unchanged, through the new `tools/grid_view_embed.py`. One `setup()` call above `openGridView()` enables those features, pins ID and Name below 1024px of grid width and the ID only below 768px of screen width, and carries the app's wording. No other app code changed; `openGridView()` and every view config are as they were. Bulk edit writes through each view's existing `onEdit`, so annotation writes still go through the entry functions (TD-230). Before the paste, the base already failed two `p61_check` lines because the module files had moved on.
+
+**`tools/p70_check.py` (new).** Three clean page loads, with the host resolver mapped to nothing, reading store contents and engine state; it honours `SRET_CHROME`:
+- *1440x900:* `SRETGrid.features()` is exactly marks, bulk-edit, xlsx, and the lists and import helper modules are not embedded. Three milestones are added through the real Add milestone path and View items opens them. No Edit button with nothing selected; two rows selected shows "Edit 2 rows". The dialog lists the editable fields, Health included. % complete 50 reaches `USER_MILESTONES` for both selected rows through the grid's `onEdit` and the third row is untouched; the summary names the change. 150 is refused and the store keeps 50. Bulk dates are typed as the board shows them (placeholder "e.g. 9-Oct-26"), and 31-Feb-26 is refused before anything changes.
+- *900x800:* the checkbox, ID and Name are frozen columns.
+- *390x844:* only the checkbox and ID are frozen.
+- Run against the P64 file it failed at every load, so it discriminates.
+
+**`tools/p61_check.py` (updated).** "Pasted unchanged" now covers the core and each pasted feature file, in order, and checks that `setup()` enables exactly the pasted set.
+
+**Results:** recorded by `tools/run_checks.py --all` (ledger and `docs/component-register.md` committed with this round). `tools/grid_view_embed.py --check` reports the paste current. The version grep returns 1.
+
+**Published:** `releases/v3.1.0-P70_grid-core-features.html`
+
