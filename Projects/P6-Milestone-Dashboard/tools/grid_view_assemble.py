@@ -356,15 +356,20 @@ def grid_features(ext: str) -> str:
 
 def sheetjs() -> str:
     """The vendored SheetJS mini build with its licence beside it (TD-216),
-    once tools/vendor_sheetjs.py has been run; until then, a note."""
+    as the app embeds it (vendor/sheetjs/SOURCE.md)."""
     d = ROOT / "vendor" / "sheetjs"
     js = d / "xlsx.mini.min.js"
     if not js.exists():
-        return "/* SheetJS not vendored yet (TD-216): run tools/vendor_sheetjs.py. */"
+        sys.exit("vendor/sheetjs/xlsx.mini.min.js is missing (TD-216).")
     lic = (d / "LICENSE").read_text(encoding="utf-8").replace("*/", "* /")
     ver = re.search(r"\| Version \| ([^|]+) \|", (d / "SOURCE.md").read_text(encoding="utf-8"))
     head = f"/* SheetJS Community Edition {ver.group(1).strip() if ver else ''} (mini build), vendor/sheetjs/SOURCE.md.\n{lic}*/\n"
-    return head + safe_inline(js.read_text(encoding="utf-8"), "</script", "SheetJS")
+    # The same one change the app makes (vendor/sheetjs/SOURCE.md, CLAUDE.md): the "<" of the
+    # library's HTML tag literals written \x3C, so the page holds one </body>. Same string at runtime.
+    lib = js.read_text(encoding="utf-8")
+    for tag in ("<html>", "<head>", "</head>", "<body>", "</body>", "</html>"):
+        lib = lib.replace(tag, "\\x3C" + tag[1:])
+    return head + safe_inline(lib, "</script", "SheetJS")
 
 
 def safe_inline(text: str, closer: str, what: str) -> str:

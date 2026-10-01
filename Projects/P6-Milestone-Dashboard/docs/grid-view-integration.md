@@ -157,7 +157,7 @@ Back returns focus to the element that had it when `open()` ran, so opening from
 
 Today: `renderMounts()` (line ~10737) renders a disabled `Manage…` button titled "Grid arrives in D-17c" in the User-defined group, which lands in `#ws-userms-body`. Replace it with an enabled "View items" button calling `openUserMsGrid()`.
 
-Adapter outline (field names from the `USER_MILESTONES.push` in the add-milestone handler, line ~12704; after TD-217 these are `USER_TASKS` and the add-task handler):
+Adapter outline (field names from the `USER_MILESTONES.push` in the add-milestone handler, line ~12704; after TD-225 these are `USER_TASKS` and the add-task handler):
 
 | Grid column (`key`) | From `USER_MILESTONES` record | Editable |
 |---|---|---|
@@ -285,7 +285,7 @@ The list selection feature is used by both the grid and the dashboard. They shar
 - **Show only these on the board** is the dashboard's counterpart of the grid's scope filter: a display-state filter on the board to the list's activities, shown as a pill in the Top filter bar and cleared from it. It never changes schedule data.
 - **Open in table** opens the grid's Schedule milestones view scoped to that list, so the user moves between the two screens with the same selection.
 - Entry points that feed it: the Notes bulk bar ("Add to temp list"), a board selection if P59 adds one, and a milestone dialog action "Add to temp list".
-- Acceptance: a list made in the grid appears in the dashboard selector with the same count without a reload, and the reverse; deleting a list on either side removes it from both; the temp list empties on reload on both; `describe()` wording is identical on both. TD-219.
+- Acceptance: a list made in the grid appears in the dashboard selector with the same count without a reload, and the reverse; deleting a list on either side removes it from both; the temp list empties on reload on both; `describe()` wording is identical on both. TD-227.
 
 ### 3. Views from the title (Matt, 2026-09-28)
 
@@ -301,7 +301,7 @@ The grid's title is a view switcher (`views`, `view`, `onView`). Back returns to
 
 Schedule columns (ID, name, WBS, duration, dates, float, predecessors, successors, actual flag) are **read-only**; annotation edits go through `onEdit` to the annotation stores, never to `TASKS` / `MILESTONES`. The importer passes `noun:['task','tasks']`, so the menu, dialog and summary say "Import tasks" and "Imported 3 tasks".
 
-**User tasks across the dashboard, names and stored keys in sync (Matt, 2026-09-28).** Tracked as TD-217. Everything is renamed: the words people read, the keys and values saved in files, and the code identifiers, so they cannot drift apart. Files saved before the rename still open because every load path runs `SRETMigrate.userTasks()` first (`src/modules/migrate/migrate.js`, paste as #4g after #4f). Saving writes only the new names.
+**User tasks across the dashboard, names and stored keys in sync (Matt, 2026-09-28).** Tracked as TD-225. Everything is renamed: the words people read, the keys and values saved in files, and the code identifiers, so they cannot drift apart. Files saved before the rename still open because every load path runs `SRETMigrate.userTasks()` first (`src/modules/migrate/migrate.js`, paste as #4g after #4f). Saving writes only the new names.
 
 *Stored keys and values (migrated on load):*
 
@@ -393,7 +393,7 @@ Plus the embedded **Project baseline**. A vendor or contractor schedule is its o
 4. **Data & view > Sources** shows the reference table and the stored uploads with a Set as control, as in the demo's Tools > Loaded schedules.
 5. `SRETCompare` reads the same records: `add()` takes the app's source id as the upload reference.
 
-**Interim dates over the primary on the board (Matt, 2026-09-28: yes, optional).** Tracked as TD-218.
+**Interim dates over the primary on the board (Matt, 2026-09-28: yes, optional).** Tracked as TD-226.
 - A View controls toggle, off by default: "Show interim dates". It is display state only; it never changes the primary, the reference table or any stored upload.
 - When on, `SRETCompare.overlay(store, {scopes, movedOnly})` gives one mark per activity the interim shares with the primary: the interim's start and finish, the primary's, and the finish slip. The board draws each as an extra marker on that activity's row, styled apart from the baseline ghost (the baseline is the past; the interim is newer than the primary), with a tooltip naming the interim, its scope and data date.
 - Options beside the toggle: which interim scopes to show (default all), and "Moved only" (default on) so unchanged activities add no marker.
@@ -418,6 +418,8 @@ Plus the embedded **Project baseline**. A vendor or contractor schedule is its o
 **Icon symbols in the demo:** `tools/grid_view_assemble.py` copies the app's `#ico-*` symbols and `.ms-icon` rules into the demo; in the app they already exist.
 
 ### 6. Reuse: core, features and setup (Matt, 2026-09-30)
+
+**The app embeds the pre-split module** (PR #20, TD-221). Moving it to this structure is TD-229; the app's view configs then lose the options `setup()` now holds.
 
 The grid is a core plus optional features, so another screen, or another app, takes only what it needs and configures it once.
 
