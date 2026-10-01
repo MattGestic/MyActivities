@@ -53,6 +53,28 @@ def token_blocks() -> str:
             ":root{accent-color:var(--color-accent)}\n*{box-sizing:border-box;margin:0;padding:0}")
 
 
+def icon_defs() -> str:
+    """The app's marker symbols (#ico-*) and the .ms-icon rules that colour
+    them, so the grid's Icon column draws the board's own marks."""
+    html = APP.read_text(encoding="utf-8")
+    m = re.search(r'<svg width="0" height="0"[^>]*>\s*<defs>.*?</defs>\s*</svg>', html, re.S)
+    if not m or 'id="ico-diamond"' not in m.group(0):
+        sys.exit("Could not find the marker symbols in the app file.")
+    return m.group(0)
+
+
+def icon_css() -> str:
+    html = APP.read_text(encoding="utf-8")
+    style = re.search(r"<style[^>]*>(.*?)</style>", html, re.S).group(1)
+    # Only the .ms-icon rules themselves (one line each), not .ms-icon-btn and friends.
+    rules = [l for l in style.splitlines() if re.match(r"\.ms-icon[.{]", l)]
+    if any(l.count("{") != l.count("}") for l in rules):
+        sys.exit("An .ms-icon rule spans several lines in the app file; update icon_css().")
+    if len(rules) < 5:
+        sys.exit("Could not find the .ms-icon rules in the app file.")
+    return "/* Copied from src/milestone-dashboard.html: the marker colours. */\n" + "\n".join(rules)
+
+
 def iso(s: str):
     s = (s or "").strip().rstrip("A").rstrip("*").strip()
     m = re.match(r"^(\d{1,2})-([A-Za-z]{3})-(\d{2})$", s)
@@ -140,12 +162,37 @@ def comparison_snapshots(sched):
         slip = 0 if i < 3 else (5 if i < 9 else 9)
         v2.append({"id": "OS-%d" % (100 + i * 10), "name": n, "start": _shift(st, slip if i >= 4 else 0), "finish": _shift(fi, slip),
                    "float": 10 - (i % 5) - (2 if i >= 9 else 0), "actual": "Yes" if i < 3 else "No"})
+    # Loaded in this order (Matt, 2026-09-28: three per schedule plus the
+    # embedded baseline). The demo then imports the live 29-Aug update as the
+    # latest, so 22-Aug becomes the comparison and 15-Aug is dropped.
+    proj = "P:\\103787 SRET\\05 Controls\\Schedule\\Weekly updates"
+    vend = "P:\\103787 SRET\\07 Procurement\\P8010 Ocean Steel\\Schedules"
+    # Interim update of part of the schedule only (Matt, 2026-09-28): the cost
+    # estimate band, cut after the latest full update, with moves and one
+    # activity the full schedule does not have yet.
+    part = []
+    for k, r in enumerate([r for r in sched if r["wbs"] == "Capital and Operating Cost Estimate"]):
+        x = row(r)
+        if k % 3 == 0:
+            x["finish"] = _shift(r["finish"], 5)
+        part.append(x)
+    part.append({"id": "SNIP-950", "name": "Estimate peer review", "start": "2026-10-05", "finish": "2026-10-09", "float": 6, "actual": "No"})
     return [
-        {"meta": {"id": "bl", "role": "baseline", "name": "Baseline", "dataDate": "2026-08-15", "file": "Embedded baseline"}, "rows": base},
-        {"meta": {"id": "pu-0822", "role": "project", "name": "Project schedule", "dataDate": "2026-08-22", "file": "103787-13_PFS_Weekly_Update_DD-2026-08-22.xlsx", "importedAt": "2026-08-24T08:00:00Z"}, "rows": prev},
-        {"meta": {"id": "iu-0826", "role": "interim", "name": "Project schedule", "dataDate": "2026-08-26", "file": "PFS interim DD-2026-08-26.xlsx", "importedAt": "2026-08-26T15:00:00Z"}, "rows": interim},
-        {"meta": {"id": "os-0820", "role": "external", "name": "Ocean Steel fabrication", "dataDate": "2026-08-20", "file": "OceanSteel_P8010_2026-08-20.xlsx", "importedAt": "2026-08-21T09:00:00Z"}, "rows": v1},
-        {"meta": {"id": "os-0827", "role": "external", "name": "Ocean Steel fabrication", "dataDate": "2026-08-27", "file": "OceanSteel_P8010_2026-08-27.xlsx", "importedAt": "2026-08-28T09:00:00Z"}, "rows": v2},
+        {"slot": "interim", "meta": {"id": "pi-0902", "role": "project", "dataDate": "2026-09-02", "scope": "Cost estimate",
+                                     "file": "PFS interim, cost estimate only DD-2026-09-02.xlsx", "path": proj + "\\Interim",
+                                     "snapshotAt": "2026-09-03T10:00:00Z"}, "rows": part},
+        {"slot": "baseline", "meta": {"id": "bl", "role": "project", "dataDate": "2026-08-15", "file": "Embedded baseline",
+                                      "path": "(inside this file)", "snapshotAt": "2026-08-18T08:00:00Z"}, "rows": base},
+        {"slot": "latest", "meta": {"id": "pu-0815", "role": "project", "dataDate": "2026-08-15", "file": "103787-13_PFS_Weekly_Update_DD-2026-08-15.xlsx",
+                                    "path": proj, "snapshotAt": "2026-08-18T08:05:00Z"}, "rows": base},
+        {"slot": "latest", "meta": {"id": "pu-0822", "role": "project", "dataDate": "2026-08-22", "file": "103787-13_PFS_Weekly_Update_DD-2026-08-22.xlsx",
+                                    "path": proj, "snapshotAt": "2026-08-24T08:00:00Z"}, "rows": prev},
+        {"slot": "alternate", "meta": {"id": "pa-0826", "role": "project", "dataDate": "2026-08-26", "file": "PFS recovery option DD-2026-08-26.xlsx",
+                                       "path": proj + "\\Options", "snapshotAt": "2026-08-26T15:00:00Z"}, "rows": interim},
+        {"slot": "latest", "meta": {"id": "os-0820", "role": "external", "name": "Ocean Steel fabrication", "dataDate": "2026-08-20",
+                                    "file": "OceanSteel_P8010_2026-08-20.xlsx", "path": vend, "snapshotAt": "2026-08-21T09:00:00Z"}, "rows": v1},
+        {"slot": "latest", "meta": {"id": "os-0827", "role": "external", "name": "Ocean Steel fabrication", "dataDate": "2026-08-27",
+                                    "file": "OceanSteel_P8010_2026-08-27.xlsx", "path": vend, "snapshotAt": "2026-08-28T09:00:00Z"}, "rows": v2},
     ]
 
 
@@ -164,20 +211,21 @@ def fixtures():
              "Geotech report issued for review", "Permitting pre-application meeting", "Cost estimate basis frozen",
              "Execution plan workshop", "Water balance model accepted", "Power supply study received",
              "Risk register refreshed", "Board paper lodged", "Final PFS issued"]
-    userms = []
+    usertasks = []
     for i, name in enumerate(names):
         a = ms[i % len(ms)]
         b = ms[(i + 1) % len(ms)]
         fin = a["finish"] or a["start"] or "2026-10-30"
         d = datetime.date.fromisoformat(fin) + datetime.timedelta(days=7 * (i % 4))
-        userms.append({"id": f"USR-{i + 1:03d}", "name": name, "type": types[i % 4], "state": states[i % 5],
+        usertasks.append({"id": f"USR-{i + 1:03d}", "name": name, "type": types[i % 4], "state": states[i % 5],
                        "start": None if i % 3 else (d - datetime.timedelta(days=14)).isoformat(),
-                       "finish": d.isoformat(), "band": "User Defined Milestones", "wbs": a["wbs"],
+                       "finish": d.isoformat(), "band": "User Tasks", "wbs": a["wbs"],
                        "pred": a["id"], "succ": b["id"] if i % 2 else "",
                        "progress": [0, 25, 50, 75, 100][i % 5],
                        "comment": "" if i % 3 else "Added at the weekly review.",
                        "created": (datetime.date(2026, 9, 1) + datetime.timedelta(days=i)).isoformat(),
-                       "createdBy": ["MG", "JR", "AK"][i % 3], "health": [1, 2, 3, 4, 0][i % 5]})
+                       "createdBy": ["MG", "JR", "AK"][i % 3], "health": [1, 2, 3, 4, 0][i % 5],
+                       "marker": ["diamond", "lock", "diamond", "star", "flag", "circle"][i % 6]})
     kinds = [("Milestone comment", "comment"), ("Row remark", "remark"), ("Dependency comment", "dep"),
              ("Note", "note"), ("Health override", "health"), ("Progress override", "progress"),
              ("Date override", "date")]
@@ -209,22 +257,29 @@ def fixtures():
     nstat = [{"value": "note", "label": "Note"}, {"value": "open", "label": "Open"}, {"value": "sent", "label": "Sent"},
              {"value": "review", "label": "In review"}, {"value": "outstanding", "label": "Outstanding"},
              {"value": "done", "label": "Done"}, {"value": "closed", "label": "Closed"}]
+    # The board's marks (MS_MARKERS in the app), drawn from its #ico-* symbols.
+    markers = [{"value": "diamond", "label": "Diamond, default milestone"}, {"value": "lock", "label": "Lock, stage gate"},
+               {"value": "flag", "label": "Flag, notable milestone"}, {"value": "star", "label": "Star, key project milestone"},
+               {"value": "circle", "label": "Circle"}]
     cols = {
-        "userms": [
+        "usertasks": [
             # ID carries the health icon (tap to change, as the dashboard); Health itself is a
             # hidden column so it exports last and appears last in the import template.
             {"key": "id", "label": "ID", "type": "text", "width": 104,
              "icon": {"key": "health", "label": "Health", "options": health}},
             {"key": "name", "label": "Name", "type": "text", "editable": True, "width": 240},
             {"key": "type", "label": "Type", "type": "select", "editable": True, "options": types, "width": 70},
+            # Icon (Matt, 2026-09-30): the mark the board draws, picked from the board's own set.
+            {"key": "marker", "label": "Icon", "type": "select", "editable": True, "options": markers, "width": 96,
+             "symbols": {"prefix": "ico-", "stateKey": "state"}},
             {"key": "start", "label": "Start", "type": "date", "editable": True},
             {"key": "finish", "label": "Finish", "type": "date", "editable": True},
             {"key": "band", "label": "Band", "type": "text", "editable": True, "width": 170},
-            {"key": "wbs", "label": "WBS", "type": "text", "editable": True, "width": 150},
+            {"key": "wbs", "label": "WBS/Area", "type": "text", "editable": True, "width": 150},
             {"key": "state", "label": "Status", "type": "select", "editable": True, "options": state,
              "tones": {"FUTURE": "future", "TRACK": "track", "RISK": "risk", "CRIT": "crit", "DONEUSER": "done"}},
-            {"key": "pred", "label": "Predecessor", "type": "text", "editable": True, "width": 110},
-            {"key": "succ", "label": "Successor", "type": "text", "editable": True, "width": 110},
+            {"key": "pred", "label": "Predecessor", "type": "refs", "editable": True, "width": 150},
+            {"key": "succ", "label": "Successor", "type": "refs", "editable": True, "width": 150},
             {"key": "progress", "label": "% complete", "type": "number", "editable": True, "width": 90, "min": 0, "max": 100},
             {"key": "comment", "label": "Comment", "type": "text", "editable": True, "width": 220},
             {"key": "created", "label": "Date created", "type": "date", "width": 100},
@@ -244,7 +299,11 @@ def fixtures():
         "sched": [
             {"key": "id", "label": "Activity ID", "type": "text", "width": 100},
             {"key": "name", "label": "Activity name", "type": "text", "width": 260},
-            {"key": "wbs", "label": "WBS", "type": "text", "width": 160},
+            # Icon override (Matt, 2026-09-30: "available to all"): an annotation on the
+            # activity, never schedule data; blank draws the board's default mark.
+            {"key": "marker", "label": "Icon", "type": "select", "editable": True, "options": markers, "width": 96,
+             "symbols": {"prefix": "ico-"}},
+            {"key": "wbs", "label": "WBS/Area", "type": "text", "width": 160},
             {"key": "dur", "label": "Duration", "type": "number", "width": 72},
             {"key": "start", "label": "Start", "type": "date"},
             {"key": "finish", "label": "Finish", "type": "date"},
@@ -266,7 +325,7 @@ def fixtures():
     file_state = {"savedBy": "J. Ruiz", "history": [
         {"at": "2026-09-14T08:05:00Z", "by": "M. Garrett", "version": "3.1.0-P57"},
         {"at": "2026-09-20T09:12:00Z", "by": "J. Ruiz", "version": "3.1.0-P58"}]}
-    data = {"sched": sched, "userms": userms, "annot": annot, "cols": cols, "fileState": file_state, "snaps": snaps}
+    data = {"sched": sched, "usertasks": usertasks, "annot": annot, "cols": cols, "fileState": file_state, "snaps": snaps}
     js = "window.SRET_FIXTURES=" + json.dumps(data, separators=(",", ":"), ensure_ascii=False) + ";\n"
     js += ("// Stress set: the reference schedule repeated to n rows with unique IDs.\n"
            "window.SRET_STRESS=function(n){var s=window.SRET_FIXTURES.sched,out=[];"
@@ -277,6 +336,40 @@ def fixtures():
 
 VENDOR_JS_ORDER = ["slick.core.js", "slick.interactions.js", "slick.grid.js", "slick.dataview.js",
                    "slick.checkboxselectcolumn.js", "slick.rowselectionmodel.js"]
+
+
+# Grid features, in load order (each after the core; bulk edit uses refs,
+# import uses xlsx for its template link). A feature with no styles has no .css.
+GRID_FEATURES = ["refs", "marks", "bulk-edit", "lists", "xlsx", "import"]
+
+
+def grid_features(ext: str) -> str:
+    out = []
+    for name in GRID_FEATURES:
+        f = MOD / "features" / f"{name}.{ext}"
+        if f.exists():
+            out.append(safe_inline(f.read_text(encoding="utf-8"), "</script" if ext == "js" else "</style", f.name))
+        elif ext == "js":
+            sys.exit(f"Grid feature {name} has no {f.relative_to(ROOT)}.")
+    return "\n".join(out)
+
+
+def sheetjs() -> str:
+    """The vendored SheetJS mini build with its licence beside it (TD-216),
+    as the app embeds it (vendor/sheetjs/SOURCE.md)."""
+    d = ROOT / "vendor" / "sheetjs"
+    js = d / "xlsx.mini.min.js"
+    if not js.exists():
+        sys.exit("vendor/sheetjs/xlsx.mini.min.js is missing (TD-216).")
+    lic = (d / "LICENSE").read_text(encoding="utf-8").replace("*/", "* /")
+    ver = re.search(r"\| Version \| ([^|]+) \|", (d / "SOURCE.md").read_text(encoding="utf-8"))
+    head = f"/* SheetJS Community Edition {ver.group(1).strip() if ver else ''} (mini build), vendor/sheetjs/SOURCE.md.\n{lic}*/\n"
+    # The same one change the app makes (vendor/sheetjs/SOURCE.md, CLAUDE.md): the "<" of the
+    # library's HTML tag literals written \x3C, so the page holds one </body>. Same string at runtime.
+    lib = js.read_text(encoding="utf-8")
+    for tag in ("<html>", "<head>", "</head>", "<body>", "</body>", "</html>"):
+        lib = lib.replace(tag, "\\x3C" + tag[1:])
+    return head + safe_inline(lib, "</script", "SheetJS")
 
 
 def safe_inline(text: str, closer: str, what: str) -> str:
@@ -292,14 +385,21 @@ def build() -> str:
     parts = {
         "/*@TOKENS@*/": token_blocks(),
         "/*@GRID_CSS@*/": (MOD / "grid-view.css").read_text(encoding="utf-8"),
+        "/*@GRID_FEATURES_CSS@*/": grid_features("css"),
+        "/*@ICON_CSS@*/": icon_css(),
+        "<!--@ICON_DEFS@-->": icon_defs(),
         "/*@USER_CSS@*/": (ROOT / "src" / "modules" / "user" / "user.css").read_text(encoding="utf-8"),
         "/*@VENDOR_CSS@*/": safe_inline(vendor_css, "</style", "vendor CSS"),
         "/*@VENDOR_JS@*/": safe_inline(vendor_js, "</script", "vendor JS"),
+        "/*@SHEETJS_JS@*/": sheetjs(),
         "/*@GRID_JS@*/": safe_inline((MOD / "grid-view.js").read_text(encoding="utf-8"), "</script", "grid-view.js"),
+        "/*@GRID_FEATURES_JS@*/": grid_features("js"),
         "/*@COLLECTIONS_JS@*/": safe_inline((COLL / "collections.js").read_text(encoding="utf-8"), "</script", "collections.js"),
         "/*@DATES_JS@*/": safe_inline((ROOT / "src" / "modules" / "dates" / "dates.js").read_text(encoding="utf-8"), "</script", "dates.js"),
         "/*@USER_JS@*/": safe_inline((ROOT / "src" / "modules" / "user" / "user.js").read_text(encoding="utf-8"), "</script", "user.js"),
         "/*@COMPARE_JS@*/": safe_inline((ROOT / "src" / "modules" / "compare" / "compare.js").read_text(encoding="utf-8"), "</script", "compare.js"),
+        "/*@IDS_JS@*/": safe_inline((ROOT / "src" / "modules" / "ids" / "ids.js").read_text(encoding="utf-8"), "</script", "ids.js"),
+        "/*@MIGRATE_JS@*/": safe_inline((ROOT / "src" / "modules" / "migrate" / "migrate.js").read_text(encoding="utf-8"), "</script", "migrate.js"),
         "/*@MSIMPORT_JS@*/": safe_inline((ROOT / "src" / "modules" / "ms-import" / "ms-import.js").read_text(encoding="utf-8"), "</script", "ms-import.js"),
         "/*@FIXTURES@*/": safe_inline(fixtures(), "</script", "fixtures"),
     }
@@ -325,7 +425,7 @@ def main():
         print("demo.html is current.")
         return 0
     out.write_text(html, encoding="utf-8")
-    print(f"Wrote {out.relative_to(ROOT)} ({len(html.encode('utf-8'))} bytes)")
+    print(f"Wrote {out} ({len(html.encode('utf-8'))} bytes)")
     return 0
 
 

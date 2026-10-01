@@ -10,16 +10,19 @@ The app keeps one `<style>` (scanned by `colour_audit.py --strict`) and one `<sc
 
 | # | Source file | Destination in `milestone-dashboard.html` | Why there |
 |---|---|---|---|
-| 1 | `src/modules/grid-view/grid-view.css` | Inside the main `<style>`, after the Workspace / Data and view panel rules, as its own commented section | Tier 3 component styles; only `--color-*` roles and D-16 tokens, so `--strict` passes with no exception |
+| 1 | `src/modules/grid-view/grid-view.css`, then `features/*.css` in the feature load order (#4) | Inside the main `<style>`, after the Workspace / Data and view panel rules, as its own commented section | Tier 3 component styles; only `--color-*` roles and D-16 tokens, so `--strict` passes with no exception. `xlsx` has no styles |
 | 2 | `vendor/slickgrid/dist/slick.grid.css` | New `<style id="vendor-slickgrid-css">` immediately after the main `</style>` | Unmodified vendor CSS; kept out of the audited block. Every colour it could paint is overridden by #1 (proven by the palette swap in `tools/grid_view_check.py`) |
 | 3 | `vendor/slickgrid/slickgrid.subset.min.js` | New `<script id="vendor-slickgrid">` immediately **before** `<script id="app-script">`, preceded by a `/* */` comment holding the full text of `vendor/slickgrid/LICENSE` and the version line from `SOURCE.md` | Must define `window.Slick` before the app script runs; MIT notice travels with the code |
-| 4 | `src/modules/grid-view/grid-view.js` | Top of `<script id="app-script">`, before the app's own code, as one commented section | Self-contained IIFE; defines `window.SRETGrid` only |
+| 3b | `vendor/sheetjs/xlsx.mini.min.js` (TD-216) | New `<script id="vendor-sheetjs">` after #3, before `app-script`, preceded by a `/* */` comment holding `vendor/sheetjs/LICENSE` and the version line from its `SOURCE.md`. Then `ensureXLSX()` becomes `window.XLSX ? Promise.resolve(window.XLSX) : Promise.reject(...)` with no script injection, as in the demo | Removes the app's one network request. The build contains the text `</body>` and `</head>`: probe tools must inject at the last `</body>` (TD-216) |
+| 4 | `src/modules/grid-view/grid-view.js`, then `features/refs.js`, `marks.js`, `bulk-edit.js`, `lists.js`, `xlsx.js`, `import.js` | Top of `<script id="app-script">`, before the app's own code, as one commented section | The core defines `window.SRETGrid`; each feature registers itself with it and defines nothing else. Order: core first; `bulk-edit` after `refs`, `import` after `xlsx` (section 6) |
 | 4b | `src/modules/collections/collections.js` | Directly after #4, same script | Self-contained IIFE; defines `window.SRETCollections` only (My temp list and saved lists). Shared by the grid and the dashboard, so it must load before either calls it |
 | 4c | `src/modules/ms-import/ms-import.js` | Directly after #4b, same script | Self-contained IIFE; defines `window.SRETMsImport` only (the milestone import rules). The grid's import dialog calls it; the app's own import form can too |
 | 4d | `src/modules/dates/dates.js` | Directly after #4b, before #4c | `window.SRETDates`: the one date reader for every import (grid and dashboard). #4c needs it |
 | 4e | `src/modules/user/user.js`, `src/modules/user/user.css` | JS after #4d; CSS in the main `<style>` after #1 | `window.SRETUser`: the user name and save history, and the Data settings field |
-| 4f | `src/modules/compare/compare.js` | After #4e | `window.SRETCompare`: snapshots and the Schedule changes comparison |
-| 5 | The adapters below | In `app-script`, beside the Workspace code (`setWorkspaceSection()`) | The only code that knows both the app's stores and the grid contract |
+| 4f | `src/modules/compare/compare.js` | After #4e | `window.SRETCompare`: stored uploads, the designation reference table, and the Schedule changes comparison |
+| 4g | `src/modules/migrate/migrate.js` | After #4f | `window.SRETMigrate`: renames old stored keys and values (user milestones to user tasks) on every load |
+| 4h | `src/modules/ids/ids.js` | After #4g | `window.SRETIds`: user task IDs (prefix + number, default U + initials), GUIDs, and the merge that renumbers clashing IDs |
+| 5 | The `SRETGrid.setup()` call (section 6), then the adapters below | In `app-script`, beside the Workspace code (`setWorkspaceSection()`); setup runs once at load, before any entry point can open the grid | The only code that knows both the app's stores and the grid contract |
 
 Check before pasting: neither vendor file contains `</script` or `</style` (`tools/grid_view_assemble.py` asserts this for the demo and would fail the same way).
 
@@ -33,9 +36,25 @@ Check before pasting: neither vendor file contains `</script` or `</style` (`too
 | Adapters (#5), estimate | about 8,000 | about 2,500 |
 | **Total added** | **about 339,000 (about 39%)** | about 87,000 |
 
+Measured before the core and feature split (section 6), which adds the setup layer and per-file headers; re-measure at merge with only the features the app loads.
+
 If Matt chooses the unminified vendor files (D-09 decision 2), #3 grows from 217,423 to 458,011 bytes and the total becomes about 580,000 (about 66%).
 
 ## The contract the app calls
+
+Once, at load (section 6 has every setting):
+
+```js
+SRETGrid.setup({
+  features: ['refs','marks','bulk-edit','lists','xlsx','import'],
+  defaults: { host, ensureXLSX, onBack, pin: ['id','name'], pinPhone: ['id'], symbolClass: 'ms-icon filled' },
+  text: { readOnlyCell: 'This value comes from the schedule and cannot be edited here.',
+          noun: ['milestone','milestones'], refsPlaceholder: 'Type an ID or name, e.g. S, 117 or pump',
+          refsUnknown: 'not found in the schedule or the user tasks' }
+});
+```
+
+Then per screen; anything in `defaults` can be left out here, and a screen's own value wins:
 
 ```js
 SRETGrid.open({
@@ -77,7 +96,8 @@ SRETGrid.open({
   }
 });
 SRETGrid.close(); SRETGrid.setRows(rows); SRETGrid.patchRows(rows); SRETGrid.isOpen();
-SRETGrid.dialog(title, build);        // the grid's centred modal, for the app's own content
+SRETGrid.dialog(title, build, {wide});// the grid's centred modal, for the app's own content (wide: up to 1040px)
+SRETGrid.refresh(config);             // reopen with a new config, keeping where Back returns to
 SRETGrid.importAoa(aoa, fileName);    // run the import checks on a sheet the app already parsed
 ```
 
@@ -137,7 +157,7 @@ Back returns focus to the element that had it when `open()` ran, so opening from
 
 Today: `renderMounts()` (line ~10737) renders a disabled `Manage…` button titled "Grid arrives in D-17c" in the User-defined group, which lands in `#ws-userms-body`. Replace it with an enabled "View items" button calling `openUserMsGrid()`.
 
-Adapter outline (field names from the `USER_MILESTONES.push` in the add-milestone handler, line ~12704):
+Adapter outline (field names from the `USER_MILESTONES.push` in the add-milestone handler, line ~12704; after TD-225 these are `USER_TASKS` and the add-task handler):
 
 | Grid column (`key`) | From `USER_MILESTONES` record | Editable |
 |---|---|---|
@@ -235,20 +255,93 @@ While a filter is on, a pill in row 3 names it ("My temp list only" or "List: <n
   - "Limit items to a single list", when it becomes a setting, belongs in Data & view > Data settings and just sets `USER_LISTS.settings.singleList`.
 - **Relationship to week collections (P58, D-19a).** These are separate. A note keeps its reporting week; lists are the user's own working groups.
 
-### 3. Views from the title: user milestones and the schedule (Matt, 2026-09-28)
+### Lists across both screens: handoff spec (Matt, 2026-09-30)
 
-The grid's title is a view switcher (`views`, `view`, `onView`). One grid screen, four views, each reopening the grid with its own config; Back returns to where the grid was first opened.
+The list selection feature is used by both the grid and the dashboard. They share one store and one set of rules; neither screen keeps a copy of either. This is the contract both sides build to.
+
+**One store, one module.** `USER_LISTS = SRETCollections.newStore()`, an app global. Every read and write on either screen goes through `SRETCollections` (`src/modules/collections/collections.js`). Saved lists (`USER_LISTS.list`) are annotation-layer data and are persisted with the annotations; My temp list (`USER_LISTS.temp`) is session state and never saved.
+
+**Item refs.** `'activity:'+activityId` for schedule activities and user tasks (the same activity from the board or any grid view is one item), `'note:'+nid` for notes, `'annot:'+entryId` for other annotation entries. Refs are keyed by activity ID, so they survive a schedule re-import; an activity missing from the current schedule stays in its lists and shows as "not in this schedule".
+
+**Module API** (all return a result object; show `describe(result)` as the message; persist after any result without `error`):
+
+| Call | Does | Used by |
+|---|---|---|
+| `tempAdd(store, refs)` / `tempRemove(store, refs)` / `tempClear(store)` | Build and trim My temp list | Grid Add to temp list; dashboard Notes bulk bar, board selection, list panel |
+| `temp(store)`, `inTemp(store, ref)` | Read the temp list | Both panels, the grid's row mark |
+| `create(store, name)` | New empty saved list (name rules: not blank, 60 characters, unique, not "My temp list") | Both panels |
+| `addFromTemp(store, listId, refs)` / `saveFromTemp(store, name, refs)` | Step 2: ticked temp items into an existing or new list; the temp list stays | Both panels |
+| `assign(store, listId, refs)` | Straight into a list, skipping the temp list | Grid "Add to "<list>"" |
+| `removeFromList(store, listId, refs)`, `unassign(store, refs)`, `deleteList(store, listId)` | Take items out of one list, of every list, or delete a list (items unchanged) | Both panels |
+| `list(store)` -> `[{id, label, count}]`, `itemsOf(store, listId)`, `membership(store, ref)` -> names, `listIdsOf(store, ref)` | Reads for selectors, item lists and the List column | Both |
+| `describe(result)` | The one user-facing sentence for any result | Both |
+
+**Keeping the two screens in step.** The grid reads the store when a screen opens and after each of its own changes (`lists.onChange`). A change made on the dashboard while a grid is open calls `SRETGrid.refresh(currentConfig)` (or `patchRows`) so the List column, row marks, pill and panel follow. A change made in the grid calls the dashboard's list panel render in `lists.onChange`, beside `noteMarkup()`. Rule for both: whoever changes the store tells the other screen; nothing polls.
+
+**Dashboard: the list selector in the Workspace panel (Matt, 2026-09-30).** The Workspace (left, annotation side, D-20) gets a **Lists** section with the same selector the grid panel has:
+- A header dropdown choosing **My temp list** or any saved list (`list(store)`, with counts), the same control as the grid's Saved lists header, plus the temp list's session-only hint on hover.
+- The selected list's items, each with a checkbox, the activity ID and name (`refLabel`), and the lists it is in (`membership`).
+- The grid panel's actions, in the same places: temp list: **Add to list ▾** (saved lists, New list…), **Remove**, **More ▾** (Show only these on the board, Clear temp list…); saved list: **Remove from list**, **More ▾** (Show only these on the board, Open in table, Delete list…).
+- **Show only these on the board** is the dashboard's counterpart of the grid's scope filter: a display-state filter on the board to the list's activities, shown as a pill in the Top filter bar and cleared from it. It never changes schedule data.
+- **Open in table** opens the grid's Schedule milestones view scoped to that list, so the user moves between the two screens with the same selection.
+- Entry points that feed it: the Notes bulk bar ("Add to temp list"), a board selection if P59 adds one, and a milestone dialog action "Add to temp list".
+- Acceptance: a list made in the grid appears in the dashboard selector with the same count without a reload, and the reverse; deleting a list on either side removes it from both; the temp list empties on reload on both; `describe()` wording is identical on both. TD-227.
+
+### 3. Views from the title (Matt, 2026-09-28)
+
+The grid's title is a view switcher (`views`, `view`, `onView`). Back returns to where the grid was first opened.
 
 | View | Rows | Editable |
 |---|---|---|
-| User milestones | `USER_MILESTONES` | Yes (section 1) |
-| Schedule milestones | **[CONFIRM WITH MATT]** The demo uses zero-duration activities. The board plots every leaf activity as a milestone (`MILESTONES`, built in the ingest), so in the app this view is either those board milestones (then "All schedule activities" adds only the WBS-level rows) or P6 milestone-type activities only | Annotation columns only |
-| Schedule updates | Schedule activities carrying an annotation: short title, health or comment | Annotation columns only |
-| All schedule activities | Every schedule activity | Annotation columns only |
+| User tasks | The user's own items (`USER_TASKS`, today `USER_MILESTONES`). Called tasks in the grid to keep them apart from schedule milestones | Yes (section 1) |
+| Schedule milestones | Every activity from an uploaded schedule (the board plots each as a milestone: `MILESTONES` from `PRIMARY_SOURCES`) | Annotation columns only |
+| Schedule updates | Schedule milestones carrying an annotation: short title, health or comment | Annotation columns only |
+| Schedule changes | Section 4 | Read-only |
+| Comments and markups | The current annotation collection (section 2) | As section 2 |
 
-Schedule columns (ID, name, WBS, duration, dates, float, predecessors, successors, actual flag) are **read-only**; there is no `onAdd` and no `onDelete` on schedule views. Annotation edits go through `onEdit` to the annotation stores, never to `TASKS` / `MILESTONES`, so schedule data is never mutated. Counts in the menu come from the app's stores at open.
+Schedule columns (ID, name, WBS, duration, dates, float, predecessors, successors, actual flag) are **read-only**; annotation edits go through `onEdit` to the annotation stores, never to `TASKS` / `MILESTONES`. The importer passes `noun:['task','tasks']`, so the menu, dialog and summary say "Import tasks" and "Imported 3 tasks".
 
-Entry: the existing "View items" button (section 1) opens User milestones; the other views are reached from the title, so no separate Data & view button is needed.
+**User tasks across the dashboard, names and stored keys in sync (Matt, 2026-09-28).** Tracked as TD-225. Everything is renamed: the words people read, the keys and values saved in files, and the code identifiers, so they cannot drift apart. Files saved before the rename still open because every load path runs `SRETMigrate.userTasks()` first (`src/modules/migrate/migrate.js`, paste as #4g after #4f). Saving writes only the new names.
+
+*Stored keys and values (migrated on load):*
+
+| Stored where | Old | New |
+|---|---|---|
+| Publish, model and annotations payload key | `userMilestones` | `userTasks` |
+| Payload key | `userMsEnabled` | `userTasksEnabled` |
+| `source` / `sourceSchedule` value on tasks, rows, milestones, registered sources | `User-defined` | `User tasks` |
+| Band value (`notes` on the band's rows) | `User Defined Milestones` | `User Tasks` |
+| `localStorage` `sret-ws-section` value | `userms` | `usertasks` (via `SRETMigrate.wsSection`) |
+| Export sheet name / file name part | `User-defined` / `_user-defined_` | `User tasks` / `_user-tasks_`; re-import accepts both (`SRETMigrate.sheetName`) |
+
+*Where the app calls the migration (by function, base `81cfd7a`):* `applyPublishedState()` (published file), the `ANNOT_CATEGORIES` entry that applies `userMilestones` (model and annotations `.json` import and mount), `restorePrimarySources()`, the user route in `runIngest()` (`srcName===USER_BAND_SOURCE` must also accept the old value through `SRETMigrate.value`), and the start-up read of `sret-ws-section`. Each takes the migrated payload and never reads the old key again.
+
+*Code identifiers (renamed with every reference):*
+
+| Old | New |
+|---|---|
+| `USER_MILESTONES`, `USER_MS_ENABLED`, `USER_BAND`, `USER_BAND_SOURCE` | `USER_TASKS`, `USER_TASKS_ENABLED`, `USER_TASKS_BAND`, `USER_TASKS_SOURCE` |
+| `applyUserMilestones()`, `nextUserMsId()`, `exportUserDefinedSchedule()`, `userDefinedExportRows()` | `applyUserTasks()`, `nextUserTaskId()`, `exportUserTasks()`, `userTaskExportRows()` |
+| `openAddMilestone()` / `closeAddMilestone()`, ids and classes `add-ms-*`, `#btn-add-ms` | `openAddTask()` / `closeAddTask()`, `add-task-*`, `#btn-add-task` |
+| Workspace section `userms`, ids `ws-tab-userms`, `ws-sec-userms`, `ws-userms-body`, `ws-userms-count`, `WS_TITLES.userms` | `usertasks`, `ws-tab-usertasks`, `ws-sec-usertasks`, `ws-usertasks-body`, `ws-usertasks-count`, `WS_TITLES.usertasks` |
+| `ANNOT_CATEGORIES` key `userMs`, label "Milestones added on the board" | `userTasks`, "Tasks added on the board" |
+
+*Words people read:* Workspace button and heading "User tasks"; "Add a task" (header button, dialog, help list); Sources group "User tasks" and its description; status messages ("3 user tasks restored", "Showing user tasks", "Deleted 2 user tasks", "Exported 12 user tasks", "No user tasks yet"); the band label "User Tasks". The board keeps drawing user tasks with the markers they have today.
+
+*IDs (Matt, 2026-09-29):* new user tasks are **prefix + dash + number**, numbered within each prefix's own series.
+- **Default prefix:** U + the user's initials, e.g. `UMG-001` for Matt Garrett, `UJR-001` for Jo Ruiz. Initials come from the confirmed user name (first and last word); with no name set yet the prefix is `UXX`, so the first-use name prompt must come before the first task is added.
+- **Own prefix:** the user can set one to group tasks, e.g. `A100` while adding the tasks for area 100 (`A100-001`, `A100-002`), then `A200` (`A200-001`); going back to `A100` carries on at `A100-003`. 1 to 8 letters or digits, starting with a letter, stored in upper case; blank goes back to the initials. A prefix the schedule already uses (e.g. `SNIP`) is allowed with a warning. Remembered per user on their computer (`localStorage` `sret-task-prefix`, beside the name), set in Data settings under Your name (`SRETUser.buildField(container, USER, {prefix:{nextId, scheduleIds}})`) and in the User tasks grid under Tools > Task ID prefix.
+- `SRETIds.next(ids, USER.idPrefix())` replaces `nextUserMsId()`. Tasks created before keep their `USR-013` IDs; they are not renamed, because comments and links in saved files point at them.
+
+**Recognising a user task:** with custom prefixes the ID can no longer say on its own whether something is a user task. Identify user tasks by their source (`USER_TASKS_SOURCE`); where the app today tests the ID (`/^USR-/` in the add dialog hint `#add-ms-id`, in `msEditedFields()` near line 5687, and `isAllUsr` / `routed` in `runIngest()` near lines 10183 to 10188), use `SRETIds.isUserId(id, prefixesInUse)`, where the prefixes in use are the series of the loaded user tasks (`SRETIds.seriesOf`). It accepts `USR-`, U + two letters, and those prefixes.
+
+*Identity for merging (Matt, 2026-09-29: "generate a GUID for the tasks and use that to merge").* Two people adding tasks in their own copies can both create `USR-013`. Every user task therefore carries a `guid` (version 4), set once when it is created or first loaded and never changed; `SRETIds` (`src/modules/ids/ids.js`, paste as #4h) does the work:
+- New tasks: `id` from `SRETIds.next()` (above) and `guid` from `SRETIds.guid()`. Imported rows get a `guid` on commit; an ID given in the import file is kept as given.
+- Load: every load path calls `SRETIds.ensureGuids(USER_TASKS)` after `SRETMigrate.userTasks()`, so older tasks get one; saving writes it.
+- Merging another person's file (model or annotations `.json` import, and the mount path): `SRETIds.merge(USER_TASKS, incoming.userTasks)`. Same GUID is the same task, kept once. Same ID with a different GUID is a different task (only when two people use the same prefix): it gets the next free number in its own series, and the incoming file's own references follow it (`pred`/`succ` through `rewriteRefs`, and its ID-keyed annotation stores through `rewriteKeys`) before anything is applied. Each renumber is listed in the Import log ("UMG-001 from M. Green's file is now UMG-002").
+- Older tasks without a GUID match only when ID, name and created date all agree.
+
+*Drift check at merge:* the rendered text and the source both contain no `user milestone`, `User-defined`, `User Defined Milestones`, `userMilestones`, `userMsEnabled` or `userms`, except inside `SRETMigrate.KEYS`; an older published file, an older model `.json` and an older user-defined export all load, and saving them writes only the new names. Re-grep at merge: P59 may have added references.
 
 **Built at P63 (TD-223).** The grid module already had `views`/`view`/`onView`, so the switcher is the module's own title menu (a menu button with `aria-haspopup`, arrow keys, Home/End, Esc back to the button, the current view checked); `grid-view.js` is unchanged. The adapter in the app:
 
@@ -265,23 +358,138 @@ Entry: the existing "View items" button (section 1) opens User milestones; the o
 
 ### 4. Schedule changes (`SRETCompare`, Matt 2026-09-28)
 
-A view in the title menu that lists what moved between the chosen schedule and a comparison basis: Later, Earlier, Completed, New, Removed, Float only, with the old and new start, finish and float, and the days moved (calendar days, positive is later). Biggest slips first; read-only; exportable; rows can go to the temp list.
+Lists what moved between a loaded schedule and a basis: Later, Earlier, Completed, New, Removed, Float only, with old and new start, finish and float and the days moved (**calendar days**, positive is later). Biggest slips first; read-only; exportable; rows can go to the temp list. Tools > Loaded schedules lists what is held.
 
-**Comparison basis.** Not every import is a project update, so each import is filed with a role:
+**Storage by upload, designations by reference (Matt, 2026-09-28).** Every loaded file is stored once under its upload reference. What role it plays is a row in a reference table, so "set this source as the primary" changes one row and copies nothing.
 
-| Role at import | Examples | Compared with by default | Can also pick |
-|---|---|---|---|
-| Project update | The formal weekly or monthly P6 update | The previous project update | Any earlier project or interim update, the baseline |
-| Interim update | A mid-period cut of the project schedule | The latest project update before it (never another interim) | As above |
-| External schedule (named) | Vendor or contractor schedule, e.g. "Ocean Steel fabrication" | The previous import of the same named schedule | Its own earlier imports only; never the project schedule |
+```
+SOURCE_DESIGNATIONS                     (per schedule line)
+line      designation   source id
+project   primary       src-12      the schedule the board shows
+project   secondary     src-9       the usual comparison
+project   alternate     src-11      another basis kept on purpose (can be an interim)
+```
 
-Activities match by Activity ID within the same schedule line (project, or one named external schedule), so a vendor's IDs are never matched against the project's. The first import of any schedule shows "nothing to compare it with yet".
+Plus the embedded **Project baseline**. A vendor or contractor schedule is its own line (named at import) with its own three rows and no baseline; lines never compare with each other.
 
-**What the app must add at merge (it keeps no history today).** `PRIMARY_SOURCES` is replaced on a normal import, so earlier updates are lost.
-1. The Import step asks the role (Project update / Interim update / External schedule + its name). Append mode already covers adding an external schedule beside the project one.
-2. Each successful import stores `SRETCompare.snapshot(meta, rows)`: only ID, name, start, finish, float and the actual flag, about 40 bytes per activity. The embedded baseline becomes the one `role:'baseline'` snapshot.
-3. Snapshots persist with the annotations and publish state. **[CONFIRM WITH MATT]** how many to keep per schedule (proposed: every project update, and the last 3 interim and 3 per external schedule).
-4. Working days: differences are calendar days until the P6 calendar is imported. **[CONFIRM WITH MATT]** whether working days are needed.
+**Each stored upload records:** upload reference, snapshot date (when loaded), data date, file name, file location (typed at import: a browser gives the file name only), coverage (full schedule, or part with the interim's scope), activity count.
+
+**Rules:**
+
+| Rule | Detail |
+|---|---|
+| Import as primary (the weekly update) | A shortcut for two table changes: old primary becomes secondary, the new upload becomes primary |
+| Interim update | Stored with its scope (e.g. Commissioning), no designation. Can be set as secondary or alternate, **never primary**. One kept per scope. Never changes the board |
+| Re-designating | Never deletes. An upload that loses its designation stays stored, shown as not designated |
+| Retention | On each import, uploads with no designation are released, except the latest interim of each scope and the baseline. So each line holds its three designated uploads, plus interims |
+| Default comparison | Primary vs secondary (else baseline); secondary vs baseline; alternate, interim or not designated vs primary |
+
+**Comparing a partial interim.** Activities outside its scope are counted as outside the interim, never Removed or New. An activity only the interim holds is New when the interim is viewed, and "Only in interim" when the full schedule is compared against it.
+
+**What the app must add at merge (it keeps no history today; `PRIMARY_SOURCES` is replaced on import):**
+1. **Storage.** Keep each upload's full source record (the tasks and milestones a `PRIMARY_SOURCES` entry already holds) under its source id, not just the comparison fields. The board must be able to render whichever upload is primary, so the full rows are needed. Size: one full source per designated upload and per interim scope, instead of one today. **Decided (Matt, 2026-09-28): keep full copies**, so any stored upload can be made primary without re-importing.
+2. **Reference table.** `SOURCE_DESIGNATIONS` as above, persisted with the annotations and publish state. The board renders `SOURCE_DESIGNATIONS.project.primary` (plus enabled external sources as today). Changing the primary calls `scheduleRerender(true)`.
+3. **Import** asks: Primary update / Interim update (with scope) / Alternate / an external schedule by name, and the optional location. Before an import releases uploads, the confirmation names them.
+4. **Data & view > Sources** shows the reference table and the stored uploads with a Set as control, as in the demo's Tools > Loaded schedules.
+5. `SRETCompare` reads the same records: `add()` takes the app's source id as the upload reference.
+
+**Interim dates over the primary on the board (Matt, 2026-09-28: yes, optional).** Tracked as TD-226.
+- A View controls toggle, off by default: "Show interim dates". It is display state only; it never changes the primary, the reference table or any stored upload.
+- When on, `SRETCompare.overlay(store, {scopes, movedOnly})` gives one mark per activity the interim shares with the primary: the interim's start and finish, the primary's, and the finish slip. The board draws each as an extra marker on that activity's row, styled apart from the baseline ghost (the baseline is the past; the interim is newer than the primary), with a tooltip naming the interim, its scope and data date.
+- Options beside the toggle: which interim scopes to show (default all), and "Moved only" (default on) so unchanged activities add no marker.
+- Activities only the interim holds have no row on the board; they are counted in a line under the toggle ("1 activity in the interim is not on the board") and listed in Schedule changes as New.
+- Dependency lines: interim markers take no part in `drawDepLines()`; lines stay on the primary's markers.
+
+### 5. Table editing and phones (Matt, 2026-09-30)
+
+**New column and grid options**
+
+| Option | What it does | App wiring |
+|---|---|---|
+| `type:'refs'` + `opts.refOptions(key, rowKey)` | Predecessor and Successor are token pickers: type a letter to list IDs starting with it (S lists SNIP-...), digits to match the start of the ID number (117 lists SNIP-117, exact first, then ID order); from two letters, names with a word starting with what was typed are listed after the ID matches (pump finds Feed pump install). Enter or a click adds; the cross removes one; Delete clears what was typed; Backspace deletes characters; Enter on an empty input, Tab or a press outside saves; Esc cancels. The value stays text (`'SNIP-101, UMG-003'`); an ID with a relationship (`'SNIP-101: FS'`) keeps it; an unknown ID keeps a dashed token | `refOptions` returns every schedule activity and user task `{id, name}` the board knows |
+| `symbols:{prefix:'ico-', stateKey:'state'}` on a select column | The Icon column: draws `<svg><use href="#ico-...">` coloured by the row's status (the board's `.ms-icon` classes); tap to pick from the five marks. `symbolClass` (setup defaults, SRET: `'ms-icon filled'`) adds the board's classes; `renderSymbol(value, item, column)` can draw it instead | Options are `MS_MARKERS` (diamond, lock, flag, star, circle); the key is the user task's `marker`, normalised with `normalizeMarker()`; `renderSymbol` can call the app's `renderIcon()` |
+| Icon override everywhere (Matt, 2026-09-30) | The Icon column is on the schedule views as well as User tasks. On a schedule activity it is an override: an annotation keyed by activity ID, never schedule data; blank draws the board's default mark | Store it beside the activity's other annotations (short title, health), and have the board's marker lookup read the override before its default |
+| WBS label | "WBS/Area" on User tasks and the schedule views | Column label only |
+| Bulk edit (automatic when the grid is editable) | "Edit N rows" appears while rows are selected. Date fields are typed as the grid shows them (setup `dates`, SRET 9-Oct-26), not the browser's locale picker; impossible dates such as 31-Feb are refused. Tick fields, set values, Apply: every change goes through `canEdit` and `onEdit`; references can be added, replaced or removed; ranges are checked first; refused changes are listed | Nothing extra: it uses the same `onEdit` as a cell edit |
+| `pin:['id','name']`, `pinPhone:['id']` | Below 1024px of grid width the checkbox and `pin` columns stay put while the rest scrolls sideways; the last one narrows so the pinned part stays under about 70%. Below 768px of screen width `pinPhone` is pinned instead (Matt, 2026-09-30: ID only on phones, so most of a phone's width scrolls) | Set both once in `setup()` defaults |
+
+**Phones and touch:** on a coarse pointer controls are 32px with an invisible 40px tap area (`--ctl-hit-touch`, as the dashboard's filter bar), rows and header grow to 40px, and the whole checkbox cell ticks the row. Menus and pickers stay inside the screen. Header buttons wrap at every width. Below 768px search sits behind a button in the title row and the counts row shows only while something is selected or filtered. `tools/grid_view_responsive.py` (part of `grid_view_check.py`) asserts all of this at 390, 768 and 1440 wide with mouse and touch, and has its own `--prove-fails`.
+
+**Icon symbols in the demo:** `tools/grid_view_assemble.py` copies the app's `#ico-*` symbols and `.ms-icon` rules into the demo; in the app they already exist.
+
+### 6. Reuse: core, features and setup (Matt, 2026-09-30)
+
+**The app embeds the pre-split module** (PR #20, TD-221). Moving it to this structure is TD-229; the app's view configs then lose the options `setup()` now holds.
+
+The grid is a core plus optional features, so another screen, or another app, takes only what it needs and configures it once.
+
+**Files**
+
+| File | Gives | Needs |
+|---|---|---|
+| `grid-view.js` + `.css` (core) | The screen, views and pickers, text/date/number/select columns and editors, header filters with operators, quick search, sort, Add row, Delete with confirmation, Tools menu, dialogs, messages, pinned columns, touch sizing, resize handling | `window.Slick` (vendored) |
+| `features/refs.js` + `.css` | Column type `refs`: the token picker for predecessors and successors | `refOptions(key, rowKey)` on the screen |
+| `features/marks.js` + `.css` | `icon` (health dot) and `symbols` (Icon column) on columns, tap-to-pick | The host's SVG symbols for `symbols` |
+| `features/bulk-edit.js` + `.css` | Edit N rows | `refs` for refs columns (without it they are edited as text) |
+| `features/lists.js` + `.css` | My temp list, saved lists, the rail, panel and List column | `window.SRETCollections`; `lists` on the screen |
+| `features/xlsx.js` | Export .xlsx, Download import template, `SRETGrid.exportVisible()` | `ensureXLSX` (SheetJS; the SRET app embeds the mini build, TD-216, so import takes .xlsx and .csv, not legacy .xls) |
+| `features/import.js` + `.css` | Import dialog, Import log, `SRETGrid.importAoa()` | An import engine (`importer.engine`, default `window.SRETMsImport`); `xlsx` for the template link; `SRETDates` for date-order wording |
+
+A feature that is not loaded costs nothing: the core calls only the hooks of features active on the open screen. The hot paths (cell drawing, filtering, scrolling) have no per-feature loop except the row filter, which is empty unless `lists` is on; the timing checks in `tools/grid_view_check.py` are unchanged by the split.
+
+**`SRETGrid.setup(settings)`: once per deployment, before the first `open()`**
+
+| Setting | Default | What it sets |
+|---|---|---|
+| `features` | every loaded feature | Which loaded features to use. An unknown name, or a feature whose helper module is missing, throws here |
+| `defaults` | none | Any `open()` option shared by every screen: `host`, `ensureXLSX`, `onBack`, `pin`, `symbolClass`, `renderSymbol`, `editable`... A screen's own option wins |
+| `text` | generic wording | `readOnlyCell` (a refused edit), `noun` (what import calls a row), `refsPlaceholder`, `refsUnknown`. A screen can pass `text` too |
+| `dates` | `d-Mmm-yy` | `format(iso)` for cells, `parse(text)` for filter operators (`<1-Oct-26`), `excel` for export |
+| `layout` | `pinBelow:1024, phoneBelow:768, pinShare:0.62, pinMin:100` | When columns pin (grid width), when the phone set `pinPhone` replaces `pin` (screen width), and how much of the width they may take |
+
+It returns the settings in force. Mistakes fail at setup or at the first `open()`, with a message naming the feature or file: `lists` without the lists feature, a `refs` column with refs switched off, an unknown layout setting. A column type no loaded feature provides is shown as text.
+
+**Theme.** The CSS reads the host's tokens: `--color-*` roles, D-16 sizes (`--ctl-h`, `--ctl-hit-touch`, `--space-*`, `--radius-*`, `--text-*`) and `--font-sans`. A host without the SRET token blocks defines those names first; `tools/grid_view_assemble.py` `token_blocks()` shows the full set the demo copies from the app, and `palette_swap_check.py` proves nothing in the grid paints outside them.
+
+**Writing a feature.** `SRETGrid.feature(name, function(kit){ return hooks; })`. The hook list is in the header of `grid-view.js`; the six features are the worked examples. A feature reaches the open screen through `kit.s()`, shares helpers with others through `kit.provide()` and `kit.get()`, and adds row-derived fields through `prepare(item)`, which every row copy passes through (load, edit, bulk edit, import, `patchRows`).
+
+**Proof.** `tools/grid_view_modular.py` (part of `grid_view_check.py`) builds bare pages with no demo code: the core alone (opens, edits, filters, adds, deletes; no feature controls; missing features named at open), refs and bulk edit without the others, and all features under different `setup()` calls (fail-fast cases, defaults and overrides, text, a different date format, layout, `symbolClass`). It has its own `--prove-fails`.
+
+### 7. Dependency management screen: proposal and estimate (Matt, 2026-09-30; not started)
+
+**Purpose.** Help the user understand the relationships around one activity or a group, in sequence rather than against the timeline, and record update notes against them.
+
+**Shape.** A grid screen built on the embedded engine (SlickGrid) and the `marks` feature, opened for one activity (row, board marker or milestone dialog), a selection, or a saved list:
+
+| Column | Content |
+|---|---|
+| Sequence | Level relative to the focus (-2, -1, 0, +1, +2) with indent and connector glyphs; expand and collapse each branch |
+| Icon | The board's mark (with any override), coloured by status |
+| ID, Name | From the schedule or user tasks; "not in this schedule" when the export does not include it |
+| Link | Relationship to the row it hangs from (FS, SS, FF, SF), from the export's `ID: TYPE` entries |
+| Start, Finish, Float, Status | Read only, toned as elsewhere |
+| Notes | Editable update note per activity, saved through `onEdit` to the annotation layer (never schedule data); bulk notes through Edit N rows |
+
+Header: direction (Upstream, Downstream, Both), depth (1, 2, 3, All), "Show only driving" later if float data allows. Double-click re-focuses on that activity; Back returns along the path. An activity reached by two paths is listed once, at its nearest level, with "also via ..."; a loop is cut and flagged.
+
+**Build.**
+
+| Part | Size |
+|---|---|
+| `SRETDeps` module: dependency index from schedule Predecessors/Successors and user task refs, levels by breadth-first walk, cycle guard, missing-activity flags, unit checks | Small: about half a working session |
+| `deps` grid feature: sequence column, tree expand and collapse, direction and depth pickers, re-focus and back path | Medium: about one session |
+| Notes column and annotation wiring, bulk notes | Small: about a third of a session |
+| Demo views, main, responsive and modular checks with mutations, docs | Small to medium: half to one session |
+| **Branch total** | **About 2.5 to 3 sessions** (on the scale of this branch's rounds) |
+| At merge: entry points (milestone dialog, board selection, Lists panel "Show dependencies"), note storage beside comments | About half a session |
+
+Code size: roughly that of the `lists` feature. Runtime: the index is built once per screen open, linear in activities plus links.
+
+**Risks and decisions.**
+- Exports may list predecessors outside the filtered set (seen in the reference export); those show as "not in this schedule" rather than being dropped. A full XER import would close the gap.
+- Lags are not in the reference export; the Link column shows the type only until they are.
+- Large fan-out (one activity with dozens of successors): branches start collapsed past the first level, and the depth picker defaults to 2.
+- Decision needed: whether notes are one per activity (shared with the board's comments) or per relationship. Per activity is the smaller build and matches the existing comment store.
 
 ## Verification at merge
 
