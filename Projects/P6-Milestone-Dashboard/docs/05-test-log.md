@@ -3220,3 +3220,21 @@ TD-225. No visible change: the board, card and tables read the same stores, now 
 
 **Full suite, sequential:** every tool exits 0, `colour_audit --strict` 0 violations, `palette_swap_check` 0 escapes, `spacing_audit` at its ceiling, `grid_view_assemble --check` current.
 
+## TEST-67: P66 milestone card to the Claude Design dialog, update history in the card and the Notes panel (v3.1.0-P66)
+
+TD-226. Design reference: `docs/mockups/P66/milestone-dialog.dc.html` and `milestone-dialog.png`.
+
+**Module, re-run by the orchestrator:** `tools/notes_history_check.py` 71/71. It checks newest-first order, labels in the design's order with the comment last, the from and to roles, a pencil on exactly the editable entries (N=3) placed right of the pill, the edit round trip (Save, Cancel, Esc, Ctrl+Enter), groups with heading, summary, count and collapse, escaping, both themes and a 360px fit.
+
+**`tools/p66_check.py` 101/101, at 1440x900 and 390x844,** driving the real card:
+- Save controls disabled while clean, the Saved flash, an empty remark box on every open, the follow-up status reaching the entry.
+- Health popover with Esc, changed-dot size, colour and titles, duration including after a typed date.
+- Dependency chips matching the schedule and coloured by state; a chip opens that milestone's card.
+- History: this milestone's entries newest first with the count; a pencil on each current-report entry and none on an earlier one (N=3); the pencil sits right of the pill; Save writes text and follow-up through the store and the board's remark follows; the card stays open.
+- Notes panel: a heading groups the milestone's entries with ID, count and roll-up line, and opens to the same entries with the pencil.
+- Drift: nothing adopted across the card, pencil and panel flows. A milestone with no entries shows "No updates yet".
+
+**Existing checks changed for the new layout, same intent (listed with before and after in the P66 agent report and the PR):** `p43_check`, `p44_check`, `p35_check`, `p59_check`, `p65_check` A3 (the box opens empty, so emptying it is no longer a clear; clearing is covered by the grid path).
+
+**Full suite, sequential:** see the PR for the run on the release commit.
+

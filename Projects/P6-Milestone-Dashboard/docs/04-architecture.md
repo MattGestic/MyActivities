@@ -351,6 +351,15 @@ Three rules that are load-bearing here:
 
 Both literals these replaced were wrong and had been for some time: the week band sat 3.5px below a 16px row, and the filter bar's 160px cap cut 43px off its own content at phone width.
 
+### The milestone card is the Claude Design dialog; history is one gallery (v3.1.0-P66)
+
+TD-226. Matt's design (`docs/mockups/P66/`) is the source for the card's layout; the app keeps its own fonts, tokens and control sizes (D-16), since it is offline and colour-audited.
+
+- **Every element id the card had is kept,** so its form logic (`msReadForm`, `msDirty`, `saveMsDialog`, the edited marks) is unchanged; the re-lay is CSS and markup order. Fields the design does not show sit in a collapsed More fields fold.
+- **The comment box is a new remark, always empty on open.** Earlier remarks are in the history. Saving appends an entry; the follow-up select sets its status, also when the save merges into the previous card entry.
+- **One gallery, two places.** `SRETHistory` (module `src/modules/notes-history/`) renders entries for the card (one milestone) and for the Notes panel (grouped per milestone). Both containers stop click propagation: the gallery rebuilds its own markup in its click handlers, and the card's document-level click-away would otherwise close the card (CLAUDE.md trap).
+- **Edits from the pencil go through `SRETEntries.edit`,** which refuses entries outside the current report, then the stores are re-projected.
+
 ### Entries are the record; the stores are projections (v3.1.0-P65)
 
 Matt's decision of 2026-09-30 (TD-225): every update to a milestone is its own entry, and a roll-up gives the compiled view.

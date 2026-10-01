@@ -255,9 +255,66 @@ PROBE = r"""
     // ===== 7. History mount and More fields =====
     await open(A);
     const hist=$('ms-history');
-    ck('history: #ms-history is the open section’s body, with the placeholder',
-       !!hist&&$('ms-hist-fold').open&&$('ms-hist-fold').contains(hist)&&/No updates yet/.test(hist.textContent),
-       hist?hist.textContent.trim():'missing');
+    // Integration (orchestrator): the history is now filled from ENTRIES by
+    // SRETHistory. The empty placeholder is asserted on a milestone with none.
+    const keyA=msDialogFor, mine=msEntriesFor(keyA);
+    const rows=[...hist.querySelectorAll('.nh-entry')];
+    ck('history: #ms-history is the open section’s body and lists this milestone’s entries',
+       $('ms-hist-fold').open&&$('ms-hist-fold').contains(hist)&&mine.length>=1&&rows.length===mine.length,
+       rows.length+' rows vs '+mine.length+' entries');
+    const ats=rows.map(r=>{ const e=mine.find(x=>x.eid===r.getAttribute('data-eid')); return e?String(e.at):''; });
+    ck('history: newest first', ats.every((a,i)=>i===0||ats[i-1]>=a), ats.join(' | '));
+    ck('history: the count reads N entries', $('ms-hist-count').textContent===mine.length+' entr'+(mine.length===1?'y':'ies'),
+       $('ms-hist-count').textContent);
+    // N=3 editability: make one entry an earlier report's; it loses its pencil.
+    const per=reportPeriodISO();
+    while(msEntriesFor(keyA).length<3){
+      $('ms-comment-text').value='P66 filler '+msEntriesFor(keyA).length; onMsCommentInput();
+      saveMsDialog(false); await settle();
+      // New remarks inside the merge window would merge; age the newest one.
+      const L=msEntriesFor(keyA); L.forEach(e=>{ e.updatedAt=new Date(Date.now()-3600e3).toISOString(); });
+    }
+    const all3=msEntriesFor(keyA), old=all3[0];
+    const oldPeriod=old.period; old.period='2000-01-02';
+    renderMsHistory(); await settle();
+    const pens=[...hist.querySelectorAll('.nh-entry')].filter(r=>r.querySelector('.nh-edit')).map(r=>r.getAttribute('data-eid'));
+    ck('pencil: on every current-report entry and not on the earlier one',
+       pens.length===all3.length-1&&pens.indexOf(old.eid)<0, pens.join(',')+' / old '+old.eid);
+    const pen=hist.querySelector('.nh-entry .nh-edit'), pr=pen.getBoundingClientRect(),
+          pil=pen.closest('.nh-entry').querySelector('.nh-fu').getBoundingClientRect();
+    ck('pencil: sits right of the status pill', pr.left>=pil.right-1, pr.left+' vs '+pil.right);
+    // Edit round trip through the store, with the newest entry.
+    const tgt=pen.closest('.nh-entry').getAttribute('data-eid');
+    pen.click(); await settle();
+    const ta=hist.querySelector('.nh-ta'), sel=hist.querySelector('.nh-sel');
+    ck('pencil: opens an editor with the entry text', !!ta&&!!sel, '');
+    ta.value='P66 edited remark'; sel.value='sent';
+    hist.querySelector('[data-act="save"]').click(); await settle(); await settle();
+    const te=ENTRIES.find(e=>e.eid===tgt);
+    ck('pencil: Save writes the entry (text and follow-up) and re-renders',
+       te&&te.text==='P66 edited remark'&&te.status==='sent'&&/P66 edited remark/.test(hist.textContent)&&!dlg().hidden,
+       te?te.text+'/'+te.status:'gone');
+    ck('pencil: an edited latest remark is what the board reads', MS_COMMENTS[keyA]==='P66 edited remark', MS_COMMENTS[keyA]);
+    old.period=oldPeriod; projectEntryStores();
+    // Notes panel: the same gallery, grouped under a milestone heading.
+    setWorkspaceSection&&setWorkspaceSection('notes'); NOTES_VIEW.coll='all'; renderNotes(); await settle();
+    const grp=[...document.querySelectorAll('#notes-ms-groups .nh-group')].find(g=>(g.querySelector('.nh-gid')||{}).textContent===$('ms-code').textContent);
+    ck('notes panel: a heading groups this milestone’s entries, with ID, count and roll-up line',
+       !!grp&&grp.querySelector('.nh-gcount').textContent.indexOf(String(msEntriesFor(keyA).length))>=0&&!!grp.querySelector('.nh-gsum'),
+       grp?grp.querySelector('.nh-ghead').textContent:'no group');
+    grp.querySelector('.nh-gchev').click(); await settle();
+    ck('notes panel: the group opens to the same entries, pencil included',
+       grp.querySelectorAll('.nh-entry').length===msEntriesFor(keyA).length&&!!grp.querySelector('.nh-edit'), '');
+    NOTES_VIEW.coll='current'; renderNotes();
+    ck('drift: the card, pencil and panel flows adopted nothing', ENTRY_DRIFT_ADOPTED===0, ENTRY_DRIFT_ADOPTED);
+    // A milestone with no entries shows the placeholder.
+    discardMsDialog(); await settle();
+    const bare=MILESTONES.find(m=>!msEntriesFor(msKeyFor(m)).length&&document.querySelector('.m-wrap[data-ms="'+msId(m)+'"]'));
+    if(bare){ document.querySelector('.m-wrap[data-ms="'+msId(bare)+'"]').click(); await settle(); }
+    ck('history: a milestone with no entries shows "No updates yet"', !!bare&&/No updates yet/.test($('ms-history').textContent),
+       bare?msId(bare):'none found');
+    discardMsDialog(); await settle();
+    await open(A);
     const fold=$('ms-metrics-fold');
     ck('more fields: collapsed, holding the display label and the weight',
        !fold.open&&fold.contains($('ms-shorttitle-input'))&&fold.contains($('ms-weight'))&&
