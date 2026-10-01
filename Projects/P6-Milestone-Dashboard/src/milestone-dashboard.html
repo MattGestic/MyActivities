@@ -1292,28 +1292,45 @@ select.ds-select{cursor:pointer}
   #top-filter-bar #tfb-crit .fb-dd>label,
   #top-filter-bar #tfb-crit .fb-sep{display:none}
 
-  /* 1. Find: the name field alone until the chevron opens the rest. */
-  #top-filter-bar #tfb-find:not(.fb-more-open) .fb-more{display:none}
+  /* 1. P72 (Matt 2026-10-01): the panel collapses to the search field. The
+     funnel inside its right end (#fb-find-more-btn, P67's chevron id kept)
+     opens everything else; syncFbShape() moves the date tile into Find, right
+     after the search field, so DOM order (and so tab order) is the visual
+     order: search, row 1, row 2, then Banding, Source, Activity ID(s). The
+     filter summary line goes with the rest while collapsed. */
+  #top-filter-bar #tfb-find:not(.fb-more-open) .fb-more,
+  #top-filter-bar #tfb-find:not(.fb-more-open) #tfb-when,
+  #top-filter-bar.fb-phone:not(.fb-panel-open) .fb-foot{display:none}
   #top-filter-bar .fb-chev{display:inline-flex;position:absolute;right:0;top:50%;transform:translateY(-50%)}
-  #top-filter-bar .fb-chev .fb-chev-ico{display:inline-block;transition:transform .16s ease}
-  #top-filter-bar .fb-chev[aria-expanded="true"] .fb-chev-ico{transform:rotate(180deg)}
+  #top-filter-bar .fb-chev .fb-chev-ico{display:inline-flex}
+  #top-filter-bar .fb-chev[aria-expanded="true"]{background:var(--color-accent-tint-bg);color:var(--color-accent-ink);box-shadow:inset 0 0 0 var(--stroke-ctl) var(--color-accent)}
   #top-filter-bar .fb-chev .fb-dot{display:none;position:absolute;top:var(--space-1);right:var(--space-1);width:6px;height:6px;border-radius:50%;background:var(--color-accent);pointer-events:none}
   #top-filter-bar .fb-chev.has-dot .fb-dot{display:block}
   #top-filter-bar .ds-fwrap.has-chev .ds-field{padding-right:calc(var(--space-7) + var(--icon-btn))}
   #top-filter-bar .ds-fwrap.has-chev .clr{right:var(--icon-btn)}
 
-  /* 2-5. One tile: Weeks sized to its content with the status, float and
-     notes triggers to its right (wrapping inside their own group), then Mode
-     and Fit on one row. row-gap 0 on the tile, the rows take their spacing
-     from .fb-modefit's margin, so the tile has exactly two rows. */
-  #top-filter-bar #tfb-when{flex-direction:row;flex-wrap:wrap;align-items:flex-start;gap:0 var(--ctl-gap)}
-  #top-filter-bar #tfb-when>.fb-row-1{display:contents}
-  #top-filter-bar #tfb-when #wr-field{order:1;flex:0 1 auto;width:auto;min-width:0;max-width:100%}
-  #top-filter-bar #tfb-when #tfb-crit{order:2;flex:1 1 0;min-width:0;display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;gap:var(--ctl-gap-tight);border:0;padding:0;background:none;border-radius:0}
-  #top-filter-bar #tfb-when .fb-modefit{order:3;flex:1 1 100%;display:flex;align-items:center;gap:var(--ctl-gap);margin-top:var(--ctl-gap)}
+  /* Find is the whole panel: its search row's children and the moved date
+     tile are its own flex items. Banding and Source share a row. */
+  #top-filter-bar #tfb-find{flex-direction:row;flex-wrap:wrap;align-items:center;gap:var(--ctl-gap)}
+  #top-filter-bar #tfb-find>.fb-row-1,#top-filter-bar #tfb-find>.fb-row-1.has-source{display:contents}
+  #top-filter-bar #tfb-find>.fb-row-1>.ds-fwrap{flex:1 1 100%}
+  #top-filter-bar #tfb-find>.fb-row-1>.fb-more{flex:1 1 0;min-width:0}
+  #top-filter-bar #tfb-find>.fb-line{flex:1 1 100%}
+  /* A label sits just above its own field (P59 C-03): the panel's row gap
+     less the label-to-field gap. */
+  #top-filter-bar #tfb-find>.fb-line.fb-lbl{margin-bottom:calc(var(--space-2) - var(--ctl-gap))}
+
+  /* 2. The date tile inside Find, no tile of its own. Row 1: Weeks, Mode,
+     Fit on one line (nowrap; Weeks is the one that gives, with an ellipsis).
+     Row 2: Status, Float, Notes and the clear x on one line. */
+  #top-filter-bar #tfb-find #tfb-when{flex:1 1 100%;min-width:0;display:flex;flex-direction:column;align-items:stretch;gap:var(--ctl-gap);border:0;padding:0;background:none;border-radius:0}
+  #top-filter-bar #tfb-when>.fb-row-1{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:var(--ctl-gap);min-width:0}
+  #top-filter-bar #tfb-when #wr-field{flex:0 1 auto;width:auto;min-width:0;max-width:100%;overflow:hidden}
+  #top-filter-bar #tfb-when .fb-modefit{flex:0 0 auto;display:flex;align-items:center;gap:var(--ctl-gap);margin:0}
   #top-filter-bar #tfb-when .fb-modefit .fb-inline{flex:0 0 auto}
+  #top-filter-bar #tfb-when #tfb-crit{min-width:0;display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:var(--ctl-gap-tight);border:0;padding:0;background:none;border-radius:0}
   #top-filter-bar #tfb-crit .fb-dd{flex:0 1 auto;min-width:0;flex-direction:row}
-  #top-filter-bar #tfb-crit .crit-clear{position:static;margin-left:0}
+  #top-filter-bar #tfb-crit .crit-clear{position:static;margin-left:0;flex:0 0 auto}
 
   /* Dropdown triggers: a compact field-like button with the choice in it. */
   #top-filter-bar .fb-dd-trig{display:inline-flex;align-items:center;gap:var(--space-2);max-width:100%;min-width:0;padding:0 var(--space-3)}
@@ -1579,6 +1596,55 @@ body.print-mode .pm-banner{display:block}
 .rpt-sub .today{color:var(--color-text-on-header-accent)}
 
 #scroll-wrap{overflow-x:auto;overflow-y:auto;max-height:calc(100vh - 150px);position:relative}
+/* ---- P72 (Matt 2026-10-01): the screen heading scrolls away -------------
+   Below 1024px only (CHROME_AWAY_MQ). Every width has the same two scrollers:
+   the board scrolls inside #scroll-wrap and the window scrolls whatever the
+   header, icon bar and filter bar push past 100vh - 150px. Scrolling the board
+   down past a small threshold sets html.chrome-away (setChromeAway()):
+   - the icon bar takes a negative top margin of the board's measured offset
+     (--chrome-shift), so the icon bar, heading, filter bar and board all move
+     up together, nothing re-laid between them, and the board's top meets the
+     viewport's (the hamburger, absolutely placed, moves by the same amount);
+   - the board is as tall as the viewport for as long as any shift applies
+     (html.chrome-shift): set at the start of hiding and cleared at the end
+     of showing, its bottom edge is below the viewport both times, so the
+     change is not seen and is not animated (a height that changes every
+     frame re-runs the info strip's width observer every frame);
+   - the info rows stick ABOVE the board's top edge (top: minus their own
+     measured height, --hdr-info-h) and the month and week bands stick at 0
+     and at --hdr-phase-h, so the bands meet the top with nothing between.
+   The info row stays in the table, so no row moves and no measured variable
+   is rewritten. Transitions run only while html.chrome-anim is set (the
+   change itself), so a measured height that changes at any other time still
+   lands at once, as before. The classes go on <html>, not <body>: a change to
+   the body's classes re-runs syncInfoBarWidth() (its MutationObserver), and
+   --chrome-shift is set on the two elements that read it, not on :root,
+   since a :root custom property restyles the whole document (measured on the
+   reference board: about 0.1s and 0.3s per change, at 390px). */
+@media (max-width:1023px){
+  html.chrome-shift body:not(.grid-open):not(.print-mode) #icon-bar{margin-top:calc(-1 * var(--chrome-shift))}
+  html.chrome-shift body:not(.grid-open):not(.print-mode) .ws-toggle{transform:translateY(calc(-1 * var(--chrome-shift)))}
+  html.chrome-shift body:not(.grid-open):not(.print-mode) #scroll-wrap{max-height:100vh;max-height:100dvh}
+  html.chrome-away body:not(.grid-open):not(.print-mode) tr.hdr-info th{top:calc(-1 * var(--hdr-info-h))}
+  html.chrome-away body:not(.grid-open):not(.print-mode) tr.hdr-phase th{top:0}
+  html.chrome-away body:not(.grid-open):not(.print-mode) tr.hdr-wk th{top:var(--hdr-phase-h)}
+  /* Out of the tab order and the accessibility tree while off screen; the
+     delay keeps them painted while they slide. */
+  html.chrome-away body:not(.grid-open):not(.print-mode) #icon-bar,
+  html.chrome-away body:not(.grid-open):not(.print-mode) .rpt-hd,
+  html.chrome-away body:not(.grid-open):not(.print-mode) #top-filter-bar,
+  html.chrome-away body:not(.grid-open):not(.print-mode) .ws-toggle{visibility:hidden}
+  html.chrome-anim #icon-bar{transition:margin-top .2s ease}
+  html.chrome-anim .ws-toggle{transition:transform .2s ease}
+  html.chrome-anim tr.hdr-info th,html.chrome-anim tr.hdr-phase th,html.chrome-anim tr.hdr-wk th{transition:top .2s ease}
+  html.chrome-anim.chrome-away #icon-bar{transition:margin-top .2s ease,visibility 0s linear .2s}
+  html.chrome-anim.chrome-away .rpt-hd,html.chrome-anim.chrome-away #top-filter-bar{transition:visibility 0s linear .2s}
+  html.chrome-anim.chrome-away .ws-toggle{transition:transform .2s ease,visibility 0s linear .2s}
+}
+@media (max-width:1023px) and (prefers-reduced-motion:reduce){
+  html.chrome-anim #icon-bar,html.chrome-anim .ws-toggle,html.chrome-anim .rpt-hd,html.chrome-anim #top-filter-bar,
+  html.chrome-anim tr.hdr-info th,html.chrome-anim tr.hdr-phase th,html.chrome-anim tr.hdr-wk th{transition:none}
+}
 table{border-collapse:separate;border-spacing:0;table-layout:fixed;width:max-content}
 .c-name{width:220px;min-width:220px}
 .c-ref{width:46px;min-width:46px}
@@ -3731,9 +3797,10 @@ button.sg-hdot:hover{transform:scale(1.25)}
        spill into a third row once Source is visible (docs/03-todo.md
        TD-202); the name field is the one that shrinks (a sensible min), the
        two selects hold their natural width. -->
-  <!-- P67: at phone width only the name field shows; the chevron inside its
-       right end (#fb-find-more-btn) expands the .fb-more rows below it, and
-       carries a dot while one of them holds a filter it is hiding. -->
+  <!-- P67: at phone width only the name field shows. P72: the funnel inside
+       its right end (#fb-find-more-btn, P67's chevron id) expands the whole
+       panel: the date tile (moved in here by syncFbShape()), then the .fb-more
+       rows. It carries a dot while any filter it is hiding is set. -->
   <div class="fb-box find" id="tfb-find" role="group" aria-label="Find">
    <p class="fb-title">Find</p>
    <div class="fb-line fb-lbl fb-name-lbl"><label for="filter-title">Activity name</label></div>
@@ -3742,7 +3809,7 @@ button.sg-hdot:hover{transform:scale(1.25)}
      <span class="lead" aria-hidden="true">&#128269;</span>
      <input type="text" id="filter-title" class="ds-field" placeholder="Search activity name" aria-label="Activity name" oninput="onTitleFilterInput(this)">
      <button class="clr" id="sticky-title-clear" onclick="clearOneFilter('filter-title')" title="Clear this filter" aria-label="Clear title search" style="display:none">&#10005;</button>
-     <button type="button" class="ds-ico fb-chev" id="fb-find-more-btn" onclick="toggleFindMore()" aria-expanded="false" aria-controls="tfb-find" aria-label="Show Banding and Activity IDs" title="Banding and Activity IDs"><span class="fb-chev-ico" aria-hidden="true">&#9662;</span><span class="fb-dot" aria-hidden="true"></span></button>
+     <button type="button" class="ds-ico fb-chev" id="fb-find-more-btn" onclick="toggleFindMore()" aria-expanded="false" aria-controls="tfb-find" aria-label="Show filters" title="Filters"><span class="fb-chev-ico" aria-hidden="true"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false"><path d="M2 3h12l-4.6 5.4v4.4l-2.8 1.4V8.4z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></span><span class="fb-dot" aria-hidden="true"></span></button>
     </span>
     <span class="fb-inline fb-fixed fb-more"><label for="filter-band">Banding</label>
      <select id="filter-band" class="ds-select" onchange="applyFilter()">
@@ -11070,13 +11137,22 @@ function syncFbShape(){
   const phone=fbIsPhone();
   if(phone&&crit.parentElement!==when) when.appendChild(crit);
   else if(!phone&&crit.parentElement!==bar) bar.insertBefore(crit,hidden);
+  // P72: the date tile (with the status box inside it) goes into Find right
+  // after the search field, so the funnel's panel reads search, Weeks/Mode/Fit,
+  // Status/Float/Notes, then Banding, Source and Activity ID(s), in DOM order
+  // as well as on screen. Back beside Find, in .fb-top, on desktop.
+  const find=document.getElementById('tfb-find');
+  const sw=find&&find.querySelector('.fb-row-1>.ds-fwrap');
+  if(phone&&sw&&sw.nextElementSibling!==when) sw.parentNode.insertBefore(when,sw.nextElementSibling);
+  else if(!phone&&find&&when.parentElement!==find.parentElement) find.parentNode.insertBefore(when,find.nextElementSibling);
   bar.classList.toggle('fb-phone',phone);
   if(!phone) closeFbDropdown();
   syncFindMore();
 }
 try{ window.matchMedia(FB_PHONE_MQ).addEventListener('change',syncFbShape); }catch(e){}
-// Find's chevron. Display state (it changes what is shown, never what is
-// filtered), kept per browser like the rail and the settings tab.
+// Find's funnel (P67's chevron, P72's whole-panel toggle; the id, the state
+// and its storage key are P67's). Display state (it changes what is shown,
+// never what is filtered), kept per browser like the rail and the settings tab.
 var FB_FIND_OPEN=false;
 try{ FB_FIND_OPEN=localStorage.getItem('sret-fb-find-more')==='open'; }catch(e){}
 function setFindMore(open){
@@ -11096,15 +11172,137 @@ function syncFindMore(){
   const btn=document.getElementById('fb-find-more-btn');
   if(!box||!btn) return;
   box.classList.toggle('fb-more-open',FB_FIND_OPEN);
+  const bar=document.getElementById('top-filter-bar');
+  if(bar) bar.classList.toggle('fb-panel-open',FB_FIND_OPEN);
   btn.setAttribute('aria-expanded',String(FB_FIND_OPEN));
+  const hiddenActive=!FB_FIND_OPEN&&fbHiddenFilterSet();
+  btn.classList.toggle('has-dot',hiddenActive);
+  btn.setAttribute('aria-label',(FB_FIND_OPEN?'Hide':'Show')+' filters'+(hiddenActive?' (a filter is set)':''));
+  btn.title=hiddenActive?'Filters: a filter is set':'Filters';
+}
+// Every filter the collapsed panel hides: everything but the name search.
+// Read from the same state applyFilter() reads, so the dot cannot disagree
+// with what the board is showing.
+function fbHiddenFilterSet(){
   const val=function(id){ const el=document.getElementById(id); return el?String(el.value||'').trim():''; };
   const srcGrp=document.getElementById('tfb-source-group');
   const srcOn=!!(srcGrp&&srcGrp.style.display!=='none'&&val('filter-source'));
-  const hiddenActive=!FB_FIND_OPEN&&!!(val('filter-band')||val('filter-ids')||srcOn);
-  btn.classList.toggle('has-dot',hiddenActive);
-  btn.setAttribute('aria-label',(FB_FIND_OPEN?'Hide':'Show')+' Banding and Activity IDs'+(hiddenActive?' (a filter is set)':''));
-  btn.title=hiddenActive?'Banding and Activity IDs: a filter is set':'Banding and Activity IDs';
+  let weeks=false, crit=false;
+  try{ weeks=!!(typeof currentWeekRange==='function'&&currentWeekRange())||!!(val('filter-date-from')||val('filter-date-to')); }catch(e){}
+  try{ crit=!!((typeof STATUS_FILTER!=='undefined'&&STATUS_FILTER.size)||(typeof floatFilterSpec==='function'&&floatFilterSpec())); }catch(e){}
+  const annot=typeof ANNOT_FILTER!=='undefined'&&ANNOT_FILTER!=='any';
+  return !!(val('filter-band')||val('filter-ids')||srcOn||weeks||crit||annot);
 }
+// ===== P72 (Matt 2026-10-01): the screen heading scrolls away =====
+// Below 1024px, scrolling the board down past a small threshold hides the
+// icon bar, the heading, the filter bar and the board's info rows, so only
+// the month and week bands stay pinned above the board; scrolling up brings
+// them back. The CSS beside #scroll-wrap does the moving; this decides when.
+// Display state only, never stored: every load starts with the heading shown.
+var CHROME_AWAY_MQ='(max-width:1023px)';
+var CHROME_AWAY=false;
+var CHROME_LAST_Y=0, CHROME_ACC=0, CHROME_HOLD_UNTIL=0, CHROME_TIMER=0;
+var CHROME_DELTA=12;          // px of travel in one direction before it acts
+var CHROME_ANIM_MS=200;       // the CSS transitions' duration
+function chromeAwayEligible(){
+  const b=document.body;
+  return !!b&&window.matchMedia(CHROME_AWAY_MQ).matches&&!b.classList.contains('grid-open')&&!b.classList.contains('print-mode');
+}
+// Nothing moves while something is open over or under the board: a dialog
+// (the milestone card is position:fixed and must not move with the board
+// under it), a drawer, a dropdown or popover (every one of them carries
+// aria-haspopup and reports aria-expanded), or a field in the heading or the
+// filter bar that has focus (the phone keyboard is up).
+function chromeAwayBlocked(){
+  if(typeof FB_DD_OPEN!=='undefined'&&FB_DD_OPEN) return true;
+  const shown=function(id){ const el=document.getElementById(id); return !!el&&!el.hidden&&el.getClientRects().length>0; };
+  if(['ms-dialog','add-ms-dialog','pdf-dialog','annot-dialog','dep-comment-panel','id-suggest-dropdown','float-custom-pop'].some(shown)) return true;
+  const open=function(id){ const el=document.getElementById(id); return !!el&&el.classList.contains('open'); };
+  if(open('settings-drawer')||open('ws-panel')) return true;
+  if(document.querySelector('[aria-haspopup][aria-expanded="true"]')) return true;
+  const ae=document.activeElement;
+  if(ae&&ae!==document.body&&/^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName)&&chromeAwayContains(ae)) return true;
+  return false;
+}
+function chromeAwayContains(el){
+  return ['icon-bar','top-filter-bar','ws-toggle'].some(function(id){ const c=document.getElementById(id); return !!c&&c.contains(el); })||
+    !!(el.closest&&el.closest('.rpt-hd'));
+}
+// The board must be scrolled past its own info rows before they can go, so
+// the bands never stick over a partly visible info row.
+// Read from the inline value watchStickyHeights() writes, not computed style:
+// this runs on every scroll event.
+function chromeAwayThreshold(){
+  const v=parseFloat(document.documentElement.style.getPropertyValue('--hdr-info-h'))||0;
+  return v+2*CHROME_DELTA;
+}
+function setChromeAway(on,instant){
+  on=!!on;
+  if(on===CHROME_AWAY) return;
+  const html=document.documentElement;
+  const sw=document.getElementById('scroll-wrap');
+  if(!sw) return;
+  // --chrome-shift lives on the two elements that read it (see the CSS).
+  const movers=[document.getElementById('icon-bar'),document.getElementById('ws-toggle')].filter(Boolean);
+  const shift=function(px){ movers.forEach(function(el){ if(px===null) el.style.removeProperty('--chrome-shift'); else el.style.setProperty('--chrome-shift',px.toFixed(2)+'px'); }); };
+  const anim=!instant&&!window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  clearTimeout(CHROME_TIMER);
+  if(on){
+    // The board's top in document terms with no shift applied. The window may
+    // already be scrolled part of the way (the old page scroll): that much is
+    // taken into the shift first, with the window put back to 0, so nothing
+    // moves on screen at the start, then the shift eases to the full offset.
+    const cur=html.classList.contains('chrome-shift')&&movers[0]?(parseFloat(movers[0].style.getPropertyValue('--chrome-shift'))||0):0;
+    const y=window.scrollY||0;
+    const H=sw.getBoundingClientRect().top+y+cur;
+    html.classList.remove('chrome-anim');
+    shift(cur+y);
+    html.classList.add('chrome-shift');
+    if(y) window.scrollTo(0,0);
+    void sw.offsetHeight;
+    if(anim) html.classList.add('chrome-anim');
+    shift(Math.max(0,H));
+    html.classList.add('chrome-away');
+  } else {
+    html.classList.toggle('chrome-anim',anim);
+    shift(0);
+    html.classList.remove('chrome-away');
+  }
+  CHROME_AWAY=on;
+  // Growing the board can clamp its scrollTop at the bottom, which reads as a
+  // scroll up: scroll events during the change only re-base the position.
+  const ms=anim?CHROME_ANIM_MS+40:0;
+  CHROME_HOLD_UNTIL=performance.now()+ms+20;
+  const done=function(){
+    html.classList.remove('chrome-anim');
+    if(!CHROME_AWAY){ html.classList.remove('chrome-shift'); shift(null); }
+    CHROME_LAST_Y=sw.scrollTop; CHROME_ACC=0;
+  };
+  if(ms) CHROME_TIMER=setTimeout(done,ms); else done();
+}
+function onBoardScrollForChrome(){
+  const sw=document.getElementById('scroll-wrap');
+  if(!sw) return;
+  const y=sw.scrollTop, dy=y-CHROME_LAST_Y;
+  CHROME_LAST_Y=y;
+  if(performance.now()<CHROME_HOLD_UNTIL||!dy) return;
+  if(!chromeAwayEligible()){ if(CHROME_AWAY) setChromeAway(false,true); return; }
+  if((dy>0)!==(CHROME_ACC>0)) CHROME_ACC=0;
+  CHROME_ACC+=dy;
+  const t=chromeAwayThreshold();
+  const hide=!CHROME_AWAY&&CHROME_ACC>=CHROME_DELTA&&y>t;
+  const show=CHROME_AWAY&&(CHROME_ACC<=-CHROME_DELTA||y<=t);
+  // The blocking test reads layout, so it runs only when a change is due.
+  if((hide||show)&&!chromeAwayBlocked()) setChromeAway(hide);
+}
+(function(){
+  const sw=document.getElementById('scroll-wrap');
+  if(sw){ sw.addEventListener('scroll',onBoardScrollForChrome,{passive:true}); CHROME_LAST_Y=sw.scrollTop; }
+  // Leaving the narrow layout, or focus arriving in the hidden heading (Tab,
+  // a shortcut), brings it back at once.
+  try{ window.matchMedia(CHROME_AWAY_MQ).addEventListener('change',function(){ if(!chromeAwayEligible()) setChromeAway(false,true); }); }catch(e){}
+  document.addEventListener('focusin',function(e){ if(CHROME_AWAY&&chromeAwayContains(e.target)) setChromeAway(false,true); });
+})();
 // Status / Float / Notes dropdowns. The panel IS the existing chip group (or
 // the float chips with their Custom card), shown as a popover from its
 // trigger at phone width and inline as before on desktop.
@@ -13561,7 +13759,14 @@ function watchInfoBar(){
     new MutationObserver(syncInfoBarWidth).observe(document.body,{attributes:true,attributeFilter:['class']});
   }
   const sw=document.getElementById('scroll-wrap');
-  if(sw&&window.ResizeObserver) new ResizeObserver(syncInfoBarWidth).observe(sw);
+  // Width changes only. P72's scroll-away changes the scroller's HEIGHT, and
+  // a full re-measure of the board costs about 0.3s on the reference board
+  // at phone width, which stalled the slide's first frame.
+  let swW=-1;
+  if(sw&&window.ResizeObserver) new ResizeObserver(function(){
+    if(sw.clientWidth===swW) return;
+    swW=sw.clientWidth; syncInfoBarWidth();
+  }).observe(sw);
   window.addEventListener('resize',syncInfoBarWidth);
   syncInfoBarSpan();
   syncInfoBarWidth();

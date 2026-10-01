@@ -9,16 +9,22 @@ elements themselves, never a screenshot.
 
 Phone shape (max-width:767px, the breakpoint the stacked phone layout already
 used), at 390x844 and at 767 (1px inside), light and dark:
-  - Find shows only the Activity name field; the chevron inside its right end
-    expands Banding and Activity ID(s) and collapses them again, with
-    aria-expanded, a rotated chevron and a stored display preference;
+  - Find shows only the Activity name field; the control inside its right end
+    (P67's chevron, P72's funnel, #fb-find-more-btn) expands Banding and
+    Activity ID(s) and collapses them again, with aria-expanded, a pressed
+    look while open (P72; was a rotated chevron) and a stored display
+    preference;
   - a Banding or Activity ID filter hidden by the collapsed state puts a dot
     on the chevron (N=3: band, IDs, both);
   - no section headings (box titles, the Status/Total float/Annotations row
     labels, the name/Weeks/Mode labels);
   - the Weeks field and the Status, Float and Notes triggers are in ONE tile,
-    the Weeks field narrower than it, the triggers to its right;
+    the Weeks field narrower than it; P72 (Matt 2026-10-01) re-orders the
+    tile: Mode and Fit on the Weeks row to its right, the triggers on the
+    row below (tools/p72_filter_scroll_check.py owns the full order);
   - Mode and Fit share a row (tops within 4px);
+  - the tile and the dropdown checks run with the panel expanded, since P72
+    folds the tile into the funnel's panel;
   - the Status trigger opens a panel holding the existing chips; picking 1, 2
     and 3 statuses reads "Status: Critical", "Status: Critical, At risk" and
     "Status: 3 selected", and the visible marker count equals the count with
@@ -173,8 +179,11 @@ PROBE = r"""
     ck('find: the chevron sits inside the right end of the search field',
        shown(chev)&&within(rc(fw),rc(chev))&&rc(fw).right-rc(chev).right<=4, JSON.stringify([rc(fw).right,rc(chev).right]));
     ck('find: the chevron is the --icon-btn square', Math.abs(rc(chev).width-parseFloat(cs(document.documentElement).getPropertyValue('--icon-btn')))<=0.5, rc(chev).width);
-    ck('find: collapsed chevron reads aria-expanded=false, not rotated',
-       chev.getAttribute('aria-expanded')==='false'&&cs(chev.querySelector('.fb-chev-ico')).transform==='none', cs(chev.querySelector('.fb-chev-ico')).transform);
+    // P72: the chevron became a funnel that looks pressed while open (was:
+    // not rotated / rotated). Same intent: the control shows its state.
+    const chevBgClosed=cs(chev).backgroundColor;
+    ck('find: collapsed funnel reads aria-expanded=false, not pressed',
+       chev.getAttribute('aria-expanded')==='false'&&!!chev.querySelector('.fb-chev-ico svg'), chevBgClosed);
     const clr=$('sticky-title-clear'); clr.style.display='inline-flex';
     ck('find: the title clear and the chevron do not overlap, both inside the field',
        rc(clr).right<=rc(chev).left+0.5&&within(rc(title),rc(clr)), rc(clr).right+' vs '+rc(chev).left);
@@ -185,8 +194,8 @@ PROBE = r"""
     ck('find: the chevron expands Banding and Activity IDs below the name',
        shown($('filter-band'))&&shown($('filter-ids'))&&rc($('filter-band')).top>=rc(title).bottom&&rc($('filter-ids')).top>=rc($('filter-band')).bottom,
        '');
-    ck('find: expanded reads aria-expanded=true with a rotated chevron',
-       chev.getAttribute('aria-expanded')==='true'&&cs(chev.querySelector('.fb-chev-ico')).transform!=='none', cs(chev.querySelector('.fb-chev-ico')).transform);
+    ck('find: expanded reads aria-expanded=true with the pressed funnel look',
+       chev.getAttribute('aria-expanded')==='true'&&cs(chev).backgroundColor!==chevBgClosed, chevBgClosed+' vs '+cs(chev).backgroundColor);
     ck('find: the expanded state is stored as a display preference', stored==='open', stored);
     ck('find: the bar grows to fit the expanded tile (not clipped)',
        parseFloat(cs(bar).maxHeight)>=bar.scrollHeight-1, cs(bar).maxHeight+' vs '+bar.scrollHeight);
@@ -214,6 +223,9 @@ PROBE = r"""
     clearOneFilter('filter-ids'); await settle();
     ck('dot: gone once the hidden filters are cleared', !dotOn(), '');
 
+    // P72: the date tile (and the dropdown triggers in it) is part of the
+    // funnel's panel, so everything from here on runs with the panel open.
+    setFindMore(true); await settle(300);
     // ---- 6. headings ----
     const heads=Array.prototype.slice.call(bar.querySelectorAll('.fb-title,.fb-name-lbl label,#wr-field-label,#tfb-when .fb-modefit .fb-inline>label,#tfb-crit .fb-dd>label'));
     ck('headings: no section heading or row label shows', heads.length>=7&&heads.every(function(h){ return !shown(h); }),
@@ -227,12 +239,13 @@ PROBE = r"""
     ck('tile: the Weeks control is narrower than the tile', rc(wr).width<tile.width*0.6, Math.round(rc(wr).width)+' of '+Math.round(tile.width));
     ck('tile: the Weeks control is still the field that opens the week-range picker',
        wr.getAttribute('aria-haspopup')==='dialog'&&Math.abs(rc(wr).height-parseFloat(cs(document.documentElement).getPropertyValue('--ctl-h')))<=0.5, '');
-    ck('tile: the triggers sit to the right of the Weeks field, starting on its row',
-       rc(trigs[0]).left>=rc(wr).right-0.5&&Math.abs(rc(trigs[0]).top-rc(wr).top)<=4, rc(trigs[0]).left+' / '+rc(wr).right);
+    ck('tile: the triggers sit on the row below the Weeks field, from its left edge (P72 row 2)',
+       rc(trigs[0]).top>=rc(wr).bottom-0.5&&Math.abs(rc(trigs[0]).left-rc(wr).left)<=0.5, rc(trigs[0]).left+','+rc(trigs[0]).top+' / '+rc(wr).left+','+rc(wr).bottom);
     const seg=$('wr-mode-seg'), fit=$('btn-fit-screen-inline');
     ck('tile: Mode and Fit share one row (tops within 4px)', Math.abs(rc(seg).top-rc(fit).top)<=4&&rc(fit).left>=rc(seg).right,
        rc(seg).top+'/'+rc(fit).top);
-    ck('tile: Mode and Fit sit below the Weeks row', rc(seg).top>=rc(wr).bottom, '');
+    ck('tile: Mode and Fit sit on the Weeks row, to its right (P72 row 1)', Math.abs(rc(seg).top-rc(wr).top)<=4&&rc(seg).left>=rc(wr).right-0.5,
+       rc(seg).left+','+rc(seg).top+' / '+rc(wr).right+','+rc(wr).top);
     ck('triggers: the default labels', trigTxt('fb-dd-status-trig')==='Status: Any'&&trigTxt('fb-dd-float-trig')==='Float: Any'&&trigTxt('fb-dd-annot-trig')==='Notes: Any',
        trigs.map(function(t){ return t.textContent.trim(); }).join(' | '));
     ck('triggers: the chips are not inline (they live in the closed panels)',

@@ -3289,3 +3289,22 @@ TD-235.
 - Saved copy reopened: reports published; XLSX and Slick defined; 159 rows, 198 milestones and the same marker count as the baseline; every annotation store still empty; the foreign script never ran.
 
 **Checks run:** by `tools/run_checks.py` (change-scoped). Results in the PR.
+
+## TEST-72: P72 collapsible phone filter panel and the heading that scrolls away (working copy on v3.1.0-P71)
+
+TD-236. Matt's phone screenshots were the brief. Implementation screenshots: `docs/mockups/P72/impl-390-collapsed.png`, `impl-390-expanded.png`, `impl-390-scrolled.png`.
+
+**Measured before building:** at every width the board scrolls inside `#scroll-wrap` (`max-height: calc(100vh - 150px)`) and the window scrolls whatever the header, icon bar and filter bar push past that; the info row, the month band and the week band are sticky cells inside the scroller (top 0, `--hdr-info-h`, `--hdr-info-h + --hdr-phase-h`); nothing above the board is sticky or fixed. 768 to 1023px has the same two scrollers as the phone, with the tallest heading share of the viewport, so the scroll-away applies below 1024px.
+
+**New check `tools/p72_filter_scroll_check.py`** (headless Chromium, network unresolvable), at 390x844 light and dark (dark with reduced motion), 767 / 768 (both sides of the phone breakpoint), 1023 / 1024 (both sides of the scroll-away query) and 1440x900 light and dark:
+- Collapsed: only the search field and the funnel show in the bar; the funnel sits inside the field's right end; `aria-expanded`, pressed look, stored state, and a fresh load of the page (an iframe of the same file) reads it back, open and closed.
+- Expanded: row 1 Weeks, Mode, Fit (tops within 4px, left to right, still one row with a week range set); row 2 Status, Float, Notes and the x on one line; then Banding (with Source beside it when shown) and Activity ID(s); labels hidden, accessible names kept; not clipped.
+- Dot: status, float, notes, week range, banding and IDs each show it alone while collapsed, not while expanded, not once cleared.
+- Filters: three combinations set through the phone dropdowns give the same visible marker count as on desktop at every width.
+- Scroll-away (below 1024): heading, filter bar and info row out of view; month band cells within 2px of the viewport top and the week band within 2px under them; still there scrolling further; also from a window already scrolled part way; scrolling up restores every position; an open filter dropdown, the week-range popover and the milestone card each block it, both ways, and the card does not move; reduced motion sets no transition class.
+- 1024 and 1440: scrolling the board changes nothing above it, the bands stick as before, the board keeps its max-height.
+- No horizontal page scroll anywhere.
+
+**`tools/p67_check.py` updated, same intent:** the collapsed and expanded control-state assertions read the funnel's pressed look instead of the chevron's rotation; the tile assertions run with the panel expanded and read P72's order (Mode and Fit on the Weeks row, the triggers on the row below). Before and after listed in the hand-off.
+
+**Checks run:** by `tools/run_checks.py` (change-scoped, 3 jobs). Results in the hand-off.

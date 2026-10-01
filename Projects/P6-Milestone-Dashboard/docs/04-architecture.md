@@ -326,6 +326,25 @@ Matt's marked-up phone screenshot (`docs/mockups/P67/filter-markup.png`, 2026-10
 
 At every width, the header toggle `#btn-filter-expand` (the old expand-only icon's id, kept for the checks) sits left of + Milestone, always shown, pressed while the row is open, and is the row's only show/hide control. The bar's own close x `#btn-filter-hide` is gone. `toggleTopFilterBar()` is still the one writer of both states.
 
+### The filter panel collapses to the search field; the heading scrolls away (P72)
+
+TD-236, from Matt's phone screenshots (2026-10-01). Builds on the P67 phone shape above.
+
+**Panel (below 768px, `FB_PHONE_MQ`).** The P67 chevron is now a funnel (same id, `#fb-find-more-btn`; same state `FB_FIND_OPEN`, `setFindMore()` / `toggleFindMore()` / `syncFindMore()`; same storage key `sret-fb-find-more`), and it folds the whole panel, not only Banding and IDs. `syncFbShape()` moves `#tfb-when` (with `#tfb-crit` already inside it) into `#tfb-find` straight after the search field, so the DOM order, and so the tab order, is the visual order: search; Weeks, Mode, Fit; Status, Float, Notes, x; Banding, Source; Activity ID(s). On desktop it goes back into `.fb-top` beside Find. Find's search row is `display:contents` at phone width so its children and the moved tile are Find's own flex items. The dot reads `fbHiddenFilterSet()`, every filter except the name search, from the same state `applyFilter()` reads.
+
+**Heading (below 1024px, `CHROME_AWAY_MQ`).** Every width has two scrollers: the board inside `#scroll-wrap` and the window for whatever the heading pushes past `100vh - 150px`. `onBoardScrollForChrome()` (a passive listener on `#scroll-wrap`) sets `html.chrome-away` after 12px of travel down once the board is past its own info row plus 24px, and clears it after 12px up or back near the top. `setChromeAway()`:
+- puts a negative top margin of the board's measured document offset on `#icon-bar` (`--chrome-shift`, set on `#icon-bar` and `.ws-toggle` only), so icon bar, heading, filter bar and board move up together with nothing re-laid between them; a window already scrolled part way is folded into the shift first, so nothing jumps;
+- makes the board as tall as the viewport while any shift applies (`html.chrome-shift`), set at the start of hiding and cleared at the end of showing, when its bottom edge is below the viewport either way;
+- sticks the info row cells at minus `--hdr-info-h` (just above the board's top edge) and the bands at 0 and `--hdr-phase-h`, the measured variables `watchStickyHeights()` already writes; the info row stays in the table, so nothing re-measures;
+- animates only while `html.chrome-anim` is set (200ms), never under `prefers-reduced-motion`.
+
+Three findings that shaped it, each measured on the reference board at 390px:
+- **Classes on `<html>`, not `<body>`.** A change to the body's classes re-runs `syncInfoBarWidth()` through its MutationObserver, about 0.3s, which stalled the slide's first frame.
+- **No custom property on `:root` per change.** Setting one restyles the whole document, about 0.1s.
+- **The info strip's ResizeObserver now acts on width changes only.** The scroll-away changes the board's height; a height change cannot change the strip's width.
+
+`chromeAwayBlocked()` freezes the state both ways while any `[aria-haspopup][aria-expanded="true"]` exists (every dropdown, menu and popover reports this), while the milestone card, the add, PDF or annotation dialogs, a dependency comment panel, the ID suggestions or the float Custom card are shown, while the settings drawer or Workspace panel is open, or while a field in the heading has focus (the phone keyboard). The card is `position:fixed` and is never inside a moved or transformed box. Grid view and print mode are excluded in the CSS selectors and in `chromeAwayEligible()`. Display state only, never stored.
+
 ### The milestone Progress override (v3.1.0-P35)
 
 Progress is the first **editable number** in the annotation layer. Everything before it was a colour, a comment or a piece of text, none of which anything else computed from.
