@@ -99,7 +99,13 @@ PROBE = r"""
     const td=w.closest('td[data-col]');
     return td?td.getAttribute('data-col'):null;
   };
-  const saveShown=()=>$('ms-save-actions')&&!$('ms-save-actions').hidden;
+  // P66: the save pair is always on screen and is DISABLED while the form is
+  // clean, so "shown" now means "enabled": present, not hidden, and neither
+  // the wrapper nor its buttons aria-disabled.
+  const saveShown=()=>{ const a=$('ms-save-actions'); if(!a||a.hidden) return false;
+    if(a.getAttribute('aria-disabled')==='true') return false;
+    return Array.prototype.every.call(a.querySelectorAll('.ms-act'),
+      b=>b.getAttribute('aria-disabled')!=='true'); };
 
   try{
     const st=document.createElement('style');
@@ -148,8 +154,19 @@ PROBE = r"""
     // ============ 2. A fresh card is CLEAN ============
     // The negative control for everything below: if the save pair showed on an
     // untouched card, every "it appears when dirty" check would pass trivially.
-    ck('dirty: a card nobody has edited shows no save controls at all',
-       !saveShown(), 'save pair hidden='+String(!saveShown()));
+    ck('dirty: a card nobody has edited has its save controls DISABLED',
+       !saveShown(), 'save pair enabled='+String(saveShown()));
+    // P66: and they are on screen while disabled, and a click on either does
+    // nothing: the card stays open and nothing is stored.
+    const cleanActs=$('ms-save-actions');
+    const cleanBtns=cleanActs?cleanActs.querySelectorAll('.ms-act'):[];
+    const cleanVis=Array.prototype.every.call(cleanBtns,b=>b.getBoundingClientRect().width>0);
+    const storedBefore=MS_SHORT_TITLES[msKeyFor(withStart)]||null;
+    if(cleanBtns[1]) cleanBtns[1].click(); await settle();
+    ck('dirty: a clean card shows both save controls, and Save and close does nothing',
+       cleanBtns.length===2&&cleanVis&&!dlg().hidden&&
+       (MS_SHORT_TITLES[msKeyFor(withStart)]||null)===storedBefore,
+       JSON.stringify({buttons:cleanBtns.length,visible:cleanVis,open:!dlg().hidden}));
 
     // ============ 3. Dirty puts two save controls at the TOP RIGHT ========
     type('ms-shorttitle-input','Probe short title');
@@ -172,7 +189,7 @@ PROBE = r"""
     actBtns[0].click(); await settle(); await settle();
     R.notes.saved={stillOpen:!dlg().hidden,saveShown:saveShown(),
                    stored:MS_SHORT_TITLES[msKeyFor(withStart)]||null};
-    ck('save: the card stays open and the save controls go away',
+    ck('save: the card stays open and the save controls go back to disabled',
        !dlg().hidden&&!saveShown(), JSON.stringify(R.notes.saved));
     ck('save: the value reached its store',
        MS_SHORT_TITLES[msKeyFor(withStart)]==='Probe short title',
@@ -219,10 +236,10 @@ PROBE = r"""
        fieldsA.length===3&&fieldsB.length===3,
        fieldsA.length+' and '+fieldsB.length);
     // Equal weight, within a pixel of rounding.
-    // P59 (D-01): Start and Finish share the width equally and Progress is a
-    // fixed narrower track, so an actualised date fits. Positions stay fixed.
-    const eq=g=>Math.abs(g[0].w-g[1].w)<=1&&g[2].w<g[0].w;
-    ck('columns: Start and Finish equally weighted, Progress narrower, on a card WITH a start date',
+    // P66: the row is Start, Duration, Finish in three EQUAL tracks (Progress
+    // moved to its own row under it). Positions stay fixed.
+    const eq=g=>Math.abs(g[0].w-g[1].w)<=1&&Math.abs(g[1].w-g[2].w)<=1;
+    ck('columns: Start, Duration and Finish equally weighted, on a card WITH a start date',
        eq(geomA), JSON.stringify(geomA));
     ck('columns: and the same split on a card WITHOUT one',
        eq(geomB), JSON.stringify(geomB));

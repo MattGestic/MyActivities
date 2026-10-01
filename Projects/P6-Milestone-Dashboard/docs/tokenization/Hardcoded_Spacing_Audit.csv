@@ -117,33 +117,14 @@ line,property,value,px_literals,also_uses_space_token,source
 2124,gap,8px,8px,False,style-block
 2127,gap,6px,6px,False,style-block
 2132,padding,14px 16px,14px|16px,False,style-block
-2167,padding,3px,3px,False,style-block
-2167,margin,-3px 0 0 -3px,3px|3px,False,style-block
-2229,padding,var(--space-2) 7px,7px,True,style-block
-2234,padding,5px 7px 2px,5px|7px|2px,False,style-block
-2258,margin,var(--space-2) 0 2px,2px,True,style-block
-2265,gap,10px,10px,False,style-block
-2277,padding,2px 4px,2px|4px,False,style-block
-2293,gap,10px,10px,False,style-block
-2327,padding,1px 6px,1px|6px,False,style-block
-2333,gap,1px,1px,False,style-block
-2333,padding,1px 3px,1px|3px,False,style-block
-2346,column-gap,12px,12px,False,style-block
-2347,padding,9px 0 0,9px,False,style-block
-2360,padding,6px 7px,6px|7px,False,style-block
-2369,gap,8px,8px,False,style-block
-2370,gap,2px,2px,False,style-block
-2374,padding,3px 4px,3px|4px,False,style-block
-2381,gap,6px 16px,6px|16px,False,style-block
-2382,gap,6px,6px,False,style-block
-3913,padding,4px 5px,4px|5px,False,inline-style
-3914,padding,4px 5px,4px|5px,False,inline-style
-3915,padding,4px 5px,4px|5px,False,inline-style
-3916,padding,4px 5px,4px|5px,False,inline-style
-3917,padding,4px 5px,4px|5px,False,inline-style
-3918,padding,4px 5px,4px|5px,False,inline-style
-3919,padding,4px 5px,4px|5px,False,inline-style
-3920,padding,4px 5px,4px|5px,False,inline-style
-3921,padding,4px 5px,4px|5px,False,inline-style
-3922,padding,4px 5px,4px|5px,False,inline-style
-11436,gap,8px,8px,False,inline-style
+3975,padding,4px 5px,4px|5px,False,inline-style
+3976,padding,4px 5px,4px|5px,False,inline-style
+3977,padding,4px 5px,4px|5px,False,inline-style
+3978,padding,4px 5px,4px|5px,False,inline-style
+3979,padding,4px 5px,4px|5px,False,inline-style
+3980,padding,4px 5px,4px|5px,False,inline-style
+3981,padding,4px 5px,4px|5px,False,inline-style
+3982,padding,4px 5px,4px|5px,False,inline-style
+3983,padding,4px 5px,4px|5px,False,inline-style
+3984,padding,4px 5px,4px|5px,False,inline-style
+11498,gap,8px,8px,False,inline-style

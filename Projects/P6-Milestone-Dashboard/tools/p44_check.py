@@ -156,12 +156,22 @@ PROBE = r"""
     // P59 (D-02/D-03): the float moved INTO the heading, beside the ID, and
     // the heading is outdented slightly so the mark sits further left. It now
     // runs the card's full content width, with the float inside it.
-    const padR=parseFloat(getComputedStyle(dlg()).paddingRight)||0;
+    // P66: sections carry their own padding (the card has none, so hairlines
+    // run edge to edge), and the float moved to the Duration column as
+    // "(Nd float)". The meta line runs the section's full content width, its
+    // mark outdented slightly past the padding, and the float sits in the
+    // Start / Duration / Finish row.
+    const sec=dlg().querySelector('.ms-title-row');
+    const spad=parseFloat(getComputedStyle(sec).paddingLeft)||0;
+    const spadR=parseFloat(getComputedStyle(sec).paddingRight)||0;
     const cardW=dlg().getBoundingClientRect().width;
-    ck('rows: the heading starts at the card\u2019s left edge and runs its full width, float inside',
-       box(heading).l<=pad&&box(heading).l>=pad-3&&
-       Math.abs(box(heading).r-(cardW-padR))<=1&&heading.contains(floatCol),
-       JSON.stringify({pad:pad,headingL:box(heading).l,headingR:box(heading).r,
+    const sched=dlg().querySelector('.ms-schedule');
+    const durField=$('ms-dur-field');
+    ck('rows: the meta line starts at the section\u2019s left edge and runs its full width; float in the Duration column',
+       box(heading).l<=spad&&box(heading).l>=spad-5&&
+       Math.abs(box(heading).r-(cardW-spadR))<=2&&
+       !!sched&&sched.contains(floatCol)&&!!durField&&durField.contains(floatCol),
+       JSON.stringify({pad:spad,headingL:box(heading).l,headingR:box(heading).r,cardW:Math.round(cardW),
                        floatL:box(floatCol).l,gap:gap}));
     ck('rows: the heading is wider than the ID it used to share a line with',
        box(heading).w>box(code).w*2,
@@ -172,10 +182,15 @@ PROBE = r"""
     const tip=$('ms-icon-btn').getAttribute('title')||'';
     R.notes.typeText={heading:headingText,tooltip:tip,
                       typeLabel:TYPE_LABELS[sample.type]};
-    ck('type: the heading no longer carries the type name',
-       headingText.indexOf(TYPE_LABELS[sample.type])<0&&
+    // P66: the design writes the type in the meta line's muted text
+    // ("<Band> · <Type>"), so the name is back on the heading, in #ms-sub and
+    // nowhere else on it: not in the ID, and not as the raw "(CODE)".
+    const subText=($('ms-sub')||{}).textContent||'';
+    ck('type: the type name is in the muted meta text, not in the ID or as a raw code',
+       subText.indexOf(TYPE_LABELS[sample.type])>=0&&
+       code.textContent.indexOf(TYPE_LABELS[sample.type])<0&&
        headingText.indexOf('('+sample.type+')')<0,
-       headingText);
+       JSON.stringify({heading:headingText,sub:subText}));
     ck('type: the icon’s tooltip carries it instead',
        tip.indexOf(TYPE_LABELS[sample.type])>=0&&tip.indexOf('('+sample.type+')')>=0,
        tip);
@@ -224,7 +239,7 @@ PROBE = r"""
        markShown('weight')&&!$('ms-weight').classList.contains('ms-dirty-field'),
        JSON.stringify(R.notes.marksSaved));
     ck('marks: the mark’s tooltip reports the value the schedule had',
-       !!wMark&&/Changed from the schedule/.test(wMark.getAttribute('title')||'')&&
+       !!wMark&&/^Previous: /.test(wMark.getAttribute('title')||'')&&
        (wMark.getAttribute('title')||'').indexOf(String(
          sample._msBase?sample._msBase.weight:sample.weight))>=0,
        wMark?wMark.getAttribute('title'):'no mark');

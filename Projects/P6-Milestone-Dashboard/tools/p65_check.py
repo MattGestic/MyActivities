@@ -26,9 +26,11 @@ Numbered as the brief numbers them (each probe check is prefixed A<n>):
       merges (count unchanged, `to` is the new value, `from` is still the
       original); at +600001 it appends. The inclusive edge (+600000 exactly) is
       asserted too, since the contract says 0 <= dt <= window.
-  A3  Remark and clear. A card remark makes an entry with that text and
-      MS_COMMENTS[key] equals it; emptying the box and saving makes a clearText
-      entry and the key is gone; a later remark shows again.
+  A3  Remark, and no spurious clear. A card remark makes an entry with that
+      text and MS_COMMENTS[key] equals it. P66: the card's box is a NEW remark
+      and opens empty, so reopening and saving with it empty makes NO entry
+      (no clearText) and the stored remark stays; a later remark shows again.
+      Clearing a remark is still covered, through the grid, in A6.
   A4  Health 0 vs automatic. The N/A dot (0) projects MS_HEALTH_OVERRIDE[key]
       === 0 (a present key, not an absent one); clicking the selected dot again
       is the card's "automatic" (-1), and removes the key. Also the case where
@@ -284,14 +286,16 @@ STAGE1 = r"""
        eC.length===1&&eC[0].text==='remark one', J(eC.map(function(e){ return e.text; })));
     ck('A3 MS_COMMENTS[key] equals it', MS_COMMENTS[kC]==='remark one', MS_COMMENTS[kC]);
     FAKE=T0+61*60000;
-    await card(kC,function(){ setVal('ms-comment-text',''); },true);
+    let boxAtOpen=null;
+    await card(kC,function(){ boxAtOpen=$('ms-comment-text').value; setVal('ms-comment-text',''); },true);
     eC=msEntries(kC);
-    ck('A3 emptying the remark box makes a clearText entry',
-       eC.length===2&&eC[1].clearText===true&&eC[1].text==='', J(eC.map(function(e){ return [e.text,e.clearText]; })));
-    ck('A3 after the clear MS_COMMENTS has no key', !(kC in MS_COMMENTS), J(MS_COMMENTS[kC]));
+    ck('A3 (P66) the card opens with an EMPTY remark box, and saving it empty makes no clearText entry',
+       boxAtOpen===''&&eC.length===1&&!eC.some(function(e){ return e.clearText; }),
+       J({boxAtOpen:boxAtOpen,entries:eC.map(function(e){ return [e.text,e.clearText]; })}));
+    ck('A3 (P66) and the stored remark is untouched by it', MS_COMMENTS[kC]==='remark one', J(MS_COMMENTS[kC]));
     FAKE=T0+62*60000;
     await card(kC,function(){ setVal('ms-comment-text','remark two'); },true);
-    ck('A3 a later remark shows again', MS_COMMENTS[kC]==='remark two'&&msEntries(kC).length===3,
+    ck('A3 a later remark shows again', MS_COMMENTS[kC]==='remark two'&&msEntries(kC).length===2,
        MS_COMMENTS[kC]+' / '+msEntries(kC).length+' entries');
 
     // ============================ A4 ============================

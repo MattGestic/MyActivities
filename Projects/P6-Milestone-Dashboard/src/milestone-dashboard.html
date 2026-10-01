@@ -2144,49 +2144,113 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 .pdf-note{margin:var(--space-4) 0 0;font-size:10.5px;line-height:1.45;color:var(--color-text-muted)}
 .pdf-note-quiet{color:var(--color-text-label)}
 .pdf-actions{display:flex;justify-content:flex-end;gap:var(--space-3);margin-top:var(--space-5)}
-.ms-dialog{position:fixed;z-index:2147483647;box-sizing:border-box;width:min(340px,calc(100vw - 24px));padding:var(--space-4) var(--space-5) var(--space-5);background:var(--color-dialog-bg);color:var(--color-text-ink);border:1px solid var(--color-line-default);border-radius:12px;box-shadow:0 1px 2px var(--color-shadow-dialog-near),0 8px 24px var(--color-shadow-dialog-far);font-family:var(--font-sans)}
+/* ===== P66: the milestone card, re-laid to Matt's approved design =====
+   docs/mockups/P66/milestone-dialog.dc.html. 380px, sections run edge to
+   edge with their own padding, so the hairlines between them reach the
+   card's border the way the design draws them. Every colour is a role
+   token; tints are color-mix() of a role, never a new literal. */
+.ms-dialog{position:fixed;z-index:2147483647;box-sizing:border-box;width:min(380px,calc(100vw - 24px));
+  max-height:calc(100vh - 24px);overflow-x:hidden;overflow-y:auto;padding:var(--space-0);
+  background:var(--color-dialog-bg);color:var(--color-text-primary);border:1px solid var(--color-line-default);
+  border-radius:var(--radius-overlay);box-shadow:0 1px 2px var(--color-shadow-dialog-near),0 8px 24px var(--color-shadow-dialog-far);
+  font-family:var(--font-sans)}
 .ms-dialog[hidden]{display:none}
 .ms-dialog *,.ms-dialog *::before,.ms-dialog *::after{box-sizing:border-box}
-/* A controls-only row: close on the left, the save pair on the right. The
-   spacer is what pushes the pair right, rather than justify-content:
-   space-between, which would also move anything else on the line every time
-   the form went dirty. Nothing else lives here, which is what frees the
-   heading below to use the card's full width. */
-.ms-dialog-head{display:flex;align-items:center;gap:var(--space-3);min-height:19px}
-/* The heading. Sits inside the title column, so it ends where the float
-   column begins and runs the whole width up to it. */
-.ms-heading{display:flex;align-items:center;gap:var(--space-2);min-width:0;margin:var(--space-2) 0 0 calc(-1 * var(--space-1));
-  padding-bottom:var(--space-3);border-bottom:1px solid var(--color-line-hairline)}
-.ms-heading .ms-code{white-space:nowrap}
-/* P59 (D-04): status right-aligned, anchored by the heading's underline. */
-.ms-heading .ms-status{white-space:nowrap;margin-left:auto;padding-left:var(--space-4)}
-/* P59 (D-03): float sits beside the ID, left of the status. */
-.ms-heading .ms-float-col{display:inline-flex;align-items:baseline;gap:var(--space-1);padding-left:var(--space-3);
-  border-left:1px solid var(--color-line-hairline)}
+/* 1. Header bar: close LEFT, the save pair RIGHT. The spacer pushes the
+   pair right, so nothing else on the line moves when the Saved flash shows. */
+.ms-dialog-head{display:flex;align-items:center;gap:var(--space-3);padding:var(--space-4) var(--space-5) var(--space-4) var(--space-4);
+  border-bottom:1px solid var(--color-line-hairline)}
 .ms-head-spacer{flex:1 1 auto;min-width:0}
-.ms-close{background:none;border:none;font-size:13px;line-height:1;color:var(--color-text-muted);cursor:pointer;padding:3px;border-radius:4px;margin:-3px 0 0 -3px}
-.ms-close:hover{color:var(--color-status-crit);background:var(--color-btn-hover-bg)}
-/* The milestone's own mark, as a button. It is drawn by renderIcon(), the same
-   helper the board uses, through the same sprite, so it carries the outline /
-   filled convention and the state colour without a second set of shapes here
-   that could drift from the board's. */
+.ms-head-ico{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+/* D-16 icon button: --icon-btn square, borderless, fill on hover only. The
+   shared 28px standalone minimum further down would grow it past the token,
+   the same exemption the card's mark button already takes. */
+.ms-close{display:inline-flex;align-items:center;justify-content:center;width:var(--icon-btn);height:var(--icon-btn);
+  padding:var(--space-0);border:0;border-radius:var(--radius-ctl);background:transparent;color:var(--color-text-muted);cursor:pointer}
+.ms-dialog .ms-close{min-width:0;min-height:0}
+.ms-close:hover{background:var(--color-btn-hover-bg);color:var(--color-text-primary)}
+.ms-saved-flash{font:500 var(--text-base)/1 var(--font-sans);color:var(--color-ok-text);padding-right:var(--space-2)}
+.ms-saved-flash[hidden]{display:none}
+/* The save pair is always on screen. Clean form: aria-disabled and muted,
+   and onMsSaveClick() ignores the click. */
+.ms-save-actions{display:inline-flex;align-items:center;gap:var(--space-3);flex:0 0 auto}
+.ms-act{height:var(--ctl-h);border-radius:var(--radius-ctl);font:500 var(--text-md)/1 var(--font-sans);cursor:pointer;white-space:nowrap}
+.ms-act-icon{display:inline-flex;align-items:center;justify-content:center;width:var(--icon-btn);height:var(--icon-btn);padding:var(--space-0);
+  border:1px solid var(--color-btn-secondary-outline);background:var(--color-btn-secondary-bg);color:var(--color-btn-secondary-text)}
+.ms-act-icon .ms-head-ico{width:15px;height:15px}
+.ms-act-icon:hover{background:var(--color-btn-secondary-hover-bg)}
+.ms-act-icon:active{background:var(--color-btn-secondary-pressed-bg)}
+.ms-act-primary{padding:0 var(--ctl-pad-x);border:1px solid var(--color-btn-primary-outline);background:var(--color-btn-primary-bg);color:var(--color-btn-primary-text)}
+.ms-act-primary:hover{background:var(--color-btn-primary-hover-bg)}
+.ms-act-primary:active{background:var(--color-btn-primary-pressed-bg)}
+.ms-act[aria-disabled="true"]{opacity:.4;cursor:default}
+.ms-act-icon[aria-disabled="true"]:hover,.ms-act-icon[aria-disabled="true"]:active{background:var(--color-btn-secondary-bg)}
+.ms-act-primary[aria-disabled="true"]:hover,.ms-act-primary[aria-disabled="true"]:active{background:var(--color-btn-primary-bg)}
+/* 2. Meta line and 3. title. */
+.ms-title-row{padding:var(--space-5) var(--space-6) 0}
+.ms-title-col{min-width:0}
+.ms-heading{display:flex;align-items:center;gap:var(--space-3);min-width:0;margin-left:calc(-1 * var(--space-2))}
 .ms-icon-btn{display:inline-flex;align-items:center;justify-content:center;
-  width:var(--icon-btn);height:var(--icon-btn);min-width:0;min-height:0;padding:var(--space-0);border:1px solid transparent;border-radius:5px;
+  width:var(--icon-btn);height:var(--icon-btn);min-width:0;min-height:0;padding:var(--space-0);border:1px solid transparent;border-radius:var(--radius-ctl);
   background:none;cursor:pointer;transition:background .12s,border-color .12s;flex:0 0 auto}
 .ms-icon-btn:hover{background:var(--color-accent-wash-weak);border-color:var(--color-accent)}
 .ms-icon-btn[aria-expanded="true"]{background:var(--color-accent-wash);border-color:var(--color-accent)}
-.ms-icon-btn .ms-icon{width:15px;height:15px}
-/* The shared 28px hit minimum further down would grow this box past the
-   D-16 icon-button size; the card's mark is the icon button itself. */
+.ms-icon-btn .ms-icon{width:12px;height:12px}
 .ms-dialog .ms-icon-btn{min-width:0;min-height:0}
-/* A field whose stored value differs from the schedule's own. Distinct from
-   .ms-dirty-field, which means "typed but not saved yet": this one survives the
-   save and is how a reader tells, later, which figures on the card are the
-   schedule's and which are somebody's. Its tooltip carries the original. */
+.ms-code{font:600 var(--text-md)/1 var(--font-mono);color:var(--color-text-primary);white-space:nowrap}
+.ms-sub{margin:0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font:450 var(--text-base)/1 var(--font-sans);color:var(--color-text-muted)}
+.ms-health-wrap{position:relative;display:inline-flex;align-items:center;gap:var(--space-3);margin-left:auto;flex:0 0 auto}
+/* The health pill: a dot and the label, tinted by the state it shows. */
+.ms-health-pill{display:inline-flex;align-items:center;gap:var(--space-3);height:var(--ctl-h);padding:0 var(--space-4);
+  border:0;border-radius:var(--radius-pill);font:500 var(--text-base)/1 var(--font-sans);cursor:pointer;
+  color:var(--color-text-muted);background:var(--color-bg-subtle)}
+.ms-pill-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex:0 0 auto}
+.ms-status{white-space:nowrap}
+.ms-dialog.status-track .ms-health-pill{color:var(--color-status-track);background:color-mix(in srgb,var(--color-status-track) 12%,transparent)}
+.ms-dialog.status-risk .ms-health-pill{color:var(--color-status-risk);background:color-mix(in srgb,var(--color-status-risk-fill) 12%,transparent)}
+.ms-dialog.status-crit .ms-health-pill{color:var(--color-crit);background:var(--color-crit-tint-bg)}
+.ms-dialog.status-done .ms-health-pill{color:var(--color-icon-done);background:color-mix(in srgb,var(--color-icon-done) 10%,transparent)}
+.ms-dialog.status-doneuser .ms-health-pill{color:var(--color-status-done);background:var(--color-ready-tint-bg)}
+.ms-dialog.status-future .ms-health-pill{color:var(--color-status-future);background:color-mix(in srgb,var(--color-status-future) 12%,transparent)}
+.ms-health-pill:hover{box-shadow:inset 0 0 0 1px currentColor}
+.ms-health-pill[aria-expanded="true"]{box-shadow:inset 0 0 0 1px currentColor}
+/* The existing five health dots, as a small popover under the pill. */
+.ms-health-pop{position:absolute;right:0;top:calc(100% + 4px);z-index:4;padding:var(--space-3) var(--space-4);
+  background:var(--color-dialog-bg);border:1px solid var(--color-line-default);border-radius:var(--radius-overlay);
+  box-shadow:0 6px 18px var(--color-shadow-dialog-far)}
+.ms-health-pop[hidden]{display:none}
+.ms-health-dots{display:flex;gap:var(--space-3);align-items:center}
+.ms-health-dots .health-dot{width:13px;height:13px;cursor:pointer;border:1.2px solid var(--color-health-rim)}
+.ms-health-dots .health-dot.selected{box-shadow:0 0 0 2px var(--color-accent)}
+.health-dot.mh-0{background:var(--color-health-none-fill)}
+.health-dot.mh-1{background:var(--color-health-info);border-color:var(--color-health-info-border)}
+.health-dot.mh-2{background:var(--color-health-good);border-color:var(--color-health-good-border)}
+.health-dot.mh-3{background:var(--color-health-watch);border-color:var(--color-health-watch-border)}
+.health-dot.mh-4{background:var(--color-crit);border-color:var(--color-crit-border)}
+.ms-title-line{display:flex;align-items:center;gap:var(--space-2);margin-top:var(--space-4)}
+/* Read first, edit on touch: every field is its <input>, drawn as the plain
+   value until hover (a subtle fill) or focus (the 1px accent ring). */
+.ms-edit{border:0;background:transparent;color:inherit;font-family:inherit;border-radius:var(--radius-ctl);
+  min-width:0;transition:background .12s}
+.ms-edit:hover{background:var(--color-bg-subtle)}
+.ms-dialog .ms-edit:focus,.ms-dialog .ms-edit:focus-visible{outline:1px solid var(--color-accent);outline-offset:0;background:var(--color-dialog-bg)}
+.ms-edit[readonly]:hover{background:transparent}
+.ms-dialog .ms-edit[readonly]:focus{outline:none}
+.ms-edit::placeholder{color:var(--color-text-muted)}
+/* A field holding an edit that has not been saved yet. */
+.ms-dirty-field{background:var(--color-accent-wash);color:var(--color-accent-ink)}
+.ms-title{flex:1 1 auto;width:100%;margin:0 0 0 calc(-1 * var(--space-2));padding:var(--space-1) var(--space-2);
+  font:600 16px/1.3 var(--font-sans);letter-spacing:-.015em;color:var(--color-text-primary)}
+/* The changed-dot: a field whose stored value differs from the schedule's
+   own. It replaces the old mark visually; the ms-mark-* elements are the same
+   ones syncMsEditedMarks() shows, and their title carries the previous value.
+   Scoped to the card, because the board's own mark reuses the class. */
 .ms-edited-mark{display:inline-block;width:5px;height:5px;margin-left:4px;border-radius:99px;
   background:var(--color-accent);vertical-align:middle;cursor:help;flex:0 0 auto}
+.ms-dialog .ms-edited-mark{width:6px;height:6px;margin:0;border-radius:50%;
+  background:var(--color-accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--color-accent) 18%,transparent)}
 .ms-edited-mark[hidden]{display:none}
-.ms-shorttitle-row .ms-edited-mark,.ms-heading .ms-edited-mark{align-self:center}
 /* D-18: the same mark, on the board. Repositioned to the icon's own
    top-right corner, OUTSIDE its box (never inside it, so the icon's own
    shape/fill/size is untouched) via the wrap's containing block — .m-wrap
@@ -2219,168 +2283,138 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 .legend-row .ms-edited-mark.li-swatch{position:static;display:inline-block;
   width:auto;height:auto;border-radius:0;margin:0 var(--space-1) 0 0;border:none;background:none;
   color:var(--color-accent-ink);font-weight:700;font-size:var(--text-lg);line-height:1}
-/* The type picker. Absolute inside the card rather than fixed: the card is
-   itself position:fixed, so it is not clipped by anything and an absolute
-   child rides with it when the card is repositioned. */
-.ms-type-menu{position:absolute;left:10px;top:30px;z-index:3;min-width:132px;padding:var(--space-2);
+/* The type picker, under the meta line. Absolute inside the card, which is
+   itself fixed, so it rides with the card when it is repositioned. */
+.ms-type-menu{position:absolute;left:var(--space-5);top:78px;z-index:3;min-width:132px;padding:var(--space-2);
   background:var(--color-dialog-bg);border:1px solid var(--color-line-default);border-radius:var(--radius-overlay);
   box-shadow:0 6px 18px var(--color-shadow-dialog-far)}
 .ms-type-menu[hidden]{display:none}
-.ms-type-opt{display:flex;align-items:center;gap:var(--space-3);width:100%;padding:var(--space-2) 7px;border:none;border-radius:5px;
+.ms-type-opt{display:flex;align-items:center;gap:var(--space-3);width:100%;padding:var(--space-2) var(--space-3);border:none;border-radius:var(--radius-ctl);
   background:none;color:var(--color-text-ink);font:500 11px var(--font-sans);text-align:left;cursor:pointer}
 .ms-type-opt:hover{background:var(--color-btn-hover-bg)}
 .ms-type-opt.active{background:var(--color-accent-wash);color:var(--color-accent-ink);font-weight:650}
 .ms-type-opt .ms-icon{width:11px;height:11px;flex:0 0 auto}
-.ms-type-grp{padding:5px 7px 2px;font:600 9px var(--font-sans);letter-spacing:.08em;
+.ms-type-grp{padding:var(--space-2) var(--space-3) var(--space-1);font:600 9px var(--font-sans);letter-spacing:.08em;
   text-transform:uppercase;color:var(--color-text-label)}
-/* The two save controls. Present only while the form is dirty. */
-.ms-save-actions{display:inline-flex;align-items:center;gap:var(--space-2);flex:0 0 auto}
-.ms-save-actions[hidden]{display:none}
-.ms-act{font:650 var(--text-base) var(--font-sans);padding:var(--space-2) var(--space-4);border-radius:5px;
-  cursor:pointer;white-space:nowrap}
-.ms-act-secondary{border:1px solid var(--color-btn-secondary-outline);background:var(--color-btn-secondary-bg);color:var(--color-btn-secondary-text)}
-.ms-act-secondary:hover{background:var(--color-btn-secondary-hover-bg)}
-.ms-act-secondary:active{background:var(--color-btn-secondary-pressed-bg)}
-.ms-act-primary{border:1px solid var(--color-btn-primary-outline);background:var(--color-btn-primary-bg);color:var(--color-btn-primary-text)}
-.ms-act-primary:hover{background:var(--color-btn-primary-hover-bg)}
-.ms-act-primary:active{background:var(--color-btn-primary-pressed-bg)}
-.ms-code{font:700 12px/1 var(--font-mono);color:var(--color-text-mono)}
-.ms-status{font:600 11px/1 var(--font-sans)}
-.ms-dialog.status-track .ms-status{color:var(--color-status-track)}
-.ms-dialog.status-risk .ms-status{color:var(--color-status-risk)}
-.ms-dialog.status-crit .ms-status{color:var(--color-status-crit)}
-.ms-dialog.status-done .ms-status{color:var(--color-icon-done)}
-.ms-dialog.status-doneuser .ms-status{color:var(--color-icon-doneuser)}
-.ms-dialog.status-future .ms-status{color:var(--color-status-future)}
-.ms-title{margin:0;font-weight:600;font-size:14.5px;line-height:1.28;letter-spacing:-.01em}
-/* The parent heading now sits ABOVE the title, so it reads as the band the
-   milestone belongs to before the milestone itself is named. */
-.ms-sub{margin:var(--space-2) 0 2px;font:450 11px var(--font-sans);color:var(--color-text-muted)}
-/* Title and its short title in one column, total float in a narrow one
-   beside them: two rows, the label at the short title's size so the pair
-   reads as one unit rather than a heading with a tag stuck on the end. */
-/* stretch, not flex-start: the float column should run beside both rows as a
-   column, with its divider full height, rather than ending after its own
-   two lines of text. */
-.ms-title-row{display:flex;gap:10px;align-items:stretch}
-.ms-title-col{flex:1 1 auto;min-width:0}
-.ms-float-col{flex:0 0 auto}
-.ms-float-val{font-weight:600;font-size:13px;line-height:1.3;white-space:nowrap;
-  font-variant-numeric:tabular-nums;color:var(--color-text-primary)}
-.ms-float-lbl{font-size:11px;line-height:1.3;color:var(--color-text-muted)}
+/* 4. Hairline, then Start / Duration / Finish in three equal tracks. */
+.ms-lbl{display:flex;align-items:center;gap:var(--space-2);margin:0 0 var(--space-3);font:500 var(--text-sm)/1 var(--font-sans);
+  letter-spacing:.08em;text-transform:uppercase;color:var(--color-text-label)}
+.ms-schedule{margin:var(--space-5) var(--space-6) 0;padding-top:var(--space-5);border-top:1px solid var(--color-line-hairline);
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-5)}
+.ms-schedule .ms-field{display:flex;flex-direction:column;align-items:flex-start;min-width:0}
+.ms-fin-field{align-items:flex-end}
+.ms-schedule .ms-fin-field{align-items:flex-end}
+.ms-fin-field .ms-lbl{justify-content:flex-end}
+.ms-date,.ms-dur-val{font:600 var(--text-lg)/1.2 var(--font-sans);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.ms-date{width:calc(100% + var(--space-2));margin-left:calc(-1 * var(--space-2));padding:var(--space-0) var(--space-2)}
+.ms-fin-field .ms-date{text-align:right;margin:0 calc(-1 * var(--space-2)) 0 0}
+/* An actualised date ("A") keeps its green "this really happened" ink. The
+   fill it used to carry is dropped: at rest every value reads plain (P66). */
+.ms-date.is-actualised{color:var(--color-status-done)}
+.ms-started{margin-top:var(--space-2);font:500 var(--text-sm)/1 var(--font-sans);color:var(--color-accent-ink)}
+.ms-started:empty{display:none}
+.ms-dur-val{padding:var(--space-0) 0}
+.ms-float-col{display:inline-flex;align-items:baseline;margin-top:var(--space-2);font:450 var(--text-sm)/1.2 var(--font-sans);color:var(--color-text-muted);white-space:nowrap}
+.ms-float-val{width:2.2em;padding:var(--space-0) var(--space-1);text-align:center;font:inherit;font-variant-numeric:tabular-nums;color:var(--color-text-primary)}
 .ms-float-val::placeholder{color:var(--color-text-muted)}
-.ms-float-val[readonly]{cursor:default;background:transparent}
-.ms-shorttitle-block{margin-top:var(--space-2)}
-.ms-shorttitle-row{display:flex;gap:var(--space-2);align-items:center}
-/* P59 (D-07): the board label, named as such, above the title. */
-.ms-shorttitle-lbl{flex:0 0 auto;font-size:11px;font-weight:600;color:var(--color-text-label)}
-.ms-shorttitle-row input{flex:1;font-size:11px;padding:2px 4px;border:none;border-radius:3px;background:transparent;color:var(--color-text-muted);font-family:inherit;font-style:italic;transition:background .12s}
-.ms-shorttitle-row input:hover{background:var(--color-accent-wash-weak)}
-.ms-shorttitle-row input:focus{background:var(--color-accent-wash);color:var(--color-accent-ink);outline:none;font-style:normal}
-/* The short title's own Save button is gone. It saved on click without hiding
-   itself, so it sat there after a save looking like unsaved work, and a second
-   save control inside a form that now has its own is two writers for one
-   field. The head's save pair is the only way to commit the card. */
-/* Start, Finish and Progress are one row. stretch rather than flex-end so the
-   divider beside Progress runs the row's full height, the same device the
-   float column already uses. */
-/* A three-column grid, not a flex row. Equal weight and fixed positions were
-   asked for directly, and flex could not give them: the columns sized to their
-   own content, so Start appearing or a longer date changed where Finish and
-   Progress sat. A grid of three equal tracks puts each label in the same place
-   on every card, whatever it holds. */
-.ms-schedule{margin-top:12px;padding-top:10px;border-top:1px solid var(--color-line-hairline);
-  display:grid;grid-template-columns:1fr 1fr 76px;align-items:stretch;gap:10px}
-/* P59 (D-01): the two date tracks take the width Progress does not need, so
-   an actualised date ("04-Aug-26 A") fits. Positions stay fixed per card. */
-.ms-schedule .ms-field{display:flex;flex-direction:column;justify-content:flex-end;min-width:0}
-/* Progress keeps its divider and its right alignment, now as the third track
-   rather than by being pushed there with margin-left:auto. */
-.ms-prog-field{align-items:flex-end;padding-left:10px;
-  border-left:1px solid var(--color-line-hairline)}
-.ms-lbl{display:block;margin-bottom:4px;font:500 10px var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--color-text-label)}
-/* One declaration for all three values in that row. Start was 14px against
-   Finish at 18px, which read as two different kinds of fact rather than one
-   row, and Progress has to match both or the row reads as two again. */
-.ms-date,.ms-prog-input{font-weight:600;font-size:14px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
-/* Every field in the card that is now typed into rather than read. They keep
-   the look of the value they replaced (no border, no box) and only show they
-   are editable on hover and focus, so the card still reads as a card. The one
-   shared rule exists because six fields with six copies of this is the shape
-   that drifts. */
-.ms-title,.ms-date,.ms-float-val,.ms-val-input,.ms-shorttitle-row input{
-  border:none;background:transparent;color:inherit;font-family:inherit;
-  border-radius:3px;transition:background .12s;width:100%;min-width:0}
-.ms-title:hover,.ms-date:hover,.ms-float-val:hover,.ms-val-input:hover{background:var(--color-accent-wash-weak)}
-.ms-title:focus,.ms-date:focus,.ms-float-val:focus,.ms-val-input:focus{
-  background:var(--color-accent-wash);color:var(--color-accent-ink);outline:none}
-/* A field holding an edit that has not been saved yet. Same filled dot and
-   accent wash the Progress field and the row remarks already use for exactly
-   this meaning, so "changed but not saved" looks the same everywhere. */
-.ms-dirty-field{background:var(--color-accent-wash);color:var(--color-accent-ink)}
-/* P59 (D-06): the full card width, on a faint surface so it reads as the
-   field it is. */
-.ms-title{padding:var(--space-2) var(--space-3);margin:var(--space-1) 0 0;display:block;background:var(--color-bg-subtle);border-radius:var(--radius-ctl)}
-.ms-date{padding:var(--space-0) var(--space-1);margin-left:-2px}
-.ms-val-input{padding:var(--space-0) var(--space-1);margin-left:-2px;width:100%}
-.ms-float-val{padding:var(--space-0) var(--space-1);text-align:center;width:3.4em;min-width:0}
-.ms-date.is-actualised,.ms-start-date.is-actualised{background:var(--color-ready-tint-bg);color:var(--color-status-done);border-radius:5px;padding:1px 6px;display:inline-block}
-/* .ms-type-inline is gone: the type name moved off the heading and onto the
-   icon's tooltip, where it is now written in exactly one place. */
-/* The editable Progress field. The wrapper carries the state, not the input:
-   ::before cannot be given to an <input>, and the edited indicator is the same
-   filled dot and accent wash the row remarks field uses for the same meaning. */
-.ms-prog-edit{display:inline-flex;align-items:baseline;gap:1px;padding:1px 3px;margin-right:-3px;border-radius:3px;transition:background .12s}
-.ms-prog-edit:hover{background:var(--color-accent-wash-weak)}
-.ms-prog-edit:focus-within{background:var(--color-accent-wash)}
-.ms-prog-input{width:2.9em;text-align:right;padding:0;border:none;outline:none;background:transparent;color:inherit;font-family:inherit}
-.ms-prog-pct{font-size:11px;color:var(--color-text-muted)}
-.ms-prog-edit.is-zero .ms-prog-input{color:var(--color-text-label)}
+.ms-float-val[readonly]{cursor:default}
+.ms-float-lbl{color:var(--color-text-muted)}
+/* 5. Progress: label and changed-dot, the figure and the status word on
+   the right, a 3px bar under both. */
+.ms-prog-row{margin:var(--space-5) var(--space-6) 0}
+.ms-prog-head{display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);margin-bottom:var(--space-3)}
+.ms-prog-head .ms-lbl{margin:0}
+.ms-prog-right{display:inline-flex;align-items:baseline;gap:var(--space-2)}
+.ms-prog-edit{display:inline-flex;align-items:baseline;border-radius:var(--radius-ctl);transition:background .12s}
+.ms-prog-edit:hover{background:var(--color-bg-subtle)}
+.ms-prog-edit:focus-within{outline:1px solid var(--color-accent);background:var(--color-dialog-bg)}
+.ms-prog-input{width:2.6em;text-align:right;padding:var(--space-0);font:600 var(--text-md)/1.2 var(--font-sans);font-variant-numeric:tabular-nums}
+.ms-dialog .ms-prog-input:focus,.ms-dialog .ms-prog-input:focus-visible{outline:none;background:transparent}
+.ms-prog-pct{font:600 var(--text-md)/1.2 var(--font-sans);color:var(--color-text-primary)}
+.ms-prog-word{font:450 var(--text-md)/1.2 var(--font-sans);color:var(--color-text-muted)}
+.ms-prog-edit.is-zero .ms-prog-input,.ms-prog-edit.is-zero .ms-prog-pct{color:var(--color-text-label)}
 .ms-prog-edit.changed{background:var(--color-accent-wash)}
 .ms-prog-edit.changed .ms-prog-input,.ms-prog-edit.changed .ms-prog-pct{color:var(--color-accent-ink)}
-.ms-prog-edit.changed::before{content:'\25CF';color:var(--color-accent);font-size:7px;line-height:1;align-self:center;letter-spacing:1px}
-/* Weight and the two hours figures are reference values, not things read at a
-   glance, so they fold away. Collapsed by default, same as the ID lists. */
-.ms-metrics-fold{margin-top:10px;border-top:1px solid var(--color-line-hairline);padding-top:5px}
-.ms-metrics-fold summary{font-size:9px;color:var(--color-text-on-panel-muted);cursor:pointer;user-select:none;list-style:revert}
-.ms-metrics{display:grid;grid-template-columns:1fr 1fr 1fr;column-gap:12px}
-.ms-field{padding:9px 0 0}
-.ms-val{font-weight:600;font-size:13px;font-variant-numeric:tabular-nums}
-.ms-val.is-zero{color:var(--color-text-label)}
-.ms-progress-track{margin-top:11px;height:3px;border-radius:99px;background:var(--color-status-track-bg);overflow:hidden}
+.ms-progress-track{height:3px;border-radius:99px;background:var(--color-status-track-bg);overflow:hidden}
 .ms-progress-fill{height:100%;border-radius:inherit;background:var(--color-status-track)}
 .ms-dialog.status-risk .ms-progress-fill{background:var(--color-status-risk-fill)}
 .ms-dialog.status-crit .ms-progress-fill{background:var(--color-status-crit)}
 .ms-dialog.status-done .ms-progress-fill{background:var(--color-icon-done)}
 .ms-dialog.status-doneuser .ms-progress-fill{background:var(--color-icon-doneuser)}
-.ms-comment-block{margin-top:11px;padding-top:10px;border-top:1px solid var(--color-line-hairline)}
-.ms-comment-head{display:flex;align-items:center;gap:var(--space-3);margin-bottom:5px}
-.ms-comment-dot{width:6px;height:6px;border-radius:50%;background:var(--color-comment-indicator);display:inline-block;margin-right:5px;flex-shrink:0}
+/* Collapsible sections share one summary style: chevron and title left,
+   the count right in mono. */
+.ms-dialog summary{list-style:none;cursor:pointer;user-select:none}
+.ms-dialog summary::-webkit-details-marker{display:none}
+/* The app-wide details>summary::before triangle is replaced here by the
+   design's own chevron. */
+.ms-dialog details>summary::before{content:none;display:none}
+.ms-chev{width:10px;height:10px;fill:none;stroke:currentColor;stroke-width:1.5;flex:0 0 auto;transition:transform .15s}
+.ms-dialog details[open]>summary .ms-chev{transform:rotate(90deg)}
+/* "More fields": the P66 deviation that keeps the fields the design has no
+   place for. Collapsed on every open. */
+.ms-metrics-fold{margin:var(--space-4) var(--space-6) 0}
+.ms-metrics-fold>summary{display:inline-flex;align-items:center;gap:var(--space-3);padding:var(--space-2) 0;
+  font:500 var(--text-sm)/1 var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--color-text-label)}
+.ms-metrics-fold>summary:hover{color:var(--color-text-primary)}
+.ms-shorttitle-block{margin-top:var(--space-3)}
+.ms-shorttitle-row{display:flex;gap:var(--space-3);align-items:center}
+.ms-shorttitle-lbl{flex:0 0 auto;font:600 var(--text-base) var(--font-sans);color:var(--color-text-label)}
+.ms-shorttitle-row input{flex:1 1 auto;height:var(--ctl-h);padding:0 var(--space-2);font:450 var(--text-base) var(--font-sans);color:var(--color-text-muted)}
+.ms-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-5);padding-bottom:var(--space-2)}
+.ms-field{padding:var(--space-4) 0 0}
+.ms-schedule .ms-field{padding:0}
+.ms-val{font:600 13px var(--font-sans);font-variant-numeric:tabular-nums}
+.ms-val-input{width:100%;padding:var(--space-0) var(--space-2);margin-left:calc(-1 * var(--space-2))}
+.ms-val.is-zero{color:var(--color-text-label)}
+/* 6. New update: a NEW remark, empty on every open. */
+.ms-comment-block{margin-top:var(--space-5);padding:var(--space-5) var(--space-6);border-top:1px solid var(--color-line-hairline)}
+.ms-comment-head{display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);margin-bottom:var(--space-4)}
+.ms-sec-title{min-width:0;display:inline-flex;align-items:center;gap:var(--space-4);font:600 var(--text-base)/1 var(--font-sans);
+  letter-spacing:.06em;text-transform:uppercase;color:var(--color-text-primary)}
+.ms-comment-dot{width:6px;height:6px;border-radius:50%;background:var(--color-comment-indicator);display:inline-block;flex-shrink:0}
 .ms-comment-dot.empty{background:transparent;border:1px solid var(--color-line-default)}
-.ms-comment-block textarea{width:100%;min-height:40px;resize:vertical;font-family:var(--font-sans);font-size:10.5px;padding:6px 7px;border-radius:6px;border:1px solid var(--color-line-default);background:var(--color-bg-elevated);color:var(--color-text-ink);box-sizing:border-box}
-.ms-head-divider{width:1px;align-self:stretch;background:var(--color-line-default)}
-.ms-health-dots{display:flex;gap:var(--space-2);align-items:center;margin-left:auto}
-.ms-health-dots .health-dot{width:13px;height:13px;cursor:pointer;border:1.2px solid var(--color-health-rim)}
-/* Read-only ID lists, collapsed by default so the card keeps its size until
-   someone wants the raw logic. Selectable, because the point of showing the
-   IDs is being able to copy them into P6 or an email. */
-.ms-dep-lists{margin-top:6px;border-top:1px solid var(--color-line-hairline);padding-top:5px}
-.ms-dep-lists summary{font-size:9px;color:var(--color-text-on-panel-muted);cursor:pointer;user-select:none;list-style:revert}
-.ms-dep-cols{display:flex;gap:8px;margin-top:5px}
-.ms-dep-col{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:2px}
-.ms-dep-col textarea{width:100%;box-sizing:border-box;min-height:44px;resize:vertical;
-  font-size:8.5px;line-height:1.35;font-family:var(--font-mono,monospace);
-  color:var(--color-text-on-panel);background:var(--color-bg-elevated);
-  border:1px solid var(--color-input-border);border-radius:3px;padding:3px 4px}
-.ms-health-dots .health-dot.selected{box-shadow:0 0 0 2px var(--color-accent)}
-.health-dot.mh-0{background:var(--color-health-none-fill)}
-.health-dot.mh-1{background:var(--color-health-info);border-color:var(--color-health-info-border)}
-.health-dot.mh-2{background:var(--color-health-good);border-color:var(--color-health-good-border)}
-.health-dot.mh-3{background:var(--color-health-watch);border-color:var(--color-health-watch-border)}
-.health-dot.mh-4{background:var(--color-crit);border-color:var(--color-crit-border)}
-.ms-toggles{margin-top:11px;padding-top:10px;border-top:1px solid var(--color-line-hairline);display:flex;flex-wrap:wrap;gap:6px 16px}
-.ms-toggle{display:flex;align-items:center;gap:6px;cursor:pointer;font:450 11px var(--font-sans);color:var(--color-text-small)}
+.ms-comment-dot[hidden]{display:none}
+.ms-followup{height:var(--ctl-h);padding:0 var(--space-3);border:1px solid var(--color-input-border);border-radius:var(--radius-ctl);
+  background:var(--color-dialog-bg);color:var(--color-text-primary);font:450 var(--text-base) var(--font-sans);cursor:pointer}
+.ms-comment-block textarea{display:block;width:100%;min-height:52px;resize:vertical;padding:var(--space-4) var(--space-5);
+  border:1px solid var(--color-line-default);border-radius:var(--radius-ctl);background:var(--color-bg-subtle);
+  font:450 var(--text-md)/1.45 var(--font-sans);color:var(--color-text-primary)}
+.ms-comment-block textarea::placeholder{color:var(--color-text-muted)}
+.ms-dialog .ms-comment-block textarea:focus,.ms-dialog .ms-comment-block textarea:focus-visible{outline:1px solid var(--color-accent);outline-offset:0;background:var(--color-dialog-bg)}
+/* 7 and 8. The two collapsible sections. */
+.ms-sec{border-top:1px solid var(--color-line-hairline)}
+.ms-sec>summary{display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);padding:var(--space-5) var(--space-6)}
+.ms-sec>summary:hover{background:var(--color-bg-subtle)}
+.ms-sec-count{font:450 var(--text-base)/1 var(--font-mono);color:var(--color-text-muted);white-space:nowrap}
+.ms-sec-body{padding:var(--space-1) var(--space-6) var(--space-5)}
+.ms-toggles{display:flex;flex-wrap:wrap;gap:var(--space-3) var(--space-6);margin-bottom:var(--space-5)}
+.ms-toggle{display:flex;align-items:center;gap:var(--space-3);cursor:pointer;font:450 var(--text-base) var(--font-sans);color:var(--color-text-muted)}
 .ms-toggle input{width:12px;height:12px;margin:0;cursor:pointer;accent-color:var(--color-status-track)}
+.ms-dep-cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--space-5)}
+.ms-dep-col{min-width:0}
+.ms-dep-col .ms-lbl{margin-bottom:var(--space-4)}
+.ms-dep-chips{display:flex;flex-wrap:wrap;gap:var(--space-2)}
+.ms-dep-none{font:450 var(--text-base) var(--font-sans);color:var(--color-text-muted)}
+/* An ID chip: the linked milestone's state as a dot, its name as the title.
+   A chip whose milestone is on the board opens that card. */
+.ms-dep-chip{display:inline-flex;align-items:center;gap:var(--space-2);height:var(--ctl-h);padding:0 var(--space-3);
+  border:1px solid var(--color-line-default);border-radius:var(--radius-ctl);background:var(--color-bg-subtle);
+  font:500 var(--text-base)/1 var(--font-mono);color:var(--color-text-primary);cursor:pointer}
+.ms-dep-chip:hover{background:var(--color-btn-hover-bg)}
+.ms-dep-chip.is-off{cursor:default;color:var(--color-text-muted)}
+.ms-dep-chip.is-off:hover{background:var(--color-bg-subtle)}
+.ms-chip-dot{width:6px;height:6px;border-radius:50%;flex:0 0 auto;background:var(--color-icon-future)}
+.ms-chip-dot[data-st="done"]{background:var(--color-icon-done)}
+.ms-chip-dot[data-st="doneuser"]{background:var(--color-icon-doneuser)}
+.ms-chip-dot[data-st="track"]{background:var(--color-icon-track)}
+.ms-chip-dot[data-st="risk"]{background:var(--color-icon-risk)}
+.ms-chip-dot[data-st="crit"]{background:var(--color-icon-crit)}
+.ms-chip-dot[data-st="future"]{background:var(--color-icon-future)}
+.ms-chip-dot[data-st="na"]{background:var(--color-icon-na)}
+.ms-dep-raw[hidden]{display:none}
+/* 8. Update history. #ms-history is filled by the history module. */
+#ms-history{padding:0 var(--space-6) var(--space-4)}
+.ms-hist-empty{margin:0;padding:var(--space-1) 0 var(--space-4);font:450 var(--text-md) var(--font-sans);color:var(--color-text-muted)}
 
 /* ============================================================
    D-15 control consistency pass: two shared rules instead of
@@ -3765,102 +3799,130 @@ button.sg-hdot:hover{transform:scale(1.25)}
 </div>
 
 <div id="ms-dialog" class="ms-dialog" hidden>
-  <!-- A discrete controls row, holding nothing but the two ways out. Close
-       discards and sits LEFT; the save pair commits and sits RIGHT, so the two
-       directions of leaving the card cannot be hit for one another. Keeping
-       them on their own line is what lets the heading below run the full width
-       of the card instead of competing with them for it. -->
+  <!-- P66: the card re-laid to Matt's approved design
+       (docs/mockups/P66/milestone-dialog.dc.html). Every id the code and the
+       checks read is kept; the elements moved and were restyled, no logic was
+       added beyond what the layout itself needs (duration, chips, follow-up).
+       The head row holds nothing but the ways out: close (discard) LEFT, the
+       save pair RIGHT, so the two directions cannot be hit for one another. -->
   <div class="ms-dialog-head">
-    <button class="ms-close" onclick="discardMsDialog()" aria-label="Discard changes and close" title="Discard changes and close">&#10005;</button>
+    <button type="button" class="ms-close" onclick="discardMsDialog()" aria-label="Discard changes and close" title="Discard changes and close"><svg class="ms-head-ico" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 3l8 8M11 3l-8 8"/></svg></button>
     <span class="ms-head-spacer"></span>
-    <!-- Shown only while the form is dirty, so a card nobody has edited carries
-         no save controls at all. -->
-    <span class="ms-save-actions" id="ms-save-actions" hidden>
-      <button type="button" class="ms-act ms-act-secondary" onclick="saveMsDialog(false)" title="Save">Save</button>
-      <button type="button" class="ms-act ms-act-primary" onclick="saveMsDialog(true)" title="Save and close">Save &amp; close</button>
+    <span class="ms-saved-flash" id="ms-saved-flash" role="status" aria-live="polite" hidden>Saved</span>
+    <!-- Always on screen. While the form is clean both are aria-disabled and
+         muted, and a click on either does nothing (onMsSaveClick). -->
+    <span class="ms-save-actions" id="ms-save-actions" aria-disabled="true">
+      <button type="button" class="ms-act ms-act-icon" onclick="onMsSaveClick(false)" title="Save" aria-label="Save" aria-disabled="true"><svg class="ms-head-ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 2.5h9l2 2v9h-11z"/><path d="M5 2.5v3.5h5V2.5"/><rect x="5" y="9" width="6" height="4.5"/></svg></button>
+      <button type="button" class="ms-act ms-act-primary" onclick="onMsSaveClick(true)" title="Save and close" aria-disabled="true">Save &amp; close</button>
     </span>
   </div>
   <div class="ms-type-menu" id="ms-type-menu" hidden></div>
-  <!-- P59 (D-02..D-07): the heading carries the mark, the ID and the float on
-       the left and the status on the right, underlined. The parent band, the
-       board's display label and then the full-width title follow it. -->
   <div class="ms-title-row">
     <div class="ms-title-col">
+      <!-- Meta line: the mark (the type and mark picker), the ID, then the
+           band and type muted; the health changed-dot and the health pill on
+           the right. -->
       <div class="ms-heading">
         <button type="button" class="ms-icon-btn" id="ms-icon-btn" onclick="toggleMsTypeMenu(event)" aria-haspopup="true" aria-expanded="false" aria-label="Milestone type and mark" title="Milestone type and mark"><svg class="ms-icon"><use href="#ico-diamond"/></svg></button>
         <span id="ms-code" class="ms-code"></span>
         <span class="ms-edited-mark" id="ms-mark-icon" data-field="marker" hidden></span>
-        <span class="ms-float-col" id="ms-float-col">
-          <span class="ms-float-lbl">Float</span>
-          <input type="text" id="ms-float-val" class="ms-float-val" inputmode="decimal" maxlength="6" autocomplete="off" placeholder="-" title="Total float in days" aria-label="Total float in days" oninput="onMsFieldInput()">
-          <span class="ms-edited-mark" id="ms-mark-floatD" data-field="floatD" hidden></span>
+        <span id="ms-sub" class="ms-sub"></span>
+        <span class="ms-health-wrap">
+          <span class="ms-edited-mark" id="ms-mark-health" data-field="health" hidden></span>
+          <button type="button" class="ms-health-pill" id="ms-health-pill" onclick="toggleMsHealthPop(event)" aria-haspopup="true" aria-expanded="false" aria-label="Health. Click to change it." title="Health. Click to change it."><span class="ms-pill-dot"></span><span id="ms-status" class="ms-status"></span></button>
+          <div class="ms-health-pop" id="ms-health-pop" hidden>
+            <div class="ms-health-dots" id="ms-health-dots">
+              <span class="health-dot mh-0" data-val="0" title="N/A, no status, base colour" onclick="onMsHealthClick(this)"></span>
+              <span class="health-dot mh-1" data-val="1" title="On track" onclick="onMsHealthClick(this)"></span>
+              <span class="health-dot mh-2" data-val="2" title="Done, marked off in this update, shown green" onclick="onMsHealthClick(this)"></span>
+              <span class="health-dot mh-3" data-val="3" title="At risk" onclick="onMsHealthClick(this)"></span>
+              <span class="health-dot mh-4" data-val="4" title="Critical" onclick="onMsHealthClick(this)"></span>
+            </div>
+          </div>
         </span>
-        <span id="ms-status" class="ms-status"></span>
       </div>
-      <p id="ms-sub" class="ms-sub"></p>
-      <div class="ms-shorttitle-block">
-        <div class="ms-shorttitle-row">
-          <label class="ms-shorttitle-lbl" for="ms-shorttitle-input">Display label:</label>
-          <input type="text" id="ms-shorttitle-input" maxlength="100" placeholder="Short title&#8230;" title="Short title shown on the board" oninput="onMsFieldInput()">
-          <span class="ms-edited-mark" id="ms-mark-shortTitle" data-field="shortTitle" hidden></span>
-        </div>
+      <div class="ms-title-line">
+        <input type="text" id="ms-title" class="ms-title ms-edit" maxlength="200" placeholder="Milestone name&#8230;" title="Milestone name" oninput="onMsFieldInput()">
+        <span class="ms-edited-mark" id="ms-mark-actName" data-field="actName" hidden></span>
       </div>
-      <input type="text" id="ms-title" class="ms-title" maxlength="200" placeholder="Milestone name&#8230;" title="Milestone name" oninput="onMsFieldInput()">
-      <span class="ms-edited-mark" id="ms-mark-actName" data-field="actName" hidden></span>
     </div>
   </div>
-  <!-- Start, Finish and Progress are three equal columns that never move. A
-       milestone with no start shows a dash in the same place a date would be,
-       rather than the column collapsing and the other two sliding across. -->
+  <!-- Start, Duration and Finish: three equal tracks that never move. A
+       milestone with no start shows a dash where a date would be. -->
   <div class="ms-schedule">
-    <div class="ms-field" id="ms-start-field"><span class="ms-lbl">Start<span class="ms-edited-mark" id="ms-mark-start" data-field="start" hidden></span></span><input type="text" id="ms-start-date" class="ms-date ms-start-date" maxlength="12" autocomplete="off" title="Start date. Clear the field to restore the schedule's own value." oninput="onMsFieldInput()"></div>
-    <div class="ms-field"><span class="ms-lbl">Finish<span class="ms-edited-mark" id="ms-mark-date" data-field="date" hidden></span></span><input type="text" id="ms-date" class="ms-date" maxlength="12" autocomplete="off" title="Finish date. Clear the field to restore the schedule's own value." oninput="onMsFieldInput()"></div>
-    <div class="ms-field ms-prog-field"><span class="ms-lbl">Progress<span class="ms-edited-mark" id="ms-mark-progress" data-field="progress" hidden></span></span><span class="ms-prog-edit" id="ms-prog-edit"><input type="text" id="ms-progress-input" class="ms-prog-input" inputmode="decimal" maxlength="5" autocomplete="off" title="Progress override. Clear the field to restore the schedule's own value." oninput="onMsFieldInput()" onkeydown="onMsProgressKey(event)"><span class="ms-prog-pct">%</span></span></div>
+    <div class="ms-field" id="ms-start-field"><span class="ms-lbl">Start<span class="ms-edited-mark" id="ms-mark-start" data-field="start" hidden></span></span><input type="text" id="ms-start-date" class="ms-date ms-start-date ms-edit" maxlength="12" autocomplete="off" title="Start date. Clear the field to restore the schedule's own value." oninput="onMsFieldInput()"><span class="ms-started" id="ms-started"></span></div>
+    <div class="ms-field ms-dur-field" id="ms-dur-field"><span class="ms-lbl">Duration<span class="ms-edited-mark" id="ms-mark-floatD" data-field="floatD" hidden></span></span><span class="ms-dur-val" id="ms-duration"></span><span class="ms-float-col" id="ms-float-col">(<input type="text" id="ms-float-val" class="ms-float-val ms-edit" inputmode="decimal" maxlength="6" autocomplete="off" placeholder="-" title="Total float in days" aria-label="Total float in days" oninput="onMsFieldInput()"><span class="ms-float-lbl">d float)</span></span></div>
+    <div class="ms-field ms-fin-field"><span class="ms-lbl"><span class="ms-edited-mark" id="ms-mark-date" data-field="date" hidden></span>Finish</span><input type="text" id="ms-date" class="ms-date ms-edit" maxlength="12" autocomplete="off" title="Finish date. Clear the field to restore the schedule's own value." oninput="onMsFieldInput()"></div>
   </div>
-  <div class="ms-progress-track"><div id="ms-progress-fill" class="ms-progress-fill"></div></div>
+  <div class="ms-prog-row ms-prog-field" id="ms-prog-field">
+    <div class="ms-prog-head">
+      <span class="ms-lbl">Progress<span class="ms-edited-mark" id="ms-mark-progress" data-field="progress" hidden></span></span>
+      <span class="ms-prog-right"><span class="ms-prog-edit" id="ms-prog-edit"><input type="text" id="ms-progress-input" class="ms-prog-input ms-edit" inputmode="decimal" maxlength="5" autocomplete="off" title="Progress override. Clear the field to restore the schedule's own value." oninput="onMsFieldInput()" onkeydown="onMsProgressKey(event)"><span class="ms-prog-pct">%</span></span><span class="ms-prog-word" id="ms-prog-word"></span></span>
+    </div>
+    <div class="ms-progress-track"><div id="ms-progress-fill" class="ms-progress-fill"></div></div>
+  </div>
+  <!-- P66 deviation from the design, so no function is lost: the fields the
+       design has no place for fold away here, collapsed on every open. The
+       type and the mark stay on the meta line's mark button. -->
   <details class="ms-metrics-fold" id="ms-metrics-fold">
-    <summary>Weighting and hours</summary>
+    <summary><svg class="ms-chev" viewBox="0 0 10 10" aria-hidden="true"><path d="M3.5 2l3 3-3 3"/></svg>More fields</summary>
+    <div class="ms-shorttitle-block">
+      <div class="ms-shorttitle-row">
+        <label class="ms-shorttitle-lbl" for="ms-shorttitle-input">Display label:</label>
+        <input type="text" id="ms-shorttitle-input" class="ms-edit" maxlength="100" placeholder="Short title&#8230;" title="Short title shown on the board" oninput="onMsFieldInput()">
+        <span class="ms-edited-mark" id="ms-mark-shortTitle" data-field="shortTitle" hidden></span>
+      </div>
+    </div>
     <div class="ms-metrics">
-      <div class="ms-field"><span class="ms-lbl">MS weight<span class="ms-edited-mark" id="ms-mark-weight" data-field="weight" hidden></span></span><input type="text" id="ms-weight" class="ms-val ms-val-input" inputmode="decimal" maxlength="6" autocomplete="off" title="Milestone weight. Clear the field to restore the schedule's own value." oninput="onMsFieldInput()"></div>
-      <!-- Derived from weight and progress, so not editable: a field a person
-           can type into that the next keystroke elsewhere overwrites is a
-           control that lies about what it does. -->
+      <div class="ms-field"><span class="ms-lbl">MS weight<span class="ms-edited-mark" id="ms-mark-weight" data-field="weight" hidden></span></span><input type="text" id="ms-weight" class="ms-val ms-val-input ms-edit" inputmode="decimal" maxlength="6" autocomplete="off" title="Milestone weight. Clear the field to restore the schedule's own value." oninput="onMsFieldInput()"></div>
+      <!-- Derived from weight and progress, so not editable. -->
       <div class="ms-field"><span class="ms-lbl">MS hours</span><span id="ms-hours" class="ms-val"></span></div>
       <div class="ms-field"><span class="ms-lbl">Earned hours</span><span id="ms-earned" class="ms-val"></span></div>
     </div>
   </details>
+  <!-- A NEW remark, empty on every open. Earlier remarks are in the history. -->
   <div class="ms-comment-block">
     <div class="ms-comment-head">
-      <span class="ms-lbl" style="margin-bottom:0"><span id="ms-comment-dot" class="ms-comment-dot empty"></span>Comment</span>
-      <span class="ms-head-divider"></span>
-      <span class="ms-lbl" style="margin-bottom:0">Health<span class="ms-edited-mark" id="ms-mark-health" data-field="health" hidden></span></span>
-      <div class="ms-health-dots" id="ms-health-dots">
-        <span class="health-dot mh-0" data-val="0" title="N/A &mdash; no status, base colour" onclick="onMsHealthClick(this)"></span>
-        <span class="health-dot mh-1" data-val="1" title="On track" onclick="onMsHealthClick(this)"></span>
-        <span class="health-dot mh-2" data-val="2" title="Done &mdash; marked off in this update, shown green" onclick="onMsHealthClick(this)"></span>
-        <span class="health-dot mh-3" data-val="3" title="At risk" onclick="onMsHealthClick(this)"></span>
-        <span class="health-dot mh-4" data-val="4" title="Critical" onclick="onMsHealthClick(this)"></span>
-      </div>
+      <span class="ms-sec-title"><span id="ms-comment-dot" class="ms-comment-dot empty" hidden></span>New update</span>
+      <select id="ms-followup" class="ms-followup" title="Follow-up status of this update" aria-label="Follow-up status of this update">
+        <option value="open" selected>Follow-up: Open</option>
+        <option value="sent">Follow-up: Sent</option>
+        <option value="done">Follow-up: Done</option>
+      </select>
     </div>
-    <textarea id="ms-comment-text" placeholder="Notes on this milestone&#8230;" oninput="onMsCommentInput()"></textarea>
+    <textarea id="ms-comment-text" rows="2" placeholder="Add a comment" oninput="onMsCommentInput()"></textarea>
     <button type="button" class="ms-notes-ref" id="ms-notes-ref" hidden aria-label="Notes that mention this milestone" onclick="showNotesForDialog(event)"></button>
   </div>
-  <div class="ms-toggles">
-    <label class="ms-toggle"><input type="checkbox" id="ms-toggle-pred" onchange="onMsDepToggle()"> Show predecessors</label>
-    <label class="ms-toggle"><input type="checkbox" id="ms-toggle-succ" onchange="onMsDepToggle()"> Show dependencies</label>
-  </div>
-  <details class="ms-dep-lists" id="ms-dep-lists">
-    <summary>Predecessor and dependency IDs</summary>
-    <div class="ms-dep-cols">
-      <div class="ms-dep-col">
-        <span class="ms-lbl">Predecessors</span>
-        <textarea id="ms-dep-pred-list" readonly spellcheck="false" placeholder="None"></textarea>
+  <details class="ms-sec ms-dep-lists" id="ms-dep-lists">
+    <summary><span class="ms-sec-title"><svg class="ms-chev" viewBox="0 0 10 10" aria-hidden="true"><path d="M3.5 2l3 3-3 3"/></svg>Predecessors &amp; successors</span><span class="ms-sec-count" id="ms-dep-count"></span></summary>
+    <div class="ms-sec-body">
+      <div class="ms-toggles">
+        <label class="ms-toggle"><input type="checkbox" id="ms-toggle-pred" onchange="onMsDepToggle()"> Show predecessors</label>
+        <label class="ms-toggle"><input type="checkbox" id="ms-toggle-succ" onchange="onMsDepToggle()"> Show dependencies</label>
       </div>
-      <div class="ms-dep-col">
-        <span class="ms-lbl">Dependencies</span>
-        <textarea id="ms-dep-succ-list" readonly spellcheck="false" placeholder="None"></textarea>
+      <div class="ms-dep-cols">
+        <div class="ms-dep-col">
+          <span class="ms-lbl">Predecessors</span>
+          <div class="ms-dep-chips" id="ms-dep-pred-chips"></div>
+        </div>
+        <div class="ms-dep-col">
+          <span class="ms-lbl">Successors</span>
+          <div class="ms-dep-chips" id="ms-dep-succ-chips"></div>
+        </div>
+      </div>
+      <!-- The raw comma lists, kept for anything that reads them; the chips
+           above are built from the same values. -->
+      <div class="ms-dep-raw" hidden>
+        <textarea id="ms-dep-pred-list" readonly spellcheck="false" placeholder="None" aria-label="Predecessor IDs"></textarea>
+        <textarea id="ms-dep-succ-list" readonly spellcheck="false" placeholder="None" aria-label="Successor IDs"></textarea>
       </div>
     </div>
+  </details>
+  <details class="ms-sec ms-hist-sec" id="ms-hist-fold" open>
+    <summary><span class="ms-sec-title"><svg class="ms-chev" viewBox="0 0 10 10" aria-hidden="true"><path d="M3.5 2l3 3-3 3"/></svg>Update history</span><span class="ms-sec-count" id="ms-hist-count"></span></summary>
+    <!-- Filled by the history module (P66 orchestrator). The line below is
+         a placeholder it replaces. -->
+    <div id="ms-history"><p class="ms-hist-empty">No updates yet</p></div>
   </details>
 </div>
 
@@ -17177,8 +17239,9 @@ function openMsDialog(m, snipId, anchorEl, hd, task){
   dlg.className='ms-dialog status-'+statusClassOf(msEffState);
   dlg.hidden=false;
 
-  document.getElementById('ms-code').textContent=snipId?('#'+snipId):('['+m.type+']');
-  document.getElementById('ms-status').textContent=STATE_LABELS[msEffState]||msEffState;
+  // P66: the ID bare, as the design writes it (the mono face says "ID").
+  document.getElementById('ms-code').textContent=snipId?snipId:('['+m.type+']');
+  setMsStatusLabel(STATE_LABELS[msEffState]||msEffState);
   const actName=m.actName||(function(){ const mm=String(m.notes||'').match(/^\[[^\]]+\]\s*-\s*(.*)$/); return mm?mm[1]:(m.notes||m.label||''); })();
   const titleText=actName||task.name;
   // Total float moved out of the title and into its own column. A milestone
@@ -17202,10 +17265,11 @@ function openMsDialog(m, snipId, anchorEl, hd, task){
   // "Unassigned" tells the reader nothing they can act on — a real discipline name
   // is worth showing, an empty/unassigned one isn't, so the line just doesn't
   // render rather than showing a label that means "we don't know."
+  // P66: the meta line reads "<Band> · <Type>", muted. The band is left out
+  // when it is unassigned, the type is always there. renderMsSub() writes it,
+  // called again by renderMsIcon() so a picked type shows at once.
   const discText=(task.disc||'').trim();
-  const subEl=document.getElementById('ms-sub');
-  if(discText && discText.toLowerCase()!=='unassigned'){ subEl.textContent=discText; subEl.style.display=''; }
-  else { subEl.style.display='none'; }
+  msDialogBand=(discText && discText.toLowerCase()!=='unassigned')?discText:'';
 
   const shortTitleKey=msKeyFor(m);
   // What the field would hold with no custom short title at all. Held so the
@@ -17217,7 +17281,9 @@ function openMsDialog(m, snipId, anchorEl, hd, task){
 
   const dateEl=document.getElementById('ms-date');
   dateEl.value=fmtTipDate(m.date)+(m.actual?' A':'');
-  dateEl.className='ms-date'+(m.actual?' is-actualised':'');
+  // P66: ms-edit is the read-first field style; the class list is rebuilt
+  // with it, or the field reverts to a bordered browser input.
+  dateEl.className='ms-date ms-edit'+(m.actual?' is-actualised':'');
 
   // Start date. The field is ALWAYS on screen now, showing a dash where a true
   // zero-duration milestone has no start of its own. It used to hide itself,
@@ -17231,12 +17297,18 @@ function openMsDialog(m, snipId, anchorEl, hd, task){
   if(isRealTask){
     const suffix=(m.startActual?' A':'')+(m.startStarred?' *':'');
     startEl.value=fmtTipDate(m.start)+suffix;
-    startEl.className='ms-date ms-start-date'+(m.startActual?' is-actualised':'');
+    startEl.className='ms-date ms-start-date ms-edit'+(m.startActual?' is-actualised':'');
   } else {
     startEl.value='';
-    startEl.className='ms-date ms-start-date';
+    startEl.className='ms-date ms-start-date ms-edit';
   }
   startEl.placeholder='—';
+  // P66: "Started" / "Not started" under the start date, in accent ink.
+  const startedEl=document.getElementById('ms-started');
+  if(startedEl){
+    const effP=effectiveProgress(m);
+    startedEl.textContent=(m.startActual||m.actual||(effP!=null&&effP>0))?'Started':'Not started';
+  }
 
   document.getElementById('ms-weight').value=(m.weight!=null)?String(m.weight):'';
   // Collapsed on every open, not left wherever the last card was put. The row
@@ -17246,9 +17318,17 @@ function openMsDialog(m, snipId, anchorEl, hd, task){
   if(fold) fold.open=false;
   renderMsProgress();
 
-  const existing=MS_COMMENTS[msDialogFor]||'';
-  document.getElementById('ms-comment-text').value=existing;
-  document.getElementById('ms-comment-dot').className='ms-comment-dot'+(existing.trim()?'':' empty');
+  // P66: the box is a NEW remark, so it opens empty on every card. The
+  // stored remarks are the history below it. The baseline (msDraftClean) is
+  // taken further down, after this, so an empty box is the clean state.
+  document.getElementById('ms-comment-text').value='';
+  document.getElementById('ms-comment-dot').className='ms-comment-dot empty';
+  const fu=document.getElementById('ms-followup');
+  if(fu) fu.value='open';
+  const hf=document.getElementById('ms-hist-fold');
+  if(hf) hf.open=true;
+  msHideSavedFlash();
+  closeMsHealthPop();
 
   // -1 (not a real dot value) when nothing's been set at all, so no dot shows
   // as selected — distinct from 0, which is the real "explicitly N/A" state.
@@ -17278,6 +17358,7 @@ function openMsDialog(m, snipId, anchorEl, hd, task){
   // separate idea of what was put into it.
   renderMsIcon();
   closeMsTypeMenu();
+  renderMsDuration();
   msDraftClean=msReadForm();
   syncMsDirtyUI();
   syncMsEditedMarks();
@@ -17301,6 +17382,43 @@ function renderMsIcon(){
   // only place it is now written.
   const ty=msFormType();
   btn.title=(TYPE_LABELS[ty]||ty)+' ('+ty+')  \u00B7  click to change the mark or the type';
+  renderMsSub();
+}
+// P66: the band the open card belongs to, '' when unassigned.
+let msDialogBand='';
+// The meta line's muted "<Band> · <Type>", from the type the FORM shows.
+function renderMsSub(){
+  const el=document.getElementById('ms-sub');
+  if(!el) return;
+  const ty=msFormType();
+  const tl=TYPE_LABELS[ty]||ty;
+  el.textContent=msDialogBand?(msDialogBand+' \u00B7 '+tl):tl;
+}
+// P66: calendar days from start to finish, read off the FORM so it follows
+// the dates as they are typed. A dash when there is no start to count from.
+// The float suffix reads "d float)" beside a figure and " float)" beside the
+// "-" placeholder, so a blank float never shows as "-d".
+function msFormDate(id){
+  const el=document.getElementById(id);
+  const v=el?String(el.value).replace(/(\s+[A*])+\s*$/,'').trim():'';
+  return v?parseMsDate(v):null;
+}
+function renderMsDuration(){
+  const out=document.getElementById('ms-duration');
+  if(out){
+    const s=msFormDate('ms-start-date'), f=msFormDate('ms-date');
+    const d=(s&&f)?Math.round((msDateMs(f)-msDateMs(s))/86400000):NaN;
+    out.textContent=isNaN(d)?'-':(d+'d');
+  }
+  const fv=document.getElementById('ms-float-val');
+  const fl=document.querySelector('#ms-float-col .ms-float-lbl');
+  if(fv&&fl) fl.textContent=String(fv.value).trim()?'d float)':' float)';
+}
+// The muted word after the progress figure.
+function msProgressWord(p){
+  if(p==null||isNaN(p)||p<=0) return 'Not started';
+  if(p>=100) return 'Complete';
+  return 'In progress';
 }
 // The marker the FORM is showing, which is not necessarily the milestone's: an
 // unsaved change lives on the card until it is committed, like every other
@@ -17333,6 +17451,7 @@ function toggleMsTypeMenu(e){
   const menu=msTypeMenuEl(), btn=document.getElementById('ms-icon-btn');
   if(!menu||!msDialogMs) return;
   if(!menu.hidden){ closeMsTypeMenu(); return; }
+  closeMsHealthPop();
   menu.innerHTML='';
   const grp=function(txt){
     const h=document.createElement('div'); h.className='ms-type-grp';
@@ -17403,17 +17522,67 @@ function fillMsDepLists(snipId){
   };
   pred.value=d?fmt(d.pred):'';
   succ.value=d?fmt(d.succ):'';
+  // P66: the same values as chips. Built from the textareas' own lists, so
+  // the chips and the raw lists cannot disagree.
+  const ids=function(v){ return String(v||'').split(',').map(function(x){return x.trim();}).filter(Boolean); };
+  const pIds=ids(pred.value), sIds=ids(succ.value);
+  fillMsDepChips('ms-dep-pred-chips',pIds);
+  fillMsDepChips('ms-dep-succ-chips',sIds);
+  const cnt=document.getElementById('ms-dep-count');
+  if(cnt) cnt.textContent=pIds.length+' pred \u00B7 '+sIds.length+' succ';
   // A milestone with no id carries no relationships to show at all.
   wrap.style.display=snipId?'':'none';
   wrap.open=false;
+}
+// One chip per linked ID: a dot in the linked milestone's effective state
+// colour (the board's own --color-icon-* roles), its name as the tooltip.
+// Built with DOM calls, not innerHTML, since an ID is schedule text.
+function fillMsDepChips(hostId,list){
+  const host=document.getElementById(hostId);
+  if(!host) return;
+  host.innerHTML='';
+  if(!list.length){
+    const none=document.createElement('span');
+    none.className='ms-dep-none'; none.textContent='None';
+    host.appendChild(none);
+    return;
+  }
+  list.forEach(function(id){
+    const lm=findMilestoneBySnip(id);
+    const onBoard=!!document.querySelector('#tbody .m-wrap[data-ms="'+CSS.escape(id)+'"]');
+    const b=document.createElement('button');
+    b.type='button';
+    b.className='ms-dep-chip'+(onBoard?'':' is-off');
+    b.setAttribute('data-id',id);
+    const name=lm?(lm.actName||String(lm.notes||'').replace(/^\[[^\]]+\]\s*-\s*/,'')||lm.label||''):'';
+    b.title=(name||id)+(onBoard?'':' (not on the board)');
+    const dot=document.createElement('span');
+    dot.className='ms-chip-dot';
+    dot.setAttribute('data-st',lm?statusClassOf(effectiveState(lm)):'future');
+    b.appendChild(dot);
+    b.appendChild(document.createTextNode(id));
+    b.onclick=function(ev){ onMsDepChip(ev,id); };
+    host.appendChild(b);
+  });
+}
+// A chip opens that milestone's card, through openNoteMilestone() like the
+// notes' own chips. Leaving an edited card this way is leaving it, not
+// discarding it, so the edits are saved first, the same as a click away.
+function onMsDepChip(e,id){
+  if(e) e.stopPropagation();
+  if(!document.querySelector('#tbody .m-wrap[data-ms="'+CSS.escape(id)+'"]')) return;
+  if(msDirty()) saveMsDialog(true);
+  openNoteMilestone(e,id);
 }
 // Raw close. Neither of the two ways OUT of the card calls this directly:
 // discardMsDialog() throws the edits away and saveMsDialog(true) commits them
 // first. It exists so both have one place that clears the card's state.
 function closeMsDialog(){
   closeMsTypeMenu();
+  closeMsHealthPop();
+  msHideSavedFlash();
   document.getElementById('ms-dialog').hidden=true;
-  document.getElementById('ms-save-actions').hidden=true;
+  setMsSaveEnabled(false);
   msDialogFor=null;
   msDialogMs=null;
   msDialogHd=null;
@@ -17506,17 +17675,25 @@ function syncMsEditedMarks(){
     if(!el) return;
     const v=marks[f];
     el.hidden=(v===null);
-    if(v!==null) el.title='Changed from the schedule. It had: '+v;
+    // P66: the design's wording. Health reads "Updated · was X", every
+    // other field "Previous: X"; both carry the schedule's own value.
+    if(v!==null) el.title=(f==='health'?'Updated \u00B7 was ':'Previous: ')+v;
   });
 }
 // One writer for everything that depends on the form being dirty: the save
 // pair in the head, and the per-field tint that says which fields carry the
 // unsaved edit. Called from every input handler rather than each handler
 // toggling its own piece.
-function syncMsDirtyUI(){
+// P66: the save pair is always on screen; clean means disabled, not hidden.
+function setMsSaveEnabled(on){
   const acts=document.getElementById('ms-save-actions');
+  if(!acts) return;
+  acts.setAttribute('aria-disabled',on?'false':'true');
+  acts.querySelectorAll('.ms-act').forEach(function(b){ b.setAttribute('aria-disabled',on?'false':'true'); });
+}
+function syncMsDirtyUI(){
   const dirty=msDirty();
-  if(acts) acts.hidden=!dirty;
+  setMsSaveEnabled(dirty);
   if(!msDraftClean) return;
   const now=msReadForm();
   [['title','ms-title'],['shortTitle','ms-shorttitle-input'],['start','ms-start-date'],
@@ -17536,8 +17713,30 @@ function onMsFieldInput(){
     const n=parseFloat(String(input.value).replace('%','').trim());
     if(!isNaN(n)) document.getElementById('ms-progress-fill').style.width=
       Math.min(100,Math.max(0,n))+'%';
+    const w=document.getElementById('ms-prog-word');
+    if(w) w.textContent=msProgressWord(isNaN(n)?null:n);
   }
+  renderMsDuration();
   syncMsDirtyUI();
+}
+// The two save buttons. Disabled (clean form) they do nothing at all, so a
+// no-op save cannot close the card or flash "Saved". The icon save flashes
+// "Saved" and stays open; Save & close commits and closes.
+let msSavedFlashTimer=null;
+function msHideSavedFlash(){
+  if(msSavedFlashTimer){ clearTimeout(msSavedFlashTimer); msSavedFlashTimer=null; }
+  const f=document.getElementById('ms-saved-flash');
+  if(f) f.hidden=true;
+}
+function onMsSaveClick(alsoClose){
+  if(!msDirty()) return;
+  saveMsDialog(alsoClose);
+  if(alsoClose) return;
+  const f=document.getElementById('ms-saved-flash');
+  if(!f) return;
+  msHideSavedFlash();
+  f.hidden=false;
+  msSavedFlashTimer=setTimeout(msHideSavedFlash,1600);
 }
 // Commit. One write of each store, then ONE rebuild, rather than the rebuild
 // per keystroke and per click the old card did.
@@ -17582,9 +17781,9 @@ function saveMsDialog(alsoClose){
   if(now.shortTitle&&now.shortTitle!==msShortTitleDefault) MS_SHORT_TITLES[key]=now.shortTitle;
   else delete MS_SHORT_TITLES[key];
 
-  // The remark box still shows the latest remark while the P65 card feed is
-  // pending. Carried unchanged it is not a new remark, and emptied it is an
-  // explicit clear.
+  // P66: the remark box opens EMPTY (a new remark, not the stored one), so
+  // oldText is always '' from the card and the clear branch below cannot
+  // fire from it. Both guards are kept for any caller that seeds the box.
   const oldText=String(clean.comment||'').trim(), newText=String(now.comment||'').trim();
   let draft=res&&res.draft;
   if(draft&&newText===oldText) draft.text='';
@@ -17592,7 +17791,13 @@ function saveMsDialog(alsoClose){
     draft=draft||{target:{kind:'ms',key:key},changes:{},origin:'card',status:'open'};
     draft.text=''; draft.clearText=true;
   }
-  if(draft) addEntry(draft);
+  // P66: the follow-up select sets the entry's status (open/sent/done).
+  if(draft){
+    const fu=document.getElementById('ms-followup');
+    const fv=fu?fu.value:'open';
+    draft.status=(fv==='sent'||fv==='done')?fv:'open';
+    addEntry(draft);
+  }
   document.getElementById('ms-comment-dot').className=
     'ms-comment-dot'+(newText?'':' empty');
 
@@ -17608,6 +17813,13 @@ function saveMsDialog(alsoClose){
     // whose override was just cleared shows the schedule's own value again
     // rather than the empty box that cleared it.
     renderMsProgress();
+    // P66: the remark just saved is in the history now; the box is for the
+    // next one, so it and the follow-up go back to their open state.
+    document.getElementById('ms-comment-text').value='';
+    document.getElementById('ms-comment-dot').className='ms-comment-dot empty';
+    const fuEl=document.getElementById('ms-followup');
+    if(fuEl) fuEl.value='open';
+    renderMsDuration();
     // Stays open, so the baseline has to move with it or the save pair would
     // never go away. This is the reported defect, stated once for every field
     // instead of once for the short title.
@@ -17639,6 +17851,8 @@ function renderMsProgress(){
     wrap.classList.toggle('is-zero',!eff);
   }
   document.getElementById('ms-progress-fill').style.width=Math.min(100,Math.max(0,eff||0))+'%';
+  const word=document.getElementById('ms-prog-word');
+  if(word) word.textContent=msProgressWord(eff);
   const total=(msDialogHd&&msDialogHd.total>0)?msDialogHd.total:0;
   const wEl=document.getElementById('ms-weight');
   const wVal=wEl?parseFloat(wEl.value):NaN;
@@ -17692,9 +17906,33 @@ function onMsHealthClick(dotEl){
   const m=msDialogMs||findMilestoneBySnip(msDialogFor);
   const effState=m?previewEffState(m,msDialogFor,msFormHealth):'FUTURE';
   dlg.className='ms-dialog status-'+statusClassOf(effState);
-  document.getElementById('ms-status').textContent=STATE_LABELS[effState]||effState;
+  setMsStatusLabel(STATE_LABELS[effState]||effState);
   renderMsIcon();
+  closeMsHealthPop();
   onMsFieldInput();
+}
+// P66: the pill's label, and its accessible name with the state in it.
+function setMsStatusLabel(txt){
+  document.getElementById('ms-status').textContent=txt;
+  const pill=document.getElementById('ms-health-pill');
+  if(pill) pill.setAttribute('aria-label','Health: '+txt+'. Click to change it.');
+}
+// P66: the health pill opens the existing dots as a popover under it.
+function closeMsHealthPop(){
+  const pop=document.getElementById('ms-health-pop');
+  if(pop) pop.hidden=true;
+  const pill=document.getElementById('ms-health-pill');
+  if(pill) pill.setAttribute('aria-expanded','false');
+}
+function toggleMsHealthPop(e){
+  if(e) e.stopPropagation();
+  const pop=document.getElementById('ms-health-pop');
+  if(!pop||!msDialogFor) return;
+  if(!pop.hidden){ closeMsHealthPop(); return; }
+  closeMsTypeMenu();
+  pop.hidden=false;
+  const pill=document.getElementById('ms-health-pill');
+  if(pill) pill.setAttribute('aria-expanded','true');
 }
 function onMsDepToggle(){
   if(!msDialogFor) return;
@@ -17704,6 +17942,20 @@ function onMsDepToggle(){
   if(typeof drawDepLines==='function') drawDepLines();
   updateDepAllButtonState();
 }
+// P66: the card grows when a section is opened (and when the history module
+// fills #ms-history), so it is pulled back up inside the viewport whenever
+// its height changes. Only the top moves; max-height caps it, and anything
+// taller scrolls inside the card.
+function clampMsDialog(){
+  const dlg=document.getElementById('ms-dialog');
+  if(!dlg||dlg.hidden) return;
+  const pad=12, r=dlg.getBoundingClientRect();
+  if(r.bottom>window.innerHeight-pad)
+    dlg.style.top=Math.max(pad,window.innerHeight-r.height-pad)+'px';
+}
+document.addEventListener('toggle',function(e){
+  if(e.target&&e.target.closest&&e.target.closest('#ms-dialog')) clampMsDialog();
+},true);
 function positionMsDialog(anchor,dlg){
   const pad=12;
   const r=anchor.getBoundingClientRect();
@@ -17732,6 +17984,10 @@ document.addEventListener('click',function(e){
     const menu=msTypeMenuEl();
     if(menu&&!menu.hidden&&!menu.contains(e.target)&&
        !e.target.closest('#ms-icon-btn')) closeMsTypeMenu();
+    // P66: and the health popover, the same way.
+    const hp=document.getElementById('ms-health-pop');
+    if(hp&&!hp.hidden&&!e.target.closest('#ms-health-pop')&&
+       !e.target.closest('#ms-health-pill')) closeMsHealthPop();
     return;
   }
   if(e.target.closest('.m-wrap')) return;
@@ -17744,6 +18000,8 @@ document.addEventListener('keydown',function(e){
   if(e.key!=='Escape') return;
   const menu=msTypeMenuEl();
   if(menu&&!menu.hidden){ closeMsTypeMenu(); return; }
+  const hp=document.getElementById('ms-health-pop');
+  if(hp&&!hp.hidden){ closeMsHealthPop(); return; }
   discardMsDialog();
 });
 
