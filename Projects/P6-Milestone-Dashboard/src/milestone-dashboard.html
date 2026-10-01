@@ -2502,6 +2502,17 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 .ms-dep-chip:hover{background:var(--color-btn-hover-bg)}
 .ms-dep-chip.is-off{cursor:default;color:var(--color-text-muted)}
 .ms-dep-chip.is-off:hover{background:var(--color-bg-subtle)}
+/* P72: a user milestone's own links carry a remove cross (.collect-x), and
+   a dashed Add field under each list. A link another user milestone made is
+   shown without a cross: it is removed on that milestone's card. */
+.ms-dep-chip.is-own{padding-right:var(--space-1)}
+.ms-dep-add{display:block;width:100%;box-sizing:border-box;height:var(--ctl-h);margin-top:var(--space-3);padding:0 var(--space-3);
+  border:1px dashed var(--color-line-default);font:450 var(--text-base)/1 var(--font-mono);color:var(--color-text-primary)}
+.ms-dep-add[hidden]{display:none}
+.ms-dep-suggest[hidden]{display:none}
+.ms-dep-suggest .id-suggest-item{font-family:var(--font-mono)}
+.ms-dep-suggest .id-suggest-item.is-hl{background:var(--color-btn-secondary-hover-bg)}
+.ms-dep-suggest .ms-dep-sug-name{margin-left:var(--space-3);font-family:var(--font-sans);color:var(--color-text-muted)}
 /* P68/P69: the collection strip in the info bar, above the date bands.
    Sticky at left 0 and as wide as the scroller, like the bar above it. */
 .collect-bar{position:sticky;left:0;width:var(--sib-w,100%);box-sizing:border-box;display:flex;align-items:center;
@@ -4056,7 +4067,7 @@ button.sg-hdot:hover{transform:scale(1.25)}
        milestone with no start shows a dash where a date would be. -->
   <div class="ms-schedule">
     <div class="ms-field" id="ms-start-field"><span class="ms-lbl">Start<span class="ms-edited-mark" id="ms-mark-start" data-field="start" hidden></span><button type="button" class="ms-dp-btn" id="ms-dp-btn-start" onclick="openMsDatePicker(event,'ms-start-date')" aria-haspopup="dialog" aria-expanded="false" aria-label="Pick the start date" title="Pick the start date"><svg class="ms-head-ico" viewBox="0 0 14 14" aria-hidden="true"><rect x="2" y="3" width="10" height="9" rx="1"/><path d="M2 6h10M5 1.8v2.4M9 1.8v2.4"/></svg></button></span><input type="text" id="ms-start-date" class="ms-date ms-start-date ms-edit" maxlength="14" autocomplete="off" title="Start date. An A after the date marks it actual. Clear the field to restore the schedule's own value." oninput="onMsFieldInput()" onkeydown="onMsDateKey(event)" onpointerdown="onMsDatePointer(event)"><span class="ms-started" id="ms-started"></span></div>
-    <div class="ms-field ms-dur-field" id="ms-dur-field"><span class="ms-lbl">Duration<span class="ms-edited-mark" id="ms-mark-floatD" data-field="floatD" hidden></span></span><span class="ms-dur-val" id="ms-duration"></span><span class="ms-float-col" id="ms-float-col">(<input type="text" id="ms-float-val" class="ms-float-val ms-edit" inputmode="decimal" maxlength="6" autocomplete="off" placeholder="-" title="Total float in days" aria-label="Total float in days" oninput="onMsFieldInput()"><span class="ms-float-lbl">d float)</span></span></div>
+    <div class="ms-field ms-dur-field" id="ms-dur-field"><span class="ms-lbl">Duration<span class="ms-edited-mark" id="ms-mark-floatD" data-field="floatD" hidden></span></span><span class="ms-dur-val" id="ms-duration"></span><span class="ms-float-col" id="ms-float-col">(<input type="text" id="ms-float-val" class="ms-float-val ms-edit" maxlength="6" autocomplete="off" placeholder="-" readonly tabindex="-1" title="Total float in days, from the schedule. Not editable." aria-label="Total float in days, from the schedule"><span class="ms-float-lbl">d float)</span></span></div>
     <div class="ms-field ms-fin-field"><span class="ms-lbl"><button type="button" class="ms-dp-btn" id="ms-dp-btn-date" onclick="openMsDatePicker(event,'ms-date')" aria-haspopup="dialog" aria-expanded="false" aria-label="Pick the finish date" title="Pick the finish date"><svg class="ms-head-ico" viewBox="0 0 14 14" aria-hidden="true"><rect x="2" y="3" width="10" height="9" rx="1"/><path d="M2 6h10M5 1.8v2.4M9 1.8v2.4"/></svg></button><span class="ms-edited-mark" id="ms-mark-date" data-field="date" hidden></span>Finish</span><input type="text" id="ms-date" class="ms-date ms-edit" maxlength="14" autocomplete="off" title="Finish date. An A after the date marks it actual. Clear the field to restore the schedule's own value." oninput="onMsFieldInput()" onkeydown="onMsDateKey(event)" onpointerdown="onMsDatePointer(event)"></div>
   </div>
   <!-- P69: the date picker for Start and Finish. Inside the card so a click
@@ -4112,12 +4123,17 @@ button.sg-hdot:hover{transform:scale(1.25)}
         <div class="ms-dep-col">
           <span class="ms-lbl">Predecessors</span>
           <div class="ms-dep-chips" id="ms-dep-pred-chips"></div>
+          <input type="text" id="ms-dep-add-pred" class="ms-dep-add ms-edit" autocomplete="off" spellcheck="false" placeholder="Add an ID" aria-label="Add a predecessor by Activity ID" aria-autocomplete="list" aria-controls="ms-dep-suggest" hidden oninput="onMsDepAddInput('pred')" onkeydown="onMsDepAddKey(event,'pred')" onfocus="onMsDepAddInput('pred')" onblur="closeMsDepSuggest()">
         </div>
         <div class="ms-dep-col">
           <span class="ms-lbl">Successors</span>
           <div class="ms-dep-chips" id="ms-dep-succ-chips"></div>
+          <input type="text" id="ms-dep-add-succ" class="ms-dep-add ms-edit" autocomplete="off" spellcheck="false" placeholder="Add an ID" aria-label="Add a successor by Activity ID" aria-autocomplete="list" aria-controls="ms-dep-suggest" hidden oninput="onMsDepAddInput('succ')" onkeydown="onMsDepAddKey(event,'succ')" onfocus="onMsDepAddInput('succ')" onblur="closeMsDepSuggest()">
         </div>
       </div>
+      <!-- P72: the Add ID suggestions. Inside the card, so picking one is a
+           click in the card, and fixed-positioned under its field. -->
+      <div class="id-suggest-dropdown ms-dep-suggest" id="ms-dep-suggest" role="listbox" aria-label="Matching Activity IDs" hidden></div>
       <!-- The raw comma lists, kept for anything that reads them; the chips
            above are built from the same values. -->
       <div class="ms-dep-raw" hidden>
@@ -5621,7 +5637,10 @@ button.sg-hdot:hover{transform:scale(1.25)}
   var STATUSES=['note','open','sent','review','outstanding','done','closed'];
   var OPEN_STATUSES=['open','sent','review','outstanding'];
   // The milestone's own schedule fields, exactly MS_EDITABLE_FIELDS in the app.
-  var MS_FIELDS=['actName','start','date','weight','floatD','type','marker','actual','startActual'];
+  // P72: floatD is not one of them. Float is the schedule's result, never a
+  // hand edit, so an old floatD change neither projects nor migrates (it
+  // stays in its entry, for the history).
+  var MS_FIELDS=['actName','start','date','weight','type','marker','actual','startActual'];
   var CHANGE_FIELDS=MS_FIELDS.concat(['health','progress','rowHealth','rowRemark']);
   var DEFAULT_WINDOW_MS=10*60*1000;
 
@@ -7129,6 +7148,58 @@ function applyFieldOverrides(){
 }
 // ===== Real predecessor/successor data, parsed from the 22-Aug-26 P6 schedule export =====
 const DEP_DATA={"SNIP-101": {"pred": "", "succ": "SNIP-249,SNIP-258,SNIP-248,SNIP-255,SNIP-103,SNIP-115,SNIP-134,SNIP-105"}, "SNIP-104": {"pred": "", "succ": "SNIP-159"}, "SNIP-102": {"pred": "", "succ": "SNIP-115,SNIP-118"}, "SNIP-113": {"pred": "SNIP-111", "succ": ""}, "SNIP-103": {"pred": "SNIP-101", "succ": "SNIP-118"}, "SNIP-110": {"pred": "SNIP-111,SNIP-105", "succ": "SNIP-182"}, "SNIP-153": {"pred": "SNIP-154,SNIP-133", "succ": "SNIP-234"}, "SNIP-117": {"pred": "", "succ": "SNIP-242"}, "SNIP-182": {"pred": "SNIP-166,SNIP-110", "succ": "SNIP-234"}, "SNIP-207": {"pred": "SNIP-166", "succ": "SNIP-261"}, "SNIP-233": {"pred": "SNIP-231", "succ": "SNIP-261"}, "SNIP-219": {"pred": "SNIP-218", "succ": "SNIP-261"}, "SNIP-221": {"pred": "SNIP-220", "succ": "SNIP-234"}, "SNIP-234": {"pred": "SNIP-221,SNIP-182,SNIP-161,SNIP-215,SNIP-230,SNIP-223,SNIP-153,SNIP-237,SNIP-220,SNIP-105,SNIP-166,SNIP-133,SNIP-115,SNIP-229,A1070", "succ": "SNIP-255,SNIP-235"}, "SNIP-238": {"pred": "SNIP-239,SNIP-237,SNIP-220,SNIP-105,SNIP-166,SNIP-133,SNIP-115,SNIP-229,SNIP-230,A1070", "succ": "SNIP-261"}, "SNIP-235": {"pred": "SNIP-224,SNIP-234", "succ": "SNIP-241"}, "SNIP-226": {"pred": "SNIP-224", "succ": "SNIP-241"}, "SNIP-245": {"pred": "SNIP-255", "succ": "SNIP-256"}, "SNIP-246": {"pred": "SNIP-250,SNIP-244", "succ": "SNIP-261"}, "SNIP-247": {"pred": "SNIP-251,SNIP-244", "succ": "SNIP-261"}, "SNIP-248": {"pred": "SNIP-101,SNIP-111,SNIP-241,SNIP-250", "succ": "SNIP-261"}, "SNIP-249": {"pred": "SNIP-101,SNIP-111,SNIP-241,SNIP-250,SNIP-244", "succ": "SNIP-261"}, "SNIP-256": {"pred": "SNIP-245,SNIP-255", "succ": "SNIP-258"}, "SNIP-260": {"pred": "SNIP-259", "succ": "SNIP-261"}, "SNIP-261": {"pred": "SNIP-207,SNIP-238,SNIP-219,SNIP-233,SNIP-249,SNIP-248,SNIP-247,SNIP-246,SNIP-260", "succ": ""}, "SNIP-136": {"pred": "", "succ": "SNIP-159"}, "SNIP-127": {"pred": "", "succ": "SNIP-166,SNIP-138,SNIP-201"}, "SNIP-106": {"pred": "", "succ": "SNIP-166,SNIP-126,SNIP-201,SNIP-188"}, "SNIP-203": {"pred": "", "succ": "SNIP-270,SNIP-240,SNIP-310"}, "SNIP-204": {"pred": "", "succ": "SNIP-240"}, "SNIP-320": {"pred": "", "succ": "SNIP-240"}, "SNIP-105": {"pred": "SNIP-101", "succ": "SNIP-158,SNIP-183,SNIP-120,SNIP-116,SNIP-115,SNIP-124,SNIP-166,SNIP-111,SNIP-110,SNIP-142,SNIP-112,SNIP-128,SNIP-237,SNIP-240,SNIP-238,SNIP-234"}, "SNIP-111": {"pred": "SNIP-105,SNIP-112", "succ": "SNIP-249,SNIP-258,SNIP-248,SNIP-255,SNIP-115,SNIP-110,SNIP-113"}, "SNIP-148": {"pred": "SNIP-166", "succ": ""}, "SNIP-158": {"pred": "SNIP-105", "succ": ""}, "SNIP-191": {"pred": "SNIP-133,SNIP-166,SNIP-214", "succ": ""}, "SNIP-223": {"pred": "SNIP-220", "succ": "SNIP-234"}, "SNIP-112": {"pred": "SNIP-105", "succ": "SNIP-132,SNIP-111"}, "SNIP-132": {"pred": "SNIP-112", "succ": ""}, "SNIP-157": {"pred": "SNIP-156", "succ": "SNIP-242"}, "SNIP-215": {"pred": "SNIP-166,SNIP-120", "succ": "SNIP-125,SNIP-185,SNIP-240,SNIP-239,SNIP-234"}, "SNIP-202": {"pred": "SNIP-166", "succ": "SNIP-270,SNIP-240"}, "SNIP-118": {"pred": "SNIP-102,SNIP-103", "succ": "SNIP-129"}, "SNIP-115": {"pred": "SNIP-102,SNIP-101,SNIP-111,SNIP-105", "succ": "SNIP-123,SNIP-116,SNIP-124,SNIP-128,SNIP-133,SNIP-134,SNIP-259,SNIP-237,SNIP-240,SNIP-238,SNIP-234,SNIP-161"}, "SNIP-123": {"pred": "SNIP-115", "succ": "SNIP-133,SNIP-129,SNIP-128"}, "SNIP-129": {"pred": "SNIP-118,SNIP-123", "succ": "SNIP-134"}, "SNIP-134": {"pred": "SNIP-129,SNIP-101,SNIP-115", "succ": "SNIP-161,SNIP-255,SNIP-143"}, "SNIP-133": {"pred": "SNIP-123,SNIP-115", "succ": "SNIP-137,SNIP-155,SNIP-191,SNIP-153,SNIP-154,SNIP-138,SNIP-144,SNIP-259,SNIP-237,SNIP-240,SNIP-238,SNIP-234"}, "SNIP-137": {"pred": "SNIP-133", "succ": "SNIP-145,SNIP-271"}, "SNIP-145": {"pred": "SNIP-137", "succ": "SNIP-154"}, "SNIP-154": {"pred": "SNIP-145,SNIP-133", "succ": "SNIP-255,SNIP-153,SNIP-227"}, "SNIP-138": {"pred": "SNIP-127,SNIP-133", "succ": "SNIP-147,SNIP-156"}, "SNIP-147": {"pred": "SNIP-138", "succ": "SNIP-144,SNIP-155,SNIP-150"}, "SNIP-150": {"pred": "SNIP-147", "succ": "SNIP-156"}, "SNIP-156": {"pred": "SNIP-150,SNIP-138", "succ": "SNIP-157,SNIP-240"}, "SNIP-155": {"pred": "SNIP-147,SNIP-133", "succ": "SNIP-255,SNIP-161"}, "SNIP-128": {"pred": "SNIP-115,SNIP-105,SNIP-123", "succ": "SNIP-161"}, "SNIP-201": {"pred": "SNIP-106,SNIP-127", "succ": "SNIP-281,SNIP-190"}, "SNIP-271": {"pred": "SNIP-137", "succ": "SNIP-281,A1000,SNIP-200"}, "SNIP-281": {"pred": "SNIP-271,SNIP-201", "succ": "SNIP-161,A1000"}, "SNIP-161": {"pred": "SNIP-134,SNIP-128,SNIP-155,SNIP-115,SNIP-281", "succ": "SNIP-144,SNIP-143,SNIP-167,SNIP-186,SNIP-234,SNIP-165,SNIP-236,SNIP-259"}, "SNIP-143": {"pred": "SNIP-161,SNIP-134", "succ": "SNIP-180,SNIP-240,SNIP-228"}, "SNIP-167": {"pred": "SNIP-161", "succ": "SNIP-172"}, "SNIP-172": {"pred": "SNIP-167", "succ": "SNIP-231"}, "SNIP-231": {"pred": "SNIP-172", "succ": "SNIP-228,SNIP-240,SNIP-233"}, "SNIP-195": {"pred": "SNIP-166", "succ": "SNIP-240"}, "SNIP-144": {"pred": "SNIP-173,SNIP-147,SNIP-161,SNIP-133", "succ": "SNIP-200"}, "SNIP-176": {"pred": "", "succ": "SNIP-300"}, "SNIP-300": {"pred": "SNIP-176", "succ": "SNIP-189"}, "SNIP-166": {"pred": "SNIP-106,SNIP-127,SNIP-105", "succ": "SNIP-202,SNIP-178,SNIP-179,SNIP-148,SNIP-159,SNIP-168,SNIP-217,SNIP-173,SNIP-215,SNIP-207,SNIP-237,SNIP-191,SNIP-182,SNIP-220,SNIP-185,SNIP-195,SNIP-237,SNIP-240,SNIP-238,SNIP-234"}, "SNIP-173": {"pred": "SNIP-166", "succ": "SNIP-144,SNIP-189,SNIP-330"}, "SNIP-330": {"pred": "SNIP-173", "succ": ""}, "SNIP-189": {"pred": "SNIP-300,SNIP-173", "succ": "SNIP-220"}, "SNIP-220": {"pred": "SNIP-189,SNIP-166", "succ": "SNIP-239,SNIP-221,SNIP-223,SNIP-237,SNIP-240,SNIP-238,SNIP-234"}, "SNIP-168": {"pred": "SNIP-166", "succ": "SNIP-240"}, "SNIP-178": {"pred": "SNIP-166", "succ": "SNIP-240"}, "SNIP-179": {"pred": "SNIP-166", "succ": "SNIP-240"}, "SNIP-146": {"pred": "SNIP-217", "succ": "SNIP-162"}, "SNIP-162": {"pred": "SNIP-146", "succ": "SNIP-240"}, "SNIP-140": {"pred": "SNIP-217", "succ": "SNIP-160"}, "SNIP-160": {"pred": "SNIP-140", "succ": "SNIP-240"}, "SNIP-116": {"pred": "SNIP-115,SNIP-105", "succ": "SNIP-125,SNIP-120,SNIP-237"}, "SNIP-217": {"pred": "SNIP-166", "succ": "SNIP-237,SNIP-146,SNIP-140,SNIP-222"}, "SNIP-159": {"pred": "SNIP-136,SNIP-104,SNIP-166", "succ": "SNIP-164"}, "SNIP-164": {"pred": "SNIP-159", "succ": "SNIP-169"}, "SNIP-169": {"pred": "SNIP-164", "succ": "SNIP-174"}, "SNIP-174": {"pred": "SNIP-169", "succ": "SNIP-198"}, "SNIP-125": {"pred": "SNIP-215,SNIP-116", "succ": ""}, "SNIP-198": {"pred": "SNIP-174", "succ": "SNIP-240"}, "SNIP-222": {"pred": "SNIP-217", "succ": "SNIP-237"}, "SNIP-237": {"pred": "SNIP-217,SNIP-222,SNIP-116,SNIP-166,SNIP-220,SNIP-105,SNIP-166,SNIP-133,SNIP-115", "succ": "SNIP-240,SNIP-238,SNIP-234"}, "SNIP-120": {"pred": "SNIP-116,SNIP-105", "succ": "SNIP-215"}, "SNIP-188": {"pred": "SNIP-106", "succ": "SNIP-197"}, "SNIP-197": {"pred": "SNIP-188", "succ": "SNIP-208"}, "SNIP-208": {"pred": "SNIP-197", "succ": "SNIP-212"}, "SNIP-212": {"pred": "SNIP-208", "succ": ""}, "SNIP-185": {"pred": "SNIP-215,SNIP-166", "succ": "SNIP-239"}, "SNIP-239": {"pred": "SNIP-220,SNIP-215,SNIP-185", "succ": "SNIP-238,SNIP-240"}, "SNIP-124": {"pred": "SNIP-115,SNIP-105", "succ": "SNIP-165"}, "SNIP-165": {"pred": "SNIP-124,SNIP-161", "succ": "SNIP-126,SNIP-171,SNIP-186,SNIP-170"}, "SNIP-171": {"pred": "SNIP-165", "succ": "SNIP-186"}, "SNIP-186": {"pred": "SNIP-161,SNIP-171,SNIP-165", "succ": "SNIP-228"}, "SNIP-228": {"pred": "SNIP-231,SNIP-186,SNIP-143", "succ": "SNIP-227,SNIP-229"}, "SNIP-170": {"pred": "SNIP-165,SNIP-190", "succ": "SNIP-181,SNIP-180,SNIP-229"}, "SNIP-181": {"pred": "SNIP-170", "succ": "SNIP-192"}, "SNIP-192": {"pred": "SNIP-181", "succ": "SNIP-229"}, "SNIP-229": {"pred": "SNIP-192,SNIP-228,SNIP-170,A1030", "succ": "SNIP-230,SNIP-238,SNIP-234"}, "SNIP-190": {"pred": "SNIP-201", "succ": "SNIP-180,SNIP-170"}, "SNIP-200": {"pred": "SNIP-271,SNIP-144", "succ": "SNIP-180,A1040"}, "SNIP-180": {"pred": "SNIP-143,SNIP-170,SNIP-190,SNIP-200", "succ": "SNIP-193,SNIP-230,SNIP-194"}, "SNIP-193": {"pred": "SNIP-180", "succ": "SNIP-205"}, "SNIP-205": {"pred": "SNIP-193", "succ": "SNIP-230"}, "SNIP-194": {"pred": "SNIP-126,SNIP-180", "succ": "SNIP-206,SNIP-240"}, "SNIP-230": {"pred": "SNIP-205,SNIP-229,SNIP-180,A1070", "succ": "SNIP-234,SNIP-240,SNIP-238"}, "SNIP-126": {"pred": "SNIP-165,SNIP-106", "succ": "SNIP-206,SNIP-194"}, "SNIP-206": {"pred": "SNIP-126,SNIP-194", "succ": "SNIP-224"}, "SNIP-214": {"pred": "SNIP-236", "succ": "SNIP-191"}, "SNIP-218": {"pred": "SNIP-236", "succ": "SNIP-219,SNIP-255"}, "SNIP-236": {"pred": "SNIP-161", "succ": "SNIP-240,SNIP-214,SNIP-218"}, "SNIP-152": {"pred": "SNIP-142", "succ": "SNIP-240"}, "SNIP-142": {"pred": "SNIP-105", "succ": "SNIP-152"}, "SNIP-310": {"pred": "SNIP-203", "succ": "SNIP-227"}, "SNIP-211": {"pred": "SNIP-240", "succ": "SNIP-241,SNIP-244,SNIP-224"}, "SNIP-270": {"pred": "SNIP-203,SNIP-202", "succ": "SNIP-240"}, "SNIP-227": {"pred": "SNIP-228,SNIP-154,SNIP-310", "succ": "SNIP-224"}, "SNIP-224": {"pred": "SNIP-206,SNIP-227,SNIP-211", "succ": "SNIP-226,SNIP-235,SNIP-241,SNIP-232"}, "SNIP-232": {"pred": "SNIP-224", "succ": "SNIP-244,SNIP-241,SNIP-253"}, "SNIP-240": {"pred": "SNIP-270,SNIP-204,SNIP-203,SNIP-178,SNIP-168,SNIP-179,SNIP-202,SNIP-198,SNIP-156,SNIP-195,SNIP-162,SNIP-236,SNIP-194,SNIP-231,SNIP-215,SNIP-237,SNIP-239,SNIP-143,SNIP-152,SNIP-160,SNIP-220,SNIP-105,SNIP-166,SNIP-133,SNIP-115,SNIP-230,SNIP-320", "succ": "SNIP-242,SNIP-241,SNIP-244,SNIP-211"}, "SNIP-241": {"pred": "SNIP-211,SNIP-240,SNIP-224,SNIP-235,SNIP-226,SNIP-232", "succ": "SNIP-249,SNIP-258,SNIP-248,SNIP-255,SNIP-244"}, "SNIP-244": {"pred": "SNIP-211,SNIP-240,SNIP-241,SNIP-232", "succ": "SNIP-280,SNIP-252,SNIP-249,SNIP-255,SNIP-251,SNIP-250,SNIP-247,SNIP-246,SNIP-258"}, "SNIP-250": {"pred": "SNIP-244", "succ": "SNIP-249,SNIP-258,SNIP-248,SNIP-255,SNIP-253,SNIP-246"}, "SNIP-251": {"pred": "SNIP-244", "succ": "SNIP-253,SNIP-247"}, "SNIP-253": {"pred": "SNIP-251,SNIP-250,SNIP-232", "succ": "SNIP-255"}, "SNIP-290": {"pred": "SNIP-242", "succ": ""}, "SNIP-242": {"pred": "SNIP-117,SNIP-157,SNIP-240", "succ": "SNIP-290,SNIP-254,SNIP-252"}, "SNIP-254": {"pred": "SNIP-242", "succ": "SNIP-257"}, "SNIP-252": {"pred": "SNIP-244,SNIP-242", "succ": "SNIP-257,SNIP-255"}, "SNIP-257": {"pred": "SNIP-252,SNIP-254", "succ": "SNIP-280,SNIP-255"}, "SNIP-183": {"pred": "SNIP-105", "succ": "SNIP-255"}, "SNIP-280": {"pred": "SNIP-257,SNIP-244", "succ": "SNIP-259"}, "SNIP-255": {"pred": "SNIP-257,SNIP-252,SNIP-244,SNIP-101,SNIP-111,SNIP-250,SNIP-183,SNIP-155,SNIP-134,SNIP-154,SNIP-241,SNIP-234,SNIP-218,SNIP-253", "succ": "SNIP-245,SNIP-256,SNIP-258"}, "SNIP-258": {"pred": "SNIP-101,SNIP-111,SNIP-241,SNIP-250,SNIP-244,SNIP-255,SNIP-256", "succ": "SNIP-259"}, "SNIP-259": {"pred": "SNIP-258,SNIP-133,SNIP-115,SNIP-161,SNIP-280", "succ": "SNIP-260"}};
+// P72 (Matt, 2026-10-01): user milestones carry predecessors and successors
+// of their own (rec.pred / rec.succ on the USER_MILESTONES record, the same
+// comma-separated Activity ID text, field names and format the grid view's
+// refs picker writes for user tasks: 'SNIP-102, USR-002'). DEP_DATA is what
+// every reader reads, so it holds the EFFECTIVE set: the schedule's own links
+// plus every user link in both directions. Restore-then-apply, the
+// applyFieldOverrides() pattern: DEP_DATA_SCHEDULE is the pristine schedule
+// copy, and applyUserDeps() rebuilds DEP_DATA from it on every renderRows()
+// and every user milestone change. DEP_DATA is never written anywhere else,
+// and a published file carries the schedule's own literal above, so a user
+// link can never be baked into schedule data.
+const DEP_DATA_SCHEDULE=JSON.parse(JSON.stringify(DEP_DATA));
+// 'SNIP-101: FS' -> 'SNIP-101'. A relationship kept after an ID (the grid's
+// refs format) is not part of the ID the board resolves.
+function depRefId(tok){ return String(tok||'').split(/[:\s]/)[0].trim(); }
+function userDepIds(v){
+  const seen={}, out=[];
+  String(v==null?'':v).split(/[,;]+/).forEach(function(t){
+    const id=depRefId(t);
+    if(id&&!seen[id]){ seen[id]=1; out.push(id); }
+  });
+  return out;
+}
+function applyUserDeps(){
+  Object.keys(DEP_DATA).forEach(function(k){ delete DEP_DATA[k]; });
+  Object.keys(DEP_DATA_SCHEDULE).forEach(function(k){
+    const d=DEP_DATA_SCHEDULE[k];
+    DEP_DATA[k]={pred:d.pred,succ:d.succ};
+  });
+  // Hidden user milestones are off the board, and so are their links.
+  if(!USER_MS_ENABLED) return;
+  const add=function(id,kind,other){
+    if(!id||!other||id===other) return;
+    const d=DEP_DATA[id]||(DEP_DATA[id]={pred:'',succ:''});
+    const have=parseIds(d[kind]);
+    if(have.indexOf(other)>=0) return;
+    have.push(other);
+    d[kind]=have.join(',');
+  };
+  // a before b: a lists b as a successor, b lists a as a predecessor.
+  const link=function(a,b){ add(a,'succ',b); add(b,'pred',a); };
+  USER_MILESTONES.forEach(function(r){
+    if(!r||!r.id) return;
+    userDepIds(r.pred).forEach(function(p){ link(p,r.id); });
+    userDepIds(r.succ).forEach(function(x){ link(r.id,x); });
+  });
+}
+// A milestone a person added: no float, editable links.
+function isUserMs(m){
+  if(!m) return false;
+  return (m.source||'')===USER_BAND_SOURCE||m.userAdded===true||!!umsRecord(msId(m));
+}
 function extractSnipId(notes){ const m=/\[([A-Za-z0-9\-_]+)\]/.exec(notes||""); return m?m[1]:null; }
 // The milestone object has carried its own `id` since the seeds were written,
 // but four separate readers re-derived it by running a regex over `notes`
@@ -8486,7 +8557,8 @@ function buildMsTip(m,total,isLoE){
   const finLbl=(isActual?'ACT Finish: ':'PLN Finish: ')+fmtTipDate(m.date);
   const startIsActual=!!m.startActual;
   const startLbl=m.start?((startIsActual?'ACT Start: ':'PLN Start: ')+fmtTipDate(m.start)):'';
-  const floatPart=(m.floatD!=null)?(' (Float: '+m.floatD+'d)'):'';
+  // P72: a user milestone has no float to show, whatever its record holds.
+  const floatPart=(m.floatD!=null&&!isUserMs(m))?(' (Float: '+m.floatD+'d)'):'';
 
   let tip='['+m.type+'] '+tyLbl+'  - '+stLbl;
   tip+='\n['+m.id+']   - '+(m.actName||m.notes||m.label||'');
@@ -8645,7 +8717,11 @@ const MS_FIELD_OVERRIDE={};
 // owns, and the ID is the key every annotation store is filed under, so
 // editing it would orphan the comment, health, progress and short title
 // already attached to that milestone.
-const MS_EDITABLE_FIELDS=['actName','start','date','weight','floatD','type','marker','actual','startActual'];
+// P72 (Matt, 2026-10-01): float (floatD) is out too. The schedule computes it
+// from this activity's finish and its network; it is not set by hand. A float
+// override stored by an older file is therefore no longer laid over the
+// board, which shows the schedule's own float again.
+const MS_EDITABLE_FIELDS=['actName','start','date','weight','type','marker','actual','startActual'];
 function effectiveState(m){
   const key=msKeyFor(m);
   if(!(key in MS_HEALTH_OVERRIDE)) return m.state; // never set — fully automatic
@@ -9324,6 +9400,9 @@ function renderRows(){
   // on the board yet. Same reasoning as the merge itself: one function, every
   // build path, idempotent.
   applyFieldOverrides();
+  // P72: and the user milestones' links over the schedule's, from the records,
+  // so every DEP_DATA reader in this build sees the same effective set.
+  applyUserDeps();
   // Fresh per rebuild: the board is built from MILESTONES and anything that
   // changed it since the last paint must not be served from a stale index.
   invalidateMsIndexes();
@@ -10411,12 +10490,29 @@ function bindHistory(el){
     }
   });
 }
+// P72: a user milestone's link changes are stored as changes.pred and
+// changes.succ, keys the history module has no label for (it shows an
+// unknown key by its name). They are shown in the card's words, on copies of
+// the entries, so neither the module nor the stored entries change.
+const HISTORY_DEP_LABELS={pred:'Predecessors',succ:'Successors'};
+function historyEntriesView(list){
+  return list.map(function(e){
+    const ch=e&&e.changes;
+    if(!ch||!(('pred' in ch)||('succ' in ch))) return e;
+    const out={}, v=function(x){ return (x==null||x==='')?'none':String(x); };
+    Object.keys(ch).forEach(function(f){
+      if(f in HISTORY_DEP_LABELS) out[HISTORY_DEP_LABELS[f]]={from:v(ch[f].from),to:v(ch[f].to)};
+      else out[f]=ch[f];
+    });
+    return Object.assign({},e,{changes:out});
+  });
+}
 function renderMsHistory(){
   const el=document.getElementById('ms-history');
   if(!el||!msDialogFor) return;
   bindHistory(el);
   const list=msEntriesFor(msDialogFor);
-  el.innerHTML=list.length?SRETHistory.renderEntries(list,historyCtx())
+  el.innerHTML=list.length?SRETHistory.renderEntries(historyEntriesView(list),historyCtx())
                           :'<p class="ms-hist-empty">No updates yet</p>';
   const c=document.getElementById('ms-hist-count');
   if(c) c.textContent=list.length?list.length+' entr'+(list.length===1?'y':'ies'):'';
@@ -10451,6 +10547,7 @@ function renderNotesMsGroups(){
   const groups=order.map(function(k){
     const g=byKey[k];
     g.count=g.entries.length; g.summary=historySummary(k); g.open=!!NOTES_GROUP_OPEN[k];
+    g.entries=historyEntriesView(g.entries);
     return g;
   }).sort(function(a,b){ return String(a.id).localeCompare(String(b.id),undefined,{numeric:true}); });
   box.innerHTML=groups.length?SRETHistory.renderGroups(groups,historyCtx()):'';
@@ -15601,8 +15698,10 @@ const USER_DEFINED_EXPORT_HEADER=['Activity ID','Activity Name','Start','Finish'
 function userDefinedExportRows(){
   const rows=[USER_DEFINED_EXPORT_HEADER];
   USER_MILESTONES.forEach(function(m){
-    rows.push([m.id||m.ref, m.actName||'', m.start||'', m.date||'', m.floatD!=null?m.floatD:'',
-      STATE_LABELS[m.state]||m.state||'', '', '', USER_BAND, '', m.progress||0]);
+    // P72: no float on a user milestone; its own links in the two
+    // relationship columns, in the record's comma-separated form.
+    rows.push([m.id||m.ref, m.actName||'', m.start||'', m.date||'', '',
+      STATE_LABELS[m.state]||m.state||'', m.pred||'', m.succ||'', USER_BAND, '', m.progress||0]);
   });
   return rows;
 }
@@ -15780,8 +15879,12 @@ function applyAnnotSelection(){
 // Containers the app fills at runtime. A published file must ship with these
 // empty or it carries a stale copy of the board as dead markup — measured at
 // 603 KB of a 1,038 KB serialisation, more than half the file.
+// P72: the dependency layer's drawn lines (#dep-lines-g), not the whole
+// #dep-line-layer. Emptying the layer took its <defs> (the arrow markers) and
+// the <g> drawDepLines() draws into, so since P14 no published copy could
+// draw a dependency line at all.
 const PUBLISH_CLEAR_IDS=['tbody','mount-body','import-summary-wrap','import-error-wrap',
-  'map-wrap','diag-body','annot-dialog-body','current-import-advanced','dep-line-layer',
+  'map-wrap','diag-body','annot-dialog-body','current-import-advanced','dep-lines-g',
   'sib-left','sib-right'];
 
 // D-17a: a disabled source's rows are not in TASKS/MILESTONES (that is what
@@ -17350,6 +17453,8 @@ function msMatchesFloat(m,spec){
   // A milestone with no recorded float is not "zero float", it is unknown, so
   // it never satisfies a float constraint in either direction. Reporting an
   // unknown as critical is the kind of wrong that reaches a client.
+  // P72: a user milestone has no float, so it is unknown here too.
+  if(isUserMs(m)) return false;
   const f=(m&&m.floatD!=null&&m.floatD!=='')?parseFloat(m.floatD):NaN;
   if(isNaN(f)) return false;
   if(spec.op==='lt') return f<spec.days;
@@ -18011,16 +18116,19 @@ function openMsDialog(m, snipId, anchorEl, hd, task){
   const hasFloat=(m.floatD!=null&&!isNaN(m.floatD));
   const floatCol=document.getElementById('ms-float-col');
   if(floatCol){
-    // The column no longer hides itself when the schedule carries no float. It
-    // is a field a person can fill in now, and a field that is not on screen
-    // cannot be filled in; a dash says "none recorded" in the same place.
+    // Always on screen; a dash says "none recorded" in the same place.
     floatCol.style.display='';
-    // P59 (D-03): a completed milestone has no float to speak of, so it reads
-    // "-" and is not editable; a blank one shows the same "-" placeholder.
+    // P72 (Matt, 2026-10-01): float is display only on every milestone. It
+    // is the schedule's result of this activity's finish and its network, not
+    // a figure a person sets, so the field is read only. P59 (D-03): a
+    // completed milestone reads "-". A user milestone has no float at all:
+    // nothing computes one for it, so it always reads "-".
     const fEl=document.getElementById('ms-float-val');
     const st=effectiveState(m), isDone=(st==='DONE'||st==='DONEUSER');
-    fEl.readOnly=isDone;
-    fEl.value=(hasFloat&&!isDone)?String(Math.round(m.floatD)):'';
+    const userMs=isUserMs(m);
+    fEl.readOnly=true;
+    fEl.value=(hasFloat&&!isDone&&!userMs)?String(Math.round(m.floatD)):'';
+    fEl.title=userMs?'A user milestone carries no float.':'Total float in days, from the schedule. Not editable.';
   }
   // "Unassigned" tells the reader nothing they can act on — a real discipline name
   // is worth showing, an empty/unassigned one isn't, so the line just doesn't
@@ -18099,6 +18207,13 @@ function openMsDialog(m, snipId, anchorEl, hd, task){
     dot.classList.toggle('selected', parseInt(dot.getAttribute('data-val'),10)===msFormHealth);
   });
 
+  // P72: a user milestone's own links are a form field like any other,
+  // held here until Save. null for a schedule milestone, whose links are the
+  // schedule's and read only.
+  const umsRec=(snipId&&isUserMs(m))?umsRecord(snipId):null;
+  msFormDeps=umsRec?{pred:userDepIds(umsRec.pred),succ:userDepIds(umsRec.succ)}:null;
+  closeMsDepSuggest();
+  ['pred','succ'].forEach(function(k){ const a=document.getElementById('ms-dep-add-'+k); if(a) a.value=''; });
   fillMsDepLists(snipId);
   if(snipId){
     const flags=depFlags(snipId);
@@ -18271,6 +18386,116 @@ function pickMsType(code){
   closeMsTypeMenu();
   onMsFieldInput();
 }
+// ===== P72: a user milestone's predecessors and successors on its card =====
+// msFormDeps holds the pending lists ({pred:[ids], succ:[ids]}) while a user
+// milestone's card is open, null otherwise. Save writes them to the record;
+// Discard drops them with the rest of the form.
+let msFormDeps=null;
+function removeMsDep(kind,id){
+  if(!msFormDeps) return;
+  msFormDeps[kind]=msFormDeps[kind].filter(function(x){ return x!==id; });
+  fillMsDepLists(msDialogFor);
+  onMsFieldInput();
+}
+function addMsDep(kind,id){
+  if(!msFormDeps||!id||id===msDialogFor) return false;
+  if(msFormDeps[kind].indexOf(id)>=0) return false;
+  msFormDeps[kind].push(id);
+  fillMsDepLists(msDialogFor);
+  onMsFieldInput();
+  return true;
+}
+// Every Activity ID a link may point at: the board's, and the user
+// milestones' (a record added while the grid is open is not on the board yet).
+function msDepOptions(){
+  const seen={}, out=[];
+  const put=function(id,name){ if(id&&!seen[id]){ seen[id]=1; out.push({id:id,name:name||''}); } };
+  allMilestoneIds().forEach(function(id){
+    const m=findMilestoneBySnip(id);
+    put(id,m?(m.actName||String(m.notes||'').replace(/^\[[^\]]+\]\s*-\s*/,'')):'');
+  });
+  USER_MILESTONES.forEach(function(r){ put(r.id,r.actName); });
+  return out;
+}
+// The same matching as the Activity ID filter: the typed text anywhere in
+// the ID, IDs that start with it first. Nothing is listed for an empty box.
+let MS_DEP_SUG={kind:null,ids:[],hl:0};
+function msDepMatches(kind,q){
+  q=String(q||'').trim().toUpperCase();
+  if(!q||!msFormDeps) return [];
+  const taken=msFormDeps[kind];
+  return msDepOptions().filter(function(o){
+    return o.id!==msDialogFor&&taken.indexOf(o.id)<0&&o.id.toUpperCase().indexOf(q)>=0;
+  }).sort(function(a,b){
+    const sa=a.id.toUpperCase().indexOf(q)===0?0:1, sb=b.id.toUpperCase().indexOf(q)===0?0:1;
+    return sa-sb||a.id.localeCompare(b.id,undefined,{numeric:true});
+  }).slice(0,30);
+}
+// Hidden, not emptied: it is called from a suggestion's own click, and an
+// item detached under its click reaches the document as a click away from
+// the card (which saves and closes it). The next list replaces the items.
+function closeMsDepSuggest(){
+  const dd=document.getElementById('ms-dep-suggest');
+  if(dd) dd.hidden=true;
+  MS_DEP_SUG={kind:null,ids:[],hl:0};
+}
+function onMsDepAddInput(kind){
+  const input=document.getElementById('ms-dep-add-'+kind);
+  const dd=document.getElementById('ms-dep-suggest');
+  if(!input||!dd||!msFormDeps) return;
+  const list=msDepMatches(kind,input.value);
+  MS_DEP_SUG={kind:kind,ids:list.map(function(o){ return o.id; }),hl:0};
+  if(!list.length){ dd.hidden=true; dd.innerHTML=''; return; }
+  // onmousedown + preventDefault, the Activity ID filter's rule: the field
+  // keeps focus, so its blur cannot close the list before the pick lands.
+  dd.innerHTML=list.map(function(o,i){
+    return '<div class="id-suggest-item'+(i===0?' is-hl':'')+'" role="option" data-kind="'+kind+'" data-id="'+escapeHtml(o.id)+'"'+
+      ' onmousedown="event.preventDefault();pickMsDepSuggestion(this)" onclick="closeMsDepSuggest()">'+
+      escapeHtml(o.id)+(o.name?'<span class="ms-dep-sug-name">'+escapeHtml(o.name)+'</span>':'')+'</div>';
+  }).join('');
+  dd.hidden=false;
+  dd.style.width=Math.max(input.getBoundingClientRect().width,220)+'px';
+  positionFixedPopup(dd,input,'left');
+}
+// Picked on mousedown. The list is left in place until the click that
+// follows, so that click lands inside the card rather than on whatever
+// was under the list (which would read as a click away and close the card).
+function pickMsDepSuggestion(el){
+  const kind=el.getAttribute('data-kind'), id=el.getAttribute('data-id');
+  addMsDep(kind,id);
+  const input=document.getElementById('ms-dep-add-'+kind);
+  if(input){ input.value=''; input.focus(); }
+}
+function onMsDepAddKey(e,kind){
+  const dd=document.getElementById('ms-dep-suggest');
+  const open=dd&&!dd.hidden&&MS_DEP_SUG.kind===kind&&MS_DEP_SUG.ids.length;
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){
+    if(!open) return;
+    e.preventDefault();
+    const n=MS_DEP_SUG.ids.length;
+    MS_DEP_SUG.hl=(MS_DEP_SUG.hl+(e.key==='ArrowDown'?1:n-1))%n;
+    dd.querySelectorAll('.id-suggest-item').forEach(function(it,i){ it.classList.toggle('is-hl',i===MS_DEP_SUG.hl); });
+    return;
+  }
+  if(e.key==='Enter'){
+    e.preventDefault();
+    const input=e.target;
+    // The highlighted match, or an exact known ID typed in full.
+    let id=open?MS_DEP_SUG.ids[MS_DEP_SUG.hl]:null;
+    if(!id){
+      const q=String(input.value||'').trim().toUpperCase();
+      const hit=msDepOptions().filter(function(o){ return o.id.toUpperCase()===q; })[0];
+      id=hit?hit.id:null;
+    }
+    if(id&&addMsDep(kind,id)){ input.value=''; closeMsDepSuggest(); }
+    return;
+  }
+  if(e.key==='Escape'&&open){
+    // Closes the list only; Escape again leaves the card as usual.
+    e.preventDefault(); e.stopPropagation();
+    closeMsDepSuggest();
+  }
+}
 // The raw relationship IDs for this milestone, comma separated. DEP_DATA
 // stores them comma packed with no spaces, which is unreadable in a narrow
 // box, so they are re-joined with a separator that wraps.
@@ -18279,19 +18504,42 @@ function fillMsDepLists(snipId){
   const succ=document.getElementById('ms-dep-succ-list');
   const wrap=document.getElementById('ms-dep-lists');
   if(!pred||!succ||!wrap) return;
+  // DEP_DATA is the effective set (applyUserDeps()): a schedule milestone
+  // a user milestone links to lists that user milestone here too.
   const d=(snipId&&DEP_DATA[snipId])?DEP_DATA[snipId]:null;
-  const fmt=function(v){
-    return String(v||'').split(',').map(function(x){return x.trim();})
-           .filter(Boolean).join(', ');
-  };
-  pred.value=d?fmt(d.pred):'';
-  succ.value=d?fmt(d.succ):'';
-  // P66: the same values as chips. Built from the textareas' own lists, so
-  // the chips and the raw lists cannot disagree.
-  const ids=function(v){ return String(v||'').split(',').map(function(x){return x.trim();}).filter(Boolean); };
-  const pIds=ids(pred.value), sIds=ids(succ.value);
-  fillMsDepChips('ms-dep-pred-chips',pIds);
-  fillMsDepChips('ms-dep-succ-chips',sIds);
+  let lists={pred:d?parseIds(d.pred):[],succ:d?parseIds(d.succ):[]};
+  let own=null;
+  if(msFormDeps&&snipId){
+    // P72: a user milestone. Its own links come from the FORM (pending until
+    // Save) and carry a remove cross; a link another user milestone made to
+    // this one, or the schedule's own, is listed after them without one.
+    own=msFormDeps;
+    const inbound={pred:[],succ:[]};
+    const sch=DEP_DATA_SCHEDULE[snipId];
+    if(sch){ inbound.pred=parseIds(sch.pred); inbound.succ=parseIds(sch.succ); }
+    if(USER_MS_ENABLED) USER_MILESTONES.forEach(function(r){
+      if(!r||r.id===snipId) return;
+      if(userDepIds(r.succ).indexOf(snipId)>=0) inbound.pred.push(r.id);
+      if(userDepIds(r.pred).indexOf(snipId)>=0) inbound.succ.push(r.id);
+    });
+    lists={};
+    ['pred','succ'].forEach(function(k){
+      const out=own[k].slice();
+      inbound[k].forEach(function(id){ if(out.indexOf(id)<0) out.push(id); });
+      lists[k]=out;
+    });
+  }
+  pred.value=lists.pred.join(', ');
+  succ.value=lists.succ.join(', ');
+  // P66: the same values as chips, built from the same lists, so the chips
+  // and the raw lists cannot disagree.
+  const pIds=lists.pred, sIds=lists.succ;
+  fillMsDepChips('ms-dep-pred-chips',pIds,own?{kind:'pred',own:own.pred}:null);
+  fillMsDepChips('ms-dep-succ-chips',sIds,own?{kind:'succ',own:own.succ}:null);
+  ['pred','succ'].forEach(function(k){
+    const a=document.getElementById('ms-dep-add-'+k);
+    if(a) a.hidden=!own;
+  });
   const cnt=document.getElementById('ms-dep-count');
   if(cnt) cnt.textContent=pIds.length+' pred \u00B7 '+sIds.length+' succ';
   // A milestone with no id carries no relationships to show at all.
@@ -18302,7 +18550,9 @@ function fillMsDepLists(snipId){
 // One chip per linked ID: a dot in the linked milestone's effective state
 // colour (the board's own --color-icon-* roles), its name as the tooltip.
 // Built with DOM calls, not innerHTML, since an ID is schedule text.
-function fillMsDepChips(hostId,list){
+// P72: edit = {kind, own:[ids]} on a user milestone's card; the ids in own
+// get a remove cross.
+function fillMsDepChips(hostId,list,edit){
   const host=document.getElementById(hostId);
   if(!host) return;
   host.innerHTML='';
@@ -18327,6 +18577,19 @@ function fillMsDepChips(hostId,list){
     b.appendChild(dot);
     b.appendChild(document.createTextNode(id));
     b.onclick=function(ev){ onMsDepChip(ev,id); };
+    if(edit&&edit.own.indexOf(id)>=0){
+      b.classList.add('is-own');
+      const x=document.createElement('span');
+      x.className='collect-x ms-dep-x'; x.setAttribute('role','button'); x.tabIndex=0;
+      x.setAttribute('aria-label','Remove '+id); x.title='Remove '+id;
+      x.textContent='\u2715';
+      // stopPropagation: the chips are rebuilt under this click, and a click
+      // reaching the document from a detached node reads as a click away.
+      const rm=function(ev){ ev.stopPropagation(); ev.preventDefault(); removeMsDep(edit.kind,id); };
+      x.onclick=rm;
+      x.onkeydown=function(ev){ if(ev.key==='Enter'||ev.key===' ') rm(ev); };
+      b.appendChild(x);
+    }
     host.appendChild(b);
   });
 }
@@ -18610,6 +18873,8 @@ function closeMsDialog(){
   msFormTypeVal=null;
   msFormMarkerVal=null;
   msFormHealth=-1;
+  msFormDeps=null;
+  closeMsDepSuggest();
   msDraftClean=null;
 }
 // ===== The card is a form =====
@@ -18640,7 +18905,11 @@ function msReadForm(){
     marker:msFormMarker(),
     progress:g('ms-progress-input').trim(),
     comment:g('ms-comment-text'),
-    health:msFormHealth
+    health:msFormHealth,
+    // P72: a user milestone's own links, pending until Save. Always '' on a
+    // schedule milestone, whose links are not editable.
+    pred:msFormDeps?msFormDeps.pred.join(', '):'',
+    succ:msFormDeps?msFormDeps.succ.join(', '):''
   };
 }
 // The pending health, held on the form like everything else rather than
@@ -18793,9 +19062,10 @@ function saveMsDialog(alsoClose){
       return m[f];
     },
     scheduleProgress:m.progress,
-    // A completed milestone's float field is a read-only "-": never a request
-    // to clear a stored float.
-    floatReadOnly:!!(flEl&&flEl.readOnly),
+    // P72: float is read only on every milestone, so the card never asks
+    // for a float change. flEl.readOnly is always true now; kept as the
+    // source so the rule stays where the field is.
+    floatReadOnly:!flEl||flEl.readOnly!==false,
     parseDate:parseMsDate
   });
 
@@ -18815,6 +19085,26 @@ function saveMsDialog(alsoClose){
   if(oldText&&!newText){
     draft=draft||{target:{kind:'ms',key:key},changes:{},origin:'card',status:'open'};
     draft.text=''; draft.clearText=true;
+  }
+  // P72: a user milestone's links. The record is where they live (like the
+  // grid's edits to the same record), and the change goes into the same
+  // entry as the rest of this save, as changes.pred / changes.succ, so the
+  // update history shows it. The store keeps unknown change fields and
+  // never projects them, so nothing else reads them as an override.
+  const depRec=msFormDeps?umsRecord(key):null;
+  if(depRec){
+    const depCh={};
+    ['pred','succ'].forEach(function(k){
+      if(now[k]===clean[k]) return;
+      depCh[k]={from:clean[k],to:now[k]};
+      depRec[k]=now[k];
+      m[k]=now[k];
+    });
+    if(Object.keys(depCh).length){
+      draft=draft||{target:{kind:'ms',key:key},text:'',changes:{},origin:'card',status:'open'};
+      draft.changes=Object.assign({},draft.changes||{},depCh);
+      applyUserDeps();
+    }
   }
   // P66: the follow-up select sets the entry's status (open/sent/done).
   if(draft){
@@ -18851,6 +19141,8 @@ function saveMsDialog(alsoClose){
     const fuEl=document.getElementById('ms-followup');
     if(fuEl) fuEl.value='open';
     renderMsDuration();
+    // P72: the links just saved, with the other side's view rebuilt.
+    if(msFormDeps) fillMsDepLists(key);
     // Stays open, so the baseline has to move with it or the save pair would
     // never go away. This is the reported defect, stated once for every field
     // instead of once for the short title.

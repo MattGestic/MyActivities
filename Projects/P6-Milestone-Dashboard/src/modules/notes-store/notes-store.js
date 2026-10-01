@@ -32,7 +32,10 @@
   var STATUSES=['note','open','sent','review','outstanding','done','closed'];
   var OPEN_STATUSES=['open','sent','review','outstanding'];
   // The milestone's own schedule fields, exactly MS_EDITABLE_FIELDS in the app.
-  var MS_FIELDS=['actName','start','date','weight','floatD','type','marker','actual','startActual'];
+  // P72: floatD is not one of them. Float is the schedule's result, never a
+  // hand edit, so an old floatD change neither projects nor migrates (it
+  // stays in its entry, for the history).
+  var MS_FIELDS=['actName','start','date','weight','type','marker','actual','startActual'];
   var CHANGE_FIELDS=MS_FIELDS.concat(['health','progress','rowHealth','rowRemark']);
   var DEFAULT_WINDOW_MS=10*60*1000;
 

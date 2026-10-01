@@ -404,5 +404,33 @@ for (const name of ['model', 'published']) {
   check('create: bound clock and seq floor; coalesces via the clock', e1 === e2 && e1.eid === 'E-0101' && st.entries.length === 1 && st.rollup('Z').values.weight === 3);
 }
 
+// ---------- P72: float is not a hand edit; link changes are history only ----------
+{
+  check('P72: MS_FIELDS no longer lists floatD', S.MS_FIELDS.indexOf('floatD') < 0 && S.CHANGE_FIELDS.indexOf('floatD') < 0, S.MS_FIELDS);
+  const E = [];
+  S.append(E, Object.assign(ms('SNIP-7', { floatD: { from: 3, to: 9 }, weight: { from: 1, to: 2 } }), { origin: 'grid' }), { now: T0, period: P });
+  const pr = S.projectEntries(E);
+  check('P72: a stored floatD change is kept in its entry (history)', E[0].changes.floatD && E[0].changes.floatD.to === 9);
+  check('P72: a stored floatD change does not project as a field override', eq(pr.fields['SNIP-7'], { weight: 2 }), pr.fields);
+  const only = []; S.append(only, Object.assign(ms('SNIP-8', { floatD: { from: 3, to: 9 } }), { origin: 'grid' }), { now: T0, period: P });
+  check('P72: a floatD-only entry projects no field object at all', !('SNIP-8' in S.projectEntries(only).fields));
+  const mig = S.migrateLegacy({ milestoneFieldOverrides: { 'SNIP-9': { floatD: 4, date: '2026-10-10' }, 'SNIP-10': { floatD: 2 } }, reportDate: '2026-10-01' }, { now: T0 });
+  const m9 = mig.filter(e => e.target.key === 'SNIP-9')[0];
+  check('P72: migrateLegacy drops a legacy floatD override, keeps the rest', m9 && !('floatD' in m9.changes) && m9.changes.date.to === '2026-10-10', mig);
+  check('P72: migrateLegacy carries nothing for a floatD-only override', !mig.some(e => e.target.key === 'SNIP-10'), mig);
+  // A user milestone's link change: an unknown change field, kept and never projected.
+  const U = [];
+  const u1 = S.append(U, ms('USR-001', { pred: { from: '', to: 'SNIP-102' } }), { now: T0, period: P });
+  check('P72: pred change appended as its own entry', !!u1 && U.length === 1 && u1.changes.pred.to === 'SNIP-102', U);
+  const u2 = S.append(U, ms('USR-001', { succ: { from: '', to: 'SNIP-126' } }), { now: T0 + MIN, period: P });
+  check('P72: a card save in the window coalesces pred and succ into one entry', u2 === u1 && U.length === 1 && u1.changes.succ.to === 'SNIP-126' && u1.changes.pred.to === 'SNIP-102', U);
+  const u3 = S.append(U, ms('USR-001', { pred: { from: 'SNIP-102', to: '' } }), { now: T0 + 2 * MIN, period: P });
+  check('P72: a link removed again in the window drops out of the entry', u3 === u1 && !('pred' in u1.changes) && 'succ' in u1.changes, U);
+  const up = S.projectEntries(U);
+  check('P72: link changes project into no store', !('USR-001' in up.fields) && !('USR-001' in up.comments) && !('USR-001' in up.progress) && !('USR-001' in up.health), up);
+  const back = S.deserialize(S.serialize(U));
+  check('P72: link changes survive serialize/deserialize', back.length === 1 && back[0].changes.succ.to === 'SNIP-126', back);
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed, ' + (pass + fail) + ' checks');
 process.exit(fail ? 1 : 0);

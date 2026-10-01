@@ -126,5 +126,14 @@ r=run(Object.assign({},baseA,{date:'2026-10-20',dateActual:true}),{date:'',dateA
 ok('cleared date takes its flag back to schedule', r.draft.changes.date.to===null&&r.draft.changes.actual.to===null, r);
 ok('flag untouched -> nothing', run(baseA,{},{own:ownA,current:ownA})===null);
 
+// P72: the card's float is read only on every milestone (floatReadOnly is
+// always true from the app), and the card's link fields (pred, succ) are not
+// this module's: the app adds them to the draft itself.
+r=run(base,{floatD:'9'},{floatReadOnly:true}); ok('P72: read-only float, float alone -> null', r===null);
+r=run(Object.assign({},base,{pred:'',succ:''}),{pred:'SNIP-102',succ:'SNIP-126'},{floatReadOnly:true});
+ok('P72: pred/succ form keys are ignored by formToEntry', r===null);
+r=run(Object.assign({},base,{pred:''}),{pred:'SNIP-102',title:'Renamed'},{floatReadOnly:true});
+ok('P72: pred beside a real change -> only the real change', r&&r.draft.changes.actName&&!('pred' in r.draft.changes)&&Object.keys(r.draft.changes).length===1, r);
+
 console.log('\n'+(n-fails)+'/'+n+' passed');
 process.exit(fails?1:0);
