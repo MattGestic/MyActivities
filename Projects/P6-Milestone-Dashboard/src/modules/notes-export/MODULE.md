@@ -38,3 +38,4 @@ Run these on the module alone before embedding; after `--embed`, `tools/run_chec
 | Version | App version | Change |
 |---|---|---|
 | 0.1.0 | 3.1.0-P75 | standalone baseline as at app 3.1.0-P75; becomes 1.0.0 when first embedded in a release (D-30). |
+| 0.2.0 | 3.1.0-P78 | P78 (TD-244): people field labels; `pred:`/`succ:` prefix stripped from dependency remark keys. Changed in the app before D-30 was merged; versioned when the two met. |

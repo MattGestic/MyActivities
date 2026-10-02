@@ -1,6 +1,6 @@
 # D-30: Modules are the source; the app's module regions are generated
 
-**Status:** Proposed (Matt to approve). Implemented on `claude/modular-component-architecture-kzv0i7` (TD-242, TEST-79).
+**Status:** Proposed (Matt to approve). Implemented on `claude/modular-component-architecture-kzv0i7` (TD-245, TEST-81).
 **Directed by:** Matt, 2026-10-02. He asked for components with discrete inputs and outputs to be developed, versioned and tested as standalone files, then merged into the single file when they work, and to be reusable in other apps.
 
 ## Decision
@@ -59,9 +59,9 @@ The tool replaces only the text between a module's own pair. This closes TD-238,
 
 - **During development (the saving):** a module is tested alone: its Node test, its harness check, or the prototype. That takes seconds, needs no app and no Chromium, and is repeated as often as needed.
 - **At integration:** `--embed`, then `tools/run_checks.py`, which selects checks by changed region (`docs/check-map.md`).
-  - **Limit, measured at TEST-79:** the region map treats a module's IIFE as one top-level chunk, and every chunk runs at load. So embedding any module change re-selects every browser check that loads the app.
+  - **Limit, measured at TEST-81:** the region map treats a module's IIFE as one top-level chunk, and every chunk runs at load. So embedding any module change re-selects every browser check that loads the app.
   - **What this means:** integration is one full run per module merge, not one per edit. The saving is in how many full runs are needed, not in how big each one is.
-  - **Follow-up:** narrowing the selection needs function-level regions inside module IIFEs (TD-243).
+  - **Follow-up:** narrowing the selection needs function-level regions inside module IIFEs (TD-246).
 
 ## Reuse in other apps
 

@@ -38,3 +38,4 @@ Run these on the module alone before embedding; after `--embed`, `tools/run_chec
 | Version | App version | Change |
 |---|---|---|
 | 1.0.0 | 3.1.0-P75 | first embedded before D-30; baseline as at app 3.1.0-P75 (D-30). |
+| 1.1.0 | 3.1.0-P78 | P78 (TD-244): the three people fields map from the card; dash normalising written as escapes. Additive. Changed in the app before D-30 was merged; versioned when the two met. |

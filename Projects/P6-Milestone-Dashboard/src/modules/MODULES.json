@@ -100,7 +100,7 @@
     {
       "id": "notes-store",
       "dir": "notes-store",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "status": "embedded",
       "global": "SRETEntries",
       "summary": "The append-only entry record behind every milestone update (P65); the app's stores are projections of it.",
@@ -130,9 +130,9 @@
         "src/modules/notes-store/INTERFACE.md"
       ],
       "recorded": {
-        "version": "1.0.0",
+        "version": "1.1.0",
         "sources": {
-          "notes-store.js": "891a875dcb7cad3a",
+          "notes-store.js": "8a5da7db9a6a0ff6",
           "INTERFACE.md": "1117baee6c7779f8"
         }
       }
@@ -140,7 +140,7 @@
     {
       "id": "notes-card",
       "dir": "notes-card",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "status": "embedded",
       "global": "SRETFormToEntry",
       "summary": "Milestone card save reduced to one entry draft (P65, M5). Pure.",
@@ -165,16 +165,16 @@
         "tools/form_to_entry_test.mjs"
       ],
       "recorded": {
-        "version": "1.0.0",
+        "version": "1.1.0",
         "sources": {
-          "form-to-entry.js": "bc4fa5a637dc0c20"
+          "form-to-entry.js": "1d0bcd99be11c46f"
         }
       }
     },
     {
       "id": "notes-history",
       "dir": "notes-history",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "status": "embedded",
       "global": "SRETHistory",
       "summary": "Update history gallery for the milestone card and Notes panel (P66, M6).",
@@ -207,9 +207,9 @@
         "tools/p66_check.py"
       ],
       "recorded": {
-        "version": "1.0.0",
+        "version": "1.1.0",
         "sources": {
-          "notes-history.js": "a4a100d2822d7dc0",
+          "notes-history.js": "9eef7091f5381fb5",
           "notes-history.css": "bfe6d9552d31c457"
         }
       }
@@ -365,7 +365,7 @@
     {
       "id": "notes-export",
       "dir": "notes-export",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "status": "standalone",
       "global": "SRETNotesExport",
       "summary": "Entry array to the two-sheet notes workbook (Summary, Log). Pure.",
@@ -380,9 +380,9 @@
         "tools/notes_export_test.mjs"
       ],
       "recorded": {
-        "version": "0.1.0",
+        "version": "0.2.0",
         "sources": {
-          "notes-export.js": "f2ebbff56e15e836"
+          "notes-export.js": "3ea09c2a1d9fdd7d"
         }
       }
     },

@@ -22,7 +22,8 @@
   var FIELDS = [['status','Status'],['health','Health'],['progress','Progress'],
     ['date','End date'],['start','Start date'],['actName','Name'],['weight','Weight'],
     ['floatD','Float'],['type','Type'],['marker','Mark'],
-    ['startActual','Start date is'],['actual','End date is']];
+    ['startActual','Start date is'],['actual','End date is'],
+    ['discipline','Discipline'],['supervisor','Supervisor'],['engineer','Engineer']];
   var STATUS_LABEL = {note:'Note', open:'Open', sent:'Sent', review:'In review',
     outstanding:'Outstanding', done:'Done', closed:'Closed'};
   var STATUS_ORDER = ['note','open','sent','review','outstanding','done','closed'];

@@ -34,9 +34,11 @@
   var FIELD = {title:'actName', start:'start', date:'date', weight:'weight',
                floatD:'floatD', type:'type', marker:'marker',
                progress:'progress', health:'health',
-               startActual:'startActual', dateActual:'actual'};
+               startActual:'startActual', dateActual:'actual',
+               // P78: free text, one name each; blank is back to the schedule.
+               discipline:'discipline', supervisor:'supervisor', engineer:'engineer'};
   var ORDER = ['title','start','date','weight','floatD','type','marker','progress','health',
-               'startActual','dateActual'];
+               'startActual','dateActual','discipline','supervisor','engineer'];
 
   function norm(v){ return (v===undefined||v===''||v!==v)?null:v; }
   function same(a,b){
@@ -52,6 +54,7 @@
     var raw=now[f], s;
     switch(f){
       case 'title': case 'marker': case 'type':
+      case 'discipline': case 'supervisor': case 'engineer':
         s=(raw==null)?'':String(raw).trim();
         return {to:s===''?null:s};
       case 'start': case 'date':

@@ -440,7 +440,8 @@ def main():
     checks.append((
         "source: the ID and the relationships are absent from the editable list",
         # P72: floatD left the list (float is the schedule's, not a hand edit).
-        "const MS_EDITABLE_FIELDS=['actName','start','date','weight','type','marker','actual','startActual']" in src,
+        # P78: discipline, supervisor and engineer joined it (Matt, 2026-10-02).
+        "const MS_EDITABLE_FIELDS=['actName','start','date','weight','type','marker','actual','startActual',\n  'discipline','supervisor','engineer']" in src,
         "the editable field list changed"))
     # The short title's own Save button is what was reported. It should be gone
     # rather than fixed in place beside a second save control.

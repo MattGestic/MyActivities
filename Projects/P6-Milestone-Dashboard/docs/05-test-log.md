@@ -3388,11 +3388,58 @@ TD-241. Four builds in parallel worktrees, merged by the orchestrator; per-build
 
 **Full suite on the merged code:** `run_checks.py --all --jobs 3`: 65 selected, 65 passed (12.5 min).
 
-## TEST-79: D-30 module amalgamation (2026-10-02, no version bump)
+## TEST-79: P76 loss prevention controls, Info and About (v3.1.0-P76)
 
-This test covers TD-242 and TASK-64. It changes tooling only, so the app code is unchanged and `APP_VERSION` stays at 3.1.0-P75.
+TD-242. Design, storage key and platform limits: `docs/04-architecture.md`, P76.
 
-**App diff.** The diff against the P75 file contains only these lines, checked line by line:
+**New check:** `p76_loss_check` 165/165.
+
+Half A, `--dump-dom` through `chrome_fixture.py` (fixture seeded), at 1440x900 and 390x844:
+- computed `overscroll-behavior-y` is `contain` on html, body, `#scroll-wrap`, the Data & view scroller and `#ws-panel`;
+- a `BeforeUnloadEvent` is not cancelled on a clean board, is cancelled with `returnValue` set after an edit, and is clear again after the real `publishDashboard()` and after `exportModel()`; an open card with an edited title counts as unsaved with the pill off, and leaving commits it;
+- the saved copy's Backups list, status and clear row are empty and its banner is hidden;
+- Backups panel rows newest first with time, label, rev, counts, change and size; Restore, Download and Delete on screen; Restore and Clear all confirm inline with the counts; the banner's text, inside the viewport, Dismiss; the P72 heading still scrolls away and back at 390;
+- Info between Help and About, every rail tab on screen, Info and About headings in order, Matt's wording, no em dash, the version filled from `APP_VERSION`, the five "What you can use it for" items, the Save, Backups, import options and Help links land where they say, no sideways scroll;
+- with `window.indexedDB` throwing: the app boots, backups fall back to localStorage (rev 1, then rev 2, each holding its edit), warned once;
+- the empty app as it ships: no banner.
+
+Half B, real time, Node + Playwright, a `file://` page in a persistent profile:
+- IndexedDB opens; no dialog on a clean reload;
+- nothing inside the debounce, then a revision holding all 3 edits (remark, user milestone, note) with rev, savedAt, appVersion, label, summary and size; a `visibilitychange` to hidden writes one at once;
+- a dirty reload raises a `beforeunload` dialog; after Leave the banner offers the work, including the edit made just before the reload; Dismiss keeps the revision; at the next open the banner is back;
+- Restore brings the remark, the drawn user milestone and the note back, as unsaved, after a pinned Before restore revision; revs are numbered 1..N; the panel's Restore of rev 1 confirms with counts and restores it;
+- Download gives `milestone-dashboard_model_backup-r<N>_<stamp>.json`, which `validateModelPayload()` accepts with the revision's counts and which mounts into a fresh app (`#annot-file`, select all, apply) to the same entries, user milestones and notes;
+- a second identity (another project number) gets its own rev 1 and leaves the first untouched;
+- retention keeps 20 autosaves plus the newest of a day two days back, drops the other of that day and one 20 days old, and keeps every pinned one; the pure plan evicts the oldest unpinned and the oldest pinned over their caps, and over the size budget unpinned before pinned;
+- Delete removes one; Clear all confirms, then empties;
+- the empty app in a fresh profile has no banner; after work there that changes its identity (project number, a milestone) and a reload, it reopens empty and the banner still finds the work by the page it was made in; Restore brings it back.
+
+**Existing check changed, same intent:** `p29_check` `tabs: seven tabs and seven panels` (`tabs.length===7 && panels.length===7`) became `tabs: nine tabs and nine panels` (`===9`), for the Backups and Info tabs.
+
+**Suite:** `run_checks.py --jobs 3`: 65 selected, 64 passed, 1 failed. `grid_view_check` was 295/296 under three parallel jobs: its scroll p95 was 10.4 ms against an 8 ms bound, on the prototype grid (no app code). Standalone it passed 296/296 (p95 2.7 ms). The follow-up `run_checks.py --jobs 3` (11 selected, including it and `p76_loss_check`) passed 11/11.
+
+**Not tested here:** a real Android device (Chrome or Edge, a `content://` page). Headless Chromium does not perform the pull-to-refresh gesture, so the lock is asserted as the computed property that Chromium's gesture reads.
+
+## TEST-80: P77 Share Report and P78 Discipline, Supervisor and Engineer fields (v3.1.0-P78)
+
+TD-243, TD-244. Notes: `docs/p77-notes-share-report.md`, `docs/p78-notes-fields.md`.
+
+**New checks:** `p77_share_report_check` 109/109; `p78_fields_check` 196/196.
+
+- P77: the button's place and enabled state, the dialog (period, From remembered, Excel toggle, Share where `navigator.canShare` accepts files, Download), the report HTML (no scripts, inline CSS, fixed palette, every section in order, newest update first), and the Summary and Log workbook parsed back with SheetJS. `notes_export_test` 48/48 with the `pred:`/`succ:` key fix.
+- P78: import by paste (auto-map, values landing), the card people block measured at 1440 and 390, suggestions by mouse and keyboard, free text, entries, history, marks and clear-to-schedule, the grids, the user-defined export, publish and reopen in a fresh profile, model export and mount. Module tests: `notes_store_test` 139, `form_to_entry_test` 85/85, `notes_history_check` 74/74.
+
+**Existing assertions changed, same intent:** `p43_check` editable-field literal gains the three fields; `d17a_check` export header gains Discipline, Supervisor, Engineer; `p61_check` grid header gains the three columns and Health moves from index 8 to 11.
+
+**Bug fixed:** `applyFieldOverrides()` stored `undefined` on `_msBase` for a field the schedule did not carry, so after publish and reopen the override read back as the schedule value. It now stores `null`.
+
+**Suite (merged P76 + P77 + P78 build):** `run_checks.py --all --jobs 3`: 68 selected / 68 passed / 0 failed (wall 20.2 min). `p30_check` passed in 553.7 s against its 600 s limit, so it remains at risk of a timeout under load.
+
+## TEST-81: D-30 module amalgamation (2026-10-02, no version bump)
+
+This test covers TD-245 and TASK-64. It changes tooling only, so the app code is unchanged and `APP_VERSION` is not bumped. It was first run at P75, and re-checked after merging P76 to P78; see the merge note at the end.
+
+**App diff.** The diff against the base file contains only these lines, checked line by line:
 - `@module` BEGIN and END markers around the 6 existing pasted regions;
 - the `@slot` anchors `app-script-modules` and `style-modules`;
 - the P72 CSS comment, reworded.
@@ -3414,9 +3461,14 @@ This test covers TD-242 and TASK-64. It changes tooling only, so the app code is
 **`run_checks.py --jobs 4`, change-scoped:** 66 selected, 66 passed, 14.4 min.
 - A comment was edited while this run was in progress, so a settling run followed: 27 selected, 27 passed, 4.6 min.
 
-**TD-243 measurement.** At rest, `run_checks.py --dry-run` selects 12 of 67 checks: the fast static and node checks it always runs. I then made one patch-level change to a single module: a comment in `notes-history.js`, version bumped to 1.0.1, then `--embed`.
+**TD-246 measurement.** At rest, `run_checks.py --dry-run` selects 12 of 67 checks: the fast static and node checks it always runs. I then made one patch-level change to a single module: a comment in `notes-history.js`, version bumped to 1.0.1, then `--embed`.
 - **Result:** 66 of 67 selected, 53 of them because a used region changed.
 - **Cause:** the module's IIFE is one region, and every check that loads the app uses it.
 - **Restore:** the probe was reverted and `--check` was clean afterwards.
 
-**Exceptions accepted:** TD-243. Integration of any module change re-runs the full browser suite.
+**Exceptions accepted:** TD-246. Integration of any module change re-runs the full browser suite.
+
+**Merge with P76 to P78 (2026-10-02).** P76 to P78 merged into the base first and used TD-242, TD-243 and TEST-79, so this work moved to TD-245, TD-246 and TEST-81.
+- **Module versions:** P78 changed four module sources by hand, before D-30 existed. They were versioned when the two branches met: `notes-store`, `notes-card` and `notes-history` go to 1.1.0, and `notes-export` to 0.2.0.
+- **App file:** the base's pasted modules matched their sources exactly and were adopted unchanged. Against P78, the app differs only by the markers and three comment lines.
+- **Tests:** `modules_embed_test.py` passed 14/14 and `--check` was clean. `run_checks.py --jobs 4` selected 69 checks and all 69 passed (15.9 min).
