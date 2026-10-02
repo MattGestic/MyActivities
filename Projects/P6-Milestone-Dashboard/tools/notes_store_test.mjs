@@ -432,5 +432,32 @@ for (const name of ['model', 'published']) {
   check('P72: link changes survive serialize/deserialize', back.length === 1 && back[0].changes.succ.to === 'SNIP-126', back);
 }
 
+// ---------- P78: Discipline, Supervisor, Engineer are milestone fields ----------
+{
+  check('P78: MS_FIELDS lists discipline, supervisor, engineer', ['discipline', 'supervisor', 'engineer'].every(f => S.MS_FIELDS.indexOf(f) >= 0 && S.CHANGE_FIELDS.indexOf(f) >= 0), S.MS_FIELDS);
+  const E = [];
+  S.append(E, ms('SNIP-301', { supervisor: { from: null, to: 'J. Smith' }, discipline: { from: 'Mining', to: 'Process' } }), { now: T0, period: P });
+  const src = (k, f) => ({ 'SNIP-301': { supervisor: null, discipline: 'Mining', engineer: 'P. Patel' } }[k] || {})[f];
+  let pr = S.projectEntries(E, src);
+  check('P78: a supervisor and a discipline change project as field overrides', eq(pr.fields['SNIP-301'], { supervisor: 'J. Smith', discipline: 'Process' }), pr.fields);
+  S.append(E, Object.assign(ms('SNIP-301', { engineer: { from: 'P. Patel', to: 'P. Patel' } }), { origin: 'grid' }), { now: T0 + MIN, period: P });
+  check('P78: a change to the same value appends nothing', E.length === 1, E);
+  S.append(E, Object.assign(ms('SNIP-301', { supervisor: { from: 'J. Smith', to: null } }), { origin: 'grid' }), { now: T0 + 2 * MIN, period: P });
+  pr = S.projectEntries(E, src);
+  check('P78: to:null takes the supervisor back to the schedule (no override)', eq(pr.fields['SNIP-301'], { discipline: 'Process' }), pr.fields);
+  const E2 = [];
+  S.append(E2, Object.assign(ms('SNIP-302', { engineer: { from: null, to: 'P. Patel' } }), { origin: 'grid' }), { now: T0, period: P });
+  check('P78: a value equal to the schedule\'s own is not stored', !('SNIP-302' in S.projectEntries(E2, (k, f) => f === 'engineer' ? 'P. Patel' : undefined).fields));
+  const E3 = [];
+  S.append(E3, ms('USR-009', { discipline: { from: null, to: 'Electrical' } }), { now: T0, period: P });
+  check('P78: a USR- key projects like any other', eq(S.projectEntries(E3).fields['USR-009'], { discipline: 'Electrical' }));
+  const c1 = S.append(E3, ms('USR-009', { discipline: { from: 'Electrical', to: null } }), { now: T0 + MIN, period: P });
+  check('P78: a card change reverted in the window coalesces to nothing', E3.length === 0 && S.isEmptyEntry(c1), E3);
+  const mig = S.migrateLegacy({ milestoneFieldOverrides: { 'SNIP-303': { supervisor: 'K. Lee', engineer: 'R. Chen' } }, reportDate: '2026-10-01' }, { now: T0 });
+  check('P78: migrateLegacy carries the three fields from milestoneFieldOverrides', mig.length === 1 && mig[0].changes.supervisor.to === 'K. Lee' && mig[0].changes.engineer.to === 'R. Chen', mig);
+  const back = S.deserialize(S.serialize(E));
+  check('P78: the changes survive serialize/deserialize', back.length === E.length && eq(S.projectEntries(back, src).fields, pr.fields), back);
+}
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed, ' + (pass + fail) + ' checks');
 process.exit(fail ? 1 : 0);

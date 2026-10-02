@@ -243,12 +243,13 @@ PROBE = r"""
       const rows=sheetRows(w.wb,w.wb.SheetNames[0]);
       const head=rows[0]||[];
       ck('its header is the grid\'s columns, Health last',
-         JSON.stringify(head)===JSON.stringify(['Activity ID','Name','Type','Date','Band','Status','% complete','Comment','Health']), JSON.stringify(head));
+         // P78: Discipline, Supervisor and Engineer are grid columns now, before Health.
+         JSON.stringify(head)===JSON.stringify(['Activity ID','Name','Type','Date','Band','Status','% complete','Comment','Discipline','Supervisor','Engineer','Health']), JSON.stringify(head));
       const byId={}; rows.slice(1).forEach(r=>{ byId[r[0]]=r; });
       ck('one sheet row per user milestone, deleted one absent',
          rows.length===4&&byId[A]&&byId[C]&&byId[nextId]&&!byId[B], rows.map(r=>r[0]).join(','));
       ck('the sheet carries the edited name, comment and health',
-         byId[A]&&byId[A][1]==='Renamed in grid'&&byId[A][7]==='Grid comment'&&(dotId!==A||byId[A][8]==='Critical'), JSON.stringify(byId[A]));
+         byId[A]&&byId[A][1]==='Renamed in grid'&&byId[A][7]==='Grid comment'&&(dotId!==A||byId[A][11]==='Critical'), JSON.stringify(byId[A]));
     }
 
     // Back
