@@ -207,7 +207,13 @@ PROBE = r"""
     let e=lastEntryOn(aKey);
     ck('+2: one new entry with changes.date', ENTRIES.length===n1+1&&e&&e.changes&&e.changes.date&&e.changes.date.to===exp2&&e.changes.date.from===aOwn, JSON.stringify(e&&e.changes));
     ck('+2: the override is the projection of that entry', MS_FIELD_OVERRIDE[aKey]&&MS_FIELD_OVERRIDE[aKey].date===exp2, JSON.stringify(MS_FIELD_OVERRIDE[aKey]));
-    ck('+2: the A flag and the Start are unchanged', A.actual===aActual&&!('actual' in (e.changes||{}))&&!('start' in (e.changes||{})), '');
+    // P75 integration (orchestrator): A is zero-duration (no start of its own),
+    // so its start follows the finish in the same entry and it still has no
+    // start of its own afterwards; before this the stored start was left behind
+    // and the card began showing it. The A flag is still untouched.
+    ck('+2: the A flag is unchanged, and the start follows (still no start of its own)',
+       A.actual===aActual&&!('actual' in (e.changes||{}))&&e.changes.start&&e.changes.start.to===exp2&&A.start===A.date&&msOwnStart(A)===null,
+       JSON.stringify(e&&e.changes)+' start '+A.start);
     ck('+2: the edited mark (*) is on the marker', !!(w&&w.querySelector('.m-board-edit-mark')), '');
     const trA=document.querySelector('#tbody tr.data[data-ref="'+CSS.escape(aRef)+'"]');
     ck('+2: the ghost tick sits at the source week', !!trA.querySelector('td.c-wk[data-col="'+aCol+'"] .m-edit-ghost'), '');
@@ -387,7 +393,7 @@ def main():
     checks.append(("source: exactly one version literal",
                    len(re.findall(r"3\.[0-9]+\.[0-9]+-P", src)) == 1, ""))
     checks.append(("source: the drop writes the date through addFieldEntry, never the store",
-                   "addFieldEntry(msKeyFor(ms),'date'" in src and "MS_FIELD_OVERRIDE[msKeyFor(ms)]=" not in src, ""))
+                   "addFieldEntry(key,'date'" in src and "function msWriteFinishMove(" in src and "MS_FIELD_OVERRIDE[key]=" not in src and "MS_FIELD_OVERRIDE[msKeyFor(ms)]=" not in src, ""))
     for (w, h) in VIEWPORTS:
         R = render(html, w, h)
         print(f"\n=== {w}x{h} ===  notes {json.dumps(R.get('notes', {}))}")

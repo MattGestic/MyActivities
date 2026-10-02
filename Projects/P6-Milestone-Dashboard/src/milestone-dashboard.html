@@ -6826,7 +6826,7 @@ button.sg-sym:hover{transform:scale(1.2)}
 // label, and embedded in exported JSON — bump this one place, everything else
 // reads from it, so the three copies can't silently drift apart the way the
 // title/label/export payload just had for a long stretch of unversioned work.
-const APP_VERSION='3.1.0-P74';
+const APP_VERSION='3.1.0-P75';
 // ============================================================
 // PRE-BOOT DATASET HOOK (P74, TD-239)
 // ============================================================
@@ -9326,6 +9326,8 @@ function msDragUpdateCol(e){
 let MS_DRAG_TOAST_TIMER=null;
 const MS_DRAG_TOAST_MS=4000;
 function msDragToast(text,actionLabel,action){
+  // One message at a time: the app toast (strip, P75) gives way.
+  if(typeof hideToast==='function') hideToast();
   clearTimeout(MS_DRAG_TOAST_TIMER);
   let el=document.getElementById('ms-drag-toast');
   if(!el){
@@ -9375,20 +9377,41 @@ function msOwnFinish(ms){
 function msOwnStart(ms){
   const s=ms&&ms.start;
   if(!s) return null;
-  const b=ms._msBase||{};
-  if(!ms.finishFromStart&&!('start' in b)&&s===msOwnFinish(ms)) return null;
+  // Judged on the schedule's own values plus the current pair, so a start
+  // that has followed a dragged finish (below) still reads as "no own start".
+  if(!ms.finishFromStart&&msOwnScheduleStart(ms)===msOwnFinish(ms)&&s===ms.date) return null;
   return s;
+}
+// A milestone with no start of its own (stored start equal to finish) keeps
+// it that way: its start follows the finish, so the card goes on showing no
+// start rather than a leftover date (P75 integration, Matt's review).
+function msOwnScheduleStart(ms){
+  return (ms._msBase&&('start' in ms._msBase))?ms._msBase.start:ms.start;
+}
+// One entry for the move: the finish, plus the start when it has no start of
+// its own, so history shows a single change and Undo is a single entry.
+function msWriteFinishMove(ms,iso){
+  const key=msKeyFor(ms);
+  const followStart=!!ms.start&&msOwnStart(ms)===null;
+  const e=addFieldEntry(key,'date',iso===msOwnFinish(ms)?null:iso);
+  if(followStart&&e&&e.changes){
+    const ov=MS_FIELD_OVERRIDE[key];
+    e.changes.start={from:(ov&&('start' in ov))?ov.start:ms.start,
+                     to:iso===msOwnScheduleStart(ms)?null:iso};
+    projectEntryStores();
+  }
+  return e;
 }
 function msSetFinishByDrag(ms,iso){
   const prev=ms.date;
-  addFieldEntry(msKeyFor(ms),'date',iso===msOwnFinish(ms)?null:iso);
+  msWriteFinishMove(ms,iso);
   return prev;
 }
 function msUndoDragMove(ms,prevIso,fromRef,toRef){
   if(toRef&&ms.ref===toRef) moveMilestoneToRow(ms,fromRef);
   // Undo is a new entry back to the earlier date, never a deleted one, so the
   // history keeps both the move and its reversal.
-  addFieldEntry(msKeyFor(ms),'date',prevIso===msOwnFinish(ms)?null:prevIso);
+  msWriteFinishMove(ms,prevIso);
   noteMarkup();
   if(typeof renderNotes==='function') renderNotes();
   diag('aggregate','info','Milestone finish move undone, back to '+prevIso,msKeyFor(ms));
@@ -16793,6 +16816,10 @@ function publishDashboard(){
     root.querySelectorAll('colgroup col.col-wk').forEach(function(e){e.remove();});
     const wf=root.querySelector('#week-filter'); if(wf) while(wf.options.length>1) wf.remove(1);
     const ghost=root.querySelector('#ms-drag-ghost'); if(ghost) ghost.remove();
+    // P75: transient messages never travel into a saved copy.
+    const dt=root.querySelector('#ms-drag-toast'); if(dt) dt.remove();
+    const at=root.querySelector('#app-toast'); if(at) at.classList.remove('is-shown');
+    const dl=root.querySelector('#ms-drag-date'); if(dl) dl.remove();
     // The A3 preview is a transient way of looking at the board, not a saved
     // setting, so it never travels into a published file. The injected @page
     // rule goes with it, or every published copy would print A3 whether or not
@@ -19489,6 +19516,8 @@ function showToast(text,opts){
   if(!el||!msg) return;
   opts=opts||{};
   if(TOAST_TIMER) clearTimeout(TOAST_TIMER);
+  // One message at a time: a drag Undo toast gives way.
+  if(typeof msDragToastClose==='function') msDragToastClose();
   msg.textContent=String(text||'');
   if(act){
     act.hidden=!opts.action;
