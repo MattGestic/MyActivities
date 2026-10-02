@@ -3419,3 +3419,18 @@ Half B, real time, Node + Playwright, a `file://` page in a persistent profile:
 **Suite:** `run_checks.py --jobs 3`: 65 selected, 64 passed, 1 failed. `grid_view_check` was 295/296 under three parallel jobs: its scroll p95 was 10.4 ms against an 8 ms bound, on the prototype grid (no app code). Standalone it passed 296/296 (p95 2.7 ms). The follow-up `run_checks.py --jobs 3` (11 selected, including it and `p76_loss_check`) passed 11/11.
 
 **Not tested here:** a real Android device (Chrome or Edge, a `content://` page). Headless Chromium does not perform the pull-to-refresh gesture, so the lock is asserted as the computed property that Chromium's gesture reads.
+
+## TEST-80: P77 Share Report and P78 Discipline, Supervisor and Engineer fields (v3.1.0-P78)
+
+TD-243, TD-244. Notes: `docs/p77-notes-share-report.md`, `docs/p78-notes-fields.md`.
+
+**New checks:** `p77_share_report_check` 109/109; `p78_fields_check` 196/196.
+
+- P77: the button's place and enabled state, the dialog (period, From remembered, Excel toggle, Share where `navigator.canShare` accepts files, Download), the report HTML (no scripts, inline CSS, fixed palette, every section in order, newest update first), and the Summary and Log workbook parsed back with SheetJS. `notes_export_test` 48/48 with the `pred:`/`succ:` key fix.
+- P78: import by paste (auto-map, values landing), the card people block measured at 1440 and 390, suggestions by mouse and keyboard, free text, entries, history, marks and clear-to-schedule, the grids, the user-defined export, publish and reopen in a fresh profile, model export and mount. Module tests: `notes_store_test` 139, `form_to_entry_test` 85/85, `notes_history_check` 74/74.
+
+**Existing assertions changed, same intent:** `p43_check` editable-field literal gains the three fields; `d17a_check` export header gains Discipline, Supervisor, Engineer; `p61_check` grid header gains the three columns and Health moves from index 8 to 11.
+
+**Bug fixed:** `applyFieldOverrides()` stored `undefined` on `_msBase` for a field the schedule did not carry, so after publish and reopen the override read back as the schedule value. It now stores `null`.
+
+**Suite (merged P76 + P77 + P78 build):** `run_checks.py --all --jobs 3`: 68 selected / 68 passed / 0 failed (wall 20.2 min). `p30_check` passed in 553.7 s against its 600 s limit, so it remains at risk of a timeout under load.
