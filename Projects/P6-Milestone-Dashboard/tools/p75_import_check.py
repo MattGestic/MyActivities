@@ -33,6 +33,12 @@ Runs:
              SheetJS (data/schedules/...DD-2026-08-29.xlsx);
       paste: the same export as TSV (tools/import_check.py build_aoa) through
              the paste box and "Parse pasted data";
+      excel: the same export exactly as Excel copies it (CRLF, the header's
+             "\nActivity ID\n" a quoted multi-line cell): Activity ID must
+             auto-map and the board must equal the file import (105/146);
+             plus Parse.delimited() on its own: an embedded comma and a
+             doubled quote, a quoted tab and line break, a literal mid-cell
+             quote, an unterminated quote, and auto-map on padded headers;
     each checks Import is enabled (disabled, aria-disabled, computed style,
     the primary look, nothing on top of it), that a click imports, and that
     the paste box is empty afterwards; the file run also checks the panel's
@@ -299,9 +305,22 @@ setTimeout(async function(){
     // ---- the real file, through handleFile and the embedded SheetJS ----
     const bin=atob(XB64), u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i);
     const file=new File([u],'103787-13_PFS_Weekly_Update_DD-2026-08-29.xlsx',{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    // Everything after the disk read is the app's own: handleFile(), the
+    // embedded SheetJS, Parse.workbook(), showMapper(). The FileReader step
+    // alone hands over the same bytes directly: under --virtual-time-budget
+    // its real-thread completion can land after the probe's waits have spent
+    // the virtual clock (seen as a run stuck at "Reading ...", 1 in 3 runs).
+    const realRead=window.readFileWithRetry;
+    window.readFileWithRetry=function(f,how,onDone,onFail){
+      if(f!==file) return realRead.apply(this,arguments);
+      setTimeout(function(){ onDone({target:{result:u.buffer.slice(0)}}); },0);
+    };
     handleFile({files:[file]});
-    for(let i=0;i<40&&!$('import-run-btn');i++) await settle(150);
-    ck('file: the workbook parses to the export’s rows', LAST_PARSE&&LAST_PARSE.rows.length===EXP.rows, LAST_PARSE?LAST_PARSE.rows.length:'no parse');
+    // The read and the SheetJS parse are asynchronous; give them room on a
+    // loaded machine (a 6s wait was flaky under --jobs 3).
+    for(let i=0;i<120&&!$('import-run-btn')&&!$('import-error-wrap').textContent.trim();i++) await settle(250);
+    if(!$('import-run-btn')) R.notes.fileStatus=txt($('ingest-status'))+' | '+txt($('import-error-wrap'));
+    ck('file: the workbook parses to the export’s rows', LAST_PARSE&&LAST_PARSE.rows.length===EXP.rows, LAST_PARSE?LAST_PARSE.rows.length:'no parse: '+R.notes.fileStatus);
     const S2=steps();
     ck('panel: with a file, steps 1 to 3 read done and step 4 is current',
        S2.slice(0,3).every(s=>s.classList.contains('is-done'))&&S2[3].classList.contains('is-current')&&getComputedStyle(rw).display!=='none', S2.map(s=>s.className).join(' | '));
@@ -311,16 +330,35 @@ setTimeout(async function(){
     ck('panel: after the import the range filter is put away, the dates stay', getComputedStyle(rw).display==='none'&&dd.getBoundingClientRect().width>0&&rd.getBoundingClientRect().width>0);
   } else {
     // ---- the pasted export, through the paste box ----
+    // MODE 'paste': the export as TSV with its header flattened.
+    // MODE 'excel': exactly what Excel puts on the clipboard (CRLF rows, any
+    // cell holding a tab, a line break or a quote quoted, quotes doubled), so
+    // the header's own "\nActivity ID\n" arrives as a quoted multi-line cell.
+    if(MODE==='excel'){
+      // The parser on its own, RFC 4180 for comma and tab alike.
+      const c1=Parse.delimited('Activity ID,Activity Name,Finish\r\nA-1,"Pump, ""A"" train",2026-08-01\r\nA-2,Plain,2026-08-02\r\n');
+      ck('parser: a comma CSV cell keeps its embedded comma and its doubled quote', c1.rows.length===2&&c1.rows[0].length===3&&c1.rows[0][1]==='Pump, "A" train', JSON.stringify(c1.rows));
+      const c2=Parse.delimited('"\nActivity ID\n"\tActivity Name\tFinish\nA-1\t"Line one\nline two, with\ttab"\t2026-08-01\nA-2\t12" pipe\t2026-08-02\n');
+      ck('parser: a quoted TSV header cell with line breaks is one trimmed header', JSON.stringify(c2.headers)==='["Activity ID","Activity Name","Finish"]', JSON.stringify(c2.headers));
+      ck('parser: a quoted TSV cell keeps its line break and tab, the row stays whole', c2.rows.length===2&&c2.rows[0][1]==='Line one\nline two, with\ttab'&&c2.rows[0][2]==='2026-08-01', JSON.stringify(c2.rows));
+      ck('parser: a quote inside a cell is literal', c2.rows[1][1]==='12" pipe', JSON.stringify(c2.rows[1]));
+      const c3=Parse.delimited('Activity ID,Activity Name,Finish\nA-1,"never closed,2026-08-01\nA-2,Plain,2026-08-02\n');
+      ck('parser: an unterminated quote falls back to line by line, nothing swallowed', c3.rows.length===2&&c3.rows[1][1]==='Plain', JSON.stringify(c3.rows));
+      const am=Parse.autoMap(['\nActivity ID\n',' Activity Name ','Finish\n']);
+      ck('parser: auto-map reads a header that kept its padding and line breaks', am.id===0&&am.name===1&&am.finish===2, JSON.stringify(am));
+    }
     togglePaste(); await settle(60);
     $('paste-box').value=TSV;
     const parseBtn=Array.from($('paste-wrap').querySelectorAll('button')).find(b=>/Parse pasted data/.test(b.textContent));
     parseBtn.click(); await settle();
-    ck('paste: the pasted export parses to its rows', LAST_PARSE&&LAST_PARSE.rows.length===EXP.rows, LAST_PARSE?LAST_PARSE.rows.length:'no parse');
-    await importButtonChecks('paste');
-    await clickImport('paste');
+    ck(MODE+': the pasted export parses to its rows', LAST_PARSE&&LAST_PARSE.rows.length===EXP.rows, LAST_PARSE?LAST_PARSE.rows.length:'no parse');
+    ck(MODE+': Activity ID is the first header and auto-maps to it', LAST_PARSE&&LAST_PARSE.headers[0]==='Activity ID'&&LAST_MAP&&LAST_MAP.id===0&&$('map-id').value==='0',
+       LAST_PARSE?JSON.stringify(LAST_PARSE.headers[0])+' map.id='+(LAST_MAP&&LAST_MAP.id):'');
+    await importButtonChecks(MODE);
+    await clickImport(MODE);
     // A second Parse finds nothing to reuse.
     parseBtn.click(); await settle();
-    ck('paste: a second Parse after the import finds the box empty and stages nothing',
+    ck(MODE+': a second Parse after the import finds the box empty and stages nothing',
        !LAST_PARSE&&!$('import-run-btn')&&/Paste box is empty/.test(txt($('ingest-status'))), txt($('ingest-status')));
   }
   ck('no console errors', window.__errs.length===0, window.__errs.join(' | '));
@@ -361,6 +399,19 @@ def to_tsv(aoa):
     return "\n".join("\t".join(cell(v, i == 0) for v in row) for i, row in enumerate(aoa)) + "\n"
 
 
+def to_excel_clipboard(aoa):
+    """The export as Excel copies a range: tab between cells, CRLF between
+    rows, and a cell holding a tab, a line break or a quote wrapped in quotes
+    with its quotes doubled. The header's "\\nActivity ID\\n" goes over as it
+    is, a quoted multi-line cell."""
+    def cell(v):
+        s = "" if v is None else str(v)
+        if any(c in s for c in '\t\n\r"'):
+            s = '"' + s.replace('"', '""') + '"'
+        return s
+    return "".join("\t".join(cell(v) for v in row) + "\r\n" for row in aoa)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--html", default=str(ROOT / "src" / "milestone-dashboard.html"))
@@ -374,11 +425,11 @@ def main():
         tag = f"picker {size[0]}"
         probe = PICKER.replace("__TAG__", json.dumps(tag))
         checks += run(page_with(html, probe, False), size)["checks"]
-    for mode in ["file", "paste"]:
+    for mode in ["file", "paste", "excel"]:
         probe = (IMPORT.replace("__TAG__", json.dumps("import " + mode))
                  .replace("__MODE__", json.dumps(mode))
                  .replace("__EXP__", json.dumps(exp))
-                 .replace("__TSV__", json.dumps(to_tsv(aoa)) if mode == "paste" else "''")
+                 .replace("__TSV__", json.dumps(to_tsv(aoa) if mode == "paste" else to_excel_clipboard(aoa) if mode == "excel" else ""))
                  .replace("__XB64__", json.dumps(base64.b64encode(XLSX.read_bytes()).decode()) if mode == "file" else "''"))
         checks += run(page_with(html, probe, True), (1440, 900))["checks"]
     fails = 0

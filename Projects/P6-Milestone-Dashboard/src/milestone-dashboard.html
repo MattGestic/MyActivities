@@ -7353,27 +7353,54 @@ function parseFloatLoose(v){
 // 1. PARSE  — file/text -> {headers, rows}
 // ============================================================
 const Parse={
+  // P75 (Matt 2026-10-02): RFC 4180 records, for tab and comma alike. The
+  // text used to be split into lines first and quotes handled per line (and
+  // not at all for tabs), so a quoted cell holding a line break broke its
+  // row in two. Excel quotes exactly such cells when it copies a range, and
+  // a P6 export's own header carries one ("\nActivity ID\n"), so a pasted
+  // export lost its Activity ID column. A quoted cell may now hold line
+  // breaks, the delimiter and doubled quotes (""); a quote only opens a
+  // quoted cell at the start of a cell, elsewhere it is literal (12" pipe).
+  // An unterminated quote falls back to the old line-by-line reading rather
+  // than swallowing the rest of the paste.
   delimited:function(text){
-    const lines=String(text).replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(l=>l.trim()!=='');
-    if(!lines.length) return {headers:[],rows:[]};
-    const tabs=(lines[0].match(/\t/g)||[]).length;
-    const commas=(lines[0].match(/,/g)||[]).length;
+    const src=String(text).replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+    // The delimiter is read off the first record, counting only outside quotes.
+    let tabs=0,commas=0;
+    for(let i=0,q=false,cellStart=true;i<src.length;i++){
+      const ch=src[i];
+      if(q){ if(ch==='"'){ if(src[i+1]==='"') i++; else q=false; } continue; }
+      if(ch==='"'&&cellStart){ q=true; cellStart=false; continue; }
+      if(ch==='\n'){ if(tabs||commas) break; cellStart=true; continue; }
+      if(ch==='\t'){ tabs++; cellStart=true; } else if(ch===','){ commas++; cellStart=true; } else cellStart=false;
+    }
     const delim=tabs>=commas?'\t':',';
-    const split=function(line){
-      if(delim==='\t') return line.split('\t');
-      const out=[];let cur='';let q=false;
-      for(let i=0;i<line.length;i++){
-        const ch=line[i];
-        if(ch==='"'){ if(q&&line[i+1]==='"'){cur+='"';i++;} else q=!q; }
-        else if(ch===','&&!q){out.push(cur);cur='';}
-        else cur+=ch;
+    function records(quoting){
+      const recs=[]; let row=[], cur='', q=false, cellStart=true;
+      for(let i=0;i<src.length;i++){
+        const ch=src[i];
+        if(q){
+          if(ch==='"'){ if(src[i+1]==='"'){ cur+='"'; i++; } else q=false; }
+          else cur+=ch;
+          continue;
+        }
+        if(quoting&&ch==='"'&&cellStart){ q=true; cellStart=false; continue; }
+        if(ch===delim){ row.push(cur); cur=''; cellStart=true; continue; }
+        if(ch==='\n'){ row.push(cur); recs.push(row); row=[]; cur=''; cellStart=true; continue; }
+        cur+=ch; cellStart=false;
       }
-      out.push(cur);return out;
-    };
+      if(q) return null;
+      if(cur!==''||row.length){ row.push(cur); recs.push(row); }
+      return recs;
+    }
+    let recs=records(true);
+    if(!recs) recs=records(false).map(function(r){ return r.map(function(x){ return x.replace(/^"|"$/g,''); }); });
+    recs=recs.filter(function(r){ return r.some(function(x){ return x.trim()!==''; }); });
+    if(!recs.length) return {headers:[],rows:[]};
     // find header row = first row with >=3 non-empty cells matching any alias
     let hdrIdx=0,bestHits=0;
-    for(let i=0;i<Math.min(lines.length,15);i++){
-      const cells=split(lines[i]).map(normKey);
+    for(let i=0;i<Math.min(recs.length,15);i++){
+      const cells=recs[i].map(normKey);
       let hits=0;
       for(const k in INGEST_CONFIG.headerAliases){
         if(INGEST_CONFIG.headerAliases[k].some(a=>cells.indexOf(normKey(a))>=0)) hits++;
@@ -7381,11 +7408,13 @@ const Parse={
       if(hits>bestHits){bestHits=hits;hdrIdx=i;}
       if(hits>=3){hdrIdx=i;bestHits=hits;break;}
     }
-    const headers=split(lines[hdrIdx]).map(h=>h.replace(/^"|"$/g,'').trim().replace(/\s+/g,' '));
+    // Header cells are trimmed and their inner whitespace (line breaks
+    // included) collapsed, so "\nActivity ID\n" reads as Activity ID.
+    const headers=recs[hdrIdx].map(h=>String(h).trim().replace(/\s+/g,' '));
     const rows=[];
     const rawRows=[];
-    for(let i=hdrIdx+1;i<lines.length;i++){
-      const raw=split(lines[i]).map(x=>x.replace(/^"|"$/g,''));
+    for(let i=hdrIdx+1;i<recs.length;i++){
+      const raw=recs[i];
       const c=raw.map(x=>x.trim());
       if(c.some(x=>x!=='')){ rows.push(c); rawRows.push(raw); }
     }
@@ -7424,7 +7453,9 @@ const Parse={
     return {headers:headers,rows:rows,sheet:best.name,headerScore:bestHits};
   },
   autoMap:function(headers){
-    const nh=headers.map(normKey);
+    // Trimmed (and inner whitespace collapsed) before matching, so a header
+    // that kept a line break or padding from its source still auto-maps.
+    const nh=headers.map(h=>normKey(String(h==null?'':h).trim().replace(/\s+/g,' ')));
     const map={};
     for(const field in INGEST_CONFIG.headerAliases){
       map[field]=-1;

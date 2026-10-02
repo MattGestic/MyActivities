@@ -67,11 +67,32 @@ Visibility:
 
 `runIngest()`'s success path empties `#paste-box`. It already nulled `LAST_PARSE` / `LAST_MAP` and cleared the summary. The box stays open if it was open. A second "Parse pasted data" then reports "Paste box is empty." and stages nothing.
 
-## Not fixed, found on the way (outside this brief)
+## 5. Pasted export lost its Activity ID column (follow-up commit)
 
-- `Parse.delimited()` splits lines before it handles quotes. A header cell holding a line break breaks the header row. The reference export's own `"\nActivity ID\n"` is an example, and Excel quotes such a cell when it copies it as TSV.
-- When that happens, Activity ID maps to "not present" and a paste of that export builds 117 deliverables instead of 105.
-- That may be part of what Matt saw with his paste. It is worth its own TD.
+**Symptom.** Matt's screenshot: after a paste, Activity ID mapped to "not present", 196 rows came through, and the board built 109/150. The reference export reproduces it: 117 deliverables instead of 105.
+
+**Root cause.**
+- `Parse.delimited()` split the text into lines first and handled quotes per line, only for commas, never for tabs.
+- Excel quotes a cell holding a line break when it copies a range. The P6 export's own header cell is `"\nActivity ID\n"`.
+- So the header row broke in two, the Activity ID header became an empty string, and every activity was keyed by name stem instead of ID.
+
+**Fix.**
+- `Parse.delimited()` now reads RFC 4180 records, for tab and comma alike. A quoted cell may hold line breaks, the delimiter and doubled quotes (`""`).
+- A quote opens a quoted cell only at the start of a cell; mid-cell it is literal (`12" pipe`).
+- The delimiter is chosen from the first record, counting only outside quotes.
+- An unterminated quote falls back to the old line-by-line reading, so it never swallows the rest of the paste.
+- Header cells are trimmed and their inner whitespace (line breaks included) collapsed.
+- `Parse.autoMap()` trims and collapses each header before matching. `normKey` already ignored whitespace; this makes the trim explicit.
+- `Parse.workbook()` (the file path) is unchanged.
+
+**Check.** `p75_import_check` gained an `excel` run:
+- the reference export exactly as Excel puts it on the clipboard (CRLF rows; cells holding a tab, a line break or a quote are quoted, with their quotes doubled);
+- asserts Activity ID is header 0 and auto-maps, and that the import equals the file import, 105/146;
+- parser unit cases: an embedded comma with `""` in CSV, a quoted TSV header with line breaks, a quoted cell holding a line break and a tab, a literal mid-cell quote, an unterminated quote, and `autoMap` on padded headers.
+
+Against 947ce47's parser the `excel` run fails 5 checks: header `""`, map.id=-1, rows split, and 117/146 instead of 105/146.
+
+The file run's disk read is now handed the same bytes directly, instead of through `FileReader`. Under `--virtual-time-budget`, the real-thread `FileReader` completion was stranded at "Reading ..." about 1 run in 3. Everything after the read is still the app's own: `handleFile()`, the embedded SheetJS, `Parse.workbook()` and `showMapper()`.
 
 ## Checks
 
@@ -103,7 +124,7 @@ New: `tools/p75_import_check.py`. It uses the headless Chromium harness, written
   - the moved fields' handlers still write `cfg-datadate` and `REPORT_META.reportDate`.
 
 Results:
-- Against this change: 207/207 pass.
+- Against this change: all pass (207 at 947ce47; 232 with the parser follow-up, three consecutive runs).
 - Against the P74 file (`--html` of `2a83203`): the picker fails with Matt's exact symptom. The head reads "W/E07 Jun 26→07 Jun 26", lost=1, churn=25, and the applied range becomes "From ... open end". The panel checks also fail.
 
 `python3 tools/run_checks.py --jobs 3`, three rounds:
