@@ -1808,6 +1808,25 @@ tr.data:hover td{background:var(--color-row-hover-bg)!important}
 tr.data.ms-drop-target td{background:var(--color-accent-wash)!important;
   box-shadow:inset 0 0 0 1px var(--color-accent)}
 body.ms-dragging{cursor:grabbing;user-select:none;-webkit-user-select:none}
+/* P75: the new Finish a column drag would give, under the snapped ghost. The
+   popover look (.ms-health-pop). Refused (before the Start) reads as critical. */
+#ms-drag-date{position:fixed;z-index:2147483647;pointer-events:none;transform:translate(-50%,0);
+  padding:var(--space-1) var(--space-3);white-space:nowrap;font-size:var(--text-sm);
+  font-variant-numeric:tabular-nums;color:var(--color-text-primary);background:var(--color-dialog-bg);
+  border:1px solid var(--color-line-default);border-radius:var(--radius-overlay);
+  box-shadow:0 6px 18px var(--color-shadow-dialog-far)}
+#ms-drag-date.is-refused{color:var(--color-crit-text);background:var(--color-crit-tint-bg);border-color:var(--color-crit-border)}
+/* P75: the drop's Undo toast. Self-contained (msDragToast) so a shared toast
+   can absorb it later. */
+.ms-drag-toast{position:fixed;left:50%;bottom:var(--space-6);transform:translateX(-50%);z-index:2147483000;
+  display:flex;align-items:center;gap:var(--space-4);max-width:calc(100vw - 32px);box-sizing:border-box;
+  padding:var(--space-3) var(--space-4);font-size:var(--text-md);color:var(--color-text-primary);
+  background:var(--color-dialog-bg);border:1px solid var(--color-line-default);border-radius:var(--radius-overlay);
+  box-shadow:0 6px 18px var(--color-shadow-dialog-far)}
+.ms-drag-toast[hidden]{display:none}
+.ms-drag-toast button{border:0;background:transparent;color:var(--color-accent-ink);font:inherit;font-weight:600;
+  padding:0 var(--space-2);height:var(--ctl-h);border-radius:var(--radius-ctl);cursor:pointer}
+.ms-drag-toast button:hover{background:var(--color-accent-wash)}
 /* ---- Import failure ------------------------------------------------
    A failed load used to be reported only by the 9.5px status line, while
    the "2 - Map columns" step simply never appeared. Its own hint reads
@@ -9164,7 +9183,11 @@ const DELETED_ROWS=[];
 const MS_DRAG={
   active:false,armed:false,suppressClick:false,
   wrap:null,ms:null,fromRef:null,startX:0,startY:0,holdTimer:null,
-  ghost:null,target:null
+  ghost:null,target:null,
+  // P75: the column half of the drag. srcCol is the week the marker sits in,
+  // col the week under the pointer (clamped to the visible weeks), newIso the
+  // Finish that drop would give and refused why it cannot (before the Start).
+  srcCol:-1,col:-1,newIso:null,refused:null
 };
 const MS_DRAG_MOVE_THRESHOLD=4;     // px before a mouse drag begins
 const MS_DRAG_HOLD_MS=400;          // press-and-hold before a touch drag begins
@@ -9184,12 +9207,16 @@ function msDragBegin(e){
   const d=MS_DRAG;
   if(d.active||!d.wrap) return;
   d.active=true;d.armed=false;
-  clearTimeout(d.holdTimer);
+  // Cleared AND nulled: pointermove reads a non-null holdTimer as "a touch
+  // press still waiting", so a stale id cancelled the next mouse drag (P75).
+  clearTimeout(d.holdTimer);d.holdTimer=null;
   document.body.classList.add('ms-dragging');
   d.wrap.classList.add('ms-dragging');
   const g=msDragGhost();
   g.innerHTML=d.wrap.innerHTML;
   g.hidden=false;
+  d.srcCol=d.ms?dateToCol(d.ms.date):-1;
+  d.col=d.srcCol;d.newIso=null;d.refused=null;
   msDragMoveGhost(e);
 }
 
@@ -9197,6 +9224,175 @@ function msDragMoveGhost(e){
   const g=msDragGhost();
   g.style.left=e.clientX+'px';
   g.style.top=e.clientY+'px';
+}
+
+// ---- P75: drag across week columns moves the Finish (Matt, 2026-10-02) ----
+// Whole weeks, weekday kept: Thu 08-Oct two columns right is Thu 22-Oct. The
+// row half of the drag is unchanged and both can happen in one gesture.
+//
+// The week cells that can be dropped on: on the board (the date range) and
+// at least partly in view, i.e. not scrolled under the sticky name column or
+// past the board's scroller. The pointer beyond either end clamps to the
+// first or last of them. Read off the source row; every row's week cells
+// share the same x.
+function msDragVisibleCols(tr){
+  if(!tr) return [];
+  let sc=tr.parentElement;
+  while(sc&&sc!==document.body){
+    const ox=getComputedStyle(sc).overflowX;
+    if(ox==='auto'||ox==='scroll') break;
+    sc=sc.parentElement;
+  }
+  const clip=(sc&&sc!==document.body)?sc.getBoundingClientRect():{left:0,right:window.innerWidth};
+  const nm=tr.querySelector('td.c-name.sticky');
+  const lo=Math.max(clip.left,0,nm?nm.getBoundingClientRect().right:0);
+  const hi=Math.min(clip.right,window.innerWidth);
+  const out=[];
+  tr.querySelectorAll('td.c-wk').forEach(function(td){
+    const c=+td.getAttribute('data-col');
+    if(!colIsOnBoard(c)) return;
+    const r=td.getBoundingClientRect();
+    if(r.width<1||r.right<=lo+1||r.left>=hi-1) return;
+    out.push({col:c,left:r.left,right:r.right});
+  });
+  return out;
+}
+function msDragColAt(cols,x){
+  if(!cols.length) return -1;
+  if(x<cols[0].left) return cols[0].col;
+  const last=cols[cols.length-1];
+  if(x>=last.right) return last.col;
+  for(let i=0;i<cols.length;i++) if(x<cols[i].right) return cols[i].col;
+  return last.col;
+}
+// Bare ISO date plus whole weeks, on local dates (msDateMs's reasoning).
+function msShiftWeeks(iso,weeks){
+  const d=new Date(String(iso)+'T00:00:00');
+  if(isNaN(d)) return null;
+  d.setDate(d.getDate()+7*weeks);
+  return isoDay(d);
+}
+function msDragDateLabel(){
+  let el=document.getElementById('ms-drag-date');
+  if(!el){
+    el=document.createElement('div');
+    el.id='ms-drag-date';
+    el.setAttribute('role','status');
+    document.body.appendChild(el);
+  }
+  return el;
+}
+// Called on every move of an active drag, after the row target is set. Works
+// out the week, snaps the ghost to the target cell and says what the drop
+// would do.
+function msDragUpdateCol(e){
+  const d=MS_DRAG;
+  if(!d.ms||!d.wrap||d.srcCol<0) return;
+  const srcTr=d.wrap.closest('tr.data')||
+    document.querySelector('#tbody tr.data[data-ref="'+CSS.escape(d.fromRef)+'"]');
+  const cols=msDragVisibleCols(srcTr);
+  const col=msDragColAt(cols,e.clientX);
+  if(col<0) return;
+  d.col=col;
+  const delta=col-d.srcCol;
+  d.newIso=delta?msShiftWeeks(d.ms.date,delta):d.ms.date;
+  d.refused=null;
+  const st=msOwnStart(d.ms);
+  if(delta&&st&&d.newIso<st) d.refused='start';
+  // Snap: x is the target week's centre, y the target row's (or the source
+  // row's while the pointer is not over another row).
+  const rowTr=d.target||srcTr;
+  const cell=rowTr&&rowTr.querySelector('td.c-wk[data-col="'+col+'"]');
+  const g=msDragGhost();
+  if(cell){
+    const r=cell.getBoundingClientRect(), rr=rowTr.getBoundingClientRect();
+    const cx=r.left+r.width/2, cy=rr.top+rr.height/2;
+    g.style.left=cx+'px'; g.style.top=cy+'px';
+    const lbl=msDragDateLabel();
+    lbl.textContent=d.refused
+      ?('Before Start '+fmtTipDate(st))
+      :(fmtTipDate(d.newIso)+(delta?' ('+(delta>0?'+':'')+delta+' wk)':' (no date change)'));
+    lbl.classList.toggle('is-refused',!!d.refused);
+    lbl.style.left=cx+'px';
+    lbl.style.top=(cy+Math.max(rr.height/2,iconSize)+2)+'px';
+    lbl.hidden=false;
+  }
+}
+
+// Self-contained toast with one action, named for the drag so a shared toast
+// (the collection strip may add one) can absorb it later without a clash.
+// One at a time; a new one replaces the last. Removed when it times out, so a
+// published copy never carries it.
+let MS_DRAG_TOAST_TIMER=null;
+const MS_DRAG_TOAST_MS=4000;
+function msDragToast(text,actionLabel,action){
+  clearTimeout(MS_DRAG_TOAST_TIMER);
+  let el=document.getElementById('ms-drag-toast');
+  if(!el){
+    el=document.createElement('div');
+    el.id='ms-drag-toast';
+    el.className='ms-drag-toast';
+    el.setAttribute('role','status');
+    el.setAttribute('aria-live','polite');
+    document.body.appendChild(el);
+  }
+  el.innerHTML='';
+  const t=document.createElement('span'); t.textContent=text; el.appendChild(t);
+  if(action){
+    const b=document.createElement('button');
+    b.type='button'; b.textContent=actionLabel||'Undo';
+    b.addEventListener('click',function(ev){
+      ev.stopPropagation();
+      msDragToastClose();
+      action();
+    });
+    el.appendChild(b);
+  }
+  el.hidden=false;
+  MS_DRAG_TOAST_TIMER=setTimeout(msDragToastClose,MS_DRAG_TOAST_MS);
+  return el;
+}
+function msDragToastClose(){
+  clearTimeout(MS_DRAG_TOAST_TIMER); MS_DRAG_TOAST_TIMER=null;
+  const el=document.getElementById('ms-drag-toast');
+  if(el) el.remove();
+}
+
+// The Finish written as an entry, the way the card writes it: equal to the
+// schedule's own date clears the override (to:null), the A flag is a separate
+// field and is left alone. A user milestone (USR-) goes the same way, since
+// that is the path its card uses (its key is its ID). Returns the date the
+// board showed before, for Undo.
+function msOwnFinish(ms){
+  return (ms._msBase&&('date' in ms._msBase))?ms._msBase.date:ms.date;
+}
+// The Start a drag must not cross, or null. Only a start of the milestone's
+// own: a true zero-duration milestone carries start equal to its finish, which
+// the card shows as a dash (no start), and refusing every leftward drag of
+// those would make the column move one-directional for them. A start the
+// schedule gave and the finish was derived from (finishFromStart), or one set
+// by hand, is real.
+function msOwnStart(ms){
+  const s=ms&&ms.start;
+  if(!s) return null;
+  const b=ms._msBase||{};
+  if(!ms.finishFromStart&&!('start' in b)&&s===msOwnFinish(ms)) return null;
+  return s;
+}
+function msSetFinishByDrag(ms,iso){
+  const prev=ms.date;
+  addFieldEntry(msKeyFor(ms),'date',iso===msOwnFinish(ms)?null:iso);
+  return prev;
+}
+function msUndoDragMove(ms,prevIso,fromRef,toRef){
+  if(toRef&&ms.ref===toRef) moveMilestoneToRow(ms,fromRef);
+  // Undo is a new entry back to the earlier date, never a deleted one, so the
+  // history keeps both the move and its reversal.
+  addFieldEntry(msKeyFor(ms),'date',prevIso===msOwnFinish(ms)?null:prevIso);
+  noteMarkup();
+  if(typeof renderNotes==='function') renderNotes();
+  diag('aggregate','info','Milestone finish move undone, back to '+prevIso,msKeyFor(ms));
+  scheduleRerender(true);
 }
 
 function msDragSetTarget(tr){
@@ -9209,18 +9405,39 @@ function msDragSetTarget(tr){
 
 function msDragEnd(commit){
   const d=MS_DRAG;
-  clearTimeout(d.holdTimer);
+  clearTimeout(d.holdTimer);d.holdTimer=null;
   if(d.wrap) d.wrap.classList.remove('ms-dragging');
   document.body.classList.remove('ms-dragging');
   msDragGhost().hidden=true;
+  const lbl=document.getElementById('ms-drag-date'); if(lbl) lbl.remove();
   const target=d.target;
   msDragSetTarget(null);
   const ms=d.ms,fromRef=d.fromRef,wasActive=d.active;
+  const srcCol=d.srcCol,col=d.col,newIso=d.newIso,refused=d.refused;
   d.active=false;d.armed=false;d.wrap=null;d.ms=null;d.fromRef=null;
-  if(!commit||!wasActive||!target||!ms) return;
-  const toRef=target.getAttribute('data-ref');
-  if(!toRef||toRef===fromRef) return;
-  moveMilestoneToRow(ms,toRef);
+  d.srcCol=-1;d.col=-1;d.newIso=null;d.refused=null;
+  if(!commit||!wasActive||!ms) return;
+  let toRef=target?target.getAttribute('data-ref'):null;
+  if(!toRef||toRef===fromRef) toRef=null;
+  const dateMove=srcCol>=0&&col>=0&&col!==srcCol&&!!newIso&&newIso!==ms.date;
+  // P75: a Finish before the Start is refused, and the whole drop with it,
+  // so a diagonal drag never half-happens. The Start never moves.
+  if(dateMove&&refused){
+    msDragToast('Not moved: the Finish cannot be before the Start ('+fmtTipDate(msOwnStart(ms))+').');
+    return;
+  }
+  if(!dateMove){ if(toRef) moveMilestoneToRow(ms,toRef); return; }
+  // Date first, then the row: moveMilestoneToRow re-keys the entries of a
+  // milestone without an ID, and the new entry is then carried with them.
+  const prev=msSetFinishByDrag(ms,newIso);
+  diag('aggregate','info','Milestone finish moved by user from '+prev+' to '+newIso+
+       ' ('+(col-srcCol>0?'+':'')+(col-srcCol)+' wk)',msKeyFor(ms));
+  if(toRef) moveMilestoneToRow(ms,toRef);
+  else { noteMarkup(); scheduleRerender(true); }
+  if(typeof renderNotes==='function') renderNotes();
+  msDragToast('Finish moved to '+fmtTipDate(newIso)+'.','Undo',function(){
+    msUndoDragMove(ms,prev,fromRef,toRef);
+  });
 }
 
 // Rebuild the Source cell for the given rows from the milestones they now hold.
@@ -9364,6 +9581,10 @@ function attachMilestoneDrag(wrap,m){
   wrap.addEventListener('pointerdown',function(e){
     if(e.button!==undefined&&e.button!==0) return;
     const d=MS_DRAG;
+    // A flag left by an earlier drag whose click never landed on a marker
+    // (dropped on another row, or cancelled) must not eat this gesture's click.
+    d.suppressClick=false;
+    clearTimeout(d.holdTimer);d.holdTimer=null;
     d.wrap=wrap;d.ms=m;d.fromRef=m.ref;
     d.startX=e.clientX;d.startY=e.clientY;
     d.active=false;d.armed=true;
@@ -9394,6 +9615,7 @@ document.addEventListener('pointermove',function(e){
   const el=document.elementFromPoint(e.clientX,e.clientY);
   const tr=el?el.closest('tr.data'):null;
   msDragSetTarget(tr&&tr.getAttribute('data-ref')!==d.fromRef?tr:null);
+  msDragUpdateCol(e);
 },{passive:false});
 
 document.addEventListener('pointerup',function(){
@@ -9402,6 +9624,17 @@ document.addEventListener('pointerup',function(){
   msDragEnd(true);
 });
 document.addEventListener('pointercancel',function(){ msDragEnd(false); });
+// P75: Esc cancels a drag in progress. Capture phase, and stopped there, so
+// the panel Esc handler does not also close a drawer under the drag. The
+// click that follows the release is swallowed, so a cancel never opens the card.
+document.addEventListener('keydown',function(e){
+  if(e.key!=='Escape') return;
+  const d=MS_DRAG;
+  if(!d.active&&!d.armed) return;
+  const was=d.active;
+  msDragEnd(false);
+  if(was){ d.suppressClick=true; e.preventDefault(); e.stopImmediatePropagation(); }
+},true);
 
 function renderRows(){
   // User-added milestones are merged back into TASKS/MILESTONES here, at the
