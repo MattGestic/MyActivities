@@ -38,7 +38,7 @@
     return s+' '+pad(d.getHours())+':'+pad(d.getMinutes());
   }
   function clean(v){
-    return typeof v==='string' ? v.replace(/[—–]/g,'-') : v;
+    return typeof v==='string' ? v.replace(/[\u2014\u2013]/g,'-') : v;
   }
 
   function makeFmt(fmtDate){
@@ -72,6 +72,10 @@
     var t=target||{}, key=t.key==null?'':String(t.key);
     if(t.kind==='general') return {id:'General',name:''};
     if(t.kind==='dep'){
+      /* The app files a dependency remark as 'pred:A->B' or 'succ:A->B'
+         (which side of the line it was opened from). The prefix is not part
+         of either Activity ID. */
+      key=key.replace(/^(?:pred|succ):/i,'');
       var parts=key.split(/\s*(?:→|->|>|\|)\s*/);
       return {id:parts.length===2?parts[0]+' → '+parts[1]:key,name:'Dependency'};
     }

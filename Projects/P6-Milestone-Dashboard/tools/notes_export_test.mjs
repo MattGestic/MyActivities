@@ -106,6 +106,14 @@ eq('general linked IDs in log', log.find(r => r[0] === 'E-0007')[7], 'A1000, A20
 const dep = summary.find(r => r[1] === 'Dependency');
 eq('dependency ID', dep && dep[0], 'A1000 → A2000');
 eq('dependency log ID', log.find(r => r[0] === 'E-0008')[1], 'A1000 → A2000');
+// P77: the app's dependency keys carry a 'pred:' / 'succ:' side prefix
+const depP = NE.buildNotesWorkbookAoA([
+  E('E-0101', { kind: 'dep', key: 'pred:A1000->A2000' }, P2, '2026-10-03T09:10:00Z', { text: 'Pred side' }),
+  E('E-0102', { kind: 'dep', key: 'succ:A3000->A1000' }, P2, '2026-10-03T09:20:00Z', { text: 'Succ side' }),
+], args());
+eq('dep pred: prefix stripped (summary)', depP.summary.slice(1).map(r => r[0]).sort(), ['A1000 → A2000', 'A3000 → A1000']);
+eq('dep succ: prefix stripped (log)', depP.log.slice(1).map(r => r[1]), ['A1000 → A2000', 'A3000 → A1000']);
+t('no pred:/succ: left in any dep ID', !/(pred|succ):/.test(JSON.stringify(depP)));
 const rw = summary.find(r => String(r[0]).startsWith('Row: '));
 eq('row ID', rw && rw[0], 'Row: ROW-7');
 eq('row log changes', log.find(r => r[0] === 'E-0009')[6], 'Row health On track → Critical; Row remark schedule value → Late');
