@@ -3377,3 +3377,13 @@ TD-240. **New `tools/p74_deps_check.py`** (no fixture, 1440x900): a real import 
 - Turning the source off empties the schedule's set and takes SNIP-155's links off the board; on brings them back.
 - A user milestone linked after SNIP-155 shows as its successor while the schedule's set, the source's and the baseline's stay free of USR- IDs.
 - The model export carries the source's links and the board's set; the published state block carries them; reopened, the published file has the same links, chips and lines, and the Baseline view shows the baseline's. No console errors.
+
+## TEST-78: P75 desktop review round (v3.1.0-P75)
+
+TD-241. Four builds in parallel worktrees, merged by the orchestrator; per-build detail in `docs/p75-notes-import.md`, `-card.md`, `-strip-header.md`, `-drag.md`.
+
+**New checks:** `p75_import_check` 232/232 (picker with a pointer model that re-fires mouseenter, N=3 ranges, swap; real file and Excel-style paste both 105/146; Import enabled and primary; section order; paste cleared); `p75_card_check` 230/230 (date fields open the picker, uniform row, float strike for later/earlier/none, tooltip text, every exit saves, Esc saves, × discards, copy with publish round trip); `p75_strip_header_check` 221/221 (toast, strip order, clear-all with Undo, header left, one row at 1680 not 1679); `p75_drag_date_check` 131/131 (+2/-1/0 weeks, combined row and date, back to schedule, Undo, clamp, start rule, touch, click and double-click intact).
+
+**Existing checks changed, same intent:** `p43` (Esc saves; start placeholder hyphen; date selectors count as editable), `p69` (field opens the picker; no typing), `p68` (Add to list enabled; copy beside it), `p32` (toggle on the left), `p75_drag_date_check` at integration (zero-duration start follows the finish in the same entry; source assertion follows `msWriteFinishMove`).
+
+**Full suite on the merged code:** `run_checks.py --all --jobs 3`: 65 selected, 65 passed (12.5 min).
