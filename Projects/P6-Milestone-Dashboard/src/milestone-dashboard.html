@@ -1609,6 +1609,11 @@ body.print-mode .pm-banner{display:block}
 .rpt-hd-btn.rpt-hd-ico{width:var(--ctl-h);padding:0;justify-content:center}
 .rpt-hd-btn.rpt-hd-ico svg{display:block;flex:0 0 auto}
 .rpt-hd-btn[aria-pressed="true"]{background:var(--color-bg-header-hover);border-color:var(--color-text-on-header)}
+/* P77: Share report, the one primary action in the group. */
+.rpt-hd-btn.rpt-hd-primary{gap:var(--space-2);background:var(--color-btn-primary-bg);border-color:var(--color-btn-primary-outline);color:var(--color-btn-primary-text)}
+.rpt-hd-btn.rpt-hd-primary:hover:not(:disabled){background:var(--color-btn-primary-hover-bg)}
+.rpt-hd-btn.rpt-hd-primary svg{display:block;flex:0 0 auto}
+.rpt-hd-btn:disabled{opacity:.45;cursor:not-allowed}
 .rpt-sub-divider{color:var(--color-text-on-header-muted);opacity:.6;flex:0 0 auto}
 .view-toggle{display:inline-flex;border:1px solid var(--color-vt-divider);border-radius:var(--radius-ctl);overflow:hidden;vertical-align:middle;margin-left:2px}
 .vt-btn{font-size:var(--text-sm);height:var(--ctl-h);display:inline-flex;align-items:center;padding:0 var(--ctl-pad-x);border:none;background:var(--color-bg-panel);color:var(--color-text-on-panel-muted);cursor:pointer;font-weight:600}
@@ -2306,6 +2311,9 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 .add-ms-err{margin:0;font-size:10.5px;font-weight:600;color:var(--color-status-crit)}
 .add-ms-err[hidden]{display:none}
 .add-ms-foot{display:flex;gap:6px;justify-content:flex-end;margin-top:2px}
+/* P77: Share report, on the add-milestone dialog's classes. */
+.share-check{display:flex;align-items:center;gap:var(--space-2);font-size:var(--text-base);color:var(--color-text-ink);cursor:pointer}
+.share-check input{margin:0}
 /* The PDF picker. Same shape as the add-milestone dialog: fixed, centred,
    above the drawer that opens it. */
 .pdf-dialog{position:fixed;z-index:2147483647;box-sizing:border-box;
@@ -3917,6 +3925,10 @@ button.sg-sym:hover{transform:scale(1.2)}
       <span class="rpt-hd-actions">
         <button class="rpt-hd-btn rpt-hd-ico" id="btn-filter-expand" onclick="toggleTopFilterBar()" title="Show or hide the filter row" aria-label="Filters" aria-controls="top-filter-bar" aria-expanded="true" aria-pressed="true"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false"><path d="M2 3h12l-4.6 5.4v4.4l-2.8 1.4V8.4z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></button>
         <button class="rpt-hd-btn" id="btn-add-ms" onclick="openAddMilestone(null,null)" title="Add a milestone. Double click any week cell to add one on that row and date instead.">&#43; Milestone</button>
+        <!-- P77 (Matt 2026-10-02): Share report. A self-contained report page
+             of this period's updates, with the Excel detail as an option.
+             syncShareReportBtn() is its one writer of disabled and title. -->
+        <button class="rpt-hd-btn rpt-hd-primary" id="btn-share-report" onclick="openShareDialog()" title="Share a report of this period's updates" aria-haspopup="dialog"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false"><path d="M8 10.5V2.5M5 5.2L8 2.3l3 2.9M3.5 8.5v5h9v-5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Share</span></button>
       </span>
   </div>
 </div>
@@ -4271,6 +4283,33 @@ button.sg-sym:hover{transform:scale(1.2)}
   <div class="pdf-actions">
     <button class="toggle-btn" onclick="closePdfDialog()">Cancel</button>
     <button class="toggle-btn active" onclick="doPdfExport()">&#11015; Export PDF</button>
+  </div>
+</div>
+
+<!-- P77: Share report. The add-milestone dialog's shape (centred, modal, a
+     scrim behind), so it reuses that dialog's classes. -->
+<div id="share-scrim" class="add-ms-scrim" hidden onclick="closeShareDialog()"></div>
+<div id="share-dialog" class="add-ms-dialog share-dialog" role="dialog" aria-label="Share report" aria-modal="true" hidden>
+  <div class="add-ms-head">
+    <b>Share report</b>
+    <button class="ms-close" onclick="closeShareDialog()" aria-label="Close" title="Close" style="margin-left:auto">&#10005;</button>
+  </div>
+  <p class="add-ms-where">A page that opens in any browser and prints to PDF, setting out the updates recorded for the period.</p>
+  <div class="add-ms-row2">
+    <div class="add-ms-field">
+      <label for="share-period">Period</label>
+      <select id="share-period"></select>
+    </div>
+    <div class="add-ms-field">
+      <label for="share-from">From</label>
+      <input type="text" id="share-from" maxlength="60" placeholder="Name or initials" autocomplete="off" oninput="rememberShareFrom(this.value)">
+    </div>
+  </div>
+  <label class="share-check"><input type="checkbox" id="share-xlsx" checked> Include Excel detail (Summary and Log sheets)</label>
+  <p class="add-ms-err" id="share-err" role="alert" hidden></p>
+  <div class="add-ms-foot">
+    <button class="toggle-btn" id="share-download" onclick="doShareReport(false)">Download</button>
+    <button class="toggle-btn active" id="share-go" onclick="doShareReport(true)">Share</button>
   </div>
 </div>
 
@@ -6837,6 +6876,190 @@ button.sg-sym:hover{transform:scale(1.2)}
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
 // ============ END UPDATE HISTORY MODULE ============
+// ============================================================
+// NOTES EXPORT MODULE (built P65, wired in P77): src/modules/notes-export/notes-export.js,
+// pasted unchanged. Defines window.SRETNotesExport only. The Summary and Log
+// sheets of Share report's Excel detail. Edit the module file and re-paste.
+// ============================================================
+/* =====================================================================
+   SRET notes export. Turns the entry array into the two-sheet workbook
+   data (Summary, Log). Pure functions, no DOM, no network, no app globals.
+   The rollup, the milestone lookup and the schedule lookup are injected.
+
+   API (global SRETNotesExport, also module.exports):
+     buildNotesWorkbookAoA(entries, {rollup, msLookup, sourceOf, periodFilter, fmtDate})
+         -> {summary: AoA, log: AoA}
+     writeNotesWorkbook(XLSX, aoa, filename)   builds the book, saves it, returns it
+     buildNotesBook(XLSX, aoa)                 builds the book only
+   ===================================================================== */
+(function(root){
+  'use strict';
+
+  var MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var HEALTH={0:'N/A',1:'On track',2:'Done',3:'At risk',4:'Critical'};
+  var FIELD_LABEL={actName:'Name',start:'Start',date:'Finish',weight:'Weight',floatD:'Float',
+    type:'Type',marker:'Marker',health:'Health',progress:'Progress',
+    rowHealth:'Row health',rowRemark:'Row remark',actual:'Finish actual',startActual:'Start actual'};
+  var SCHEDULE='schedule value';
+
+  function pad(n){ return (n<10?'0':'')+n; }
+
+  /* 'YYYY-MM-DD' (or an ISO timestamp) -> 'dd-Mmm-yy'. Anything else comes back as text. */
+  function defaultFmtDate(v){
+    if(v==null||v==='') return '';
+    var m=/^(\d{4})-(\d{2})-(\d{2})/.exec(String(v));
+    if(!m) return String(v);
+    return m[3]+'-'+MON[+m[2]-1]+'-'+m[1].slice(2);
+  }
+  /* ISO timestamp -> 'dd-Mmm HH:MM' (or 'dd-Mmm-yy HH:MM'), in the viewer's local time. */
+  function stamp(iso, withYear){
+    if(!iso) return '';
+    var d=new Date(iso);
+    if(isNaN(d.getTime())) return String(iso);
+    var s=pad(d.getDate())+'-'+MON[d.getMonth()];
+    if(withYear) s+='-'+String(d.getFullYear()).slice(2);
+    return s+' '+pad(d.getHours())+':'+pad(d.getMinutes());
+  }
+  function clean(v){
+    return typeof v==='string' ? v.replace(/[\u2014\u2013]/g,'-') : v;
+  }
+
+  function makeFmt(fmtDate){
+    var fd=typeof fmtDate==='function'?fmtDate:defaultFmtDate;
+    function date(v){ return v==null||v===''?'':String(fd(v)); }
+    function healthLabel(v){ return v==null?'':(HEALTH[v]!=null?HEALTH[v]:String(v)); }
+    function progress(v){ return v==null||v===''?'':v+'%'; }
+    function value(field,v){
+      if(v===null||v===undefined) return SCHEDULE;
+      if(field==='start'||field==='date') return date(v);
+      if(field==='health'||field==='rowHealth') return healthLabel(v);
+      if(field==='progress') return progress(v);
+      return String(v);
+    }
+    return {date:date,health:healthLabel,progress:progress,value:value,
+      report:function(p){ return p?'W/E '+date(p):''; }};
+  }
+
+  function changesText(changes,f){
+    var out=[];
+    Object.keys(changes||{}).forEach(function(field){
+      var c=changes[field]||{};
+      var label=FIELD_LABEL[field]||field;
+      out.push(label+' '+(('from' in c)?f.value(field,c.from)+' → ':'→ ')+f.value(field,c.to));
+    });
+    return out.join('; ');
+  }
+
+  /* Who a target is: {id, name}. */
+  function identify(target,msLookup){
+    var t=target||{}, key=t.key==null?'':String(t.key);
+    if(t.kind==='general') return {id:'General',name:''};
+    if(t.kind==='dep'){
+      /* The app files a dependency remark as 'pred:A->B' or 'succ:A->B'
+         (which side of the line it was opened from). The prefix is not part
+         of either Activity ID. */
+      key=key.replace(/^(?:pred|succ):/i,'');
+      var parts=key.split(/\s*(?:→|->|>|\|)\s*/);
+      return {id:parts.length===2?parts[0]+' → '+parts[1]:key,name:'Dependency'};
+    }
+    if(t.kind==='row') return {id:'Row: '+key,name:''};
+    var m=typeof msLookup==='function'?msLookup(key):null;
+    return {id:m&&m.id!=null?m.id:key,name:m&&m.name!=null?m.name:''};
+  }
+
+  function groupKey(e){
+    var t=e.target||{};
+    return t.kind==='general'
+      ? 'general||'+e.period
+      : (t.kind||'ms')+'|'+(t.key==null?'':t.key)+'|'+e.period;
+  }
+  function byAtDesc(a,b){ return a.at<b.at?1:a.at>b.at?-1:(a.eid<b.eid?1:a.eid>b.eid?-1:0); }
+  function byAtAsc(a,b){ return -byAtDesc(a,b); }
+
+  var SUMMARY_HEAD=['ID','Milestone','Report','Open items','Remarks',
+    'Start (schedule)','Start (new)','Finish (schedule)','Finish (new)',
+    'Status/Health (schedule)','Status/Health (new)','Progress (schedule)','Progress (new)','Last saved'];
+  var LOG_HEAD=['Entry','ID','Milestone','Report','Status','Remark','Changes','Linked IDs','Saved','Origin'];
+
+  function buildNotesWorkbookAoA(entries, opts){
+    opts=opts||{};
+    var f=makeFmt(opts.fmtDate);
+    var rollup=opts.rollup, sourceOf=opts.sourceOf, msLookup=opts.msLookup;
+    var pf=opts.periodFilter||null;
+    var list=(entries||[]).filter(function(e){ return e&&(!pf||e.period===pf); });
+
+    /* Summary: one row per (target, period) */
+    var groups={}, order=[];
+    list.forEach(function(e){
+      var k=groupKey(e);
+      if(!groups[k]){ groups[k]={target:e.target||{},period:e.period,entries:[]}; order.push(k); }
+      groups[k].entries.push(e);
+    });
+    var rows=order.map(function(k){
+      var g=groups[k], t=g.target, kind=t.kind||'ms';
+      var who=identify(t,msLookup);
+      var key=kind==='general'?'':(t.key==null?'':t.key);
+      var ru=(typeof rollup==='function'?rollup(g.entries,key,{period:g.period}):null)||{};
+      var vals=ru.values||{};
+      var remarks=g.entries.filter(function(e){ return e.text; }).sort(byAtDesc)
+        .map(function(e){ return stamp(e.at)+' '+e.text; }).join('\n');
+      var open=ru.openCount!=null?ru.openCount:g.entries.filter(function(e){ return e.status==='open'; }).length;
+      var last=g.entries.reduce(function(m,e){ var u=e.updatedAt||e.at||''; return u>m?u:m; },'');
+      function src(field){ return kind==='ms'&&typeof sourceOf==='function'?sourceOf(key,field):null; }
+      function nw(field,fmt){ return (field in vals)?(vals[field]===null?SCHEDULE:fmt(vals[field])):''; }
+      return {period:g.period,id:String(who.id),row:[
+        who.id,who.name,f.report(g.period),open,remarks,
+        f.date(src('start')),nw('start',f.date),
+        f.date(src('date')),nw('date',f.date),
+        f.health(src('health')),nw('health',f.health),
+        f.progress(src('progress')),nw('progress',f.progress),
+        stamp(last,true)
+      ]};
+    });
+    rows.sort(function(a,b){
+      return a.period<b.period?-1:a.period>b.period?1:
+        a.id.localeCompare(b.id,undefined,{numeric:true});
+    });
+
+    /* Log: one row per entry, oldest first */
+    var log=list.slice().sort(byAtAsc).map(function(e){
+      var who=identify(e.target,msLookup);
+      return [e.eid,who.id,who.name,f.report(e.period),e.status||'',e.text||'',
+        changesText(e.changes,f),(e.links||[]).join(', '),
+        stamp(e.updatedAt||e.at,true),e.origin==null?'':String(e.origin)];
+    });
+
+    function scrub(aoa){ return aoa.map(function(r){ return r.map(clean); }); }
+    return {
+      summary:scrub([SUMMARY_HEAD].concat(rows.map(function(r){ return r.row; }))),
+      log:scrub([LOG_HEAD].concat(log))
+    };
+  }
+
+  function buildNotesBook(XLSX, aoa){
+    var wb=XLSX.utils.book_new();
+    function sheet(rows,widths){
+      var ws=XLSX.utils.aoa_to_sheet(rows);
+      ws['!cols']=widths.map(function(w){ return {wch:w}; });
+      return ws;
+    }
+    XLSX.utils.book_append_sheet(wb,sheet(aoa.summary,[12,34,16,10,60,14,14,14,14,16,16,14,14,18]),'Summary');
+    XLSX.utils.book_append_sheet(wb,sheet(aoa.log,[10,12,34,16,12,60,50,18,18,14]),'Log');
+    return wb;
+  }
+
+  function writeNotesWorkbook(XLSX, aoa, filename){
+    var wb=buildNotesBook(XLSX,aoa);
+    XLSX.writeFile(wb,filename||'milestone-notes.xlsx');
+    return wb;
+  }
+
+  var api={buildNotesWorkbookAoA:buildNotesWorkbookAoA,writeNotesWorkbook:writeNotesWorkbook,
+    buildNotesBook:buildNotesBook};
+  if(typeof module!=='undefined'&&module.exports) module.exports=api;
+  root.SRETNotesExport=api;
+})(typeof window!=='undefined'?window:globalThis);
+// ============ END NOTES EXPORT MODULE ============
 
 // Single source of truth for the version string shown in <title>, the icon-bar
 // label, and embedded in exported JSON — bump this one place, everything else
@@ -11486,7 +11709,7 @@ function chromeAwayEligible(){
 function chromeAwayBlocked(){
   if(typeof FB_DD_OPEN!=='undefined'&&FB_DD_OPEN) return true;
   const shown=function(id){ const el=document.getElementById(id); return !!el&&!el.hidden&&el.getClientRects().length>0; };
-  if(['ms-dialog','add-ms-dialog','pdf-dialog','annot-dialog','dep-comment-panel','id-suggest-dropdown','float-custom-pop'].some(shown)) return true;
+  if(['ms-dialog','add-ms-dialog','pdf-dialog','share-dialog','annot-dialog','dep-comment-panel','id-suggest-dropdown','float-custom-pop'].some(shown)) return true;
   const open=function(id){ const el=document.getElementById(id); return !!el&&el.classList.contains('open'); };
   if(open('settings-drawer')||open('ws-panel')) return true;
   if(document.querySelector('[aria-haspopup][aria-expanded="true"]')) return true;
@@ -13953,6 +14176,8 @@ function rerender(overrides){
 function syncEmptyState(){
   const empty=isDashboardEmpty();
   document.body.classList.toggle('is-empty',empty);
+  // P77: Share report has nothing to report on an empty dashboard.
+  syncShareReportBtn(empty);
   const es=document.getElementById('empty-state');
   if(!es) return;
   const was=!es.hidden;
@@ -17905,6 +18130,418 @@ function syncPdfDialog(){
 function doPdfExport(){
   closePdfDialog();
   exportPDF(PDF_PAPER,PDF_ORIENT);   // async; nothing waits on it, the download fires when it lands
+}
+
+// ============================================================
+// P77: SHARE REPORT (Matt, 2026-10-02)
+// ============================================================
+// Walk the schedule, record progress, then share the updates. Share report
+// writes a self-contained report page (.html: inline CSS, no script, no app
+// code, no raw state) setting out the period's updates, and optionally the
+// Excel detail (SRETNotesExport's Summary and Log sheets) as a second file.
+// It reads the board and the annotation layer and writes nothing back; the
+// From field is display state, remembered in this browser only.
+const SHARE_FROM_KEY='sret-report-from';
+const SHARE_XLSX_MIME='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+// The report is a separate file, so it cannot read the app's theme tokens.
+// Its palette is its own small token block, and the ONLY place in the app
+// script a literal colour may be written: tools/colour_audit.py --strict
+// counts the --rpt-* declarations in this one constant as token definitions
+// and flags a literal anywhere else in the script (P77).
+const REPORT_PALETTE_CSS=':root{--rpt-paper:#ffffff;--rpt-ink:#1f2328;--rpt-muted:#59636e;'+
+  '--rpt-line:#d0d7de;--rpt-wash:#f6f8fa;--rpt-rule:#24292f;--rpt-done:#1a7f37;--rpt-track:#0969da;'+
+  '--rpt-risk:#9a6700;--rpt-crit:#cf222e;--rpt-future:#6e7781}';
+const REPORT_CSS=REPORT_PALETTE_CSS+
+  '*{box-sizing:border-box}html{-webkit-text-size-adjust:100%;text-size-adjust:100%}'+
+  'body{margin:0;background:var(--rpt-paper);color:var(--rpt-ink);'+
+    'font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}'+
+  '.page{max-width:960px;margin:0 auto;padding:24px 16px 32px}'+
+  '.rh{border-bottom:2px solid var(--rpt-rule);padding-bottom:12px;margin-bottom:20px}'+
+  '.kicker{margin:0 0 4px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--rpt-muted)}'+
+  'h1{margin:0 0 12px;font-size:22px;line-height:1.25;overflow-wrap:anywhere}'+
+  '.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px 16px;margin:0}'+
+  '.meta div{min-width:0}.meta dt{font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--rpt-muted)}'+
+  '.meta dd{margin:0;font-weight:600;overflow-wrap:anywhere}'+
+  'section{margin:0 0 26px}'+
+  'h2{margin:0 0 10px;padding-bottom:4px;border-bottom:1px solid var(--rpt-line);font-size:17px;break-after:avoid;page-break-after:avoid}'+
+  'h2 .n{font-weight:400;color:var(--rpt-muted)}'+
+  '.sub{margin:14px 0 6px;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--rpt-muted);break-after:avoid;page-break-after:avoid}'+
+  '.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px;break-inside:avoid;page-break-inside:avoid}'+
+  '.tile{min-width:0;padding:8px 10px;border:1px solid var(--rpt-line);border-left:4px solid var(--rpt-future);border-radius:6px;background:var(--rpt-wash)}'+
+  '.tile b{display:block;font-size:22px;line-height:1.15;font-variant-numeric:tabular-nums}'+
+  '.tile span{font-size:12px;color:var(--rpt-muted)}'+
+  '.t-done{border-left-color:var(--rpt-done)}.t-track{border-left-color:var(--rpt-track)}'+
+  '.t-risk{border-left-color:var(--rpt-risk)}.t-crit{border-left-color:var(--rpt-crit)}'+
+  '.t-key{border-left-color:var(--rpt-rule)}'+
+  '.upd{margin:0 0 8px;padding:10px 12px;border:1px solid var(--rpt-line);border-radius:6px;break-inside:avoid;page-break-inside:avoid}'+
+  '.upd-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px}'+
+  '.id{font-weight:700;font-variant-numeric:tabular-nums}'+
+  '.nm{flex:1 1 180px;min-width:0;overflow-wrap:anywhere}'+
+  '.fu{padding:1px 8px;border:1px solid var(--rpt-line);border-radius:10px;font-size:12px;white-space:nowrap}'+
+  '.chg{margin:6px 0 0;padding:0;list-style:none}'+
+  '.chg li{margin:2px 0;overflow-wrap:anywhere}'+
+  '.lbl{display:inline-block;min-width:92px;color:var(--rpt-muted)}'+
+  '.from{color:var(--rpt-muted)}.to{font-weight:600}'+
+  '.cmt{margin:6px 0 0;padding:6px 9px;border-left:3px solid var(--rpt-line);background:var(--rpt-wash);white-space:pre-wrap;overflow-wrap:anywhere}'+
+  '.by{margin:6px 0 0;font-size:12px;color:var(--rpt-muted)}'+
+  'table{width:100%;border-collapse:collapse;font-size:13px}'+
+  'th,td{padding:6px 8px;border-bottom:1px solid var(--rpt-line);text-align:left;vertical-align:top}'+
+  'th{font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--rpt-muted);background:var(--rpt-wash)}'+
+  'td{overflow-wrap:anywhere}td.id{white-space:nowrap;overflow-wrap:normal}tr{break-inside:avoid;page-break-inside:avoid}'+
+  '.st{font-weight:600;white-space:nowrap}.st-crit{color:var(--rpt-crit)}.st-risk{color:var(--rpt-risk)}'+
+  '.st-done{color:var(--rpt-done)}.st-track{color:var(--rpt-track)}.st-future{color:var(--rpt-future)}'+
+  '.empty{margin:0;font-style:italic;color:var(--rpt-muted)}'+
+  '.rf{padding-top:10px;border-top:1px solid var(--rpt-line);font-size:12px;color:var(--rpt-muted)}'+
+  '@media (max-width:600px){h1{font-size:19px}.rt thead{display:none}'+
+    '.rt tr{display:block;padding:6px 0;border-bottom:1px solid var(--rpt-line)}'+
+    '.rt td{display:grid;grid-template-columns:92px minmax(0,1fr);gap:8px;padding:2px 0;border:0;white-space:normal}'+
+    '.rt td::before{content:attr(data-l);font-size:12px;font-weight:400;color:var(--rpt-muted)}}'+
+  '@page{margin:14mm 12mm}'+
+  '@media print{body{font-size:10.5pt}.page{max-width:none;padding:0}'+
+    'thead{display:table-header-group}'+
+    '.tile,.cmt,th{-webkit-print-color-adjust:exact;print-color-adjust:exact}}';
+
+function syncShareReportBtn(empty){
+  const b=document.getElementById('btn-share-report');
+  if(!b) return;
+  if(empty===undefined) empty=isDashboardEmpty();
+  b.disabled=!!empty;
+  b.title=empty?'Share report: nothing to report yet. Import a schedule or add a milestone first.'
+               :'Share a report of this period’s updates';
+}
+function rememberShareFrom(v){
+  try{ localStorage.setItem(SHARE_FROM_KEY,String(v==null?'':v).trim()); }catch(e){}
+}
+// Periods offered: the current one first (the default), any earlier period
+// with updates, then All periods.
+function sharePeriodOptions(){
+  const cur=reportPeriodISO(), seen={};
+  seen[cur]=1;
+  const past=[];
+  ENTRIES.forEach(function(e){
+    if(e&&e.period&&!seen[e.period]){ seen[e.period]=1; past.push(e.period); }
+  });
+  past.sort().reverse();
+  return [{v:cur,t:'This period, '+fmtPeriod(cur)}]
+    .concat(past.map(function(p){ return {v:p,t:fmtPeriod(p)}; }))
+    .concat([{v:'all',t:'All periods'}]);
+}
+function openShareDialog(){
+  if(isDashboardEmpty()) return;
+  const d=document.getElementById('share-dialog');
+  if(!d) return;
+  const sel=document.getElementById('share-period');
+  sel.innerHTML=sharePeriodOptions().map(function(o){
+    return '<option value="'+escapeHtml(o.v)+'">'+escapeHtml(o.t)+'</option>'; }).join('');
+  sel.selectedIndex=0;
+  let from='';
+  try{ from=localStorage.getItem(SHARE_FROM_KEY)||''; }catch(e){}
+  document.getElementById('share-from').value=from;
+  const err=document.getElementById('share-err');
+  err.hidden=true; err.textContent='';
+  const s=document.getElementById('share-scrim');
+  if(s) s.hidden=false;
+  d.hidden=false;
+  const go=document.getElementById('share-go');
+  if(go) go.focus();
+}
+function closeShareDialog(){
+  const d=document.getElementById('share-dialog'), s=document.getElementById('share-scrim');
+  if(d) d.hidden=true;
+  if(s) s.hidden=true;
+}
+document.addEventListener('keydown',function(e){
+  if(e.key!=='Escape') return;
+  const d=document.getElementById('share-dialog');
+  if(!d||d.hidden) return;
+  e.stopPropagation();
+  closeShareDialog();
+  const b=document.getElementById('btn-share-report');
+  if(b) b.focus();
+});
+
+// ---- the report's content, read from the board and ENTRIES ----
+const SHARE_FOLLOW_UP={open:'open',review:'open',outstanding:'open',sent:'sent',done:'done',closed:'done'};
+const SHARE_STATE_CLASS={DONE:'done',DONEUSER:'done',TRACK:'track',RISK:'risk',CRIT:'crit',FUTURE:'future'};
+function shareDataDate(){
+  if(DATA_SOURCE&&DATA_SOURCE.dataDate instanceof Date&&!isNaN(DATA_SOURCE.dataDate)) return DATA_SOURCE.dataDate;
+  if(BASELINE_SOURCE&&BASELINE_SOURCE.dataDate instanceof Date&&!isNaN(BASELINE_SOURCE.dataDate)) return BASELINE_SOURCE.dataDate;
+  return null;
+}
+// The heading as the person sees and edits it (publish reads the same).
+function shareTitle(){
+  const ht=document.getElementById('rpt-title-text');
+  return (ht&&ht.textContent.trim())||String(REPORT_META.title||'')||DEFAULT_REPORT_TITLE;
+}
+function shareStamp(d){
+  return fmtTipDate(d)+' '+pad2(d.getHours())+':'+pad2(d.getMinutes());
+}
+// What the board draws: every milestone inside its week range (a filter does
+// not change the count). One outside the range is named in the report, not
+// counted, so the figures read the same as the board beside them.
+function shareBoardMilestones(){
+  return MILESTONES.filter(function(m){ return m&&effectiveState(m)!=='BASELINE'&&dateToCol(m.date)>=0; });
+}
+function shareOffBoardCount(){
+  return MILESTONES.filter(function(m){ return m&&effectiveState(m)!=='BASELINE'&&dateToCol(m.date)<0; }).length;
+}
+// One milestone's updates in scope, rolled into one row: each field from its
+// first "from" to its last "to" (a field moved and moved back drops out), the
+// latest remark, follow-up, author and time. Labels and value wording are
+// the update history module's (SRETHistory.entryView), so the report reads
+// as the card's history does.
+function shareUpdateRow(key,list,m){
+  list=list.slice().sort(function(a,b){ return String(a.at).localeCompare(String(b.at))||String(a.eid).localeCompare(String(b.eid)); });
+  const merged={};
+  let text='', cleared=false, by='';
+  list.forEach(function(e){
+    Object.keys(e.changes||{}).forEach(function(f){
+      const c=e.changes[f]||{};
+      if(merged[f]) merged[f].to=c.to; else merged[f]={from:c.from,to:c.to};
+    });
+    if(e.clearText){ text=''; cleared=true; }
+    else if(String(e.text||'').length){ text=String(e.text); cleared=false; }
+    if(e.by) by=String(e.by);
+  });
+  Object.keys(merged).forEach(function(f){
+    if(JSON.stringify(merged[f].from)===JSON.stringify(merged[f].to)) delete merged[f];
+  });
+  const last=list[list.length-1];
+  const ent={eid:last.eid,changes:merged,text:text,clearText:cleared&&!text,status:last.status,
+    by:by,at:last.at,updatedAt:last.updatedAt||last.at,period:last.period};
+  const v=SRETHistory.entryView(historyEntriesView([ent])[0],historyCtx());
+  // Health null is "automatic": the schedule's own status, named as such.
+  const auto=m?(STATE_LABELS[m.state]||m.state)+' (schedule)':'Automatic';
+  const changes=[];
+  let comment='';
+  v.changes.forEach(function(c){
+    if(c.isComment){ comment=c.text; return; }
+    const out={label:c.label,from:c.from,to:c.to};
+    if(c.label==='Health'&&merged.health){
+      if(merged.health.from==null) out.from=auto;
+      if(merged.health.to==null) out.to=auto;
+    }
+    changes.push(out);
+  });
+  const latest=list.reduce(function(a,e){ const u=e.updatedAt||e.at||''; return u>a?u:a; },'');
+  return {key:key,id:m?msId(m):key,name:m?String(m.actName||''):'',changes:changes,comment:comment,
+    followUp:v.followUp,status:v.status,who:v.who,when:v.when,latest:latest,entries:list.length};
+}
+function shareReportModel(period,from){
+  const all=period==='all', cur=reportPeriodISO(), idx=entryMsIndex();
+  const inScope=function(e){ return e&&e.target&&(all||e.period===period); };
+  const board=shareBoardMilestones();
+  const counts={DONE:0,TRACK:0,RISK:0,CRIT:0,FUTURE:0,NA:0};
+  board.forEach(function(m){
+    const s=effectiveState(m), k=(s==='DONEUSER')?'DONE':s;
+    if(k in counts) counts[k]++; else counts.NA++;
+  });
+  const fu={open:0,sent:0,done:0};
+  const byKey={}, order=[];
+  ENTRIES.forEach(function(e){
+    if(!inScope(e)) return;
+    const f=SHARE_FOLLOW_UP[e.status];
+    if(f) fu[f]++;
+    if(e.target.kind!=='ms') return;
+    const k=e.target.key;
+    if(!byKey[k]){ byKey[k]=[]; order.push(k); }
+    byKey[k].push(e);
+  });
+  // Newest first: the last update made is the first one read.
+  const updates=order.map(function(k){ return shareUpdateRow(k,byKey[k],idx[k]); })
+    .sort(function(a,b){ return String(b.latest).localeCompare(String(a.latest))||String(a.id).localeCompare(String(b.id),undefined,{numeric:true}); });
+  const attention=board.filter(function(m){ const s=effectiveState(m); return s==='RISK'||s==='CRIT'; })
+    .sort(function(a,b){ return (msDateMs(a.date)||0)-(msDateMs(b.date)||0)||String(msId(a)).localeCompare(String(msId(b)),undefined,{numeric:true}); })
+    .map(function(m){
+      const k=msKeyFor(m), s=effectiveState(m);
+      return {id:msId(m)||'',name:String(m.actName||''),state:s,status:STATE_LABELS[s]||s,
+        finish:fmtTipDate(m.date)+((m._msBase&&('date' in m._msBase))?' (edited)':''),
+        float:(isUserMs(m)||m.floatD==null||m.floatD==='')?'n/a':(Math.round(+m.floatD)+'d'),
+        comment:SRETEntries.rollup(ENTRIES,k,{kind:'ms'}).lastText||''};
+    });
+  const byId={};
+  board.forEach(function(m){ const i=msId(m); if(i) byId[i]=m; });
+  const proposed=USER_MILESTONES.map(function(r){
+    const m=byId[r.id]||r, s=effectiveState(m);
+    return {id:r.id,name:String(m.actName||''),start:m.start?fmtTipDate(m.start):'',finish:fmtTipDate(m.date),
+      state:s,status:STATE_LABELS[s]||s,ms:msDateMs(m.date)||0};
+  }).sort(function(a,b){ return a.ms-b.ms||String(a.id).localeCompare(String(b.id),undefined,{numeric:true}); });
+  const dd=shareDataDate(), now=new Date();
+  return {
+    title:shareTitle(),
+    projectNo:String(REPORT_META.projectNo||''),
+    period:all?'All periods (to '+fmtPeriod(cur)+')':fmtPeriod(period),
+    periodISO:all?cur:period, all:all,
+    reportDate:fmtTipDate(REPORT_META.reportDate||now),
+    dataDate:dd?fmtTipDate(dd):'Not set',
+    from:String(from||'').trim(),
+    generated:shareStamp(now),
+    total:board.length, offBoard:shareOffBoardCount(), counts:counts, updated:updates.length, followUps:fu,
+    updates:updates, attention:attention, proposed:proposed, version:APP_VERSION
+  };
+}
+function shareEsc(v){
+  return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function buildShareReportHtml(M){
+  const E=shareEsc, none=function(t){ return '<p class="empty">'+E(t)+'</p>'; };
+  const tile=function(n,label,cls){ return '<div class="tile '+cls+'"><b>'+n+'</b><span>'+E(label)+'</span></div>'; };
+  const meta=[['Project',M.projectNo||'Not set'],['Report period',M.period],['Report date',M.reportDate],
+    ['Schedule data date',M.dataDate],['Prepared by',M.from||'Not given'],['Generated',M.generated]];
+  let h='\x3C!doctype html>\x3Chtml lang="en">\x3Chead>\x3Cmeta charset="utf-8">'+
+    '\x3Cmeta name="viewport" content="width=device-width,initial-scale=1">'+
+    '\x3Ctitle>'+E(M.title+' report, '+M.period)+'\x3C/title>'+
+    '\x3Cstyle>'+REPORT_CSS+'\x3C/style>\x3C/head>\x3Cbody>\x3Cdiv class="page">';
+  // 1. Header
+  h+='\x3Cheader class="rh"><p class="kicker">Milestone update report</p><h1>'+E(M.title)+'</h1><dl class="meta">'+
+    meta.map(function(r){ return '<div><dt>'+E(r[0])+'</dt><dd>'+E(r[1])+'</dd></div>'; }).join('')+'</dl>\x3C/header>';
+  // 2. At a glance
+  const c=M.counts;
+  h+='<section id="glance"><h2>At a glance <span class="n">'+M.total+' milestones</span></h2><div class="tiles">'+
+    tile(c.DONE,'Complete','t-done')+tile(c.TRACK,'On track','t-track')+tile(c.RISK,'At risk','t-risk')+
+    tile(c.CRIT,'Critical','t-crit')+tile(c.FUTURE,'Future','t-future')+
+    (c.NA?tile(c.NA,'Not rated','t-future'):'')+'</div>'+
+    (M.offBoard?'<p class="by">'+M.offBoard+' milestone'+(M.offBoard===1?' falls':'s fall')+
+      ' outside the board\u2019s week range and '+(M.offBoard===1?'is':'are')+' not counted.</p>':'')+
+    '<p class="sub">'+E(M.all?'Updates, all periods':'This period')+'</p><div class="tiles">'+
+    tile(M.updated,'Milestones updated','t-key')+tile(M.followUps.open,'Follow-ups open','t-risk')+
+    tile(M.followUps.sent,'Follow-ups sent','t-track')+tile(M.followUps.done,'Follow-ups done','t-done')+'</div></section>';
+  // 3. Updates this period
+  h+='<section id="updates"><h2>'+E(M.all?'Updates, all periods':'Updates this period')+
+    ' <span class="n">'+M.updates.length+'</span></h2>';
+  h+=M.updates.length?M.updates.map(function(u){
+    const ch=u.changes.length?'<ul class="chg">'+u.changes.map(function(x){
+      return '<li><span class="lbl">'+E(x.label)+'</span> <span class="from">'+E(x.from)+'</span> → <span class="to">'+E(x.to)+'</span></li>';
+    }).join('')+'</ul>':'';
+    return '<article class="upd"><div class="upd-h"><span class="id">'+E(u.id)+'</span><span class="nm">'+E(u.name)+'</span>'+
+      '<span class="fu">Follow-up: '+E(u.followUp)+'</span></div>'+ch+
+      (u.comment?'<p class="cmt">'+E(u.comment)+'</p>':'')+
+      '<p class="by">'+E((u.who?u.who+', ':'')+u.when+(u.entries>1?' ('+u.entries+' updates)':''))+'</p></article>';
+  }).join(''):none(M.all?'No updates recorded':'No updates this period');
+  h+='</section>';
+  // 4. Attention
+  h+='<section id="attention"><h2>Attention <span class="n">'+M.attention.length+' at risk or critical</span></h2>';
+  h+=M.attention.length?'<table class="rt"><thead><tr><th>ID</th><th>Milestone</th><th>Status</th><th>Finish</th><th>Float</th><th>Latest comment</th></tr></thead><tbody>'+
+    M.attention.map(function(a){
+      return '<tr><td data-l="ID" class="id">'+E(a.id)+'</td><td data-l="Milestone">'+E(a.name)+'</td>'+
+        '<td data-l="Status" class="st st-'+(SHARE_STATE_CLASS[a.state]||'future')+'">'+E(a.status)+'</td>'+
+        '<td data-l="Finish">'+E(a.finish)+'</td><td data-l="Float">'+E(a.float)+'</td>'+
+        '<td data-l="Comment">'+E(a.comment||'None')+'</td></tr>';
+    }).join('')+'</tbody></table>':none('No milestones at risk or critical');
+  h+='</section>';
+  // 5. New milestones proposed
+  h+='<section id="proposed"><h2>New milestones proposed <span class="n">'+M.proposed.length+'</span></h2>';
+  h+=M.proposed.length?'<table class="rt"><thead><tr><th>ID</th><th>Milestone</th><th>Start</th><th>Finish</th><th>Status</th></tr></thead><tbody>'+
+    M.proposed.map(function(p){
+      return '<tr><td data-l="ID" class="id">'+E(p.id)+'</td><td data-l="Milestone">'+E(p.name)+'</td>'+
+        '<td data-l="Start">'+E(p.start||'Not set')+'</td><td data-l="Finish">'+E(p.finish)+'</td>'+
+        '<td data-l="Status" class="st st-'+(SHARE_STATE_CLASS[p.state]||'future')+'">'+E(p.status)+'</td></tr>';
+    }).join('')+'</tbody></table>':none('No new milestones proposed');
+  h+='</section>';
+  // 6. Footer
+  h+='\x3Cfooter class="rf">Prepared with Milestone Dashboard '+E(M.version)+'. Dates are as at the schedule data date; '+
+    'edited dates are proposals, not changes to the master schedule.\x3C/footer>';
+  h+='\x3C/div>\x3C/body>\x3C/html>\n';
+  // No em or en dash reaches the reader, whatever was typed into a remark.
+  return h.replace(/[\u2014\u2013]/g,'-');
+}
+
+// ---- the Excel detail: SRETNotesExport over ENTRIES ----
+function shareStateCode(s){
+  const c={NA:0,TRACK:1,DONE:2,DONEUSER:2,RISK:3,CRIT:4}[s];
+  return c!==undefined?c:(STATE_LABELS[s]||null);
+}
+function buildShareWorkbookAoA(period){
+  const idx=entryMsIndex();
+  return SRETNotesExport.buildNotesWorkbookAoA(ENTRIES,{
+    rollup:function(es,key,o){
+      const kind=(es[0]&&es[0].target&&es[0].target.kind)||'ms';
+      return SRETEntries.rollup(es,key,Object.assign({kind:kind},o||{}));
+    },
+    msLookup:function(key){ const m=idx[key]; return m?{id:msId(m),name:String(m.actName||'')}:null; },
+    sourceOf:function(key,f){
+      const m=idx[key]; if(!m) return null;
+      const b=m._msBase||{};
+      if(f==='start'||f==='date') return (f in b)?b[f]:(m[f]==null?null:m[f]);
+      if(f==='progress') return m.progress==null?null:m.progress;
+      if(f==='health') return shareStateCode(m.state);
+      return null;
+    },
+    periodFilter:period==='all'?null:period,
+    fmtDate:fmtTipDate
+  });
+}
+function shareFileStem(){
+  const t=shareTitle().replace(/[^A-Za-z0-9 _-]+/g,' ')
+    .trim().replace(/\s+/g,'_').replace(/_+/g,'_').slice(0,80).replace(/^[_-]+|[_-]+$/g,'');
+  return t||'Milestone_Dashboard';
+}
+// {list:[{name, blob}], model, aoa, xlsxError}
+function buildShareFiles(period,from,withXlsx){
+  const M=shareReportModel(period,from), stem=shareFileStem();
+  const out={model:M,aoa:null,xlsxError:'',list:[{name:stem+'_Report_'+M.periodISO+'.html',
+    blob:new Blob([buildShareReportHtml(M)],{type:'text/html'})}]};
+  if(withXlsx){
+    if(typeof XLSX==='undefined'||typeof SRETNotesExport==='undefined'){
+      out.xlsxError='The Excel detail could not be built: the workbook library is missing from this copy.';
+    }else{
+      out.aoa=buildShareWorkbookAoA(period);
+      const buf=XLSX.write(SRETNotesExport.buildNotesBook(XLSX,out.aoa),{type:'array',bookType:'xlsx'});
+      out.list.push({name:stem+'_Updates_'+M.periodISO+'.xlsx',blob:new Blob([buf],{type:SHARE_XLSX_MIME})});
+    }
+  }
+  return out;
+}
+function downloadShareFiles(list){
+  list.forEach(function(f,i){
+    const go=function(){
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(f.blob);
+      a.download=f.name;
+      a.click();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); },4000);
+    };
+    // The first file inside the click that asked for it; a second download
+    // a moment later, which browsers accept as one more from the same action.
+    if(i===0) go(); else setTimeout(go,600*i);
+  });
+}
+// The system share sheet (Android, iOS) when it takes files: both together
+// when it takes both, else the report alone with the workbook downloaded.
+// Returns false when the share sheet cannot take the report at all.
+function shareFilesNative(list,title){
+  const nav=navigator;
+  if(typeof nav.share!=='function'||typeof nav.canShare!=='function'||typeof File==='undefined') return false;
+  const files=list.map(function(f){ return new File([f.blob],f.name,{type:f.blob.type}); });
+  let n=0;
+  try{
+    if(nav.canShare({files:files})) n=files.length;
+    else if(files.length>1&&nav.canShare({files:[files[0]]})) n=1;
+  }catch(e){ n=0; }
+  if(!n) return false;
+  const rest=list.slice(n);
+  let p;
+  try{ p=Promise.resolve(nav.share({files:files.slice(0,n),title:title})); }
+  catch(e){ p=Promise.reject(e); }
+  // Cancelled by the person: nothing more. Refused by the system: download.
+  p.catch(function(e){ if(!e||e.name!=='AbortError') downloadShareFiles(list.slice(0,n)); });
+  if(rest.length) downloadShareFiles(rest);
+  return true;
+}
+function doShareReport(viaShare){
+  const sel=document.getElementById('share-period'), err=document.getElementById('share-err');
+  const v=sel&&sel.value?sel.value:reportPeriodISO();
+  const from=String(document.getElementById('share-from').value||'').trim();
+  const withX=!!document.getElementById('share-xlsx').checked;
+  rememberShareFrom(from);
+  let out;
+  try{ out=buildShareFiles(v,from,withX); }
+  catch(e){ err.textContent='The report could not be built. '+((e&&e.message)||''); err.hidden=false; return null; }
+  closeShareDialog();
+  if(out.xlsxError) setIngestStatus(out.xlsxError,'err');
+  out.shared=!!(viaShare&&shareFilesNative(out.list,out.model.title+' report, '+out.model.period));
+  if(!out.shared) downloadShareFiles(out.list);
+  return out;
 }
 
 function exportCSV(){
