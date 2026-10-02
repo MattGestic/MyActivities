@@ -1,0 +1,421 @@
+{
+  "$comment": "Module index (D-30). Edit 'version', 'status', 'files', 'embed', 'deps' and 'uses' by hand; 'recorded' is written by tools/modules_embed.py. One version per module, written only here.",
+  "schema": 1,
+  "host": "src/milestone-dashboard.html",
+  "slots": {
+    "style-modules": "main <style>, above the grid CSS (P72: never below it)",
+    "style-end": "main <style>, last: the grid CSS runs to </style>",
+    "app-script-modules": "top of <script id=\"app-script\">, before APP_VERSION"
+  },
+  "modules": [
+    {
+      "id": "grid-view",
+      "dir": "grid-view",
+      "version": "1.0.0",
+      "status": "embedded",
+      "global": "SRETGrid",
+      "summary": "Full-screen table view (D-09): core plus optional features, configured once with SRETGrid.setup().",
+      "files": {
+        "js": [
+          "grid-view.js",
+          "features/marks.js",
+          "features/bulk-edit.js",
+          "features/xlsx.js",
+          "features/import.js",
+          "features/lists.js",
+          "features/refs.js"
+        ],
+        "css": [
+          "grid-view.css",
+          "features/marks.css",
+          "features/bulk-edit.css",
+          "features/import.css",
+          "features/lists.css",
+          "features/refs.css"
+        ]
+      },
+      "embed": {
+        "css": {
+          "slot": "style-end",
+          "order": 10,
+          "files": [
+            "grid-view.css",
+            "features/marks.css",
+            "features/bulk-edit.css"
+          ],
+          "header": "/* ============================================================\n   GRID VIEW (D-09, P61; core and features P70, TD-229): {files},\n   pasted unchanged by tools/modules_embed.py. Tier 3 component styles on\n   --color-* roles and D-16 tokens. Edit the module files and re-run the tool.\n   ============================================================ */",
+          "separator": "/* ---- {name} ---- */"
+        },
+        "js": {
+          "slot": "app-script-modules",
+          "order": 10,
+          "files": [
+            "grid-view.js",
+            "features/marks.js",
+            "features/bulk-edit.js",
+            "features/xlsx.js"
+          ],
+          "header": "// ============================================================\n// GRID VIEW MODULE (D-09, P61; core and features P70, TD-229): {files},\n// pasted unchanged by tools/modules_embed.py. The core defines window.SRETGrid;\n// each feature registers itself with it. No app global is read. The app's\n// setup() call and adapters (openGridView) live beside the Workspace code.\n// ============================================================",
+          "separator": "// ---- {name} ----",
+          "footer": "// ============ END GRID VIEW MODULE ============"
+        }
+      },
+      "deps": [],
+      "uses": [
+        "collections",
+        "ms-import",
+        "dates"
+      ],
+      "vendor": [
+        "slickgrid"
+      ],
+      "tests": [
+        "tools/grid_view_check.py",
+        "tools/grid_view_modular.py",
+        "tools/grid_view_responsive.py",
+        "tools/p61_check.py"
+      ],
+      "docs": [
+        "docs/grid-view-integration.md"
+      ],
+      "recorded": {
+        "version": "1.0.0",
+        "sources": {
+          "grid-view.js": "bbeb152d6ddac4df",
+          "features/marks.js": "69d640ce25cd0b5e",
+          "features/bulk-edit.js": "c6039c2509640169",
+          "features/xlsx.js": "1fb095b58f163766",
+          "features/import.js": "39131ac9743cbdd5",
+          "features/lists.js": "b55c6a17a5eb3f66",
+          "features/refs.js": "52ff32836f2ba7df",
+          "grid-view.css": "6762b4445390cf53",
+          "features/marks.css": "b156622feb814e1e",
+          "features/bulk-edit.css": "70036a70933418cb",
+          "features/import.css": "16629ca3e62fb03e",
+          "features/lists.css": "6f8da2198f352b58",
+          "features/refs.css": "92180fb0f6d909e3"
+        }
+      }
+    },
+    {
+      "id": "notes-store",
+      "dir": "notes-store",
+      "version": "1.1.0",
+      "status": "embedded",
+      "global": "SRETEntries",
+      "summary": "The append-only entry record behind every milestone update (P65); the app's stores are projections of it.",
+      "files": {
+        "js": [
+          "notes-store.js"
+        ]
+      },
+      "extra_files": [
+        "INTERFACE.md"
+      ],
+      "embed": {
+        "js": {
+          "slot": "app-script-modules",
+          "order": 20,
+          "header": "// ============================================================\n// NOTES STORE MODULE (P65, M1 + M2): src/modules/notes-store/notes-store.js,\n// pasted unchanged. Defines window.SRETEntries only and reads no app global.\n// Edit the module file and re-paste. The app's adapter (ENTRIES,\n// projectEntryStores) lives beside the Notes code.\n// ============================================================",
+          "footer": "// ============ END NOTES STORE MODULE ============"
+        }
+      },
+      "deps": [],
+      "uses": [],
+      "tests": [
+        "tools/notes_store_test.mjs",
+        "tools/p65_check.py"
+      ],
+      "docs": [
+        "src/modules/notes-store/INTERFACE.md"
+      ],
+      "recorded": {
+        "version": "1.1.0",
+        "sources": {
+          "notes-store.js": "8a5da7db9a6a0ff6",
+          "INTERFACE.md": "1117baee6c7779f8"
+        }
+      }
+    },
+    {
+      "id": "notes-card",
+      "dir": "notes-card",
+      "version": "1.1.0",
+      "status": "embedded",
+      "global": "SRETFormToEntry",
+      "summary": "Milestone card save reduced to one entry draft (P65, M5). Pure.",
+      "files": {
+        "js": [
+          "form-to-entry.js"
+        ]
+      },
+      "embed": {
+        "js": {
+          "slot": "app-script-modules",
+          "order": 30,
+          "header": "// ============================================================\n// CARD FORM-TO-ENTRY MODULE (P65, M5): src/modules/notes-card/form-to-entry.js,\n// pasted unchanged. Defines window.SRETFormToEntry only.\n// ============================================================",
+          "footer": "// ============ END CARD FORM-TO-ENTRY MODULE ============"
+        }
+      },
+      "deps": [],
+      "uses": [
+        "notes-store"
+      ],
+      "tests": [
+        "tools/form_to_entry_test.mjs"
+      ],
+      "recorded": {
+        "version": "1.1.0",
+        "sources": {
+          "form-to-entry.js": "1d0bcd99be11c46f"
+        }
+      }
+    },
+    {
+      "id": "notes-history",
+      "dir": "notes-history",
+      "version": "1.1.0",
+      "status": "embedded",
+      "global": "SRETHistory",
+      "summary": "Update history gallery for the milestone card and Notes panel (P66, M6).",
+      "files": {
+        "js": [
+          "notes-history.js"
+        ],
+        "css": [
+          "notes-history.css"
+        ]
+      },
+      "embed": {
+        "js": {
+          "slot": "app-script-modules",
+          "order": 40,
+          "header": "// ============================================================\n// UPDATE HISTORY MODULE (P66, M6): src/modules/notes-history/notes-history.js,\n// pasted unchanged. Defines window.SRETHistory only. Its CSS is pasted at the\n// end of the main style. Used by the milestone card and the Notes panel.\n// ============================================================",
+          "footer": "// ============ END UPDATE HISTORY MODULE ============"
+        },
+        "css": {
+          "slot": "style-modules",
+          "order": 10,
+          "header": "/* ===== UPDATE HISTORY MODULE (P66, M6): src/modules/notes-history/notes-history.css, pasted unchanged ===== */",
+          "footer": "/* ===== END UPDATE HISTORY MODULE ===== */"
+        }
+      },
+      "deps": [],
+      "uses": [],
+      "tests": [
+        "tools/notes_history_check.py",
+        "tools/p66_check.py"
+      ],
+      "recorded": {
+        "version": "1.1.0",
+        "sources": {
+          "notes-history.js": "9eef7091f5381fb5",
+          "notes-history.css": "bfe6d9552d31c457"
+        }
+      }
+    },
+    {
+      "id": "collections",
+      "dir": "collections",
+      "version": "0.1.0",
+      "status": "standalone",
+      "global": "SRETCollections",
+      "summary": "My temp list and saved lists, shared by the grid view and the dashboard.",
+      "files": {
+        "js": [
+          "collections.js"
+        ]
+      },
+      "deps": [],
+      "uses": [],
+      "tests": [
+        "tools/grid_view_check.py"
+      ],
+      "recorded": {
+        "version": "0.1.0",
+        "sources": {
+          "collections.js": "677af33e45434b11"
+        }
+      }
+    },
+    {
+      "id": "compare",
+      "dir": "compare",
+      "version": "0.1.0",
+      "status": "standalone",
+      "global": "SRETCompare",
+      "summary": "Schedule comparison by upload, with designations (primary, secondary, alternate).",
+      "files": {
+        "js": [
+          "compare.js"
+        ]
+      },
+      "deps": [],
+      "uses": [],
+      "tests": [
+        "tools/grid_view_check.py"
+      ],
+      "recorded": {
+        "version": "0.1.0",
+        "sources": {
+          "compare.js": "13bde1f87bfaf869"
+        }
+      }
+    },
+    {
+      "id": "dates",
+      "dir": "dates",
+      "version": "0.1.0",
+      "status": "standalone",
+      "global": "SRETDates",
+      "summary": "One date-reading engine for every import: detects day/month order across a file, then parses.",
+      "files": {
+        "js": [
+          "dates.js"
+        ]
+      },
+      "deps": [],
+      "uses": [],
+      "tests": [
+        "tools/grid_view_check.py"
+      ],
+      "recorded": {
+        "version": "0.1.0",
+        "sources": {
+          "dates.js": "c2ef4eae347c29e1"
+        }
+      }
+    },
+    {
+      "id": "ids",
+      "dir": "ids",
+      "version": "0.1.0",
+      "status": "standalone",
+      "global": "SRETIds",
+      "summary": "User task IDs (prefix-number series) and merge identity (GUID).",
+      "files": {
+        "js": [
+          "ids.js"
+        ]
+      },
+      "deps": [],
+      "uses": [
+        "user"
+      ],
+      "tests": [
+        "tools/grid_view_check.py"
+      ],
+      "recorded": {
+        "version": "0.1.0",
+        "sources": {
+          "ids.js": "b2775918457143de"
+        }
+      }
+    },
+    {
+      "id": "migrate",
+      "dir": "migrate",
+      "version": "0.1.0",
+      "status": "standalone",
+      "global": "SRETMigrate",
+      "summary": "Stored-key migration (user milestones to user tasks). Pure and idempotent.",
+      "files": {
+        "js": [
+          "migrate.js"
+        ]
+      },
+      "deps": [],
+      "uses": [],
+      "tests": [
+        "tools/grid_view_check.py"
+      ],
+      "recorded": {
+        "version": "0.1.0",
+        "sources": {
+          "migrate.js": "9c906219965d55c9"
+        }
+      }
+    },
+    {
+      "id": "ms-import",
+      "dir": "ms-import",
+      "version": "0.1.0",
+      "status": "standalone",
+      "global": "SRETMsImport",
+      "summary": "Milestone import rules over a parsed sheet. Pure checks.",
+      "files": {
+        "js": [
+          "ms-import.js"
+        ]
+      },
+      "deps": [],
+      "uses": [
+        "dates"
+      ],
+      "tests": [
+        "tools/grid_view_check.py"
+      ],
+      "recorded": {
+        "version": "0.1.0",
+        "sources": {
+          "ms-import.js": "b7db121f8a0ea49e"
+        }
+      }
+    },
+    {
+      "id": "notes-export",
+      "dir": "notes-export",
+      "version": "0.2.0",
+      "status": "standalone",
+      "global": "SRETNotesExport",
+      "summary": "Entry array to the two-sheet notes workbook (Summary, Log). Pure.",
+      "files": {
+        "js": [
+          "notes-export.js"
+        ]
+      },
+      "deps": [],
+      "uses": [],
+      "tests": [
+        "tools/notes_export_test.mjs"
+      ],
+      "recorded": {
+        "version": "0.2.0",
+        "sources": {
+          "notes-export.js": "3ea09c2a1d9fdd7d"
+        }
+      }
+    },
+    {
+      "id": "user",
+      "dir": "user",
+      "version": "0.1.0",
+      "status": "standalone",
+      "global": "SRETUser",
+      "summary": "User name per computer and save history in the file.",
+      "files": {
+        "js": [
+          "user.js"
+        ],
+        "css": [
+          "user.css"
+        ]
+      },
+      "deps": [],
+      "uses": [
+        "ids"
+      ],
+      "tests": [
+        "tools/grid_view_check.py",
+        "tools/p75_card_check.py"
+      ],
+      "recorded": {
+        "version": "0.1.0",
+        "sources": {
+          "user.js": "1288ee0cfd9ef2dc",
+          "user.css": "3bdbeefcb14d5bbd"
+        }
+      }
+    }
+  ]
+}

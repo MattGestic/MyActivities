@@ -3434,3 +3434,41 @@ TD-243, TD-244. Notes: `docs/p77-notes-share-report.md`, `docs/p78-notes-fields.
 **Bug fixed:** `applyFieldOverrides()` stored `undefined` on `_msBase` for a field the schedule did not carry, so after publish and reopen the override read back as the schedule value. It now stores `null`.
 
 **Suite (merged P76 + P77 + P78 build):** `run_checks.py --all --jobs 3`: 68 selected / 68 passed / 0 failed (wall 20.2 min). `p30_check` passed in 553.7 s against its 600 s limit, so it remains at risk of a timeout under load.
+
+## TEST-81: D-30 module amalgamation (2026-10-02, no version bump)
+
+This test covers TD-245 and TASK-64. It changes tooling only, so the app code is unchanged and `APP_VERSION` is not bumped. It was first run at P75, and re-checked after merging P76 to P78; see the merge note at the end.
+
+**App diff.** The diff against the base file contains only these lines, checked line by line:
+- `@module` BEGIN and END markers around the 6 existing pasted regions;
+- the `@slot` anchors `app-script-modules` and `style-modules`;
+- the P72 CSS comment, reworded.
+
+**`tools/modules_embed_test.py`: 14/14 passed.** It runs on a throwaway copy of `src/`. Each check below was run:
+
+| Situation | Result |
+|---|---|
+| Clean app | `--check` passes |
+| Hand edit inside a region | TAMPERED; `--embed` refuses to overwrite it |
+| Source edit with no version bump | STALE and UNVERSIONED |
+| Version bumped, then `--embed` | Clean; the marker shows the new version |
+| Bytes outside the rewritten region | Identical |
+| Deleted region | MISSING; `--embed` puts it back at its slot, byte-identical |
+| `--extract` | A pure move: the app differs only by the markers |
+
+**`modules_embed.py --check`:** clean.
+
+**`run_checks.py --jobs 4`, change-scoped:** 66 selected, 66 passed, 14.4 min.
+- A comment was edited while this run was in progress, so a settling run followed: 27 selected, 27 passed, 4.6 min.
+
+**TD-246 measurement.** At rest, `run_checks.py --dry-run` selects 12 of 67 checks: the fast static and node checks it always runs. I then made one patch-level change to a single module: a comment in `notes-history.js`, version bumped to 1.0.1, then `--embed`.
+- **Result:** 66 of 67 selected, 53 of them because a used region changed.
+- **Cause:** the module's IIFE is one region, and every check that loads the app uses it.
+- **Restore:** the probe was reverted and `--check` was clean afterwards.
+
+**Exceptions accepted:** TD-246. Integration of any module change re-runs the full browser suite.
+
+**Merge with P76 to P78 (2026-10-02).** P76 to P78 merged into the base first and used TD-242, TD-243 and TEST-79, so this work moved to TD-245, TD-246 and TEST-81.
+- **Module versions:** P78 changed four module sources by hand, before D-30 existed. They were versioned when the two branches met: `notes-store`, `notes-card` and `notes-history` go to 1.1.0, and `notes-export` to 0.2.0.
+- **App file:** the base's pasted modules matched their sources exactly and were adopted unchanged. Against P78, the app differs only by the markers and three comment lines.
+- **Tests:** `modules_embed_test.py` passed 14/14 and `--check` was clean. `run_checks.py --jobs 4` selected 69 checks and all 69 passed (15.9 min).

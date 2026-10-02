@@ -44,7 +44,7 @@ LEDGER = ROOT / "tools" / "check_map" / "ledger.json"
 LAST_RUN = ROOT / "tools" / "check_map" / "last_run.txt"
 REGISTER = ROOT / "docs" / "component-register.md"
 EXCLUDE = {"d01_render", "xer_to_aoa", "grid_view_assemble", "p65_fixtures", "import_check_lib", "run_checks"}
-EXTRA_ARGS = {"colour_audit": ["--strict"]}
+EXTRA_ARGS = {"colour_audit": ["--strict"], "grid_view_embed": ["--check"], "modules_embed": ["--check"]}
 NODE_TESTS = ["notes_store_test", "form_to_entry_test", "notes_export_test"]
 FAST = 5.0
 

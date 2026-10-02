@@ -85,3 +85,9 @@ python3 tools/run_checks.py               # run it
 ```
 
 Commit `tools/check_map/ledger.json` and `docs/component-register.md` with the round. Run `--all` before a release, after a merge, and after editing anything in `tools/check_map/`.
+
+## Modules (D-30)
+
+Module regions in the app are pasted by `tools/modules_embed.py` between `@module` markers. After `--embed`, run `tools/run_checks.py` as usual: the changed module region selects the checks.
+
+**Limit (TD-246):** a module's IIFE is one top-level JS chunk, and it runs at load, so every browser check uses it. A change to an embedded module therefore re-selects every browser check that loads the app. The module's own test (`MODULE.md`, Tests) is the fast loop during development; the full selection runs once per embed.
