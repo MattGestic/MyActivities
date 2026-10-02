@@ -2436,26 +2436,36 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 .ms-type-opt .ms-icon{width:11px;height:11px;flex:0 0 auto}
 .ms-type-grp{padding:var(--space-2) var(--space-3) var(--space-1);font:600 9px var(--font-sans);letter-spacing:.08em;
   text-transform:uppercase;color:var(--color-text-label)}
-/* 4. Hairline, then Start / Duration / Finish in three equal tracks. */
+/* 4. Hairline, then Start / Duration / Finish in three equal tracks.
+   P75 (Matt, 2026-10-02): one shape for all three blocks. Equal columns,
+   anchored to the top of the row (directly under the hairline), a label line
+   of one fixed height and a value box of one fixed height, all three left
+   aligned. The value boxes share a top, a height and a baseline, so the
+   finish highlight (a dirty or actual tint) cannot make one box taller. */
 .ms-lbl{display:flex;align-items:center;gap:var(--space-2);margin:0 0 var(--space-3);font:500 var(--text-sm)/1 var(--font-sans);
   letter-spacing:.08em;text-transform:uppercase;color:var(--color-text-label)}
 .ms-schedule{margin:var(--space-5) var(--space-6) 0;padding-top:var(--space-5);border-top:1px solid var(--color-line-hairline);
-  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-5)}
-.ms-schedule .ms-field{display:flex;flex-direction:column;align-items:flex-start;min-width:0}
-.ms-fin-field{align-items:flex-end}
-.ms-schedule .ms-fin-field{align-items:flex-end}
-.ms-fin-field .ms-lbl{justify-content:flex-end}
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-5);align-items:start}
+.ms-schedule .ms-field{display:flex;flex-direction:column;align-items:stretch;min-width:0}
+.ms-schedule .ms-lbl{height:var(--space-5);margin:0 0 var(--space-2);white-space:nowrap}
 .ms-date,.ms-dur-val{font:600 var(--text-lg)/1.2 var(--font-sans);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
-.ms-date{width:calc(100% + var(--space-2));margin-left:calc(-1 * var(--space-2));padding:var(--space-0) var(--space-2)}
-.ms-fin-field .ms-date{text-align:right;margin:0 calc(-1 * var(--space-2)) 0 0}
+.ms-schedule .ms-date,.ms-schedule .ms-dur-val{display:block;width:100%;height:var(--ctl-h);margin:0;padding:0 var(--space-2);
+  border:0;border-radius:var(--radius-ctl);line-height:var(--ctl-h);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}
+/* Start and Finish read as selectors: a pointer, a fill on hover, the
+   accent ring while the picker is open. At rest they stay plain, the P66
+   read-first rule (no fill, no border). The field is readonly (no typing); a
+   click, a tap or the keyboard opens the picker. The focus ring is kept for
+   the keyboard, which the readonly rule above would otherwise drop. */
+.ms-dialog .ms-date-sel{cursor:pointer;caret-color:transparent}
+.ms-dialog .ms-date-sel[readonly]:hover{background:var(--color-bg-subtle)}
+.ms-dialog .ms-date-sel[readonly]:focus-visible,.ms-dialog .ms-date-sel[aria-expanded="true"]{outline:1px solid var(--color-accent);outline-offset:0}
+.ms-dialog .ms-date-sel.ms-dirty-field{background:var(--color-accent-wash)}
 /* An actualised date ("A") keeps its green "this really happened" ink. The
    fill it used to carry is dropped: at rest every value reads plain (P66). */
 .ms-date.is-actualised{color:var(--color-status-done)}
-/* P69: calendar button in the date label, and the picker. */
-.ms-dp-btn{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;padding:var(--space-0);margin:0 var(--space-1);
-  border:0;border-radius:var(--radius-ctl);background:transparent;color:var(--color-text-muted);cursor:pointer;min-width:0;min-height:0}
-.ms-dp-btn:hover,.ms-dp-btn[aria-expanded="true"]{background:var(--color-btn-hover-bg);color:var(--color-text-primary)}
-.ms-dp-btn .ms-head-ico{width:13px;height:13px}
+/* P69: the picker. P75 moved its trigger from a calendar button in the
+   label onto the field itself. */
 .ms-dp{position:fixed;z-index:5;box-sizing:border-box;width:252px;max-width:calc(100vw - 16px);overflow-y:auto;padding:var(--space-3);
   background:var(--color-bg-elevated);color:var(--color-text-primary);border:1px solid var(--color-line-default);
   border-radius:var(--radius-overlay);box-shadow:0 8px 24px var(--color-shadow-dialog-far);font:450 var(--text-base)/1.2 var(--font-sans);
@@ -2482,12 +2492,39 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 .ms-dp-foot{display:flex;justify-content:space-between;margin-top:var(--space-3);padding-top:var(--space-3);border-top:1px solid var(--color-line-hairline)}
 .ms-started{margin-top:var(--space-2);font:500 var(--text-sm)/1 var(--font-sans);color:var(--color-accent-ink)}
 .ms-started:empty{display:none}
-.ms-dur-val{padding:var(--space-0) 0}
-.ms-float-col{display:inline-flex;align-items:baseline;margin-top:var(--space-2);font:450 var(--text-sm)/1.2 var(--font-sans);color:var(--color-text-muted);white-space:nowrap}
+.ms-float-col{position:relative;display:inline-flex;align-items:baseline;margin-top:var(--space-2);font:450 var(--text-sm)/1.2 var(--font-sans);color:var(--color-text-muted);white-space:nowrap}
 .ms-float-val{width:2.2em;padding:var(--space-0) var(--space-1);text-align:center;font:inherit;font-variant-numeric:tabular-nums;color:var(--color-text-primary)}
 .ms-float-val::placeholder{color:var(--color-text-muted)}
 .ms-float-val[readonly]{cursor:default}
 .ms-float-lbl{color:var(--color-text-muted)}
+/* P75: the finish moved, so the schedule float is struck through and the
+   adjusted figure follows it. The tooltip says what moved and what the figure
+   is not (a scheduling engine's result). Shown on hover, on keyboard focus
+   and on a tap (.is-open). */
+.ms-float-was{padding:0 var(--space-1) 0 0;font-variant-numeric:tabular-nums;color:var(--color-text-muted)}
+.ms-float-was[hidden],.ms-float-adj[hidden]{display:none}
+.ms-float-adj{padding:0;font-weight:600;font-variant-numeric:tabular-nums;color:var(--color-text-primary)}
+.ms-float-col.is-moved{cursor:help;border-radius:var(--radius-ctl)}
+.ms-float-col.is-moved .ms-float-val{display:none}
+.ms-float-col.is-moved:focus-visible{outline:1px solid var(--color-accent);outline-offset:1px}
+.ms-float-tip{display:none;position:absolute;left:50%;top:calc(100% + var(--space-2));transform:translateX(-50%);z-index:4;
+  width:220px;padding:var(--space-3) var(--space-4);background:var(--color-bg-elevated);color:var(--color-text-primary);
+  border:1px solid var(--color-line-default);border-radius:var(--radius-overlay);box-shadow:0 6px 18px var(--color-shadow-dialog-far);
+  font:450 var(--text-sm)/1.4 var(--font-sans);white-space:normal;text-align:left;cursor:default}
+.ms-float-tip b{font-weight:600}
+.ms-float-tip p{margin:var(--space-2) 0 0;color:var(--color-text-muted)}
+.ms-float-col.is-moved:hover .ms-float-tip,.ms-float-col.is-moved:focus .ms-float-tip,.ms-float-col.is-open .ms-float-tip{display:block}
+.ms-float-tip[hidden]{display:none!important}
+/* P75: Copy milestone. The new card scales in and the new marker pulses an
+   accent outline, both once. Nothing moves under reduced motion; the script
+   does not add the classes then either. */
+@keyframes ms-copy-in{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+@keyframes ms-copy-pulse{from{outline-color:var(--color-accent);outline-offset:0}to{outline-color:transparent;outline-offset:4px}}
+.ms-dialog.ms-copy-in{animation:ms-copy-in .2s ease-out 1}
+.m-wrap.ms-copy-pulse{outline:2px solid transparent;border-radius:var(--radius-ctl);animation:ms-copy-pulse .6s ease-out 2}
+@media (prefers-reduced-motion:reduce){
+  .ms-dialog.ms-copy-in,.m-wrap.ms-copy-pulse{animation:none}
+}
 /* 5. Progress: label and changed-dot, the figure and the status word on
    the right, a 3px bar under both. */
 .ms-prog-row{margin:var(--space-5) var(--space-6) 0}
@@ -3725,7 +3762,7 @@ button.sg-sym:hover{transform:scale(1.2)}
         <li><b>Left rail, your annotations:</b> comments and markups, and your own milestones.</li>
         <li><b>This panel, the schedule and its format:</b> view controls, sources, import and data settings.</li>
         <li><b>On the board:</b> click a milestone to open its card; double-click a week cell to add a milestone on that row.</li>
-        <li><b>Esc</b> closes the topmost panel or card.</li>
+        <li><b>Esc</b> closes the topmost popover, panel or card. A milestone card is saved as it closes; only its &#215; discards changes.</li>
       </ul>
     </div>
   </div>
@@ -4169,12 +4206,18 @@ button.sg-sym:hover{transform:scale(1.2)}
        The head row holds nothing but the ways out: close (discard) LEFT, the
        save pair RIGHT, so the two directions cannot be hit for one another. -->
   <div class="ms-dialog-head">
-    <button type="button" class="ms-close" onclick="discardMsDialog()" aria-label="Discard changes and close" title="Discard changes and close"><svg class="ms-head-ico" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 3l8 8M11 3l-8 8"/></svg></button>
+    <!-- P75: the cross is the ONLY way to throw edits away. Every other exit
+         (a click away, Esc, a marker, a chip, Back, another card) saves. -->
+    <button type="button" class="ms-close" onclick="discardMsDialog()" aria-label="Close without saving. Discards unsaved changes; every other way out saves them." title="Close without saving (discards unsaved changes). Clicking away or Esc saves."><svg class="ms-head-ico" viewBox="0 0 14 14" aria-hidden="true"><path d="M3 3l8 8M11 3l-8 8"/></svg></button>
     <!-- P68: back to the card a dependency chip was opened from. One step
          only: shown after a chip jump, cleared once used or on any other open. -->
     <button type="button" class="ms-close ms-back" id="ms-back" onclick="msGoBack(event)" hidden aria-label="Back" title="Back"><svg class="ms-head-ico" viewBox="0 0 14 14" aria-hidden="true"><path d="M8.5 3L4.5 7l4 4M4.5 7H12"/></svg></button>
     <span class="ms-head-spacer"></span>
     <span class="ms-saved-flash" id="ms-saved-flash" role="status" aria-live="polite" hidden>Saved</span>
+    <!-- P75: Copy milestone, immediately left of the save icon. Outside the
+         save pair, so setMsSaveEnabled() never disables it: a clean card can
+         be copied too. -->
+    <button type="button" class="ms-act ms-act-icon ms-copy-btn" id="ms-copy-btn" onclick="copyMsMilestone(event)" title="Copy milestone" aria-label="Copy milestone"><svg class="ms-head-ico" viewBox="0 0 16 16" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8" rx="1.2"/><path d="M10.5 5.5v-2a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2"/></svg></button>
     <!-- Always on screen. While the form is clean both are aria-disabled and
          muted, and a click on either does nothing (onMsSaveClick). -->
     <span class="ms-save-actions" id="ms-save-actions" aria-disabled="true">
@@ -4216,9 +4259,15 @@ button.sg-sym:hover{transform:scale(1.2)}
   <!-- Start, Duration and Finish: three equal tracks that never move. A
        milestone with no start shows a dash where a date would be. -->
   <div class="ms-schedule">
-    <div class="ms-field" id="ms-start-field"><span class="ms-lbl">Start<span class="ms-edited-mark" id="ms-mark-start" data-field="start" hidden></span><button type="button" class="ms-dp-btn" id="ms-dp-btn-start" onclick="openMsDatePicker(event,'ms-start-date')" aria-haspopup="dialog" aria-expanded="false" aria-label="Pick the start date" title="Pick the start date"><svg class="ms-head-ico" viewBox="0 0 14 14" aria-hidden="true"><rect x="2" y="3" width="10" height="9" rx="1"/><path d="M2 6h10M5 1.8v2.4M9 1.8v2.4"/></svg></button></span><input type="text" id="ms-start-date" class="ms-date ms-start-date ms-edit" maxlength="14" autocomplete="off" title="Start date. An A after the date marks it actual. Clear the field to restore the schedule's own value." oninput="onMsFieldInput()" onkeydown="onMsDateKey(event)" onpointerdown="onMsDatePointer(event)"><span class="ms-started" id="ms-started"></span></div>
-    <div class="ms-field ms-dur-field" id="ms-dur-field"><span class="ms-lbl">Duration<span class="ms-edited-mark" id="ms-mark-floatD" data-field="floatD" hidden></span></span><span class="ms-dur-val" id="ms-duration"></span><span class="ms-float-col" id="ms-float-col">(<input type="text" id="ms-float-val" class="ms-float-val ms-edit" maxlength="6" autocomplete="off" placeholder="-" readonly tabindex="-1" title="Total float in days, from the schedule. Not editable." aria-label="Total float in days, from the schedule"><span class="ms-float-lbl">d float)</span></span></div>
-    <div class="ms-field ms-fin-field"><span class="ms-lbl"><button type="button" class="ms-dp-btn" id="ms-dp-btn-date" onclick="openMsDatePicker(event,'ms-date')" aria-haspopup="dialog" aria-expanded="false" aria-label="Pick the finish date" title="Pick the finish date"><svg class="ms-head-ico" viewBox="0 0 14 14" aria-hidden="true"><rect x="2" y="3" width="10" height="9" rx="1"/><path d="M2 6h10M5 1.8v2.4M9 1.8v2.4"/></svg></button><span class="ms-edited-mark" id="ms-mark-date" data-field="date" hidden></span>Finish</span><input type="text" id="ms-date" class="ms-date ms-edit" maxlength="14" autocomplete="off" title="Finish date. An A after the date marks it actual. Clear the field to restore the schedule's own value." oninput="onMsFieldInput()" onkeydown="onMsDateKey(event)" onpointerdown="onMsDatePointer(event)"></div>
+    <!-- P75 (Matt, 2026-10-02): three blocks of one shape. Each has a label
+         line of one fixed height and a value box of one fixed height, so the
+         three values share a top and a baseline. Start and Finish are date
+         selectors: the box itself opens the picker (click, tap, Enter, Space,
+         Alt+Down), and nothing is typed into it (readonly). The picker writes
+         the value; Clear empties it back to the schedule's own date. -->
+    <div class="ms-field" id="ms-start-field"><span class="ms-lbl">Start<span class="ms-edited-mark" id="ms-mark-start" data-field="start" hidden></span></span><input type="text" id="ms-start-date" class="ms-date ms-start-date ms-edit ms-date-sel" readonly maxlength="14" autocomplete="off" aria-haspopup="dialog" aria-expanded="false" aria-label="Start date. Opens the date picker." title="Start date. Click to pick a date; an A after the date marks it actual. Clear in the picker restores the schedule's own value." oninput="onMsFieldInput()" onkeydown="onMsDateKey(event)" onpointerdown="onMsDatePointer(event)" onclick="onMsDateClick(event)"><span class="ms-started" id="ms-started"></span></div>
+    <div class="ms-field ms-dur-field" id="ms-dur-field"><span class="ms-lbl">Duration<span class="ms-edited-mark" id="ms-mark-floatD" data-field="floatD" hidden></span></span><span class="ms-dur-val" id="ms-duration"></span><span class="ms-float-col" id="ms-float-col" onclick="toggleMsFloatTip(event)" onkeydown="onMsFloatKey(event)">(<s class="ms-float-was" id="ms-float-was" hidden></s><input type="text" id="ms-float-val" class="ms-float-val ms-edit" maxlength="6" autocomplete="off" placeholder="-" readonly tabindex="-1" title="Total float in days, from the schedule. Not editable." aria-label="Total float in days, from the schedule"><span class="ms-float-adj" id="ms-float-adj" hidden></span><span class="ms-float-lbl">d float)</span><span class="ms-float-tip" id="ms-float-tip" role="tooltip" hidden></span></span></div>
+    <div class="ms-field ms-fin-field" id="ms-fin-field"><span class="ms-lbl">Finish<span class="ms-edited-mark" id="ms-mark-date" data-field="date" hidden></span></span><input type="text" id="ms-date" class="ms-date ms-edit ms-date-sel" readonly maxlength="14" autocomplete="off" aria-haspopup="dialog" aria-expanded="false" aria-label="Finish date. Opens the date picker." title="Finish date. Click to pick a date; an A after the date marks it actual. Clear in the picker restores the schedule's own value." oninput="onMsFieldInput()" onkeydown="onMsDateKey(event)" onpointerdown="onMsDatePointer(event)" onclick="onMsDateClick(event)"></div>
   </div>
   <!-- P69: the date picker for Start and Finish. Inside the card so a click
        in it is a click in the card; fixed-positioned beside its field. -->
@@ -9543,7 +9592,10 @@ function renderRows(){
         }
         MS_LAST_TAP=MS_SYNTH_CLICK?{key:null,at:0}:{key:_k,at:_now};
         if(msDialogFor===msKeyFor(m) && !document.getElementById('ms-dialog').hidden){
-          discardMsDialog();
+          // P75: a second click on the card's own marker is leaving the card,
+          // so an edited card is saved, not discarded. Another marker saves
+          // through openMsDialog()'s own guard.
+          msLeaveDialog();
         } else {
           openMsDialog(m,actId,wrap,hd,task);
         }
@@ -10418,11 +10470,13 @@ function bindHistory(el){
 // changes.succ, keys the history module has no label for (it shows an
 // unknown key by its name). They are shown in the card's words, on copies of
 // the entries, so neither the module nor the stored entries change.
-const HISTORY_DEP_LABELS={pred:'Predecessors',succ:'Successors'};
+// P75: a copy's own entry, changes.copiedFrom {from: source ID, to: copy ID},
+// is shown the same way, as "Copied from".
+const HISTORY_DEP_LABELS={pred:'Predecessors',succ:'Successors',copiedFrom:'Copied from'};
 function historyEntriesView(list){
   return list.map(function(e){
     const ch=e&&e.changes;
-    if(!ch||!(('pred' in ch)||('succ' in ch))) return e;
+    if(!ch||!Object.keys(ch).some(function(f){ return f in HISTORY_DEP_LABELS; })) return e;
     const out={}, v=function(x){ return (x==null||x==='')?'none':String(x); };
     Object.keys(ch).forEach(function(f){
       if(f in HISTORY_DEP_LABELS) out[HISTORY_DEP_LABELS[f]]={from:v(ch[f].from),to:v(ch[f].to)};
@@ -18461,6 +18515,10 @@ function openMsDialog(m, actId, anchorEl, hd, task){
   // while msKeyFor prefers m.id — equal on this dataset, but nothing enforced
   // it, so any milestone whose id and notes disagreed would have had the card
   // write annotations under a key the board never read back.
+  // P75 (Matt, 2026-10-02): opening a card while another is open and edited
+  // is leaving that one, not discarding it. One guard here covers every way a
+  // card is opened (a marker, a chip, Back, the collection, a note, the grid).
+  if(msDialogFor&&!document.getElementById('ms-dialog').hidden&&msDirty()) saveMsDialog(true);
   msDialogFor=msKeyFor(m);
   msDialogMs=m;
   // P68: a back step exists only when this open is the chip jump that set it.
@@ -18503,6 +18561,12 @@ function openMsDialog(m, actId, anchorEl, hd, task){
     fEl.readOnly=true;
     fEl.value=(hasFloat&&!isDone&&!userMs)?String(Math.round(m.floatD)):'';
     fEl.title=userMs?'A user milestone carries no float.':'Total float in days, from the schedule. Not editable.';
+    // P75: what renderMsFloat() adjusts from. Only a schedule milestone that
+    // is not complete and carries a float has one; anything else reads as
+    // today ("-" or the plain figure) and never shows a strike.
+    const base=m._msBase||{};
+    MS_FLOAT_BASE=(hasFloat&&!isDone&&!userMs)
+      ?{f:Math.round(m.floatD),fin:('date' in base)?base.date:m.date}:null;
   }
   // "Unassigned" tells the reader nothing they can act on — a real discipline name
   // is worth showing, an empty/unassigned one isn't, so the line just doesn't
@@ -18525,7 +18589,7 @@ function openMsDialog(m, actId, anchorEl, hd, task){
   dateEl.value=fmtTipDate(m.date)+(m.actual?' A':'');
   // P66: ms-edit is the read-first field style; the class list is rebuilt
   // with it, or the field reverts to a bordered browser input.
-  dateEl.className='ms-date ms-edit'+(m.actual?' is-actualised':'');
+  dateEl.className='ms-date ms-edit ms-date-sel'+(m.actual?' is-actualised':'');
 
   // Start date. The field is ALWAYS on screen now, showing a dash where a true
   // zero-duration milestone has no start of its own. It used to hide itself,
@@ -18539,12 +18603,13 @@ function openMsDialog(m, actId, anchorEl, hd, task){
   if(isRealTask){
     const suffix=(m.startActual?' A':'')+(m.startStarred?' *':'');
     startEl.value=fmtTipDate(m.start)+suffix;
-    startEl.className='ms-date ms-start-date ms-edit'+(m.startActual?' is-actualised':'');
+    startEl.className='ms-date ms-start-date ms-edit ms-date-sel'+(m.startActual?' is-actualised':'');
   } else {
     startEl.value='';
-    startEl.className='ms-date ms-start-date ms-edit';
+    startEl.className='ms-date ms-start-date ms-edit ms-date-sel';
   }
-  startEl.placeholder='—';
+  // P75: a plain hyphen, not an em dash (no em dashes in UI strings).
+  startEl.placeholder='-';
   // P66: "Started" / "Not started" under the start date, in accent ink.
   const startedEl=document.getElementById('ms-started');
   if(startedEl){
@@ -18666,6 +18731,73 @@ function renderMsDuration(){
   const fv=document.getElementById('ms-float-val');
   const fl=document.querySelector('#ms-float-col .ms-float-lbl');
   if(fv&&fl) fl.textContent=String(fv.value).trim()?'d float)':' float)';
+  renderMsFloat();
+}
+// P75 (Matt, 2026-10-02): float follows a moved finish. When the finish the
+// card shows (a saved override, or a date just picked) differs from the
+// schedule's own finish, the schedule float is struck through and the
+// adjusted figure follows it: the schedule float minus the days the finish
+// moved later, plus the days it moved earlier.
+// Assumption, stated as asked: CALENDAR days, the same count Duration uses
+// above (msDateMs difference / 86400000). P6 float is usually in working
+// days; this is an indication only, which the tooltip says in so many words.
+// Float stays read only (P72); a user milestone and a completed one have no
+// base here (MS_FLOAT_BASE null) and read exactly as before.
+let MS_FLOAT_BASE=null;
+const MS_FLOAT_DISCLAIMER='Float is an indication based on the end date adjustment. Float is not recalculated by a scheduling engine and does not consider any changes of related activities.';
+function msFloatShift(){
+  const b=MS_FLOAT_BASE;
+  if(!b||!b.fin) return 0;
+  // An empty finish field means "back to the schedule's own date".
+  const cur=msFormDate('ms-date')||b.fin;
+  const d=Math.round((msDateMs(cur)-msDateMs(b.fin))/86400000);
+  return isNaN(d)?0:d;
+}
+function renderMsFloat(){
+  const col=document.getElementById('ms-float-col');
+  const was=document.getElementById('ms-float-was'), adj=document.getElementById('ms-float-adj'), tip=document.getElementById('ms-float-tip');
+  if(!col||!was||!adj||!tip) return;
+  const b=MS_FLOAT_BASE, shift=msFloatShift();
+  const moved=!!b&&shift!==0;
+  col.classList.toggle('is-moved',moved);
+  was.hidden=!moved; adj.hidden=!moved; tip.hidden=!moved;
+  if(!moved){
+    col.classList.remove('is-open');
+    col.removeAttribute('tabindex'); col.removeAttribute('aria-describedby'); col.removeAttribute('aria-label');
+    was.textContent=''; adj.textContent=''; tip.textContent='';
+    return;
+  }
+  was.textContent=String(b.f);
+  adj.textContent=String(b.f-shift);
+  // Reachable by keyboard focus and named for a screen reader.
+  col.tabIndex=0;
+  col.setAttribute('aria-describedby','ms-float-tip');
+  col.setAttribute('aria-label','Float '+(b.f-shift)+' days, adjusted from the schedule float of '+b.f+' days');
+  // Built with DOM calls; both dates are dates the code formats.
+  tip.textContent='';
+  const line=function(lbl,val){ const d=document.createElement('div'); const k=document.createElement('b'); k.textContent=lbl+' '; d.appendChild(k); d.appendChild(document.createTextNode(val)); tip.appendChild(d); };
+  const cur=msFormDate('ms-date')||b.fin;
+  line('Previous end date:',fmtTipDate(b.fin));
+  line('Current end date:',fmtTipDate(cur));
+  const p=document.createElement('p'); p.textContent=MS_FLOAT_DISCLAIMER; tip.appendChild(p);
+}
+// A tap (or a click) on the float toggles its tooltip; hover and focus show
+// it through CSS. stopPropagation keeps the click from reaching the card's
+// own click handler, which closes popovers it does not know.
+function toggleMsFloatTip(e){
+  const col=document.getElementById('ms-float-col');
+  if(!col||!col.classList.contains('is-moved')) return;
+  if(e) e.stopPropagation();
+  col.classList.toggle('is-open');
+}
+function closeMsFloatTip(){
+  const col=document.getElementById('ms-float-col');
+  if(!col||!col.classList.contains('is-open')) return false;
+  col.classList.remove('is-open');
+  return true;
+}
+function onMsFloatKey(e){
+  if((e.key==='Enter'||e.key===' ')&&e.currentTarget.classList.contains('is-moved')){ e.preventDefault(); toggleMsFloatTip(e); }
 }
 // The muted word after the progress figure.
 function msProgressWord(p){
@@ -19119,8 +19251,8 @@ function openMsDatePicker(e,fieldId){
   document.getElementById('ms-dp-actual').checked=false;
   syncMsDpMode();
   pop.hidden=false;
-  const btn=document.getElementById(fieldId==='ms-date'?'ms-dp-btn-date':'ms-dp-btn-start');
-  if(btn) btn.setAttribute('aria-expanded','true');
+  // P75: the field is the trigger, so it carries the expanded state.
+  field.setAttribute('aria-expanded','true');
   positionFixedPopup(pop,field,fieldId==='ms-date'?'right':'left');
   const f=pop.querySelector('.ms-dp-day[data-iso="'+MS_DP.focus+'"]');
   if(f) f.focus();
@@ -19129,7 +19261,7 @@ function closeMsDatePicker(refocus){
   const pop=document.getElementById('ms-dp');
   if(!pop||pop.hidden) return;
   pop.hidden=true;
-  document.querySelectorAll('.ms-dp-btn').forEach(function(b){ b.setAttribute('aria-expanded','false'); });
+  document.querySelectorAll('#ms-dialog .ms-date-sel').forEach(function(b){ b.setAttribute('aria-expanded','false'); });
   if(refocus&&MS_DP.field){ const f=document.getElementById(MS_DP.field); if(f) f.focus(); }
   MS_DP.field=null;
 }
@@ -19219,14 +19351,29 @@ function msDpWrite(text){
   f.dispatchEvent(new Event('input',{bubbles:true}));
 }
 // Alt+Down or F4 on the field opens the picker, the platform's own keys.
+// P75: the field is a selector, so Enter and Space open it too, the way a
+// button or a select does. Nothing is typed (the field is readonly); Esc is
+// the card's own handler, which closes the picker first.
 function onMsDateKey(e){
-  if((e.altKey&&e.key==='ArrowDown')||e.key==='F4'){ e.preventDefault(); openMsDatePicker(e,e.target.id); }
+  if((e.altKey&&e.key==='ArrowDown')||e.key==='F4'||e.key==='Enter'||e.key===' '){
+    e.preventDefault();
+    if(!msDpOpenOn(e.target.id)) openMsDatePicker(e,e.target.id);
+  }
 }
-// A tap on a phone opens the picker rather than the keyboard; a mouse click
-// still places the caret for typing.
+function msDpOpenOn(id){ const pop=document.getElementById('ms-dp'); return !!pop&&!pop.hidden&&MS_DP.field===id; }
+// A tap on a phone opens the picker rather than the keyboard, on pointerdown
+// so the keyboard never comes up. Its own click that follows then finds the
+// picker already open and leaves it (onMsDateClick).
 function onMsDatePointer(e){
-  if(e.pointerType!=='touch'||e.target.readOnly) return;
+  if(e.pointerType!=='touch') return;
   e.preventDefault();
+  if(!msDpOpenOn(e.target.id)) openMsDatePicker(e,e.target.id);
+}
+// P75 (Matt, 2026-10-02): a click anywhere on the field opens the picker, on
+// desktop as on touch. It opens, it does not toggle: a second click on an
+// open field leaves the picker where it is (Esc or a click elsewhere closes it).
+function onMsDateClick(e){
+  if(msDpOpenOn(e.target.id)){ e.stopPropagation(); return; }
   openMsDatePicker(e,e.target.id);
 }
 // Raw close. Neither of the two ways OUT of the card calls this directly:
@@ -19234,6 +19381,8 @@ function onMsDatePointer(e){
 // first. It exists so both have one place that clears the card's state.
 function closeMsDialog(){
   closeMsDatePicker();
+  closeMsFloatTip();
+  MS_FLOAT_BASE=null;
   closeMsTypeMenu();
   closeMsHealthPop();
   msHideSavedFlash();
@@ -19534,7 +19683,80 @@ function saveMsDialog(alsoClose){
 // Leaving by the close control throws the pending edits away. Nothing to undo:
 // every field, health included, is held on the form until Save, so closing
 // without saving simply drops what the form was holding.
+// P75 (Matt, 2026-10-02): the cross is the ONLY discard. Esc, a click away,
+// a marker, a chip, Back and opening another card all save (msLeaveDialog).
 function discardMsDialog(){ closeMsDialog(); }
+// Every way out of the card that is not the cross: save when edited, then
+// close. One writer, so the exits cannot drift apart again.
+function msLeaveDialog(){
+  if(msDirty()) saveMsDialog(true);
+  else closeMsDialog();
+}
+// ===== P75: Copy milestone =====
+// The card's copy button. Saves an edited card first, then makes a NEW user
+// milestone through addUserMilestone(), the one writer saveAddMilestone() and
+// the grid's Add row use, so the USR- numbering, the collision and week-range
+// checks, the record and its own row under the user band (USER_BAND) all hold.
+// Carried over: the title, the effective finish, the type and the mark, as the
+// card shows them after the save. Not carried: float (a user milestone has
+// none), the start (the add path has no start), progress, health, links and
+// remarks. The copy starts as a Future milestone.
+// History: one entry on the copy, changes.copiedFrom {from: source, to: copy},
+// shown in the copy's update history as "Copied from".
+function copyMsMilestone(e){
+  if(e) e.stopPropagation();
+  const m=msDialogMs;
+  if(!m||!msDialogFor) return;
+  if(msDirty()) saveMsDialog(false);
+  const f=msReadForm();
+  const base=m._msBase||{};
+  const srcId=msId(m)||msDialogFor;
+  const fin=parseMsDate(f.date)||m.date||(('date' in base)?base.date:null);
+  const r=addUserMilestone({name:f.title||m.actName||srcId, date:fin, type:f.type||m.type||'MS',
+    state:'FUTURE', id:nextUserMsId()});
+  if(r.error){ setIngestStatus('Could not copy '+srcId+': '+r.error,'err'); return; }
+  const mark=f.marker||m.marker;
+  if(mark) r.record.marker=mark;
+  addEntry({target:{kind:'ms',key:r.id},text:'',changes:{copiedFrom:{from:srcId,to:r.id}},origin:'card',status:'note'});
+  closeMsDialog();
+  noteMarkup();
+  scheduleRerender(true);
+  setIngestStatus('Copied '+srcId+' to '+r.id+' · '+r.record.actName+'.','ok');
+  msOpenWhenOnBoard(r.id,true);
+}
+// The board is rebuilt on a timer (scheduleRerender), so the copy's marker
+// appears a moment later. Waits for it, then opens its card the way a chip
+// does, with the arrival animation unless the reader asked for less motion.
+function msOpenWhenOnBoard(id,animate){
+  let tries=0;
+  const tick=function(){
+    const w=document.querySelector('#tbody .m-wrap[data-ms="'+CSS.escape(id)+'"]');
+    if(!w){ if(++tries<60) setTimeout(tick,50); return; }
+    openNoteMilestone(null,id);
+    if(!animate) return;
+    setTimeout(function(){
+      const dlg=document.getElementById('ms-dialog');
+      if(!dlg||dlg.hidden||msDialogFor!==id) return;
+      msPlayCopyAnimation(dlg,document.querySelector('#tbody .m-wrap[data-ms="'+CSS.escape(id)+'"]'));
+    },0);
+  };
+  setTimeout(tick,50);
+}
+function msReducedMotion(){
+  try{ return window.matchMedia('(prefers-reduced-motion:reduce)').matches; }catch(x){ return false; }
+}
+function msPlayCopyAnimation(dlg,wrap){
+  if(msReducedMotion()) return;
+  [[dlg,'ms-copy-in'],[wrap,'ms-copy-pulse']].forEach(function(p){
+    const el=p[0], cls=p[1];
+    if(!el) return;
+    el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls);
+    // Removed once played, so the class never lingers into a later open.
+    const done=function(ev){ if(ev&&ev.target!==el) return; el.classList.remove(cls); el.removeEventListener('animationend',done); };
+    el.addEventListener('animationend',done);
+    setTimeout(done,1400);
+  });
+}
 // One writer for every part of the card that depends on progress: the field,
 // its edited indicator, the bar, and earned hours. Four places read m.progress
 // independently before this, which is the shape that lets a card show one
@@ -19672,16 +19894,16 @@ function positionMsDialog(anchor,dlg){
 }
 // Clicking away from an edited card SAVES it. The reasoning the user gave is
 // that clicking off is not a decision to throw work away, it is just leaving;
-// the deliberate gestures (the close control, Escape) are the ones that
-// discard. So the two directions are: leave by accident, keep the work; leave
-// on purpose from the control marked with a cross, lose it.
+// the deliberate gesture (the close control) is the one that discards. So the
+// two directions are: leave by accident, keep the work; leave on purpose from
+// the control marked with a cross, lose it. P75: Esc moved to the saving side.
 document.addEventListener('click',function(e){
   const dlg=document.getElementById('ms-dialog');
   if(dlg.hidden) return;
   if(dlg.contains(e.target)){
     // P69: the date picker closes on a click elsewhere in the card.
     const dp=document.getElementById('ms-dp');
-    if(dp&&!dp.hidden&&!e.target.closest('#ms-dp')&&!e.target.closest('.ms-dp-btn')&&e.target.id!==MS_DP.field) closeMsDatePicker();
+    if(dp&&!dp.hidden&&!e.target.closest('#ms-dp')&&e.target.id!==MS_DP.field) closeMsDatePicker();
     // A click inside the card but outside the type picker closes the picker,
     // without touching the card itself.
     const menu=msTypeMenuEl();
@@ -19691,23 +19913,29 @@ document.addEventListener('click',function(e){
     const hp=document.getElementById('ms-health-pop');
     if(hp&&!hp.hidden&&!e.target.closest('#ms-health-pop')&&
        !e.target.closest('#ms-health-pill')) closeMsHealthPop();
+    // P75: and the float tooltip opened by a tap.
+    if(!e.target.closest('#ms-float-col')) closeMsFloatTip();
     return;
   }
   if(e.target.closest('.m-wrap')) return;
-  if(msDirty()) saveMsDialog(true);
-  else closeMsDialog();
+  msLeaveDialog();
 });
-// Escape mirrors the close control it sits beside in meaning: a deliberate
-// "get me out of here", so it discards rather than saving.
+// P75 (Matt, 2026-10-02): Esc no longer discards. It closes the topmost
+// popover on the card first (date picker, type menu, health, the float
+// tooltip); pressed again it leaves the card the way a click away does,
+// saving an edited card. The cross is the only discard.
 document.addEventListener('keydown',function(e){
   if(e.key!=='Escape') return;
+  const dlg=document.getElementById('ms-dialog');
+  if(!dlg||dlg.hidden) return;
   const dp=document.getElementById('ms-dp');
   if(dp&&!dp.hidden){ closeMsDatePicker(true); return; }
   const menu=msTypeMenuEl();
   if(menu&&!menu.hidden){ closeMsTypeMenu(); return; }
   const hp=document.getElementById('ms-health-pop');
   if(hp&&!hp.hidden){ closeMsHealthPop(); return; }
-  discardMsDialog();
+  if(closeMsFloatTip()) return;
+  msLeaveDialog();
 });
 
 // One writer for the theme glyph. It used to be written in two places as the
