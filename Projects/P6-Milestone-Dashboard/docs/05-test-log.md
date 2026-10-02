@@ -3387,3 +3387,36 @@ TD-241. Four builds in parallel worktrees, merged by the orchestrator; per-build
 **Existing checks changed, same intent:** `p43` (Esc saves; start placeholder hyphen; date selectors count as editable), `p69` (field opens the picker; no typing), `p68` (Add to list enabled; copy beside it), `p32` (toggle on the left), `p75_drag_date_check` at integration (zero-duration start follows the finish in the same entry; source assertion follows `msWriteFinishMove`).
 
 **Full suite on the merged code:** `run_checks.py --all --jobs 3`: 65 selected, 65 passed (12.5 min).
+
+## TEST-79: D-30 module amalgamation (2026-10-02, no version bump)
+
+This test covers TD-242 and TASK-64. It changes tooling only, so the app code is unchanged and `APP_VERSION` stays at 3.1.0-P75.
+
+**App diff.** The diff against the P75 file contains only these lines, checked line by line:
+- `@module` BEGIN and END markers around the 6 existing pasted regions;
+- the `@slot` anchors `app-script-modules` and `style-modules`;
+- the P72 CSS comment, reworded.
+
+**`tools/modules_embed_test.py`: 14/14 passed.** It runs on a throwaway copy of `src/`. Each check below was run:
+
+| Situation | Result |
+|---|---|
+| Clean app | `--check` passes |
+| Hand edit inside a region | TAMPERED; `--embed` refuses to overwrite it |
+| Source edit with no version bump | STALE and UNVERSIONED |
+| Version bumped, then `--embed` | Clean; the marker shows the new version |
+| Bytes outside the rewritten region | Identical |
+| Deleted region | MISSING; `--embed` puts it back at its slot, byte-identical |
+| `--extract` | A pure move: the app differs only by the markers |
+
+**`modules_embed.py --check`:** clean.
+
+**`run_checks.py --jobs 4`, change-scoped:** 66 selected, 66 passed, 14.4 min.
+- A comment was edited while this run was in progress, so a settling run followed: 27 selected, 27 passed, 4.6 min.
+
+**TD-243 measurement.** At rest, `run_checks.py --dry-run` selects 12 of 67 checks: the fast static and node checks it always runs. I then made one patch-level change to a single module: a comment in `notes-history.js`, version bumped to 1.0.1, then `--embed`.
+- **Result:** 66 of 67 selected, 53 of them because a used region changed.
+- **Cause:** the module's IIFE is one region, and every check that loads the app uses it.
+- **Restore:** the probe was reverted and `--check` was clean afterwards.
+
+**Exceptions accepted:** TD-243. Integration of any module change re-runs the full browser suite.
