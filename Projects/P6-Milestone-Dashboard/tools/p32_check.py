@@ -379,7 +379,7 @@ PROBE = r"""
     // hide control. It stays on screen with the row open and reports it
     // (aria-expanded=true) rather than hiding itself, and the bar's own
     // close x is gone, so the same toggle must be the one that hides the
-    // row again, from the right-hand side of the header.
+    // row again, from the header (left side since P75).
     ck('defect A: and the toggle stays on screen reporting the row is back (aria-expanded=true)',
        expandBtn.hidden===false&&expandBtn.getAttribute('aria-expanded')==='true',
        'hidden='+expandBtn.hidden+' aria-expanded='+expandBtn.getAttribute('aria-expanded'));
@@ -396,8 +396,14 @@ PROBE = r"""
        bar.getBoundingClientRect().height<2 && expandBtn.getAttribute('aria-expanded')==='false',
        bar.getBoundingClientRect().height+'px');
     expandBtn.click(); await settle();
-    ck('defect A: and that control sits on the right-hand side (of the header)',
-       (hdr.right-hr.right)<160 && hr.left>hdr.left+hdr.width/2, Math.round(hdr.right-hr.right)+'px from the header\'s right edge');
+    // P75 (Matt 2026-10-02): the toggle moved from the right-hand side to the
+    // left of the details row, straight after the View group (first on the
+    // row while that group is hidden). Same control, new anchor.
+    const vg=document.querySelector('.rpt-sub-view'), vgOn=vg&&vg.getClientRects().length>0;
+    const rowL=expandBtn.closest('.rpt-sub').getBoundingClientRect().left;
+    ck('defect A: and that control sits on the left of the header, after the View group (P75)',
+       hr.left<hdr.left+hdr.width/2 && (vgOn ? hr.left>=vg.getBoundingClientRect().right-0.5 : hr.left-rowL<=2),
+       Math.round(hr.left-hdr.left)+'px from the header\'s left edge, view group '+(vgOn?'shown':'hidden'));
 
     // ============ 6. Defect B: one field, one filter ============
     const titleFields=Array.from(document.querySelectorAll('#top-filter-bar input[type="text"]'))

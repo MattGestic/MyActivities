@@ -1231,6 +1231,25 @@ select.ds-select{cursor:pointer}
    container query, which would make the bar the containing block for its
    fixed popovers. 1235 = the old 1279 breakpoint less the workspace rail. */
 #top-filter-bar.fb-narrow .fb-box.find,#top-filter-bar.fb-narrow .fb-box.when{flex:1 1 100%}
+/* P75 (Matt 2026-10-02): on a wide desktop the three boxes share ONE row:
+   Find, Date range, then Status / Total float / Annotations. Set by
+   syncFbNarrow() as .fb-wide from the same layout state as .fb-narrow (bar
+   width >= FB_WIDE_MIN), never at phone width. .fb-top steps out of the way
+   (display:contents) so the status box, its DOM sibling, joins the row
+   without a DOM move. The status box's single line (about 1240px of chips)
+   cannot sit beside the other two at 1920, so here it stacks its three groups
+   as label-and-chips rows (Status, Total float, Annotations), the same fixed
+   label column as Find and Date range, each group intact and unwrapped. */
+#top-filter-bar.fb-wide:not(.fb-phone){flex-direction:row;flex-wrap:wrap;column-gap:var(--ctl-gap)}
+#top-filter-bar.fb-wide:not(.fb-phone) .fb-top{display:contents}
+#top-filter-bar.fb-wide:not(.fb-phone) .fb-box.find,#top-filter-bar.fb-wide:not(.fb-phone) .fb-box.when{flex:1 1 0}
+#top-filter-bar.fb-wide:not(.fb-phone) .fb-box.crit{flex:0 0 auto;display:grid;grid-template-columns:auto auto auto;gap:var(--ctl-gap) var(--field-label-gap);align-content:center;align-items:center}
+#top-filter-bar.fb-wide:not(.fb-phone) .fb-box.crit .fb-dd{display:contents}
+#top-filter-bar.fb-wide:not(.fb-phone) .fb-box.crit .fb-dd>label{grid-column:1;justify-self:end}
+#top-filter-bar.fb-wide:not(.fb-phone) .fb-box.crit .fb-dd-panel{grid-column:2;justify-self:start}
+#top-filter-bar.fb-wide:not(.fb-phone) .fb-box.crit .fb-sep{display:none}
+#top-filter-bar.fb-wide:not(.fb-phone) .fb-box.crit .crit-clear{grid-column:3;grid-row:1;margin-left:0;align-self:start}
+#top-filter-bar.fb-wide:not(.fb-phone) .fb-foot{flex:1 1 100%}
 @media (max-width:767px){
   /* Phone: labels above full-width fields, per the design standard's field
      row pattern (>=768 inline with a fixed label column; <768 stacked). */
@@ -1571,9 +1590,11 @@ body.print-mode .pm-banner{display:block}
 .bl-shadow .tsw-slider:before{height:12px;width:12px;left:2px;top:2px}
 .bl-shadow .toggle-switch input:checked+.tsw-slider:before{transform:translateX(16px)}
 .bl-shadow.is-disabled{opacity:.5;cursor:not-allowed}
-/* Pinned to the right end of the project details row, which is where the
-   request puts them and where the header's own icons already are. */
-.rpt-hd-actions{margin-left:auto;display:inline-flex;align-items:center;gap:6px;flex:0 0 auto}
+/* P75 (Matt 2026-10-02): anchored LEFT, straight after the View toggle and
+   Baseline shadow group (first on the row while that group is hidden), at
+   every width. They used to be pinned to the row's right end (margin-left:
+   auto); the icon group stays top right in the icon bar. */
+.rpt-hd-actions{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto}
 .rpt-hd-btn{font-size:var(--text-sm);font-weight:600;white-space:nowrap;cursor:pointer;height:var(--ctl-h);display:inline-flex;align-items:center;
   color:var(--color-text-on-header);background:none;
   border:1px solid var(--color-text-on-header-muted);border-radius:10px;
@@ -2590,7 +2611,10 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
   color:var(--color-text-primary);border-top:1px solid var(--color-line-default)}
 .collect-bar[hidden]{display:none}
 .collect-add{flex:0 0 auto}
-.collect-add[aria-disabled="true"]{opacity:.55;cursor:default}
+/* P75: Add to list, Copy, a divider, the chips, then clear-all at the far
+   right. */
+.collect-div{flex:0 0 auto;width:1px;align-self:stretch;background:var(--color-line-default)}
+.collect-clear{flex:0 0 auto}
 .collect-chips{flex:1 1 auto;min-width:0;display:flex;flex-wrap:nowrap;gap:var(--space-2);overflow-x:auto;overflow-y:hidden;scrollbar-width:thin}
 .collect-chips .ms-dep-chip{flex:0 0 auto;padding-right:var(--space-1)}
 .collect-x{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;padding:var(--space-0);
@@ -2599,6 +2623,20 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
 .collect-copy{flex:0 0 auto}
 .collect-copy.is-copied{color:var(--color-ok-text)}
 @media print{ .collect-bar{display:none!important} }
+/* P75: the app toast. One line of confirmation over the board's foot, with
+   an optional action (Undo). Non-blocking: it takes no focus and ignores the
+   pointer while faded. A body child, so it is outside the card and its
+   click-away rule (its clicks stop at it). showToast() is its one writer. */
+.app-toast{position:fixed;left:50%;bottom:var(--group-gap);transform:translateX(-50%);z-index:2147483000;box-sizing:border-box;
+  max-width:calc(100vw - 2 * var(--group-gap));display:flex;align-items:center;gap:var(--space-5);
+  padding:var(--space-4) var(--space-5);border-radius:var(--radius-overlay);box-shadow:var(--shadow-2);
+  background:var(--color-tooltip-bg);color:var(--color-text-on-header);font-size:var(--text-md);line-height:16px;
+  opacity:0;pointer-events:none;transition:opacity .2s ease}
+.app-toast.is-shown{opacity:1;pointer-events:auto}
+.app-toast-act{flex:0 0 auto;border:0;background:none;padding:0;font:inherit;font-weight:600;cursor:pointer;
+  color:var(--color-text-on-header-accent);text-decoration:underline}
+.app-toast-act[hidden]{display:none}
+@media print{ .app-toast{display:none!important} }
 .ms-back[hidden]{display:none}
 /* A second tap on a marker is a double tap, not a zoom. */
 .m-wrap{touch-action:manipulation}
@@ -3796,10 +3834,9 @@ button.sg-sym:hover{transform:scale(1.2)}
              both that disabled state and the tooltip. TD-148. -->
         <label class="bl-shadow" id="bl-shadow-wrap"><span>Baseline shadow</span><span class="toggle-switch"><input type="checkbox" id="btn-baseline-ms" onchange="toggleBaselineMilestones(this)"><span class="tsw-slider"></span></span></label>
       </div>
-      <!-- A sibling of the detail groups, not a child of the View group: its
-           margin-left:auto has to measure against the whole details row, and
-           inside .rpt-sub-view it would only have pushed against the Baseline
-           shadow switch. Top right of the project details row, as asked.
+      <!-- A sibling of the View group, not a child of it, so it stays on the
+           row while that group is hidden. P75 (Matt 2026-10-02): anchored left,
+           right after the View group, no longer pushed to the right end.
            P67 (Matt 2026-10-01): the filter row's show/hide toggle sits
            immediately left of + Milestone at every width and is always shown,
            pressed while the row is open. It replaced the expand-only icon and
@@ -4065,6 +4102,10 @@ button.sg-sym:hover{transform:scale(1.2)}
  </div>
 </div>
 
+
+<!-- P75: the app toast (showToast()). Polite live region; its clicks stop
+     here so an Undo never counts as a click away from an open card. -->
+<div id="app-toast" class="app-toast" role="status" aria-live="polite" onclick="event.stopPropagation()"><span class="app-toast-msg" id="app-toast-msg"></span><button type="button" class="app-toast-act" id="app-toast-act" hidden>Undo</button></div>
 
 <div id="dep-tooltip" class="dep-tooltip" hidden></div>
 
@@ -4336,7 +4377,9 @@ button.sg-sym:hover{transform:scale(1.2)}
      2026-10-01). Double-click a milestone to add its ID. One line that
      scrolls sideways; hidden while empty. Display state, never exported.
      Clicks stop here so a strip action never closes an open card.
-  --><div class="collect-bar" id="collect-bar" hidden onclick="event.stopPropagation()"><button type="button" class="ds-btn collect-add" id="collect-add" aria-disabled="true" title="Add these to a list. Lists are not in the dashboard yet.">Add to list</button><div class="collect-chips" id="collect-chips" role="list" aria-label="Collected milestones"></div><button type="button" class="ds-ico collect-copy" id="collect-copy" onclick="copyMsCollection(event)" aria-label="Copy the IDs as a comma-separated list" title="Copy the IDs as a comma-separated list"><svg class="ms-head-ico" viewBox="0 0 14 14" aria-hidden="true"><rect x="3" y="2.5" width="8" height="10" rx="1"/><path d="M5.5 2.5V1.5h3v1M5.5 6h3M5.5 8.5h3"/></svg></button></div></th>
+     P75 (Matt 2026-10-02): Add to list, Copy, a divider, the chips, and a
+     clear-all cross at the far right (its toast offers Undo).
+  --><div class="collect-bar" id="collect-bar" hidden onclick="event.stopPropagation()"><button type="button" class="ds-btn collect-add" id="collect-add" onclick="addMsCollectionToList(event)" title="Add these IDs to a list">Add to list</button><button type="button" class="ds-ico collect-copy" id="collect-copy" onclick="copyMsCollection(event)" aria-label="Copy the IDs as a comma-separated list" title="Copy the IDs as a comma-separated list"><svg class="ms-head-ico" viewBox="0 0 14 14" aria-hidden="true"><rect x="3" y="2.5" width="8" height="10" rx="1"/><path d="M5.5 2.5V1.5h3v1M5.5 6h3M5.5 8.5h3"/></svg></button><span class="collect-div" id="collect-div" aria-hidden="true"></span><div class="collect-chips" id="collect-chips" role="list" aria-label="Collected milestones"></div><button type="button" class="ds-ico collect-clear" id="collect-clear" onclick="clearMsCollection(event)" aria-label="Clear all collected IDs" title="Clear all collected IDs">&#10005;</button></div></th>
 </tr>
 <tr class="hdr-phase" id="phase-hdr">
   <th class="c-name sticky" style="background:var(--color-bg-header);text-align:left;padding:0"></th>
@@ -9538,7 +9581,7 @@ function renderRows(){
           MS_LAST_TAP={key:null,at:0};
           // The first click closed this card if it was already open on it.
           if(msDialogFor!==_k||document.getElementById('ms-dialog').hidden) openMsDialog(m,actId,wrap,hd,task);
-          addToMsCollection(actId||_k);
+          collectMsFromBoard(actId||_k);
           return;
         }
         MS_LAST_TAP=MS_SYNTH_CLICK?{key:null,at:0}:{key:_k,at:_now};
@@ -10851,7 +10894,15 @@ function syncFbNarrow(){
     if(document.body.classList.contains('dv-open')) w-=px('--dv-w',404);
   }
   bar.classList.toggle('fb-narrow',w<1235);
+  // P75: the one-row filter layout (Find, Date range, Status) from FB_WIDE_MIN.
+  bar.classList.toggle('fb-wide',w>=FB_WIDE_MIN&&!fbIsPhone());
 }
+// The bar width (viewport less the rail and any docked panel) from which the
+// three filter boxes share one row with nothing wrapping inside them AND the
+// Weeks field keeping its own 220px minimum: 1636, a 1680px screen with the
+// rail shown (measured, P75; docs/p75-notes-strip-header.md). Below it the
+// two-row layout stays.
+var FB_WIDE_MIN=1636;
 window.addEventListener('resize',syncFbNarrow);
 
 // ===== P59 (B-01): rail state, collapsed or shown =====
@@ -19032,6 +19083,62 @@ function addToMsCollection(id){
   return true;
 }
 function removeFromMsCollection(id){ setMsCollection(msCollectionIds().filter(function(x){ return x!==id; })); }
+// P75: a double click (or tap) on the board collects the ID and says so: a
+// toast, and a brief pulse on the new chip; a repeat says it is already there.
+function collectMsFromBoard(id){
+  const added=addToMsCollection(id);
+  if(!id) return added;
+  showToast(added?id+' added':'Already in the list');
+  if(added){
+    const chip=document.querySelector('#collect-chips .ms-dep-chip[data-id="'+CSS.escape(id)+'"]');
+    if(chip){ chip.classList.remove('is-landed'); void chip.offsetWidth; chip.classList.add('is-landed');
+      setTimeout(function(){ chip.classList.remove('is-landed'); },1300); }
+  }
+  return added;
+}
+// P75: the strip's clear-all cross. Empties the collection; the toast offers
+// Undo for about 4s, which puts the same IDs back in the same order.
+function clearMsCollection(e){
+  if(e) e.stopPropagation();
+  const was=msCollectionIds();
+  if(!was.length) return;
+  setMsCollection([]);
+  showToast(was.length===1?'1 ID cleared':was.length+' IDs cleared',{action:'Undo',ms:4000,run:function(){
+    setMsCollection(was); showToast('Collection restored');
+  }});
+}
+// P75: Add to list. The Lists section (D-06; the SRETCollections store and
+// the grid's lists feature in src/modules/) is not in the dashboard yet, so
+// the button is live and says where lists will come from. When Lists lands,
+// this is the one place to wire it: hand msCollectionIds() to that store.
+function addMsCollectionToList(e){
+  if(e) e.stopPropagation();
+  showToast('Lists come with the Lists section. Use Copy to take the IDs for now.');
+}
+// P75: the app toast. One message at a time; a new one replaces the last.
+// Non-blocking (never takes focus), auto-dismissing (about 1.6s, or opts.ms),
+// announced politely. opts.action / opts.run add one action button (Undo).
+let TOAST_TIMER=null;
+function showToast(text,opts){
+  const el=document.getElementById('app-toast'), msg=document.getElementById('app-toast-msg'), act=document.getElementById('app-toast-act');
+  if(!el||!msg) return;
+  opts=opts||{};
+  if(TOAST_TIMER) clearTimeout(TOAST_TIMER);
+  msg.textContent=String(text||'');
+  if(act){
+    act.hidden=!opts.action;
+    act.textContent=opts.action||'Undo';
+    act.onclick=opts.action?function(ev){ ev.stopPropagation(); hideToast(); if(opts.run) opts.run(); }:null;
+  }
+  el.classList.add('is-shown');
+  TOAST_TIMER=setTimeout(hideToast,opts.ms||1600);
+}
+function hideToast(){
+  const el=document.getElementById('app-toast'), act=document.getElementById('app-toast-act');
+  if(TOAST_TIMER){ clearTimeout(TOAST_TIMER); TOAST_TIMER=null; }
+  if(el) el.classList.remove('is-shown');
+  if(act){ act.hidden=true; act.onclick=null; }
+}
 function renderMsCollection(focusId){
   const row=document.getElementById('collect-bar'), host=document.getElementById('collect-chips');
   if(!row||!host) return;
