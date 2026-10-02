@@ -808,6 +808,9 @@ input[type=range]{width:110px;cursor:pointer;background-color:transparent}
 .sd-row:first-child{padding-top:0}
 .sd-row:last-child{padding-bottom:0}
 .sd-row+.sd-row{border-top:1px solid var(--color-line-default)}
+/* P75: step 4's range filter is wrapped (#range-wrap-section, shown once a
+   file loads), so it is not an .sd-row sibling of the dates above it. */
+#range-wrap-section>.sd-row{border-top:1px solid var(--color-line-default);padding-top:var(--sd-row-y)}
 .sd-row-label{font-size:var(--text-sm);font-weight:500;color:var(--color-text-primary);line-height:1.4}
 .sd-row-help{font-size:var(--text-xs);font-style:normal;color:var(--color-text-note);line-height:1.5;margin-top:var(--space-1)}
 .sd-row-ctrl{display:flex;align-items:center;gap:var(--sd-inline);flex-wrap:wrap;min-width:0}
@@ -1164,11 +1167,11 @@ select.ds-select{cursor:pointer}
 #top-filter-bar .wr-field .wr-txt{flex:1 1 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #top-filter-bar .wr-field.empty .wr-txt{color:var(--color-text-muted)}
 #top-filter-bar .wr-field .wr-caret{color:var(--color-text-muted);font-size:10px;flex:0 0 auto}
-#top-filter-bar .wr-field .wr-val{display:inline-flex;align-items:center;gap:var(--space-3);flex:1 1 auto;min-width:0;overflow:hidden;white-space:nowrap}
-#top-filter-bar .wr-field .wr-tag{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--color-text-muted)}
-#top-filter-bar .wr-field .wr-arrow{color:var(--color-text-muted)}
-#top-filter-bar .wr-field .wr-div{width:1px;align-self:stretch;margin:var(--space-1) var(--space-1);background:var(--color-btn-secondary-outline)}
-#top-filter-bar .wr-field .wr-count{flex:0 0 auto;font-size:11px;font-weight:600;color:var(--color-accent-ink);background:var(--color-accent-tint-bg);border-radius:999px;padding:var(--space-1) var(--space-4)}
+#top-filter-bar .wr-field .wr-val,.wr-head .wr-val{display:inline-flex;align-items:center;gap:var(--space-3);flex:1 1 auto;min-width:0;overflow:hidden;white-space:nowrap}
+#top-filter-bar .wr-field .wr-tag,.wr-head .wr-tag{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--color-text-muted)}
+#top-filter-bar .wr-field .wr-arrow,.wr-head .wr-arrow{color:var(--color-text-muted)}
+#top-filter-bar .wr-field .wr-div,.wr-head .wr-div{width:1px;align-self:stretch;margin:var(--space-1) var(--space-1);background:var(--color-btn-secondary-outline)}
+#top-filter-bar .wr-field .wr-count,.wr-head .wr-count{flex:0 0 auto;font-size:11px;font-weight:600;color:var(--color-accent-ink);background:var(--color-accent-tint-bg);border-radius:999px;padding:var(--space-1) var(--space-4)}
 #top-filter-bar .wr-field .wr-clr{border:0;background:transparent;color:var(--color-text-muted);width:20px;height:20px;border-radius:var(--radius-ctl);cursor:pointer;font-size:11px;flex:0 0 auto;position:relative}
 #top-filter-bar .wr-field .wr-clr:hover{background:var(--color-btn-icon-hover-bg)}
 
@@ -2185,6 +2188,8 @@ tr.hist-row td.c-wk.now-col{background:var(--color-col-filtered-alt-bg) !importa
 .import-summary{margin-top:10px;padding-top:8px;border-top:1px dashed var(--color-line-default)}
 .import-summary-row{margin-bottom:4px}
 .import-summary-row:last-child{margin-bottom:0}
+.import-summary-actions{display:flex;flex-wrap:wrap;gap:var(--ctl-gap);margin-top:var(--space-3)}
+.import-summary-actions .ds-btn.primary:disabled{opacity:.4;cursor:not-allowed}
 .import-pass{font-size:10.5px;font-weight:700}
 .import-pass.ok{color:var(--color-ok-text)}
 .import-pass.err{color:var(--color-crit-text)}
@@ -3601,20 +3606,6 @@ button.sg-sym:hover{transform:scale(1.2)}
         <div class="sd-step-body">
           <div class="sd-row">
             <div class="sd-row-main">
-              <div class="sd-row-label">Data date</div>
-              <div class="sd-row-help">The P6 export's own as-of date. Drives week placement and float health. Defaults to the previous Friday.</div>
-            </div>
-            <div class="sd-row-ctrl"><input type="date" id="cfg-datadate-main" onchange="setDataDateField(this.value)"></div>
-          </div>
-          <div class="sd-row">
-            <div class="sd-row-main">
-              <div class="sd-row-label">Report date, as printed or issued</div>
-              <div class="sd-row-help">Defaults to today. Drives the now column highlight in the grid.</div>
-            </div>
-            <div class="sd-row-ctrl"><input type="date" id="cfg-reportdate" onchange="setReportDate(this.value)"></div>
-          </div>
-          <div class="sd-row">
-            <div class="sd-row-main">
               <div class="sd-row-label">Schedule file</div>
               <div class="sd-row-help">Excel or CSV. Paste the export instead if the file will not open.</div>
             </div>
@@ -3651,30 +3642,9 @@ button.sg-sym:hover{transform:scale(1.2)}
         <div class="sd-step-body"><div id="map-wrap"></div></div>
       </div>
 
-      <div class="sd-step" id="range-wrap-section" style="display:none">
-        <div class="sd-step-hd">
-          <span class="sd-step-num">3</span>
-          <span class="sd-step-name">Date range</span>
-          <span class="sd-badge sd-badge--cond">Once a file loads</span>
-        </div>
-        <div class="sd-step-body">
-          <div class="sd-row">
-            <div class="sd-row-main">
-              <div class="sd-row-label">Board span</div>
-              <div class="sd-row-help" id="range-note">Left blank, the board spans the imported schedule's own earliest and latest dates. Set either field to hold it to a narrower window instead. Activities outside the range are listed under Diagnostics rather than dropped silently.</div>
-            </div>
-            <div class="sd-row-ctrl">
-              <input type="date" id="cfg-range-from" oninput="onBaseRangeEdit()">
-              <input type="date" id="cfg-range-to" oninput="onBaseRangeEdit()">
-              <button class="toggle-btn" id="btn-range-reset" onclick="resetBaseRange()" title="Clear both fields, so the board spans the whole schedule">Reset to full range</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <div class="sd-step" id="source-wrap-section" style="display:none">
         <div class="sd-step-hd">
-          <span class="sd-step-num">4</span>
+          <span class="sd-step-num">3</span>
           <span class="sd-step-name">Source</span>
           <span class="sd-badge sd-badge--cond">Once a file loads</span>
         </div>
@@ -3709,6 +3679,52 @@ button.sg-sym:hover{transform:scale(1.2)}
                   </span>
                 </span>
               </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- P75 (Matt 2026-10-02): step 4, after Source. The data date and the
+           report date moved here from step 1 (ids and handlers unchanged) and
+           sit above the range filter, which is the old step 3 "Date range",
+           renamed. The step itself is always shown, because the two dates are
+           editable with or without a file; the range filter inside it keeps
+           the id #range-wrap-section and still appears only once a file loads
+           (setRangeSectionVisible), which is also what syncImportSteps() reads
+           as "this step is reached". -->
+      <div class="sd-step" id="import-dates-section">
+        <div class="sd-step-hd">
+          <span class="sd-step-num">4</span>
+          <span class="sd-step-name">Import date range</span>
+          <span class="sd-badge sd-badge--opt">Optional</span>
+        </div>
+        <div class="sd-group-desc" id="import-dates-sub">Filter import date range</div>
+        <div class="sd-step-body">
+          <div class="sd-row">
+            <div class="sd-row-main">
+              <div class="sd-row-label">Data date</div>
+              <div class="sd-row-help">The P6 export's own as-of date. Drives week placement and float health. Defaults to the previous Friday.</div>
+            </div>
+            <div class="sd-row-ctrl"><input type="date" id="cfg-datadate-main" onchange="setDataDateField(this.value)"></div>
+          </div>
+          <div class="sd-row">
+            <div class="sd-row-main">
+              <div class="sd-row-label">Report date, as printed or issued</div>
+              <div class="sd-row-help">Defaults to today. Drives the now column highlight in the grid.</div>
+            </div>
+            <div class="sd-row-ctrl"><input type="date" id="cfg-reportdate" onchange="setReportDate(this.value)"></div>
+          </div>
+          <div id="range-wrap-section" style="display:none">
+            <div class="sd-row">
+              <div class="sd-row-main">
+                <div class="sd-row-label">Board span <span class="sd-badge sd-badge--cond">Once a file loads</span></div>
+                <div class="sd-row-help" id="range-note">Left blank, the board spans the imported schedule's own earliest and latest dates. Set either field to hold it to a narrower window instead. Activities outside the range are listed under Diagnostics rather than dropped silently.</div>
+              </div>
+              <div class="sd-row-ctrl">
+                <input type="date" id="cfg-range-from" oninput="onBaseRangeEdit()">
+                <input type="date" id="cfg-range-to" oninput="onBaseRangeEdit()">
+                <button class="toggle-btn" id="btn-range-reset" onclick="resetBaseRange()" title="Clear both fields, so the board spans the whole schedule">Reset to full range</button>
+              </div>
             </div>
           </div>
         </div>
@@ -7448,27 +7464,54 @@ function parseFloatLoose(v){
 // 1. PARSE  — file/text -> {headers, rows}
 // ============================================================
 const Parse={
+  // P75 (Matt 2026-10-02): RFC 4180 records, for tab and comma alike. The
+  // text used to be split into lines first and quotes handled per line (and
+  // not at all for tabs), so a quoted cell holding a line break broke its
+  // row in two. Excel quotes exactly such cells when it copies a range, and
+  // a P6 export's own header carries one ("\nActivity ID\n"), so a pasted
+  // export lost its Activity ID column. A quoted cell may now hold line
+  // breaks, the delimiter and doubled quotes (""); a quote only opens a
+  // quoted cell at the start of a cell, elsewhere it is literal (12" pipe).
+  // An unterminated quote falls back to the old line-by-line reading rather
+  // than swallowing the rest of the paste.
   delimited:function(text){
-    const lines=String(text).replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(l=>l.trim()!=='');
-    if(!lines.length) return {headers:[],rows:[]};
-    const tabs=(lines[0].match(/\t/g)||[]).length;
-    const commas=(lines[0].match(/,/g)||[]).length;
+    const src=String(text).replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+    // The delimiter is read off the first record, counting only outside quotes.
+    let tabs=0,commas=0;
+    for(let i=0,q=false,cellStart=true;i<src.length;i++){
+      const ch=src[i];
+      if(q){ if(ch==='"'){ if(src[i+1]==='"') i++; else q=false; } continue; }
+      if(ch==='"'&&cellStart){ q=true; cellStart=false; continue; }
+      if(ch==='\n'){ if(tabs||commas) break; cellStart=true; continue; }
+      if(ch==='\t'){ tabs++; cellStart=true; } else if(ch===','){ commas++; cellStart=true; } else cellStart=false;
+    }
     const delim=tabs>=commas?'\t':',';
-    const split=function(line){
-      if(delim==='\t') return line.split('\t');
-      const out=[];let cur='';let q=false;
-      for(let i=0;i<line.length;i++){
-        const ch=line[i];
-        if(ch==='"'){ if(q&&line[i+1]==='"'){cur+='"';i++;} else q=!q; }
-        else if(ch===','&&!q){out.push(cur);cur='';}
-        else cur+=ch;
+    function records(quoting){
+      const recs=[]; let row=[], cur='', q=false, cellStart=true;
+      for(let i=0;i<src.length;i++){
+        const ch=src[i];
+        if(q){
+          if(ch==='"'){ if(src[i+1]==='"'){ cur+='"'; i++; } else q=false; }
+          else cur+=ch;
+          continue;
+        }
+        if(quoting&&ch==='"'&&cellStart){ q=true; cellStart=false; continue; }
+        if(ch===delim){ row.push(cur); cur=''; cellStart=true; continue; }
+        if(ch==='\n'){ row.push(cur); recs.push(row); row=[]; cur=''; cellStart=true; continue; }
+        cur+=ch; cellStart=false;
       }
-      out.push(cur);return out;
-    };
+      if(q) return null;
+      if(cur!==''||row.length){ row.push(cur); recs.push(row); }
+      return recs;
+    }
+    let recs=records(true);
+    if(!recs) recs=records(false).map(function(r){ return r.map(function(x){ return x.replace(/^"|"$/g,''); }); });
+    recs=recs.filter(function(r){ return r.some(function(x){ return x.trim()!==''; }); });
+    if(!recs.length) return {headers:[],rows:[]};
     // find header row = first row with >=3 non-empty cells matching any alias
     let hdrIdx=0,bestHits=0;
-    for(let i=0;i<Math.min(lines.length,15);i++){
-      const cells=split(lines[i]).map(normKey);
+    for(let i=0;i<Math.min(recs.length,15);i++){
+      const cells=recs[i].map(normKey);
       let hits=0;
       for(const k in INGEST_CONFIG.headerAliases){
         if(INGEST_CONFIG.headerAliases[k].some(a=>cells.indexOf(normKey(a))>=0)) hits++;
@@ -7476,11 +7519,13 @@ const Parse={
       if(hits>bestHits){bestHits=hits;hdrIdx=i;}
       if(hits>=3){hdrIdx=i;bestHits=hits;break;}
     }
-    const headers=split(lines[hdrIdx]).map(h=>h.replace(/^"|"$/g,'').trim().replace(/\s+/g,' '));
+    // Header cells are trimmed and their inner whitespace (line breaks
+    // included) collapsed, so "\nActivity ID\n" reads as Activity ID.
+    const headers=recs[hdrIdx].map(h=>String(h).trim().replace(/\s+/g,' '));
     const rows=[];
     const rawRows=[];
-    for(let i=hdrIdx+1;i<lines.length;i++){
-      const raw=split(lines[i]).map(x=>x.replace(/^"|"$/g,''));
+    for(let i=hdrIdx+1;i<recs.length;i++){
+      const raw=recs[i];
       const c=raw.map(x=>x.trim());
       if(c.some(x=>x!=='')){ rows.push(c); rawRows.push(raw); }
     }
@@ -7519,7 +7564,9 @@ const Parse={
     return {headers:headers,rows:rows,sheet:best.name,headerScore:bestHits};
   },
   autoMap:function(headers){
-    const nh=headers.map(normKey);
+    // Trimmed (and inner whitespace collapsed) before matching, so a header
+    // that kept a line break or padding from its source still auto-maps.
+    const nh=headers.map(h=>normKey(String(h==null?'':h).trim().replace(/\s+/g,' ')));
     const map={};
     for(const field in INGEST_CONFIG.headerAliases){
       map[field]=-1;
@@ -10455,14 +10502,19 @@ function syncDiagTab(){
 // correct whenever it is called and cannot drift out of step with the sections
 // the ingest pipeline shows and hides.
 function syncImportSteps(){
+  // P75: the order is Import, Map columns, Source, Import date range. Step 4
+  // is always on screen (its data date and report date work without a file),
+  // so it counts as reached when its range filter is, i.e. once a file loads.
   const steps=[document.getElementById('ingest-bar'),
                document.getElementById('map-wrap-section'),
-               document.getElementById('range-wrap-section'),
-               document.getElementById('source-wrap-section')];
+               document.getElementById('source-wrap-section'),
+               document.getElementById('import-dates-section')];
+  const reachedBy=[null,null,null,document.getElementById('range-wrap-section')];
   let current=-1;
   steps.forEach(function(el,i){
     if(!el) return;
-    const shown=el.style.display!=='none';
+    const probe=reachedBy[i]||el;
+    const shown=el.style.display!=='none'&&probe.style.display!=='none';
     if(shown) current=i;
   });
   steps.forEach(function(el,i){
@@ -12491,7 +12543,7 @@ function syncWeekRangeFieldUI(){
     label='Weeks from '+fmt(loD)+' onward, open end';
   } else {
     const n=range.hi-range.lo+1;
-    html='<span class="wr-val"><span class="wr-tag">W/E</span><b>'+fmt(loD)+'</b><span class="wr-arrow" aria-hidden="true">&#8594;</span><b>'+fmt(hiD)+'</b></span><span class="wr-div" aria-hidden="true"></span><span class="wr-count">'+n+' wk'+(n===1?'':'s')+'</span>';
+    html='<span class="wr-val"><span class="wr-tag">W/E</span> <b>'+fmt(loD)+'</b> <span class="wr-arrow" aria-hidden="true">&#8594;</span> <b>'+fmt(hiD)+'</b></span><span class="wr-div" aria-hidden="true"></span><span class="wr-count">'+n+' wk'+(n===1?'':'s')+'</span>';
     label='Weeks ending '+fmt(loD)+' to '+fmt(hiD)+', '+n+' week'+(n===1?'':'s');
   }
   html+='<button type="button" class="wr-clr" onclick="event.stopPropagation();clearWeekRange()" title="Clear" aria-label="Clear the week range">&#10005;</button>';
@@ -12620,7 +12672,9 @@ function closeWeekRangePopover(){
 }
 function weekRangePopoverKeydown(e){
   if(e.key==='Escape'){ closeWeekRangePopover(); const f=document.getElementById('wr-field'); if(f) f.focus(); }
-  else if(e.key==='Enter'){
+  // P75: Enter on a week cell picks that week (its own handler) and Enter on
+  // a button or field acts on that control; only elsewhere does it Apply.
+  else if(e.key==='Enter'&&!(e.target&&e.target.closest&&e.target.closest('#wr-pop-el .wr-wk,#wr-pop-el button,#wr-pop-el input'))){
     const applyBtn=document.getElementById('wr-apply-btn');
     if(applyBtn&&!applyBtn.disabled) applyBtn.click();
   }
@@ -12678,14 +12732,37 @@ function openWeekRangePopover(){
   field.setAttribute('aria-expanded','true');
   document.addEventListener('keydown',weekRangePopoverKeydown,true);
 }
+// P75 (Matt 2026-10-02, "the picker does not let you pick the end date").
+// Root cause: every hover REBUILT the popover (pop.innerHTML) and so replaced
+// the week cell under the pointer. Chromium then fires mouseenter on the new
+// cell, which re-rendered again, so once a start week was picked the grid was
+// rebuilt continuously while the pointer rested on any week. A click whose
+// mousedown and mouseup land on two different (replaced) cells is not
+// dispatched to either cell, so the second click never reached wrPickWeek.
+// The pointer still resting on the start cell also set hoverCol to the start
+// itself, which is why the head read "W/E 06 Sep 26 -> 06 Sep 26".
+// Fixed by splitting the popover into a structure built once per open (and on
+// a Range start/end rebuild) and a paint pass (wrPaintWeekRange) that only
+// toggles classes, the head text and Apply's state on the existing nodes.
+// Hover, pick and quick ranges call the paint pass, never the rebuild.
+// An earlier second week SWAPS (it becomes the start, the first pick the end).
+function wrFmtWeek(d){ return String(d.getDate()).padStart(2,'0')+' '+MONTH_NAMES[d.getMonth()]+' '+String(d.getFullYear()).slice(2); }
+// The span the popover currently shows, as {lo,hi} columns (both null when
+// nothing is picked). While a start is pending the span runs from the start
+// to the hovered week, either side.
+function wrPopSpan(st){
+  if(!st) return {lo:null,hi:null};
+  if(st.startCol!=null){
+    const h=(st.hoverCol!=null)?st.hoverCol:st.startCol;
+    return {lo:Math.min(st.startCol,h),hi:Math.max(st.startCol,h)};
+  }
+  if(st.lo==null) return {lo:null,hi:null};
+  return {lo:st.lo,hi:(st.hi==null?st.lo:st.hi)};
+}
 function renderWeekRangePopover(){
   const pop=document.getElementById('wr-pop-el');
   if(!pop||!WR_POP_STATE) return;
   const bounds=programmeBounds();
-  const st=WR_POP_STATE;
-  const loSel=st.lo, hiSel=(st.hoverCol!=null&&st.startCol!=null)?Math.max(st.startCol,st.hoverCol):st.hi;
-  const loActual=(st.startCol!=null)?Math.min(st.startCol,(st.hoverCol!=null?st.hoverCol:st.startCol)):loSel;
-  const hiActual=(st.startCol!=null)?Math.max(st.startCol,(st.hoverCol!=null?st.hoverCol:st.startCol)):hiSel;
   // Group columns into months, mirroring the board's own MONTHS bands so the
   // grid reads exactly like the header above it.
   const rows=[]; let cur=null;
@@ -12703,15 +12780,6 @@ function renderWeekRangePopover(){
       if(i==null){ g+='<span></span>'; continue; }
       const d=WE_DATES[i];
       let cls='wr-wk';
-      const picked=(st.startCol!=null)?(i===st.startCol||(st.hoverCol!=null&&i===st.hoverCol)):(loActual!=null&&(i===loActual||i===hiActual));
-      const inRange=loActual!=null&&i>loActual&&i<hiActual;
-      if(st.startCol!=null&&st.hoverCol!=null){
-        if(i===st.startCol||i===st.hoverCol) cls+=' end';
-        else if(inRange) cls+=' preview';
-      } else if(loActual!=null){
-        if(i===loActual||i===hiActual) cls+=' end';
-        else if(inRange) cls+=' in';
-      }
       if(i===NOW_COL) cls+=' dd';
       if(i===bounds.first) cls+=' ps';
       if(i===bounds.last) cls+=' pe';
@@ -12719,23 +12787,13 @@ function renderWeekRangePopover(){
       if(i===NOW_COL) lab+=', data date';
       if(i===bounds.first) lab+=', programme start';
       if(i===bounds.last) lab+=', programme end';
-      g+='<span class="'+cls+'" role="button" tabindex="0" data-col="'+i+'" aria-label="'+escapeHtml(lab)+'" title="'+escapeHtml(lab)+'" onclick="wrPickWeek('+i+')" onmouseenter="wrHoverWeek('+i+')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();wrPickWeek('+i+');}">'+String(d.getDate()).padStart(2,'0')+'</span>';
+      g+='<span class="'+cls+'" role="button" tabindex="0" aria-pressed="false" data-col="'+i+'" aria-label="'+escapeHtml(lab)+'" title="'+escapeHtml(lab)+'" onclick="wrPickWeek('+i+')" onmouseenter="wrHoverWeek('+i+')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();wrPickWeek('+i+');}">'+String(d.getDate()).padStart(2,'0')+'</span>';
     }
   });
   const quick=[['thisweek','This week'],['thismo','This month'],['next4','Next 4 weeks'],['next3mo','Next 3 months'],['rest','Rest of programme'],['fullprog','Full programme'],['fullrange','Full range']];
   const q=quick.map(function(k){
     return '<button type="button" onclick="wrPickQuick(\''+k[0]+'\')">'+k[1]+'</button>';
   }).join('');
-  let headHtml;
-  if(st.startCol!=null&&st.hoverCol==null){
-    headHtml='<span class="wr-val"><span class="wr-tag">Start</span><b>'+String(WE_DATES[st.startCol].getDate()).padStart(2,'0')+' '+MONTH_NAMES[WE_DATES[st.startCol].getMonth()]+' '+String(WE_DATES[st.startCol].getFullYear()).slice(2)+'</b></span><span class="wr-div" aria-hidden="true"></span><span class="wr-tag">Pick an end week</span>';
-  } else if(loActual!=null){
-    const n=hiActual-loActual+1;
-    headHtml='<span class="wr-val"><span class="wr-tag">W/E</span><b>'+String(WE_DATES[loActual].getDate()).padStart(2,'0')+' '+MONTH_NAMES[WE_DATES[loActual].getMonth()]+' '+String(WE_DATES[loActual].getFullYear()).slice(2)+'</b><span class="wr-arrow" aria-hidden="true">&#8594;</span><b>'+String(WE_DATES[hiActual].getDate()).padStart(2,'0')+' '+MONTH_NAMES[WE_DATES[hiActual].getMonth()]+' '+String(WE_DATES[hiActual].getFullYear()).slice(2)+'</b></span><span class="wr-div" aria-hidden="true"></span><span class="wr-count">'+n+' wk'+(n===1?'':'s')+'</span>';
-  } else {
-    headHtml='<span class="wr-tag">Click a week to start</span>';
-  }
-  const canApply=loActual!=null;
   // P53: Range start / Range end replace From only / Until only (item 3).
   // They edit the BOARD's own bounds (rebuildTimelineForBaseRange, above),
   // not the current pick, so they are prefilled from the live timeline on
@@ -12746,9 +12804,9 @@ function renderWeekRangePopover(){
   const rb=wrCurrentBoardBounds();
   const rbFrom=rb?isoDay(rb.from):'', rbTo=rb?isoDay(rb.to):'';
   pop.innerHTML='<div class="wr-quick">'+q+'</div><div class="wr-main">'+
-    '<div class="wr-head">'+headHtml+'</div>'+
+    '<div class="wr-head" aria-live="polite"></div>'+
     '<div class="wr-grid">'+g+'</div>'+
-    '<div class="wr-legend"><span><i style="background:var(--color-accent)"></i>Selected start / end</span><span><i style="box-shadow:inset 0 0 0 1.5px var(--color-accent-ink)"></i>Data date</span><span><i class="brk" aria-hidden="true"></i><i class="brk e" aria-hidden="true"></i>Programme start / end</span></div>'+
+    '<div class="wr-legend"><span><i style="background:var(--color-accent)"></i>Selected start / end</span><span><i style="background:var(--color-accent-tint-bg)"></i>In range</span><span><i style="box-shadow:inset 0 0 0 1.5px var(--color-accent-ink)"></i>Data date</span><span><i class="brk" aria-hidden="true"></i><i class="brk e" aria-hidden="true"></i>Programme start / end</span></div>'+
     '<div class="wr-foot">'+
       '<div class="wr-range-edit">'+
         '<span class="fb-inline"><label for="wr-range-start">Range start</label><input type="date" class="ds-field" id="wr-range-start" value="'+rbFrom+'" onchange="wrRangeBoundChange()" aria-label="Range start, the board\'s own lower bound"></span>'+
@@ -12756,14 +12814,47 @@ function renderWeekRangePopover(){
         '<button type="button" class="ds-btn" onclick="wrResetToSchedule()" title="Restore the span derived from the schedule\'s own earliest and latest dates">Reset to schedule</button>'+
       '</div>'+
       '<div class="wr-range-msg" id="wr-range-msg" role="alert"></div>'+
-      '<div class="wr-hint">Pick a start and end week, or Apply after one week to show from it onward with no end.</div>'+
-      '<span style="display:flex;gap:8px;flex-wrap:wrap"><button class="ds-btn" onclick="clearWeekRange();closeWeekRangePopover()">Clear</button><button class="ds-btn" onclick="closeWeekRangePopover()">Cancel</button><button class="ds-btn primary" id="wr-apply-btn" '+(!canApply?'disabled':'')+' onclick="wrApply()">Apply</button></span>'+
+      '<div class="wr-hint">Click a start week, then an end week. Apply after one week to show from it onward with no end.</div>'+
+      '<span style="display:flex;gap:8px;flex-wrap:wrap"><button class="ds-btn" onclick="clearWeekRange();closeWeekRangePopover()">Clear</button><button class="ds-btn" onclick="closeWeekRangePopover()">Cancel</button><button class="ds-btn primary" id="wr-apply-btn" onclick="wrApply()">Apply</button></span>'+
     '</div>';
+  wrPaintWeekRange();
+}
+// The paint pass: reflects WR_POP_STATE on the nodes renderWeekRangePopover()
+// built, without replacing any of them (see the P75 note above).
+function wrPaintWeekRange(){
+  const pop=document.getElementById('wr-pop-el');
+  if(!pop||!WR_POP_STATE) return;
+  const st=WR_POP_STATE;
+  const sp=wrPopSpan(st);
+  const previewing=st.startCol!=null&&st.hoverCol!=null&&st.hoverCol!==st.startCol;
+  pop.querySelectorAll('.wr-wk[data-col]').forEach(function(el){
+    const i=+el.getAttribute('data-col');
+    const isEnd=sp.lo!=null&&(i===sp.lo||i===sp.hi);
+    const inside=sp.lo!=null&&i>sp.lo&&i<sp.hi;
+    el.classList.toggle('end',isEnd);
+    el.classList.toggle('in',inside&&!previewing);
+    el.classList.toggle('preview',inside&&previewing);
+    el.classList.toggle('pending',st.startCol!=null&&i===st.startCol);
+    el.setAttribute('aria-pressed',String(isEnd));
+  });
+  let headHtml;
+  if(st.startCol!=null&&!previewing){
+    headHtml='<span class="wr-val"><span class="wr-tag">Start</span> <b>'+wrFmtWeek(WE_DATES[st.startCol])+'</b></span><span class="wr-div" aria-hidden="true"></span><span class="wr-tag">Pick an end week</span>';
+  } else if(sp.lo!=null){
+    const n=sp.hi-sp.lo+1;
+    headHtml='<span class="wr-val"><span class="wr-tag">W/E</span> <b>'+wrFmtWeek(WE_DATES[sp.lo])+'</b> <span class="wr-arrow" aria-hidden="true">&#8594;</span> <b>'+wrFmtWeek(WE_DATES[sp.hi])+'</b></span><span class="wr-div" aria-hidden="true"></span><span class="wr-count">'+n+' wk'+(n===1?'':'s')+'</span>';
+  } else {
+    headHtml='<span class="wr-tag">Click a week to start</span>';
+  }
+  const head=pop.querySelector('.wr-head');
+  if(head) head.innerHTML=headHtml;
+  const applyBtn=document.getElementById('wr-apply-btn');
+  if(applyBtn) applyBtn.disabled=(sp.lo==null);
 }
 function wrHoverWeek(col){
-  if(!WR_POP_STATE||WR_POP_STATE.startCol==null) return;
+  if(!WR_POP_STATE||WR_POP_STATE.startCol==null||WR_POP_STATE.hoverCol===col) return;
   WR_POP_STATE.hoverCol=col;
-  renderWeekRangePopover();
+  wrPaintWeekRange();
 }
 // P53 (TD-202): root cause of "can't reselect" — the SECOND click of a pair
 // used to be the only one that wrote WR_POP_STATE.lo/.hi. After a complete
@@ -12785,13 +12876,13 @@ function wrPickWeek(col){
     WR_POP_STATE.hi=Math.max(WR_POP_STATE.startCol,col);
     WR_POP_STATE.startCol=null; WR_POP_STATE.hoverCol=null;
   }
-  renderWeekRangePopover();
+  wrPaintWeekRange();
 }
 function wrPickQuick(key){
   const r=quickRangeBounds(key);
   if(!r||!WR_POP_STATE) return;
   WR_POP_STATE.lo=r.lo; WR_POP_STATE.hi=r.hi; WR_POP_STATE.startCol=null; WR_POP_STATE.hoverCol=null;
-  renderWeekRangePopover();
+  wrPaintWeekRange();
 }
 // One-sided ranges are reached the same way any complete range is: Apply
 // with only a start week picked (hi still null) commits it as "from that
@@ -14512,8 +14603,16 @@ function renderImportSummary(){
     '<div class="import-summary">'+
       '<div class="import-summary-row">'+statusHtml+'</div>'+
       '<div class="import-summary-row"><span class="sd-note" style="margin:0">Data date: <b>'+escapeHtml(ddLabel)+'</b> &middot; Activities: <b>'+LAST_PARSE.rows.length+'</b> rows'+(LAST_PARSE.sheet?' &middot; Sheet: <b>'+escapeHtml(LAST_PARSE.sheet)+'</b>':'')+'</span></div>'+
-      '<div class="import-summary-row" style="margin-top:6px"><button class="toggle-btn" onclick="cancelIngest()">Discard</button> '+
-        '<button class="toggle-btn active" '+(ok?'':'disabled')+' onclick="runIngest()">Import</button></div>'+
+      // P75 (Matt 2026-10-02, "the Import button shows as inactive"): these
+      // were .toggle-btn chips, the 10px on/off toggle style, so Import read
+      // as a toggle that happens to be on (the same look as "Parse pasted
+      // data" above it) rather than as the action that commits the import.
+      // They are the app's action buttons now: .ds-btn, and .ds-btn.primary
+      // for Import, as the empty state's Import schedule and the picker's
+      // Apply. Enabled state is written both ways (disabled and aria-disabled)
+      // so it never depends on an attribute being absent.
+      '<div class="import-summary-row import-summary-actions"><button type="button" class="ds-btn" id="import-discard-btn" onclick="cancelIngest()">Discard</button>'+
+        '<button type="button" class="ds-btn primary" id="import-run-btn" '+(ok?'':'disabled ')+'aria-disabled="'+(ok?'false':'true')+'" onclick="runIngest()">Import</button></div>'+
     '</div>';
 }
 document.addEventListener('change',function(e){
@@ -14875,6 +14974,10 @@ function runIngest(){
   const isw=document.getElementById('import-summary-wrap'); if(isw) isw.innerHTML='';
   clearImportFailure();
   LAST_PARSE=null;LAST_MAP=null;
+  // P75 (Matt 2026-10-02): the pasted export is spent once it is imported.
+  // Left in the box, a second import (or a second Parse) would quietly reuse
+  // it. The box stays open if it was, so the next paste goes straight in.
+  const pbox=document.getElementById('paste-box'); if(pbox) pbox.value='';
   renderCurrentImportSummary();
     // Re-ingest of the same already-active update (e.g. a data-date tweak): snapshot
     // and reapply the live DOM. First-time import: apply whatever was previously
