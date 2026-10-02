@@ -15,7 +15,8 @@ Drives the real card in headless Chrome by clicking markers on the board:
     nothing; three markers give three chips in order; a single click still
     opens and closes as before;
   - the strip sits on the main page directly above the date bands, is one line that scrolls
-    sideways, Add to list on the left (inert), copy on the right; the cross
+    sideways, Add to list on the left (live since P75), copy next to it
+    (P75 moved it from the right); the cross
     removes one ID; copy writes the string; a chip opens that card;
   - markers take touch-action: manipulation, so a double tap is not a zoom.
 
@@ -163,9 +164,12 @@ PROBE = r"""
        getComputedStyle(ph).top+' vs '+document.getElementById('info-hdr').getBoundingClientRect().height);
     const add=$('collect-add'), cp=$('collect-copy');
     const aR=add.getBoundingClientRect(), hR=host.getBoundingClientRect(), cR2=cp.getBoundingClientRect();
-    ck('row: Add to list on the left, copy on the right', aR.right<=hR.left+1&&cR2.left>=hR.right-1&&/Add to list/.test(add.textContent),
-       Math.round(aR.right)+' '+Math.round(hR.left)+'-'+Math.round(hR.right)+' '+Math.round(cR2.left));
-    ck('row: Add to list is present but inert for now', add.getAttribute('aria-disabled')==='true', '');
+    // P75 (Matt 2026-10-02): copy moved from the far right to straight after
+    // Add to list, both before the chips; the full order is p75's.
+    ck('row: Add to list on the left, copy next to it before the chips (P75)', aR.right<=cR2.left+1&&cR2.right<=hR.left+1&&/Add to list/.test(add.textContent),
+       Math.round(aR.right)+' '+Math.round(cR2.left)+'-'+Math.round(cR2.right)+' '+Math.round(hR.left));
+    // P75: Add to list is live (it was inert); what it does is p75's.
+    ck('row: Add to list is present and enabled (P75)', !add.hasAttribute('aria-disabled')&&!add.disabled, String(add.getAttribute('aria-disabled')));
     const h1=Math.round(rR.height);
     const many=all.filter(id=>[A,B,C].indexOf(id)<0).slice(0,12);
     setMsCollection([A,B,C].concat(many));

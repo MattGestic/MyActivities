@@ -14,10 +14,11 @@ directions, because a one-way check passes on code that can save and never
 stop showing the save control, or discard and never restore anything.
 
 TWO DIRECTIONS OUT, DELIBERATELY OPPOSITE. Close (left, marked with a cross)
-and Escape discard. Clicking away from the card saves and closes, on the
-reasoning that clicking off is leaving, not a decision to destroy work. Both
-are driven here as a real user gesture, not by calling the handler, because
-the click-away path only exists as a document listener.
+discards. Clicking away from the card saves and closes, on the reasoning that
+clicking off is leaving, not a decision to destroy work. P75 (Matt,
+2026-10-02): Escape moved to the saving side; the cross is the only discard.
+Both are driven here as a real user gesture, not by calling the handler,
+because the click-away path only exists as a document listener.
 
 GEOMETRY IS MEASURED, NOT READ OFF THE MARKUP. "Close on the left", "icon then
 ID", "save pair top right" and "three equal columns that do not move" are all
@@ -247,8 +248,9 @@ PROBE = r"""
     const sameL=geomA.every((g,i)=>Math.abs(g.l-geomB[i].l)<=1);
     ck('columns: FIXED positions, the same on both cards',
        sameL, JSON.stringify({withStart:geomA.map(g=>g.l),noStart:geomB.map(g=>g.l)}));
+    // P75: the dash is a plain hyphen (no em dashes in UI strings).
     ck('columns: a milestone with no start shows a dash, not a blank',
-       $('ms-start-date').value===''&&$('ms-start-date').placeholder==='—',
+       $('ms-start-date').value===''&&$('ms-start-date').placeholder==='-',
        JSON.stringify({v:$('ms-start-date').value,p:$('ms-start-date').placeholder}));
 
     // ============ 8. The icon opens a type picker that changes the type ====
@@ -325,6 +327,10 @@ PROBE = r"""
       const e=$(id);
       // P59 (D-03): a completed milestone's float is a read-only "-".
       if(id==='ms-float-val'&&/status-done/.test(dlg().className)) return !e;
+      // P75: Start and Finish are date selectors, readonly to typing and
+      // written through the picker they open (aria-haspopup="dialog").
+      if((id==='ms-start-date'||id==='ms-date')&&e&&e.readOnly&&!e.disabled&&
+         e.getAttribute('aria-haspopup')==='dialog') return false;
       return !e||e.readOnly||e.disabled||
              (e.tagName!=='INPUT'&&e.tagName!=='TEXTAREA');
     });
@@ -339,15 +345,18 @@ PROBE = r"""
     ck('editable: the milestone ID is NOT a control, since it keys every store',
        code.tagName==='SPAN'&&!dlg().querySelector('input#ms-code'),
        code.tagName);
-    // Escape discards, mirroring the close control it stands in for.
-    type('ms-title','Escape should throw this away');
+    // P75 (Matt, 2026-10-02): Escape no longer discards. It leaves the card
+    // the way a click away does, saving the edit; the cross is the only
+    // discard. (Before P75 this asserted Escape stored nothing; it read
+    // .title, a field the store does not have, so it could not fail.)
+    type('ms-title','Escape should keep this');
     await settle();
     document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
     await settle(); await settle();
     R.notes.escape={closed:dlg().hidden,
-                    storedTitle:(MS_FIELD_OVERRIDE[msKeyFor(withStart)]||{}).title||null};
-    ck('escape: discards like the close control, storing nothing',
-       dlg().hidden&&!(MS_FIELD_OVERRIDE[msKeyFor(withStart)]||{}).title,
+                    storedTitle:(MS_FIELD_OVERRIDE[msKeyFor(withStart)]||{}).actName||null};
+    ck('escape: saves and closes like a click away (P75), only the cross discards',
+       dlg().hidden&&(MS_FIELD_OVERRIDE[msKeyFor(withStart)]||{}).actName==='Escape should keep this',
        JSON.stringify(R.notes.escape));
 
     emit();

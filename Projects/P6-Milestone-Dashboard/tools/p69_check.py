@@ -5,8 +5,9 @@ p69_check: Start and Finish as date fields with a picker, and the A flag
 dropped the h-3 and h-4 rules since P42).
 
 Drives the real card in headless Chrome:
-  - each date label carries a calendar button; the picker opens on the
-    field's own date, inside the viewport, with Actual UNticked by default;
+  - the Start and Finish fields are the picker's triggers (P75 moved it off
+    the calendar buttons in the labels); the picker opens on the field's own
+    date, inside the viewport, with Actual UNticked by default;
   - a pick unticked writes a forecast date (no A, not green); ticked writes
     "<date> A" and the field turns green at once;
   - saving records the date and the flag as one entry (actual / startActual),
@@ -73,13 +74,15 @@ PROBE = r"""
 
     // ===== 1. Controls =====
     await open(A);
-    const bS=$('ms-dp-btn-start'), bF=$('ms-dp-btn-date');
-    ck('buttons: a calendar button in the Start and Finish labels', !!bS&&!!bF&&bS.closest('.ms-lbl')&&bF.closest('.ms-lbl')&&
+    // P75: the trigger is the field itself; the label buttons are gone.
+    const bS=$('ms-start-date'), bF=$('ms-date');
+    ck('trigger: the Start and Finish fields open the picker (P75: the label buttons are gone)', !!bS&&!!bF&&
+       bS.getAttribute('aria-haspopup')==='dialog'&&bF.getAttribute('aria-haspopup')==='dialog'&&!$('ms-dp-btn-start')&&!$('ms-dp-btn-date')&&
        bS.getBoundingClientRect().width>0&&bF.getBoundingClientRect().width>0, '');
     ck('picker: hidden at rest', dp().hidden, '');
     const finIso=parseMsDate($('ms-date').value);
     bF.click(); await settle();
-    ck('picker: opens from the finish button', !dp().hidden&&bF.getAttribute('aria-expanded')==='true', '');
+    ck('picker: opens from the finish field', !dp().hidden&&bF.getAttribute('aria-expanded')==='true', '');
     ck('picker: on the field\'s own month', $('ms-dp-month').textContent===MONTH_NAMES[+finIso.slice(5,7)-1].slice(0,3)+' '+finIso.slice(0,4), $('ms-dp-month').textContent);
     ck('picker: the field\'s date is selected', day(finIso)&&day(finIso).classList.contains('is-sel'), finIso);
     ck('picker: Actual is unticked by default', $('ms-dp-actual').checked===false&&/forecast/i.test($('ms-dp-mode').textContent), $('ms-dp-mode').textContent);
@@ -178,12 +181,15 @@ PROBE = r"""
     document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})); await settle();
     discardMsDialog(); await settle();
 
-    // ===== 7. Typing and P6 suffixes =====
+    // ===== 7. The value's A, and P6 suffixes =====
+    // P75: the field is readonly (no free typing); the value is written by
+    // the picker, which raises the same input event this writes.
     await open(A);
+    ck('no typing: the date fields are readonly (P75)', $('ms-date').readOnly&&$('ms-start-date').readOnly, '');
     $('ms-date').value=fmtTipDate(finIso)+' A'; $('ms-date').dispatchEvent(new Event('input',{bubbles:true}));
-    ck('typing: " A" typed turns the field green', $('ms-date').classList.contains('is-actualised'), '');
+    ck('value: " A" written turns the field green', $('ms-date').classList.contains('is-actualised'), '');
     $('ms-date').value=fmtTipDate(finIso); $('ms-date').dispatchEvent(new Event('input',{bubbles:true}));
-    ck('typing: removing it turns it back', !$('ms-date').classList.contains('is-actualised'), '');
+    ck('value: removing it turns it back', !$('ms-date').classList.contains('is-actualised'), '');
     discardMsDialog(); await settle();
     ck('suffix: "A *" parses and reads actual', parseMsDate('15-Jun-26 A *')==='2026-06-15'&&msDateIsActual('15-Jun-26 A *'), '');
     ck('suffix: "*" alone parses and reads forecast', parseMsDate('15-Jun-26 *')==='2026-06-15'&&!msDateIsActual('15-Jun-26 *'), '');
