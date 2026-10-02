@@ -57,74 +57,74 @@ line,property,value,px_literals,also_uses_space_token,source
 1749,padding,2px 8px,2px|8px,False,style-block
 1772,gap,9px,9px,False,style-block
 1775,padding,0 2px,2px,False,style-block
-1801,margin,6px 0 6px,6px|6px,False,style-block
-1803,gap,5px,5px,False,style-block
-1850,padding,16px,16px,False,style-block
-1854,padding,14px,14px,False,style-block
-1858,margin,8px 0 6px,8px|6px,False,style-block
-1859,padding,5px 7px,5px|7px,False,style-block
-1862,gap,1px,1px,False,style-block
-1863,gap,7px,7px,False,style-block
-1863,padding,5px 6px,5px|6px,False,style-block
-1870,gap,6px,6px,False,style-block
-1874,padding,3px 6px,3px|6px,False,style-block
-1883,padding,0 3px,3px,False,style-block
-1901,padding,3px,3px,False,style-block
-1903,gap,8px,8px,False,style-block
-1903,padding,9px 10px,9px|10px,False,style-block
-1908,padding,2px 3px,2px|3px,False,style-block
-1909,padding,2px 4px,2px|4px,False,style-block
-1911,padding,0 3px,3px,False,style-block
-1912,padding,2px 4px,2px|4px,False,style-block
-1914,padding,2px 4px,2px|4px,False,style-block
-1915,padding,1px 5px,1px|5px,False,style-block
-1919,padding,2px 4px,2px|4px,False,style-block
-1920,padding,2px 4px,2px|4px,False,style-block
-1921,padding,2px 4px,2px|4px,False,style-block
-1922,padding,2px 4px,2px|4px,False,style-block
-1930,padding,1px 0,1px,False,style-block
-2026,padding,2px 3px,2px|3px,False,style-block
-2027,gap,3px,3px,False,style-block
-2030,padding,2px 3px,2px|3px,False,style-block
-2038,padding,0 3px,3px,False,style-block
-2057,padding,4px 6px,4px|6px,False,style-block
-2061,padding,4px 0,4px,False,style-block
-2092,padding,4px 6px,4px|6px,False,style-block
-2118,padding,8px 10px,8px|10px,False,style-block
-2119,gap,12px,12px,False,style-block
-2121,gap,4px,4px,False,style-block
-2123,gap,8px,8px,False,style-block
-2141,gap,6px,6px,False,style-block
-2142,gap,2px,2px,False,style-block
-2143,padding,2px 4px,2px|4px,False,style-block
-2144,gap,8px,8px,False,style-block
-2151,padding,6px 10px,6px|10px,False,style-block
-2154,padding,3px 6px,3px|6px,False,style-block
-2155,padding,2px 6px,2px|6px,False,style-block
-2182,padding,5px 9px,5px|9px,False,style-block
-2183,gap,5px,5px,False,style-block
-2193,padding,6px 8px 8px,6px|8px|8px,False,style-block
-2196,padding,4px,4px,False,style-block
-2199,padding,6px,6px,False,style-block
-2200,gap,6px,6px,False,style-block
-2201,padding,3px 6px,3px|6px,False,style-block
-2217,padding,1.5px 2px,1.5px|2px,False,style-block
-2247,padding,14px 16px 13px,14px|16px|13px,False,style-block
-2251,gap,9px,9px,False,style-block
-2253,gap,6px,6px,False,style-block
-2255,gap,3px,3px,False,style-block
-2258,padding,4px 6px,4px|6px,False,style-block
-2260,gap,8px,8px,False,style-block
-2263,gap,6px,6px,False,style-block
-2268,padding,14px 16px,14px|16px,False,style-block
-4354,padding,4px 5px,4px|5px,False,inline-style
-4355,padding,4px 5px,4px|5px,False,inline-style
-4356,padding,4px 5px,4px|5px,False,inline-style
-4357,padding,4px 5px,4px|5px,False,inline-style
-4358,padding,4px 5px,4px|5px,False,inline-style
-4359,padding,4px 5px,4px|5px,False,inline-style
-4360,padding,4px 5px,4px|5px,False,inline-style
-4361,padding,4px 5px,4px|5px,False,inline-style
-4362,padding,4px 5px,4px|5px,False,inline-style
-4363,padding,4px 5px,4px|5px,False,inline-style
-12399,gap,8px,8px,False,inline-style
+1820,margin,6px 0 6px,6px|6px,False,style-block
+1822,gap,5px,5px,False,style-block
+1869,padding,16px,16px,False,style-block
+1873,padding,14px,14px,False,style-block
+1877,margin,8px 0 6px,8px|6px,False,style-block
+1878,padding,5px 7px,5px|7px,False,style-block
+1881,gap,1px,1px,False,style-block
+1882,gap,7px,7px,False,style-block
+1882,padding,5px 6px,5px|6px,False,style-block
+1889,gap,6px,6px,False,style-block
+1893,padding,3px 6px,3px|6px,False,style-block
+1902,padding,0 3px,3px,False,style-block
+1920,padding,3px,3px,False,style-block
+1922,gap,8px,8px,False,style-block
+1922,padding,9px 10px,9px|10px,False,style-block
+1927,padding,2px 3px,2px|3px,False,style-block
+1928,padding,2px 4px,2px|4px,False,style-block
+1930,padding,0 3px,3px,False,style-block
+1931,padding,2px 4px,2px|4px,False,style-block
+1933,padding,2px 4px,2px|4px,False,style-block
+1934,padding,1px 5px,1px|5px,False,style-block
+1938,padding,2px 4px,2px|4px,False,style-block
+1939,padding,2px 4px,2px|4px,False,style-block
+1940,padding,2px 4px,2px|4px,False,style-block
+1941,padding,2px 4px,2px|4px,False,style-block
+1949,padding,1px 0,1px,False,style-block
+2045,padding,2px 3px,2px|3px,False,style-block
+2046,gap,3px,3px,False,style-block
+2049,padding,2px 3px,2px|3px,False,style-block
+2057,padding,0 3px,3px,False,style-block
+2076,padding,4px 6px,4px|6px,False,style-block
+2080,padding,4px 0,4px,False,style-block
+2111,padding,4px 6px,4px|6px,False,style-block
+2137,padding,8px 10px,8px|10px,False,style-block
+2138,gap,12px,12px,False,style-block
+2140,gap,4px,4px,False,style-block
+2142,gap,8px,8px,False,style-block
+2160,gap,6px,6px,False,style-block
+2161,gap,2px,2px,False,style-block
+2162,padding,2px 4px,2px|4px,False,style-block
+2163,gap,8px,8px,False,style-block
+2170,padding,6px 10px,6px|10px,False,style-block
+2173,padding,3px 6px,3px|6px,False,style-block
+2174,padding,2px 6px,2px|6px,False,style-block
+2201,padding,5px 9px,5px|9px,False,style-block
+2202,gap,5px,5px,False,style-block
+2212,padding,6px 8px 8px,6px|8px|8px,False,style-block
+2215,padding,4px,4px,False,style-block
+2218,padding,6px,6px,False,style-block
+2219,gap,6px,6px,False,style-block
+2220,padding,3px 6px,3px|6px,False,style-block
+2236,padding,1.5px 2px,1.5px|2px,False,style-block
+2266,padding,14px 16px 13px,14px|16px|13px,False,style-block
+2270,gap,9px,9px,False,style-block
+2272,gap,6px,6px,False,style-block
+2274,gap,3px,3px,False,style-block
+2277,padding,4px 6px,4px|6px,False,style-block
+2279,gap,8px,8px,False,style-block
+2282,gap,6px,6px,False,style-block
+2287,padding,14px 16px,14px|16px,False,style-block
+4373,padding,4px 5px,4px|5px,False,inline-style
+4374,padding,4px 5px,4px|5px,False,inline-style
+4375,padding,4px 5px,4px|5px,False,inline-style
+4376,padding,4px 5px,4px|5px,False,inline-style
+4377,padding,4px 5px,4px|5px,False,inline-style
+4378,padding,4px 5px,4px|5px,False,inline-style
+4379,padding,4px 5px,4px|5px,False,inline-style
+4380,padding,4px 5px,4px|5px,False,inline-style
+4381,padding,4px 5px,4px|5px,False,inline-style
+4382,padding,4px 5px,4px|5px,False,inline-style
+12632,gap,8px,8px,False,inline-style
