@@ -694,7 +694,39 @@ def strict_audit(html_path: pathlib.Path) -> dict:
     for m in re.finditer(r"`([^`]*)`", js_masked, re.S):
         scan_markup_fragment(m.group(1), js_start + m.start(1), "template")
 
-    return {"violations": violations, "warnings": warnings}
+    # P77: any other hex / rgb() / hsl() literal anywhere in the app script.
+    # The rules above only see colours in style-shaped contexts, so a literal
+    # in a plain string (a generated document's stylesheet, say) passed
+    # unseen. The one place a literal is allowed is REPORT_PALETTE_CSS, the
+    # Share report page's own :root{} palette: the report is a separate file
+    # and cannot read the app's theme tokens, so its palette is counted here
+    # as a token block (each literal the value of an --rpt-* token) and
+    # reported, not as a violation. A literal anywhere else in the script, or
+    # one in that constant that is not an --rpt-* token value, is a violation.
+    pal = re.search(r"const\s+REPORT_PALETTE_CSS\s*=\s*(['\"])(.*?)\1\s*(?:\+\s*\1(.*?)\1\s*)*;", js_masked, re.S)
+    pal_span = (pal.start(0), pal.end(0)) if pal else (-1, -1)
+    already = {(v["line"], str(v["literal"]).lower()) for v in violations if v["zone"] == "js"}
+    report_palette = []
+    for regex in (STRICT_HEX_RE, RGB_RE, HSL_RE):
+        for m in regex.finditer(js_masked):
+            abs_pos = js_start + m.start()
+            line, snippet = line_snippet(abs_pos)
+            if pal_span[0] <= m.start() < pal_span[1]:
+                head = js_masked[pal_span[0]:m.start()]
+                tok = re.search(r"--rpt-[\w-]+\s*:\s*$", head)
+                if tok and ":root{" in head.replace(" ", ""):
+                    report_palette.append({"line": line, "literal": m.group(0),
+                                           "token": tok.group(0).split(":")[0].strip()})
+                    continue
+            if (line, m.group(0).lower()) in already:
+                continue
+            violations.append({
+                "zone": "js", "line": line, "literal": m.group(0), "snippet": snippet,
+                "kind": "literal-js-string",
+                "detail": "literal colour in the app script outside the report palette",
+            })
+
+    return {"violations": violations, "warnings": warnings, "report_palette": report_palette}
 
 
 def load_exceptions(path: pathlib.Path) -> list[dict]:
@@ -724,6 +756,8 @@ def run_strict(html_path: pathlib.Path, ceiling: int, exceptions_path: pathlib.P
     print(f"Strict tokenization audit: {html_path}")
     print(f"Violations: {len(kept)} (ceiling {ceiling}); "
           f"excepted: {len(excepted)}; warnings: {len(result['warnings'])}")
+    rp = result.get("report_palette", [])
+    print(f"Report palette tokens (REPORT_PALETTE_CSS, counted as token definitions): {len(rp)}")
     print()
     for v in kept:
         print(f"{v['zone']} {v['line']} {v['literal']} | {v['snippet']}")

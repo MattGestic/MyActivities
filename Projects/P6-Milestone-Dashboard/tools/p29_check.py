@@ -262,7 +262,8 @@ PROBE = r"""
     // P56/D-20b added the 'view' tabpanel (View controls moved inside the
     // drawer) alongside the four this partial shipped with (sources, import,
     // defaults, diag) plus help/about, for seven tabs and seven panels total.
-    ck('tabs: seven tabs and seven panels', tabs.length===7 && panels.length===7,
+    // P76 (TD-242) added Backups and Info: nine and nine.
+    ck('tabs: nine tabs and nine panels', tabs.length===9 && panels.length===9,
        tabs.length+' tabs / '+panels.length+' panels');
     const tabResults=[];
     ['sources','import','defaults'].forEach(function(t){

@@ -135,5 +135,21 @@ ok('P72: pred/succ form keys are ignored by formToEntry', r===null);
 r=run(Object.assign({},base,{pred:''}),{pred:'SNIP-102',title:'Renamed'},{floatReadOnly:true});
 ok('P72: pred beside a real change -> only the real change', r&&r.draft.changes.actName&&!('pred' in r.draft.changes)&&Object.keys(r.draft.changes).length===1, r);
 
+// P78: Discipline, Supervisor and Engineer: free text, trimmed, blank back to the schedule.
+const baseP=Object.assign({},base,{discipline:'Mining',supervisor:'',engineer:'P. Patel'});
+const ownP=f=>({discipline:'Mining',supervisor:null,engineer:'P. Patel'}[f]!==undefined?{discipline:'Mining',supervisor:null,engineer:'P. Patel'}[f]:own[f]);
+r=run(baseP,{supervisor:'J. Smith'},{own:ownP,current:ownP});
+ok('P78: supervisor set -> changes.supervisor {from null, to name}', r&&r.draft.changes.supervisor.from===null&&r.draft.changes.supervisor.to==='J. Smith'&&Object.keys(r.draft.changes).length===1, r);
+r=run(baseP,{discipline:'  Process  '},{own:ownP,current:ownP});
+ok('P78: discipline trimmed', r&&r.draft.changes.discipline.to==='Process'&&r.draft.changes.discipline.from==='Mining', r);
+r=run(Object.assign({},baseP,{engineer:'R. Chen'}),{engineer:''},{own:ownP,current:f=>f==='engineer'?'R. Chen':ownP(f)});
+ok('P78: engineer cleared over an override -> to null (back to the schedule)', r&&r.draft.changes.engineer.from==='R. Chen'&&r.draft.changes.engineer.to===null, r);
+r=run(Object.assign({},baseP,{engineer:'R. Chen'}),{engineer:'P. Patel'},{own:ownP,current:f=>f==='engineer'?'R. Chen':ownP(f)});
+ok('P78: a value equal to the schedule\'s -> to null', r&&r.draft.changes.engineer.to===null, r);
+ok('P78: cleared when the card already showed the schedule -> nothing', run(baseP,{engineer:''},{own:ownP,current:ownP})===null);
+ok('P78: a form without the fields (an older caller) -> untouched', run(base,{title:'Renamed'}).draft.changes.supervisor===undefined);
+r=run(baseP,{supervisor:'J. Smith',engineer:'R. Chen',discipline:'Geology'},{own:ownP,current:ownP});
+ok('P78: all three in one entry, in order', r&&Object.keys(r.draft.changes).join()==='discipline,supervisor,engineer', r&&Object.keys(r.draft.changes));
+
 console.log('\n'+(n-fails)+'/'+n+' passed');
 process.exit(fails?1:0);

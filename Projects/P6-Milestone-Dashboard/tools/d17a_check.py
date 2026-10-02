@@ -209,8 +209,10 @@ if(CAP_WB){
   assert('export has a sheet named User-defined', !!sheet);
   if(sheet){
     const header=sheet[0];
+    // P78: Discipline, Supervisor and Engineer follow, under importer names.
     const expectHeader=['Activity ID','Activity Name','Start','Finish','Total Float',
-      'Status','Predecessor Details','Successor Details','WBS','Budgeted Units','% Complete'];
+      'Status','Predecessor Details','Successor Details','WBS','Budgeted Units','% Complete',
+      'Discipline','Supervisor','Engineer'];
     assert('export header matches the importer\'s own column names exactly',
       JSON.stringify(header)===JSON.stringify(expectHeader), header);
     assert('export has exactly 3 data rows', sheet.length===4, sheet.length);

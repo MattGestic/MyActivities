@@ -3387,3 +3387,50 @@ TD-241. Four builds in parallel worktrees, merged by the orchestrator; per-build
 **Existing checks changed, same intent:** `p43` (Esc saves; start placeholder hyphen; date selectors count as editable), `p69` (field opens the picker; no typing), `p68` (Add to list enabled; copy beside it), `p32` (toggle on the left), `p75_drag_date_check` at integration (zero-duration start follows the finish in the same entry; source assertion follows `msWriteFinishMove`).
 
 **Full suite on the merged code:** `run_checks.py --all --jobs 3`: 65 selected, 65 passed (12.5 min).
+
+## TEST-79: P76 loss prevention controls, Info and About (v3.1.0-P76)
+
+TD-242. Design, storage key and platform limits: `docs/04-architecture.md`, P76.
+
+**New check:** `p76_loss_check` 165/165.
+
+Half A, `--dump-dom` through `chrome_fixture.py` (fixture seeded), at 1440x900 and 390x844:
+- computed `overscroll-behavior-y` is `contain` on html, body, `#scroll-wrap`, the Data & view scroller and `#ws-panel`;
+- a `BeforeUnloadEvent` is not cancelled on a clean board, is cancelled with `returnValue` set after an edit, and is clear again after the real `publishDashboard()` and after `exportModel()`; an open card with an edited title counts as unsaved with the pill off, and leaving commits it;
+- the saved copy's Backups list, status and clear row are empty and its banner is hidden;
+- Backups panel rows newest first with time, label, rev, counts, change and size; Restore, Download and Delete on screen; Restore and Clear all confirm inline with the counts; the banner's text, inside the viewport, Dismiss; the P72 heading still scrolls away and back at 390;
+- Info between Help and About, every rail tab on screen, Info and About headings in order, Matt's wording, no em dash, the version filled from `APP_VERSION`, the five "What you can use it for" items, the Save, Backups, import options and Help links land where they say, no sideways scroll;
+- with `window.indexedDB` throwing: the app boots, backups fall back to localStorage (rev 1, then rev 2, each holding its edit), warned once;
+- the empty app as it ships: no banner.
+
+Half B, real time, Node + Playwright, a `file://` page in a persistent profile:
+- IndexedDB opens; no dialog on a clean reload;
+- nothing inside the debounce, then a revision holding all 3 edits (remark, user milestone, note) with rev, savedAt, appVersion, label, summary and size; a `visibilitychange` to hidden writes one at once;
+- a dirty reload raises a `beforeunload` dialog; after Leave the banner offers the work, including the edit made just before the reload; Dismiss keeps the revision; at the next open the banner is back;
+- Restore brings the remark, the drawn user milestone and the note back, as unsaved, after a pinned Before restore revision; revs are numbered 1..N; the panel's Restore of rev 1 confirms with counts and restores it;
+- Download gives `milestone-dashboard_model_backup-r<N>_<stamp>.json`, which `validateModelPayload()` accepts with the revision's counts and which mounts into a fresh app (`#annot-file`, select all, apply) to the same entries, user milestones and notes;
+- a second identity (another project number) gets its own rev 1 and leaves the first untouched;
+- retention keeps 20 autosaves plus the newest of a day two days back, drops the other of that day and one 20 days old, and keeps every pinned one; the pure plan evicts the oldest unpinned and the oldest pinned over their caps, and over the size budget unpinned before pinned;
+- Delete removes one; Clear all confirms, then empties;
+- the empty app in a fresh profile has no banner; after work there that changes its identity (project number, a milestone) and a reload, it reopens empty and the banner still finds the work by the page it was made in; Restore brings it back.
+
+**Existing check changed, same intent:** `p29_check` `tabs: seven tabs and seven panels` (`tabs.length===7 && panels.length===7`) became `tabs: nine tabs and nine panels` (`===9`), for the Backups and Info tabs.
+
+**Suite:** `run_checks.py --jobs 3`: 65 selected, 64 passed, 1 failed. `grid_view_check` was 295/296 under three parallel jobs: its scroll p95 was 10.4 ms against an 8 ms bound, on the prototype grid (no app code). Standalone it passed 296/296 (p95 2.7 ms). The follow-up `run_checks.py --jobs 3` (11 selected, including it and `p76_loss_check`) passed 11/11.
+
+**Not tested here:** a real Android device (Chrome or Edge, a `content://` page). Headless Chromium does not perform the pull-to-refresh gesture, so the lock is asserted as the computed property that Chromium's gesture reads.
+
+## TEST-80: P77 Share Report and P78 Discipline, Supervisor and Engineer fields (v3.1.0-P78)
+
+TD-243, TD-244. Notes: `docs/p77-notes-share-report.md`, `docs/p78-notes-fields.md`.
+
+**New checks:** `p77_share_report_check` 109/109; `p78_fields_check` 196/196.
+
+- P77: the button's place and enabled state, the dialog (period, From remembered, Excel toggle, Share where `navigator.canShare` accepts files, Download), the report HTML (no scripts, inline CSS, fixed palette, every section in order, newest update first), and the Summary and Log workbook parsed back with SheetJS. `notes_export_test` 48/48 with the `pred:`/`succ:` key fix.
+- P78: import by paste (auto-map, values landing), the card people block measured at 1440 and 390, suggestions by mouse and keyboard, free text, entries, history, marks and clear-to-schedule, the grids, the user-defined export, publish and reopen in a fresh profile, model export and mount. Module tests: `notes_store_test` 139, `form_to_entry_test` 85/85, `notes_history_check` 74/74.
+
+**Existing assertions changed, same intent:** `p43_check` editable-field literal gains the three fields; `d17a_check` export header gains Discipline, Supervisor, Engineer; `p61_check` grid header gains the three columns and Health moves from index 8 to 11.
+
+**Bug fixed:** `applyFieldOverrides()` stored `undefined` on `_msBase` for a field the schedule did not carry, so after publish and reopen the override read back as the schedule value. It now stores `null`.
+
+**Suite (merged P76 + P77 + P78 build):** `run_checks.py --all --jobs 3`: 68 selected / 68 passed / 0 failed (wall 20.2 min). `p30_check` passed in 553.7 s against its 600 s limit, so it remains at risk of a timeout under load.
