@@ -35,7 +35,11 @@
   // P72: floatD is not one of them. Float is the schedule's result, never a
   // hand edit, so an old floatD change neither projects nor migrates (it
   // stays in its entry, for the history).
-  var MS_FIELDS=['actName','start','date','weight','type','marker','actual','startActual'];
+  // P78: discipline, supervisor and engineer join them. Each is a plain
+  // string; an imported value is the schedule's, a card or grid value is an
+  // override of it, and to:null goes back to the schedule value.
+  var MS_FIELDS=['actName','start','date','weight','type','marker','actual','startActual',
+    'discipline','supervisor','engineer'];
   var CHANGE_FIELDS=MS_FIELDS.concat(['health','progress','rowHealth','rowRemark']);
   var DEFAULT_WINDOW_MS=10*60*1000;
 

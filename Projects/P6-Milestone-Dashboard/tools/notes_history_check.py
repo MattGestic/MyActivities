@@ -67,6 +67,13 @@ t('view: full field order and labels', vn.changes.map(function(c){ return c.labe
 t('view: review is In review, who hidden when empty', vn.followUp === 'In review' && vn.who === '', vn.followUp);
 var vc = H.entryView({eid:'y', text:'old', clearText:true, changes:{}, status:'note', at:mk(2026,9,1,9,0)}, ctx);
 t('view: clearText shows Remark cleared', vc.changes.length === 1 && vc.changes[0].text === 'Remark cleared' && vc.changes[0].isComment, JSON.stringify(vc.changes));
+// P78: Discipline, Supervisor, Engineer: labelled, after the older fields, before the comment.
+var vp = H.entryView({eid:'p78', changes:{engineer:{from:'P. Patel', to:null}, supervisor:{from:null, to:'J. Smith'}, discipline:{from:'Mining', to:'Process'}, weight:{from:1, to:2}},
+  text:'who', status:'open', at:mk(2026,9,1,9,0), period:'P2'}, ctx);
+t('P78: labels Discipline, Supervisor, Engineer, after the older fields', vp.changes.map(function(c){ return c.label; }).join('|') === 'Weight|Discipline|Supervisor|Engineer|Comments', vp.changes.map(function(c){ return c.label; }));
+t('P78: Supervisor none -> J. Smith, and a clear reads schedule value', vp.changes[2].from === 'none' && vp.changes[2].to === 'J. Smith' && vp.changes[3].from === 'P. Patel' && vp.changes[3].to === 'schedule value' && vp.changes[1].from === 'Mining' && vp.changes[1].to === 'Process', JSON.stringify(vp.changes));
+var bp = document.createElement('div'); bp.innerHTML = H.renderEntries([{eid:'p78b', changes:{supervisor:{from:null, to:'J. Smith'}}, text:'', status:'open', at:mk(2026,9,1,9,0), period:'P2'}], ctx);
+t('P78: the DOM row reads "Supervisor none → J. Smith"', bp.querySelector('.nh-row').textContent.replace(/\s+/g, ' ').trim() === 'Supervisor none → J. Smith', bp.querySelector('.nh-row').textContent);
 var labels = {note:'Note', open:'Open', sent:'Sent', review:'In review', outstanding:'Outstanding', done:'Done', closed:'Closed'};
 t('view: status labels', Object.keys(labels).every(function(k){ return H.entryView({status:k}, ctx).followUp === labels[k]; }));
 

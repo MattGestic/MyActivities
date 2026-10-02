@@ -2493,6 +2493,24 @@ body.counts-on .m-lbl-stack>.m-title-label-row{padding-left:3px}
   display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-5);align-items:start}
 .ms-schedule .ms-field{display:flex;flex-direction:column;align-items:stretch;min-width:0}
 .ms-schedule .ms-lbl{height:var(--space-5);margin:0 0 var(--space-2);white-space:nowrap}
+/* P78: WBS/Area | Discipline over Supervisor | Engineer, under the title and
+   above the Start / Duration / Finish row. The P75 row's shape: cells of one
+   height (--ctl-h), left aligned, no border. A value reads as plain text; a
+   blank field shows its name as the placeholder, muted, in a subtle box. */
+.ms-people{margin:var(--space-4) var(--space-6) 0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:var(--space-2) var(--space-5);align-items:start}
+.ms-pf{display:flex;align-items:center;gap:var(--space-2);min-width:0;height:var(--ctl-h)}
+.ms-pf-text,.ms-dialog .ms-pf-input{flex:1 1 auto;display:block;min-width:0;width:100%;height:var(--ctl-h);box-sizing:border-box;margin:0;
+  padding:0 var(--space-2);font:450 var(--text-base)/var(--ctl-h) var(--font-sans);color:var(--color-text-primary);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ms-pf-text.is-empty{color:var(--color-text-muted)}
+.ms-dialog .ms-pf-input::placeholder{color:var(--color-text-muted);opacity:1}
+.ms-dialog .ms-pf-input:placeholder-shown{background:var(--color-bg-subtle)}
+.ms-dialog .ms-pf-input.ms-dirty-field{background:var(--color-accent-wash)}
+.ms-pf-suggest[hidden]{display:none}
+.ms-pf-suggest .id-suggest-item.is-hl{background:var(--color-btn-secondary-hover-bg)}
+.ms-pf-hint{padding:var(--space-2) var(--space-3);font-size:var(--text-sm);color:var(--color-text-muted);
+  border-bottom:1px solid var(--color-line-hairline)}
 .ms-date,.ms-dur-val{font:600 var(--text-lg)/1.2 var(--font-sans);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
 .ms-schedule .ms-date,.ms-schedule .ms-dur-val{display:block;width:100%;height:var(--ctl-h);margin:0;padding:0 var(--space-2);
   border:0;border-radius:var(--radius-ctl);line-height:var(--ctl-h);
@@ -4332,6 +4350,22 @@ button.sg-sym:hover{transform:scale(1.2)}
       </div>
     </div>
   </div>
+  <!-- P78 (Matt, 2026-10-02): who and what, under the title. A 2x2 grid:
+       WBS/Area | Discipline, Supervisor | Engineer. WBS/Area is the row's
+       band from the schedule, read only. The other three are fields: a
+       value reads as the plain name; a blank one shows the field name as its
+       placeholder in a muted box. Each suggests the names already used for
+       it on the board (#ms-pf-suggest) and takes free text. An edit is an
+       override saved with the card, like any other field. -->
+  <div class="ms-people" id="ms-people" role="group" aria-label="WBS/Area, discipline, supervisor and engineer">
+    <div class="ms-pf ms-pf-ro" id="ms-pf-wbs"><span class="ms-pf-text" id="ms-wbs" title="WBS/Area, from the schedule. Not editable."></span></div>
+    <div class="ms-pf" id="ms-pf-discipline"><input type="text" id="ms-discipline" class="ms-pf-input ms-edit" maxlength="80" autocomplete="off" spellcheck="false" placeholder="Discipline" role="combobox" aria-autocomplete="list" aria-controls="ms-pf-suggest" aria-expanded="false" aria-label="Discipline" title="Discipline. Type one, or pick one already used. Clear it to restore the schedule's own value." oninput="onMsPfInput('discipline')" onfocus="onMsPfInput('discipline',true)" onkeydown="onMsPfKey(event,'discipline')" onblur="closeMsPfSuggest()"><span class="ms-edited-mark" id="ms-mark-discipline" data-field="discipline" hidden></span></div>
+    <div class="ms-pf" id="ms-pf-supervisor"><input type="text" id="ms-supervisor" class="ms-pf-input ms-edit" maxlength="80" autocomplete="off" spellcheck="false" placeholder="Supervisor" role="combobox" aria-autocomplete="list" aria-controls="ms-pf-suggest" aria-expanded="false" aria-label="Supervisor" title="Supervisor. Type a name, or pick one already used. Clear it to restore the schedule's own value." oninput="onMsPfInput('supervisor')" onfocus="onMsPfInput('supervisor',true)" onkeydown="onMsPfKey(event,'supervisor')" onblur="closeMsPfSuggest()"><span class="ms-edited-mark" id="ms-mark-supervisor" data-field="supervisor" hidden></span></div>
+    <div class="ms-pf" id="ms-pf-engineer"><input type="text" id="ms-engineer" class="ms-pf-input ms-edit" maxlength="80" autocomplete="off" spellcheck="false" placeholder="Engineer" role="combobox" aria-autocomplete="list" aria-controls="ms-pf-suggest" aria-expanded="false" aria-label="Engineer" title="Engineer. Type a name, or pick one already used. Clear it to restore the schedule's own value." oninput="onMsPfInput('engineer')" onfocus="onMsPfInput('engineer',true)" onkeydown="onMsPfKey(event,'engineer')" onblur="closeMsPfSuggest()"><span class="ms-edited-mark" id="ms-mark-engineer" data-field="engineer" hidden></span></div>
+  </div>
+  <!-- P78: the suggestions for the three fields. Inside the card, so a pick
+       is a click in the card; fixed-positioned under its field. -->
+  <div class="id-suggest-dropdown ms-pf-suggest" id="ms-pf-suggest" role="listbox" aria-label="Names already used" hidden></div>
   <!-- Start, Duration and Finish: three equal tracks that never move. A
        milestone with no start shows a dash where a date would be. -->
   <div class="ms-schedule">
@@ -5935,7 +5969,11 @@ button.sg-sym:hover{transform:scale(1.2)}
   // P72: floatD is not one of them. Float is the schedule's result, never a
   // hand edit, so an old floatD change neither projects nor migrates (it
   // stays in its entry, for the history).
-  var MS_FIELDS=['actName','start','date','weight','type','marker','actual','startActual'];
+  // P78: discipline, supervisor and engineer join them. Each is a plain
+  // string; an imported value is the schedule's, a card or grid value is an
+  // override of it, and to:null goes back to the schedule value.
+  var MS_FIELDS=['actName','start','date','weight','type','marker','actual','startActual',
+    'discipline','supervisor','engineer'];
   var CHANGE_FIELDS=MS_FIELDS.concat(['health','progress','rowHealth','rowRemark']);
   var DEFAULT_WINDOW_MS=10*60*1000;
 
@@ -6508,9 +6546,11 @@ button.sg-sym:hover{transform:scale(1.2)}
   var FIELD = {title:'actName', start:'start', date:'date', weight:'weight',
                floatD:'floatD', type:'type', marker:'marker',
                progress:'progress', health:'health',
-               startActual:'startActual', dateActual:'actual'};
+               startActual:'startActual', dateActual:'actual',
+               // P78: free text, one name each; blank is back to the schedule.
+               discipline:'discipline', supervisor:'supervisor', engineer:'engineer'};
   var ORDER = ['title','start','date','weight','floatD','type','marker','progress','health',
-               'startActual','dateActual'];
+               'startActual','dateActual','discipline','supervisor','engineer'];
 
   function norm(v){ return (v===undefined||v===''||v!==v)?null:v; }
   function same(a,b){
@@ -6526,6 +6566,7 @@ button.sg-sym:hover{transform:scale(1.2)}
     var raw=now[f], s;
     switch(f){
       case 'title': case 'marker': case 'type':
+      case 'discipline': case 'supervisor': case 'engineer':
         s=(raw==null)?'':String(raw).trim();
         return {to:s===''?null:s};
       case 'start': case 'date':
@@ -6629,7 +6670,8 @@ button.sg-sym:hover{transform:scale(1.2)}
   var FIELDS = [['status','Status'],['health','Health'],['progress','Progress'],
     ['date','End date'],['start','Start date'],['actName','Name'],['weight','Weight'],
     ['floatD','Float'],['type','Type'],['marker','Mark'],
-    ['startActual','Start date is'],['actual','End date is']];
+    ['startActual','Start date is'],['actual','End date is'],
+    ['discipline','Discipline'],['supervisor','Supervisor'],['engineer','Engineer']];
   var STATUS_LABEL = {note:'Note', open:'Open', sent:'Sent', review:'In review',
     outstanding:'Outstanding', done:'Done', closed:'Closed'};
   var STATUS_ORDER = ['note','open','sent','review','outstanding','done','closed'];
@@ -7110,7 +7152,11 @@ function applyFieldOverrides(){
     const base={};
     MS_EDITABLE_FIELDS.forEach(function(f){
       if(!(f in ov)) return;
-      base[f]=m[f];
+      // P78: null, not undefined, for a field the schedule did not carry (a
+      // Supervisor no column supplied). _msBase travels in a published file
+      // as JSON, which drops an undefined, and the override would then read
+      // back as the schedule's own value.
+      base[f]=(m[f]===undefined)?null:m[f];
       m[f]=ov[f];
     });
     if(Object.keys(base).length) m._msBase=base;
@@ -7285,8 +7331,16 @@ const INGEST_CONFIG={
     succ:['successor details','successors','successor','succ'],
     wbs:['wbs','wbs path','wbs code','wbs name','wbs level 2','activity wbs'],
     budget:['budgeted units','budget units','budgeted labor units','planned units','budgeted hours','at completion units','remaining units'],
-    pct:['% complete','activity % complete','pct complete','physical % complete','performance % complete','duration % complete']
+    pct:['% complete','activity % complete','pct complete','physical % complete','performance % complete','duration % complete'],
+    // P78 (Matt, 2026-10-02): optional, per activity. Listed last so autoMap()
+    // gives every older field its column first, and it never hands one of
+    // these a column another field already took (OPTIONAL_PEOPLE_MAP below).
+    discipline:['discipline','disc','trade'],
+    supervisor:['supervisor','superintendent','lead'],
+    engineer:['engineer','responsible engineer','owner']
   },
+  // P78: the fields autoMap() maps only to a column nothing else has.
+  peopleFields:['discipline','supervisor','engineer'],
   // Ordered — first match wins. Keys are alphanumeric-normalised substrings.
   milestoneTypes:[
     {code:'FIN',keys:['finalissue','issuedforconstruction','ifc','issuedforuse','finalisation','finalise','approvedforuse']},
@@ -7571,14 +7625,23 @@ const Parse={
     for(const field in INGEST_CONFIG.headerAliases){
       map[field]=-1;
       const aliases=INGEST_CONFIG.headerAliases[field];
+      // P78: Discipline, Supervisor and Engineer take only a column no other
+      // field has (an "Owner" column that something else already maps stays
+      // with it). The older fields keep their own rule unchanged.
+      const own=INGEST_CONFIG.peopleFields.indexOf(field)>=0;
+      const free=function(idx){
+        if(!own) return true;
+        for(const f in map) if(f!==field&&map[f]===idx) return false;
+        return true;
+      };
       for(let a=0;a<aliases.length;a++){
         const idx=nh.indexOf(normKey(aliases[a]));
-        if(idx>=0){map[field]=idx;break;}
+        if(idx>=0&&free(idx)){map[field]=idx;break;}
       }
       if(map[field]<0){ // loose contains-match fallback
         for(let a=0;a<aliases.length;a++){
           const key=normKey(aliases[a]);
-          const idx=nh.findIndex(h=>h&&h.indexOf(key)>=0);
+          const idx=nh.findIndex((h,i)=>h&&h.indexOf(key)>=0&&free(i));
           if(idx>=0){map[field]=idx;break;}
         }
       }
@@ -7660,6 +7723,10 @@ function normalise(parsed,map){
       wbs:(hier&&hier.detected&&hier.paths[ri])?hier.paths[ri]:String(g(r,'wbs')||'').trim(),
       budget:parseFloatLoose(g(r,'budget')),
       pct:parseFloatLoose(g(r,'pct')),
+      // P78: optional, per activity; '' when the column is not mapped.
+      discipline:String(g(r,'discipline')||'').trim(),
+      supervisor:String(g(r,'supervisor')||'').trim(),
+      engineer:String(g(r,'engineer')||'').trim(),
       _row:ri+2
     });
   });
@@ -8292,7 +8359,7 @@ function aggregate(acts,sourceName){
     });
     g.acts.forEach(function(a,i){
       let w=base; if(i<rem) w+=1;
-      milestones.push({
+      const ms={
         ref:ref,type:a.msType||'MS',
         date:a.finish.getFullYear()+'-'+String(a.finish.getMonth()+1).padStart(2,'0')+'-'+String(a.finish.getDate()).padStart(2,'0'),
         state:a.state,weight:w,
@@ -8303,7 +8370,12 @@ function aggregate(acts,sourceName){
         notes:'['+a.id+'] - '+a.name,
         source:srcName,
         label:'',active:'Yes',marker:a.marker
-      });
+      };
+      // P78: the activity's own Discipline, Supervisor and Engineer, when the
+      // import carried them. Schedule values: the card shows them and a hand
+      // edit overrides them (MS_EDITABLE_FIELDS). Absent when blank.
+      MS_PEOPLE_FIELDS.forEach(function(f){ if(a[f]) ms[f]=a[f]; });
+      milestones.push(ms);
     });
   });
   return {tasks:tasks,milestones:milestones};
@@ -8803,7 +8875,15 @@ const MS_FIELD_OVERRIDE={};
 // from this activity's finish and its network; it is not set by hand. A float
 // override stored by an older file is therefore no longer laid over the
 // board, which shows the schedule's own float again.
-const MS_EDITABLE_FIELDS=['actName','start','date','weight','type','marker','actual','startActual'];
+// P78 (Matt, 2026-10-02): discipline, supervisor and engineer join them. Each
+// may come in with the schedule (a mapped column, per activity) or be set by
+// hand on the card or a grid; a hand value is an override like any other, so
+// clearing it goes back to the schedule's value.
+const MS_EDITABLE_FIELDS=['actName','start','date','weight','type','marker','actual','startActual',
+  'discipline','supervisor','engineer'];
+// P78: the three people/trade fields, in card order, with their labels.
+const MS_PEOPLE_FIELDS=['discipline','supervisor','engineer'];
+const MS_PEOPLE_LABELS={discipline:'Discipline',supervisor:'Supervisor',engineer:'Engineer'};
 function effectiveState(m){
   const key=msKeyFor(m);
   if(!(key in MS_HEALTH_OVERRIDE)) return m.state; // never set — fully automatic
@@ -10676,7 +10756,8 @@ function addFieldEntry(key,field,to){
   let from;
   if(field==='health') from=(key in MS_HEALTH_OVERRIDE)?MS_HEALTH_OVERRIDE[key]:null;
   else if(field==='progress') from=m?effectiveProgress(m):((key in MS_PROGRESS_OVERRIDE)?MS_PROGRESS_OVERRIDE[key]:null);
-  else { const ov=MS_FIELD_OVERRIDE[key]; from=(ov&&(field in ov))?ov[field]:(m?m[field]:null); }
+  // P78: null, not undefined, for a field the milestone does not carry.
+  else { const ov=MS_FIELD_OVERRIDE[key]; from=(ov&&(field in ov))?ov[field]:((m&&m[field]!==undefined)?m[field]:null); }
   const ch={}; ch[field]={from:from,to:to};
   return addEntry({target:{kind:'ms',key:key},changes:ch,origin:'grid'});
 }
@@ -14565,7 +14646,9 @@ function showMapper(parsed){
   const fields=[['id','Activity ID',true],['name','Activity Name',true],['finish','Finish',true],
                 ['start','Start',false],['float','Total Float',false],['status','Status',false],
                 ['pred','Predecessor Details',false],['succ','Successor Details',false],
-                ['wbs','WBS',false],['budget','Budgeted Units',false],['pct','% Complete',false]];
+                ['wbs','WBS',false],['budget','Budgeted Units',false],['pct','% Complete',false],
+                // P78: optional, per activity.
+                ['discipline','Discipline',false],['supervisor','Supervisor',false],['engineer','Engineer',false]];
   let h='<div class="map-hd">Column mapping &mdash; '+parsed.rows.length+' rows'+(parsed.sheet?' from sheet <b>'+escapeHtml(parsed.sheet)+'</b>':'')+'. Required fields marked <span class="req">*</span>.</div><div class="map-grid">';
   fields.forEach(function(f){
     h+='<label class="map-cell"><span>'+f[1]+(f[2]?' <span class="req">*</span>':'')+'</span><select id="map-'+f[0]+'">';
@@ -14723,7 +14806,8 @@ function runIngest(){
   }
   DIAG=[];
   const map={};
-  ['id','name','finish','start','float','status','wbs','budget','pct','pred','succ'].forEach(function(f){
+  ['id','name','finish','start','float','status','wbs','budget','pct','pred','succ',
+   'discipline','supervisor','engineer'].forEach(function(f){
     const sel=document.getElementById('map-'+f);
     map[f]=sel?parseInt(sel.value,10):-1;
   });
@@ -15543,7 +15627,10 @@ function userMsGridRow(rec){
   const pr=(k in MS_PROGRESS_OVERRIDE)?MS_PROGRESS_OVERRIDE[k]:rec.progress;
   return {id:rec.id,name:umsEffective(rec,'actName')||'',type:umsEffective(rec,'type')||'MS',
           finish:umsEffective(rec,'date')||'',band:task?(task.notes||''):'',state:rec.state||'FUTURE',
-          progress:(pr==null||pr==='')?null:Number(pr),comment:MS_COMMENTS[k]||'',health:umsHealth(rec)};
+          progress:(pr==null||pr==='')?null:Number(pr),comment:MS_COMMENTS[k]||'',health:umsHealth(rec),
+          // P78: as the board shows them (a card edit wins over the record).
+          discipline:String(umsEffective(rec,'discipline')||''),supervisor:String(umsEffective(rec,'supervisor')||''),
+          engineer:String(umsEffective(rec,'engineer')||'')};
 }
 function userMsGridColumns(){
   const health=[0,1,2,3,4].map(function(v){ return {value:v,label:HEALTH_LABELS[v]}; });
@@ -15561,6 +15648,10 @@ function userMsGridColumns(){
      tones:{FUTURE:'future',TRACK:'track',RISK:'risk',CRIT:'crit',DONEUSER:'done'}},
     {key:'progress',label:'% complete',type:'number',editable:true,width:90,min:0,max:100},
     {key:'comment',label:'Comment',type:'text',editable:true,width:220},
+    // P78: free text, on the record like the name and type.
+    {key:'discipline',label:'Discipline',type:'text',editable:true,width:130},
+    {key:'supervisor',label:'Supervisor',type:'text',editable:true,width:140},
+    {key:'engineer',label:'Engineer',type:'text',editable:true,width:140},
     {key:'health',label:'Health',type:'select',editable:true,options:health,hidden:true}];
 }
 // onEdit. Return false refuses the value and the grid puts the cell back.
@@ -15604,6 +15695,13 @@ function userMsGridEdit(id,key,value){
   } else if(key==='health'){
     if(!(value in UMS_GRID_TO_MSH)) return false;
     addFieldEntry(k,'health',UMS_GRID_TO_MSH[value]);
+  } else if(MS_PEOPLE_FIELDS.indexOf(key)>=0){
+    // P78: the record, the path this grid's name and type take. Blank
+    // empties it ('' rather than deleted, so refreshUserMsBoardCopies()'s
+    // Object.assign carries the blank onto the board copy). A card edit to
+    // the same field is dropped with the write.
+    rec[key]=String(value==null?'':value).trim();
+    dropOverride(key);
   } else return false;
   noteMarkup();
   return true;
@@ -15770,7 +15868,8 @@ const ANNOT_GRID_TYPES=['comments','notes','msHealth','msProgress','msFields','s
 const MSH_OPTIONS=[{value:0,label:'N/A'},{value:1,label:'On track'},{value:2,label:'Done'},
                    {value:3,label:'At risk'},{value:4,label:'Critical'}];
 // MS_EDITABLE_FIELDS in the card's words.
-const MS_FIELD_LABELS={actName:'Title',start:'Start',date:'Finish',weight:'MS weight',floatD:'Float',type:'Type',marker:'Mark'};
+const MS_FIELD_LABELS={actName:'Title',start:'Start',date:'Finish',weight:'MS weight',floatD:'Float',type:'Type',marker:'Mark',
+  discipline:'Discipline',supervisor:'Supervisor',engineer:'Engineer'};
 let ANNOT_GRID=null;       // the type whose table is open
 let ANNOT_MS_IDX=null;     // msKeyFor() -> milestone (board copy or user record), rebuilt on open
 function annotMsIndex(){
@@ -16161,9 +16260,34 @@ function schedMsRows(onlyAnnotated){
               start:schedIso(annotOwn(m,'start')),finish:schedIso(annotOwn(m,'date')),
               float:schedNum(annotOwn(m,'floatD')),state:m.state||'',progress:schedNum(m.progress),
               health:(k in MS_HEALTH_OVERRIDE)?MS_HEALTH_OVERRIDE[k]:null,
-              comment:MS_COMMENTS[k]||'',shortTitle:MS_SHORT_TITLES[k]||'',edits:ed.join(', ')});
+              comment:MS_COMMENTS[k]||'',shortTitle:MS_SHORT_TITLES[k]||'',edits:ed.join(', '),
+              // P78: the value the card shows (an edit, else the schedule's).
+              discipline:schedPfValue(m,k,'discipline'),supervisor:schedPfValue(m,k,'supervisor'),
+              engineer:schedPfValue(m,k,'engineer')});
   });
   return out;
+}
+// P78: Discipline, Supervisor, Engineer in the milestone views. Shown as the
+// card shows them and written as the card writes them: an entry whose
+// change is an override, never the schedule itself.
+function schedPfValue(m,k,f){
+  const ov=MS_FIELD_OVERRIDE[k];
+  if(ov&&(f in ov)) return ov[f]==null?'':String(ov[f]);
+  const v=annotOwn(m,f);
+  return v==null?'':String(v);
+}
+function schedPfWrite(key,f,value){
+  const m=annotMs(key);
+  if(!m||MS_PEOPLE_FIELDS.indexOf(f)<0) return false;
+  const t=annotBlank(value)?'':String(value).trim();
+  const own=annotOwn(m,f), ownS=own==null?'':String(own);
+  // Blank, or the schedule's own value, is "back to the schedule".
+  const to=(t===''||t===ownS)?null:t;
+  const ov=MS_FIELD_OVERRIDE[key];
+  if(to===null&&!(ov&&(f in ov))) return true;          // already the schedule's
+  if(to!==null&&ov&&ov[f]===to) return true;            // already this value
+  addFieldEntry(key,f,to);
+  return true;
 }
 // All schedule activities: every schedule row of the board (TASKS, one per
 // deliverable, the activities the ingest grouped into it). Dates, float,
@@ -16236,7 +16360,11 @@ function schedGridColumns(view){
     {key:'health',label:'Health',type:'select',editable:true,options:MSH_OPTIONS,width:110,
      tones:{1:'track',2:'done',3:'risk',4:'crit'}},
     {key:'comment',label:'Comment',type:'text',editable:true,width:240},
-    {key:'shortTitle',label:'Short title',type:'text',editable:true,width:160}];
+    {key:'shortTitle',label:'Short title',type:'text',editable:true,width:160},
+    // P78: editable, as an override (schedPfWrite), like the card.
+    {key:'discipline',label:'Discipline',type:'text',editable:true,width:130},
+    {key:'supervisor',label:'Supervisor',type:'text',editable:true,width:140},
+    {key:'engineer',label:'Engineer',type:'text',editable:true,width:140}];
   if(view==='sched-upd') cols.push({key:'edits',label:'Annotations',type:'text',width:200});
   return cols;
 }
@@ -16253,6 +16381,7 @@ function schedGridEdit(key,col,value){
     if(col==='comment') ok=annotWrite('comments',key,'value',value);
     else if(col==='health') ok=annotWrite('msHealth',key,'value',value);
     else if(col==='shortTitle') ok=annotWrite('shortTitles',key,'value',value);
+    else if(MS_PEOPLE_FIELDS.indexOf(col)>=0) ok=schedPfWrite(key,col,value);
     else return false;
   } else return false;
   if(ok===false) return false;
@@ -16470,15 +16599,19 @@ function removeAllUserDefined(){
 // Same columns and header names the importer maps, in the same order, so the
 // file this produces re-imports through the ordinary Import tab (or the
 // USR-/'User-defined' routing in runIngest()) with no remapping needed.
+// P78: Discipline, Supervisor and Engineer follow, under the names the
+// importer maps (INGEST_CONFIG.headerAliases), as the board shows them.
 const USER_DEFINED_EXPORT_HEADER=['Activity ID','Activity Name','Start','Finish','Total Float',
-  'Status','Predecessor Details','Successor Details','WBS','Budgeted Units','% Complete'];
+  'Status','Predecessor Details','Successor Details','WBS','Budgeted Units','% Complete',
+  'Discipline','Supervisor','Engineer'];
 function userDefinedExportRows(){
   const rows=[USER_DEFINED_EXPORT_HEADER];
   USER_MILESTONES.forEach(function(m){
     // P72: no float on a user milestone; its own links in the two
     // relationship columns, in the record's comma-separated form.
     rows.push([m.id||m.ref, m.actName||'', m.start||'', m.date||'', '',
-      STATE_LABELS[m.state]||m.state||'', m.pred||'', m.succ||'', USER_BAND, '', m.progress||0]);
+      STATE_LABELS[m.state]||m.state||'', m.pred||'', m.succ||'', USER_BAND, '', m.progress||0,
+      umsEffective(m,'discipline')||'', umsEffective(m,'supervisor')||'', umsEffective(m,'engineer')||'']);
   });
   return rows;
 }
@@ -18990,6 +19123,9 @@ function openMsDialog(m, actId, anchorEl, hd, task){
   // called again by renderMsIcon() so a picked type shows at once.
   const discText=(task.disc||'').trim();
   msDialogBand=(discText && discText.toLowerCase()!=='unassigned')?discText:'';
+  // P78: WBS/Area, Discipline, Supervisor and Engineer, under the title.
+  closeMsPfSuggest();
+  renderMsPeople(task);
 
   const shortTitleKey=msKeyFor(m);
   // What the field would hold with no custom short title at all. Held so the
@@ -19414,6 +19550,163 @@ function onMsDepAddKey(e,kind){
     // Closes the list only; Escape again leaves the card as usual.
     e.preventDefault(); e.stopPropagation();
     closeMsDepSuggest();
+  }
+}
+// ===== P78: Discipline, Supervisor, Engineer and WBS/Area on the card =====
+// The three fields are form fields like the title: held on the form, saved
+// with the card as one entry (changes.discipline / supervisor / engineer),
+// projected as an override in MS_FIELD_OVERRIDE, never written into the
+// schedule. A blank field goes back to the schedule's own value.
+// The value the card shows: a saved override, else the schedule's own. Read
+// from the stores rather than off the board copy, so a card that stays open
+// after a save shows what was just saved (or, cleared, the schedule's value)
+// before the board has been rebuilt.
+function msPfEffective(m,key,f){
+  const ov=MS_FIELD_OVERRIDE[key];
+  if(ov&&(f in ov)) return ov[f]==null?'':String(ov[f]);
+  const b=m._msBase||{};
+  const v=(f in b)?b[f]:m[f];
+  return v==null?'':String(v);
+}
+// WBS/Area: the band the milestone's row sits under on the board (the row's
+// disc heading, which the ingest derives from the WBS path), else the row's
+// phase. Read only: it is the schedule's structure, not a person's value.
+function msWbsAreaText(task){
+  const disc=String((task&&task.disc)||'').trim();
+  if(disc&&disc.toLowerCase()!=='unassigned') return disc;
+  return String((task&&task.notes)||'').trim();
+}
+function renderMsPeople(task){
+  const m=msDialogMs, key=msDialogFor;
+  if(!m||!key) return;
+  if(task!==undefined){
+    const w=document.getElementById('ms-wbs');
+    if(w){
+      const t=msWbsAreaText(task);
+      w.textContent=t||'WBS/Area';
+      w.classList.toggle('is-empty',!t);
+      w.title=t?('WBS/Area: '+t+'. From the schedule, not editable.'):'WBS/Area. None in the schedule.';
+    }
+  }
+  MS_PEOPLE_FIELDS.forEach(function(f){
+    const el=document.getElementById('ms-'+f);
+    if(el) el.value=msPfEffective(m,key,f);
+  });
+}
+// The names already used for one field across the board, imported and
+// typed: deduplicated without regard to case (the spelling used most is the
+// one shown), most used first. A name counts once per milestone, for the
+// value that milestone shows; an imported name a person has since replaced
+// is still offered, with no uses.
+function msPfOptions(field){
+  const uses={}, spell={};
+  const put=function(v,n){
+    v=String(v==null?'':v).trim(); if(!v) return;
+    const k=v.toLowerCase();
+    uses[k]=(uses[k]||0)+n;
+    const sp=spell[k]||(spell[k]={});
+    sp[v]=(sp[v]||0)+1;
+  };
+  const seen={};
+  const one=function(m){
+    const k=msKeyFor(m); if(seen[k]) return; seen[k]=1;
+    const b=m._msBase||{}, own=(field in b)?b[field]:m[field];
+    const ov=MS_FIELD_OVERRIDE[k], has=!!(ov&&(field in ov));
+    put(own,has?0:1);
+    if(has) put(ov[field],1);
+  };
+  MILESTONES.forEach(one);
+  USER_MILESTONES.forEach(one);
+  return Object.keys(uses).map(function(k){
+    const sp=spell[k];
+    const name=Object.keys(sp).sort(function(a,b){ return sp[b]-sp[a]||a.localeCompare(b); })[0];
+    return {name:name,uses:uses[k]};
+  }).sort(function(a,b){ return b.uses-a.uses||a.name.localeCompare(b.name); });
+}
+const MS_PF_MAX=8;
+let MS_PF_SUG={field:null,names:[],hl:-1};
+function msPfMatches(field,q){
+  q=String(q||'').trim().toLowerCase();
+  return msPfOptions(field).filter(function(o){ return !q||o.name.toLowerCase().indexOf(q)>=0; }).slice(0,MS_PF_MAX);
+}
+// Hidden, not emptied, for the reason closeMsDepSuggest() gives: it runs
+// from a suggestion's own click.
+function closeMsPfSuggest(){
+  const dd=document.getElementById('ms-pf-suggest');
+  if(dd) dd.hidden=true;
+  MS_PEOPLE_FIELDS.forEach(function(f){
+    const el=document.getElementById('ms-'+f);
+    if(el){ el.setAttribute('aria-expanded','false'); el.removeAttribute('aria-activedescendant'); }
+  });
+  MS_PF_SUG={field:null,names:[],hl:-1};
+}
+// On focus the list offers every name in use (most used first); typing
+// narrows it to the names holding the typed text. Nothing is highlighted
+// until the arrow keys move, so Enter keeps whatever was typed.
+function onMsPfInput(field,all){
+  const input=document.getElementById('ms-'+field);
+  const dd=document.getElementById('ms-pf-suggest');
+  if(!input||!dd) return;
+  if(!all) onMsFieldInput();
+  const list=msPfMatches(field,all?'':input.value);
+  MS_PF_SUG={field:field,names:list.map(function(o){ return o.name; }),hl:-1};
+  if(!list.length){ dd.hidden=true; input.setAttribute('aria-expanded','false'); return; }
+  // onmousedown + preventDefault, the Activity ID autocomplete's rule: the
+  // field keeps focus, so its blur cannot close the list before the pick.
+  dd.innerHTML='<div class="ms-pf-hint" role="presentation">Pick an existing name or type a new one</div>'+
+    list.map(function(o,i){
+      return '<div class="id-suggest-item" role="option" id="ms-pf-opt-'+i+'" aria-selected="false" data-field="'+field+'" data-name="'+escapeHtml(o.name)+'"'+
+        ' onmousedown="event.preventDefault();pickMsPfSuggestion(this)" onclick="closeMsPfSuggest()">'+escapeHtml(o.name)+'</div>';
+    }).join('');
+  dd.setAttribute('aria-label',MS_PEOPLE_LABELS[field]+': names already used');
+  dd.hidden=false;
+  input.setAttribute('aria-expanded','true');
+  input.removeAttribute('aria-activedescendant');
+  dd.style.width=Math.max(input.getBoundingClientRect().width,200)+'px';
+  positionFixedPopup(dd,input,'left');
+}
+function msPfSetValue(field,name){
+  const input=document.getElementById('ms-'+field);
+  if(!input) return;
+  input.value=name;
+  onMsFieldInput();
+}
+// Picked on mousedown; the list stays until the click that follows, so that
+// click lands inside the card (see pickMsDepSuggestion()).
+function pickMsPfSuggestion(el){
+  const field=el.getAttribute('data-field'), name=el.getAttribute('data-name');
+  if(MS_PEOPLE_FIELDS.indexOf(field)<0) return;
+  msPfSetValue(field,name);
+  const input=document.getElementById('ms-'+field);
+  if(input) input.focus();
+}
+function onMsPfKey(e,field){
+  const dd=document.getElementById('ms-pf-suggest');
+  const open=dd&&!dd.hidden&&MS_PF_SUG.field===field&&MS_PF_SUG.names.length;
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){
+    e.preventDefault();
+    if(!open){ onMsPfInput(field,true); if(!MS_PF_SUG.names.length) return; }
+    const n=MS_PF_SUG.names.length;
+    const h=MS_PF_SUG.hl;
+    MS_PF_SUG.hl=(e.key==='ArrowDown')?(h+1)%n:(h<=0?n-1:h-1);
+    dd.querySelectorAll('.id-suggest-item').forEach(function(it,i){
+      const on=(i===MS_PF_SUG.hl);
+      it.classList.toggle('is-hl',on); it.setAttribute('aria-selected',on?'true':'false');
+    });
+    e.target.setAttribute('aria-activedescendant','ms-pf-opt-'+MS_PF_SUG.hl);
+    return;
+  }
+  if(e.key==='Enter'){
+    e.preventDefault();
+    // The highlighted name, or the typed text as it stands (free text).
+    if(open&&MS_PF_SUG.hl>=0) msPfSetValue(field,MS_PF_SUG.names[MS_PF_SUG.hl]);
+    closeMsPfSuggest();
+    return;
+  }
+  if(e.key==='Escape'&&open){
+    // Closes the list only; Escape again leaves the card as usual.
+    e.preventDefault(); e.stopPropagation();
+    closeMsPfSuggest();
   }
 }
 // The raw relationship IDs for this milestone, comma separated. DEP_DATA
@@ -19904,7 +20197,11 @@ function msReadForm(){
     // P72: a user milestone's own links, pending until Save. Always '' on a
     // schedule milestone, whose links are not editable.
     pred:msFormDeps?msFormDeps.pred.join(', '):'',
-    succ:msFormDeps?msFormDeps.succ.join(', '):''
+    succ:msFormDeps?msFormDeps.succ.join(', '):'',
+    // P78: free text, trimmed; blank is back to the schedule's own value.
+    discipline:g('ms-discipline').trim(),
+    supervisor:g('ms-supervisor').trim(),
+    engineer:g('ms-engineer').trim()
   };
 }
 // The pending health, held on the form like everything else rather than
@@ -19956,7 +20253,11 @@ function syncMsEditedMarks(){
                  ? ('mark '+fmt(own('marker'))+', type '+fmt(own('type'))) : null,
     progress:  (key in MS_PROGRESS_OVERRIDE) ? fmt(m.progress)+'%' : null,
     shortTitle:(key in MS_SHORT_TITLES) ? 'the auto-shortened '+fmt(msShortTitleDefault) : null,
-    health:    (key in MS_HEALTH_OVERRIDE) ? fmt(STATE_LABELS[m.state]||m.state) : null
+    health:    (key in MS_HEALTH_OVERRIDE) ? fmt(STATE_LABELS[m.state]||m.state) : null,
+    // P78: the three people/trade fields, against the schedule's own value.
+    discipline:('discipline' in fieldOv) ? fmt(own('discipline')) : null,
+    supervisor:('supervisor' in fieldOv) ? fmt(own('supervisor')) : null,
+    engineer:  ('engineer'   in fieldOv) ? fmt(own('engineer')) : null
   };
   Object.keys(marks).forEach(function(f){
     const el=document.getElementById('ms-mark-'+f);
@@ -19985,7 +20286,8 @@ function syncMsDirtyUI(){
   if(!msDraftClean) return;
   const now=msReadForm();
   [['title','ms-title'],['shortTitle','ms-shorttitle-input'],['start','ms-start-date'],
-   ['date','ms-date'],['weight','ms-weight'],['floatD','ms-float-val']].forEach(function(pair){
+   ['date','ms-date'],['weight','ms-weight'],['floatD','ms-float-val'],
+   ['discipline','ms-discipline'],['supervisor','ms-supervisor'],['engineer','ms-engineer']].forEach(function(pair){
     const el=document.getElementById(pair[1]);
     if(el) el.classList.toggle('ms-dirty-field',now[pair[0]]!==msDraftClean[pair[0]]);
   });
@@ -20054,7 +20356,9 @@ function saveMsDialog(alsoClose){
     current:function(f){
       if(f==='health') return (key in MS_HEALTH_OVERRIDE)?MS_HEALTH_OVERRIDE[key]:null;
       if(f==='progress') return effectiveProgress(m);
-      return m[f];
+      // P78: a field the milestone does not carry (no Supervisor imported)
+      // is null, so the entry records "none" rather than dropping the from.
+      return m[f]===undefined?null:m[f];
     },
     scheduleProgress:m.progress,
     // P72: float is read only on every milestone, so the card never asks
@@ -20136,6 +20440,9 @@ function saveMsDialog(alsoClose){
     const fuEl=document.getElementById('ms-followup');
     if(fuEl) fuEl.value='open';
     renderMsDuration();
+    // P78: the three fields from the stores, so a cleared one shows the
+    // schedule's own value again rather than the empty box that cleared it.
+    renderMsPeople();
     // P72: the links just saved, with the other side's view rebuilt.
     if(msFormDeps) fillMsDepLists(key);
     // Stays open, so the baseline has to move with it or the save pair would
