@@ -117,6 +117,8 @@ Status baseline is the delivered v3.1.0-P1 build. Features marked `Published` we
 | TASK-09 | FEAT-10 | Banding Phase 1: auto-derivation of row collections | Open | Re-scoped by D-27: auto-derivation becomes building the Indent and WBS hierarchies on import. Go-ahead in principle 2026-09-27; order pending. |
 | TASK-62 | FEAT-02, FEAT-12 | Inline SheetJS as a marked block, last in `<body>`, excluded from audits (D-23) | **Merged into TD-216** | Kept for its ID only. TD-216 tracks the embed; D-23 carries the placement and audit detail. |
 | TASK-63 | FEAT-26 | Commit the scale benchmark on synthetic data and record the baseline | Done | `tools/scale_bench.mjs`, TEST-59. Client-schedule runs are recorded for context only; the file stays out of the repo. |
+| TASK-64 | FEAT-16 | Module amalgamation: manifest, `@module` markers, `tools/modules_embed.py` (check, embed, list, extract), MODULE.md per module (D-30) | Done | TD-242, TEST-79. Existing pasted modules adopted with no code change. |
+| TASK-65 | FEAT-16 | First extraction pilot: the ingest pipeline (Parse, normalise, classify, join, aggregate) into `src/modules/ingest/` (D-30) | Open | Next after D-30 is approved. Use `modules_embed.py --extract`, then make it a clean module with its own Node test. |
 
 ---
 **Rules:**

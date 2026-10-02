@@ -1,103 +1,61 @@
 #!/usr/bin/env python3
-"""Re-paste the grid view module into the app (TD-229, P70).
+"""Re-paste the grid view module into the app (TD-229, P70). Since D-30 a thin
+wrapper over tools/modules_embed.py, kept because tools/p61_check.py imports
+parts() and APP_FEATURES from here.
 
-The app embeds src/modules/grid-view/ by pasting, not by a build: the core
-and the features the app uses, each file unchanged, in load order, between
-fixed banners. This rewrites exactly those two blocks of
-src/milestone-dashboard.html from the module files, so a re-paste is one
-command and touches nothing else:
+Which grid files are pasted, in what order, is now the "grid-view" entry of
+src/modules/MODULES.json (embed.js.files / embed.css.files). The app's
+SRETGrid.setup() call, beside openGridView(), says which features are on;
+APP_FEATURES below is derived from the manifest and tools/p61_check.py
+checks the two agree.
 
-  1. main <style>: from the "GRID VIEW (D-09" banner to the end of the grid
-     CSS (the end of the main style, where P61 put it);
-  2. top of app-script: from the "GRID VIEW MODULE (D-09" banner to
-     "// ============ END GRID VIEW MODULE ============".
-
-The app's SRETGrid.setup() call, beside openGridView(), says which features
-are on; APP_FEATURES below must name the same ones (tools/p61_check.py
-checks both).
-
-  python3 tools/grid_view_embed.py           # rewrite the two blocks
-  python3 tools/grid_view_embed.py --check   # exit 1 if the app is not the module, pasted
+  python3 tools/grid_view_embed.py           # same as modules_embed.py --embed grid-view
+  python3 tools/grid_view_embed.py --check   # exit 1 if the grid regions are not the module, pasted
 """
 import argparse
 import pathlib
-import re
 import sys
 
-ROOT = pathlib.Path(__file__).resolve().parent.parent
-APP = ROOT / "src" / "milestone-dashboard.html"
-MOD = ROOT / "src" / "modules" / "grid-view"
-# The app has no lists (SRETCollections) or import (SRETMsImport) screens and
-# no refs columns, so only these are pasted. Order: the core's load order.
-APP_FEATURES = ["marks", "bulk-edit", "xlsx"]
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import modules_embed as ME  # noqa: E402
 
-CSS_START = "/* ============================================================\n   GRID VIEW (D-09"
-JS_START = "// ============================================================\n// GRID VIEW MODULE (D-09"
-JS_END = "// ============ END GRID VIEW MODULE ============"
+ROOT = ME.ROOT
+APP = ME.APP
+MOD = ROOT / "src" / "modules" / "grid-view"
+
+
+def _grid():
+    return next(m for m in ME.load_manifest()["modules"] if m["id"] == "grid-view")
+
+
+# Features pasted into the app, in the core's load order (features/<name>.js).
+APP_FEATURES = [f[len("features/"):-len(".js")] for f in _grid()["embed"]["js"]["files"] if f.startswith("features/")]
 
 
 def parts(ext):
-    out = [("grid-view." + ext, (MOD / ("grid-view." + ext)).read_text(encoding="utf-8").rstrip("\n"))]
-    for f in APP_FEATURES:
-        p = MOD / "features" / f"{f}.{ext}"
-        if p.exists():
-            out.append((f"features/{f}.{ext}", p.read_text(encoding="utf-8").rstrip("\n")))
-        elif ext == "js":
-            sys.exit(f"features/{f}.js is missing.")
-    return out
-
-
-def css_block():
-    names = ", ".join(n for n, _ in parts("css"))
-    head = ("/* ============================================================\n"
-            "   GRID VIEW (D-09, P61; core and features P70, TD-229): " + names + ",\n"
-            "   pasted unchanged by tools/grid_view_embed.py. Tier 3 component styles on\n"
-            "   --color-* roles and D-16 tokens. Edit the module files and re-run the tool.\n"
-            "   ============================================================ */")
-    return head + "\n" + "\n".join(f"/* ---- {n} ---- */\n{t}" for n, t in parts("css")) + "\n"
-
-
-def js_block():
-    names = ", ".join(n for n, _ in parts("js"))
-    head = ("// ============================================================\n"
-            "// GRID VIEW MODULE (D-09, P61; core and features P70, TD-229): " + names + ",\n"
-            "// pasted unchanged by tools/grid_view_embed.py. The core defines window.SRETGrid;\n"
-            "// each feature registers itself with it. No app global is read. The app's\n"
-            "// setup() call and adapters (openGridView) live beside the Workspace code.\n"
-            "// ============================================================")
-    return head + "\n" + "\n".join(f"// ---- {n} ----\n{t}" for n, t in parts("js")) + "\n" + JS_END
-
-
-def rebuild(src):
-    a = src.index(CSS_START)
-    b = src.index("</style>", a)
-    if src.count(CSS_START) != 1:
-        sys.exit("Expected one GRID VIEW CSS banner.")
-    src = src[:a] + css_block() + src[b:]
-    c = src.index(JS_START)
-    d = src.index(JS_END, c) + len(JS_END)
-    if src.count(JS_START) != 1 or src.count(JS_END) != 1:
-        sys.exit("Expected one GRID VIEW MODULE banner and one end marker.")
-    return src[:c] + js_block() + src[d:]
+    """[(name, text)] of the grid files the app pastes for ext ('js' or 'css'), in order."""
+    names = _grid()["embed"][ext]["files"]
+    return [(n, (MOD / n).read_text(encoding="utf-8").rstrip("\n")) for n in names]
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true")
     a = ap.parse_args()
-    for _, t in parts("js"):
-        if "</script" in t.lower():
-            sys.exit("A grid file contains </script.")
+    man = ME.load_manifest()
     src = APP.read_text(encoding="utf-8")
-    out = rebuild(src)
-    if a.check:
-        if out != src:
-            print("STALE: the app's grid blocks differ from the module files. Run tools/grid_view_embed.py.")
-            return 1
-        print("The app's grid blocks are the module files, pasted.")
-        return 0
-    APP.write_text(out, encoding="utf-8")
-    print(f"Pasted {', '.join(['core'] + APP_FEATURES)} into {APP.relative_to(ROOT)}.")
+    if not a.check:
+        src, changed = ME.embed(man, src, {"grid-view"})
+        APP.write_text(src, encoding="utf-8")
+        ME.save_manifest(man)
+        for c in changed:
+            print("rewrote", c)
+    bad = [(k, msg) for k, msg in ME.check(man, src) if msg.startswith("grid-view")]
+    for k, msg in bad:
+        print(f"{k:<12}{msg}")
+    if bad:
+        return 1
+    print("The app's grid regions are the module files, pasted.")
     return 0
 
 
