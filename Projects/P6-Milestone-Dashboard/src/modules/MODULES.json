@@ -215,6 +215,80 @@
       }
     },
     {
+      "id": "continue-file",
+      "dir": "continue-file",
+      "version": "1.0.0",
+      "status": "embedded",
+      "global": "SRETContinue",
+      "summary": "Reads a previously saved dashboard (.html state block or a whole-state .json) so a blank copy can continue from it (P79). Back end only: no DOM, never runs the file's scripts.",
+      "files": {
+        "js": [
+          "continue-file.js"
+        ]
+      },
+      "embed": {
+        "js": {
+          "slot": "app-script-modules",
+          "order": 50,
+          "header": "// ============================================================\n// CONTINUE-FILE MODULE (P79, TD-247): src/modules/continue-file/continue-file.js,\n// pasted unchanged. Defines window.SRETContinue only and reads no app global.\n// The app's adapter (continueRead / continueApply) sits beside the P76 backups.\n// ============================================================",
+          "footer": "// ============ END CONTINUE-FILE MODULE ============"
+        }
+      },
+      "deps": [],
+      "uses": [],
+      "tests": [
+        "tools/continue_file_test.mjs",
+        "tools/p79_continue_check.py"
+      ],
+      "docs": [
+        "src/modules/continue-file/MODULE.md",
+        "docs/decisions/D-31-continue-from-saved.md"
+      ],
+      "recorded": {
+        "version": "1.0.0",
+        "sources": {
+          "continue-file.js": "e8c23a4470a3df17"
+        }
+      }
+    },
+    {
+      "id": "quick-links",
+      "dir": "quick-links",
+      "version": "1.0.0",
+      "status": "embedded",
+      "global": "SRETQuickLinks",
+      "summary": "Two named links to where the dashboard's files are kept, validated (http, https or file only) and carried in every saved file (P80). Back end only: no DOM.",
+      "files": {
+        "js": [
+          "quick-links.js"
+        ]
+      },
+      "embed": {
+        "js": {
+          "slot": "app-script-modules",
+          "order": 60,
+          "header": "// ============================================================\n// QUICK-LINKS MODULE (P80, TD-248): src/modules/quick-links/quick-links.js,\n// pasted unchanged. Defines window.SRETQuickLinks only and reads no app global.\n// The app's adapter (quickLinksGet / quickLinksSet) sits beside the continue adapter.\n// ============================================================",
+          "footer": "// ============ END QUICK-LINKS MODULE ============"
+        }
+      },
+      "deps": [],
+      "uses": [],
+      "tests": [
+        "tools/quick_links_test.mjs",
+        "tools/p80_quick_links_check.py"
+      ],
+      "docs": [
+        "src/modules/quick-links/MODULE.md",
+        "docs/decisions/D-31-continue-from-saved.md"
+      ],
+      "recorded": {
+        "version": "1.0.0",
+        "sources": {
+          "quick-links.js": "f1b8c4fc24b50363"
+        }
+      }
+    },
+    {
       "id": "collections",
       "dir": "collections",
       "version": "0.1.0",
@@ -422,7 +496,7 @@
       "dir": "ui-tokens",
       "version": "0.2.0",
       "status": "embedded",
-      "summary": "Shared design tokens for the UI kit (D-31): palette, colour roles, spacing, type, shape, elevation, motion, layers.",
+      "summary": "Shared design tokens for the UI kit (D-32): palette, colour roles, spacing, type, shape, elevation, motion, layers.",
       "files": {
         "css": [
           "ui-tokens.css",
@@ -438,8 +512,8 @@
       "recorded": {
         "version": "0.2.0",
         "sources": {
-          "ui-tokens.css": "428770d5003f02eb",
-          "ui-palette.css": "ce02cfed596bae90"
+          "ui-tokens.css": "6ad4bed1886c0ed7",
+          "ui-palette.css": "ebbd3e0111fe7c4a"
         }
       },
       "embed": {
@@ -449,7 +523,7 @@
           "files": [
             "ui-tokens.css"
           ],
-          "header": "/* ===== UI-TOKENS (D-31 UI kit): src/modules/ui-tokens/, pasted unchanged. Uses only ui-tokens. ===== */",
+          "header": "/* ===== UI-TOKENS (D-32 UI kit): src/modules/ui-tokens/, pasted unchanged. Uses only ui-tokens. ===== */",
           "footer": "/* ===== END UI-TOKENS ===== */"
         }
       }
@@ -460,7 +534,7 @@
       "version": "0.1.0",
       "status": "embedded",
       "global": "SRETIcons",
-      "summary": "Inline SVG icon set for the UI kit (D-31).",
+      "summary": "Inline SVG icon set for the UI kit (D-32).",
       "files": {
         "js": [
           "ui-icons.js"
@@ -475,14 +549,14 @@
       "recorded": {
         "version": "0.1.0",
         "sources": {
-          "ui-icons.js": "5bbd5b4f3f054fb6"
+          "ui-icons.js": "f9fe8050b0c6c647"
         }
       },
       "embed": {
         "js": {
           "slot": "app-script-modules",
-          "order": 50,
-          "header": "// ============================================================\n// UI-ICONS (D-31 UI kit): src/modules/ui-icons/, pasted unchanged.\n// Defines window.SRETIcons only and reads no app global. The app adapter\n// (APP_NAV) lives beside the Workspace code.\n// ============================================================",
+          "order": 70,
+          "header": "// ============================================================\n// UI-ICONS (D-32 UI kit): src/modules/ui-icons/, pasted unchanged.\n// Defines window.SRETIcons only and reads no app global. The app adapter\n// (APP_NAV) lives beside the Workspace code.\n// ============================================================",
           "footer": "// ============ END UI-ICONS ============"
         }
       }
@@ -493,7 +567,7 @@
       "version": "0.2.0",
       "status": "embedded",
       "global": "SRETShell",
-      "summary": "App frame containers (D-31): nav, header, main, aside regions with phone, tablet and desktop behaviour.",
+      "summary": "App frame containers (D-32): nav, header, main, aside regions with phone, tablet and desktop behaviour.",
       "files": {
         "js": [
           "ui-shell.js"
@@ -513,8 +587,8 @@
       "recorded": {
         "version": "0.2.0",
         "sources": {
-          "ui-shell.js": "f2e8d34715bc61c2",
-          "ui-shell.css": "513e0443392adb37"
+          "ui-shell.js": "8045cdbf7642a251",
+          "ui-shell.css": "dcf28b203d421179"
         }
       },
       "embed": {
@@ -524,13 +598,13 @@
           "files": [
             "ui-shell.css"
           ],
-          "header": "/* ===== UI-SHELL (D-31 UI kit): src/modules/ui-shell/, pasted unchanged. Uses only ui-tokens. ===== */",
+          "header": "/* ===== UI-SHELL (D-32 UI kit): src/modules/ui-shell/, pasted unchanged. Uses only ui-tokens. ===== */",
           "footer": "/* ===== END UI-SHELL ===== */"
         },
         "js": {
           "slot": "app-script-modules",
-          "order": 51,
-          "header": "// ============================================================\n// UI-SHELL (D-31 UI kit): src/modules/ui-shell/, pasted unchanged.\n// Defines window.SRETShell only and reads no app global. The app adapter\n// (APP_NAV) lives beside the Workspace code.\n// ============================================================",
+          "order": 71,
+          "header": "// ============================================================\n// UI-SHELL (D-32 UI kit): src/modules/ui-shell/, pasted unchanged.\n// Defines window.SRETShell only and reads no app global. The app adapter\n// (APP_NAV) lives beside the Workspace code.\n// ============================================================",
           "footer": "// ============ END UI-SHELL ============"
         }
       }
@@ -541,7 +615,7 @@
       "version": "0.1.1",
       "status": "standalone",
       "global": "SRETSurfaces",
-      "summary": "Cards and content containers (D-31): card, section, panel header, toolbar, tabs, fold, list, empty state, toast.",
+      "summary": "Cards and content containers (D-32): card, section, panel header, toolbar, tabs, fold, list, empty state, toast.",
       "files": {
         "js": [
           "ui-surfaces.js"
@@ -562,8 +636,8 @@
       "recorded": {
         "version": "0.1.1",
         "sources": {
-          "ui-surfaces.js": "80945cab084f6373",
-          "ui-surfaces.css": "9a8f238e22a8447d"
+          "ui-surfaces.js": "17f4461f1d6948e0",
+          "ui-surfaces.css": "16b6fe3bb4e80ff8"
         }
       }
     },
@@ -573,7 +647,7 @@
       "version": "0.1.1",
       "status": "embedded",
       "global": "SRETControls",
-      "summary": "Form and action controls (D-31): buttons, inputs, select, switch, segmented, radio cards, chips, badges.",
+      "summary": "Form and action controls (D-32): buttons, inputs, select, switch, segmented, radio cards, chips, badges.",
       "files": {
         "js": [
           "ui-controls.js"
@@ -593,8 +667,8 @@
       "recorded": {
         "version": "0.1.1",
         "sources": {
-          "ui-controls.js": "554b609a190b96d2",
-          "ui-controls.css": "91361311bbb1cb95"
+          "ui-controls.js": "c7b92184b369a934",
+          "ui-controls.css": "4de4b9764c721c66"
         }
       },
       "embed": {
@@ -604,13 +678,13 @@
           "files": [
             "ui-controls.css"
           ],
-          "header": "/* ===== UI-CONTROLS (D-31 UI kit): src/modules/ui-controls/, pasted unchanged. Uses only ui-tokens. ===== */",
+          "header": "/* ===== UI-CONTROLS (D-32 UI kit): src/modules/ui-controls/, pasted unchanged. Uses only ui-tokens. ===== */",
           "footer": "/* ===== END UI-CONTROLS ===== */"
         },
         "js": {
           "slot": "app-script-modules",
-          "order": 52,
-          "header": "// ============================================================\n// UI-CONTROLS (D-31 UI kit): src/modules/ui-controls/, pasted unchanged.\n// Defines window.SRETControls only and reads no app global. The app adapter\n// (APP_NAV) lives beside the Workspace code.\n// ============================================================",
+          "order": 72,
+          "header": "// ============================================================\n// UI-CONTROLS (D-32 UI kit): src/modules/ui-controls/, pasted unchanged.\n// Defines window.SRETControls only and reads no app global. The app adapter\n// (APP_NAV) lives beside the Workspace code.\n// ============================================================",
           "footer": "// ============ END UI-CONTROLS ============"
         }
       }
@@ -621,7 +695,7 @@
       "version": "0.1.1",
       "status": "embedded",
       "global": "SRETNav",
-      "summary": "Generic left navigation panel (D-31): expanded, rail and drawer modes, groups, badges, keyboard.",
+      "summary": "Generic left navigation panel (D-32): expanded, rail and drawer modes, groups, badges, keyboard.",
       "files": {
         "js": [
           "ui-nav.js"
@@ -644,8 +718,8 @@
       "recorded": {
         "version": "0.1.1",
         "sources": {
-          "ui-nav.js": "f4d07f4cf7ba1968",
-          "ui-nav.css": "b6ae55781ecee52a"
+          "ui-nav.js": "8cff0a3e2f2ad266",
+          "ui-nav.css": "7224fa01725ee90d"
         }
       },
       "embed": {
@@ -655,13 +729,13 @@
           "files": [
             "ui-nav.css"
           ],
-          "header": "/* ===== UI-NAV (D-31 UI kit): src/modules/ui-nav/, pasted unchanged. Uses only ui-tokens. ===== */",
+          "header": "/* ===== UI-NAV (D-32 UI kit): src/modules/ui-nav/, pasted unchanged. Uses only ui-tokens. ===== */",
           "footer": "/* ===== END UI-NAV ===== */"
         },
         "js": {
           "slot": "app-script-modules",
-          "order": 53,
-          "header": "// ============================================================\n// UI-NAV (D-31 UI kit): src/modules/ui-nav/, pasted unchanged.\n// Defines window.SRETNav only and reads no app global. The app adapter\n// (APP_NAV) lives beside the Workspace code.\n// ============================================================",
+          "order": 73,
+          "header": "// ============================================================\n// UI-NAV (D-32 UI kit): src/modules/ui-nav/, pasted unchanged.\n// Defines window.SRETNav only and reads no app global. The app adapter\n// (APP_NAV) lives beside the Workspace code.\n// ============================================================",
           "footer": "// ============ END UI-NAV ============"
         }
       }

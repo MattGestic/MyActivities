@@ -1,5 +1,5 @@
 /* ============================================================
-   ui-controls (SRETControls): behaviour for stateful controls (D-31).
+   ui-controls (SRETControls): behaviour for stateful controls (D-32).
    Markup-first: the HTML carries the state in ARIA attributes; this
    module only keeps them in step with clicks and keys, and reports.
 

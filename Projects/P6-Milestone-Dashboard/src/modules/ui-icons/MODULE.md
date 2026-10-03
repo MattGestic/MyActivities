@@ -1,11 +1,11 @@
 # ui-icons (`SRETIcons`)
 
-The kit's inline SVG icon set (D-31). 24 by 24 stroke icons drawn with `currentColor`. No icon font, no network.
+The kit's inline SVG icon set (D-32). 24 by 24 stroke icons drawn with `currentColor`. No icon font, no network.
 
 | Field | Value |
 |---|---|
 | Version | see `src/modules/MODULES.json` |
-| Status | Standalone (D-31 Stage A) |
+| Status | Embedded in the app from v3.1.0-P81 (D-32 Stage A). `python3 tools/modules_embed.py --list` gives its current lines. |
 | Global | `window.SRETIcons`, also `module.exports` |
 | Requires | none |
 
@@ -29,4 +29,4 @@ None.
 
 | Version | App version | Change |
 |---|---|---|
-| 0.1.0 | none (standalone) | First version, D-31 Stage A. |
+| 0.1.0 | none (standalone) | First version, D-32 Stage A. |

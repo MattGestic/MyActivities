@@ -250,12 +250,15 @@ def embed(man, src, only):
                     if src.count(slot) != 1:
                         sys.exit(f"{m['id']} {kind}: slot marker {slot!r} must appear exactly once in the app.")
                     a = b = src.index(slot)
-                    # Keep manifest order inside the slot: go in front of the first
-                    # region of the same slot with a higher order, not at the slot end.
-                    spec = m["embed"][kind]
+                    # Before the first region in this slot that loads later (higher
+                    # order); the slot marker is only right when none does. P79: once
+                    # continue-file followed notes-history, a re-inserted notes-history
+                    # landed after it and broke the slot's load order.
+                    mine = m["embed"][kind]
                     later = [regions[o["id"]][0] for o in embedded(man)
-                             if o["id"] in regions and o.get("embed", {}).get(kind, {}).get("slot") == spec["slot"]
-                             and o["embed"][kind].get("order", 0) > spec.get("order", 0)]
+                             if o["id"] != m["id"] and o["id"] in regions
+                             and o.get("embed", {}).get(kind, {}).get("slot") == mine["slot"]
+                             and o["embed"][kind].get("order", 0) > mine.get("order", 0)]
                     if later:
                         a = b = min(later)
                     new += "\n"

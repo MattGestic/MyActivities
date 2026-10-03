@@ -1,11 +1,11 @@
 # ui-surfaces (`SRETSurfaces`)
 
-The internal cards and content containers (D-31): card, section, panel header, toolbar, tabs, fold, list, empty state and toast.
+The internal cards and content containers (D-32): card, section, panel header, toolbar, tabs, fold, list, empty state and toast.
 
 | Field | Value |
 |---|---|
 | Version | see `src/modules/MODULES.json` |
-| Status | Standalone (D-31 Stage A) |
+| Status | Standalone (D-32 Stage A) |
 | Global | `window.SRETSurfaces` (`tabs`, `toast`), also `module.exports` |
 | Requires | `ui-tokens`; `ui-icons` for the fold chevron |
 
@@ -43,5 +43,5 @@ The internal cards and content containers (D-31): card, section, panel header, t
 
 | Version | App version | Change |
 |---|---|---|
-| 0.1.0 | none (standalone) | First version, D-31 Stage A. |
-| 0.1.1 | 3.1.0-P79 | Same spacing-token pass as ui-controls 0.1.1. |
+| 0.1.0 | none (standalone) | First version, D-32 Stage A. |
+| 0.1.1 | 3.1.0-P81 | Same spacing-token pass as ui-controls 0.1.1. |

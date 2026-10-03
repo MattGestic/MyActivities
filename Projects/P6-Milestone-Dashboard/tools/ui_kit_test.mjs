@@ -1,4 +1,4 @@
-// Unit test for the pure parts of the UI kit (D-31 Stage A). No browser.
+// Unit test for the pure parts of the UI kit (D-32 Stage A). No browser.
 //   node tools/ui_kit_test.mjs
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);

@@ -57,7 +57,7 @@ STAGE1 = r"""
     ck('the board has at least three milestone ids to link', !!(A&&B&&C), ids.length);
 
     // ---- rail and section ----
-    // D-31 (P79): the left nav's My work group, Notes first.
+    // D-32 (P81): the left nav's My work group, Notes first.
     const rail=qa('#ws-rail .ui-nav__group[data-group="work"] .ui-nav__item').map(function(b){ return b.dataset.id; });
     ck('Notes is the first item under My work in the nav', rail[0]==='notes', rail.join(','));
     setWorkspaceSection('notes',true);

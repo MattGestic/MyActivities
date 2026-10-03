@@ -1,5 +1,5 @@
 /* ============================================================
-   ui-icons (SRETIcons): the kit's inline SVG icon set (D-31).
+   ui-icons (SRETIcons): the kit's inline SVG icon set (D-32).
    24 x 24 stroke icons drawn with currentColor, so they take the text
    colour of whatever holds them. No icon font, no network.
 

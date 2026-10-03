@@ -1,4 +1,4 @@
-# UI kit gallery (D-31 Stage A)
+# UI kit gallery (D-32 Stage A)
 
 Standalone harness for the `ui-*` modules in `src/modules/`. It uses no app data.
 

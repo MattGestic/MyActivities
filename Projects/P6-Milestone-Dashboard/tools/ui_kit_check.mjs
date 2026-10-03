@@ -1,4 +1,4 @@
-// Browser check for the UI kit (D-31 Stage A): measured layout, behaviour and contracts.
+// Browser check for the UI kit (D-32 Stage A): measured layout, behaviour and contracts.
 //   node tools/ui_kit_check.mjs
 // Runs prototypes/ui-kit/demo-shell.html (the module files, unbundled) at 390, 768 and 1440,
 // then the built gallery once for console errors. Measures computed styles and classes,

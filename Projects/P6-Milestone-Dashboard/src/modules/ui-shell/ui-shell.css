@@ -1,5 +1,5 @@
 /* ============================================================
-   ui-shell: the external containers of an app screen (D-31).
+   ui-shell: the external containers of an app screen (D-32).
    Regions: nav (left), header (command bar), main (content), aside (right).
    Layout state is written by SRETShell as data attributes on .ui-shell:
      data-nav       expanded | rail | overlay | drawer

@@ -1,5 +1,5 @@
 /* ============================================================
-   ui-tokens: the one shared resource for the SRET UI kit (D-31).
+   ui-tokens: the one shared resource for the SRET UI kit (D-32).
    Every ui-* module reads only these custom properties. No ui-* module
    writes a literal colour, size or duration of its own.
 

@@ -6,7 +6,7 @@
 <title>SRET UI Kit</title>
 <style>/* src/modules/ui-tokens/ui-palette.css */
 /* ============================================================
-   ui-palette: the literal palette for standalone hosts of the UI kit (D-31).
+   ui-palette: the literal palette for standalone hosts of the UI kit (D-32).
    Load it beside ui-tokens.css where the host does not define --pal-*.
    The app does not load this file: its own html[data-theme] blocks are the
    palette (P55). Values copied from the app's light block, palette Option A.
@@ -49,7 +49,7 @@
 </style>
 <style>/* src/modules/ui-tokens/ui-tokens.css */
 /* ============================================================
-   ui-tokens: the one shared resource for the SRET UI kit (D-31).
+   ui-tokens: the one shared resource for the SRET UI kit (D-32).
    Every ui-* module reads only these custom properties. No ui-* module
    writes a literal colour, size or duration of its own.
 
@@ -201,7 +201,7 @@
 </style>
 <style>/* src/modules/ui-surfaces/ui-surfaces.css */
 /* ============================================================
-   ui-surfaces: internal cards and content containers (D-31).
+   ui-surfaces: internal cards and content containers (D-32).
    card, section, panel header, toolbar, tabs, fold, list, empty state, toast.
    Containers own their padding; children are spaced with gap. Uses only
    ui-tokens. Layout contract in MODULE.md.
@@ -369,7 +369,7 @@ button.ui-list-item:hover, .ui-list-item--action:hover { background: var(--ui-bg
 </style>
 <style>/* src/modules/ui-controls/ui-controls.css */
 /* ============================================================
-   ui-controls: form and action controls (D-31).
+   ui-controls: form and action controls (D-32).
    button, icon button, input, textarea, select, switch, segmented control,
    radio card, chip, badge, count, field, field grid.
    Visible control height is --ui-ctl-h; touch hit area is --ui-hit,
@@ -580,7 +580,7 @@ button.ui-list-item:hover, .ui-list-item--action:hover { background: var(--ui-bg
 <body class="ui-root">
 <div class="g-wrap">
   <header class="g-hd">
-    <span class="ui-badge ui-badge--accent" style="align-self:flex-start">D-31 Stage A · standalone · light theme</span>
+    <span class="ui-badge ui-badge--accent" style="align-self:flex-start">D-32 Stage A · standalone · light theme</span>
     <h1>SRET UI kit</h1>
     <p>The shared building blocks for the dashboard redesign. They are built here on their own, with no app data, so they can be reviewed, reused and redeployed. They cover the containers (shell), cards and controls, and the left navigation. The dialog form, right panel and filter bar follow in Stages B to D, on these same tokens.</p>
   </header>
@@ -605,7 +605,7 @@ button.ui-list-item:hover, .ui-list-item--action:hover { background: var(--ui-bg
 &lt;!-- Kit modules (build.py inlines these for the single-file gallery) --&gt;
 &lt;style&gt;/* src/modules/ui-tokens/ui-palette.css */
 /* ============================================================
-   ui-palette: the literal palette for standalone hosts of the UI kit (D-31).
+   ui-palette: the literal palette for standalone hosts of the UI kit (D-32).
    Load it beside ui-tokens.css where the host does not define --pal-*.
    The app does not load this file: its own html[data-theme] blocks are the
    palette (P55). Values copied from the app&#x27;s light block, palette Option A.
@@ -648,7 +648,7 @@ button.ui-list-item:hover, .ui-list-item--action:hover { background: var(--ui-bg
 &lt;/style&gt;
 &lt;style&gt;/* src/modules/ui-tokens/ui-tokens.css */
 /* ============================================================
-   ui-tokens: the one shared resource for the SRET UI kit (D-31).
+   ui-tokens: the one shared resource for the SRET UI kit (D-32).
    Every ui-* module reads only these custom properties. No ui-* module
    writes a literal colour, size or duration of its own.
 
@@ -800,7 +800,7 @@ button.ui-list-item:hover, .ui-list-item--action:hover { background: var(--ui-bg
 &lt;/style&gt;
 &lt;style&gt;/* src/modules/ui-shell/ui-shell.css */
 /* ============================================================
-   ui-shell: the external containers of an app screen (D-31).
+   ui-shell: the external containers of an app screen (D-32).
    Regions: nav (left), header (command bar), main (content), aside (right).
    Layout state is written by SRETShell as data attributes on .ui-shell:
      data-nav       expanded | rail | overlay | drawer
@@ -983,7 +983,7 @@ button.ui-list-item:hover, .ui-list-item--action:hover { background: var(--ui-bg
 &lt;/style&gt;
 &lt;style&gt;/* src/modules/ui-surfaces/ui-surfaces.css */
 /* ============================================================
-   ui-surfaces: internal cards and content containers (D-31).
+   ui-surfaces: internal cards and content containers (D-32).
    card, section, panel header, toolbar, tabs, fold, list, empty state, toast.
    Containers own their padding; children are spaced with gap. Uses only
    ui-tokens. Layout contract in MODULE.md.
@@ -1151,7 +1151,7 @@ button.ui-list-item:hover, .ui-list-item--action:hover { background: var(--ui-bg
 &lt;/style&gt;
 &lt;style&gt;/* src/modules/ui-controls/ui-controls.css */
 /* ============================================================
-   ui-controls: form and action controls (D-31).
+   ui-controls: form and action controls (D-32).
    button, icon button, input, textarea, select, switch, segmented control,
    radio card, chip, badge, count, field, field grid.
    Visible control height is --ui-ctl-h; touch hit area is --ui-hit,
@@ -1327,7 +1327,7 @@ button.ui-list-item:hover, .ui-list-item--action:hover { background: var(--ui-bg
 &lt;/style&gt;
 &lt;style&gt;/* src/modules/ui-nav/ui-nav.css */
 /* ============================================================
-   ui-nav: generic left navigation panel (D-31).
+   ui-nav: generic left navigation panel (D-32).
    Modes (data-mode on .ui-nav, set by SRETNav): expanded | rail.
    Context (data-context): docked | overlay | drawer, from the shell.
    Uses only ui-tokens. Layout contract in MODULE.md.
@@ -1589,7 +1589,7 @@ button.ui-nav__label:hover { color: var(--ui-on-brand); }
 
 &lt;script&gt;/* src/modules/ui-icons/ui-icons.js */
 /* ============================================================
-   ui-icons (SRETIcons): the kit&#x27;s inline SVG icon set (D-31).
+   ui-icons (SRETIcons): the kit&#x27;s inline SVG icon set (D-32).
    24 x 24 stroke icons drawn with currentColor, so they take the text
    colour of whatever holds them. No icon font, no network.
 
@@ -1657,7 +1657,7 @@ button.ui-nav__label:hover { color: var(--ui-on-brand); }
 &lt;/script&gt;
 &lt;script&gt;/* src/modules/ui-shell/ui-shell.js */
 /* ============================================================
-   ui-shell (SRETShell): layout controller for the app frame (D-31).
+   ui-shell (SRETShell): layout controller for the app frame (D-32).
    Knows nothing about the app&#x27;s data. It only decides how the nav and
    aside regions behave at the current width and writes that state as
    data attributes on the .ui-shell element (CSS does the rest).
@@ -1827,7 +1827,7 @@ button.ui-nav__label:hover { color: var(--ui-on-brand); }
 &lt;/script&gt;
 &lt;script&gt;/* src/modules/ui-surfaces/ui-surfaces.js */
 /* ============================================================
-   ui-surfaces (SRETSurfaces): behaviour for the surface primitives (D-31).
+   ui-surfaces (SRETSurfaces): behaviour for the surface primitives (D-32).
 
    API
      SRETSurfaces.tabs(tablistEl, opts?) -&gt; { select(id) }
@@ -1903,7 +1903,7 @@ button.ui-nav__label:hover { color: var(--ui-on-brand); }
 &lt;/script&gt;
 &lt;script&gt;/* src/modules/ui-controls/ui-controls.js */
 /* ============================================================
-   ui-controls (SRETControls): behaviour for stateful controls (D-31).
+   ui-controls (SRETControls): behaviour for stateful controls (D-32).
    Markup-first: the HTML carries the state in ARIA attributes; this
    module only keeps them in step with clicks and keys, and reports.
 
@@ -1991,7 +1991,7 @@ button.ui-nav__label:hover { color: var(--ui-on-brand); }
 &lt;/script&gt;
 &lt;script&gt;/* src/modules/ui-nav/ui-nav.js */
 /* ============================================================
-   ui-nav (SRETNav): generic left navigation panel (D-31).
+   ui-nav (SRETNav): generic left navigation panel (D-32).
    Renders from a config object; knows nothing about the app&#x27;s data.
    Selecting an item calls back to the host; the host decides what opens.
 
@@ -2268,8 +2268,8 @@ button.ui-nav__label:hover { color: var(--ui-on-brand); }
       </div>
       <div class="ui-card__body">
         <div class="ui-tabpanel g-doc" id="dp-tokens"><h1>ui-tokens</h1>
-<p>The one shared styling resource for the SRET UI kit (D-31). Every <code>ui-*</code> module reads only these custom properties.</p>
-<table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>see <code>src/modules/MODULES.json</code> (the only place it is written)</td></tr><tr><td>Status</td><td>Standalone (D-31 Stage A). Not embedded in the app yet.</td></tr><tr><td>Global</td><td>none (CSS only)</td></tr><tr><td>Requires</td><td>none</td></tr><tr><td>Theme</td><td>Light only for now. Dark is a later slot.</td></tr></tbody></table>
+<p>The one shared styling resource for the SRET UI kit (D-32). Every <code>ui-*</code> module reads only these custom properties.</p>
+<table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>see <code>src/modules/MODULES.json</code> (the only place it is written)</td></tr><tr><td>Status</td><td>Embedded in the app from v3.1.0-P81 (D-32 Stage A). <code>python3 tools/modules_embed.py --list</code> gives its current lines.</td></tr><tr><td>Global</td><td>none (CSS only)</td></tr><tr><td>Requires</td><td>none</td></tr><tr><td>Theme</td><td>Light only for now. Dark is a later slot.</td></tr></tbody></table>
 <h2>What it defines</h2>
 <table><thead><tr><th>Group</th><th>Tokens</th><th>Notes</th></tr></thead><tbody><tr><td>Palette</td><td><code>--pal-*</code></td><td>Supplied by the host. The app supplies them in its two <code>html[data-theme]</code> blocks (P55). Standalone hosts load <code>ui-palette.css</code> (a copy of the app's light palette, the only literal colours in the kit). <code>ui-tokens.css</code> itself holds no literal colour.</td></tr><tr><td>Colour roles</td><td><code>--ui-bg-*</code>, <code>--ui-text*</code>, <code>--ui-border*</code>, <code>--ui-accent*</code>, <code>--ui-brand*</code>, <code>--ui-on-brand*</code>, <code>--ui-ok/warn/danger*</code>, <code>--ui-scrim</code>, <code>--ui-focus</code></td><td>Components use roles, never <code>--pal-*</code> directly.</td></tr><tr><td>Spacing</td><td><code>--ui-space-0..8</code> = 2, 4, 8, 12, 16, 20, 24, 32, 40 px; <code>--ui-gutter</code></td><td>Gutter is 16 px on phone and tablet, 24 px from 1025 px.</td></tr><tr><td>Type</td><td><code>--ui-font</code>, <code>--ui-font-mono</code>, <code>--ui-text-xs..2xl</code> with matching <code>--ui-lh-*</code>, weights, <code>--ui-tracking-label</code></td><td>11, 12, 13, 14, 16, 20 px. Body is 13/20.</td></tr><tr><td>Shape</td><td><code>--ui-radius-sm/md/lg/xl/pill</code></td><td>4, 6, 8, 12 px.</td></tr><tr><td>Elevation</td><td><code>--ui-shadow-1/2/3</code></td><td>Level 1 cards, 2 popovers, 3 drawers and dialogs (design-standard levels).</td></tr><tr><td>Controls</td><td><code>--ui-ctl-h</code> (32 px, also on touch), <code>--ui-ctl-h-sm</code>, <code>--ui-hit</code> (40 px), <code>--ui-icon</code>, <code>--ui-icon-sm</code></td><td>Touch targets reach 40 px through <code>::after</code>, never by growing the visible box.</td></tr><tr><td>Motion</td><td><code>--ui-dur-fast/base/slow</code> = 120/200/240 ms; <code>--ui-ease-standard/enter/exit</code></td><td>See Motion below.</td></tr><tr><td>Layers</td><td><code>--ui-z-nav</code> up to <code>--ui-z-toast</code></td><td>Fixed order: nav, aside, scrim, drawer, dialog, popover, toast. A host may override the values to sit the kit among its own layers (the app does).</td></tr><tr><td>Shell sizes</td><td><code>--ui-nav-w-expanded/rail/drawer</code>, <code>--ui-header-h</code>, <code>--ui-aside-w</code>, <code>--ui-nav-col</code></td><td>240, 60, 288, 52, 380 px. <code>--ui-nav-col</code> is the nav column in use, written by <code>SRETShell</code>.</td></tr><tr><td>Breakpoints</td><td>documented constants</td><td>Phone up to 640, tablet 641 to 1024, desktop from 1025, wide from 1280. CSS cannot read variables in media queries, so each module repeats these numbers.</td></tr></tbody></table>
 <h2>Layout contract</h2>
@@ -2280,10 +2280,10 @@ button.ui-nav__label:hover { color: var(--ui-on-brand); }
 <ul><li>One animation per user action.</li><li>No staggers or chained sequences.</li><li>No motion on data.</li><li>Only transform and opacity animate, except deliberate width changes (nav, pinned aside).</li></ul>
 <p>The OS "reduce motion" accessibility setting sets every duration to 0 automatically. There is no control for it in the UI.</p>
 <h2>Changelog</h2>
-<table><thead><tr><th>Version</th><th>App version</th><th>Change</th></tr></thead><tbody><tr><td>0.1.0</td><td>none (standalone)</td><td>First version, D-31 Stage A.</td></tr><tr><td>0.2.0</td><td>3.1.0-P79</td><td>Literal palette moved to <code>ui-palette.css</code>, loaded only by standalone hosts; in the app the roles resolve to its own <code>--pal-*</code> blocks (P55), so <code>colour_audit --strict</code> is unaffected. Touch control height 32 px (design-standard), hit area stays 40 px. Layer tokens documented as host-overridable. <code>--ui-nav-col</code> default added. <code>--ui-space-0</code> (2 px) added; <code>.ui-visually-hidden</code> drops its -1px margin.</td></tr></tbody></table></div>
+<table><thead><tr><th>Version</th><th>App version</th><th>Change</th></tr></thead><tbody><tr><td>0.1.0</td><td>none (standalone)</td><td>First version, D-32 Stage A.</td></tr><tr><td>0.2.0</td><td>3.1.0-P81</td><td>Literal palette moved to <code>ui-palette.css</code>, loaded only by standalone hosts; in the app the roles resolve to its own <code>--pal-*</code> blocks (P55), so <code>colour_audit --strict</code> is unaffected. Touch control height 32 px (design-standard), hit area stays 40 px. Layer tokens documented as host-overridable. <code>--ui-nav-col</code> default added. <code>--ui-space-0</code> (2 px) added; <code>.ui-visually-hidden</code> drops its -1px margin.</td></tr></tbody></table></div>
         <div class="ui-tabpanel g-doc" id="dp-shell" hidden><h1>ui-shell (<code>SRETShell</code>)</h1>
-<p>The external containers of an app screen (D-31): nav (left), header (command bar), main (content) and aside (right). It knows nothing about the app's data. It decides how the nav and aside behave at the current width.</p>
-<table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>see <code>src/modules/MODULES.json</code></td></tr><tr><td>Status</td><td>Standalone (D-31 Stage A)</td></tr><tr><td>Global</td><td><code>window.SRETShell</code>, also <code>module.exports</code></td></tr><tr><td>Requires</td><td><code>ui-tokens</code></td></tr></tbody></table>
+<p>The external containers of an app screen (D-32): nav (left), header (command bar), main (content) and aside (right). It knows nothing about the app's data. It decides how the nav and aside behave at the current width.</p>
+<table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>see <code>src/modules/MODULES.json</code></td></tr><tr><td>Status</td><td>Embedded in the app from v3.1.0-P81 (D-32 Stage A). <code>python3 tools/modules_embed.py --list</code> gives its current lines.</td></tr><tr><td>Global</td><td><code>window.SRETShell</code>, also <code>module.exports</code></td></tr><tr><td>Requires</td><td><code>ui-tokens</code></td></tr></tbody></table>
 <h2>Interface</h2>
 <p>The header comment of <code>ui-shell.js</code> is the API reference (<code>mount</code>, <code>layoutFor</code>, controller methods, the <code>ui-shell:change</code> event).</p>
 <p>Markup:</p>
@@ -2315,10 +2315,10 @@ button.ui-nav__label:hover { color: var(--ui-on-brand); }
 <h2>Tests</h2>
 <ul><li><code>tools/ui_kit_test.mjs</code>: <code>layoutFor</code> across the band edges.</li><li><code>tools/ui_kit_check.mjs</code>: the gallery at 390, 768 and 1440.</li></ul>
 <h2>Changelog</h2>
-<table><thead><tr><th>Version</th><th>App version</th><th>Change</th></tr></thead><tbody><tr><td>0.1.0</td><td>none (standalone)</td><td>First version, D-31 Stage A.</td></tr><tr><td>0.2.0</td><td>3.1.0-P79</td><td>No motion before <code>data-ui-ready</code> (boot). Page variant (<code>variant:'page'</code>, class <code>.ui-shell-page</code>) for hosts whose document scrolls: fixed nav, <code>--ui-nav-col</code> written on <code>&lt;html&gt;</code> for the host to offset its content. Esc listener in the capture phase, stops the event only when it closed something.</td></tr></tbody></table></div>
+<table><thead><tr><th>Version</th><th>App version</th><th>Change</th></tr></thead><tbody><tr><td>0.1.0</td><td>none (standalone)</td><td>First version, D-32 Stage A.</td></tr><tr><td>0.2.0</td><td>3.1.0-P81</td><td>No motion before <code>data-ui-ready</code> (boot). Page variant (<code>variant:'page'</code>, class <code>.ui-shell-page</code>) for hosts whose document scrolls: fixed nav, <code>--ui-nav-col</code> written on <code>&lt;html&gt;</code> for the host to offset its content. Esc listener in the capture phase, stops the event only when it closed something.</td></tr></tbody></table></div>
         <div class="ui-tabpanel g-doc" id="dp-surfaces" hidden><h1>ui-surfaces (<code>SRETSurfaces</code>)</h1>
-<p>The internal cards and content containers (D-31): card, section, panel header, toolbar, tabs, fold, list, empty state and toast.</p>
-<table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>see <code>src/modules/MODULES.json</code></td></tr><tr><td>Status</td><td>Standalone (D-31 Stage A)</td></tr><tr><td>Global</td><td><code>window.SRETSurfaces</code> (<code>tabs</code>, <code>toast</code>), also <code>module.exports</code></td></tr><tr><td>Requires</td><td><code>ui-tokens</code>; <code>ui-icons</code> for the fold chevron</td></tr></tbody></table>
+<p>The internal cards and content containers (D-32): card, section, panel header, toolbar, tabs, fold, list, empty state and toast.</p>
+<table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>see <code>src/modules/MODULES.json</code></td></tr><tr><td>Status</td><td>Standalone (D-32 Stage A)</td></tr><tr><td>Global</td><td><code>window.SRETSurfaces</code> (<code>tabs</code>, <code>toast</code>), also <code>module.exports</code></td></tr><tr><td>Requires</td><td><code>ui-tokens</code>; <code>ui-icons</code> for the fold chevron</td></tr></tbody></table>
 <h2>Layout contract</h2>
 <table><thead><tr><th>Part</th><th>Direction and wrap</th><th>Padding</th><th>Gap</th><th>Content behaviour</th></tr></thead><tbody><tr><td><code>.ui-card</code></td><td>column</td><td>none (its parts pad)</td><td>none</td><td><code>min-width: 0</code>. Border 1 px, radius 8, elevation 1</td></tr><tr><td><code>.ui-card__header</code></td><td>row, no wrap</td><td>12 px 16 px</td><td>8 px</td><td>Title truncates with an ellipsis; actions keep their size</td></tr><tr><td><code>.ui-card__body</code></td><td>column</td><td>16 px</td><td>12 px</td><td>Children stack; text wraps</td></tr><tr><td><code>.ui-card__footer</code></td><td>row, <b>wraps</b>, right-aligned</td><td>12 px 16 px</td><td>8 px</td><td>Buttons wrap to a new line on narrow widths, never squeezed</td></tr><tr><td><code>.ui-section</code></td><td>column</td><td>none</td><td>8 px</td><td>Uppercase 11 px label, then content</td></tr><tr><td><code>.ui-panel-header</code></td><td>row, no wrap</td><td>8 px 12 px 8 px 16 px; min height 52 px</td><td>8 px</td><td>Title truncates; actions keep their size</td></tr><tr><td><code>.ui-toolbar</code></td><td>row, <b>wraps</b></td><td>none</td><td>8 px</td><td><code>--scroll</code> variant: no wrap, scrolls sideways (use where a second line would push content down, such as a filter row on desktop)</td></tr><tr><td><code>.ui-tabs</code></td><td>row, no wrap</td><td>0 12 px</td><td>4 px</td><td>Scrolls sideways when the tabs do not fit; tabs never wrap or truncate</td></tr><tr><td><code>.ui-fold</code></td><td>summary row; body column</td><td>body 0 0 12 px</td><td>12 px</td><td>Native <code>details</code>, so it works without script</td></tr><tr><td><code>.ui-list-item</code></td><td>row, no wrap</td><td>8 px 16 px; min height 44 px</td><td>12 px</td><td>Title truncates; meta line is 12 px muted; the end slot keeps its size</td></tr><tr><td><code>.ui-empty</code></td><td>column, centred</td><td>32 px 20 px</td><td>12 px</td><td>Text wraps at 36 characters</td></tr><tr><td><code>.ui-toast</code></td><td>row</td><td>12 px 16 px</td><td>12 px</td><td>Max 420 px wide or the viewport minus 32 px; text wraps</td></tr></tbody></table>
 <h2>Motion</h2>
@@ -2326,10 +2326,10 @@ button.ui-nav__label:hover { color: var(--ui-on-brand); }
 <h2>Tests</h2>
 <p><code>tools/ui_kit_check.mjs</code> covers padding and gaps against this table, tab keyboard behaviour, and toast timing.</p>
 <h2>Changelog</h2>
-<table><thead><tr><th>Version</th><th>App version</th><th>Change</th></tr></thead><tbody><tr><td>0.1.0</td><td>none (standalone)</td><td>First version, D-31 Stage A.</td></tr><tr><td>0.1.1</td><td>3.1.0-P79</td><td>Same spacing-token pass as ui-controls 0.1.1.</td></tr></tbody></table></div>
+<table><thead><tr><th>Version</th><th>App version</th><th>Change</th></tr></thead><tbody><tr><td>0.1.0</td><td>none (standalone)</td><td>First version, D-32 Stage A.</td></tr><tr><td>0.1.1</td><td>3.1.0-P81</td><td>Same spacing-token pass as ui-controls 0.1.1.</td></tr></tbody></table></div>
         <div class="ui-tabpanel g-doc" id="dp-controls" hidden><h1>ui-controls (<code>SRETControls</code>)</h1>
-<p>The form and action controls (D-31): button variants, text input, textarea, select, field, field grid, switch, segmented control, radio cards, chips, badges and counts. The markup carries state in ARIA attributes, and <code>SRETControls.bind</code> keeps it in step and emits events.</p>
-<table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>see <code>src/modules/MODULES.json</code></td></tr><tr><td>Status</td><td>Standalone (D-31 Stage A)</td></tr><tr><td>Global</td><td><code>window.SRETControls</code>, also <code>module.exports</code></td></tr><tr><td>Requires</td><td><code>ui-tokens</code>; <code>ui-icons</code> where a control shows an icon</td></tr></tbody></table>
+<p>The form and action controls (D-32): button variants, text input, textarea, select, field, field grid, switch, segmented control, radio cards, chips, badges and counts. The markup carries state in ARIA attributes, and <code>SRETControls.bind</code> keeps it in step and emits events.</p>
+<table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>see <code>src/modules/MODULES.json</code></td></tr><tr><td>Status</td><td>Embedded in the app from v3.1.0-P81 (D-32 Stage A). <code>python3 tools/modules_embed.py --list</code> gives its current lines.</td></tr><tr><td>Global</td><td><code>window.SRETControls</code>, also <code>module.exports</code></td></tr><tr><td>Requires</td><td><code>ui-tokens</code>; <code>ui-icons</code> where a control shows an icon</td></tr></tbody></table>
 <h2>Interface</h2>
 <p>The header comment of <code>ui-controls.js</code> is the API reference. Events: <code>ui-change</code> (<code>detail.id</code>, <code>detail.value</code>) and <code>ui-remove</code>.</p>
 <h2>Layout contract</h2>
@@ -2339,10 +2339,10 @@ button.ui-nav__label:hover { color: var(--ui-on-brand); }
 <h2>Tests</h2>
 <p><code>tools/ui_kit_check.mjs</code>: control heights, the 40 px hit area, switch and segmented events, the chip remove event, and the field grid going to one column at 390 px.</p>
 <h2>Changelog</h2>
-<table><thead><tr><th>Version</th><th>App version</th><th>Change</th></tr></thead><tbody><tr><td>0.1.0</td><td>none (standalone)</td><td>First version, D-31 Stage A.</td></tr><tr><td>0.1.1</td><td>3.1.0-P79</td><td>Sub-scale spacing on the token scale: <code>--ui-space-0</code> (2 px) for the segmented track, the count badge padding on <code>--ui-space-1</code>. No literal px in padding, margin or gap (the app's spacing_audit).</td></tr></tbody></table></div>
+<table><thead><tr><th>Version</th><th>App version</th><th>Change</th></tr></thead><tbody><tr><td>0.1.0</td><td>none (standalone)</td><td>First version, D-32 Stage A.</td></tr><tr><td>0.1.1</td><td>3.1.0-P81</td><td>Sub-scale spacing on the token scale: <code>--ui-space-0</code> (2 px) for the segmented track, the count badge padding on <code>--ui-space-1</code>. No literal px in padding, margin or gap (the app's spacing_audit).</td></tr></tbody></table></div>
         <div class="ui-tabpanel g-doc" id="dp-nav" hidden><h1>ui-nav (<code>SRETNav</code>)</h1>
-<p>The generic left navigation panel (D-31). It renders from a config of groups and items and calls the host back when an item is chosen. It has no knowledge of the app's data; counts arrive as badges from the host.</p>
-<table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>see <code>src/modules/MODULES.json</code></td></tr><tr><td>Status</td><td>Standalone (D-31 Stage A)</td></tr><tr><td>Global</td><td><code>window.SRETNav</code>, also <code>module.exports</code></td></tr><tr><td>Requires</td><td><code>ui-tokens</code>, <code>ui-icons</code>; <code>ui-controls</code> for the drawer close button</td></tr><tr><td>Works with</td><td><code>ui-shell</code>: pass <code>opts.shell</code> and the nav follows its mode and context</td></tr></tbody></table>
+<p>The generic left navigation panel (D-32). It renders from a config of groups and items and calls the host back when an item is chosen. It has no knowledge of the app's data; counts arrive as badges from the host.</p>
+<table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>see <code>src/modules/MODULES.json</code></td></tr><tr><td>Status</td><td>Embedded in the app from v3.1.0-P81 (D-32 Stage A). <code>python3 tools/modules_embed.py --list</code> gives its current lines.</td></tr><tr><td>Global</td><td><code>window.SRETNav</code>, also <code>module.exports</code></td></tr><tr><td>Requires</td><td><code>ui-tokens</code>, <code>ui-icons</code>; <code>ui-controls</code> for the drawer close button</td></tr><tr><td>Works with</td><td><code>ui-shell</code>: pass <code>opts.shell</code> and the nav follows its mode and context</td></tr></tbody></table>
 <h2>Interface</h2>
 <p>The header comment of <code>ui-nav.js</code> is the API reference: config shape, <code>mount</code>, <code>setActive</code>, <code>setBadge</code>, <code>setMode</code>, <code>setContext</code>, <code>update</code>.</p>
 <h2>Modes and context</h2>
@@ -2357,10 +2357,10 @@ button.ui-nav__label:hover { color: var(--ui-on-brand); }
 <h2>Tests</h2>
 <p><code>tools/ui_kit_check.mjs</code>: mode and context per band, the tooltip in rail, keyboard movement, badge update, the collapse callback, padding and gaps against this table, and no horizontal overflow.</p>
 <h2>Changelog</h2>
-<table><thead><tr><th>Version</th><th>App version</th><th>Change</th></tr></thead><tbody><tr><td>0.1.0</td><td>none (standalone)</td><td>First version, D-31 Stage A.</td></tr><tr><td>0.1.1</td><td>3.1.0-P79</td><td><code>setActive(null)</code> clears the current item. Spacing literals moved onto <code>--ui-space-0</code> and <code>--ui-space-1</code>.</td></tr></tbody></table></div>
+<table><thead><tr><th>Version</th><th>App version</th><th>Change</th></tr></thead><tbody><tr><td>0.1.0</td><td>none (standalone)</td><td>First version, D-32 Stage A.</td></tr><tr><td>0.1.1</td><td>3.1.0-P81</td><td><code>setActive(null)</code> clears the current item. Spacing literals moved onto <code>--ui-space-0</code> and <code>--ui-space-1</code>.</td></tr></tbody></table></div>
         <div class="ui-tabpanel g-doc" id="dp-icons" hidden><h1>ui-icons (<code>SRETIcons</code>)</h1>
-<p>The kit's inline SVG icon set (D-31). 24 by 24 stroke icons drawn with <code>currentColor</code>. No icon font, no network.</p>
-<table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>see <code>src/modules/MODULES.json</code></td></tr><tr><td>Status</td><td>Standalone (D-31 Stage A)</td></tr><tr><td>Global</td><td><code>window.SRETIcons</code>, also <code>module.exports</code></td></tr><tr><td>Requires</td><td>none</td></tr></tbody></table>
+<p>The kit's inline SVG icon set (D-32). 24 by 24 stroke icons drawn with <code>currentColor</code>. No icon font, no network.</p>
+<table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>see <code>src/modules/MODULES.json</code></td></tr><tr><td>Status</td><td>Embedded in the app from v3.1.0-P81 (D-32 Stage A). <code>python3 tools/modules_embed.py --list</code> gives its current lines.</td></tr><tr><td>Global</td><td><code>window.SRETIcons</code>, also <code>module.exports</code></td></tr><tr><td>Requires</td><td>none</td></tr></tbody></table>
 <h2>Interface</h2>
 <p>The header comment of <code>ui-icons.js</code> is the API reference: <code>svg(name, opts)</code>, <code>has(name)</code>, <code>names()</code>. An unknown name renders an empty box instead of throwing.</p>
 <h2>Layout contract</h2>
@@ -2368,7 +2368,7 @@ button.ui-nav__label:hover { color: var(--ui-on-brand); }
 <h2>Motion</h2>
 <p>None.</p>
 <h2>Changelog</h2>
-<table><thead><tr><th>Version</th><th>App version</th><th>Change</th></tr></thead><tbody><tr><td>0.1.0</td><td>none (standalone)</td><td>First version, D-31 Stage A.</td></tr></tbody></table><div id="icon-grid" class="ui-chips" style="margin-top:var(--ui-space-4)"></div></div>
+<table><thead><tr><th>Version</th><th>App version</th><th>Change</th></tr></thead><tbody><tr><td>0.1.0</td><td>none (standalone)</td><td>First version, D-32 Stage A.</td></tr></tbody></table><div id="icon-grid" class="ui-chips" style="margin-top:var(--ui-space-4)"></div></div>
       </div>
     </section>
   </section>
@@ -2376,7 +2376,7 @@ button.ui-nav__label:hover { color: var(--ui-on-brand); }
 
 <script>/* src/modules/ui-icons/ui-icons.js */
 /* ============================================================
-   ui-icons (SRETIcons): the kit's inline SVG icon set (D-31).
+   ui-icons (SRETIcons): the kit's inline SVG icon set (D-32).
    24 x 24 stroke icons drawn with currentColor, so they take the text
    colour of whatever holds them. No icon font, no network.
 
@@ -2444,7 +2444,7 @@ button.ui-nav__label:hover { color: var(--ui-on-brand); }
 </script>
 <script>/* src/modules/ui-surfaces/ui-surfaces.js */
 /* ============================================================
-   ui-surfaces (SRETSurfaces): behaviour for the surface primitives (D-31).
+   ui-surfaces (SRETSurfaces): behaviour for the surface primitives (D-32).
 
    API
      SRETSurfaces.tabs(tablistEl, opts?) -> { select(id) }
@@ -2520,7 +2520,7 @@ button.ui-nav__label:hover { color: var(--ui-on-brand); }
 </script>
 <script>/* src/modules/ui-controls/ui-controls.js */
 /* ============================================================
-   ui-controls (SRETControls): behaviour for stateful controls (D-31).
+   ui-controls (SRETControls): behaviour for stateful controls (D-32).
    Markup-first: the HTML carries the state in ARIA attributes; this
    module only keeps them in step with clicks and keys, and reports.
 

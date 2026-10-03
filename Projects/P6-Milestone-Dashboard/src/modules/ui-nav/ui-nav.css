@@ -1,5 +1,5 @@
 /* ============================================================
-   ui-nav: generic left navigation panel (D-31).
+   ui-nav: generic left navigation panel (D-32).
    Modes (data-mode on .ui-nav, set by SRETNav): expanded | rail.
    Context (data-context): docked | overlay | drawer, from the shell.
    Uses only ui-tokens. Layout contract in MODULE.md.

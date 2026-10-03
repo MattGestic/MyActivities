@@ -1,5 +1,5 @@
 /* ============================================================
-   ui-palette: the literal palette for standalone hosts of the UI kit (D-31).
+   ui-palette: the literal palette for standalone hosts of the UI kit (D-32).
    Load it beside ui-tokens.css where the host does not define --pal-*.
    The app does not load this file: its own html[data-theme] blocks are the
    palette (P55). Values copied from the app's light block, palette Option A.

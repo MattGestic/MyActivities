@@ -541,3 +541,11 @@ A second, separate trap in the same change: a JS comment naming the block as a l
 
 **Before embedding anything, count `</body>`, `<head>`, `</head>` and `</html>` across the whole page (each must stay at one) and search the library and your own comments for script start tags.** The fix that keeps the library honest is a documented `\x3C` escape of the `<` in those literals, which is the same string at runtime, rather than changing 34 tools. `tools/d23_check.py` asserts the counts.
 
+## A reader that found its own description (v3.1.0-P79)
+
+The continue-file module finds a saved dashboard's state by matching the published-state script element in the file's text. Its header comment named that element as a literal tag. Once embedded, the comment was part of every copy of the app, so the blank app matched too, and was reported as a "damaged" saved file instead of "no saved dashboard data". A real saved file happened to work, because its state element sits in `<head>`, before the app script's comment.
+
+The module's unit test caught it on the first run after `--embed`, because it reads the real app file and not a hand-made sample.
+
+**A text matcher that ships inside the thing it searches must match the data's shape, not its name.** The fix matches the element only when its text opens with the assignment, and the comment no longer spells the tag. It is the same family as the P60 entry above: a literal in our own source behaves like markup the moment it is pasted into the page. **Test a reader against the real file it will be pointed at, including the app itself.**
+

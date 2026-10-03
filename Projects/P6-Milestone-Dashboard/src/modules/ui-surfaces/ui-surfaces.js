@@ -1,5 +1,5 @@
 /* ============================================================
-   ui-surfaces (SRETSurfaces): behaviour for the surface primitives (D-31).
+   ui-surfaces (SRETSurfaces): behaviour for the surface primitives (D-32).
 
    API
      SRETSurfaces.tabs(tablistEl, opts?) -> { select(id) }

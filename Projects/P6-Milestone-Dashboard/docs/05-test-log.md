@@ -3473,16 +3473,80 @@ This test covers TD-245 and TASK-64. It changes tooling only, so the app code is
 - **App file:** the base's pasted modules matched their sources exactly and were adopted unchanged. Against P78, the app differs only by the markers and three comment lines.
 - **Tests:** `modules_embed_test.py` passed 14/14 and `--check` was clean. `run_checks.py --jobs 4` selected 69 checks and all 69 passed (15.9 min).
 
-## TEST-82: D-31 Stage A, the kit's left nav in the app (v3.1.0-P79)
+## TEST-82: P79 continue from a saved dashboard (v3.1.0-P79)
 
-This test covers TD-248. The left nav is the `ui-nav` module, hosted in `#ws-rail` and laid out by the `ui-shell` page variant. The base-screen tidy covers:
+This test covers TD-247 and D-31. The contract and the hand-off are in `docs/decisions/D-31-continue-from-saved.md`.
+
+**New checks**
+- `continue_file_test.mjs` (module alone, Node): 28/28. It runs against real repo files, including the app itself and `data/published/Milestone_Dashboard_empty.html`. It covers:
+  - the escaped `< > &` round trip, including a closing script tag inside the data;
+  - a sentinel script in the file, which stays inert;
+  - attribute order and quoting;
+  - a backup `.json` and a BOM;
+  - refusals: annotations-only export, blank app, saved empty dashboard, report page, CSV, broken JSON, damaged block, timeline mismatch, empty and null input;
+  - versions: newer major refused, newer partial warns, older warns, same version silent;
+  - the provenance chain;
+  - no em dash in any message.
+- `p79_continue_check.py` (browser): 71/71.
+  - Page A (seeded app) adds a remark, a user milestone, a note and a project number, then the real Save.
+  - Page B (blank app, `sret:no-fixture`) runs at 1440 and 390 wide. It covers the button on screen, no sideways scroll, refusals that leave the board empty, drop (an `.xlsx` is not taken, an `.html` is), the summary text, the mirror counts (121 rows, 152 milestones, the user milestone drawn, entries, notes, baseline, project number), the unsaved state, the provenance chain, the saved file's scripts never running, a re-save reading back with chain + 1, the replace warning plus a pinned `Before continue` backup, rollback after a failed load, no em dash and no page errors.
+
+**Defects found and fixed in this change**
+1. **The blank app read as a "damaged" saved file.** The reader matched the bare published-state tag, and the module's header comment named it. Once embedded, that comment is part of every copy of the app. The reader now requires the element's text to open with the assignment. Lesson recorded in `06-lessons-learned.md`.
+2. **`modules_embed_test` 5b failed.** `--embed` re-inserted a missing region at the end of its slot, so once `continue-file` (order 50) followed `notes-history` (order 40), a re-inserted `notes-history` landed after it. `--embed` now inserts before the first region in the slot with a higher order. The tool fix was proven by the same test passing.
+
+**Suite**
+- `run_checks.py` (change-scoped, 3 jobs): 70 selected, 69 passed, 1 failed (`modules_embed_test`, defect 2), wall 18.3 min.
+- After the fix and a comment edit in the app, a settling run: 69 selected / 69 passed / 0 failed (17.5 min).
+- `continue_file_test` was then added to `NODE_TESTS` in `run_checks.py`: 14 selected / 14 passed.
+
+**Other gates**
+- `modules_embed.py --check`: clean.
+- The version-literal count is 1.
+- `</body>`, `<head>`, `</head>` and `</html>` each still appear once.
+- No literal script start tag was added (the reader spells `<` as `\x3C`).
+
+**Not tested:** a real Android or Windows device. Every check is headless Chromium on Linux.
+
+## TEST-83: P80 quick links in the blank copy (v3.1.0-P80)
+
+This test covers TD-248 (D-31 §8).
+
+**New checks**
+- `quick_links_test.mjs`: 27/27.
+- `p80_quick_links_check.py`: 45/45.
+  - Blank app at 1440 and 390 wide.
+  - A saved blank copy opened as a file.
+  - Continue from a saved file, including one hand-edited to carry a `javascript:` link, which is dropped.
+
+**Pre-existing defect fixed:** every saved copy opened with the Unsaved changes pill lit. `publishDashboard()` cloned the page while the pill was showing; the clone now has it removed. Found by `p80_quick_links_check` C.
+
+**Selection: targeted, not the change-scoped default (Matt, 2026-10-03).**
+- **Why not the default:** the default selected 73 of 74 checks, because embedding a module re-selects every browser check (TD-246) and the version bump touches a region every check reads. Neither means a check is affected.
+- **What was chosen instead:** the checks covering what P80 touched:
+  - the feature checks: `p80`, `p79`;
+  - the Save, backup and saved-copy paths whose functions changed: `p76_loss_check`, `p71_check`, `p74_check`, `persist_check`;
+  - no network, for the links: `d23_check`;
+  - the new CSS: `theme_check`, `palette_swap_check`, `colour_audit`, `spacing_audit`;
+  - the module tooling: `modules_embed`, `modules_embed_test`;
+  - the node tests.
+- **Command:** `run_checks.py --all --only <those 16>`.
+- **Result:** 16 selected / 16 passed / 0 failed, 1.2 min.
+- **Not run:** the other browser checks. They exercise the board, card, grid, filters and import, and P80 changed none of that code.
+- **Exceptions accepted:** TD-246, until region splitting makes the default selection this narrow on its own.
+
+## TEST-84: D-32 Stage A, the kit's left nav in the app (v3.1.0-P81)
+
+**Merge note.** Built as P79 alongside a parallel session that shipped P79 (continue from a saved dashboard) and P80 (quick links) to the base under TD-247/248, D-31 and TEST-82/83. This work merged the base in and took the next free IDs: v3.1.0-P81, D-32 (and D-33 for the filter design round), TD-249 to TD-251, TEST-84, `p81_nav_check`. The kit's JS regions moved after `continue-file` and `quick-links` in the module slot (orders 70 to 73). The figures below are from the merged source.
+
+This test covers TD-250. The left nav is the `ui-nav` module, hosted in `#ws-rail` and laid out by the `ui-shell` page variant. The base-screen tidy covers:
 - the board height is measured;
 - the header uses one gutter;
 - More actions is a labelled menu at every width.
 
 The figures below are measured by class and computed style, not screenshots.
 
-**`tools/p79_nav_check.py` (new): 190/190 passed** at 1440, 1440 with a legacy `sret-rail` value, 1024, 768 and 390.
+**`tools/p81_nav_check.py` (new): 190/190 passed** at 1440, 1440 with a legacy `sret-rail` value, 1024, 768 and 390.
 - Band state per width: expanded above 1024, rail to 1024, drawer at 640 and below. `--ui-nav-col` and the body offset match (240, 60, 0).
 - Every nav item reaches its entry point: the Workspace sections, Grid in and out, Print preview in and out, and the four Data & view tabs.
 - The docked Workspace panel pushes the board by nav plus panel width.
@@ -3506,7 +3570,7 @@ The figures below are measured by class and computed style, not screenshots.
 - A region re-inserted by `--embed` goes in manifest order inside its slot, not at the slot end.
 - `modules_embed_test.py`: all scenarios pass.
 
-**`run_checks.py --all --jobs 4`:** 71 selected, 71 passed, 12.2 min, on the final source.
+**`run_checks.py --all --jobs 4`:** 75 selected, 75 passed, 12.6 min, on the merged source (base P80 plus this work), including `p79_continue_check` and `p80_quick_links_check` from the base. Before the merge: 71 of 71.
 - The first full run on the integration found 4 failures: p39, p53, p72_filter_scroll and spacing_audit. Each was a direct consequence of the shell change:
   - p39, p53 and p72_filter_scroll: the check updates above.
   - spacing_audit: the kit's sub-scale 2 px and 6 px literals were moved onto `--ui-space-0` and `--ui-space-1`, so the audit is back at its ceiling of 129. The ceiling was not raised.
@@ -3519,5 +3583,5 @@ The figures below are measured by class and computed style, not screenshots.
 
 **Accepted changes in behaviour:**
 - On desktop the default nav is 240 px, against the old 44 px icon rail. Collapse gives a 60 px rail and is remembered.
-- At 1440 the filter bar is therefore narrow and Find and Date range stack, so there is one more row. D-31 Stage D re-hosts the filters.
+- At 1440 the filter bar is therefore narrow and Find and Date range stack, so there is one more row. D-32 Stage D re-hosts the filters.
 - Before and after PNGs were not committed: every board view carries the client fixture (R7). The `prototypes/ui-kit/` gallery shows the nav on illustrative data.

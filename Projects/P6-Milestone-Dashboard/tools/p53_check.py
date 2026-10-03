@@ -413,7 +413,7 @@ LAYOUT_PROBE = r"""
       return [Math.round(k.getBoundingClientRect().top)];
     }));
     const distinctRows=Array.from(new Set(tops));
-    // D-31 (P79): the ceiling follows the bar's own width, not the viewport: the
+    // D-32 (P81): the ceiling follows the bar's own width, not the viewport: the
     // left nav takes 240px, so at 1440 the bar is narrow (syncFbNarrow) and Find
     // and Date range stack, as below 1280 before. Stage D re-hosts the filters.
     const ceiling=(window.innerWidth>=1440&&!bar.classList.contains('fb-narrow'))?3:4;

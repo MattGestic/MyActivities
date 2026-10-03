@@ -1,11 +1,11 @@
 # ui-tokens
 
-The one shared styling resource for the SRET UI kit (D-31). Every `ui-*` module reads only these custom properties.
+The one shared styling resource for the SRET UI kit (D-32). Every `ui-*` module reads only these custom properties.
 
 | Field | Value |
 |---|---|
 | Version | see `src/modules/MODULES.json` (the only place it is written) |
-| Status | Standalone (D-31 Stage A). Not embedded in the app yet. |
+| Status | Embedded in the app from v3.1.0-P81 (D-32 Stage A). `python3 tools/modules_embed.py --list` gives its current lines. |
 | Global | none (CSS only) |
 | Requires | none |
 | Theme | Light only for now. Dark is a later slot. |
@@ -55,5 +55,5 @@ The OS "reduce motion" accessibility setting sets every duration to 0 automatica
 
 | Version | App version | Change |
 |---|---|---|
-| 0.1.0 | none (standalone) | First version, D-31 Stage A. |
-| 0.2.0 | 3.1.0-P79 | Literal palette moved to `ui-palette.css`, loaded only by standalone hosts; in the app the roles resolve to its own `--pal-*` blocks (P55), so `colour_audit --strict` is unaffected. Touch control height 32 px (design-standard), hit area stays 40 px. Layer tokens documented as host-overridable. `--ui-nav-col` default added. `--ui-space-0` (2 px) added; `.ui-visually-hidden` drops its -1px margin. |
+| 0.1.0 | none (standalone) | First version, D-32 Stage A. |
+| 0.2.0 | 3.1.0-P81 | Literal palette moved to `ui-palette.css`, loaded only by standalone hosts; in the app the roles resolve to its own `--pal-*` blocks (P55), so `colour_audit --strict` is unaffected. Touch control height 32 px (design-standard), hit area stays 40 px. Layer tokens documented as host-overridable. `--ui-nav-col` default added. `--ui-space-0` (2 px) added; `.ui-visually-hidden` drops its -1px margin. |

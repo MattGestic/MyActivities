@@ -227,7 +227,7 @@ PROBE = r"""
       });
       return bad;
     };
-    // D-31 (P79): the left nav's column in use (240, 60 or 0), written by SRETShell.
+    // D-32 (P81): the left nav's column in use (240, 60 or 0), written by SRETShell.
     const railW=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-nav-col'))||0;
     const wideExpected=W>=768&&(W-railW)>=WIDE_MIN;
     R.notes.rail=railW;

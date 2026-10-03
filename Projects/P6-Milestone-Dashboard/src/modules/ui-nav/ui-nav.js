@@ -1,5 +1,5 @@
 /* ============================================================
-   ui-nav (SRETNav): generic left navigation panel (D-31).
+   ui-nav (SRETNav): generic left navigation panel (D-32).
    Renders from a config object; knows nothing about the app's data.
    Selecting an item calls back to the host; the host decides what opens.
 

@@ -1,5 +1,5 @@
 /* ============================================================
-   ui-surfaces: internal cards and content containers (D-31).
+   ui-surfaces: internal cards and content containers (D-32).
    card, section, panel header, toolbar, tabs, fold, list, empty state, toast.
    Containers own their padding; children are spaced with gap. Uses only
    ui-tokens. Layout contract in MODULE.md.

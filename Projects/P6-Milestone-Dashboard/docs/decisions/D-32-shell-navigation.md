@@ -1,6 +1,6 @@
-# D-31: One left nav, slim command bar, milestone side panel or dialog
+# D-32: One left nav, slim command bar, milestone side panel or dialog
 
-**Status:** Option 1 chosen by Matt, 2026-10-03. Built as a modular UI kit in stages (below). Stage A is built and in the app from v3.1.0-P79 (left nav, base-screen tidy). Stages B to D are next. TD-247, TD-248.
+**Status:** Option 1 chosen by Matt, 2026-10-03. Built as a modular UI kit in stages (below). Stage A is built and in the app from v3.1.0-P81 (left nav, base-screen tidy). Stages B to D are next. TD-249, TD-250.
 **Directed by:** Matt, 2026-10-03.
 - **Round 1:** two side panels plus a stacked header read as confusing. He asked for one segmented left panel in the style of a model-driven app, with Settings, Import and Info at the bottom, dedicated screens where a panel is too cramped, and a pinned right pane for milestone editing that shows an empty state rather than collapsing.
 - **Round 2:** Matt chose Option 1 and approved the empty state, Import, Settings and phone views. He asked for four things:
@@ -9,7 +9,7 @@
   - the unbuilt functions acknowledged;
   - a clearer period control: report date, a comparison schedule beside the baseline, up to three periods plus user-defined tasks.
 
-**Mockups:** [`docs/mockups/D-31/shell-options.html`](../mockups/D-31/shell-options.html), renders in `docs/mockups/D-31/png/`. Mid fidelity, current navy theme, `--pal-*` light values only. Frames are clickable.
+**Mockups:** [`docs/mockups/D-32/shell-options.html`](../mockups/D-32/shell-options.html), renders in `docs/mockups/D-32/png/`. Mid fidelity, current navy theme, `--pal-*` light values only. Frames are clickable.
 
 ## Decision
 
@@ -32,10 +32,10 @@ The redesign is built as a **modular UI kit**: components developed on their own
 
 | Stage | Kit modules | App change | Status |
 |---|---|---|---|
-| A | `ui-tokens`, `ui-icons`, `ui-shell` (containers; page variant for the app), `ui-surfaces` (cards), `ui-controls`, `ui-nav` (generic left nav) | Nav in the app on the existing entry points; base-screen tidy (measured board height, one header gutter, More actions as a labelled menu at every width) | **Built, v3.1.0-P79** (gallery approved by Matt, 2026-10-03) |
+| A | `ui-tokens`, `ui-icons`, `ui-shell` (containers; page variant for the app), `ui-surfaces` (cards), `ui-controls`, `ui-nav` (generic left nav) | Nav in the app on the existing entry points; base-screen tidy (measured board height, one header gutter, More actions as a labelled menu at every width) | **Built, v3.1.0-P81** (gallery approved by Matt, 2026-10-03) |
 | B | `ui-dialog`: generic dialog form with the typical controls around a dialog | The current milestone form hosted by it, not redesigned | Next |
 | C | `ui-sidepanel`: right panel, pinned, with an empty state | "Open milestones in: Dialog or Side panel" setting | Planned |
-| D | `ui-filterbar` (after a short D-32 design round) | Filters re-hosted; state and `applyFilter` kept | Planned |
+| D | `ui-filterbar` (after a short D-33 design round) | Filters re-hosted; state and `applyFilter` kept | Planned |
 | Balance | Built from the same kit | Report date in the command bar, Display pane, Import and Settings screens, form refinement, schedule versions, saved views and Lists, phone sheet, CSV people fields (build register IDs) | Roadmap |
 
 **Correction (verified in code):** several schedules can already be uploaded. Append mode keeps them as `PRIMARY_SOURCES`, each with on/off, rename and remove, and they are shown together on one merged board, with source chips, a Source filter and source columns. What is not built is comparing versions of the same schedule (shared IDs are renamed on Append) and re-baselining. Build register B6 and B7 now say this.
@@ -51,14 +51,14 @@ The redesign is built as a **modular UI kit**: components developed on their own
 
 ## Registers
 
-- [Field register](D-31-field-register.md): every field shown, what the redesign does with it and why.
-- [Build register](D-31-build-register.md): what the mockup shows that is not built, what it builds on, a rough size, and the round-2 clarity fixes.
+- [Field register](D-32-field-register.md): every field shown, what the redesign does with it and why.
+- [Build register](D-32-build-register.md): what the mockup shows that is not built, what it builds on, a rough size, and the round-2 clarity fixes.
 
-Both are generated from the mockup by `docs/mockups/D-31/registers_to_md.mjs`. Edit the arrays in the HTML and re-run; never hand-edit the outputs.
+Both are generated from the mockup by `docs/mockups/D-32/registers_to_md.mjs`. Edit the arrays in the HTML and re-run; never hand-edit the outputs.
 
 ## Open decisions (Matt)
 
-1. ~~Project `CLAUDE.md` rule.~~ Done in P79 with the approved Stage A plan: the shell rule replaces the D-20 two-sides rule.
+1. ~~Project `CLAUDE.md` rule.~~ Done in P81 with the approved Stage A plan: the shell rule replaces the D-20 two-sides rule.
 2. **Three periods** are taken as baseline, plus one chosen comparison (default: the previous update), plus the current update. More than one comparison at a time is out of scope [CONFIRM].
 3. **Free float alias.** The importer maps "free float" to total float, which can understate criticality. Keep or drop the alias [CONFIRM].
 4. **Default open mode** for a new user: side panel (proposed) or dialog.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""P79 check (D-31 Stage A, TD-248): the kit's left nav in the app, and the base-screen tidy.
+"""P81 check (D-32 Stage A, TD-250): the kit's left nav in the app, and the base-screen tidy.
 
 Matt, 2026-10-03: one left navigation panel, built as a reusable module (ui-nav)
 on the shared kit (ui-tokens, ui-shell page variant), with the base screen's
@@ -27,7 +27,7 @@ Runs the app (with the reference fixture, as every check does) at 390, 768,
      viewport bottom, within 2px, with the page scrolled to the top;
   G  More actions is a labelled dropdown at every width.
 
-    python3 tools/p79_nav_check.py [--html FILE]
+    python3 tools/p81_nav_check.py [--html FILE]
 Exit 1 if any check fails.
 """
 import argparse

@@ -1,11 +1,11 @@
 # ui-controls (`SRETControls`)
 
-The form and action controls (D-31): button variants, text input, textarea, select, field, field grid, switch, segmented control, radio cards, chips, badges and counts. The markup carries state in ARIA attributes, and `SRETControls.bind` keeps it in step and emits events.
+The form and action controls (D-32): button variants, text input, textarea, select, field, field grid, switch, segmented control, radio cards, chips, badges and counts. The markup carries state in ARIA attributes, and `SRETControls.bind` keeps it in step and emits events.
 
 | Field | Value |
 |---|---|
 | Version | see `src/modules/MODULES.json` |
-| Status | Standalone (D-31 Stage A) |
+| Status | Embedded in the app from v3.1.0-P81 (D-32 Stage A). `python3 tools/modules_embed.py --list` gives its current lines. |
 | Global | `window.SRETControls`, also `module.exports` |
 | Requires | `ui-tokens`; `ui-icons` where a control shows an icon |
 
@@ -46,5 +46,5 @@ The header comment of `ui-controls.js` is the API reference. Events: `ui-change`
 
 | Version | App version | Change |
 |---|---|---|
-| 0.1.0 | none (standalone) | First version, D-31 Stage A. |
-| 0.1.1 | 3.1.0-P79 | Sub-scale spacing on the token scale: `--ui-space-0` (2 px) for the segmented track, the count badge padding on `--ui-space-1`. No literal px in padding, margin or gap (the app's spacing_audit). |
+| 0.1.0 | none (standalone) | First version, D-32 Stage A. |
+| 0.1.1 | 3.1.0-P81 | Sub-scale spacing on the token scale: `--ui-space-0` (2 px) for the segmented track, the count badge padding on `--ui-space-1`. No literal px in padding, margin or gap (the app's spacing_audit). |

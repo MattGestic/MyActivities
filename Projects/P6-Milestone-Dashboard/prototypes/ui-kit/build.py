@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Builds the single-file UI kit gallery from the module sources (D-31 Stage A).
+"""Builds the single-file UI kit gallery from the module sources (D-32 Stage A).
 
     python3 prototypes/ui-kit/build.py
 

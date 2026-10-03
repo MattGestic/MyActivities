@@ -1,11 +1,11 @@
 # ui-nav (`SRETNav`)
 
-The generic left navigation panel (D-31). It renders from a config of groups and items and calls the host back when an item is chosen. It has no knowledge of the app's data; counts arrive as badges from the host.
+The generic left navigation panel (D-32). It renders from a config of groups and items and calls the host back when an item is chosen. It has no knowledge of the app's data; counts arrive as badges from the host.
 
 | Field | Value |
 |---|---|
 | Version | see `src/modules/MODULES.json` |
-| Status | Standalone (D-31 Stage A) |
+| Status | Embedded in the app from v3.1.0-P81 (D-32 Stage A). `python3 tools/modules_embed.py --list` gives its current lines. |
 | Global | `window.SRETNav`, also `module.exports` |
 | Requires | `ui-tokens`, `ui-icons`; `ui-controls` for the drawer close button |
 | Works with | `ui-shell`: pass `opts.shell` and the nav follows its mode and context |
@@ -64,5 +64,5 @@ Within budget. **Flag:** the group-collapse animation is the most involved effec
 
 | Version | App version | Change |
 |---|---|---|
-| 0.1.0 | none (standalone) | First version, D-31 Stage A. |
-| 0.1.1 | 3.1.0-P79 | `setActive(null)` clears the current item. Spacing literals moved onto `--ui-space-0` and `--ui-space-1`. |
+| 0.1.0 | none (standalone) | First version, D-32 Stage A. |
+| 0.1.1 | 3.1.0-P81 | `setActive(null)` clears the current item. Spacing literals moved onto `--ui-space-0` and `--ui-space-1`. |

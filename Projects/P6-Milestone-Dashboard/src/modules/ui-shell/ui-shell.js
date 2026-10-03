@@ -1,5 +1,5 @@
 /* ============================================================
-   ui-shell (SRETShell): layout controller for the app frame (D-31).
+   ui-shell (SRETShell): layout controller for the app frame (D-32).
    Knows nothing about the app's data. It only decides how the nav and
    aside regions behave at the current width and writes that state as
    data attributes on the .ui-shell element (CSS does the rest).

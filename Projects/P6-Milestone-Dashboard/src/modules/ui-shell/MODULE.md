@@ -1,11 +1,11 @@
 # ui-shell (`SRETShell`)
 
-The external containers of an app screen (D-31): nav (left), header (command bar), main (content) and aside (right). It knows nothing about the app's data. It decides how the nav and aside behave at the current width.
+The external containers of an app screen (D-32): nav (left), header (command bar), main (content) and aside (right). It knows nothing about the app's data. It decides how the nav and aside behave at the current width.
 
 | Field | Value |
 |---|---|
 | Version | see `src/modules/MODULES.json` |
-| Status | Standalone (D-31 Stage A) |
+| Status | Embedded in the app from v3.1.0-P81 (D-32 Stage A). `python3 tools/modules_embed.py --list` gives its current lines. |
 | Global | `window.SRETShell`, also `module.exports` |
 | Requires | `ui-tokens` |
 
@@ -84,5 +84,5 @@ All within budget: one animation per action and no stagger. Nothing animates at 
 
 | Version | App version | Change |
 |---|---|---|
-| 0.1.0 | none (standalone) | First version, D-31 Stage A. |
-| 0.2.0 | 3.1.0-P79 | No motion before `data-ui-ready` (boot). Page variant (`variant:'page'`, class `.ui-shell-page`) for hosts whose document scrolls: fixed nav, `--ui-nav-col` written on `<html>` for the host to offset its content. Esc listener in the capture phase, stops the event only when it closed something. |
+| 0.1.0 | none (standalone) | First version, D-32 Stage A. |
+| 0.2.0 | 3.1.0-P81 | No motion before `data-ui-ready` (boot). Page variant (`variant:'page'`, class `.ui-shell-page`) for hosts whose document scrolls: fixed nav, `--ui-nav-col` written on `<html>` for the host to offset its content. Esc listener in the capture phase, stops the event only when it closed something. |

@@ -10,13 +10,13 @@ and computed style, never a screenshot:
   A-02  header controls share --ctl-h; the shadow switch is 32x16; the More
         actions trigger is an --icon-btn, and on touch stays 32px visible
         (its 40px hit area is a pseudo-element, not a bigger box)
-  B-01  (D-31 P79, replaces the P59 three rail states) the left nav is expanded
+  B-01  (D-32 P81, replaces the P59 three rail states) the left nav is expanded
         or the 60px rail on wide screens, a closed drawer on phones; Collapse
         is remembered; opening and closing a Workspace section leaves the nav
         as it was; the nav's Collapse control brings it back
   B-02  the header's title and subtitle keep their place inside the header as
         the nav changes width; on phones the menu button does not overlap the title
-  X-02  a nav badge sits clear of its icon (D-31 P79; was the P63 rail badge)
+  X-02  a nav badge sits clear of its icon (D-32 P81; was the P63 rail badge)
   C-01  Find fits its card at wide widths: Source stays inside, Banding is not
         clipped
   C-02  Activity name takes half of Find's first row

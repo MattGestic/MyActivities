@@ -180,7 +180,7 @@ PROBE = r"""
     // display:none; at <=1024px the trigger shows and the panel is the fixed
     // dropdown, same as P36 shipped. Read from the same media query the CSS
     // uses, not a re-typed breakpoint number.
-    // D-31 Stage A (P79): More actions is a labelled dropdown at every width; the
+    // D-32 Stage A (P81): More actions is a labelled dropdown at every width; the
     // P56 inline icon row above 1024px was retired. Every width now takes the
     // dropdown path below, so the desktop branch is kept only as history.
     const desktop=false;

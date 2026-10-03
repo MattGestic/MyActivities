@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
-<title>D-31 Shell and Navigation</title>
+<title>D-32 Shell and Navigation</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 /* Layout concept: a review document wrapping scaled, live app frames. The app frames are drawn
@@ -395,7 +395,7 @@ details.cons{background:var(--pal-surface);border:1px solid var(--pal-line);bord
 <div class="wrap">
   <header class="doc-hd">
     <div>
-      <span class="tag">D-31 · Option 1 chosen · detailed design, round 2</span>
+      <span class="tag">D-32 · Option 1 chosen · detailed design, round 2</span>
       <h1 style="margin-top:8px">Shell and navigation redesign</h1>
       <p>Option 1 is chosen (Matt, 2026-10-03). This round makes the milestone pane use the app's real fields. It adds the setting to open a milestone in a dialog or the side pane, and replaces the report date chip with a period control: report date, current schedule, comparison schedule, baseline and user-defined tasks. Fields and Build list what changed against the app and what still has to be built. Frames are clickable.</p>
     </div>
@@ -759,7 +759,7 @@ function phoneDrawer(){
   </div>`;
 }
 
-/* ---------------- Registers (record: docs/decisions/D-31-field-register.md and D-31-build-register.md) ----------------
+/* ---------------- Registers (record: docs/decisions/D-32-field-register.md and D-32-build-register.md) ----------------
    Verdicts: keep, move, hide (hidden by default), diff (shown differently), omit, new (new to the UI, derived from data held). */
 const FIELDS=[
  ['Activity ID','Import: activity id, act id, id, task id, activity code, task code. Missing ID becomes ROW-n','Card header, #ID label, tooltip, grids','keep','Pane header in mono. Read only.','Key for every annotation (msKeyFor). Never editable.','None'],
@@ -822,11 +822,11 @@ const CLARITY=[
 ];
 const VLBL={keep:'Keep',move:'Move',hide:'Hidden by default',diff:'Shown differently',omit:'Omit',new:'New, derived'};
 function fieldTable(){
-  return `<p class="lead">Rule: nothing is removed from import, storage or export. "Hidden" and "Omit" are display choices only; every header alias stays. Record: <code>docs/decisions/D-31-field-register.md</code>.</p>
+  return `<p class="lead">Rule: nothing is removed from import, storage or export. "Hidden" and "Omit" are display choices only; every header alias stays. Record: <code>docs/decisions/D-32-field-register.md</code>.</p>
   <div class="tbl-wrap"><table class="cmp" style="min-width:1100px"><thead><tr><th>Field</th><th>Source</th><th>Shown today</th><th>In redesign</th><th>Where</th><th>Why</th><th>Backend and import</th></tr></thead><tbody>${FIELDS.map(f=>`<tr><th scope="row">${f[0]}</th><td class="k">${f[1]}</td><td>${f[2]}</td><td><span class="verdict v-${f[3]}">${VLBL[f[3]]}</span></td><td>${f[4]}</td><td>${f[5]}</td><td>${f[6]}</td></tr>`).join('')}</tbody></table></div>`;
 }
 function buildTable(){
-  return `<p class="lead">Functions the mockup shows that the app does not have yet. Items tagged <span class="new build">Build</span> in the frames point here. Sizes are first-pass estimates [CONFIRM after spike]. Record: <code>docs/decisions/D-31-build-register.md</code>.</p>
+  return `<p class="lead">Functions the mockup shows that the app does not have yet. Items tagged <span class="new build">Build</span> in the frames point here. Sizes are first-pass estimates [CONFIRM after spike]. Record: <code>docs/decisions/D-32-build-register.md</code>.</p>
   <div class="tbl-wrap"><table class="cmp" style="min-width:1000px"><thead><tr><th>ID</th><th>Function</th><th>Today</th><th>To build</th><th>Builds on</th><th>Size</th></tr></thead><tbody>${BUILD.map(b=>`<tr><th scope="row">${b[0]}</th><td><b>${b[1]}</b></td><td>${b[2]}</td><td>${b[3]}</td><td class="k">${b[4]}</td><td class="score"><span class="pill ${b[5]==='L'?'r':b[5]==='M'?'a':'g'}">${b[5]}</span></td></tr>`).join('')}</tbody></table></div>`;
 }
 function clarityTable(){

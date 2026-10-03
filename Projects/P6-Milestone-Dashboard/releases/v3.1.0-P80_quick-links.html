@@ -413,7 +413,7 @@ body{font-family:var(--font-sans);font-size:11px;background:var(--color-bg-eleva
    and stays below the drawers (700/850/900) so they still cover the bar. The
    bar and those two elements do not overlap geometrically, so nothing else
    about the page changes. */
-#icon-bar{background:var(--color-bg-header);padding:var(--space-2) var(--group-gap);display:flex;align-items:center;gap:var(--space-3);flex-wrap:nowrap;overflow-x:auto;position:relative;z-index:40}
+#icon-bar{background:var(--color-bg-header);padding:var(--space-2) var(--space-4);display:flex;align-items:center;gap:var(--space-3);flex-wrap:nowrap;overflow-x:auto;position:relative;z-index:40}
 .ib-right-icons{display:flex;align-items:center;gap:12px}
 /* Moved from the board header onto the filter bar's panel background, so the
    text tokens move with it. Leaving them on the on-header pair would have put
@@ -517,9 +517,22 @@ body:has(.ib-menu-panel .dot.show) #pm-more-dot{display:block}
 #btn-more-actions{font-size:15px;line-height:1;width:var(--icon-btn);height:var(--icon-btn);min-width:0;min-height:0;
   background:transparent;border-color:transparent;color:var(--color-text-on-header)}
 #btn-more-actions:hover{background:var(--color-bg-header-hover)}
-/* D-31 Stage A (P79): More actions is a labelled dropdown at every width. The
-   P56 inline icon row above 1024px is retired: unlabelled header icons were the
-   round-1 review's first complaint (docs/decisions/D-31-shell-navigation.md). */
+/* P56 (D-20b): above 1024px the menu panel IS the header's action row, icon
+   buttons with tooltips, and the trigger is hidden. At 1024px and below the
+   trigger returns and the panel is the dropdown above, labels shown. */
+@media (min-width:1025px){
+  #btn-more-actions{display:none}
+  /* :not(.open) because the print preview's banner still opens this panel as
+     a dropdown from its own trigger; opened, it is the menu again at any width. */
+  #icon-bar .ib-menu-panel:not(.open){position:static;display:flex;flex-direction:row;align-items:center;gap:var(--space-2);
+    min-width:0;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;overflow:visible;z-index:auto}
+  #icon-bar .ib-menu-panel:not(.open) .icon-btn.ib-mi{width:var(--icon-btn);height:var(--icon-btn);min-height:0;padding:0;justify-content:center;
+    color:var(--color-text-on-header);position:relative}
+  #icon-bar .ib-menu-panel:not(.open) .icon-btn.ib-mi:hover{background:var(--color-bg-header-hover);color:var(--color-text-on-header)}
+  #icon-bar .ib-menu-panel:not(.open) .icon-btn.ib-mi.on{background:var(--color-bg-header-focus);border-color:transparent;color:var(--color-text-on-header)}
+  #icon-bar .ib-menu-panel:not(.open) .ib-mi-lbl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  #icon-bar .ib-menu-panel:not(.open) .icon-btn.ib-mi .dot{position:absolute;top:2px;right:2px}
+}
 /* P64 (TD-224): #ib-label (tool name and version) left the bar for the foot of
    Data & view, so the icon group pushes itself to the right edge now. The
    Unsaved changes pill is the group's first child, left of the icon cluster. */
@@ -555,19 +568,24 @@ body.print-mode #print-filter-note.show{display:block}
    4b), and the panel it opens beside it. Right: Data & view, the schedule and
    format layer (#settings-drawer), with its own rail of sections. The board
    is pushed, not covered, by whichever panel is open, above 1024px. */
-:root{--ws-panel-w:320px;--dv-w:404px;--sd-rail-w:44px;
-  /* D-31 Stage A (P79): the left nav is the ui-nav module in #ws-rail, laid out by
-     the ui-shell page variant, which writes --ui-nav-col on <html> (240px
-     expanded, 60px rail, 0 on phones where it is a drawer). --ws-rail-w keeps
-     its name so every offset that read it still lines up with the nav. */
-  --ws-rail-w:var(--ui-nav-col);
-  /* Kit layers placed among the app's: below the Workspace panel's drawers
-     (870 panel, 900 Data & view) the nav sits at 880; its scrim and overlay
-     above the panel. */
-  --ui-z-nav:880;--ui-z-scrim:885;--ui-z-drawer:890}
-body{margin-left:var(--ws-rail-w);transition:margin-left var(--ui-dur-base) var(--ui-ease-standard),margin-right .18s ease}
-/* No slide at boot: the nav's real width is known only once SRETShell has run. */
-body:not([data-ui-ready]){transition:none}
+:root{--ws-rail-w:44px;--ws-panel-w:320px;--dv-w:404px}
+body{margin-left:var(--ws-rail-w);transition:margin-left .18s ease,margin-right .18s ease}
+#ws-rail{position:fixed;left:0;top:0;bottom:0;width:var(--ws-rail-w);z-index:880;
+  background:var(--color-bg-workspace);display:flex;flex-direction:column;align-items:center;
+  gap:var(--space-2);padding:var(--space-4) 0}
+.ws-ri{position:relative;width:calc(var(--icon-btn) + var(--space-3));height:calc(var(--icon-btn) + var(--space-3));display:grid;place-items:center;padding:0;cursor:pointer;
+  border:0;border-radius:var(--radius-md);background:transparent;font-size:15px;line-height:1;
+  color:color-mix(in srgb,var(--color-text-on-header) 72%,transparent)}
+.ws-ri:hover{background:var(--color-bg-header-hover);color:var(--color-text-on-header)}
+.ws-ri.is-active{background:var(--color-bg-header-focus);color:var(--color-text-on-header)}
+.ws-ri.is-active::before{content:'';position:absolute;left:-6px;top:6px;bottom:6px;width:3px;
+  border-radius:2px;background:var(--color-accent)}
+.ws-ri:focus-visible{outline:var(--focus-ring) solid var(--color-accent);outline-offset:1px}
+/* P63 (Matt): the Workspace rail badge sits top-LEFT of its icon, on the rail's outer edge. */
+.ws-bd{position:absolute;top:calc(-1 * var(--space-2));left:calc(-1 * var(--space-3));min-width:14px;height:14px;padding:0 var(--space-1);border-radius:7px;
+  background:var(--color-accent);color:var(--color-text-on-accent);font-size:9px;font-weight:700;
+  line-height:14px;text-align:center}
+.ws-bd:empty{display:none}
 #ws-panel{position:fixed;left:var(--ws-rail-w);top:0;bottom:0;width:var(--ws-panel-w);
   max-width:calc(100vw - var(--ws-rail-w));z-index:870;display:none;flex-direction:column;overflow-y:auto;
   background:var(--color-bg-panel);border-right:1px solid var(--color-line-default);
@@ -589,7 +607,7 @@ body.ws-open #ws-panel{box-shadow:var(--shadow-2)}
 .sd-list{margin:0;padding-left:var(--space-6);display:flex;flex-direction:column;gap:var(--space-3);
   font-size:var(--text-sm);color:var(--color-text-primary);line-height:1.5}
 /* Data & view: the rail of sections on the panel's left edge. */
-.sd-tabs.sd-rail{flex:0 0 var(--sd-rail-w);flex-direction:column;align-items:center;gap:var(--space-2);
+.sd-tabs.sd-rail{flex:0 0 var(--ws-rail-w);flex-direction:column;align-items:center;gap:var(--space-2);
   padding:var(--space-4) 0;position:static;overflow-y:auto;overflow-x:hidden;
   background:var(--color-bg-header);border-bottom:0;border-right:1px solid var(--color-line-default)}
 .sd-rail-grow{flex:1 1 auto}
@@ -687,18 +705,21 @@ body.print-mode{margin-left:0}
 .ms-notes-ref{display:block;margin-top:var(--space-2);border:0;background:none;padding:0;font:inherit;font-size:var(--text-xs);font-weight:600;color:var(--color-accent-ink);cursor:pointer;text-decoration:underline}
 .ms-notes-ref[hidden]{display:none}
 
-/* ===== D-31 Stage A (P79): the header menu button =====
-   #ws-toggle is the first item in #icon-bar and opens the nav. The ui-shell
-   page variant shows it (.ui-shell__menu) only where the nav is a drawer
-   (640px and below). It sits inside the header, so it moves with the
-   scroll-away header and never overlaps the title (B-02). */
-#icon-bar .ws-toggle{flex:0 0 auto;width:var(--icon-btn);height:var(--icon-btn);padding:0;border:0;border-radius:var(--radius-md);
-  background:transparent;color:var(--color-text-on-header);cursor:pointer;align-items:center;justify-content:center}
-#icon-bar .ws-toggle:hover{background:var(--color-bg-header-hover)}
-#icon-bar .ws-toggle:focus-visible{outline:var(--focus-ring) solid var(--color-accent);outline-offset:1px}
-#icon-bar .ws-toggle .ui-icon{width:18px;height:18px}
-body.print-mode .ws-toggle,body.print-mode .ui-shell__scrim{display:none}
-@media print{ .ws-toggle,.ui-shell__scrim{display:none!important} }
+/* ===== P59 (B-01/B-02): Workspace rail states ===== */
+.ws-ri-collapse{margin-bottom:var(--space-3)}
+.ws-toggle{display:none;position:absolute;left:0;top:0;z-index:881;width:var(--ws-rail-w);height:var(--ws-rail-w);
+  border:0;background:var(--color-bg-workspace);color:var(--color-text-on-header);font-size:15px;cursor:pointer}
+.ws-toggle:hover{background:color-mix(in srgb,var(--color-bg-workspace) 80%,var(--color-text-on-header))}
+.ws-toggle:focus-visible{outline:var(--focus-ring) solid var(--color-accent);outline-offset:-3px}
+body.rail-collapsed{margin-left:0}
+body.rail-collapsed #ws-rail,body.rail-collapsed #ws-panel{display:none}
+body.rail-collapsed .ws-toggle{display:block}
+/* The header keeps its left edge where it is in every state: the slot the
+   rail leaves behind is padding, and the toggle sits in it. */
+body.rail-collapsed #icon-bar{padding-left:calc(var(--ws-rail-w) + var(--space-4))}
+body.rail-collapsed .rpt-hd{padding-left:calc(var(--ws-rail-w) + 10px)}
+body.print-mode .ws-toggle{display:none}
+@media print{ .ws-toggle{display:none!important} }
 /* ---- Settings drawer: full-height vertical panel sliding from left ---- */
 /* ---- Settings drawer ----
    Every horizontal edge inside this panel resolves to --sd-gutter and every
@@ -1531,7 +1552,7 @@ body.print-mode .pm-banner{display:block}
    container that only claims the space it needs gives us without a breakpoint.
    The subtitle sits under the whole bar rather than under the title, so the two
    containers can align to a single baseline. */
-.rpt-hd{background:var(--color-bg-header);color:var(--color-text-on-header);padding:6px var(--group-gap) 4px;display:flex;flex-direction:column;gap:3px;position:relative;z-index:30;border-bottom:1px solid var(--color-line-default)}
+.rpt-hd{background:var(--color-bg-header);color:var(--color-text-on-header);padding:6px 10px 4px;display:flex;flex-direction:column;gap:3px;position:relative;z-index:30;border-bottom:1px solid var(--color-line-default)}
 .rpt-hd-bar{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px;width:100%}
 .rpt-hd-left{flex:1 1 260px;min-width:0}
 /* The report detail fields moved out of the heading bar to their own line
@@ -1603,10 +1624,7 @@ body.print-mode .pm-banner{display:block}
 .rpt-sub b{color:var(--color-text-on-header)}
 .rpt-sub .today{color:var(--color-text-on-header-accent)}
 
-/* D-31 Stage A (P79): the board's height is measured (sizeBoardHeight writes
-   --board-max-h): the viewport less the chrome above the board and one gutter.
-   The 150px it replaced was a guess that left a gap or a cut-off on most screens. */
-#scroll-wrap{overflow-x:auto;overflow-y:auto;max-height:var(--board-max-h,calc(100vh - 150px));position:relative}
+#scroll-wrap{overflow-x:auto;overflow-y:auto;max-height:calc(100vh - 150px);position:relative}
 /* ---- P72 (Matt 2026-10-01): the screen heading scrolls away -------------
    Below 1024px only (CHROME_AWAY_MQ). Every width has the same two scrollers:
    the board scrolls inside #scroll-wrap and the window scrolls whatever the
@@ -1634,6 +1652,7 @@ body.print-mode .pm-banner{display:block}
    reference board: about 0.1s and 0.3s per change, at 390px). */
 @media (max-width:1023px){
   html.chrome-shift body:not(.grid-open):not(.print-mode) #icon-bar{margin-top:calc(-1 * var(--chrome-shift))}
+  html.chrome-shift body:not(.grid-open):not(.print-mode) .ws-toggle{transform:translateY(calc(-1 * var(--chrome-shift)))}
   html.chrome-shift body:not(.grid-open):not(.print-mode) #scroll-wrap{max-height:100vh;max-height:100dvh}
   html.chrome-away body:not(.grid-open):not(.print-mode) tr.hdr-info th{top:calc(-1 * var(--hdr-info-h))}
   html.chrome-away body:not(.grid-open):not(.print-mode) tr.hdr-phase th{top:0}
@@ -1642,14 +1661,17 @@ body.print-mode .pm-banner{display:block}
      delay keeps them painted while they slide. */
   html.chrome-away body:not(.grid-open):not(.print-mode) #icon-bar,
   html.chrome-away body:not(.grid-open):not(.print-mode) .rpt-hd,
-  html.chrome-away body:not(.grid-open):not(.print-mode) #top-filter-bar{visibility:hidden}
+  html.chrome-away body:not(.grid-open):not(.print-mode) #top-filter-bar,
+  html.chrome-away body:not(.grid-open):not(.print-mode) .ws-toggle{visibility:hidden}
   html.chrome-anim #icon-bar{transition:margin-top .2s ease}
+  html.chrome-anim .ws-toggle{transition:transform .2s ease}
   html.chrome-anim tr.hdr-info th,html.chrome-anim tr.hdr-phase th,html.chrome-anim tr.hdr-wk th{transition:top .2s ease}
   html.chrome-anim.chrome-away #icon-bar{transition:margin-top .2s ease,visibility 0s linear .2s}
   html.chrome-anim.chrome-away .rpt-hd,html.chrome-anim.chrome-away #top-filter-bar{transition:visibility 0s linear .2s}
+  html.chrome-anim.chrome-away .ws-toggle{transition:transform .2s ease,visibility 0s linear .2s}
 }
 @media (max-width:1023px) and (prefers-reduced-motion:reduce){
-  html.chrome-anim #icon-bar,html.chrome-anim .rpt-hd,html.chrome-anim #top-filter-bar,
+  html.chrome-anim #icon-bar,html.chrome-anim .ws-toggle,html.chrome-anim .rpt-hd,html.chrome-anim #top-filter-bar,
   html.chrome-anim tr.hdr-info th,html.chrome-anim tr.hdr-phase th,html.chrome-anim tr.hdr-wk th{transition:none}
 }
 table{border-collapse:separate;border-spacing:0;table-layout:fixed;width:max-content}
@@ -2850,6 +2872,19 @@ body.grid-open #empty-state{display:none!important}
 .es-cap{margin:var(--space-4) 0 0;font-size:var(--text-xs);color:var(--color-text-muted)}
 .es-actions{display:flex;flex-wrap:wrap;gap:var(--ctl-gap);margin:var(--space-6) 0 0}
 .es-hint{margin:var(--space-4) 0 0;font-size:var(--text-sm);color:var(--color-text-muted)}
+/* P80 interim (TD-248): quick links on the empty state. Replaced by the redesign. */
+.es-links{margin:var(--space-5) 0 0}
+.ql-list{display:flex;flex-wrap:wrap;align-items:center;gap:var(--ctl-gap);font-size:var(--text-sm)}
+.ql-list[hidden]{display:none}
+.ql-lead{color:var(--color-text-muted)}
+.ql-link{color:var(--color-accent);text-decoration:underline;overflow-wrap:anywhere;min-width:0}
+.ql-edit{margin:var(--space-3) 0 0;font-size:var(--text-sm)}
+.ql-edit>summary{cursor:pointer;color:var(--color-text-muted)}
+.ql-row{display:flex;flex-wrap:wrap;align-items:center;gap:var(--ctl-gap);margin:var(--space-3) 0 0}
+.ql-row .ql-title{flex:1 1 160px;min-width:0}
+.ql-row .ql-url{flex:2 1 220px;min-width:0}
+.ql-msg{color:var(--color-text-muted);min-width:0;overflow-wrap:anywhere}
+.ql-msg.ql-err{color:var(--color-crit-text)}
 @media (max-width:600px){
   .es{padding:var(--space-5) var(--space-4)}
   .es-card{padding:var(--space-6) var(--space-5)}
@@ -2922,668 +2957,6 @@ body.grid-open #empty-state{display:none!important}
 .nh-empty{padding:var(--space-4) 0;font-size:var(--text-sm);color:var(--color-text-muted)}
 /* ===== END UPDATE HISTORY MODULE ===== */
 /* @module notes-history css END */
-/* @module ui-tokens css 0.2.0 sha256=e8525cad7baae988 BEGIN: generated by tools/modules_embed.py from src/modules/ui-tokens/, do not edit here */
-/* ===== UI-TOKENS (D-31 UI kit): src/modules/ui-tokens/, pasted unchanged. Uses only ui-tokens. ===== */
-/* ============================================================
-   ui-tokens: the one shared resource for the SRET UI kit (D-31).
-   Every ui-* module reads only these custom properties. No ui-* module
-   writes a literal colour, size or duration of its own.
-
-   Light theme only for now (Matt, 2026-10-03). Dark is a later slot.
-
-   Colour roles resolve to --pal-* palette tokens supplied by the host.
-   The app supplies them in its two html[data-theme] blocks (P55), the only
-   place a literal colour is written. A standalone host (the gallery, another
-   instance) loads ui-palette.css beside this file. This file holds no literal
-   colour, so the app's colour_audit --strict stays clean when it is embedded.
-   ============================================================ */
-
-
-:root {
-  /* ---- Colour roles (components use these, never --pal-* directly) ---- */
-  --ui-bg-page: var(--pal-page);
-  --ui-bg-surface: var(--pal-surface);
-  --ui-bg-subtle: var(--pal-surface-2);
-  --ui-bg-hover: color-mix(in srgb, var(--pal-navy) 6%, var(--pal-surface));
-  --ui-bg-selected: var(--pal-teal-tint);
-  --ui-text: var(--pal-ink);
-  --ui-text-2: var(--pal-ink-2);
-  --ui-text-muted: var(--pal-muted);
-  --ui-text-faint: var(--pal-faint);
-  --ui-border: var(--pal-line);
-  --ui-border-soft: var(--pal-line-soft);
-  --ui-border-strong: var(--pal-line-strong);
-  --ui-accent: var(--pal-teal);
-  --ui-accent-strong: var(--pal-teal-deep);
-  --ui-accent-tint: var(--pal-teal-tint);
-  --ui-on-accent: var(--pal-on-strong);
-  --ui-brand: var(--pal-navy);
-  --ui-brand-strong: var(--pal-navy-strong);
-  --ui-on-brand: var(--pal-on-header);
-  --ui-on-brand-muted: var(--pal-on-header-muted);
-  --ui-on-brand-hover: color-mix(in srgb, var(--pal-on-strong) 9%, transparent);
-  --ui-on-brand-selected: color-mix(in srgb, var(--pal-on-strong) 16%, transparent);
-  --ui-on-brand-line: color-mix(in srgb, var(--pal-on-strong) 14%, transparent);
-  --ui-ok: var(--pal-done);       --ui-ok-ink: var(--pal-done-ink);   --ui-ok-tint: var(--pal-done-tint);
-  --ui-warn: var(--pal-risk);     --ui-warn-ink: var(--pal-risk-ink); --ui-warn-tint: var(--pal-risk-tint);
-  --ui-danger: var(--pal-crit);   --ui-danger-ink: var(--pal-crit-ink); --ui-danger-tint: var(--pal-crit-tint);
-  --ui-info: var(--pal-track);
-  --ui-scrim: color-mix(in srgb, var(--pal-scrim) 42%, transparent);
-  --ui-focus: 0 0 0 2px var(--pal-surface), 0 0 0 4px var(--pal-teal);
-
-  /* ---- Spacing scale (4 px base). Containers own padding; siblings use gap. ---- */
-  --ui-space-0: 2px;    /* hairline gaps inside tight groups (segmented, nav item lists) */
-  --ui-space-1: 4px;
-  --ui-space-2: 8px;
-  --ui-space-3: 12px;
-  --ui-space-4: 16px;
-  --ui-space-5: 20px;
-  --ui-space-6: 24px;
-  --ui-space-7: 32px;
-  --ui-space-8: 40px;
-  --ui-gutter: var(--ui-space-4);           /* page side gutter, phone */
-
-  /* ---- Type ---- */
-  --ui-font: 'Segoe UI Variable Text', 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --ui-font-mono: ui-monospace, 'Cascadia Mono', Consolas, Menlo, monospace;
-  --ui-text-xs: 11px;   --ui-lh-xs: 16px;   /* captions, group labels */
-  --ui-text-sm: 12px;   --ui-lh-sm: 16px;   /* help text, badges */
-  --ui-text-md: 13px;   --ui-lh-md: 20px;   /* body, controls */
-  --ui-text-lg: 14px;   --ui-lh-lg: 20px;   /* emphasised body, panel titles */
-  --ui-text-xl: 16px;   --ui-lh-xl: 24px;   /* dialog titles */
-  --ui-text-2xl: 20px;  --ui-lh-2xl: 28px;  /* screen titles */
-  --ui-weight-regular: 400;
-  --ui-weight-medium: 500;
-  --ui-weight-semibold: 600;
-  --ui-tracking-label: .06em;
-
-  /* ---- Shape ---- */
-  --ui-radius-sm: 4px;
-  --ui-radius-md: 6px;
-  --ui-radius-lg: 8px;
-  --ui-radius-xl: 12px;
-  --ui-radius-pill: 999px;
-
-  /* ---- Elevation (design-standard levels 0-3) ---- */
-  --ui-shadow-1: 0 1px 2px color-mix(in srgb, var(--shadow-color) 8%, transparent);
-  --ui-shadow-2: 0 4px 12px color-mix(in srgb, var(--shadow-color) 12%, transparent), 0 1px 3px color-mix(in srgb, var(--shadow-color) 8%, transparent);
-  --ui-shadow-3: 0 12px 32px color-mix(in srgb, var(--shadow-color) 18%, transparent), 0 2px 6px color-mix(in srgb, var(--shadow-color) 8%, transparent);
-
-  /* ---- Controls ---- */
-  --ui-ctl-h: 32px;          /* visible height of buttons, inputs, nav items */
-  --ui-ctl-h-sm: 24px;       /* compact (chips, badges row) */
-  --ui-hit: 40px;            /* minimum touch hit area, via padding or ::after */
-  --ui-icon: 18px;
-  --ui-icon-sm: 15px;
-
-  /* ---- Motion (Material 3 / Fluent 2 guidance) ----
-     Enter: decelerate. Exit: accelerate. Small state changes: standard.
-     Only transform and opacity animate, plus the one deliberate nav width change.
-     Budget: one animation per user action, no staggers, no motion on data. */
-  --ui-dur-fast: 120ms;      /* hover, toggles, small state changes */
-  --ui-dur-base: 200ms;      /* panels and nav width, exits */
-  --ui-dur-slow: 240ms;      /* dialogs and drawers entering */
-  --ui-ease-standard: cubic-bezier(.2, 0, 0, 1);
-  --ui-ease-enter: cubic-bezier(0, 0, 0, 1);       /* decelerate */
-  --ui-ease-exit: cubic-bezier(.3, 0, 1, 1);       /* accelerate */
-
-  /* ---- Layers (a host may override these to sit the kit among its own layers) ---- */
-  --ui-z-nav: 40;
-  --ui-z-aside: 50;
-  --ui-z-scrim: 60;
-  --ui-z-drawer: 70;
-  --ui-z-dialog: 80;
-  --ui-z-popover: 90;
-  --ui-z-toast: 100;
-
-  /* ---- Shell sizes ---- */
-  --ui-nav-w-expanded: 240px;
-  --ui-nav-w-rail: 60px;
-  --ui-nav-w-drawer: 288px;
-  --ui-nav-col: var(--ui-nav-w-expanded);   /* written by SRETShell: the nav column in use */
-  --ui-header-h: 52px;
-  --ui-aside-w: 380px;
-
-  /* Breakpoints (documented constants; CSS cannot read variables in media queries):
-     phone <= 640px, tablet 641-1024px, desktop >= 1025px, wide >= 1280px. */
-}
-
-@media (min-width: 1025px) {
-  :root { --ui-gutter: var(--ui-space-6); }
-}
-/* Touch: the visible control stays 32 px (design-standard); the 40 px hit area
-   comes from --ui-hit through ::after, never by growing the visible box. */
-@media (pointer: coarse) {
-  :root { --ui-ctl-h: 32px; }
-}
-/* The OS "reduce motion" accessibility setting is honoured automatically. */
-@media (prefers-reduced-motion: reduce) {
-  :root { --ui-dur-fast: 0ms; --ui-dur-base: 0ms; --ui-dur-slow: 0ms; }
-}
-
-/* Base for any kit root. Hosts that already style body are left alone. */
-.ui-root, .ui-root * { box-sizing: border-box; }
-.ui-root {
-  font-family: var(--ui-font);
-  font-size: var(--ui-text-md);
-  line-height: var(--ui-lh-md);
-  color: var(--ui-text);
-}
-.ui-root :focus-visible { outline: none; box-shadow: var(--ui-focus); }
-.ui-visually-hidden {
-  position: absolute !important; width: 1px; height: 1px; margin: 0; padding: 0;
-  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
-}
-/* ===== END UI-TOKENS ===== */
-/* @module ui-tokens css END */
-/* @module ui-shell css 0.2.0 sha256=0cee72971e0820cd BEGIN: generated by tools/modules_embed.py from src/modules/ui-shell/, do not edit here */
-/* ===== UI-SHELL (D-31 UI kit): src/modules/ui-shell/, pasted unchanged. Uses only ui-tokens. ===== */
-/* ============================================================
-   ui-shell: the external containers of an app screen (D-31).
-   Regions: nav (left), header (command bar), main (content), aside (right).
-   Layout state is written by SRETShell as data attributes on .ui-shell:
-     data-nav       expanded | rail | overlay | drawer
-     data-nav-open  true when an overlay or drawer nav is showing
-     data-aside     push | overlay
-     data-aside-open true when the aside is showing
-   Uses only ui-tokens. See MODULE.md for the layout contract.
-   ============================================================ */
-.ui-shell {
-  --_nav-col: var(--ui-nav-w-expanded);
-  --_aside-col: 0px;
-  position: relative;
-  display: grid;
-  grid-template-columns: var(--_nav-col) minmax(0, 1fr) var(--_aside-col);
-  grid-template-rows: var(--ui-header-h) minmax(0, 1fr);
-  grid-template-areas: "nav header header" "nav main aside";
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-  background: var(--ui-bg-page);
-  color: var(--ui-text);
-  font-family: var(--ui-font);
-  font-size: var(--ui-text-md);
-  line-height: var(--ui-lh-md);
-  transition: grid-template-columns var(--ui-dur-base) var(--ui-ease-standard);
-}
-.ui-shell[data-nav="rail"],
-.ui-shell[data-nav="overlay"] { --_nav-col: var(--ui-nav-w-rail); }
-.ui-shell[data-nav="drawer"] { --_nav-col: 0px; }
-.ui-shell[data-aside="push"][data-aside-open="true"] { --_aside-col: var(--ui-aside-w); }
-
-/* ---- nav region ---- */
-.ui-shell__nav {
-  grid-area: nav;
-  position: relative;
-  z-index: var(--ui-z-nav);
-  width: var(--_nav-col);
-  min-width: 0;
-  min-height: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-/* Tablet: the rail column stays; the expanded nav slides over the content. */
-.ui-shell[data-nav="overlay"] .ui-shell__nav {
-  position: absolute; left: 0; top: 0; bottom: 0;
-  width: var(--ui-nav-w-expanded);
-  z-index: var(--ui-z-drawer);
-  box-shadow: var(--ui-shadow-3);
-}
-/* Phone: off-canvas drawer. */
-.ui-shell[data-nav="drawer"] .ui-shell__nav {
-  position: absolute; left: 0; top: 0; bottom: 0;
-  width: min(var(--ui-nav-w-drawer), 86vw);
-  z-index: var(--ui-z-drawer);
-  transform: translateX(-100%);
-  visibility: hidden;
-  transition: transform var(--ui-dur-base) var(--ui-ease-exit), visibility 0s linear var(--ui-dur-base);
-}
-.ui-shell[data-nav="drawer"][data-nav-open="true"] .ui-shell__nav {
-  transform: none;
-  visibility: visible;
-  box-shadow: var(--ui-shadow-3);
-  transition: transform var(--ui-dur-slow) var(--ui-ease-enter), visibility 0s;
-}
-
-/* ---- header region (command bar) ---- */
-.ui-shell__header {
-  grid-area: header;
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: var(--ui-space-3);
-  min-width: 0;
-  padding-inline: var(--ui-gutter);
-  background: var(--ui-brand);
-  color: var(--ui-on-brand);
-  overflow: hidden;
-}
-.ui-shell__header-start { display: flex; align-items: center; gap: var(--ui-space-2); flex: 1 1 auto; min-width: 0; }
-.ui-shell__header-end { display: flex; align-items: center; gap: var(--ui-space-2); flex: 0 0 auto; }
-.ui-shell__title {
-  font-size: var(--ui-text-lg); line-height: var(--ui-lh-lg); font-weight: var(--ui-weight-semibold);
-  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-/* Two-class selectors so the button styles from ui-controls cannot re-show it. */
-.ui-shell .ui-shell__menu { display: none; }
-.ui-shell[data-nav="drawer"] .ui-shell__menu { display: inline-flex; }
-
-/* ---- main region ---- */
-.ui-shell__main {
-  grid-area: main;
-  min-width: 0;
-  min-height: 0;
-  overflow: auto;
-  overscroll-behavior: contain;
-  padding: var(--ui-gutter);
-}
-.ui-shell__main[data-flush] { padding: 0; }
-
-/* ---- aside region ---- */
-.ui-shell__aside {
-  grid-area: aside;
-  min-width: 0;
-  min-height: 0;
-  overflow: hidden;
-  background: var(--ui-bg-surface);
-  border-left: 1px solid var(--ui-border);
-  display: flex;
-  flex-direction: column;
-}
-.ui-shell[data-aside="push"]:not([data-aside-open="true"]) .ui-shell__aside { visibility: hidden; border-left: 0; }
-.ui-shell[data-aside="overlay"] .ui-shell__aside {
-  position: absolute; right: 0; top: var(--ui-header-h); bottom: 0;
-  width: min(var(--ui-aside-w), 100%);
-  z-index: var(--ui-z-drawer);
-  transform: translateX(100%);
-  visibility: hidden;
-  transition: transform var(--ui-dur-base) var(--ui-ease-exit), visibility 0s linear var(--ui-dur-base);
-}
-.ui-shell[data-aside="overlay"][data-aside-open="true"] .ui-shell__aside {
-  transform: none; visibility: visible; box-shadow: var(--ui-shadow-3);
-  transition: transform var(--ui-dur-slow) var(--ui-ease-enter), visibility 0s;
-}
-
-/* ---- scrim ---- */
-.ui-shell__scrim {
-  position: absolute; inset: 0;
-  z-index: var(--ui-z-scrim);
-  background: var(--ui-scrim);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--ui-dur-base) var(--ui-ease-standard);
-}
-.ui-shell[data-scrim="true"] .ui-shell__scrim { opacity: 1; pointer-events: auto; }
-
-/* ============================================================
-   Page variant (.ui-shell-page on the scrolling host, usually body).
-   The document scrolls; the nav is fixed at the left. The host offsets its
-   own content with margin-left: var(--ui-nav-col), which SRETShell writes.
-   Header, main and aside are the host's own markup in this variant.
-   ============================================================ */
-.ui-shell-page .ui-shell__nav {
-  position: fixed; left: 0; top: 0; bottom: 0;
-  width: var(--ui-nav-col);
-  z-index: var(--ui-z-nav);
-  display: flex; flex-direction: column;
-  min-height: 0; overflow: hidden;
-  transition: width var(--ui-dur-base) var(--ui-ease-standard);
-}
-.ui-shell-page[data-nav="overlay"] .ui-shell__nav {
-  width: var(--ui-nav-w-expanded);
-  z-index: var(--ui-z-drawer);
-  box-shadow: var(--ui-shadow-3);
-}
-.ui-shell-page[data-nav="drawer"] .ui-shell__nav {
-  width: min(var(--ui-nav-w-drawer), 86vw);
-  z-index: var(--ui-z-drawer);
-  transform: translateX(-100%);
-  visibility: hidden;
-  transition: transform var(--ui-dur-base) var(--ui-ease-exit), visibility 0s linear var(--ui-dur-base);
-}
-.ui-shell-page[data-nav="drawer"][data-nav-open="true"] .ui-shell__nav {
-  transform: none; visibility: visible; box-shadow: var(--ui-shadow-3);
-  transition: transform var(--ui-dur-slow) var(--ui-ease-enter), visibility 0s;
-}
-.ui-shell-page > .ui-shell__scrim { position: fixed; }
-.ui-shell-page .ui-shell__menu { display: none; }
-.ui-shell-page[data-nav="drawer"] .ui-shell__menu { display: inline-flex; }
-.ui-shell-page[data-scrim="true"] > .ui-shell__scrim { opacity: 1; pointer-events: auto; }
-
-/* No motion until the shell has painted in its real state (SRETShell sets
-   data-ui-ready two frames after mount). Hosts gate their own offset
-   transitions the same way. */
-.ui-shell:not([data-ui-ready]),
-.ui-shell:not([data-ui-ready]) .ui-shell__nav,
-.ui-shell:not([data-ui-ready]) .ui-shell__aside,
-.ui-shell-page:not([data-ui-ready]) .ui-shell__nav { transition: none; }
-/* ===== END UI-SHELL ===== */
-/* @module ui-shell css END */
-/* @module ui-controls css 0.1.1 sha256=c8957b0da3f3902d BEGIN: generated by tools/modules_embed.py from src/modules/ui-controls/, do not edit here */
-/* ===== UI-CONTROLS (D-31 UI kit): src/modules/ui-controls/, pasted unchanged. Uses only ui-tokens. ===== */
-/* ============================================================
-   ui-controls: form and action controls (D-31).
-   button, icon button, input, textarea, select, switch, segmented control,
-   radio card, chip, badge, count, field, field grid.
-   Visible control height is --ui-ctl-h; touch hit area is --ui-hit,
-   reached with ::after, never by growing the visible box.
-   Uses only ui-tokens. Layout contract in MODULE.md.
-   ============================================================ */
-
-/* ---- Buttons ---- */
-.ui-btn {
-  position: relative;
-  display: inline-flex; align-items: center; justify-content: center; gap: var(--ui-space-2);
-  height: var(--ui-ctl-h); padding: 0 var(--ui-space-3);
-  border: 1px solid var(--ui-border-strong); border-radius: var(--ui-radius-md);
-  background: var(--ui-bg-surface); color: var(--ui-brand-strong);
-  font: inherit; font-size: var(--ui-text-md); font-weight: var(--ui-weight-medium); white-space: nowrap;
-  cursor: pointer; user-select: none;
-  transition: background-color var(--ui-dur-fast) var(--ui-ease-standard), border-color var(--ui-dur-fast) var(--ui-ease-standard), color var(--ui-dur-fast) var(--ui-ease-standard), transform var(--ui-dur-fast) var(--ui-ease-standard);
-}
-.ui-btn::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: max(100%, var(--ui-hit)); transform: translateY(-50%); }
-.ui-btn:hover { background: var(--ui-bg-hover); }
-.ui-btn:active { transform: scale(.98); }
-.ui-btn[disabled], .ui-btn[aria-disabled="true"] { opacity: .5; cursor: not-allowed; transform: none; }
-.ui-btn .ui-icon { width: var(--ui-icon-sm); height: var(--ui-icon-sm); flex: none; }
-.ui-btn--primary { background: var(--ui-brand-strong); border-color: var(--ui-brand-strong); color: var(--ui-on-accent); }
-.ui-btn--primary:hover { background: var(--ui-brand); border-color: var(--ui-brand); }
-.ui-btn--accent { background: var(--ui-accent); border-color: var(--ui-accent); color: var(--ui-on-accent); }
-.ui-btn--accent:hover { background: var(--ui-accent-strong); border-color: var(--ui-accent-strong); }
-.ui-btn--ghost { border-color: transparent; background: transparent; color: var(--ui-text-2); }
-.ui-btn--ghost:hover { background: var(--ui-bg-hover); color: var(--ui-text); }
-.ui-btn--danger { color: var(--ui-danger-ink); border-color: var(--ui-danger); }
-.ui-btn--danger:hover { background: var(--ui-danger-tint); }
-.ui-btn--block { width: 100%; }
-.ui-btn--icon { width: var(--ui-ctl-h); padding: 0; }
-.ui-btn--icon::after { left: 50%; width: max(100%, var(--ui-hit)); transform: translate(-50%, -50%); }
-.ui-btn--icon .ui-icon { width: var(--ui-icon); height: var(--ui-icon); }
-/* Buttons on a brand-coloured bar (header, nav) */
-.ui-on-brand .ui-btn { background: transparent; color: var(--ui-on-brand); border-color: var(--ui-on-brand-line); }
-.ui-on-brand .ui-btn:hover { background: var(--ui-on-brand-hover); }
-.ui-on-brand .ui-btn--ghost { border-color: transparent; }
-.ui-on-brand .ui-btn--accent { background: var(--ui-accent); border-color: var(--ui-accent); color: var(--ui-on-accent); }
-
-/* ---- Text inputs ---- */
-.ui-input, .ui-textarea, .ui-select {
-  width: 100%; min-width: 0;
-  height: var(--ui-ctl-h); padding: 0 var(--ui-space-3);
-  border: 1px solid var(--ui-border-strong); border-radius: var(--ui-radius-md);
-  background: var(--ui-bg-surface); color: var(--ui-text);
-  font: inherit; font-size: var(--ui-text-md);
-  transition: border-color var(--ui-dur-fast) var(--ui-ease-standard), box-shadow var(--ui-dur-fast) var(--ui-ease-standard);
-}
-.ui-input::placeholder, .ui-textarea::placeholder { color: var(--ui-text-faint); }
-.ui-input:hover, .ui-textarea:hover, .ui-select:hover { border-color: var(--ui-text-faint); }
-.ui-input:focus, .ui-textarea:focus, .ui-select:focus { outline: none; border-color: var(--ui-accent); box-shadow: 0 0 0 3px var(--ui-accent-tint); }
-.ui-input[aria-invalid="true"], .ui-textarea[aria-invalid="true"] { border-color: var(--ui-danger); }
-.ui-input[readonly] { background: var(--ui-bg-subtle); color: var(--ui-text-2); }
-.ui-textarea { height: auto; min-height: 80px; padding: var(--ui-space-2) var(--ui-space-3); line-height: var(--ui-lh-md); resize: vertical; }
-.ui-select {
-  appearance: none; padding-right: var(--ui-space-7); cursor: pointer;
-  background-image: linear-gradient(45deg, transparent 50%, var(--ui-text-muted) 50%), linear-gradient(135deg, var(--ui-text-muted) 50%, transparent 50%);
-  background-position: calc(100% - 17px) 50%, calc(100% - 12px) 50%;
-  background-size: 5px 5px; background-repeat: no-repeat;
-}
-.ui-input-wrap { position: relative; display: flex; align-items: center; min-width: 0; }
-.ui-input-wrap > .ui-icon { position: absolute; left: var(--ui-space-3); width: var(--ui-icon-sm); height: var(--ui-icon-sm); color: var(--ui-text-muted); pointer-events: none; }
-.ui-input-wrap > .ui-input { padding-left: var(--ui-space-8); }
-
-/* ---- Field (label, control, help, error) ---- */
-.ui-field { display: flex; flex-direction: column; gap: var(--ui-space-1); min-width: 0; }
-.ui-field__label { font-size: var(--ui-text-sm); line-height: var(--ui-lh-sm); font-weight: var(--ui-weight-medium); color: var(--ui-text-2); }
-.ui-field__help { font-size: var(--ui-text-sm); line-height: var(--ui-lh-sm); color: var(--ui-text-muted); }
-.ui-field__error { font-size: var(--ui-text-sm); line-height: var(--ui-lh-sm); color: var(--ui-danger-ink); }
-.ui-field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--ui-space-3) var(--ui-space-4); }
-.ui-field-grid > .ui-field--full { grid-column: 1 / -1; }
-@media (max-width: 640px) { .ui-field-grid { grid-template-columns: minmax(0, 1fr); } }
-
-/* ---- Switch (button role=switch; SRETControls toggles aria-checked) ---- */
-.ui-switch {
-  position: relative; flex: none;
-  width: 36px; height: 20px; padding: 0;
-  border: 0; border-radius: var(--ui-radius-pill);
-  background: var(--ui-border-strong); cursor: pointer;
-  transition: background-color var(--ui-dur-fast) var(--ui-ease-standard);
-}
-.ui-switch::before {
-  content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%;
-  background: var(--ui-bg-surface); box-shadow: var(--ui-shadow-1);
-  transition: transform var(--ui-dur-fast) var(--ui-ease-standard);
-}
-.ui-switch::after { content: ""; position: absolute; left: 50%; top: 50%; width: var(--ui-hit); height: var(--ui-hit); transform: translate(-50%, -50%); }
-.ui-switch[aria-checked="true"] { background: var(--ui-accent); }
-.ui-switch[aria-checked="true"]::before { transform: translateX(16px); }
-.ui-switch-row {
-  display: flex; flex-direction: row; flex-wrap: nowrap; align-items: center; justify-content: space-between;
-  gap: var(--ui-space-3); min-height: var(--ui-hit);
-  border-bottom: 1px solid var(--ui-border-soft);
-}
-.ui-switch-row__label { flex: 1 1 auto; min-width: 0; }
-
-/* ---- Segmented control (role=radiogroup) ---- */
-.ui-segmented {
-  display: inline-flex; flex-wrap: nowrap;
-  padding: var(--ui-space-0); gap: var(--ui-space-0);
-  border-radius: var(--ui-radius-md);
-  background: var(--ui-border-soft);
-}
-.ui-segmented__opt {
-  position: relative;
-  height: calc(var(--ui-ctl-h) - 4px); padding: 0 var(--ui-space-3);
-  border: 0; border-radius: var(--ui-radius-sm);
-  background: transparent; color: var(--ui-text-2);
-  font: inherit; font-size: var(--ui-text-md); white-space: nowrap; cursor: pointer;
-  transition: background-color var(--ui-dur-fast) var(--ui-ease-standard), color var(--ui-dur-fast) var(--ui-ease-standard), box-shadow var(--ui-dur-fast) var(--ui-ease-standard);
-}
-.ui-segmented__opt[aria-checked="true"] { background: var(--ui-bg-surface); color: var(--ui-brand-strong); font-weight: var(--ui-weight-semibold); box-shadow: var(--ui-shadow-1); }
-
-/* ---- Radio card (choice with description) ---- */
-.ui-radio-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: var(--ui-space-3); }
-.ui-radio-card {
-  display: flex; flex-direction: column; gap: var(--ui-space-2);
-  padding: var(--ui-space-3) var(--ui-space-4);
-  border: 1.5px solid var(--ui-border); border-radius: var(--ui-radius-lg);
-  background: var(--ui-bg-surface); color: var(--ui-text-2);
-  font: inherit; text-align: left; cursor: pointer; min-width: 0;
-  transition: border-color var(--ui-dur-fast) var(--ui-ease-standard), background-color var(--ui-dur-fast) var(--ui-ease-standard);
-}
-.ui-radio-card__title { display: flex; align-items: center; gap: var(--ui-space-2); color: var(--ui-text); font-weight: var(--ui-weight-semibold); }
-.ui-radio-card__title::before {
-  content: ""; width: 16px; height: 16px; border-radius: 50%; flex: none; box-sizing: border-box;
-  border: 1.5px solid var(--ui-border-strong);
-  transition: border-width var(--ui-dur-fast) var(--ui-ease-standard), border-color var(--ui-dur-fast) var(--ui-ease-standard);
-}
-.ui-radio-card[aria-checked="true"] { border-color: var(--ui-accent); background: var(--ui-accent-tint); }
-.ui-radio-card[aria-checked="true"] .ui-radio-card__title::before { border: 5px solid var(--ui-accent); }
-
-/* ---- Chip ---- */
-.ui-chips { display: flex; flex-direction: row; flex-wrap: wrap; gap: var(--ui-space-2); min-width: 0; }
-.ui-chip {
-  display: inline-flex; align-items: center; gap: var(--ui-space-1);
-  height: 28px; padding: 0 var(--ui-space-3);
-  border: 1px solid var(--ui-border); border-radius: var(--ui-radius-pill);
-  background: var(--ui-bg-surface); color: var(--ui-text-2);
-  font: inherit; font-size: var(--ui-text-sm); white-space: nowrap; max-width: 100%;
-  cursor: pointer;
-  transition: background-color var(--ui-dur-fast) var(--ui-ease-standard), border-color var(--ui-dur-fast) var(--ui-ease-standard);
-}
-.ui-chip > span { overflow: hidden; text-overflow: ellipsis; }
-.ui-chip[aria-pressed="true"], .ui-chip--active { background: var(--ui-accent-tint); border-color: transparent; color: var(--ui-accent-strong); font-weight: var(--ui-weight-medium); }
-.ui-chip__remove { display: inline-grid; place-items: center; width: 18px; height: 18px; margin-right: calc(-1 * var(--ui-space-1)); border: 0; border-radius: 50%; background: none; color: inherit; cursor: pointer; }
-.ui-chip__remove:hover { background: color-mix(in srgb, currentColor 14%, transparent); }
-.ui-chip__remove .ui-icon { width: 12px; height: 12px; }
-.ui-chip--add { border-style: dashed; color: var(--ui-text-2); }
-
-/* ---- Badge and count ---- */
-.ui-badge {
-  display: inline-flex; align-items: center; gap: var(--ui-space-1);
-  height: 20px; padding: 0 var(--ui-space-2); border-radius: var(--ui-radius-pill);
-  font-size: var(--ui-text-xs); line-height: var(--ui-lh-xs); font-weight: var(--ui-weight-semibold); white-space: nowrap;
-  background: var(--ui-border-soft); color: var(--ui-text-2);
-}
-.ui-badge--accent { background: var(--ui-accent-tint); color: var(--ui-accent-strong); }
-.ui-badge--ok { background: var(--ui-ok-tint); color: var(--ui-ok-ink); }
-.ui-badge--warn { background: var(--ui-warn-tint); color: var(--ui-warn-ink); }
-.ui-badge--danger { background: var(--ui-danger-tint); color: var(--ui-danger-ink); }
-.ui-count {
-  display: inline-grid; place-items: center; min-width: 20px; height: 18px; padding: 0 var(--ui-space-1);
-  border-radius: var(--ui-radius-pill);
-  font-size: var(--ui-text-xs); line-height: 1; font-weight: var(--ui-weight-semibold); font-variant-numeric: tabular-nums;
-  background: var(--ui-border-soft); color: var(--ui-text-2);
-}
-.ui-count--warn { background: var(--ui-warn); color: var(--ui-on-accent); }
-.ui-count--danger { background: var(--ui-danger); color: var(--ui-on-accent); }
-.ui-count--accent { background: var(--ui-accent); color: var(--ui-on-accent); }
-/* ===== END UI-CONTROLS ===== */
-/* @module ui-controls css END */
-/* @module ui-nav css 0.1.1 sha256=1b8d200ed0f22135 BEGIN: generated by tools/modules_embed.py from src/modules/ui-nav/, do not edit here */
-/* ===== UI-NAV (D-31 UI kit): src/modules/ui-nav/, pasted unchanged. Uses only ui-tokens. ===== */
-/* ============================================================
-   ui-nav: generic left navigation panel (D-31).
-   Modes (data-mode on .ui-nav, set by SRETNav): expanded | rail.
-   Context (data-context): docked | overlay | drawer, from the shell.
-   Uses only ui-tokens. Layout contract in MODULE.md.
-   ============================================================ */
-.ui-nav {
-  display: flex; flex-direction: column; flex-wrap: nowrap;
-  gap: var(--ui-space-1);
-  width: 100%; height: 100%; min-height: 0;
-  padding: var(--ui-space-3) var(--ui-space-2);
-  background: var(--ui-brand-strong);
-  color: var(--ui-on-brand);
-  font-family: var(--ui-font); font-size: var(--ui-text-md); line-height: var(--ui-lh-md);
-  overflow: hidden;
-}
-
-/* ---- Brand row ---- */
-.ui-nav__brand {
-  display: flex; flex-direction: row; flex-wrap: nowrap; align-items: center;
-  gap: var(--ui-space-3);
-  min-height: 44px; padding: 0 var(--ui-space-2) var(--ui-space-2);
-  min-width: 0;
-}
-.ui-nav__mark {
-  flex: none; width: 28px; height: 28px; border-radius: var(--ui-radius-lg);
-  display: grid; place-items: center;
-  background: var(--ui-accent); color: var(--ui-on-accent);
-}
-.ui-nav__mark .ui-icon { width: 16px; height: 16px; }
-.ui-nav__brand-text { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; }
-.ui-nav__brand-title { font-size: var(--ui-text-lg); line-height: var(--ui-lh-lg); font-weight: var(--ui-weight-semibold); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ui-nav__brand-sub { font-size: var(--ui-text-xs); line-height: var(--ui-lh-xs); color: var(--ui-on-brand-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ui-nav .ui-nav__close { display: none; flex: none; }
-.ui-nav[data-context="drawer"] .ui-nav__close { display: inline-flex; }
-
-/* ---- Scroll area and groups ---- */
-.ui-nav__scroll {
-  flex: 1 1 auto; min-height: 0;
-  display: flex; flex-direction: column; flex-wrap: nowrap; gap: var(--ui-space-2);
-  overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain;
-  scrollbar-width: thin; scrollbar-color: var(--ui-on-brand-line) transparent;
-}
-.ui-nav__group { display: flex; flex-direction: column; gap: var(--ui-space-0); min-width: 0; }
-.ui-nav__label {
-  display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: var(--ui-space-2);
-  height: 28px; padding: 0 var(--ui-space-3);
-  border: 0; background: none; width: 100%;
-  font: inherit; font-size: var(--ui-text-xs); line-height: var(--ui-lh-xs); font-weight: var(--ui-weight-semibold);
-  letter-spacing: var(--ui-tracking-label); text-transform: uppercase; color: var(--ui-on-brand-muted);
-  white-space: nowrap; text-align: left;
-}
-button.ui-nav__label { cursor: pointer; border-radius: var(--ui-radius-md); }
-button.ui-nav__label:hover { color: var(--ui-on-brand); }
-.ui-nav__label .ui-icon { width: 14px; height: 14px; flex: none; transition: transform var(--ui-dur-base) var(--ui-ease-standard); }
-.ui-nav__group[data-collapsed="true"] .ui-nav__label .ui-icon { transform: rotate(-90deg); }
-/* Group body collapses by animating the row track, not height, so content never jumps. */
-.ui-nav__items {
-  display: grid; grid-template-rows: 1fr;
-  transition: grid-template-rows var(--ui-dur-base) var(--ui-ease-standard);
-  list-style: none; margin: 0; padding: 0;
-}
-.ui-nav__items > div { min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: var(--ui-space-0); }
-.ui-nav__group[data-collapsed="true"] .ui-nav__items { grid-template-rows: 0fr; }
-.ui-nav__divider { height: 1px; margin: var(--ui-space-1) var(--ui-space-2); background: var(--ui-on-brand-line); flex: none; }
-
-/* ---- Item ---- */
-.ui-nav__item {
-  position: relative;
-  display: flex; flex-direction: row; flex-wrap: nowrap; align-items: center;
-  gap: var(--ui-space-3);
-  width: 100%; height: 40px; padding: 0 var(--ui-space-3);
-  border: 0; border-radius: var(--ui-radius-md);
-  background: transparent; color: var(--ui-on-brand);
-  font: inherit; font-size: var(--ui-text-md); text-align: left; text-decoration: none; white-space: nowrap;
-  cursor: pointer;
-  transition: background-color var(--ui-dur-fast) var(--ui-ease-standard);
-}
-.ui-nav__item:hover { background: var(--ui-on-brand-hover); }
-.ui-nav__item:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--ui-accent); }
-.ui-nav__item[aria-current="page"] { background: var(--ui-on-brand-selected); font-weight: var(--ui-weight-semibold); }
-.ui-nav__item::before {
-  content: ""; position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px; border-radius: 0 3px 3px 0;
-  background: var(--ui-accent); transform: scaleY(0);
-  transition: transform var(--ui-dur-base) var(--ui-ease-standard);
-}
-.ui-nav__item[aria-current="page"]::before { transform: scaleY(1); }
-.ui-nav__item > .ui-icon { width: var(--ui-icon); height: var(--ui-icon); flex: none; }
-.ui-nav__text { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.ui-nav__badge {
-  flex: none; display: inline-grid; place-items: center; min-width: 20px; height: 18px; padding: 0 var(--ui-space-1);
-  border-radius: var(--ui-radius-pill);
-  font-size: var(--ui-text-xs); line-height: 1; font-weight: var(--ui-weight-semibold); font-variant-numeric: tabular-nums;
-  background: var(--ui-on-brand-selected); color: var(--ui-on-brand);
-}
-.ui-nav__badge[data-tone="warn"] { background: var(--ui-warn); color: var(--ui-on-accent); }
-.ui-nav__badge[data-tone="danger"] { background: var(--ui-danger); color: var(--ui-on-accent); }
-.ui-nav__badge[data-tone="accent"] { background: var(--ui-accent); color: var(--ui-on-accent); }
-.ui-nav__item--sub { padding-left: calc(var(--ui-space-3) + var(--ui-icon) + var(--ui-space-3)); color: var(--ui-on-brand-muted); }
-.ui-nav__item--sub > .ui-icon { display: none; }
-
-/* ---- Footer ---- */
-.ui-nav__footer {
-  flex: none; display: flex; flex-direction: column; gap: var(--ui-space-0);
-  padding-top: var(--ui-space-2);
-  border-top: 1px solid var(--ui-on-brand-line);
-}
-.ui-nav[data-context="drawer"] .ui-nav__collapse { display: none; }
-
-/* ---- Rail mode: icons only. Labels fade; the nav width animates in the shell. ---- */
-.ui-nav__text, .ui-nav__brand-text, .ui-nav__label > span {
-  transition: opacity var(--ui-dur-fast) var(--ui-ease-standard);
-}
-.ui-nav[data-mode="rail"] .ui-nav__text,
-.ui-nav[data-mode="rail"] .ui-nav__brand-text,
-.ui-nav[data-mode="rail"] .ui-nav__label > span { opacity: 0; }
-.ui-nav[data-mode="rail"] .ui-nav__label { height: 9px; pointer-events: none; }
-.ui-nav[data-mode="rail"] .ui-nav__label .ui-icon { display: none; }
-.ui-nav[data-mode="rail"] .ui-nav__group[data-collapsed="true"] .ui-nav__items { grid-template-rows: 1fr; }
-.ui-nav[data-mode="rail"] .ui-nav__item--sub { padding-left: var(--ui-space-3); }
-.ui-nav[data-mode="rail"] .ui-nav__item--sub > .ui-icon { display: block; }
-.ui-nav[data-mode="rail"] .ui-nav__badge {
-  position: absolute; left: 26px; top: 7px; min-width: 8px; width: 8px; height: 8px; padding: 0; font-size: 0;
-  box-shadow: 0 0 0 2px var(--ui-brand-strong);
-}
-
-/* ---- Rail tooltip (one element, positioned by SRETNav) ---- */
-.ui-nav-tip {
-  position: fixed; z-index: var(--ui-z-popover);
-  padding: var(--ui-space-1) var(--ui-space-2); border-radius: var(--ui-radius-sm);
-  background: var(--ui-text); color: var(--ui-bg-surface);
-  font-family: var(--ui-font); font-size: var(--ui-text-sm); line-height: var(--ui-lh-sm); white-space: nowrap;
-  box-shadow: var(--ui-shadow-2); pointer-events: none;
-  opacity: 0; transform: translateX(-4px);
-  transition: opacity var(--ui-dur-fast) var(--ui-ease-standard), transform var(--ui-dur-fast) var(--ui-ease-standard);
-}
-.ui-nav-tip[data-show="true"] { opacity: 1; transform: none; }
-
-/* Ghost buttons inside the nav (the drawer close button) sit on the brand colour. */
-.ui-nav .ui-btn--ghost { color: var(--ui-on-brand); }
-.ui-nav .ui-btn--ghost:hover { background: var(--ui-on-brand-hover); color: var(--ui-on-brand); }
-/* ===== END UI-NAV ===== */
-/* @module ui-nav css END */
 /* @slot style-modules */
 /* P66: Notes panel. Milestone groups first, then the General notes under a
    heading that matches the group headings' weight. */
@@ -3921,11 +3294,17 @@ button.sg-sym:hover{transform:scale(1.2)}
      The rail is always on screen; only its panel opens and closes. Notes
      (D-19) and Lists (D-06) join the rail when they are built; until then the
      rail carries only sections with real content. -->
-<!-- D-31 Stage A (P79): the left nav. SRETNav renders into this host and
-     SRETShell (page variant) lays it out: expanded or rail on desktop, rail
-     with a slide-over on tablets, a drawer on phones. The id is kept from the
-     old Workspace rail so every offset and check that addresses it still does. -->
-<aside id="ws-rail" class="ui-shell__nav"></aside>
+<!-- P59 (B-01): three states. Collapsed: the rail is hidden and this toggle
+     holds the header's left slot. Rail: the icon strip, its first button
+     collapses it again. Panel: a section open beside the rail. The header
+     keeps the same left offset in every state, so nothing in it moves. -->
+<button type="button" id="ws-toggle" class="ws-toggle" onclick="setRailState('rail')" title="Show the Workspace" aria-label="Show the Workspace" aria-expanded="false">&#9776;</button>
+<nav id="ws-rail" aria-label="Workspace: your annotations">
+  <button class="ws-ri ws-ri-collapse" id="ws-tab-collapse" onclick="setRailState('collapsed')" title="Hide the Workspace rail" aria-label="Hide the Workspace rail">&#9776;</button>
+  <button class="ws-ri" id="ws-tab-notes" onclick="setWorkspaceSection('notes')" title="Notes" aria-label="Notes" aria-pressed="false">&#128221;<span class="ws-bd" id="ws-notes-count"></span></button>
+  <button class="ws-ri" id="ws-tab-comments" onclick="setWorkspaceSection('comments')" title="Comments &amp; markups" aria-label="Comments and markups" aria-pressed="false">&#128172;</button>
+  <button class="ws-ri" id="ws-tab-userms" onclick="setWorkspaceSection('userms')" title="User milestones" aria-label="User milestones" aria-pressed="false">&#9670;<span class="ws-bd" id="ws-userms-count"></span></button>
+</nav>
 <aside id="ws-panel" aria-label="Workspace">
   <div class="ws-hd">
     <div class="ws-hd-titles">
@@ -4026,8 +3405,21 @@ button.sg-sym:hover{transform:scale(1.2)}
   </div>
 </div>
 
+<!-- P79 interim UI (TD-247): confirm before continuing from a saved dashboard.
+     Reuses the annotations dialog's classes; replaced by the redesign. -->
+<div id="continue-dialog" class="annot-dialog" hidden>
+  <div class="annot-panel" role="dialog" aria-modal="true" aria-label="Continue from a saved dashboard">
+    <div class="annot-hd">Continue from a saved dashboard</div>
+    <div id="continue-dialog-body"></div>
+    <div class="annot-foot">
+      <span class="sd-actions-sep"></span>
+      <button class="toggle-btn" id="continue-cancel" onclick="continueClose()">Cancel</button>
+      <button class="toggle-btn" id="continue-apply" onclick="continueConfirm()">Load</button>
+    </div>
+  </div>
+</div>
+
 <div id="icon-bar">
-  <button type="button" id="ws-toggle" class="ws-toggle ui-shell__menu" onclick="setRailState('open')" aria-label="Open navigation" title="Open navigation" aria-expanded="false" aria-controls="ws-rail"></button>
   <span class="title" id="rpt-title-text" contenteditable="true" spellcheck="false" title="Click to edit the report title">Milestone Dashboard</span>
   <button id="btn-remove-all-filters" onclick="clearFilter()" title="A filter is currently active — click to remove all filters" style="display:none">&#10005; Remove all filters</button>
   <!-- P64 (TD-224): the tool name and version moved to the foot of Data & view
@@ -4733,8 +4125,22 @@ button.sg-sym:hover{transform:scale(1.2)}
     <div class="es-actions">
       <button type="button" class="ds-btn primary es-cta" id="es-import" onclick="openImportFromEmpty()">Import schedule</button>
       <button type="button" class="ds-btn es-cta" id="es-add-ms" onclick="openAddMilestone(null,null)">Add milestone</button>
+      <!-- P79 interim UI (TD-247): continue from a saved dashboard. Replaced by the redesign. -->
+      <button type="button" class="ds-btn es-cta" id="es-continue" onclick="continuePick()">Continue from saved</button>
+      <input type="file" id="continue-file" accept=".html,.htm,.json" onchange="continueChosen(this.files&&this.files[0])" hidden>
     </div>
-    <p class="es-hint">A P6 export as Excel or CSV. It is read in this file and never uploaded.</p>
+    <p class="es-hint">A P6 export as Excel or CSV, or a dashboard you saved last period to carry on from it. Files are read in this page and never uploaded.</p>
+    <!-- P80 interim UI (TD-248): quick links to where the files are kept. Replaced by the redesign. -->
+    <div class="es-links" id="es-links">
+      <div class="ql-list" id="ql-list" hidden></div>
+      <details class="ql-edit" id="ql-edit">
+        <summary>Set quick links</summary>
+        <p class="es-hint">Up to two links to where this dashboard's files are kept, such as the SharePoint folder. They are saved in the file and shown here to whoever opens it.</p>
+        <div class="ql-row"><input type="text" class="ds-field ql-title" id="ql-title-0" maxlength="60" placeholder="Title, e.g. Saved dashboards" aria-label="Link 1 title"><input type="text" class="ds-field ql-url" id="ql-url-0" placeholder="https:// or a folder path" aria-label="Link 1 address"></div>
+        <div class="ql-row"><input type="text" class="ds-field ql-title" id="ql-title-1" maxlength="60" placeholder="Title" aria-label="Link 2 title"><input type="text" class="ds-field ql-url" id="ql-url-1" placeholder="https:// or a folder path" aria-label="Link 2 address"></div>
+        <div class="ql-row"><button type="button" class="ds-btn" id="ql-save" onclick="qlSave()">Save links</button><span class="ql-msg" id="ql-msg" role="status"></span></div>
+      </details>
+    </div>
   </div>
 </section>
 
@@ -7684,543 +7090,270 @@ button.sg-sym:hover{transform:scale(1.2)}
 })(typeof window !== 'undefined' ? window : globalThis);
 // ============ END UPDATE HISTORY MODULE ============
 // @module notes-history js END
-// @module ui-icons js 0.1.0 sha256=8b628cd894740d40 BEGIN: generated by tools/modules_embed.py from src/modules/ui-icons/, do not edit here
+// @module continue-file js 1.0.0 sha256=7e232f37d435739d BEGIN: generated by tools/modules_embed.py from src/modules/continue-file/, do not edit here
 // ============================================================
-// UI-ICONS (D-31 UI kit): src/modules/ui-icons/, pasted unchanged.
-// Defines window.SRETIcons only and reads no app global. The app adapter
-// (APP_NAV) lives beside the Workspace code.
+// CONTINUE-FILE MODULE (P79, TD-247): src/modules/continue-file/continue-file.js,
+// pasted unchanged. Defines window.SRETContinue only and reads no app global.
+// The app's adapter (continueRead / continueApply) sits beside the P76 backups.
 // ============================================================
-/* ============================================================
-   ui-icons (SRETIcons): the kit's inline SVG icon set (D-31).
-   24 x 24 stroke icons drawn with currentColor, so they take the text
-   colour of whatever holds them. No icon font, no network.
+/* =====================================================================
+   SRET continue-file (P79). Reads a previously saved dashboard so a blank
+   copy can continue from it: last period's schedule, baseline, notes,
+   remarks, edits and user tasks, mirrored into the copy that is open now.
 
-   API
-     SRETIcons.svg(name, opts?) -> string   SVG markup; opts.size (px), opts.cls
-     SRETIcons.has(name)        -> boolean
-     SRETIcons.names()          -> string[]
-   Unknown names render an empty 24 x 24 box rather than throwing, so a
-   typo shows as a gap, not a crash.
-   ============================================================ */
-(function (root) {
+   Back end only. No DOM, no app global, no network, no eval. The saved
+   file's scripts are never run: the state is found as text and parsed with
+   JSON.parse, so a file carrying anything else is inert here.
+
+   Accepted inputs (text of the file the user picked):
+     - a saved dashboard (.html): its published-state script element. Only
+       an element whose text opens with the assignment counts, because the
+       app's own source (this comment too, once embedded) names it. Written
+       by publishDashboard() as
+       window.__PUBLISHED_STATE__=<json>;  with < > & escaped as < etc.
+     - a full-state JSON (.json): a Backups download (P76) or the bare state
+       object. It must carry a timeline with dates, which an annotations-only
+       model export does not, so that one is refused with a pointer to the
+       Sources mount that reads it.
+
+   API (all pure; nothing is stored here):
+     read(text, fileName, ctx) -> {
+        ok, errors:[string], warnings:[string],
+        format:'html'|'json'|null, payload:object|null, summary:object|null }
+       ctx: { appVersion: APP_VERSION } (optional; enables the version notes)
+     extractState(text) -> { payload, format, error }
+     summarise(payload, fileName) -> {
+        fileName, savedAt, savedBy (app version), projectNo, reportTitle,
+        dataDate, sources:[name], milestones, tasks, userTasks, entries,
+        notes, hasBaseline, chainLength, empty }
+     check(payload, ctx) -> { errors:[string], warnings:[string] }
+     chainOf(payload) -> [{at, fromVersion}]  the provenance to carry on
+     compareVersions(a, b) -> -1 | 0 | 1  (major.minor.patch-P<n>, P number last)
+
+   Messages are user-facing: no em dashes (CLAUDE.md, hard constraints).
+   Exposes window.SRETContinue, and module.exports for Node.
+   ===================================================================== */
+(function(root){
   'use strict';
-  var P = {
-    timeline: '<path d="M3 6h18M3 12h18M3 18h18"/><path d="M8 4v4M15 10v4M11 16v4"/>',
-    grid: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/>',
-    report: '<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/>',
-    print: '<path d="M7 9V3h10v6M7 17H4v-7h16v7h-3"/><rect x="7" y="14" width="10" height="7"/>',
-    note: '<path d="M5 4h14v11l-5 5H5z"/><path d="M14 20v-5h5M8 9h8M8 13h5"/>',
-    comment: '<path d="M4 5h16v11H9l-5 4z"/>',
-    diamond: '<path d="M12 3l9 9-9 9-9-9z"/>',
-    list: '<path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/>',
-    import: '<path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 17v3h16v-3"/>',
-    settings: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>',
-    help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7M12 17h.01"/>',
-    chevronRight: '<path d="M9 6l6 6-6 6"/>',
-    chevronDown: '<path d="M6 9l6 6 6-6"/>',
-    chevronLeft: '<path d="M15 6l-6 6 6 6"/>',
-    search: '<circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/>',
-    filter: '<path d="M4 5h16l-6 7v6l-4 2v-8z"/>',
-    plus: '<path d="M12 5v14M5 12h14"/>',
-    close: '<path d="M6 6l12 12M18 6L6 18"/>',
-    share: '<path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 13v7h14v-7"/>',
-    more: '<circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/>',
-    pin: '<path d="M9 3h6l-1 6 4 4H6l4-4z"/><path d="M12 13v8"/>',
-    menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
-    collapse: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M15 10l-2 2 2 2"/>',
-    expand: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M13 10l2 2-2 2"/>',
-    sliders: '<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
-    calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
-    lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
-    user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>',
-    check: '<path d="M5 12l5 5 9-10"/>',
-    info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
-    warning: '<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/>',
-    arrowLeft: '<path d="M19 12H5M11 6l-6 6 6 6"/>',
-    arrowRight: '<path d="M5 12h14M13 6l6 6-6 6"/>',
-    file: '<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/>',
-    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/>'
-  };
-  function svg(name, opts) {
-    opts = opts || {};
-    var s = opts.size ? ' width="' + opts.size + '" height="' + opts.size + '"' : '';
-    return '<svg class="ui-icon' + (opts.cls ? ' ' + opts.cls : '') + '" viewBox="0 0 24 24"' + s +
-      ' fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' +
-      (P[name] || '') + '</svg>';
+
+  // The element's text must open with the assignment; group 1 is the JSON
+  // and its closing semicolon. \x3C is '<': no literal script tag inside a
+  // script (CLAUDE.md, hard constraints; docs/06-lessons-learned.md).
+  var STATE_BLOCK=/\x3Cscript\b[^>]*\bid\s*=\s*["']?published-state["']?[^>]*>\s*window\.__PUBLISHED_STATE__\s*=\s*([\s\S]*?)\x3C\/script>/i;
+
+  function isObj(v){ return !!v&&typeof v==='object'&&!Array.isArray(v); }
+  function len(v){ return Array.isArray(v)?v.length:(isObj(v)?Object.keys(v).length:0); }
+
+  // The JSON between the prefix and the closing semicolon. Publish escapes
+  // every < > & inside the data, so the first closing script tag after the
+  // block's start is its own.
+  function extractState(text){
+    var t=String(text==null?'':text);
+    var head=t.slice(0,4096).replace(/^﻿/,'').replace(/^\s+/,'');
+    if(head.charAt(0)==='{'){
+      try{ return {payload:JSON.parse(t.replace(/^﻿/,'')),format:'json',error:null}; }
+      catch(e){ return {payload:null,format:'json',error:'The file is not valid JSON.'}; }
+    }
+    if(!/<html|<!doctype/i.test(head)&&!STATE_BLOCK.test(t))
+      return {payload:null,format:null,error:'This is not a saved dashboard. Choose an .html file made with Save, or a backup .json.'};
+    var m=STATE_BLOCK.exec(t);
+    if(!m) return {payload:null,format:'html',
+      error:'This page holds no saved dashboard data. It may be a blank copy of the app or a shared report, not a file made with Save.'};
+    var body=m[1].replace(/;\s*$/,'');
+    try{ return {payload:JSON.parse(body),format:'html',error:null}; }
+    catch(e){ return {payload:null,format:'html',error:'The saved data in this file is damaged and cannot be read.'}; }
   }
-  var api = {
-    svg: svg,
-    has: function (n) { return Object.prototype.hasOwnProperty.call(P, n); },
-    names: function () { return Object.keys(P); }
-  };
-  root.SRETIcons = api;
-  if (typeof module !== 'undefined' && module.exports) module.exports = api;
-})(typeof window !== 'undefined' ? window : globalThis);
-// ============ END UI-ICONS ============
-// @module ui-icons js END
-// @module ui-shell js 0.2.0 sha256=68b0fb18cfb08338 BEGIN: generated by tools/modules_embed.py from src/modules/ui-shell/, do not edit here
-// ============================================================
-// UI-SHELL (D-31 UI kit): src/modules/ui-shell/, pasted unchanged.
-// Defines window.SRETShell only and reads no app global. The app adapter
-// (APP_NAV) lives beside the Workspace code.
-// ============================================================
-/* ============================================================
-   ui-shell (SRETShell): layout controller for the app frame (D-31).
-   Knows nothing about the app's data. It only decides how the nav and
-   aside regions behave at the current width and writes that state as
-   data attributes on the .ui-shell element (CSS does the rest).
 
-   Width bands (match ui-tokens):
-     phone   <= 640    nav = drawer (off-canvas), aside = overlay
-     tablet  641-1024  nav = rail, opening it slides the expanded nav over
-                       the content (overlay); aside = overlay
-     desktop >= 1025   nav = the user's preference (expanded | rail),
-                       aside = push (content reflows only on open/close)
+  // 'major.minor.patch-P<n>' -> [major,minor,patch,n]. Anything unparseable compares as equal, so an
+  // odd version string never blocks a load on its own.
+  function vparts(v){
+    var m=/^(\d+)\.(\d+)\.(\d+)(?:-[A-Za-z]*(\d+))?/.exec(String(v||''));
+    return m?[+m[1],+m[2],+m[3],m[4]==null?0:+m[4]]:null;
+  }
+  function compareVersions(a,b){
+    var x=vparts(a), y=vparts(b);
+    if(!x||!y) return 0;
+    for(var i=0;i<4;i++){ if(x[i]!==y[i]) return x[i]<y[i]?-1:1; }
+    return 0;
+  }
 
-   API
-     SRETShell.layoutFor(width, pref, navOpen, asideOpen) -> state   (pure)
-     SRETShell.mount(el, opts) -> controller
-        opts.variant       'grid' (default): el is a .ui-shell grid holding the regions.
-                           'page': el is the scrolling host (for example body) with
-                           class .ui-shell-page; the nav is fixed at the left and the
-                           host offsets its content by var(--ui-nav-col). For apps
-                           whose document is the scroller.
-        opts.nav           page variant: the nav region element
-        opts.inert         page variant: fn() -> elements to make inert while a
-                           drawer or overlay nav is open (optional)
-        opts.navPref       'expanded' | 'rail' (default 'expanded')
-        opts.persist       { get(): pref|null, set(pref) }   optional
-        opts.onChange      fn(state)                          optional
-        opts.width         fn() -> number, for tests          optional
-     controller.toggleNav()  desktop: flips the preference; else opens/closes
-     controller.openNav() / closeNav()
-     controller.openAside() / closeAside() / toggleAside()
-     controller.state() -> { band, nav, navOpen, aside, asideOpen, scrim, pref }
-     controller.destroy()
-   Writes on el: data-band, data-nav, data-nav-open, data-aside, data-aside-open,
-   data-scrim, data-ui-ready (two frames after mount; transitions wait for it),
-   and the custom property --ui-nav-col (the nav column in use).
-   Events: 'ui-shell:change' (CustomEvent, detail = state) on the element.
-   Keyboard: Esc closes the topmost overlay (nav drawer, then aside overlay).
-   It listens in the capture phase and stops the event only when it closed
-   something, so a host's own Esc handling is untouched otherwise.
-   ============================================================ */
-(function (root) {
-  'use strict';
-  var PHONE_MAX = 640, TABLET_MAX = 1024;
+  function chainOf(p){
+    var c=isObj(p)&&Array.isArray(p.publishChain)?p.publishChain:[];
+    return c.filter(isObj).map(function(e){ return {at:e.at||null,fromVersion:e.fromVersion||null}; });
+  }
 
-  function bandFor(w) { return w <= PHONE_MAX ? 'phone' : (w <= TABLET_MAX ? 'tablet' : 'desktop'); }
+  function dataDateOf(p){
+    if(isObj(p.source)&&p.source.dataDate) return String(p.source.dataDate).slice(0,10);
+    if(p.scheduleDataDate) return String(p.scheduleDataDate).slice(0,10);
+    var s=Array.isArray(p.sources)?p.sources.filter(function(x){ return isObj(x)&&x.dataDate; }):[];
+    return s.length?String(s[0].dataDate).slice(0,10):null;
+  }
 
-  function layoutFor(width, pref, navOpen, asideOpen) {
-    var band = bandFor(width);
-    var s = { band: band, pref: pref === 'rail' ? 'rail' : 'expanded', asideOpen: !!asideOpen };
-    if (band === 'phone') { s.nav = 'drawer'; s.navOpen = !!navOpen; s.aside = 'overlay'; }
-    else if (band === 'tablet') { s.nav = navOpen ? 'overlay' : 'rail'; s.navOpen = !!navOpen; s.aside = 'overlay'; }
-    else { s.nav = s.pref; s.navOpen = false; s.aside = 'push'; }
-    s.scrim = !!((s.nav === 'drawer' && s.navOpen) || s.nav === 'overlay' || (s.aside === 'overlay' && s.asideOpen));
+  function summarise(p,fileName){
+    p=isObj(p)?p:{};
+    var userTasks=len(p.userTasks)||len(p.userMilestones);
+    var s={
+      fileName:fileName||'',
+      savedAt:p.publishedAt||p.exportedAt||p.savedAt||null,
+      savedBy:p.fromVersion||p.version||p.appVersion||null,
+      projectNo:p.projectNo||'',
+      reportTitle:p.reportTitle||'',
+      dataDate:dataDateOf(p),
+      sources:(Array.isArray(p.sources)?p.sources:[]).filter(isObj).map(function(x){ return x.name||x.file||'Schedule'; }),
+      milestones:len(p.milestones),
+      tasks:len(p.tasks),
+      userTasks:userTasks,
+      entries:len(p.entries),
+      notes:len(p.notes),
+      hasBaseline:isObj(p.baseline),
+      chainLength:chainOf(p).length
+    };
+    s.empty=!s.milestones&&!s.tasks&&!s.userTasks&&!s.entries&&!s.notes&&
+            !len(p.milestoneComments)&&!len(p.overrides);
     return s;
   }
 
-  function mount(el, opts) {
-    opts = opts || {};
-    var page = opts.variant === 'page';
-    var widthFn = opts.width || (page ? function () { return root.innerWidth; }
-                                      : function () { return el.getBoundingClientRect().width || root.innerWidth; });
-    if (page) el.classList.add('ui-shell-page');
-    var pref = (opts.persist && opts.persist.get && opts.persist.get()) || opts.navPref || 'expanded';
-    var navOpen = false, asideOpen = false, lastBand = null, state = null, lastFocus = null;
-
-    var scrim = el.querySelector(':scope > .ui-shell__scrim');
-    if (!scrim) { scrim = document.createElement('div'); scrim.className = 'ui-shell__scrim'; el.appendChild(scrim); }
-    scrim.setAttribute('aria-hidden', 'true');
-    var nav = page ? opts.nav : el.querySelector(':scope > .ui-shell__nav');
-    var main = page ? null : el.querySelector(':scope > .ui-shell__main');
-    var header = page ? null : el.querySelector(':scope > .ui-shell__header');
-    var COL = { expanded: 'var(--ui-nav-w-expanded)', rail: 'var(--ui-nav-w-rail)', overlay: 'var(--ui-nav-w-rail)', drawer: '0px' };
-
-    function apply() {
-      var w = widthFn();
-      var band = bandFor(w);
-      if (band !== lastBand) { navOpen = false; lastBand = band; }
-      var prev = state;
-      state = layoutFor(w, pref, navOpen, asideOpen);
-      el.setAttribute('data-band', state.band);
-      el.setAttribute('data-nav', state.nav);
-      el.setAttribute('data-nav-open', String(state.navOpen));
-      el.setAttribute('data-aside', state.aside);
-      el.setAttribute('data-aside-open', String(state.asideOpen));
-      el.setAttribute('data-scrim', String(state.scrim));
-      // Page variant: on <html>, so host tokens declared at :root can use it too.
-      (page ? document.documentElement : el).style.setProperty('--ui-nav-col', COL[state.nav]);
-      // While a drawer or overlay nav is up, the content behind it is inert.
-      var modalNav = state.navOpen && (state.nav === 'drawer' || state.nav === 'overlay');
-      var inertEls = page ? (opts.inert ? opts.inert() : []) : [main, header];
-      inertEls.forEach(function (n) { if (n) { if (modalNav) n.setAttribute('inert', ''); else n.removeAttribute('inert'); } });
-      if (nav && state.nav === 'drawer' && !state.navOpen) nav.setAttribute('aria-hidden', 'true');
-      else if (nav) nav.removeAttribute('aria-hidden');
-      if (!prev || JSON.stringify(prev) !== JSON.stringify(state)) {
-        el.dispatchEvent(new CustomEvent('ui-shell:change', { detail: state }));
-        if (opts.onChange) opts.onChange(state);
-      }
+  function check(p,ctx){
+    ctx=ctx||{};
+    var errors=[], warnings=[];
+    if(!isObj(p)){ errors.push('The file does not contain a saved dashboard.'); return {errors:errors,warnings:warnings}; }
+    var tl=p.timeline;
+    var fullState=isObj(tl)&&Array.isArray(tl.labels)&&Array.isArray(tl.dates)&&tl.labels.length===tl.dates.length;
+    if(!fullState){
+      if(p.kind&&/milestone-dashboard-model$/.test(String(p.kind))&&!(isObj(tl)&&Array.isArray(tl.dates)))
+        errors.push('This is an annotations export, not a whole dashboard. Mount it from Data and view, Sources, after importing the schedule.');
+      else errors.push('The file does not contain a whole saved dashboard (no timeline).');
+      return {errors:errors,warnings:warnings};
     }
-
-    function focusFirstNavItem() {
-      if (!nav) return;
-      var f = nav.querySelector('[aria-current="page"], button, a[href]');
-      if (f) f.focus({ preventScroll: true });
+    if(!Array.isArray(p.milestones)||!Array.isArray(p.tasks))
+      errors.push('The saved dashboard is missing its schedule rows.');
+    if(summarise(p).empty)
+      errors.push('The saved dashboard is empty: no schedule, user tasks or notes to continue from.');
+    var by=p.fromVersion||p.version||p.appVersion;
+    if(ctx.appVersion&&by){
+      var c=compareVersions(by,ctx.appVersion), bv=vparts(by), av=vparts(ctx.appVersion);
+      if(c>0&&bv&&av&&bv[0]>av[0])
+        errors.push('Saved by version '+by+', a newer major version than this copy ('+ctx.appVersion+'). Open it in that version.');
+      else if(c>0)
+        warnings.push('Saved by version '+by+', newer than this copy ('+ctx.appVersion+'). Anything this version does not know about will not load.');
+      else if(c<0)
+        warnings.push('Saved by version '+by+'. It will be brought up to '+ctx.appVersion+' when you save.');
     }
-
-    var ctl = {
-      state: function () { return Object.assign({}, state); },
-      openNav: function () {
-        if (state.band === 'desktop') { ctl.setPref('expanded'); return; }
-        lastFocus = document.activeElement; navOpen = true; apply();
-        setTimeout(focusFirstNavItem, 0);
-      },
-      closeNav: function () {
-        if (!navOpen) return;
-        navOpen = false; apply();
-        if (lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true });
-      },
-      toggleNav: function () {
-        if (state.band === 'desktop') ctl.setPref(pref === 'expanded' ? 'rail' : 'expanded');
-        else if (navOpen) ctl.closeNav(); else ctl.openNav();
-      },
-      setPref: function (p) {
-        pref = p === 'rail' ? 'rail' : 'expanded';
-        if (opts.persist && opts.persist.set) opts.persist.set(pref);
-        apply();
-      },
-      openAside: function () { asideOpen = true; apply(); },
-      closeAside: function () { asideOpen = false; apply(); },
-      toggleAside: function () { asideOpen = !asideOpen; apply(); },
-      refresh: apply,
-      destroy: function () {
-        if (ro) ro.disconnect();
-        root.removeEventListener('resize', apply);
-        document.removeEventListener('keydown', onKey, true);
-        scrim.removeEventListener('click', onScrim);
-      }
-    };
-
-    function onKey(e) {
-      if (e.key !== 'Escape') return;
-      if (navOpen && (state.nav === 'drawer' || state.nav === 'overlay')) { ctl.closeNav(); e.stopPropagation(); return; }
-      if (state.aside === 'overlay' && asideOpen) { ctl.closeAside(); e.stopPropagation(); }
-    }
-    function onScrim() {
-      if (navOpen) ctl.closeNav();
-      if (state.aside === 'overlay' && asideOpen) ctl.closeAside();
-    }
-    // On the document in the capture phase, so Esc works wherever focus is
-    // while an overlay is up, ahead of the host's own handlers.
-    document.addEventListener('keydown', onKey, true);
-    scrim.addEventListener('click', onScrim);
-    var ro = null;
-    if (page) root.addEventListener('resize', apply);
-    else { ro = new ResizeObserver(function () { apply(); }); ro.observe(el); }
-    apply();
-    // The first layout is applied without motion: transitions start only once
-    // the shell has painted in its real state (data-ui-ready), so a page that
-    // boots on a phone or on the rail does not slide in from the default width.
-    var raf = root.requestAnimationFrame || function (f) { return setTimeout(f, 16); };
-    raf(function () { raf(function () { el.setAttribute('data-ui-ready', ''); }); });
-    return ctl;
+    return {errors:errors,warnings:warnings};
   }
 
-  var api = { mount: mount, layoutFor: layoutFor, bandFor: bandFor, PHONE_MAX: PHONE_MAX, TABLET_MAX: TABLET_MAX };
-  root.SRETShell = api;
-  if (typeof module !== 'undefined' && module.exports) module.exports = api;
-})(typeof window !== 'undefined' ? window : globalThis);
-// ============ END UI-SHELL ============
-// @module ui-shell js END
-// @module ui-controls js 0.1.1 sha256=ecf9ba2fe10aff0c BEGIN: generated by tools/modules_embed.py from src/modules/ui-controls/, do not edit here
-// ============================================================
-// UI-CONTROLS (D-31 UI kit): src/modules/ui-controls/, pasted unchanged.
-// Defines window.SRETControls only and reads no app global. The app adapter
-// (APP_NAV) lives beside the Workspace code.
-// ============================================================
-/* ============================================================
-   ui-controls (SRETControls): behaviour for stateful controls (D-31).
-   Markup-first: the HTML carries the state in ARIA attributes; this
-   module only keeps them in step with clicks and keys, and reports.
+  function read(text,fileName,ctx){
+    var x=extractState(text);
+    var out={ok:false,errors:[],warnings:[],format:x.format,payload:null,summary:null};
+    if(x.error){ out.errors.push(x.error); return out; }
+    var c=check(x.payload,ctx);
+    out.errors=c.errors; out.warnings=c.warnings;
+    out.summary=summarise(x.payload,fileName);
+    if(!out.errors.length){ out.payload=x.payload; out.ok=true; }
+    return out;
+  }
 
-   API
-     SRETControls.bind(rootEl) -> unbind()
-        Delegated handling inside rootEl for:
-          .ui-switch           aria-checked flips; emits 'ui-change' {value:boolean}
-          .ui-segmented        radio group; arrow keys move; emits {value}
-          .ui-radio-cards      same, for .ui-radio-card children
-          .ui-chip[aria-pressed] toggles pressed; emits {value:boolean}
-          .ui-chip__remove     emits 'ui-remove' on its chip, then removes it
-     'ui-change' and 'ui-remove' bubble and carry detail.value / detail.id
-     (the control's data-id or id).
-   ============================================================ */
-(function (root) {
+  var api={read:read,extractState:extractState,summarise:summarise,check:check,
+           chainOf:chainOf,compareVersions:compareVersions};
+  root.SRETContinue=api;
+  if(typeof module!=='undefined'&&module.exports) module.exports=api;
+})(typeof window!=='undefined'?window:(typeof globalThis!=='undefined'?globalThis:this));
+// ============ END CONTINUE-FILE MODULE ============
+// @module continue-file js END
+// @module quick-links js 1.0.0 sha256=7d5511e4dda1767c BEGIN: generated by tools/modules_embed.py from src/modules/quick-links/, do not edit here
+// ============================================================
+// QUICK-LINKS MODULE (P80, TD-248): src/modules/quick-links/quick-links.js,
+// pasted unchanged. Defines window.SRETQuickLinks only and reads no app global.
+// The app's adapter (quickLinksGet / quickLinksSet) sits beside the continue adapter.
+// ============================================================
+/* =====================================================================
+   SRET quick links (P80). Two named links to where this dashboard's files
+   are kept (a SharePoint library, a synced OneDrive folder), set once in the
+   blank copy and carried in every file saved from it, so whoever opens it can
+   get to last period's saved file before choosing Continue from saved.
+
+   Back end only. No DOM, no app global, no network. Pure functions over a
+   list the caller owns and persists.
+
+   A link is { title:string, url:string }. Rules:
+     - at most MAX (2) slots; a slot with no URL is empty and dropped;
+     - the URL must be http:, https: or file: (a OneDrive or network path
+       written as file:///...). A Windows path (C:\... or \\server\share\...)
+       is turned into a file: URL. Anything else, javascript: and data:
+       included, is refused, because the link is opened by whoever reads
+       the file, not only by whoever typed it;
+     - the title is trimmed to TITLE_MAX characters; a blank title falls
+       back to the host name, or the last part of a file path.
+
+   API:
+     normaliseUrl(text) -> { url, error }       url is '' when text is blank
+     normalise(list)    -> { links:[{title,url}], errors:[string] }
+                           errors name the slot (Link 1, Link 2); a refused
+                           slot is left out of links
+     label(link)        -> the text to show for a link
+     MAX, TITLE_MAX
+
+   Messages are user-facing: no em dashes (CLAUDE.md, hard constraints).
+   Exposes window.SRETQuickLinks, and module.exports for Node.
+   ===================================================================== */
+(function(root){
   'use strict';
-  function emit(el, type, value) {
-    el.dispatchEvent(new CustomEvent(type, { bubbles: true, detail: { id: el.dataset.id || el.id || null, value: value } }));
+
+  var MAX=2, TITLE_MAX=60;
+  var OK_SCHEMES=/^(https?|file):$/i;
+
+  function str(v){ return v==null?'':String(v); }
+
+  function normaliseUrl(text){
+    var t=str(text).trim();
+    if(!t) return {url:'',error:null};
+    // Windows paths, as copied from Explorer's address bar.
+    if(/^[A-Za-z]:[\\/]/.test(t)) t='file:///'+t.replace(/\\/g,'/');
+    else if(/^\\\\[^\\]/.test(t)) t='file://'+t.slice(2).replace(/\\/g,'/');
+    else if(/^www\./i.test(t)) t='https://'+t;
+    var u;
+    try{ u=new URL(t); }catch(e){ return {url:'',error:'is not a web address or a folder path.'}; }
+    if(!OK_SCHEMES.test(u.protocol)) return {url:'',error:'must start with https://, http:// or file://.'};
+    if(/^https?:$/i.test(u.protocol)&&!u.hostname) return {url:'',error:'has no site name.'};
+    return {url:u.href,error:null};
   }
-  function groupOf(el) { return el.closest('.ui-segmented, .ui-radio-cards'); }
-  function optsOf(g) { return Array.prototype.slice.call(g.querySelectorAll('.ui-segmented__opt, .ui-radio-card')); }
-  function choose(g, opt, focus) {
-    optsOf(g).forEach(function (o) {
-      var on = o === opt;
-      o.setAttribute('aria-checked', String(on));
-      o.tabIndex = on ? 0 : -1;
-    });
-    if (focus) opt.focus();
-    emit(g, 'ui-change', opt.dataset.value || opt.textContent.trim());
-  }
-  function init(rootEl) {
-    rootEl.querySelectorAll('.ui-segmented, .ui-radio-cards').forEach(function (g) {
-      g.setAttribute('role', 'radiogroup');
-      var os = optsOf(g), any = false;
-      os.forEach(function (o) { o.setAttribute('role', 'radio'); if (o.getAttribute('aria-checked') === 'true') any = true; });
-      os.forEach(function (o, i) { o.tabIndex = (o.getAttribute('aria-checked') === 'true' || (!any && i === 0)) ? 0 : -1; });
-    });
-    rootEl.querySelectorAll('.ui-switch').forEach(function (s) {
-      s.setAttribute('role', 'switch');
-      if (!s.hasAttribute('aria-checked')) s.setAttribute('aria-checked', 'false');
-    });
-  }
-  function bind(rootEl) {
-    init(rootEl);
-    function onClick(e) {
-      var rm = e.target.closest('.ui-chip__remove');
-      if (rm && rootEl.contains(rm)) {
-        var chip = rm.closest('.ui-chip');
-        emit(chip, 'ui-remove', null);
-        chip.remove();
-        return;
+
+  function fallbackTitle(url){
+    try{
+      var u=new URL(url);
+      if(u.protocol==='file:'){
+        var parts=decodeURIComponent(u.pathname).split('/').filter(Boolean);
+        return parts.length?parts[parts.length-1]:'Folder';
       }
-      var sw = e.target.closest('.ui-switch');
-      if (sw && rootEl.contains(sw)) {
-        var v = sw.getAttribute('aria-checked') !== 'true';
-        sw.setAttribute('aria-checked', String(v));
-        emit(sw, 'ui-change', v);
-        return;
-      }
-      var opt = e.target.closest('.ui-segmented__opt, .ui-radio-card');
-      if (opt && rootEl.contains(opt)) { choose(groupOf(opt), opt); return; }
-      var chp = e.target.closest('.ui-chip[aria-pressed]');
-      if (chp && rootEl.contains(chp)) {
-        var p = chp.getAttribute('aria-pressed') !== 'true';
-        chp.setAttribute('aria-pressed', String(p));
-        emit(chp, 'ui-change', p);
-      }
-    }
-    function onKey(e) {
-      var opt = e.target.closest && e.target.closest('.ui-segmented__opt, .ui-radio-card');
-      if (!opt) return;
-      var g = groupOf(opt), os = optsOf(g), i = os.indexOf(opt), j = null;
-      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') j = (i + 1) % os.length;
-      else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') j = (i - 1 + os.length) % os.length;
-      if (j !== null) { e.preventDefault(); choose(g, os[j], true); }
-    }
-    rootEl.addEventListener('click', onClick);
-    rootEl.addEventListener('keydown', onKey);
-    return function unbind() { rootEl.removeEventListener('click', onClick); rootEl.removeEventListener('keydown', onKey); };
-  }
-  var api = { bind: bind };
-  root.SRETControls = api;
-  if (typeof module !== 'undefined' && module.exports) module.exports = api;
-})(typeof window !== 'undefined' ? window : globalThis);
-// ============ END UI-CONTROLS ============
-// @module ui-controls js END
-// @module ui-nav js 0.1.1 sha256=9f489fbdf19895d3 BEGIN: generated by tools/modules_embed.py from src/modules/ui-nav/, do not edit here
-// ============================================================
-// UI-NAV (D-31 UI kit): src/modules/ui-nav/, pasted unchanged.
-// Defines window.SRETNav only and reads no app global. The app adapter
-// (APP_NAV) lives beside the Workspace code.
-// ============================================================
-/* ============================================================
-   ui-nav (SRETNav): generic left navigation panel (D-31).
-   Renders from a config object; knows nothing about the app's data.
-   Selecting an item calls back to the host; the host decides what opens.
-
-   Config
-     {
-       ariaLabel: 'Main',
-       brand:  { title, subtitle?, icon? },             // icon: SRETIcons name
-       groups: [ { id, label?, collapsible?, collapsed?,
-                   items: [ { id, label, icon?, badge?: {value, tone?}, sub? } ] } ],
-       footer: [ { id, label, icon, badge? } ],          // pinned to the bottom
-       collapseControl: true                             // adds Collapse/Expand
-     }
-     badge.tone: neutral (default) | warn | danger | accent
-
-   API
-     SRETNav.mount(hostEl, config, opts) -> nav
-        opts.active            id of the current item
-        opts.onSelect(id, item)
-        opts.onCollapseToggle()   the Collapse/Expand control was pressed
-        opts.onClose()            the drawer close button was pressed
-        opts.shell             an element with class ui-shell to follow
-                               (mode and context come from its ui-shell:change)
-     nav.setActive(id)
-     nav.setBadge(id, badge|null)
-     nav.setMode('expanded'|'rail')     when not following a shell
-     nav.setContext('docked'|'overlay'|'drawer')
-     nav.update(config)
-     nav.el, nav.destroy()
-   Keyboard: Arrow Up/Down and Home/End move between items; Enter/Space select.
-   Rail mode shows each label as a tooltip on hover and keyboard focus.
-   ============================================================ */
-(function (root) {
-  'use strict';
-  function icon(n) { return root.SRETIcons ? root.SRETIcons.svg(n) : ''; }
-  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-  function badgeHtml(b) {
-    if (!b || b.value == null || b.value === '') return '';
-    return '<span class="ui-nav__badge" data-tone="' + esc(b.tone || 'neutral') + '">' + esc(b.value) + '</span>';
-  }
-  function itemHtml(it, active) {
-    return '<button type="button" class="ui-nav__item' + (it.sub ? ' ui-nav__item--sub' : '') + '" data-id="' + esc(it.id) + '" data-label="' + esc(it.label) + '"' +
-      (it.id === active ? ' aria-current="page"' : '') + '>' +
-      icon(it.icon || 'list') + '<span class="ui-nav__text">' + esc(it.label) + '</span>' + badgeHtml(it.badge) + '</button>';
-  }
-  function render(cfg, active, mode) {
-    var b = cfg.brand || {};
-    var h = '<div class="ui-nav__brand"><span class="ui-nav__mark">' + icon(b.icon || 'diamond') + '</span>' +
-      '<span class="ui-nav__brand-text"><span class="ui-nav__brand-title">' + esc(b.title || '') + '</span>' +
-      (b.subtitle ? '<span class="ui-nav__brand-sub">' + esc(b.subtitle) + '</span>' : '') + '</span>' +
-      '<button type="button" class="ui-btn ui-btn--ghost ui-btn--icon ui-nav__close" data-act="close" aria-label="Close navigation">' + icon('close') + '</button></div>';
-    h += '<div class="ui-nav__scroll">';
-    (cfg.groups || []).forEach(function (g, gi) {
-      if (gi > 0 && g.divider !== false) h += '<div class="ui-nav__divider" role="presentation"></div>';
-      var gid = 'ui-nav-g-' + esc(g.id || gi);
-      h += '<div class="ui-nav__group" data-group="' + esc(g.id || gi) + '" data-collapsed="' + (!!g.collapsed) + '">';
-      if (g.label) {
-        h += g.collapsible
-          ? '<button type="button" class="ui-nav__label" data-act="group" aria-expanded="' + (!g.collapsed) + '" aria-controls="' + gid + '"><span>' + esc(g.label) + '</span>' + icon('chevronDown') + '</button>'
-          : '<div class="ui-nav__label"><span>' + esc(g.label) + '</span></div>';
-      }
-      h += '<div class="ui-nav__items" id="' + gid + '"><div>' + (g.items || []).map(function (it) { return itemHtml(it, active); }).join('') + '</div></div></div>';
-    });
-    h += '</div>';
-    var foot = (cfg.footer || []).map(function (it) { return itemHtml(it, active); }).join('');
-    if (cfg.collapseControl !== false) {
-      var rail = mode === 'rail';
-      foot += '<button type="button" class="ui-nav__item ui-nav__collapse" data-act="collapse" data-label="' + (rail ? 'Expand' : 'Collapse') + '" aria-label="' + (rail ? 'Expand navigation' : 'Collapse navigation') + '">' +
-        icon(rail ? 'expand' : 'collapse') + '<span class="ui-nav__text">' + (rail ? 'Expand' : 'Collapse') + '</span></button>';
-    }
-    if (foot) h += '<div class="ui-nav__footer">' + foot + '</div>';
-    return h;
+      return u.hostname.replace(/^www\./i,'');
+    }catch(e){ return 'Link'; }
   }
 
-  var tip = null;
-  function showTip(btn) {
-    if (!tip) { tip = document.createElement('div'); tip.className = 'ui-nav-tip ui-root'; tip.setAttribute('role', 'tooltip'); document.body.appendChild(tip); }
-    var r = btn.getBoundingClientRect();
-    tip.textContent = btn.getAttribute('data-label') || '';
-    tip.style.left = (r.right + 8) + 'px';
-    tip.style.top = (r.top + r.height / 2 - 12) + 'px';
-    tip.setAttribute('data-show', 'true');
-  }
-  function hideTip() { if (tip) tip.setAttribute('data-show', 'false'); }
-
-  function mount(host, config, opts) {
-    opts = opts || {};
-    var cfg = config, active = opts.active || null, mode = 'expanded', context = 'docked';
-    var el = document.createElement('nav');
-    el.className = 'ui-nav';
-    el.setAttribute('aria-label', cfg.ariaLabel || 'Main');
-    host.appendChild(el);
-
-    function paint() {
-      el.innerHTML = render(cfg, active, mode);
-      el.setAttribute('data-mode', mode);
-      el.setAttribute('data-context', context);
-    }
-    function findItem(id) {
-      var all = [];
-      (cfg.groups || []).forEach(function (g) { all = all.concat(g.items || []); });
-      all = all.concat(cfg.footer || []);
-      return all.filter(function (i) { return i.id === id; })[0] || null;
-    }
-    function items() { return Array.prototype.slice.call(el.querySelectorAll('.ui-nav__item')).filter(function (b) { return b.offsetParent !== null; }); }
-
-    function onClick(e) {
-      var b = e.target.closest('button'); if (!b || !el.contains(b)) return;
-      var act = b.getAttribute('data-act');
-      if (act === 'group') {
-        var g = b.closest('.ui-nav__group');
-        var c = g.getAttribute('data-collapsed') !== 'true';
-        g.setAttribute('data-collapsed', String(c));
-        b.setAttribute('aria-expanded', String(!c));
-        var gc = (cfg.groups || []).filter(function (x) { return String(x.id) === g.getAttribute('data-group'); })[0];
-        if (gc) gc.collapsed = c;
-        return;
-      }
-      if (act === 'collapse') { hideTip(); if (opts.onCollapseToggle) opts.onCollapseToggle(); return; }
-      if (act === 'close') { if (opts.onClose) opts.onClose(); return; }
-      var id = b.getAttribute('data-id');
-      if (id) { ctl.setActive(id); if (opts.onSelect) opts.onSelect(id, findItem(id)); }
-    }
-    function onKey(e) {
-      if (!e.target.classList || !e.target.classList.contains('ui-nav__item')) return;
-      var list = items(), i = list.indexOf(e.target), j = null;
-      if (e.key === 'ArrowDown') j = Math.min(i + 1, list.length - 1);
-      else if (e.key === 'ArrowUp') j = Math.max(i - 1, 0);
-      else if (e.key === 'Home') j = 0;
-      else if (e.key === 'End') j = list.length - 1;
-      if (j !== null) { e.preventDefault(); list[j].focus(); }
-    }
-    function onOver(e) {
-      if (mode !== 'rail') return;
-      var b = e.target.closest('.ui-nav__item');
-      if (b && el.contains(b)) showTip(b); else hideTip();
-    }
-    el.addEventListener('click', onClick);
-    el.addEventListener('keydown', onKey);
-    el.addEventListener('mouseover', onOver);
-    el.addEventListener('focusin', onOver);
-    el.addEventListener('mouseleave', hideTip);
-    el.addEventListener('focusout', hideTip);
-
-    var ctl = {
-      el: el,
-      setActive: function (id) {   // null clears the current item
-        active = id == null ? null : id;
-        el.querySelectorAll('.ui-nav__item[data-id]').forEach(function (b) {
-          if (b.getAttribute('data-id') === id) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
-        });
-      },
-      setBadge: function (id, badge) {
-        var it = findItem(id); if (it) it.badge = badge;
-        var b = el.querySelector('.ui-nav__item[data-id="' + String(id).replace(/"/g, '') + '"]');
-        if (!b) return;
-        var old = b.querySelector('.ui-nav__badge'); if (old) old.remove();
-        if (badge) b.insertAdjacentHTML('beforeend', badgeHtml(badge));
-      },
-      setMode: function (m) { m = m === 'rail' ? 'rail' : 'expanded'; if (m !== mode) { mode = m; paint(); if (m !== 'rail') hideTip(); } },
-      setContext: function (c) { context = c || 'docked'; el.setAttribute('data-context', context); },
-      update: function (c) { cfg = c; paint(); },
-      destroy: function () { if (shellEl) shellEl.removeEventListener('ui-shell:change', onShell); hideTip(); el.remove(); }
-    };
-
-    var shellEl = opts.shell || null;
-    function onShell(e) {
-      var s = e.detail;
-      ctl.setMode(s.nav === 'rail' ? 'rail' : 'expanded');
-      ctl.setContext(s.nav === 'drawer' ? 'drawer' : (s.nav === 'overlay' ? 'overlay' : 'docked'));
-    }
-    paint();
-    if (shellEl) {
-      shellEl.addEventListener('ui-shell:change', onShell);
-      var dn = shellEl.getAttribute('data-nav');   // the shell may have mounted first
-      if (dn) onShell({ detail: { nav: dn } });
-    }
-    return ctl;
+  function label(link){
+    var t=str(link&&link.title).trim();
+    return t||fallbackTitle(link&&link.url);
   }
 
-  var api = { mount: mount };
-  root.SRETNav = api;
-  if (typeof module !== 'undefined' && module.exports) module.exports = api;
-})(typeof window !== 'undefined' ? window : globalThis);
-// ============ END UI-NAV ============
-// @module ui-nav js END
+  function normalise(list){
+    var src=Array.isArray(list)?list:[];
+    var links=[], errors=[];
+    for(var i=0;i<Math.min(src.length,MAX);i++){
+      var it=src[i]||{};
+      var n=normaliseUrl(it.url);
+      var title=str(it.title).replace(/\s+/g,' ').trim().slice(0,TITLE_MAX);
+      if(n.error){ errors.push('Link '+(i+1)+': the address '+n.error); continue; }
+      if(!n.url){ if(title) errors.push('Link '+(i+1)+': add an address for "'+title+'", or clear the title.'); continue; }
+      links.push({title:title,url:n.url});
+    }
+    return {links:links,errors:errors};
+  }
+
+  var api={normaliseUrl:normaliseUrl,normalise:normalise,label:label,MAX:MAX,TITLE_MAX:TITLE_MAX};
+  root.SRETQuickLinks=api;
+  if(typeof module!=='undefined'&&module.exports) module.exports=api;
+})(typeof window!=='undefined'?window:(typeof globalThis!=='undefined'?globalThis:this));
+// ============ END QUICK-LINKS MODULE ============
+// @module quick-links js END
 // @slot app-script-modules
 // ============================================================
 // NOTES EXPORT MODULE (built P65, wired in P77): src/modules/notes-export/notes-export.js,
@@ -8411,7 +7544,7 @@ button.sg-sym:hover{transform:scale(1.2)}
 // label, and embedded in exported JSON — bump this one place, everything else
 // reads from it, so the three copies can't silently drift apart the way the
 // title/label/export payload just had for a long stretch of unversioned work.
-const APP_VERSION='3.1.0-P79';
+const APP_VERSION='3.1.0-P80';
 // ============================================================
 // PRE-BOOT DATASET HOOK (P74, TD-239)
 // ============================================================
@@ -12638,7 +11771,8 @@ function renderNotes(){
       '<button class="toggle-btn sd-btn-danger" onclick="clearAllNotes()">Delete all</button></div></div>'
     : '<div class="sd-row-ctrl"><button type="button" class="toggle-btn sd-btn-danger" id="btn-notes-clear" onclick="askClearNotes()">Clear notes</button></div>');
   // Rail badge: notes in the current collection still needing action.
-  navBadge('notes',collectionInfo(cur).open);
+  const bd=document.getElementById('ws-notes-count');
+  if(bd){ const n=collectionInfo(cur).open; bd.textContent=n?String(n):''; }
   const hint=document.getElementById('note-input-hint');
   if(hint) hint.textContent='Adds to '+collectionInfo(cur).name;
   renderNotesMsGroups();
@@ -12858,8 +11992,7 @@ function syncFbNarrow(){
   if(!bar) return;
   const cs=getComputedStyle(document.documentElement);
   const px=function(v,d){ const n=parseFloat(cs.getPropertyValue(v)); return isNaN(n)?d:n; };
-  // The nav column in use (240, 60 or 0px), as SRETShell wrote it on <html>.
-  let w=window.innerWidth-px('--ui-nav-col',0);
+  let w=window.innerWidth-(document.body.classList.contains('rail-collapsed')?0:px('--ws-rail-w',44));
   if(window.matchMedia('(min-width:1025px)').matches){
     if(document.body.classList.contains('ws-open')) w-=px('--ws-panel-w',320);
     if(document.body.classList.contains('dv-open')) w-=px('--dv-w',404);
@@ -12868,7 +12001,7 @@ function syncFbNarrow(){
   // P75: the one-row filter layout (Find, Date range, Status) from FB_WIDE_MIN.
   bar.classList.toggle('fb-wide',w>=FB_WIDE_MIN&&!fbIsPhone());
 }
-// The bar width (viewport less the nav and any docked panel) from which the
+// The bar width (viewport less the rail and any docked panel) from which the
 // three filter boxes share one row with nothing wrapping inside them AND the
 // Weeks field keeping its own 220px minimum: 1636, a 1680px screen with the
 // rail shown (measured, P75; docs/p75-notes-strip-header.md). Below it the
@@ -12876,125 +12009,22 @@ function syncFbNarrow(){
 var FB_WIDE_MIN=1636;
 window.addEventListener('resize',syncFbNarrow);
 
-// ===== D-31 Stage A (P79): the left nav =====
-// SRETNav (src/modules/ui-nav) renders the nav into #ws-rail; SRETShell
-// (src/modules/ui-shell, page variant) decides its layout per width and writes
-// --ui-nav-col on <html>. The body stays the page scroller. Only functions the
-// app already has appear in the nav. Display state only.
-let APP_SHELL=null, APP_NAV=null;
-const NAV_BADGES={};
-// Remembered per browser as 'expanded' or 'rail' (desktop). sret-rail, the P59
-// key, is read once: its 'collapsed' becomes 'rail', anything else 'expanded'.
-function navPrefStore(){
-  return {
-    get:function(){
-      let v=null;
-      try{
-        v=localStorage.getItem('sret-nav');
-        if(!v){ const old=localStorage.getItem('sret-rail');
-          if(old){ v=old==='collapsed'?'rail':'expanded'; localStorage.setItem('sret-nav',v); localStorage.removeItem('sret-rail'); } }
-      }catch(e){}
-      return v==='rail'||v==='expanded'?v:null;
-    },
-    set:function(v){ try{ localStorage.setItem('sret-nav',v); }catch(e){} }
-  };
-}
-// 'expanded' | 'rail' set the desktop preference; 'open' opens the nav where it
-// is a drawer or slide-over; the P59 'collapsed' is read as 'rail'.
+// ===== P59 (B-01): rail state, collapsed or shown =====
+// Display state, remembered per browser. Phones start collapsed; anything
+// that opens a Workspace section shows the rail first.
+function railCollapsed(){ return document.body.classList.contains('rail-collapsed'); }
 function setRailState(state){
-  if(!APP_SHELL) return;
-  const band=APP_SHELL.state().band;
-  if(state==='open'){ APP_SHELL.openNav(); return; }
-  if(state==='collapsed') state='rail';
-  if(band==='desktop') APP_SHELL.setPref(state==='rail'?'rail':'expanded');
-  else if(state==='expanded') APP_SHELL.openNav();
-  else APP_SHELL.closeNav();
+  const collapse=state==='collapsed';
+  if(collapse) toggleWorkspace(false);
+  document.body.classList.toggle('rail-collapsed',collapse);
+  const t=document.getElementById('ws-toggle'); if(t) t.setAttribute('aria-expanded',String(!collapse));
+  try{ localStorage.setItem('sret-rail',collapse?'collapsed':'rail'); }catch(e){}
+  syncFbNarrow();
 }
-function navBadge(id,n){
-  NAV_BADGES[id]=n||0;
-  if(APP_NAV) APP_NAV.setBadge(id,n?{value:n,tone:'accent'}:null);
-}
-// The current item: the open Workspace section, else the board view in use.
-function syncNavActive(){
-  if(!APP_NAV) return;
-  const pan=document.getElementById('ws-panel');
-  const b=document.body.classList;
-  let id='timeline';
-  if(pan&&pan.classList.contains('open')) id=WS_SECTION;
-  else if(b.contains('grid-open')) id='grid';
-  else if(b.contains('print-mode')) id='print';
-  APP_NAV.setActive(id);
-}
-function navLeaveGrid(){
-  if(document.body.classList.contains('grid-open')&&typeof SRETGrid!=='undefined'){ SRETGrid.close(); closeGridView(); }
-}
-function onNavSelect(id){
-  if(APP_SHELL&&APP_SHELL.state().navOpen) APP_SHELL.closeNav();
-  if(WS_SECTIONS.indexOf(id)>=0){ setWorkspaceSection(id); return; }
-  if(id==='timeline'){ navLeaveGrid(); if(PRINT_MODE) togglePrintMode(false); toggleWorkspace(false); }
-  else if(id==='grid'){ if(PRINT_MODE) togglePrintMode(false);
-    if(!document.body.classList.contains('grid-open')&&gridBegin({kind:'nav',section:WS_SECTION,btnId:null})) openGridView('sched-ms'); }
-  else if(id==='print'){ navLeaveGrid(); togglePrintMode(); }
-  else { setSettingsTab(id); toggleSettingsDrawer(true); }
-  syncNavActive();
-}
-(function initNav(){
-  const host=document.getElementById('ws-rail');
-  if(!host||typeof SRETShell==='undefined'||typeof SRETNav==='undefined') return;
-  APP_SHELL=SRETShell.mount(document.body,{variant:'page',nav:host,persist:navPrefStore(),
-    // While the nav is a drawer or slide-over, everything else is out of reach.
-    inert:function(){ return Array.prototype.filter.call(document.body.children,function(el){
-      return el!==host&&!el.classList.contains('ui-shell__scrim')&&el.tagName!=='SCRIPT'&&el.tagName!=='STYLE'; }); },
-    onChange:function(st){
-      const t=document.getElementById('ws-toggle');
-      if(t) t.setAttribute('aria-expanded',String(!!st.navOpen));
-      syncFbNarrow();
-    }});
-  APP_NAV=SRETNav.mount(host,{
-    ariaLabel:'Main',
-    brand:{title:'Milestone Dashboard',subtitle:'P6 schedule tracker',icon:'diamond'},
-    groups:[
-      {id:'views',label:'Views',items:[
-        {id:'timeline',label:'Timeline',icon:'timeline'},
-        {id:'grid',label:'Grid',icon:'grid'},
-        {id:'print',label:'Print preview',icon:'print'}]},
-      {id:'work',label:'My work',items:[
-        {id:'notes',label:'Notes',icon:'note'},
-        {id:'comments',label:'Comments and markups',icon:'comment'},
-        {id:'userms',label:'User milestones',icon:'diamond'}]}],
-    footer:[
-      {id:'view',label:'Display options',icon:'sliders'},
-      {id:'import',label:'Import and data',icon:'import'},
-      {id:'defaults',label:'Settings',icon:'settings'},
-      {id:'help',label:'Help and about',icon:'help'}]
-  },{active:'timeline',shell:document.body,onSelect:onNavSelect,
-     onCollapseToggle:function(){ APP_SHELL.toggleNav(); },
-     onClose:function(){ APP_SHELL.closeNav(); }});
-  Object.keys(NAV_BADGES).forEach(function(k){ navBadge(k,NAV_BADGES[k]); });
-  const t=document.getElementById('ws-toggle');
-  if(t&&typeof SRETIcons!=='undefined') t.innerHTML=SRETIcons.svg('menu');
-  // Grid, print preview and the Workspace panel all show as body classes.
-  new MutationObserver(function(){ syncNavActive(); sizeBoardHeight(); }).observe(document.body,{attributes:true,attributeFilter:['class']});
-})();
-// D-31 Stage A (P79): the board fills the viewport below the chrome above it,
-// less one gutter. Measured, so it holds whatever the header, report heading
-// and filter bar add up to on this screen (the old fixed 150px did not). The
-// value is written on #scroll-wrap itself, not :root, which would restyle the
-// whole document on every change.
-function sizeBoardHeight(){
-  const sw=document.getElementById('scroll-wrap');
-  if(!sw) return;
-  const top=sw.getBoundingClientRect().top+window.scrollY;
-  const gap=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--group-gap'))||16;
-  sw.style.setProperty('--board-max-h',Math.max(240,Math.round(window.innerHeight-top-gap))+'px');
-}
-(function watchBoardHeight(){
-  if(typeof ResizeObserver==='undefined') return;
-  const ro=new ResizeObserver(function(){ sizeBoardHeight(); });
-  ['icon-bar','top-filter-bar','ws-rail'].forEach(function(id){ const el=document.getElementById(id); if(el) ro.observe(el); });
-  document.querySelectorAll('.rpt-hd').forEach(function(el){ ro.observe(el); });
-  window.addEventListener('resize',sizeBoardHeight);
-  sizeBoardHeight();
+(function initRailState(){
+  let st=null; try{ st=localStorage.getItem('sret-rail'); }catch(e){}
+  if(!st) st=window.matchMedia('(max-width:640px)').matches?'collapsed':'rail';
+  if(st==='collapsed'){ document.body.classList.add('rail-collapsed'); }
 })();
 function toggleWorkspace(force){
   const pan=document.getElementById('ws-panel');
@@ -13010,6 +12040,7 @@ function setWorkspaceSection(sec,keepOpen){
   const pan=document.getElementById('ws-panel');
   const wasOpen=!!pan&&pan.classList.contains('open');
   if(wasOpen&&sec===WS_SECTION&&!keepOpen){ toggleWorkspace(false); return; }
+  if(railCollapsed()) setRailState('rail');
   WS_SECTION=sec;
   document.querySelectorAll('#ws-panel .ws-sec').forEach(function(el){
     el.hidden=(el.getAttribute('data-sec')!==sec);
@@ -13020,7 +12051,17 @@ function setWorkspaceSection(sec,keepOpen){
   toggleWorkspace(true);
   try{ localStorage.setItem('sret-ws-section',sec); }catch(e){}
 }
-function syncWorkspaceRail(){ syncNavActive(); }
+function syncWorkspaceRail(){
+  const pan=document.getElementById('ws-panel');
+  const open=!!pan&&pan.classList.contains('open');
+  WS_SECTIONS.forEach(function(sec){
+    const b=document.getElementById('ws-tab-'+sec);
+    if(!b) return;
+    const on=open&&sec===WS_SECTION;
+    b.classList.toggle('is-active',on);
+    b.setAttribute('aria-pressed',on?'true':'false');
+  });
+}
 // Reset row marks, with the design standard's inline confirmation (message
 // full width, Cancel bottom-left, the action bottom-right, Esc cancels) in
 // place of the browser confirm() it used from the old More actions menu.
@@ -13214,7 +12255,7 @@ function setChromeAway(on,instant){
   const sw=document.getElementById('scroll-wrap');
   if(!sw) return;
   // --chrome-shift lives on the two elements that read it (see the CSS).
-  const movers=[document.getElementById('icon-bar')].filter(Boolean);
+  const movers=[document.getElementById('icon-bar'),document.getElementById('ws-toggle')].filter(Boolean);
   const shift=function(px){ movers.forEach(function(el){ if(px===null) el.style.removeProperty('--chrome-shift'); else el.style.setProperty('--chrome-shift',px.toFixed(2)+'px'); }); };
   const anim=!instant&&!window.matchMedia('(prefers-reduced-motion:reduce)').matches;
   clearTimeout(CHROME_TIMER);
@@ -17172,7 +16213,8 @@ function renderMounts(){
   body.innerHTML=slots[0];
   const um=document.getElementById('ws-userms-body'); if(um) um.innerHTML=slots[1];
   const an=document.getElementById('ws-annot-body'); if(an) an.innerHTML=slots[2];
-  navBadge('userms',USER_MILESTONES.length);
+  const cnt=document.getElementById('ws-userms-count');
+  if(cnt) cnt.textContent=USER_MILESTONES.length?String(USER_MILESTONES.length):'';
   if(keepId){ const el=document.getElementById(keepId); if(el) el.focus(); }
   renderYourEdits();
 }
@@ -18442,7 +17484,11 @@ const PUBLISH_CLEAR_IDS=['tbody','mount-body','import-summary-wrap','import-erro
   'map-wrap','diag-body','annot-dialog-body','current-import-advanced','dep-lines-g',
   'sib-left','sib-right',
   // P76: the Backups list and its status describe this browser, not the file.
-  'bk-list','bk-status','bk-clear-row','bk-banner-msg'];
+  'bk-list','bk-status','bk-clear-row','bk-banner-msg',
+  // P79: the continue dialog's last summary belongs to this session.
+  'continue-dialog-body',
+  // P80: the quick links are re-drawn from the state block on open.
+  'ql-list','ql-msg'];
 
 // D-17a: a disabled source's rows are not in TASKS/MILESTONES (that is what
 // "off" means), so serialising the live board alone would drop a disabled
@@ -18544,7 +17590,11 @@ function publishStatePayload(){
     // P54 (D-21): histogram display state, so a published file opens showing
     // what its author chose rather than always the Hours/Bottom default.
     histMeasure:HIST_MEASURE,
-    histPos:HIST_POS
+    histPos:HIST_POS,
+    // P80 (TD-248): the two quick links to where this dashboard's files are
+    // kept. Travel in every saved file, so a blank copy set up once passes
+    // them on to every period saved from it.
+    quickLinks:QUICK_LINKS
   };
 }
 
@@ -18669,6 +17719,9 @@ function applyPublishedState(){
     // file's own choice wins for a reader opening it for the first time.
     if(p.histMeasure==='hours'||p.histMeasure==='tasks') HIST_MEASURE=p.histMeasure;
     if(p.histPos==='top'||p.histPos==='bottom') HIST_POS=p.histPos;
+    // P80: re-checked on the way in, so a hand-edited file cannot plant a
+    // script: or data: link. A file without the key keeps what is set.
+    if(Array.isArray(p.quickLinks)){ QUICK_LINKS=SRETQuickLinks.normalise(p.quickLinks).links; quickLinksNotify(); }
     return true;
   }catch(e){
     // A malformed state block must not take the whole dashboard down; fall back
@@ -18705,6 +17758,13 @@ function publishDashboard(){
     const dl=root.querySelector('#ms-drag-date'); if(dl) dl.remove();
     // P76: the recovery banner is per browser; a saved copy opens with it hidden.
     const bkb=root.querySelector('#bk-banner'); if(bkb) bkb.setAttribute('hidden','');
+    // P80: a saved copy is saved, so it opens without the Unsaved changes
+    // pill. The clone is taken while the pill is lit (Save is pressed because
+    // there are edits), and since at least P76 every saved copy opened
+    // claiming unsaved work it did not have.
+    const dip=root.querySelector('#dirty-indicator'); if(dip) dip.classList.remove('show');
+    // P80: the quick-links fold opens closed in a saved copy.
+    const qle=root.querySelector('#ql-edit'); if(qle) qle.removeAttribute('open');
     // The A3 preview is a transient way of looking at the board, not a saved
     // setting, so it never travels into a published file. The injected @page
     // rule goes with it, or every published copy would print A3 whether or not
@@ -21521,6 +20581,232 @@ function bkRestore(id){
     bkRefreshPanel();
   });
 }
+
+// ============================================================
+// CONTINUE FROM A SAVED DASHBOARD (P79, TD-247): the app adapter.
+// ------------------------------------------------------------
+// A blank copy takes over a file saved last period: its schedule, baseline,
+// notes, remarks, edits and user tasks, so the user then imports this
+// period's P6 update over it and saves. Reading and checking the file is the
+// continue-file module (SRETContinue, no DOM, never runs the file's scripts);
+// putting it on the board is the P76 restore path, bkApplyPayload(), which is
+// the same applyPublishedState() a saved copy opens by. Nothing new writes
+// the stores.
+//
+// This is the whole contract a UI needs. The interim UI below calls only
+// these three, and so should the redesign (docs/decisions/D-31-continue-from-saved.md):
+//   continueRead(file)  -> Promise<{ok, errors[], warnings[], summary,
+//                                   replacesWork, fileName}>
+//                          reads and checks; holds the file pending if ok.
+//   continueApply()     -> {ok, message}  loads the pending file.
+//   continueCancel()    -> drops it.
+// Loading replaces what is on the board (a mirror, not a merge). A pinned
+// "Before continue" backup is written first; an empty board writes none.
+// The copy then carries the saved file's provenance (PUBLISHED_META and
+// PUBLISH_CHAIN) exactly as if that file had been opened, so the next Save
+// extends its chain. The work shows as unsaved until it is saved.
+// ============================================================
+let CONTINUE_PENDING=null;
+// What this session continued from, for the status line and the checks.
+let CONTINUED_FROM=null;
+function continueRead(file){
+  CONTINUE_PENDING=null;
+  return new Promise(function(resolve){
+    const fail=function(msg){ resolve({ok:false,errors:[msg],warnings:[],summary:null,replacesWork:!isDashboardEmpty(),fileName:file?file.name:''}); };
+    if(!file) return fail('No file chosen.');
+    let r;
+    try{ r=new FileReader(); }catch(e){ return fail('This browser cannot read files.'); }
+    r.onload=function(e){
+      let res;
+      try{ res=SRETContinue.read(String(e.target.result),file.name,{appVersion:APP_VERSION}); }
+      catch(err){ return fail('The file could not be read: '+(err&&err.message||err)); }
+      if(res.ok) CONTINUE_PENDING={file:file.name,payload:res.payload,summary:res.summary};
+      resolve({ok:res.ok,errors:res.errors,warnings:res.warnings,summary:res.summary,
+               replacesWork:!isDashboardEmpty(),fileName:file.name});
+    };
+    r.onerror=function(){ fail('Could not read '+file.name+'.'); };
+    r.readAsText(file);
+  });
+}
+function continueCancel(){ CONTINUE_PENDING=null; }
+function continueApply(){
+  const pend=CONTINUE_PENDING; CONTINUE_PENDING=null;
+  if(!pend) return {ok:false,message:'Nothing to load. Choose a saved dashboard first.'};
+  const wasEmpty=isDashboardEmpty();
+  // The board as it is, for the backup and for putting it back if the load
+  // fails part way (bkApplyPayload empties the stores before applying).
+  let prior=null;
+  if(!wasEmpty){
+    try{ const cap=bkCapture(); prior=Object.assign(JSON.parse(cap.json),cap.extra); }catch(e){ prior=null; }
+  }
+  const keepMeta=PUBLISHED_META, keepChain=PUBLISH_CHAIN;
+  bkSaveNow('Before continue');   // captured now, written after; skipped when empty
+  const p=pend.payload;
+  let ok=false;
+  try{ ok=bkApplyPayload(p); }catch(e){ ok=false; diag('pipeline','err','Continue from '+pend.file+' failed: '+(e&&e.message||e),''); }
+  if(!ok){
+    try{ if(prior) bkApplyPayload(prior); }catch(e){}
+    PUBLISHED_META=keepMeta; PUBLISH_CHAIN=keepChain;
+    const m='Could not load '+pend.file+'. '+(prior?'The board is as it was':'Nothing was changed')+'; see Diagnostics.';
+    setIngestStatus(m,'err');
+    return {ok:false,message:m};
+  }
+  PUBLISHED_META={publishedAt:p.publishedAt?new Date(p.publishedAt):null,fromVersion:p.fromVersion||null};
+  PUBLISH_CHAIN=SRETContinue.chainOf(p);
+  if(!PUBLISH_CHAIN.length&&(p.publishedAt||p.fromVersion)) PUBLISH_CHAIN=[{at:p.publishedAt||null,fromVersion:p.fromVersion||null}];
+  CONTINUED_FROM={file:pend.file,summary:pend.summary,at:new Date()};
+  renderMounts();
+  syncEmptyState();
+  const msg='Loaded '+pend.file+'. Import this period’s P6 update to roll it forward, then Save.';
+  setIngestStatus(msg,'ok');
+  return {ok:true,message:msg};
+}
+// ============ END CONTINUE ADAPTER ============
+
+// ============================================================
+// CONTINUE UI, INTERIM (P79, TD-247). Deliberately minimal: one empty-state
+// button, a drop on the empty state, and one confirm dialog that reuses the
+// annotations dialog's classes, so it adds no styling of its own. It is to be
+// replaced by the redesigned layout; it calls nothing but the adapter above
+// (continueRead / continueApply / continueCancel). Delete this block and its
+// markup (#es-continue, #continue-file, #continue-dialog) when the redesign
+// lands; the adapter and module stay.
+// ============================================================
+function continuePick(){
+  const f=document.getElementById('continue-file');
+  if(f){ f.value=''; f.click(); }
+}
+function continueChosen(file){
+  if(!file) return Promise.resolve();
+  return continueRead(file).then(continueShowDialog);
+}
+function continueShowDialog(r){
+  const dlg=document.getElementById('continue-dialog'), body=document.getElementById('continue-dialog-body');
+  if(!dlg||!body) return;
+  const s=r.summary;
+  const n=function(v,one,many){ return v+' '+(v===1?one:many); };
+  let h='<div class="annot-file"><b>'+escapeHtml(r.fileName||'')+'</b></div>';
+  r.errors.forEach(function(m){ h+='<div class="annot-msg annot-err">'+escapeHtml(m)+'</div>'; });
+  if(r.ok&&s){
+    const lines=[
+      s.savedAt?'Saved '+fmtTipDate(String(s.savedAt).slice(0,10))+(s.savedBy?' (version '+s.savedBy+')':''):'',
+      s.projectNo?'Project '+s.projectNo:'',
+      s.dataDate?'Data date '+fmtTipDate(s.dataDate):'',
+      n(s.milestones,'milestone','milestones')+', '+n(s.userTasks,'user task','user tasks'),
+      n(s.entries,'update','updates')+', '+n(s.notes,'note','notes'),
+      s.hasBaseline?'Baseline included':'No baseline'
+    ].filter(Boolean);
+    h+='<div class="annot-sub" id="continue-summary">'+lines.map(escapeHtml).join('<br>')+'</div>';
+  }
+  r.warnings.forEach(function(m){ h+='<div class="annot-msg annot-warn">'+escapeHtml(m)+'</div>'; });
+  if(r.ok&&r.replacesWork)
+    h+='<div class="annot-msg annot-warn">This replaces what is on the board now. A backup of it is kept.</div>';
+  body.innerHTML=h;
+  document.getElementById('continue-apply').hidden=!r.ok;
+  dlg.hidden=false;
+}
+function continueClose(){
+  continueCancel();
+  const d=document.getElementById('continue-dialog'); if(d) d.hidden=true;
+}
+function continueConfirm(){
+  const res=continueApply();
+  const d=document.getElementById('continue-dialog'); if(d) d.hidden=true;
+  showToast(res.message);
+}
+(function(){
+  // Drop a saved dashboard anywhere on the empty state. Other files are left
+  // alone, so a schedule dropped here is not swallowed.
+  const es=document.getElementById('empty-state');
+  if(!es) return;
+  const ours=function(dt){
+    const it=dt&&dt.items&&dt.items[0];
+    return !!it&&it.kind==='file';
+  };
+  es.addEventListener('dragover',function(e){ if(ours(e.dataTransfer)){ e.preventDefault(); e.dataTransfer.dropEffect='copy'; } });
+  es.addEventListener('drop',function(e){
+    const f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];
+    if(!f||!/\.(html?|json)$/i.test(f.name)) return;
+    e.preventDefault();
+    continueChosen(f);
+  });
+})();
+// ============ END CONTINUE UI, INTERIM ============
+
+// ============================================================
+// QUICK LINKS (P80, TD-248): the app adapter.
+// ------------------------------------------------------------
+// Two named links to where this dashboard's files are kept, set in the
+// blank copy and carried by Save, the backups and Continue from saved
+// (publishStatePayload / applyPublishedState). Validation is the quick-links
+// module (SRETQuickLinks). Contract for any UI (D-31, section 8):
+//   quickLinksGet()      -> [{title, url, label}]  0 to 2 links
+//   quickLinksSet(list)  -> {ok, errors[], links}  all or nothing; marks the
+//                           work unsaved when it changes anything
+//   'sret:quicklinks'    -> event on document whenever the links change,
+//                           including when a file or backup is loaded
+// The links are opened by the reader's browser on a click only; the app
+// itself still makes no request.
+// ============================================================
+let QUICK_LINKS=[];
+function quickLinksGet(){
+  return QUICK_LINKS.map(function(l){ return {title:l.title,url:l.url,label:SRETQuickLinks.label(l)}; });
+}
+function quickLinksNotify(){
+  try{ document.dispatchEvent(new CustomEvent('sret:quicklinks')); }catch(e){}
+}
+function quickLinksSet(list){
+  const r=SRETQuickLinks.normalise(list);
+  if(r.errors.length) return {ok:false,errors:r.errors,links:quickLinksGet()};
+  if(JSON.stringify(r.links)!==JSON.stringify(QUICK_LINKS)){
+    QUICK_LINKS=r.links;
+    noteMarkup();
+    quickLinksNotify();
+  }
+  return {ok:true,errors:[],links:quickLinksGet()};
+}
+// ============ END QUICK LINKS ADAPTER ============
+
+// ============================================================
+// QUICK LINKS UI, INTERIM (P80, TD-248). On the empty state only: the links
+// as links when set, and a fold with two title and address pairs to set
+// them. Calls only the adapter above. Delete with the continue interim UI
+// (#es-links and these functions) when the redesign lands.
+// ============================================================
+function qlRender(){
+  const list=document.getElementById('ql-list');
+  if(!list) return;
+  const links=quickLinksGet();
+  list.innerHTML=links.length
+    ? '<span class="ql-lead">Quick links</span>'+links.map(function(l){
+        return '<a class="ql-link" href="'+escapeHtml(l.url)+'" target="_blank" rel="noopener noreferrer" title="'+
+          escapeHtml(l.url)+'">'+escapeHtml(l.label)+'</a>';
+      }).join('')
+    : '';
+  list.hidden=!links.length;
+  for(let i=0;i<2;i++){
+    const tl=document.getElementById('ql-title-'+i), ul=document.getElementById('ql-url-'+i);
+    if(tl&&document.activeElement!==tl) tl.value=links[i]?links[i].title:'';
+    if(ul&&document.activeElement!==ul) ul.value=links[i]?links[i].url:'';
+  }
+}
+function qlSave(){
+  const list=[0,1].map(function(i){
+    return {title:(document.getElementById('ql-title-'+i)||{}).value||'',
+            url:(document.getElementById('ql-url-'+i)||{}).value||''};
+  });
+  const r=quickLinksSet(list);
+  const msg=document.getElementById('ql-msg');
+  if(msg){
+    msg.textContent=r.ok?(r.links.length?'Saved. Use Save to keep them in this file.':'Quick links cleared.'):r.errors.join(' ');
+    msg.classList.toggle('ql-err',!r.ok);
+  }
+  if(r.ok) qlRender();
+  return r;
+}
+document.addEventListener('sret:quicklinks',qlRender);
+qlRender();
+// ============ END QUICK LINKS UI, INTERIM ============
 
 // ---- download, delete, clear -------------------------------------------------
 // A backup as a model .json: the export's identity block over the payload,
