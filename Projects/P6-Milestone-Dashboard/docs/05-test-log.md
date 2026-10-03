@@ -3472,3 +3472,38 @@ This test covers TD-245 and TASK-64. It changes tooling only, so the app code is
 - **Module versions:** P78 changed four module sources by hand, before D-30 existed. They were versioned when the two branches met: `notes-store`, `notes-card` and `notes-history` go to 1.1.0, and `notes-export` to 0.2.0.
 - **App file:** the base's pasted modules matched their sources exactly and were adopted unchanged. Against P78, the app differs only by the markers and three comment lines.
 - **Tests:** `modules_embed_test.py` passed 14/14 and `--check` was clean. `run_checks.py --jobs 4` selected 69 checks and all 69 passed (15.9 min).
+
+## TEST-82: P79 continue from a saved dashboard (v3.1.0-P79)
+
+This test covers TD-247 and D-31. The contract and the hand-off are in `docs/decisions/D-31-continue-from-saved.md`.
+
+**New checks**
+- `continue_file_test.mjs` (module alone, Node): 28/28. It runs against real repo files, including the app itself and `data/published/Milestone_Dashboard_empty.html`. It covers:
+  - the escaped `< > &` round trip, including a closing script tag inside the data;
+  - a sentinel script in the file, which stays inert;
+  - attribute order and quoting;
+  - a backup `.json` and a BOM;
+  - refusals: annotations-only export, blank app, saved empty dashboard, report page, CSV, broken JSON, damaged block, timeline mismatch, empty and null input;
+  - versions: newer major refused, newer partial warns, older warns, same version silent;
+  - the provenance chain;
+  - no em dash in any message.
+- `p79_continue_check.py` (browser): 71/71.
+  - Page A (seeded app) adds a remark, a user milestone, a note and a project number, then the real Save.
+  - Page B (blank app, `sret:no-fixture`) runs at 1440 and 390 wide. It covers the button on screen, no sideways scroll, refusals that leave the board empty, drop (an `.xlsx` is not taken, an `.html` is), the summary text, the mirror counts (121 rows, 152 milestones, the user milestone drawn, entries, notes, baseline, project number), the unsaved state, the provenance chain, the saved file's scripts never running, a re-save reading back with chain + 1, the replace warning plus a pinned `Before continue` backup, rollback after a failed load, no em dash and no page errors.
+
+**Defects found and fixed in this change**
+1. **The blank app read as a "damaged" saved file.** The reader matched the bare published-state tag, and the module's header comment named it. Once embedded, that comment is part of every copy of the app. The reader now requires the element's text to open with the assignment. Lesson recorded in `06-lessons-learned.md`.
+2. **`modules_embed_test` 5b failed.** `--embed` re-inserted a missing region at the end of its slot, so once `continue-file` (order 50) followed `notes-history` (order 40), a re-inserted `notes-history` landed after it. `--embed` now inserts before the first region in the slot with a higher order. The tool fix was proven by the same test passing.
+
+**Suite**
+- `run_checks.py` (change-scoped, 3 jobs): 70 selected, 69 passed, 1 failed (`modules_embed_test`, defect 2), wall 18.3 min.
+- After the fix and a comment edit in the app, a settling run: 69 selected / 69 passed / 0 failed (17.5 min).
+- `continue_file_test` was then added to `NODE_TESTS` in `run_checks.py`: 14 selected / 14 passed.
+
+**Other gates**
+- `modules_embed.py --check`: clean.
+- The version-literal count is 1.
+- `</body>`, `<head>`, `</head>` and `</html>` each still appear once.
+- No literal script start tag was added (the reader spells `<` as `\x3C`).
+
+**Not tested:** a real Android or Windows device. Every check is headless Chromium on Linux.
