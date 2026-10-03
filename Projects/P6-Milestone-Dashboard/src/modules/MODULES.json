@@ -490,6 +490,255 @@
           "user.css": "3bdbeefcb14d5bbd"
         }
       }
+    },
+    {
+      "id": "ui-tokens",
+      "dir": "ui-tokens",
+      "version": "0.2.0",
+      "status": "embedded",
+      "summary": "Shared design tokens for the UI kit (D-32): palette, colour roles, spacing, type, shape, elevation, motion, layers.",
+      "files": {
+        "css": [
+          "ui-tokens.css",
+          "ui-palette.css"
+        ]
+      },
+      "deps": [],
+      "uses": [],
+      "tests": [
+        "tools/ui_kit_test.mjs",
+        "tools/ui_kit_check.mjs"
+      ],
+      "recorded": {
+        "version": "0.2.0",
+        "sources": {
+          "ui-tokens.css": "6ad4bed1886c0ed7",
+          "ui-palette.css": "ebbd3e0111fe7c4a"
+        }
+      },
+      "embed": {
+        "css": {
+          "slot": "style-modules",
+          "order": 20,
+          "files": [
+            "ui-tokens.css"
+          ],
+          "header": "/* ===== UI-TOKENS (D-32 UI kit): src/modules/ui-tokens/, pasted unchanged. Uses only ui-tokens. ===== */",
+          "footer": "/* ===== END UI-TOKENS ===== */"
+        }
+      }
+    },
+    {
+      "id": "ui-icons",
+      "dir": "ui-icons",
+      "version": "0.1.0",
+      "status": "embedded",
+      "global": "SRETIcons",
+      "summary": "Inline SVG icon set for the UI kit (D-32).",
+      "files": {
+        "js": [
+          "ui-icons.js"
+        ]
+      },
+      "deps": [],
+      "uses": [],
+      "tests": [
+        "tools/ui_kit_test.mjs",
+        "tools/ui_kit_check.mjs"
+      ],
+      "recorded": {
+        "version": "0.1.0",
+        "sources": {
+          "ui-icons.js": "f9fe8050b0c6c647"
+        }
+      },
+      "embed": {
+        "js": {
+          "slot": "app-script-modules",
+          "order": 70,
+          "header": "// ============================================================\n// UI-ICONS (D-32 UI kit): src/modules/ui-icons/, pasted unchanged.\n// Defines window.SRETIcons only and reads no app global. The app adapter\n// (APP_NAV) lives beside the Workspace code.\n// ============================================================",
+          "footer": "// ============ END UI-ICONS ============"
+        }
+      }
+    },
+    {
+      "id": "ui-shell",
+      "dir": "ui-shell",
+      "version": "0.2.0",
+      "status": "embedded",
+      "global": "SRETShell",
+      "summary": "App frame containers (D-32): nav, header, main, aside regions with phone, tablet and desktop behaviour.",
+      "files": {
+        "js": [
+          "ui-shell.js"
+        ],
+        "css": [
+          "ui-shell.css"
+        ]
+      },
+      "deps": [
+        "ui-tokens"
+      ],
+      "uses": [],
+      "tests": [
+        "tools/ui_kit_test.mjs",
+        "tools/ui_kit_check.mjs"
+      ],
+      "recorded": {
+        "version": "0.2.0",
+        "sources": {
+          "ui-shell.js": "8045cdbf7642a251",
+          "ui-shell.css": "dcf28b203d421179"
+        }
+      },
+      "embed": {
+        "css": {
+          "slot": "style-modules",
+          "order": 21,
+          "files": [
+            "ui-shell.css"
+          ],
+          "header": "/* ===== UI-SHELL (D-32 UI kit): src/modules/ui-shell/, pasted unchanged. Uses only ui-tokens. ===== */",
+          "footer": "/* ===== END UI-SHELL ===== */"
+        },
+        "js": {
+          "slot": "app-script-modules",
+          "order": 71,
+          "header": "// ============================================================\n// UI-SHELL (D-32 UI kit): src/modules/ui-shell/, pasted unchanged.\n// Defines window.SRETShell only and reads no app global. The app adapter\n// (APP_NAV) lives beside the Workspace code.\n// ============================================================",
+          "footer": "// ============ END UI-SHELL ============"
+        }
+      }
+    },
+    {
+      "id": "ui-surfaces",
+      "dir": "ui-surfaces",
+      "version": "0.1.1",
+      "status": "standalone",
+      "global": "SRETSurfaces",
+      "summary": "Cards and content containers (D-32): card, section, panel header, toolbar, tabs, fold, list, empty state, toast.",
+      "files": {
+        "js": [
+          "ui-surfaces.js"
+        ],
+        "css": [
+          "ui-surfaces.css"
+        ]
+      },
+      "deps": [
+        "ui-tokens",
+        "ui-icons"
+      ],
+      "uses": [],
+      "tests": [
+        "tools/ui_kit_test.mjs",
+        "tools/ui_kit_check.mjs"
+      ],
+      "recorded": {
+        "version": "0.1.1",
+        "sources": {
+          "ui-surfaces.js": "17f4461f1d6948e0",
+          "ui-surfaces.css": "16b6fe3bb4e80ff8"
+        }
+      }
+    },
+    {
+      "id": "ui-controls",
+      "dir": "ui-controls",
+      "version": "0.1.1",
+      "status": "embedded",
+      "global": "SRETControls",
+      "summary": "Form and action controls (D-32): buttons, inputs, select, switch, segmented, radio cards, chips, badges.",
+      "files": {
+        "js": [
+          "ui-controls.js"
+        ],
+        "css": [
+          "ui-controls.css"
+        ]
+      },
+      "deps": [
+        "ui-tokens"
+      ],
+      "uses": [],
+      "tests": [
+        "tools/ui_kit_test.mjs",
+        "tools/ui_kit_check.mjs"
+      ],
+      "recorded": {
+        "version": "0.1.1",
+        "sources": {
+          "ui-controls.js": "c7b92184b369a934",
+          "ui-controls.css": "4de4b9764c721c66"
+        }
+      },
+      "embed": {
+        "css": {
+          "slot": "style-modules",
+          "order": 22,
+          "files": [
+            "ui-controls.css"
+          ],
+          "header": "/* ===== UI-CONTROLS (D-32 UI kit): src/modules/ui-controls/, pasted unchanged. Uses only ui-tokens. ===== */",
+          "footer": "/* ===== END UI-CONTROLS ===== */"
+        },
+        "js": {
+          "slot": "app-script-modules",
+          "order": 72,
+          "header": "// ============================================================\n// UI-CONTROLS (D-32 UI kit): src/modules/ui-controls/, pasted unchanged.\n// Defines window.SRETControls only and reads no app global. The app adapter\n// (APP_NAV) lives beside the Workspace code.\n// ============================================================",
+          "footer": "// ============ END UI-CONTROLS ============"
+        }
+      }
+    },
+    {
+      "id": "ui-nav",
+      "dir": "ui-nav",
+      "version": "0.1.1",
+      "status": "embedded",
+      "global": "SRETNav",
+      "summary": "Generic left navigation panel (D-32): expanded, rail and drawer modes, groups, badges, keyboard.",
+      "files": {
+        "js": [
+          "ui-nav.js"
+        ],
+        "css": [
+          "ui-nav.css"
+        ]
+      },
+      "deps": [
+        "ui-tokens",
+        "ui-icons",
+        "ui-controls",
+        "ui-shell"
+      ],
+      "uses": [],
+      "tests": [
+        "tools/ui_kit_test.mjs",
+        "tools/ui_kit_check.mjs"
+      ],
+      "recorded": {
+        "version": "0.1.1",
+        "sources": {
+          "ui-nav.js": "8cff0a3e2f2ad266",
+          "ui-nav.css": "7224fa01725ee90d"
+        }
+      },
+      "embed": {
+        "css": {
+          "slot": "style-modules",
+          "order": 23,
+          "files": [
+            "ui-nav.css"
+          ],
+          "header": "/* ===== UI-NAV (D-32 UI kit): src/modules/ui-nav/, pasted unchanged. Uses only ui-tokens. ===== */",
+          "footer": "/* ===== END UI-NAV ===== */"
+        },
+        "js": {
+          "slot": "app-script-modules",
+          "order": 73,
+          "header": "// ============================================================\n// UI-NAV (D-32 UI kit): src/modules/ui-nav/, pasted unchanged.\n// Defines window.SRETNav only and reads no app global. The app adapter\n// (APP_NAV) lives beside the Workspace code.\n// ============================================================",
+          "footer": "// ============ END UI-NAV ============"
+        }
+      }
     }
   ]
 }

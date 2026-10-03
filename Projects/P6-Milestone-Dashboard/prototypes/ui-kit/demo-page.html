@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UI kit demo, page variant</title>
+<link rel="stylesheet" href="../../src/modules/ui-tokens/ui-palette.css">
+<link rel="stylesheet" href="../../src/modules/ui-tokens/ui-tokens.css">
+<link rel="stylesheet" href="../../src/modules/ui-shell/ui-shell.css">
+<link rel="stylesheet" href="../../src/modules/ui-surfaces/ui-surfaces.css">
+<link rel="stylesheet" href="../../src/modules/ui-controls/ui-controls.css">
+<link rel="stylesheet" href="../../src/modules/ui-nav/ui-nav.css">
+<style>
+  /* The host's own layout: the document scrolls; content is offset by the nav column. */
+  body { margin: 0; margin-left: var(--ui-nav-col); background: var(--ui-bg-page); transition: margin-left var(--ui-dur-base) var(--ui-ease-standard); }
+  .host-bar { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: var(--ui-space-3); height: var(--ui-header-h); padding: 0 var(--ui-gutter); background: var(--ui-brand); color: var(--ui-on-brand); }
+  .host-bar__title { flex: 1 1 auto; min-width: 0; font-size: var(--ui-text-lg); font-weight: var(--ui-weight-semibold); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .host-content { padding: var(--ui-gutter); display: flex; flex-direction: column; gap: var(--ui-space-4); }
+  .host-tall { height: 1600px; }
+</style>
+</head>
+<body class="ui-root">
+<aside class="ui-shell__nav" id="nav-host"></aside>
+<header class="host-bar ui-on-brand" id="host-bar">
+  <button type="button" class="ui-btn ui-btn--ghost ui-btn--icon ui-shell__menu" id="menu-btn" aria-label="Open navigation" data-icon="menu"></button>
+  <span class="host-bar__title" id="page-title">Timeline</span>
+</header>
+<div class="host-content" id="host-content">
+  <section class="ui-card"><div class="ui-card__body"><p style="margin:0">Page variant: the document scrolls and the nav is fixed at the left. The host offsets its content by <code>var(--ui-nav-col)</code>. This is how the dashboard app hosts the nav.</p></div></section>
+  <div class="host-tall ui-card"><div class="ui-card__body">Long content to scroll.</div></div>
+</div>
+<script src="../../src/modules/ui-icons/ui-icons.js"></script>
+<script src="../../src/modules/ui-shell/ui-shell.js"></script>
+<script src="../../src/modules/ui-controls/ui-controls.js"></script>
+<script src="../../src/modules/ui-nav/ui-nav.js"></script>
+<script>
+(function () {
+  document.querySelectorAll('[data-icon]').forEach(function (el) { el.insertAdjacentHTML('afterbegin', SRETIcons.svg(el.getAttribute('data-icon'))); });
+  var store = { get: function () { try { return localStorage.getItem('ui-kit-page-nav'); } catch (e) { return null; } },
+                set: function (v) { try { localStorage.setItem('ui-kit-page-nav', v); } catch (e) {} } };
+  var navHost = document.getElementById('nav-host');
+  var shell = SRETShell.mount(document.body, { variant: 'page', nav: navHost, persist: store,
+    inert: function () { return [document.getElementById('host-bar'), document.getElementById('host-content')]; } });
+  var nav = SRETNav.mount(navHost, {
+    brand: { title: 'Project Hub', subtitle: 'Page variant' },
+    groups: [
+      { id: 'views', label: 'Views', items: [ { id: 'timeline', label: 'Timeline', icon: 'timeline' }, { id: 'grid', label: 'Grid', icon: 'grid' } ] },
+      { id: 'work', label: 'My work', items: [ { id: 'notes', label: 'Notes', icon: 'note', badge: { value: 4 } } ] }
+    ],
+    footer: [ { id: 'settings', label: 'Settings', icon: 'settings' } ]
+  }, {
+    active: 'timeline', shell: document.body,
+    onSelect: function (id, item) { document.getElementById('page-title').textContent = item.label; shell.closeNav(); },
+    onCollapseToggle: function () { shell.toggleNav(); },
+    onClose: function () { shell.closeNav(); }
+  });
+  document.getElementById('menu-btn').addEventListener('click', function () { shell.openNav(); });
+  window.__kit = { shell: shell, nav: nav };
+})();
+</script>
+</body>
+</html>

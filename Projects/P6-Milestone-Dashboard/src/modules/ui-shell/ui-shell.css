@@ -1,0 +1,181 @@
+/* ============================================================
+   ui-shell: the external containers of an app screen (D-32).
+   Regions: nav (left), header (command bar), main (content), aside (right).
+   Layout state is written by SRETShell as data attributes on .ui-shell:
+     data-nav       expanded | rail | overlay | drawer
+     data-nav-open  true when an overlay or drawer nav is showing
+     data-aside     push | overlay
+     data-aside-open true when the aside is showing
+   Uses only ui-tokens. See MODULE.md for the layout contract.
+   ============================================================ */
+.ui-shell {
+  --_nav-col: var(--ui-nav-w-expanded);
+  --_aside-col: 0px;
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--_nav-col) minmax(0, 1fr) var(--_aside-col);
+  grid-template-rows: var(--ui-header-h) minmax(0, 1fr);
+  grid-template-areas: "nav header header" "nav main aside";
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--ui-bg-page);
+  color: var(--ui-text);
+  font-family: var(--ui-font);
+  font-size: var(--ui-text-md);
+  line-height: var(--ui-lh-md);
+  transition: grid-template-columns var(--ui-dur-base) var(--ui-ease-standard);
+}
+.ui-shell[data-nav="rail"],
+.ui-shell[data-nav="overlay"] { --_nav-col: var(--ui-nav-w-rail); }
+.ui-shell[data-nav="drawer"] { --_nav-col: 0px; }
+.ui-shell[data-aside="push"][data-aside-open="true"] { --_aside-col: var(--ui-aside-w); }
+
+/* ---- nav region ---- */
+.ui-shell__nav {
+  grid-area: nav;
+  position: relative;
+  z-index: var(--ui-z-nav);
+  width: var(--_nav-col);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+/* Tablet: the rail column stays; the expanded nav slides over the content. */
+.ui-shell[data-nav="overlay"] .ui-shell__nav {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: var(--ui-nav-w-expanded);
+  z-index: var(--ui-z-drawer);
+  box-shadow: var(--ui-shadow-3);
+}
+/* Phone: off-canvas drawer. */
+.ui-shell[data-nav="drawer"] .ui-shell__nav {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: min(var(--ui-nav-w-drawer), 86vw);
+  z-index: var(--ui-z-drawer);
+  transform: translateX(-100%);
+  visibility: hidden;
+  transition: transform var(--ui-dur-base) var(--ui-ease-exit), visibility 0s linear var(--ui-dur-base);
+}
+.ui-shell[data-nav="drawer"][data-nav-open="true"] .ui-shell__nav {
+  transform: none;
+  visibility: visible;
+  box-shadow: var(--ui-shadow-3);
+  transition: transform var(--ui-dur-slow) var(--ui-ease-enter), visibility 0s;
+}
+
+/* ---- header region (command bar) ---- */
+.ui-shell__header {
+  grid-area: header;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--ui-space-3);
+  min-width: 0;
+  padding-inline: var(--ui-gutter);
+  background: var(--ui-brand);
+  color: var(--ui-on-brand);
+  overflow: hidden;
+}
+.ui-shell__header-start { display: flex; align-items: center; gap: var(--ui-space-2); flex: 1 1 auto; min-width: 0; }
+.ui-shell__header-end { display: flex; align-items: center; gap: var(--ui-space-2); flex: 0 0 auto; }
+.ui-shell__title {
+  font-size: var(--ui-text-lg); line-height: var(--ui-lh-lg); font-weight: var(--ui-weight-semibold);
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* Two-class selectors so the button styles from ui-controls cannot re-show it. */
+.ui-shell .ui-shell__menu { display: none; }
+.ui-shell[data-nav="drawer"] .ui-shell__menu { display: inline-flex; }
+
+/* ---- main region ---- */
+.ui-shell__main {
+  grid-area: main;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: var(--ui-gutter);
+}
+.ui-shell__main[data-flush] { padding: 0; }
+
+/* ---- aside region ---- */
+.ui-shell__aside {
+  grid-area: aside;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--ui-bg-surface);
+  border-left: 1px solid var(--ui-border);
+  display: flex;
+  flex-direction: column;
+}
+.ui-shell[data-aside="push"]:not([data-aside-open="true"]) .ui-shell__aside { visibility: hidden; border-left: 0; }
+.ui-shell[data-aside="overlay"] .ui-shell__aside {
+  position: absolute; right: 0; top: var(--ui-header-h); bottom: 0;
+  width: min(var(--ui-aside-w), 100%);
+  z-index: var(--ui-z-drawer);
+  transform: translateX(100%);
+  visibility: hidden;
+  transition: transform var(--ui-dur-base) var(--ui-ease-exit), visibility 0s linear var(--ui-dur-base);
+}
+.ui-shell[data-aside="overlay"][data-aside-open="true"] .ui-shell__aside {
+  transform: none; visibility: visible; box-shadow: var(--ui-shadow-3);
+  transition: transform var(--ui-dur-slow) var(--ui-ease-enter), visibility 0s;
+}
+
+/* ---- scrim ---- */
+.ui-shell__scrim {
+  position: absolute; inset: 0;
+  z-index: var(--ui-z-scrim);
+  background: var(--ui-scrim);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--ui-dur-base) var(--ui-ease-standard);
+}
+.ui-shell[data-scrim="true"] .ui-shell__scrim { opacity: 1; pointer-events: auto; }
+
+/* ============================================================
+   Page variant (.ui-shell-page on the scrolling host, usually body).
+   The document scrolls; the nav is fixed at the left. The host offsets its
+   own content with margin-left: var(--ui-nav-col), which SRETShell writes.
+   Header, main and aside are the host's own markup in this variant.
+   ============================================================ */
+.ui-shell-page .ui-shell__nav {
+  position: fixed; left: 0; top: 0; bottom: 0;
+  width: var(--ui-nav-col);
+  z-index: var(--ui-z-nav);
+  display: flex; flex-direction: column;
+  min-height: 0; overflow: hidden;
+  transition: width var(--ui-dur-base) var(--ui-ease-standard);
+}
+.ui-shell-page[data-nav="overlay"] .ui-shell__nav {
+  width: var(--ui-nav-w-expanded);
+  z-index: var(--ui-z-drawer);
+  box-shadow: var(--ui-shadow-3);
+}
+.ui-shell-page[data-nav="drawer"] .ui-shell__nav {
+  width: min(var(--ui-nav-w-drawer), 86vw);
+  z-index: var(--ui-z-drawer);
+  transform: translateX(-100%);
+  visibility: hidden;
+  transition: transform var(--ui-dur-base) var(--ui-ease-exit), visibility 0s linear var(--ui-dur-base);
+}
+.ui-shell-page[data-nav="drawer"][data-nav-open="true"] .ui-shell__nav {
+  transform: none; visibility: visible; box-shadow: var(--ui-shadow-3);
+  transition: transform var(--ui-dur-slow) var(--ui-ease-enter), visibility 0s;
+}
+.ui-shell-page > .ui-shell__scrim { position: fixed; }
+.ui-shell-page .ui-shell__menu { display: none; }
+.ui-shell-page[data-nav="drawer"] .ui-shell__menu { display: inline-flex; }
+.ui-shell-page[data-scrim="true"] > .ui-shell__scrim { opacity: 1; pointer-events: auto; }
+
+/* No motion until the shell has painted in its real state (SRETShell sets
+   data-ui-ready two frames after mount). Hosts gate their own offset
+   transitions the same way. */
+.ui-shell:not([data-ui-ready]),
+.ui-shell:not([data-ui-ready]) .ui-shell__nav,
+.ui-shell:not([data-ui-ready]) .ui-shell__aside,
+.ui-shell-page:not([data-ui-ready]) .ui-shell__nav { transition: none; }

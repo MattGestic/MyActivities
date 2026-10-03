@@ -1,0 +1,166 @@
+/* ============================================================
+   ui-surfaces: internal cards and content containers (D-32).
+   card, section, panel header, toolbar, tabs, fold, list, empty state, toast.
+   Containers own their padding; children are spaced with gap. Uses only
+   ui-tokens. Layout contract in MODULE.md.
+   ============================================================ */
+
+/* ---- Card ---- */
+.ui-card {
+  display: flex; flex-direction: column;
+  min-width: 0;
+  background: var(--ui-bg-surface);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-lg);
+  box-shadow: var(--ui-shadow-1);
+}
+.ui-card__header {
+  display: flex; flex-direction: row; flex-wrap: nowrap; align-items: center;
+  gap: var(--ui-space-2);
+  padding: var(--ui-space-3) var(--ui-space-4);
+  border-bottom: 1px solid var(--ui-border-soft);
+  min-width: 0;
+}
+.ui-card__title {
+  flex: 1 1 auto; min-width: 0; margin: 0;
+  font-size: var(--ui-text-lg); line-height: var(--ui-lh-lg); font-weight: var(--ui-weight-semibold);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ui-card__body {
+  display: flex; flex-direction: column; gap: var(--ui-space-3);
+  padding: var(--ui-space-4);
+  min-width: 0;
+}
+.ui-card__footer {
+  display: flex; flex-direction: row; flex-wrap: wrap; justify-content: flex-end; align-items: center;
+  gap: var(--ui-space-2);
+  padding: var(--ui-space-3) var(--ui-space-4);
+  border-top: 1px solid var(--ui-border-soft);
+  background: var(--ui-bg-subtle);
+  border-radius: 0 0 var(--ui-radius-lg) var(--ui-radius-lg);
+}
+.ui-card--flat { box-shadow: none; }
+.ui-card--interactive { transition: box-shadow var(--ui-dur-fast) var(--ui-ease-standard), border-color var(--ui-dur-fast) var(--ui-ease-standard); cursor: pointer; }
+.ui-card--interactive:hover { box-shadow: var(--ui-shadow-2); border-color: var(--ui-border-strong); }
+
+/* ---- Section (a titled group inside a card or panel) ---- */
+.ui-section { display: flex; flex-direction: column; gap: var(--ui-space-2); min-width: 0; }
+.ui-section__label {
+  margin: 0;
+  font-size: var(--ui-text-xs); line-height: var(--ui-lh-xs); font-weight: var(--ui-weight-semibold);
+  letter-spacing: var(--ui-tracking-label); text-transform: uppercase; color: var(--ui-text-muted);
+}
+
+/* ---- Panel header (title row of a pane, drawer or screen) ---- */
+.ui-panel-header {
+  display: flex; flex-direction: row; flex-wrap: nowrap; align-items: center;
+  gap: var(--ui-space-2);
+  min-height: var(--ui-header-h);
+  padding: var(--ui-space-2) var(--ui-space-3) var(--ui-space-2) var(--ui-space-4);
+  border-bottom: 1px solid var(--ui-border);
+  min-width: 0;
+}
+.ui-panel-header__title {
+  flex: 1 1 auto; min-width: 0; margin: 0;
+  font-size: var(--ui-text-lg); line-height: var(--ui-lh-lg); font-weight: var(--ui-weight-semibold);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ui-panel-header__actions { display: flex; flex: 0 0 auto; gap: var(--ui-space-1); }
+
+/* ---- Toolbar (a row of controls; wraps on narrow widths) ---- */
+.ui-toolbar {
+  display: flex; flex-direction: row; flex-wrap: wrap; align-items: center;
+  gap: var(--ui-space-2);
+  min-width: 0;
+}
+.ui-toolbar__spacer { flex: 1 1 auto; }
+.ui-toolbar--scroll { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; }
+
+/* ---- Tabs (role=tablist; SRETSurfaces.tabs wires keyboard and selection) ---- */
+.ui-tabs {
+  display: flex; flex-direction: row; flex-wrap: nowrap;
+  gap: var(--ui-space-1);
+  padding-inline: var(--ui-space-3);
+  border-bottom: 1px solid var(--ui-border);
+  overflow-x: auto; scrollbar-width: none;
+}
+.ui-tab {
+  position: relative; flex: 0 0 auto;
+  height: 40px; padding: 0 var(--ui-space-3);
+  border: 0; background: none; cursor: pointer;
+  font: inherit; font-size: var(--ui-text-md); color: var(--ui-text-muted); white-space: nowrap;
+  transition: color var(--ui-dur-fast) var(--ui-ease-standard);
+}
+.ui-tab:hover { color: var(--ui-text); }
+.ui-tab::after {
+  content: ""; position: absolute; left: var(--ui-space-2); right: var(--ui-space-2); bottom: -1px; height: 2px;
+  border-radius: 2px 2px 0 0; background: var(--ui-accent);
+  transform: scaleX(0); transition: transform var(--ui-dur-base) var(--ui-ease-standard);
+}
+.ui-tab[aria-selected="true"] { color: var(--ui-brand-strong); font-weight: var(--ui-weight-semibold); }
+.ui-tab[aria-selected="true"]::after { transform: scaleX(1); }
+.ui-tabpanel[hidden] { display: none; }
+
+/* ---- Fold (disclosure built on details/summary) ---- */
+.ui-fold { border-top: 1px solid var(--ui-border-soft); }
+.ui-fold > summary {
+  display: flex; align-items: center; gap: var(--ui-space-2);
+  min-height: var(--ui-ctl-h); padding: var(--ui-space-2) 0;
+  cursor: pointer; list-style: none; color: var(--ui-text-2);
+}
+.ui-fold > summary::-webkit-details-marker { display: none; }
+.ui-fold > summary .ui-icon { margin-left: auto; width: var(--ui-icon-sm); height: var(--ui-icon-sm); transition: transform var(--ui-dur-base) var(--ui-ease-standard); }
+.ui-fold[open] > summary .ui-icon { transform: rotate(180deg); }
+.ui-fold__body { display: flex; flex-direction: column; gap: var(--ui-space-3); padding-bottom: var(--ui-space-3); }
+
+/* ---- List ---- */
+.ui-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.ui-list-item {
+  display: flex; flex-direction: row; flex-wrap: nowrap; align-items: center;
+  gap: var(--ui-space-3);
+  min-height: 44px; padding: var(--ui-space-2) var(--ui-space-4);
+  border-bottom: 1px solid var(--ui-border-soft);
+  min-width: 0;
+}
+.ui-list-item__main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.ui-list-item__title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ui-list-item__meta { font-size: var(--ui-text-sm); line-height: var(--ui-lh-sm); color: var(--ui-text-muted); }
+.ui-list-item__end { flex: 0 0 auto; display: flex; gap: var(--ui-space-2); align-items: center; }
+button.ui-list-item, .ui-list-item--action { width: 100%; border: 0; border-bottom: 1px solid var(--ui-border-soft); background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; transition: background-color var(--ui-dur-fast) var(--ui-ease-standard); }
+button.ui-list-item:hover, .ui-list-item--action:hover { background: var(--ui-bg-hover); }
+
+/* ---- Empty state ---- */
+.ui-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--ui-space-3);
+  padding: var(--ui-space-7) var(--ui-space-5);
+  text-align: center; color: var(--ui-text-2);
+}
+.ui-empty__glyph {
+  width: 56px; height: 56px; border-radius: var(--ui-radius-xl);
+  display: grid; place-items: center;
+  background: var(--ui-bg-subtle); border: 1px dashed var(--ui-border-strong); color: var(--ui-text-faint);
+}
+.ui-empty__title { margin: 0; font-size: var(--ui-text-lg); line-height: var(--ui-lh-lg); font-weight: var(--ui-weight-semibold); color: var(--ui-text); }
+.ui-empty__text { margin: 0; max-width: 36ch; }
+
+/* ---- Toast (SRETSurfaces.toast) ---- */
+.ui-toast-region {
+  position: fixed; left: 50%; bottom: var(--ui-space-5); transform: translateX(-50%);
+  z-index: var(--ui-z-toast);
+  display: flex; flex-direction: column; align-items: center; gap: var(--ui-space-2);
+  width: min(420px, calc(100vw - 2 * var(--ui-space-4)));
+  pointer-events: none;
+}
+.ui-toast {
+  display: flex; align-items: center; gap: var(--ui-space-3);
+  width: 100%; padding: var(--ui-space-3) var(--ui-space-4);
+  border-radius: var(--ui-radius-lg);
+  background: var(--ui-text); color: var(--ui-bg-surface);
+  box-shadow: var(--ui-shadow-3);
+  pointer-events: auto;
+  opacity: 0; transform: translateY(8px);
+  transition: opacity var(--ui-dur-base) var(--ui-ease-enter), transform var(--ui-dur-base) var(--ui-ease-enter);
+}
+.ui-toast[data-show="true"] { opacity: 1; transform: none; }
+.ui-toast__text { flex: 1 1 auto; min-width: 0; }

@@ -218,7 +218,9 @@ def order_findings(man, src, findings):
            for m in embedded(man)}
     for m in embedded(man):
         for dep in m.get("deps", []):
-            if dep in pos and pos[dep] > pos[m["id"]] and pos[m["id"]] < 10**12:
+            # A CSS-only dependency (ui-tokens) has no js position; its load order is
+            # the CSS slot order, checked above, so it is not compared here.
+            if dep in pos and pos[dep] < 10**12 and pos[dep] > pos[m["id"]] and pos[m["id"]] < 10**12:
                 findings.append(("STALE", f"{m['id']} loads before its dependency {dep}"))
 
 

@@ -1,0 +1,141 @@
+/* ============================================================
+   ui-nav: generic left navigation panel (D-32).
+   Modes (data-mode on .ui-nav, set by SRETNav): expanded | rail.
+   Context (data-context): docked | overlay | drawer, from the shell.
+   Uses only ui-tokens. Layout contract in MODULE.md.
+   ============================================================ */
+.ui-nav {
+  display: flex; flex-direction: column; flex-wrap: nowrap;
+  gap: var(--ui-space-1);
+  width: 100%; height: 100%; min-height: 0;
+  padding: var(--ui-space-3) var(--ui-space-2);
+  background: var(--ui-brand-strong);
+  color: var(--ui-on-brand);
+  font-family: var(--ui-font); font-size: var(--ui-text-md); line-height: var(--ui-lh-md);
+  overflow: hidden;
+}
+
+/* ---- Brand row ---- */
+.ui-nav__brand {
+  display: flex; flex-direction: row; flex-wrap: nowrap; align-items: center;
+  gap: var(--ui-space-3);
+  min-height: 44px; padding: 0 var(--ui-space-2) var(--ui-space-2);
+  min-width: 0;
+}
+.ui-nav__mark {
+  flex: none; width: 28px; height: 28px; border-radius: var(--ui-radius-lg);
+  display: grid; place-items: center;
+  background: var(--ui-accent); color: var(--ui-on-accent);
+}
+.ui-nav__mark .ui-icon { width: 16px; height: 16px; }
+.ui-nav__brand-text { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; }
+.ui-nav__brand-title { font-size: var(--ui-text-lg); line-height: var(--ui-lh-lg); font-weight: var(--ui-weight-semibold); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ui-nav__brand-sub { font-size: var(--ui-text-xs); line-height: var(--ui-lh-xs); color: var(--ui-on-brand-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ui-nav .ui-nav__close { display: none; flex: none; }
+.ui-nav[data-context="drawer"] .ui-nav__close { display: inline-flex; }
+
+/* ---- Scroll area and groups ---- */
+.ui-nav__scroll {
+  flex: 1 1 auto; min-height: 0;
+  display: flex; flex-direction: column; flex-wrap: nowrap; gap: var(--ui-space-2);
+  overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain;
+  scrollbar-width: thin; scrollbar-color: var(--ui-on-brand-line) transparent;
+}
+.ui-nav__group { display: flex; flex-direction: column; gap: var(--ui-space-0); min-width: 0; }
+.ui-nav__label {
+  display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: var(--ui-space-2);
+  height: 28px; padding: 0 var(--ui-space-3);
+  border: 0; background: none; width: 100%;
+  font: inherit; font-size: var(--ui-text-xs); line-height: var(--ui-lh-xs); font-weight: var(--ui-weight-semibold);
+  letter-spacing: var(--ui-tracking-label); text-transform: uppercase; color: var(--ui-on-brand-muted);
+  white-space: nowrap; text-align: left;
+}
+button.ui-nav__label { cursor: pointer; border-radius: var(--ui-radius-md); }
+button.ui-nav__label:hover { color: var(--ui-on-brand); }
+.ui-nav__label .ui-icon { width: 14px; height: 14px; flex: none; transition: transform var(--ui-dur-base) var(--ui-ease-standard); }
+.ui-nav__group[data-collapsed="true"] .ui-nav__label .ui-icon { transform: rotate(-90deg); }
+/* Group body collapses by animating the row track, not height, so content never jumps. */
+.ui-nav__items {
+  display: grid; grid-template-rows: 1fr;
+  transition: grid-template-rows var(--ui-dur-base) var(--ui-ease-standard);
+  list-style: none; margin: 0; padding: 0;
+}
+.ui-nav__items > div { min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: var(--ui-space-0); }
+.ui-nav__group[data-collapsed="true"] .ui-nav__items { grid-template-rows: 0fr; }
+.ui-nav__divider { height: 1px; margin: var(--ui-space-1) var(--ui-space-2); background: var(--ui-on-brand-line); flex: none; }
+
+/* ---- Item ---- */
+.ui-nav__item {
+  position: relative;
+  display: flex; flex-direction: row; flex-wrap: nowrap; align-items: center;
+  gap: var(--ui-space-3);
+  width: 100%; height: 40px; padding: 0 var(--ui-space-3);
+  border: 0; border-radius: var(--ui-radius-md);
+  background: transparent; color: var(--ui-on-brand);
+  font: inherit; font-size: var(--ui-text-md); text-align: left; text-decoration: none; white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--ui-dur-fast) var(--ui-ease-standard);
+}
+.ui-nav__item:hover { background: var(--ui-on-brand-hover); }
+.ui-nav__item:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--ui-accent); }
+.ui-nav__item[aria-current="page"] { background: var(--ui-on-brand-selected); font-weight: var(--ui-weight-semibold); }
+.ui-nav__item::before {
+  content: ""; position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px; border-radius: 0 3px 3px 0;
+  background: var(--ui-accent); transform: scaleY(0);
+  transition: transform var(--ui-dur-base) var(--ui-ease-standard);
+}
+.ui-nav__item[aria-current="page"]::before { transform: scaleY(1); }
+.ui-nav__item > .ui-icon { width: var(--ui-icon); height: var(--ui-icon); flex: none; }
+.ui-nav__text { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.ui-nav__badge {
+  flex: none; display: inline-grid; place-items: center; min-width: 20px; height: 18px; padding: 0 var(--ui-space-1);
+  border-radius: var(--ui-radius-pill);
+  font-size: var(--ui-text-xs); line-height: 1; font-weight: var(--ui-weight-semibold); font-variant-numeric: tabular-nums;
+  background: var(--ui-on-brand-selected); color: var(--ui-on-brand);
+}
+.ui-nav__badge[data-tone="warn"] { background: var(--ui-warn); color: var(--ui-on-accent); }
+.ui-nav__badge[data-tone="danger"] { background: var(--ui-danger); color: var(--ui-on-accent); }
+.ui-nav__badge[data-tone="accent"] { background: var(--ui-accent); color: var(--ui-on-accent); }
+.ui-nav__item--sub { padding-left: calc(var(--ui-space-3) + var(--ui-icon) + var(--ui-space-3)); color: var(--ui-on-brand-muted); }
+.ui-nav__item--sub > .ui-icon { display: none; }
+
+/* ---- Footer ---- */
+.ui-nav__footer {
+  flex: none; display: flex; flex-direction: column; gap: var(--ui-space-0);
+  padding-top: var(--ui-space-2);
+  border-top: 1px solid var(--ui-on-brand-line);
+}
+.ui-nav[data-context="drawer"] .ui-nav__collapse { display: none; }
+
+/* ---- Rail mode: icons only. Labels fade; the nav width animates in the shell. ---- */
+.ui-nav__text, .ui-nav__brand-text, .ui-nav__label > span {
+  transition: opacity var(--ui-dur-fast) var(--ui-ease-standard);
+}
+.ui-nav[data-mode="rail"] .ui-nav__text,
+.ui-nav[data-mode="rail"] .ui-nav__brand-text,
+.ui-nav[data-mode="rail"] .ui-nav__label > span { opacity: 0; }
+.ui-nav[data-mode="rail"] .ui-nav__label { height: 9px; pointer-events: none; }
+.ui-nav[data-mode="rail"] .ui-nav__label .ui-icon { display: none; }
+.ui-nav[data-mode="rail"] .ui-nav__group[data-collapsed="true"] .ui-nav__items { grid-template-rows: 1fr; }
+.ui-nav[data-mode="rail"] .ui-nav__item--sub { padding-left: var(--ui-space-3); }
+.ui-nav[data-mode="rail"] .ui-nav__item--sub > .ui-icon { display: block; }
+.ui-nav[data-mode="rail"] .ui-nav__badge {
+  position: absolute; left: 26px; top: 7px; min-width: 8px; width: 8px; height: 8px; padding: 0; font-size: 0;
+  box-shadow: 0 0 0 2px var(--ui-brand-strong);
+}
+
+/* ---- Rail tooltip (one element, positioned by SRETNav) ---- */
+.ui-nav-tip {
+  position: fixed; z-index: var(--ui-z-popover);
+  padding: var(--ui-space-1) var(--ui-space-2); border-radius: var(--ui-radius-sm);
+  background: var(--ui-text); color: var(--ui-bg-surface);
+  font-family: var(--ui-font); font-size: var(--ui-text-sm); line-height: var(--ui-lh-sm); white-space: nowrap;
+  box-shadow: var(--ui-shadow-2); pointer-events: none;
+  opacity: 0; transform: translateX(-4px);
+  transition: opacity var(--ui-dur-fast) var(--ui-ease-standard), transform var(--ui-dur-fast) var(--ui-ease-standard);
+}
+.ui-nav-tip[data-show="true"] { opacity: 1; transform: none; }
+
+/* Ghost buttons inside the nav (the drawer close button) sit on the brand colour. */
+.ui-nav .ui-btn--ghost { color: var(--ui-on-brand); }
+.ui-nav .ui-btn--ghost:hover { background: var(--ui-on-brand-hover); color: var(--ui-on-brand); }

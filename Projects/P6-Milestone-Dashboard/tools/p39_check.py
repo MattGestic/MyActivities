@@ -373,7 +373,10 @@ PROBE = r"""
       ck('filter row (P72 phone): the Date range tile stacks below the search field, as wide as it',
          box(whenBox).t>fwrapBox.b-2&&Math.abs(fwrapBox.w-box(whenBox).w)<=2,
          'search bottom '+fwrapBox.b+', when top '+box(whenBox).t+', widths '+fwrapBox.w+'/'+box(whenBox).w);
-    } else if(window.innerWidth>=1280){
+    } else if(!bar.classList.contains('fb-narrow')){
+      // D-32 (P81): side by side wherever the bar is not narrow (syncFbNarrow:
+      // the bar's width less the left nav). At 1440 with the 240px nav it is
+      // narrow and the two stack, which the else branch below covers.
       ck('filter row: Find and When sit side by side at 1440',
          sideBySide, 'find right '+box(findBox).r+', when left '+box(whenBox).l+
          ', find top '+box(findBox).t+', when top '+box(whenBox).t);

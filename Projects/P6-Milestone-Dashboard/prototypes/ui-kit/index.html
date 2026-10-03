@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SRET UI Kit</title>
+<link rel="stylesheet" href="../../src/modules/ui-tokens/ui-palette.css">
+<link rel="stylesheet" href="../../src/modules/ui-tokens/ui-tokens.css">
+<link rel="stylesheet" href="../../src/modules/ui-surfaces/ui-surfaces.css">
+<link rel="stylesheet" href="../../src/modules/ui-controls/ui-controls.css">
+<style>
+  /* Gallery page only. Built from the kit's own tokens and components. */
+  body { margin: 0; background: var(--ui-bg-page); }
+  .g-wrap { max-width: 1480px; margin: 0 auto; padding: var(--ui-space-5) var(--ui-gutter) var(--ui-space-8); display: flex; flex-direction: column; gap: var(--ui-space-6); }
+  .g-hd { display: flex; flex-direction: column; gap: var(--ui-space-2); }
+  .g-hd h1 { margin: 0; font-size: var(--ui-text-2xl); line-height: var(--ui-lh-2xl); font-weight: var(--ui-weight-semibold); }
+  .g-hd p { margin: 0; color: var(--ui-text-2); max-width: 88ch; }
+  .g-sec { display: flex; flex-direction: column; gap: var(--ui-space-3); min-width: 0; }
+  .g-sec > h2 { margin: 0; font-size: var(--ui-text-xl); line-height: var(--ui-lh-xl); font-weight: var(--ui-weight-semibold); }
+  .g-sec > p { margin: 0; color: var(--ui-text-2); max-width: 88ch; }
+  .g-stage { position: relative; width: 100%; overflow: hidden; border-radius: var(--ui-radius-xl); background: var(--ui-bg-surface); box-shadow: var(--ui-shadow-2); border: 1px solid var(--ui-border); }
+  .g-stage iframe { position: absolute; left: 0; top: 0; border: 0; transform-origin: 0 0; background: var(--ui-bg-page); }
+  .g-cap { font-size: var(--ui-text-sm); color: var(--ui-text-muted); }
+  .g-swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(180px, 100%), 1fr)); gap: var(--ui-space-3); }
+  .g-sw { display: flex; flex-direction: row; align-items: center; gap: var(--ui-space-3); min-width: 0; }
+  .g-sw i { width: 36px; height: 36px; border-radius: var(--ui-radius-md); border: 1px solid var(--ui-border); flex: none; }
+  .g-sw span { display: flex; flex-direction: column; min-width: 0; font-size: var(--ui-text-sm); line-height: var(--ui-lh-sm); }
+  .g-sw code, .g-doc code { font-family: var(--ui-font-mono); font-size: 11.5px; color: var(--ui-text-2); overflow-wrap: anywhere; }
+  .g-scale { display: flex; flex-direction: column; gap: var(--ui-space-2); }
+  .g-scale div { display: flex; align-items: center; gap: var(--ui-space-3); font-size: var(--ui-text-sm); }
+  .g-scale b { display: block; height: 12px; background: var(--ui-accent); border-radius: 2px; flex: none; }
+  .g-scale code { width: 120px; flex: none; }
+  .g-type { display: flex; flex-direction: column; gap: var(--ui-space-2); }
+  .g-doc { overflow-x: auto; }
+  .g-doc h1 { display: none; }
+  .g-doc h2 { font-size: var(--ui-text-lg); line-height: var(--ui-lh-lg); margin: var(--ui-space-5) 0 var(--ui-space-2); }
+  .g-doc h2:first-of-type { margin-top: 0; }
+  .g-doc p, .g-doc li { color: var(--ui-text-2); max-width: 90ch; }
+  .g-doc table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: var(--ui-text-sm); line-height: var(--ui-lh-sm); }
+  .g-doc th, .g-doc td { text-align: left; vertical-align: top; padding: var(--ui-space-2) var(--ui-space-3); border-bottom: 1px solid var(--ui-border-soft); }
+  .g-doc thead th { background: var(--ui-bg-subtle); font-size: var(--ui-text-xs); text-transform: uppercase; letter-spacing: var(--ui-tracking-label); color: var(--ui-text-muted); }
+  .g-doc pre { background: var(--ui-bg-subtle); border: 1px solid var(--ui-border); border-radius: var(--ui-radius-md); padding: var(--ui-space-3); overflow-x: auto; font-size: 11.5px; }
+</style>
+</head>
+<body class="ui-root">
+<div class="g-wrap">
+  <header class="g-hd">
+    <span class="ui-badge ui-badge--accent" style="align-self:flex-start">D-32 Stage A · standalone · light theme</span>
+    <h1>SRET UI kit</h1>
+    <p>The shared building blocks for the dashboard redesign. They are built here on their own, with no app data, so they can be reviewed, reused and redeployed. They cover the containers (shell), cards and controls, and the left navigation. The dialog form, right panel and filter bar follow in Stages B to D, on these same tokens.</p>
+  </header>
+
+  <section class="g-sec">
+    <h2>Live demo</h2>
+    <p>The full shell with the left nav, running on sample data. Switch the width to see the phone drawer, the tablet rail and the desktop layout. Try the Collapse control at the bottom of the nav, the menu button on phone, Details (opens the right region), the tabs, the switches and the chip remove.</p>
+    <div class="ui-toolbar">
+      <div class="ui-segmented" id="width-switch" aria-label="Preview width">
+        <button type="button" class="ui-segmented__opt" data-value="390" aria-checked="false">Phone 390</button>
+        <button type="button" class="ui-segmented__opt" data-value="768" aria-checked="false">Tablet 768</button>
+        <button type="button" class="ui-segmented__opt" data-value="1440" aria-checked="true">Desktop 1440</button>
+      </div>
+      <span class="g-cap" id="width-cap"></span>
+    </div>
+    <div class="g-stage" id="stage"><iframe id="demo" title="UI kit demo" src="demo-shell.html"></iframe></div>
+  </section>
+
+  <section class="g-sec">
+    <h2>Tokens</h2>
+    <p>One resource for colour, spacing, type, shape, elevation and motion (<code>ui-tokens</code>). Components read only these.</p>
+    <div class="ui-card"><div class="ui-card__body">
+      <div class="ui-section"><p class="ui-section__label">Colour roles</p><div class="g-swatches" id="swatches"></div></div>
+      <div class="ui-section"><p class="ui-section__label">Spacing scale</p><div class="g-scale" id="spacing"></div></div>
+      <div class="ui-section"><p class="ui-section__label">Type scale</p><div class="g-type" id="type"></div></div>
+    </div></div>
+  </section>
+
+  <section class="g-sec">
+    <h2>Modules</h2>
+    <p>Each module's own documentation, embedded from its <code>MODULE.md</code>. It covers the layout contract (direction, wrap, padding, gap and what truncates or scrolls) and the motion table.</p>
+    <section class="ui-card">
+      <div class="ui-tabs" id="doc-tabs">
+        <button type="button" class="ui-tab" id="dt-tokens" aria-controls="dp-tokens" aria-selected="true">ui-tokens</button>
+        <button type="button" class="ui-tab" id="dt-shell" aria-controls="dp-shell">ui-shell</button>
+        <button type="button" class="ui-tab" id="dt-surfaces" aria-controls="dp-surfaces">ui-surfaces</button>
+        <button type="button" class="ui-tab" id="dt-controls" aria-controls="dp-controls">ui-controls</button>
+        <button type="button" class="ui-tab" id="dt-nav" aria-controls="dp-nav">ui-nav</button>
+        <button type="button" class="ui-tab" id="dt-icons" aria-controls="dp-icons">ui-icons</button>
+      </div>
+      <div class="ui-card__body">
+        <div class="ui-tabpanel g-doc" id="dp-tokens"><!--@doc ui-tokens--></div>
+        <div class="ui-tabpanel g-doc" id="dp-shell" hidden><!--@doc ui-shell--></div>
+        <div class="ui-tabpanel g-doc" id="dp-surfaces" hidden><!--@doc ui-surfaces--></div>
+        <div class="ui-tabpanel g-doc" id="dp-controls" hidden><!--@doc ui-controls--></div>
+        <div class="ui-tabpanel g-doc" id="dp-nav" hidden><!--@doc ui-nav--></div>
+        <div class="ui-tabpanel g-doc" id="dp-icons" hidden><!--@doc ui-icons--><div id="icon-grid" class="ui-chips" style="margin-top:var(--ui-space-4)"></div></div>
+      </div>
+    </section>
+  </section>
+</div>
+
+<script src="../../src/modules/ui-icons/ui-icons.js"></script>
+<script src="../../src/modules/ui-surfaces/ui-surfaces.js"></script>
+<script src="../../src/modules/ui-controls/ui-controls.js"></script>
+<script>
+(function () {
+  var W = 1440, H = 820;
+  var stage = document.getElementById('stage'), frame = document.getElementById('demo'), cap = document.getElementById('width-cap');
+  function fit() {
+    var avail = stage.clientWidth, s = Math.min(1, avail / W);
+    frame.style.width = W + 'px'; frame.style.height = H + 'px';
+    frame.style.transform = 'scale(' + s + ')';
+    stage.style.height = Math.round(H * s) + 'px';
+    if (W < avail) { frame.style.left = Math.round((avail - W) / 2) + 'px'; } else { frame.style.left = '0'; }
+    cap.textContent = 'Rendering at ' + W + ' px' + (s < 1 ? ', shown at ' + Math.round(s * 100) + '%' : '');
+  }
+  SRETControls.bind(document.body);
+  document.getElementById('width-switch').addEventListener('ui-change', function (e) { W = +e.detail.value; fit(); });
+  new ResizeObserver(fit).observe(stage);
+  fit();
+
+  var cs = getComputedStyle(document.documentElement);
+  var roles = ['--ui-bg-page','--ui-bg-surface','--ui-bg-subtle','--ui-text','--ui-text-2','--ui-text-muted','--ui-border','--ui-border-strong','--ui-brand','--ui-brand-strong','--ui-accent','--ui-accent-tint','--ui-ok','--ui-warn','--ui-danger','--ui-info'];
+  document.getElementById('swatches').innerHTML = roles.map(function (r) {
+    return '<div class="g-sw"><i style="background:var(' + r + ')"></i><span><code>' + r + '</code></span></div>';
+  }).join('');
+  document.getElementById('spacing').innerHTML = [1,2,3,4,5,6,7,8].map(function (n) {
+    var v = cs.getPropertyValue('--ui-space-' + n).trim();
+    return '<div><code>--ui-space-' + n + '</code><b style="width:' + v + '"></b><span>' + v + '</span></div>';
+  }).join('');
+  document.getElementById('type').innerHTML = ['2xl','xl','lg','md','sm','xs'].map(function (k) {
+    return '<div style="font-size:var(--ui-text-' + k + ');line-height:var(--ui-lh-' + k + ')"><code>--ui-text-' + k + '</code> ' + cs.getPropertyValue('--ui-text-' + k).trim() + ' Equipment list revision B</div>';
+  }).join('');
+  SRETSurfaces.tabs(document.getElementById('doc-tabs'));
+  document.getElementById('icon-grid').innerHTML = SRETIcons.names().map(function (n) {
+    return '<span class="ui-chip" title="' + n + '">' + SRETIcons.svg(n, { size: 16 }) + '<span>' + n + '</span></span>';
+  }).join('');
+})();
+</script>
+</body>
+</html>

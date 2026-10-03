@@ -10,11 +10,13 @@ and computed style, never a screenshot:
   A-02  header controls share --ctl-h; the shadow switch is 32x16; the More
         actions trigger is an --icon-btn, and on touch stays 32px visible
         (its 40px hit area is a pseudo-element, not a bigger box)
-  B-01  three rail states: rail, collapsed (toggle in the header's left slot),
-        panel; the state persists; phones start collapsed; opening a section
-        from collapsed shows the rail
-  B-02  the header's title and subtitle do not move between rail states
-  X-02  the rail badge sits clear of its icon (offset up and left, P63)
+  B-01  (D-32 P81, replaces the P59 three rail states) the left nav is expanded
+        or the 60px rail on wide screens, a closed drawer on phones; Collapse
+        is remembered; opening and closing a Workspace section leaves the nav
+        as it was; the nav's Collapse control brings it back
+  B-02  the header's title and subtitle keep their place inside the header as
+        the nav changes width; on phones the menu button does not overlap the title
+  X-02  a nav badge sits clear of its icon (D-32 P81; was the P63 rail badge)
   C-01  Find fits its card at wide widths: Source stays inside, Banding is not
         clipped
   C-02  Activity name takes half of Find's first row
@@ -77,11 +79,10 @@ PROBE = r"""
     R.notes.ctlH=ctlH; R.notes.iconBtn=iconBtn; R.notes.W=W;
 
     // ---------- B-01 default state ----------
-    const collapsed=()=>document.body.classList.contains('rail-collapsed');
     if(ARGS.phone){
-      ck('B-01 a phone starts with the rail collapsed', collapsed());
-    } else {
-      ck('B-01 a wide screen starts with the rail showing', !collapsed());
+      ck('B-01 a phone starts with the nav as a closed drawer', document.body.dataset.nav==='drawer'&&!APP_SHELL.state().navOpen, document.body.dataset.nav);
+    } else if(W>1024){
+      ck('B-01 a wide screen starts with the nav expanded', document.body.dataset.nav==='expanded', document.body.dataset.nav);
     }
 
     if(!ARGS.phone && !ARGS.coarse){
@@ -119,40 +120,31 @@ PROBE = r"""
       vgrp.style.display=vwas;
 
       // ---------- B-02 / B-01 transitions ----------
-      const title=$('rpt-title-text');
-      const before={t:rc(title).left, s:rc(sub).left, h:rc(document.querySelector('.rpt-hd')).top};
+      const title=$('rpt-title-text'), hdr=document.querySelector('.rpt-hd'), bar=$('icon-bar');
+      const inside=()=>({t:rc(title).left-rc(bar).left, s:rc(sub).left-rc(hdr).left});
+      const before=inside();
       setRailState('collapsed'); await settle();
-      const after={t:rc(title).left, s:rc(sub).left, h:rc(document.querySelector('.rpt-hd')).top};
-      ck('B-01 collapsing hides the rail', cs($('ws-rail')).display==='none');
-      const tg=$('ws-toggle');
-      ck('B-01 the Workspace toggle takes the header left slot', cs(tg).display!=='none'&&rc(tg).left===0&&rc(tg).top===0,
-         rc(tg).left+','+rc(tg).top);
-      ck('B-01 the board takes the rail width back', parseFloat(cs(document.body).marginLeft)===0, cs(document.body).marginLeft);
-      ck('B-02 the report title does not move', Math.abs(after.t-before.t)<1, (after.t-before.t).toFixed(2));
-      ck('B-02 the subtitle does not move', Math.abs(after.s-before.s)<1, (after.s-before.s).toFixed(2));
-      ck('B-02 the toggle does not overlap the title', rc(tg).right<=rc(title).left, rc(tg).right+' vs '+rc(title).left);
-      let stored=null; try{ stored=localStorage.getItem('sret-rail'); }catch(e){}
-      ck('B-01 the collapsed state persists', stored==='collapsed', stored);
+      const after=inside();
+      ck('B-01 collapsing gives the 60px rail', document.body.dataset.nav==='rail'&&Math.round(rc($('ws-rail')).width)===60, rc($('ws-rail')).width);
+      ck('B-01 the board takes the width back', Math.round(parseFloat(cs(document.body).marginLeft))===60, cs(document.body).marginLeft);
+      ck('B-02 the report title keeps its place in the header', Math.abs(after.t-before.t)<1, (after.t-before.t).toFixed(2));
+      ck('B-02 the subtitle keeps its place in the report heading', Math.abs(after.s-before.s)<1, (after.s-before.s).toFixed(2));
+      let stored=null; try{ stored=localStorage.getItem('sret-nav'); }catch(e){}
+      ck('B-01 the rail is remembered', stored==='rail', stored);
       setWorkspaceSection('notes',true); await settle();
-      ck('B-01 opening a section from collapsed shows the rail and the panel',
-         !collapsed()&&cs($('ws-rail')).display!=='none'&&$('ws-panel').classList.contains('open'));
+      ck('B-01 opening a section keeps the rail and opens the panel',
+         document.body.dataset.nav==='rail'&&$('ws-panel').classList.contains('open'));
       toggleWorkspace(false); await settle();
-      ck('B-01 closing the panel leaves the rail', !collapsed()&&!$('ws-panel').classList.contains('open'));
-      $('ws-tab-collapse').click(); await settle();
-      ck('B-01 the rail\'s own first button collapses it', collapsed());
-      tg.click(); await settle();
-      ck('B-01 the toggle brings the rail back', !collapsed()&&tg.getAttribute('aria-expanded')==='true');
+      ck('B-01 closing the panel leaves the rail', document.body.dataset.nav==='rail'&&!$('ws-panel').classList.contains('open'));
+      document.querySelector('#ws-rail .ui-nav__collapse').click(); await settle();
+      ck('B-01 the nav\'s own control expands it again', document.body.dataset.nav==='expanded');
 
       // ---------- X-02 ----------
-      const bd=document.querySelector('#ws-rail .ws-bd');
-      if(bd){
-        const had=bd.textContent; bd.textContent='3';
-        const b=rc(bd), i=rc(bd.parentElement);
-        // P63 (Matt): top-left of the icon, on the rail's outer edge.
-        ck('X-02 the badge is offset up and left of its icon', b.top<i.top&&b.left<i.left,
-           [b.top,i.top,b.right,i.right].map(Math.round).join(','));
-        bd.textContent=had;
-      }
+      navBadge('notes',3); await settle();
+      const bd=document.querySelector('#ws-rail .ui-nav__item[data-id="notes"] .ui-nav__badge');
+      const ic=document.querySelector('#ws-rail .ui-nav__item[data-id="notes"] .ui-icon');
+      ck('X-02 the nav badge sits clear of its icon', !!bd&&rc(bd).left>=rc(ic).right, bd&&[rc(bd).left,rc(ic).right].map(Math.round).join(' vs '));
+      navBadge('notes',collectionInfo(reportPeriodISO()).open);
 
       // ---------- C-01 / C-02 ----------
       const grp=$('tfb-source-group');

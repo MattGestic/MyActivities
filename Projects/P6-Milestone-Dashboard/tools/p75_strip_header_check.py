@@ -227,7 +227,8 @@ PROBE = r"""
       });
       return bad;
     };
-    const railW=document.body.classList.contains('rail-collapsed')?0:(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ws-rail-w'))||44);
+    // D-32 (P81): the left nav's column in use (240, 60 or 0), written by SRETShell.
+    const railW=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-nav-col'))||0;
     const wideExpected=W>=768&&(W-railW)>=WIDE_MIN;
     R.notes.rail=railW;
     R.notes.filter=fb.className;
@@ -256,7 +257,9 @@ PROBE = r"""
       } else {
         ck('filter: below the threshold, no one-row layout', !fb.classList.contains('fb-wide'), fb.className);
         ck('filter: below the threshold, the old layout: Status on its own row below Find', T[2].top>=T[0].bottom-0.5, R.notes.boxes);
-        ck('filter: below the threshold, Find and Date range as before', W>=1280?Math.abs(T[0].top-T[1].top)<=4:T[1].top>=T[0].bottom-0.5, R.notes.boxes);
+        // Side by side unless the bar is narrow: the bar's width less the nav,
+        // the same test syncFbNarrow makes (fb-narrow below 1235px).
+        ck('filter: below the threshold, Find and Date range as before', !fb.classList.contains('fb-narrow')?Math.abs(T[0].top-T[1].top)<=4:T[1].top>=T[0].bottom-0.5, R.notes.boxes);
       }
     } else {
       ck('filter: phone shape (fb-phone), never fb-wide', fb.classList.contains('fb-phone')&&!fb.classList.contains('fb-wide'), fb.className);

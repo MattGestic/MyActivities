@@ -302,7 +302,10 @@ PROBE = r"""
     // fully reachable panel, anchored to itself" contract only applies at
     // <=1024px, where the trigger is real; above it, what has to hold is that
     // the five rows are already reachable directly, with no trigger needed.
-    const desktop=window.matchMedia('(min-width:1025px)').matches;
+    // D-32 Stage A (P81): More actions is a labelled dropdown at every width; the
+    // P56 inline icon row above 1024px was retired. Every width now takes the
+    // dropdown path below, so the desktop branch is kept only as history.
+    const desktop=false;
     if(!desktop){
       // The header trigger has to still anchor to ITSELF, or moving the anchor
       // would have broken the control that was already there. Conditional on
@@ -364,8 +367,8 @@ PROBE = r"""
     // bare viewport. Read the rail's own token rather than hardcoding 44, so
     // this does not need editing if the rail widens.
     // P59 (B-01): a collapsed rail (the phone default) takes no width.
-    const railW=document.body.classList.contains('rail-collapsed')?0:
-      (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ws-rail-w'))||0);
+    // D-32 (P81): the left nav's column in use, written by SRETShell.
+    const railW=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-nav-col'))||0;
     ck('print: the icon bar goes back to viewport width (less the Workspace rail), leaving no sheet sizing behind',
        Math.abs(barOut.w-(window.innerWidth-railW))<=1.0,
        barOut.w+' against viewport '+window.innerWidth+' minus rail '+railW);

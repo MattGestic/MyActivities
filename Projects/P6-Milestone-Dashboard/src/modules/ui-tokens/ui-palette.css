@@ -1,0 +1,41 @@
+/* ============================================================
+   ui-palette: the literal palette for standalone hosts of the UI kit (D-32).
+   Load it beside ui-tokens.css where the host does not define --pal-*.
+   The app does not load this file: its own html[data-theme] blocks are the
+   palette (P55). Values copied from the app's light block, palette Option A.
+   Light theme only for now.
+   ============================================================ */
+:where(:root) {
+  /* ---- Palette (literal values live only here) ---- */
+  --pal-navy: #2b4a7a;
+  --pal-navy-strong: #1f3a63;
+  --pal-slate: #3d4b66;
+  --pal-on-header: #f4f5f8;
+  --pal-on-header-muted: #c6d2e6;
+  --pal-on-strong: #ffffff;
+  --pal-page: #f3f4f7;
+  --pal-surface: #ffffff;
+  --pal-surface-2: #fafbfc;
+  --pal-ink: #1b2230;
+  --pal-ink-2: #475063;
+  --pal-muted: #667085;
+  --pal-faint: #8a93a3;
+  --pal-line: #dde1e8;
+  --pal-line-soft: #e9ecf1;
+  --pal-line-strong: #b8c0d0;
+  --pal-teal: #0e7c86;
+  --pal-teal-deep: #0b6570;
+  --pal-teal-tint: #e1f1f2;
+  --pal-done: #2e8b57;
+  --pal-track: #2f6fdb;
+  --pal-risk: #c98a0b;
+  --pal-crit: #c2413a;
+  --pal-done-ink: #1f6b43;
+  --pal-risk-ink: #7a5306;
+  --pal-crit-ink: #8f2a24;
+  --pal-done-tint: #e6f2eb;
+  --pal-risk-tint: #fbf1dc;
+  --pal-crit-tint: #fbeceb;
+  --shadow-color: #0f172a;
+  --pal-scrim: #0a0c1e;
+}

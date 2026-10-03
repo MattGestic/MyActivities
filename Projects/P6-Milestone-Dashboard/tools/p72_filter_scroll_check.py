@@ -375,7 +375,10 @@ PROBE = r"""
       ck('desktop: the info row and bands stick exactly as before (info at the board\'s top, bands under it)',
          Math.abs(rc(infoTh).top-rc(sw).top)<=1&&Math.abs(rc(phaseTh).top-rc(infoTh).bottom)<=1.5&&Math.abs(rc(wkTh).top-rc(phaseTh).bottom)<=1.5,
          f1(rc(infoTh).top)+' '+f1(rc(sw).top)+' '+f1(rc(phaseTh).top));
-      ck('desktop: the board keeps its max-height (100vh - 150px)', Math.abs(parseFloat(cs(sw).maxHeight)-(window.innerHeight-150))<=1, cs(sw).maxHeight);
+      // D-32 (P81): the board's max-height is measured by sizeBoardHeight() (viewport
+      // less the board's top less one gutter), replacing the fixed 100vh - 150px.
+      const want=Math.max(240,Math.round(window.innerHeight-(rc(sw).top+window.scrollY)-(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--group-gap'))||16)));
+      ck('desktop: the board keeps its measured max-height', Math.abs(parseFloat(cs(sw).maxHeight)-want)<=2, cs(sw).maxHeight+' vs '+want);
       await scrollBoardTo(0);
     }
     ck('no horizontal page scroll (end)', noHScroll(), document.documentElement.scrollWidth);
