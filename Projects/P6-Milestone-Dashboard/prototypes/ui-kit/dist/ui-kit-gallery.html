@@ -4,18 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SRET UI Kit</title>
-<style>/* src/modules/ui-tokens/ui-tokens.css */
+<style>/* src/modules/ui-tokens/ui-palette.css */
 /* ============================================================
-   ui-tokens: the one shared resource for the SRET UI kit (D-31).
-   Every ui-* module reads only these custom properties. No ui-* module
-   writes a literal colour, size or duration of its own.
-
-   Light theme only for now (Matt, 2026-10-03). Dark is a later slot.
-
-   Palette values are copied from src/milestone-dashboard.html
-   html[data-theme="light"] (P55, palette Option A). They are declared at
-   :where(:root) so a host page that already defines --pal-* (the app does)
-   wins, and the kit and the app share one palette.
+   ui-palette: the literal palette for standalone hosts of the UI kit (D-31).
+   Load it beside ui-tokens.css where the host does not define --pal-*.
+   The app does not load this file: its own html[data-theme] blocks are the
+   palette (P55). Values copied from the app's light block, palette Option A.
+   Light theme only for now.
    ============================================================ */
 :where(:root) {
   /* ---- Palette (literal values live only here) ---- */
@@ -51,6 +46,22 @@
   --shadow-color: #0f172a;
   --pal-scrim: #0a0c1e;
 }
+</style>
+<style>/* src/modules/ui-tokens/ui-tokens.css */
+/* ============================================================
+   ui-tokens: the one shared resource for the SRET UI kit (D-31).
+   Every ui-* module reads only these custom properties. No ui-* module
+   writes a literal colour, size or duration of its own.
+
+   Light theme only for now (Matt, 2026-10-03). Dark is a later slot.
+
+   Colour roles resolve to --pal-* palette tokens supplied by the host.
+   The app supplies them in its two html[data-theme] blocks (P55), the only
+   place a literal colour is written. A standalone host (the gallery, another
+   instance) loads ui-palette.css beside this file. This file holds no literal
+   colour, so the app's colour_audit --strict stays clean when it is embedded.
+   ============================================================ */
+
 
 :root {
   /* ---- Colour roles (components use these, never --pal-* directly) ---- */
@@ -85,6 +96,7 @@
   --ui-focus: 0 0 0 2px var(--pal-surface), 0 0 0 4px var(--pal-teal);
 
   /* ---- Spacing scale (4 px base). Containers own padding; siblings use gap. ---- */
+  --ui-space-0: 2px;    /* hairline gaps inside tight groups (segmented, nav item lists) */
   --ui-space-1: 4px;
   --ui-space-2: 8px;
   --ui-space-3: 12px;
@@ -139,7 +151,7 @@
   --ui-ease-enter: cubic-bezier(0, 0, 0, 1);       /* decelerate */
   --ui-ease-exit: cubic-bezier(.3, 0, 1, 1);       /* accelerate */
 
-  /* ---- Layers ---- */
+  /* ---- Layers (a host may override these to sit the kit among its own layers) ---- */
   --ui-z-nav: 40;
   --ui-z-aside: 50;
   --ui-z-scrim: 60;
@@ -152,6 +164,7 @@
   --ui-nav-w-expanded: 240px;
   --ui-nav-w-rail: 60px;
   --ui-nav-w-drawer: 288px;
+  --ui-nav-col: var(--ui-nav-w-expanded);   /* written by SRETShell: the nav column in use */
   --ui-header-h: 52px;
   --ui-aside-w: 380px;
 
@@ -162,8 +175,10 @@
 @media (min-width: 1025px) {
   :root { --ui-gutter: var(--ui-space-6); }
 }
+/* Touch: the visible control stays 32 px (design-standard); the 40 px hit area
+   comes from --ui-hit through ::after, never by growing the visible box. */
 @media (pointer: coarse) {
-  :root { --ui-ctl-h: 40px; }
+  :root { --ui-ctl-h: 32px; }
 }
 /* The OS "reduce motion" accessibility setting is honoured automatically. */
 @media (prefers-reduced-motion: reduce) {
@@ -180,7 +195,7 @@
 }
 .ui-root :focus-visible { outline: none; box-shadow: var(--ui-focus); }
 .ui-visually-hidden {
-  position: absolute !important; width: 1px; height: 1px; margin: -1px; padding: 0;
+  position: absolute !important; width: 1px; height: 1px; margin: 0; padding: 0;
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
 }
 </style>
@@ -456,7 +471,7 @@ button.ui-list-item:hover, .ui-list-item--action:hover { background: var(--ui-bg
 /* ---- Segmented control (role=radiogroup) ---- */
 .ui-segmented {
   display: inline-flex; flex-wrap: nowrap;
-  padding: 2px; gap: 2px;
+  padding: var(--ui-space-0); gap: var(--ui-space-0);
   border-radius: var(--ui-radius-md);
   background: var(--ui-border-soft);
 }
@@ -519,7 +534,7 @@ button.ui-list-item:hover, .ui-list-item--action:hover { background: var(--ui-bg
 .ui-badge--warn { background: var(--ui-warn-tint); color: var(--ui-warn-ink); }
 .ui-badge--danger { background: var(--ui-danger-tint); color: var(--ui-danger-ink); }
 .ui-count {
-  display: inline-grid; place-items: center; min-width: 20px; height: 18px; padding: 0 6px;
+  display: inline-grid; place-items: center; min-width: 20px; height: 18px; padding: 0 var(--ui-space-1);
   border-radius: var(--ui-radius-pill);
   font-size: var(--ui-text-xs); line-height: 1; font-weight: var(--ui-weight-semibold); font-variant-numeric: tabular-nums;
   background: var(--ui-border-soft); color: var(--ui-text-2);
@@ -588,18 +603,13 @@ button.ui-list-item:hover, .ui-list-item--action:hover { background: var(--ui-bg
 &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
 &lt;title&gt;UI kit demo shell&lt;/title&gt;
 &lt;!-- Kit modules (build.py inlines these for the single-file gallery) --&gt;
-&lt;style&gt;/* src/modules/ui-tokens/ui-tokens.css */
+&lt;style&gt;/* src/modules/ui-tokens/ui-palette.css */
 /* ============================================================
-   ui-tokens: the one shared resource for the SRET UI kit (D-31).
-   Every ui-* module reads only these custom properties. No ui-* module
-   writes a literal colour, size or duration of its own.
-
-   Light theme only for now (Matt, 2026-10-03). Dark is a later slot.
-
-   Palette values are copied from src/milestone-dashboard.html
-   html[data-theme=&quot;light&quot;] (P55, palette Option A). They are declared at
-   :where(:root) so a host page that already defines --pal-* (the app does)
-   wins, and the kit and the app share one palette.
+   ui-palette: the literal palette for standalone hosts of the UI kit (D-31).
+   Load it beside ui-tokens.css where the host does not define --pal-*.
+   The app does not load this file: its own html[data-theme] blocks are the
+   palette (P55). Values copied from the app&#x27;s light block, palette Option A.
+   Light theme only for now.
    ============================================================ */
 :where(:root) {
   /* ---- Palette (literal values live only here) ---- */
@@ -635,6 +645,22 @@ button.ui-list-item:hover, .ui-list-item--action:hover { background: var(--ui-bg
   --shadow-color: #0f172a;
   --pal-scrim: #0a0c1e;
 }
+&lt;/style&gt;
+&lt;style&gt;/* src/modules/ui-tokens/ui-tokens.css */
+/* ============================================================
+   ui-tokens: the one shared resource for the SRET UI kit (D-31).
+   Every ui-* module reads only these custom properties. No ui-* module
+   writes a literal colour, size or duration of its own.
+
+   Light theme only for now (Matt, 2026-10-03). Dark is a later slot.
+
+   Colour roles resolve to --pal-* palette tokens supplied by the host.
+   The app supplies them in its two html[data-theme] blocks (P55), the only
+   place a literal colour is written. A standalone host (the gallery, another
+   instance) loads ui-palette.css beside this file. This file holds no literal
+   colour, so the app&#x27;s colour_audit --strict stays clean when it is embedded.
+   ============================================================ */
+
 
 :root {
   /* ---- Colour roles (components use these, never --pal-* directly) ---- */
@@ -669,6 +695,7 @@ button.ui-list-item:hover, .ui-list-item--action:hover { background: var(--ui-bg
   --ui-focus: 0 0 0 2px var(--pal-surface), 0 0 0 4px var(--pal-teal);
 
   /* ---- Spacing scale (4 px base). Containers own padding; siblings use gap. ---- */
+  --ui-space-0: 2px;    /* hairline gaps inside tight groups (segmented, nav item lists) */
   --ui-space-1: 4px;
   --ui-space-2: 8px;
   --ui-space-3: 12px;
@@ -723,7 +750,7 @@ button.ui-list-item:hover, .ui-list-item--action:hover { background: var(--ui-bg
   --ui-ease-enter: cubic-bezier(0, 0, 0, 1);       /* decelerate */
   --ui-ease-exit: cubic-bezier(.3, 0, 1, 1);       /* accelerate */
 
-  /* ---- Layers ---- */
+  /* ---- Layers (a host may override these to sit the kit among its own layers) ---- */
   --ui-z-nav: 40;
   --ui-z-aside: 50;
   --ui-z-scrim: 60;
@@ -736,6 +763,7 @@ button.ui-list-item:hover, .ui-list-item--action:hover { background: var(--ui-bg
   --ui-nav-w-expanded: 240px;
   --ui-nav-w-rail: 60px;
   --ui-nav-w-drawer: 288px;
+  --ui-nav-col: var(--ui-nav-w-expanded);   /* written by SRETShell: the nav column in use */
   --ui-header-h: 52px;
   --ui-aside-w: 380px;
 
@@ -746,8 +774,10 @@ button.ui-list-item:hover, .ui-list-item--action:hover { background: var(--ui-bg
 @media (min-width: 1025px) {
   :root { --ui-gutter: var(--ui-space-6); }
 }
+/* Touch: the visible control stays 32 px (design-standard); the 40 px hit area
+   comes from --ui-hit through ::after, never by growing the visible box. */
 @media (pointer: coarse) {
-  :root { --ui-ctl-h: 40px; }
+  :root { --ui-ctl-h: 32px; }
 }
 /* The OS &quot;reduce motion&quot; accessibility setting is honoured automatically. */
 @media (prefers-reduced-motion: reduce) {
@@ -764,7 +794,7 @@ button.ui-list-item:hover, .ui-list-item--action:hover { background: var(--ui-bg
 }
 .ui-root :focus-visible { outline: none; box-shadow: var(--ui-focus); }
 .ui-visually-hidden {
-  position: absolute !important; width: 1px; height: 1px; margin: -1px; padding: 0;
+  position: absolute !important; width: 1px; height: 1px; margin: 0; padding: 0;
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
 }
 &lt;/style&gt;
@@ -907,6 +937,49 @@ button.ui-list-item:hover, .ui-list-item--action:hover { background: var(--ui-bg
   transition: opacity var(--ui-dur-base) var(--ui-ease-standard);
 }
 .ui-shell[data-scrim=&quot;true&quot;] .ui-shell__scrim { opacity: 1; pointer-events: auto; }
+
+/* ============================================================
+   Page variant (.ui-shell-page on the scrolling host, usually body).
+   The document scrolls; the nav is fixed at the left. The host offsets its
+   own content with margin-left: var(--ui-nav-col), which SRETShell writes.
+   Header, main and aside are the host&#x27;s own markup in this variant.
+   ============================================================ */
+.ui-shell-page .ui-shell__nav {
+  position: fixed; left: 0; top: 0; bottom: 0;
+  width: var(--ui-nav-col);
+  z-index: var(--ui-z-nav);
+  display: flex; flex-direction: column;
+  min-height: 0; overflow: hidden;
+  transition: width var(--ui-dur-base) var(--ui-ease-standard);
+}
+.ui-shell-page[data-nav=&quot;overlay&quot;] .ui-shell__nav {
+  width: var(--ui-nav-w-expanded);
+  z-index: var(--ui-z-drawer);
+  box-shadow: var(--ui-shadow-3);
+}
+.ui-shell-page[data-nav=&quot;drawer&quot;] .ui-shell__nav {
+  width: min(var(--ui-nav-w-drawer), 86vw);
+  z-index: var(--ui-z-drawer);
+  transform: translateX(-100%);
+  visibility: hidden;
+  transition: transform var(--ui-dur-base) var(--ui-ease-exit), visibility 0s linear var(--ui-dur-base);
+}
+.ui-shell-page[data-nav=&quot;drawer&quot;][data-nav-open=&quot;true&quot;] .ui-shell__nav {
+  transform: none; visibility: visible; box-shadow: var(--ui-shadow-3);
+  transition: transform var(--ui-dur-slow) var(--ui-ease-enter), visibility 0s;
+}
+.ui-shell-page &gt; .ui-shell__scrim { position: fixed; }
+.ui-shell-page .ui-shell__menu { display: none; }
+.ui-shell-page[data-nav=&quot;drawer&quot;] .ui-shell__menu { display: inline-flex; }
+.ui-shell-page[data-scrim=&quot;true&quot;] &gt; .ui-shell__scrim { opacity: 1; pointer-events: auto; }
+
+/* No motion until the shell has painted in its real state (SRETShell sets
+   data-ui-ready two frames after mount). Hosts gate their own offset
+   transitions the same way. */
+.ui-shell:not([data-ui-ready]),
+.ui-shell:not([data-ui-ready]) .ui-shell__nav,
+.ui-shell:not([data-ui-ready]) .ui-shell__aside,
+.ui-shell-page:not([data-ui-ready]) .ui-shell__nav { transition: none; }
 &lt;/style&gt;
 &lt;style&gt;/* src/modules/ui-surfaces/ui-surfaces.css */
 /* ============================================================
@@ -1180,7 +1253,7 @@ button.ui-list-item:hover, .ui-list-item--action:hover { background: var(--ui-bg
 /* ---- Segmented control (role=radiogroup) ---- */
 .ui-segmented {
   display: inline-flex; flex-wrap: nowrap;
-  padding: 2px; gap: 2px;
+  padding: var(--ui-space-0); gap: var(--ui-space-0);
   border-radius: var(--ui-radius-md);
   background: var(--ui-border-soft);
 }
@@ -1243,7 +1316,7 @@ button.ui-list-item:hover, .ui-list-item--action:hover { background: var(--ui-bg
 .ui-badge--warn { background: var(--ui-warn-tint); color: var(--ui-warn-ink); }
 .ui-badge--danger { background: var(--ui-danger-tint); color: var(--ui-danger-ink); }
 .ui-count {
-  display: inline-grid; place-items: center; min-width: 20px; height: 18px; padding: 0 6px;
+  display: inline-grid; place-items: center; min-width: 20px; height: 18px; padding: 0 var(--ui-space-1);
   border-radius: var(--ui-radius-pill);
   font-size: var(--ui-text-xs); line-height: 1; font-weight: var(--ui-weight-semibold); font-variant-numeric: tabular-nums;
   background: var(--ui-border-soft); color: var(--ui-text-2);
@@ -1296,7 +1369,7 @@ button.ui-list-item:hover, .ui-list-item--action:hover { background: var(--ui-bg
   overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain;
   scrollbar-width: thin; scrollbar-color: var(--ui-on-brand-line) transparent;
 }
-.ui-nav__group { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ui-nav__group { display: flex; flex-direction: column; gap: var(--ui-space-0); min-width: 0; }
 .ui-nav__label {
   display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: var(--ui-space-2);
   height: 28px; padding: 0 var(--ui-space-3);
@@ -1315,7 +1388,7 @@ button.ui-nav__label:hover { color: var(--ui-on-brand); }
   transition: grid-template-rows var(--ui-dur-base) var(--ui-ease-standard);
   list-style: none; margin: 0; padding: 0;
 }
-.ui-nav__items &gt; div { min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 2px; }
+.ui-nav__items &gt; div { min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: var(--ui-space-0); }
 .ui-nav__group[data-collapsed=&quot;true&quot;] .ui-nav__items { grid-template-rows: 0fr; }
 .ui-nav__divider { height: 1px; margin: var(--ui-space-1) var(--ui-space-2); background: var(--ui-on-brand-line); flex: none; }
 
@@ -1343,7 +1416,7 @@ button.ui-nav__label:hover { color: var(--ui-on-brand); }
 .ui-nav__item &gt; .ui-icon { width: var(--ui-icon); height: var(--ui-icon); flex: none; }
 .ui-nav__text { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .ui-nav__badge {
-  flex: none; display: inline-grid; place-items: center; min-width: 20px; height: 18px; padding: 0 6px;
+  flex: none; display: inline-grid; place-items: center; min-width: 20px; height: 18px; padding: 0 var(--ui-space-1);
   border-radius: var(--ui-radius-pill);
   font-size: var(--ui-text-xs); line-height: 1; font-weight: var(--ui-weight-semibold); font-variant-numeric: tabular-nums;
   background: var(--ui-on-brand-selected); color: var(--ui-on-brand);
@@ -1356,7 +1429,7 @@ button.ui-nav__label:hover { color: var(--ui-on-brand); }
 
 /* ---- Footer ---- */
 .ui-nav__footer {
-  flex: none; display: flex; flex-direction: column; gap: 2px;
+  flex: none; display: flex; flex-direction: column; gap: var(--ui-space-0);
   padding-top: var(--ui-space-2);
   border-top: 1px solid var(--ui-on-brand-line);
 }
@@ -1599,6 +1672,14 @@ button.ui-nav__label:hover { color: var(--ui-on-brand); }
    API
      SRETShell.layoutFor(width, pref, navOpen, asideOpen) -&gt; state   (pure)
      SRETShell.mount(el, opts) -&gt; controller
+        opts.variant       &#x27;grid&#x27; (default): el is a .ui-shell grid holding the regions.
+                           &#x27;page&#x27;: el is the scrolling host (for example body) with
+                           class .ui-shell-page; the nav is fixed at the left and the
+                           host offsets its content by var(--ui-nav-col). For apps
+                           whose document is the scroller.
+        opts.nav           page variant: the nav region element
+        opts.inert         page variant: fn() -&gt; elements to make inert while a
+                           drawer or overlay nav is open (optional)
         opts.navPref       &#x27;expanded&#x27; | &#x27;rail&#x27; (default &#x27;expanded&#x27;)
         opts.persist       { get(): pref|null, set(pref) }   optional
         opts.onChange      fn(state)                          optional
@@ -1608,8 +1689,13 @@ button.ui-nav__label:hover { color: var(--ui-on-brand); }
      controller.openAside() / closeAside() / toggleAside()
      controller.state() -&gt; { band, nav, navOpen, aside, asideOpen, scrim, pref }
      controller.destroy()
+   Writes on el: data-band, data-nav, data-nav-open, data-aside, data-aside-open,
+   data-scrim, data-ui-ready (two frames after mount; transitions wait for it),
+   and the custom property --ui-nav-col (the nav column in use).
    Events: &#x27;ui-shell:change&#x27; (CustomEvent, detail = state) on the element.
    Keyboard: Esc closes the topmost overlay (nav drawer, then aside overlay).
+   It listens in the capture phase and stops the event only when it closed
+   something, so a host&#x27;s own Esc handling is untouched otherwise.
    ============================================================ */
 (function (root) {
   &#x27;use strict&#x27;;
@@ -1629,16 +1715,20 @@ button.ui-nav__label:hover { color: var(--ui-on-brand); }
 
   function mount(el, opts) {
     opts = opts || {};
-    var widthFn = opts.width || function () { return el.getBoundingClientRect().width || root.innerWidth; };
+    var page = opts.variant === &#x27;page&#x27;;
+    var widthFn = opts.width || (page ? function () { return root.innerWidth; }
+                                      : function () { return el.getBoundingClientRect().width || root.innerWidth; });
+    if (page) el.classList.add(&#x27;ui-shell-page&#x27;);
     var pref = (opts.persist &amp;&amp; opts.persist.get &amp;&amp; opts.persist.get()) || opts.navPref || &#x27;expanded&#x27;;
     var navOpen = false, asideOpen = false, lastBand = null, state = null, lastFocus = null;
 
     var scrim = el.querySelector(&#x27;:scope &gt; .ui-shell__scrim&#x27;);
     if (!scrim) { scrim = document.createElement(&#x27;div&#x27;); scrim.className = &#x27;ui-shell__scrim&#x27;; el.appendChild(scrim); }
     scrim.setAttribute(&#x27;aria-hidden&#x27;, &#x27;true&#x27;);
-    var nav = el.querySelector(&#x27;:scope &gt; .ui-shell__nav&#x27;);
-    var main = el.querySelector(&#x27;:scope &gt; .ui-shell__main&#x27;);
-    var header = el.querySelector(&#x27;:scope &gt; .ui-shell__header&#x27;);
+    var nav = page ? opts.nav : el.querySelector(&#x27;:scope &gt; .ui-shell__nav&#x27;);
+    var main = page ? null : el.querySelector(&#x27;:scope &gt; .ui-shell__main&#x27;);
+    var header = page ? null : el.querySelector(&#x27;:scope &gt; .ui-shell__header&#x27;);
+    var COL = { expanded: &#x27;var(--ui-nav-w-expanded)&#x27;, rail: &#x27;var(--ui-nav-w-rail)&#x27;, overlay: &#x27;var(--ui-nav-w-rail)&#x27;, drawer: &#x27;0px&#x27; };
 
     function apply() {
       var w = widthFn();
@@ -1652,9 +1742,12 @@ button.ui-nav__label:hover { color: var(--ui-on-brand); }
       el.setAttribute(&#x27;data-aside&#x27;, state.aside);
       el.setAttribute(&#x27;data-aside-open&#x27;, String(state.asideOpen));
       el.setAttribute(&#x27;data-scrim&#x27;, String(state.scrim));
+      // Page variant: on &lt;html&gt;, so host tokens declared at :root can use it too.
+      (page ? document.documentElement : el).style.setProperty(&#x27;--ui-nav-col&#x27;, COL[state.nav]);
       // While a drawer or overlay nav is up, the content behind it is inert.
       var modalNav = state.navOpen &amp;&amp; (state.nav === &#x27;drawer&#x27; || state.nav === &#x27;overlay&#x27;);
-      [main, header].forEach(function (n) { if (n) { if (modalNav) n.setAttribute(&#x27;inert&#x27;, &#x27;&#x27;); else n.removeAttribute(&#x27;inert&#x27;); } });
+      var inertEls = page ? (opts.inert ? opts.inert() : []) : [main, header];
+      inertEls.forEach(function (n) { if (n) { if (modalNav) n.setAttribute(&#x27;inert&#x27;, &#x27;&#x27;); else n.removeAttribute(&#x27;inert&#x27;); } });
       if (nav &amp;&amp; state.nav === &#x27;drawer&#x27; &amp;&amp; !state.navOpen) nav.setAttribute(&#x27;aria-hidden&#x27;, &#x27;true&#x27;);
       else if (nav) nav.removeAttribute(&#x27;aria-hidden&#x27;);
       if (!prev || JSON.stringify(prev) !== JSON.stringify(state)) {
@@ -1695,27 +1788,35 @@ button.ui-nav__label:hover { color: var(--ui-on-brand); }
       toggleAside: function () { asideOpen = !asideOpen; apply(); },
       refresh: apply,
       destroy: function () {
-        ro.disconnect();
-        document.removeEventListener(&#x27;keydown&#x27;, onKey);
+        if (ro) ro.disconnect();
+        root.removeEventListener(&#x27;resize&#x27;, apply);
+        document.removeEventListener(&#x27;keydown&#x27;, onKey, true);
         scrim.removeEventListener(&#x27;click&#x27;, onScrim);
       }
     };
 
     function onKey(e) {
       if (e.key !== &#x27;Escape&#x27;) return;
-      if (navOpen) { ctl.closeNav(); e.stopPropagation(); return; }
+      if (navOpen &amp;&amp; (state.nav === &#x27;drawer&#x27; || state.nav === &#x27;overlay&#x27;)) { ctl.closeNav(); e.stopPropagation(); return; }
       if (state.aside === &#x27;overlay&#x27; &amp;&amp; asideOpen) { ctl.closeAside(); e.stopPropagation(); }
     }
     function onScrim() {
       if (navOpen) ctl.closeNav();
       if (state.aside === &#x27;overlay&#x27; &amp;&amp; asideOpen) ctl.closeAside();
     }
-    // On the document, so Esc works wherever focus is while an overlay is up.
-    document.addEventListener(&#x27;keydown&#x27;, onKey);
+    // On the document in the capture phase, so Esc works wherever focus is
+    // while an overlay is up, ahead of the host&#x27;s own handlers.
+    document.addEventListener(&#x27;keydown&#x27;, onKey, true);
     scrim.addEventListener(&#x27;click&#x27;, onScrim);
-    var ro = new ResizeObserver(function () { apply(); });
-    ro.observe(el);
+    var ro = null;
+    if (page) root.addEventListener(&#x27;resize&#x27;, apply);
+    else { ro = new ResizeObserver(function () { apply(); }); ro.observe(el); }
     apply();
+    // The first layout is applied without motion: transitions start only once
+    // the shell has painted in its real state (data-ui-ready), so a page that
+    // boots on a phone or on the rail does not slide in from the default width.
+    var raf = root.requestAnimationFrame || function (f) { return setTimeout(f, 16); };
+    raf(function () { raf(function () { el.setAttribute(&#x27;data-ui-ready&#x27;, &#x27;&#x27;); }); });
     return ctl;
   }
 
@@ -2036,8 +2137,8 @@ button.ui-nav__label:hover { color: var(--ui-on-brand); }
 
     var ctl = {
       el: el,
-      setActive: function (id) {
-        active = id;
+      setActive: function (id) {   // null clears the current item
+        active = id == null ? null : id;
         el.querySelectorAll(&#x27;.ui-nav__item[data-id]&#x27;).forEach(function (b) {
           if (b.getAttribute(&#x27;data-id&#x27;) === id) b.setAttribute(&#x27;aria-current&#x27;, &#x27;page&#x27;); else b.removeAttribute(&#x27;aria-current&#x27;);
         });
@@ -2170,7 +2271,7 @@ button.ui-nav__label:hover { color: var(--ui-on-brand); }
 <p>The one shared styling resource for the SRET UI kit (D-31). Every <code>ui-*</code> module reads only these custom properties.</p>
 <table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>see <code>src/modules/MODULES.json</code> (the only place it is written)</td></tr><tr><td>Status</td><td>Standalone (D-31 Stage A). Not embedded in the app yet.</td></tr><tr><td>Global</td><td>none (CSS only)</td></tr><tr><td>Requires</td><td>none</td></tr><tr><td>Theme</td><td>Light only for now. Dark is a later slot.</td></tr></tbody></table>
 <h2>What it defines</h2>
-<table><thead><tr><th>Group</th><th>Tokens</th><th>Notes</th></tr></thead><tbody><tr><td>Palette</td><td><code>--pal-*</code></td><td>Copied from the app's light palette (P55). Declared at <code>:where(:root)</code>, so a host that already defines <code>--pal-*</code> (the app) wins and both share one palette. The only literal colours in the kit.</td></tr><tr><td>Colour roles</td><td><code>--ui-bg-*</code>, <code>--ui-text*</code>, <code>--ui-border*</code>, <code>--ui-accent*</code>, <code>--ui-brand*</code>, <code>--ui-on-brand*</code>, <code>--ui-ok/warn/danger*</code>, <code>--ui-scrim</code>, <code>--ui-focus</code></td><td>Components use roles, never <code>--pal-*</code> directly.</td></tr><tr><td>Spacing</td><td><code>--ui-space-1..8</code> = 4, 8, 12, 16, 20, 24, 32, 40 px; <code>--ui-gutter</code></td><td>Gutter is 16 px on phone and tablet, 24 px from 1025 px.</td></tr><tr><td>Type</td><td><code>--ui-font</code>, <code>--ui-font-mono</code>, <code>--ui-text-xs..2xl</code> with matching <code>--ui-lh-*</code>, weights, <code>--ui-tracking-label</code></td><td>11, 12, 13, 14, 16, 20 px. Body is 13/20.</td></tr><tr><td>Shape</td><td><code>--ui-radius-sm/md/lg/xl/pill</code></td><td>4, 6, 8, 12 px.</td></tr><tr><td>Elevation</td><td><code>--ui-shadow-1/2/3</code></td><td>Level 1 cards, 2 popovers, 3 drawers and dialogs (design-standard levels).</td></tr><tr><td>Controls</td><td><code>--ui-ctl-h</code> (32 px, 40 px on touch), <code>--ui-ctl-h-sm</code>, <code>--ui-hit</code> (40 px), <code>--ui-icon</code>, <code>--ui-icon-sm</code></td><td>Touch targets reach 40 px through <code>::after</code>, never by growing the visible box.</td></tr><tr><td>Motion</td><td><code>--ui-dur-fast/base/slow</code> = 120/200/240 ms; <code>--ui-ease-standard/enter/exit</code></td><td>See Motion below.</td></tr><tr><td>Layers</td><td><code>--ui-z-nav</code> up to <code>--ui-z-toast</code></td><td>Fixed order: nav, aside, scrim, drawer, dialog, popover, toast.</td></tr><tr><td>Shell sizes</td><td><code>--ui-nav-w-expanded/rail/drawer</code>, <code>--ui-header-h</code>, <code>--ui-aside-w</code></td><td>240, 60, 288, 52, 380 px.</td></tr><tr><td>Breakpoints</td><td>documented constants</td><td>Phone up to 640, tablet 641 to 1024, desktop from 1025, wide from 1280. CSS cannot read variables in media queries, so each module repeats these numbers.</td></tr></tbody></table>
+<table><thead><tr><th>Group</th><th>Tokens</th><th>Notes</th></tr></thead><tbody><tr><td>Palette</td><td><code>--pal-*</code></td><td>Supplied by the host. The app supplies them in its two <code>html[data-theme]</code> blocks (P55). Standalone hosts load <code>ui-palette.css</code> (a copy of the app's light palette, the only literal colours in the kit). <code>ui-tokens.css</code> itself holds no literal colour.</td></tr><tr><td>Colour roles</td><td><code>--ui-bg-*</code>, <code>--ui-text*</code>, <code>--ui-border*</code>, <code>--ui-accent*</code>, <code>--ui-brand*</code>, <code>--ui-on-brand*</code>, <code>--ui-ok/warn/danger*</code>, <code>--ui-scrim</code>, <code>--ui-focus</code></td><td>Components use roles, never <code>--pal-*</code> directly.</td></tr><tr><td>Spacing</td><td><code>--ui-space-0..8</code> = 2, 4, 8, 12, 16, 20, 24, 32, 40 px; <code>--ui-gutter</code></td><td>Gutter is 16 px on phone and tablet, 24 px from 1025 px.</td></tr><tr><td>Type</td><td><code>--ui-font</code>, <code>--ui-font-mono</code>, <code>--ui-text-xs..2xl</code> with matching <code>--ui-lh-*</code>, weights, <code>--ui-tracking-label</code></td><td>11, 12, 13, 14, 16, 20 px. Body is 13/20.</td></tr><tr><td>Shape</td><td><code>--ui-radius-sm/md/lg/xl/pill</code></td><td>4, 6, 8, 12 px.</td></tr><tr><td>Elevation</td><td><code>--ui-shadow-1/2/3</code></td><td>Level 1 cards, 2 popovers, 3 drawers and dialogs (design-standard levels).</td></tr><tr><td>Controls</td><td><code>--ui-ctl-h</code> (32 px, also on touch), <code>--ui-ctl-h-sm</code>, <code>--ui-hit</code> (40 px), <code>--ui-icon</code>, <code>--ui-icon-sm</code></td><td>Touch targets reach 40 px through <code>::after</code>, never by growing the visible box.</td></tr><tr><td>Motion</td><td><code>--ui-dur-fast/base/slow</code> = 120/200/240 ms; <code>--ui-ease-standard/enter/exit</code></td><td>See Motion below.</td></tr><tr><td>Layers</td><td><code>--ui-z-nav</code> up to <code>--ui-z-toast</code></td><td>Fixed order: nav, aside, scrim, drawer, dialog, popover, toast. A host may override the values to sit the kit among its own layers (the app does).</td></tr><tr><td>Shell sizes</td><td><code>--ui-nav-w-expanded/rail/drawer</code>, <code>--ui-header-h</code>, <code>--ui-aside-w</code>, <code>--ui-nav-col</code></td><td>240, 60, 288, 52, 380 px. <code>--ui-nav-col</code> is the nav column in use, written by <code>SRETShell</code>.</td></tr><tr><td>Breakpoints</td><td>documented constants</td><td>Phone up to 640, tablet 641 to 1024, desktop from 1025, wide from 1280. CSS cannot read variables in media queries, so each module repeats these numbers.</td></tr></tbody></table>
 <h2>Layout contract</h2>
 <table><thead><tr><th>Rule</th><th>Value</th></tr></thead><tbody><tr><td>Who owns spacing</td><td>Containers own their padding. Children never set outer margins; siblings are spaced with <code>gap</code>.</td></tr><tr><td>Text in flex rows</td><td>Every flex child that holds text gets <code>min-width: 0</code>, so it can truncate or wrap instead of pushing its row wider.</td></tr><tr><td>Long content</td><td>Scrolls inside its region. The page itself never scrolls sideways.</td></tr><tr><td><code>.ui-root</code></td><td>Sets <code>box-sizing: border-box</code>, the font, body size and colour, and the focus ring for everything inside it.</td></tr></tbody></table>
 <h2>Motion</h2>
@@ -2179,7 +2280,7 @@ button.ui-nav__label:hover { color: var(--ui-on-brand); }
 <ul><li>One animation per user action.</li><li>No staggers or chained sequences.</li><li>No motion on data.</li><li>Only transform and opacity animate, except deliberate width changes (nav, pinned aside).</li></ul>
 <p>The OS "reduce motion" accessibility setting sets every duration to 0 automatically. There is no control for it in the UI.</p>
 <h2>Changelog</h2>
-<table><thead><tr><th>Version</th><th>App version</th><th>Change</th></tr></thead><tbody><tr><td>0.1.0</td><td>none (standalone)</td><td>First version, D-31 Stage A.</td></tr></tbody></table></div>
+<table><thead><tr><th>Version</th><th>App version</th><th>Change</th></tr></thead><tbody><tr><td>0.1.0</td><td>none (standalone)</td><td>First version, D-31 Stage A.</td></tr><tr><td>0.2.0</td><td>3.1.0-P79</td><td>Literal palette moved to <code>ui-palette.css</code>, loaded only by standalone hosts; in the app the roles resolve to its own <code>--pal-*</code> blocks (P55), so <code>colour_audit --strict</code> is unaffected. Touch control height 32 px (design-standard), hit area stays 40 px. Layer tokens documented as host-overridable. <code>--ui-nav-col</code> default added. <code>--ui-space-0</code> (2 px) added; <code>.ui-visually-hidden</code> drops its -1px margin.</td></tr></tbody></table></div>
         <div class="ui-tabpanel g-doc" id="dp-shell" hidden><h1>ui-shell (<code>SRETShell</code>)</h1>
 <p>The external containers of an app screen (D-31): nav (left), header (command bar), main (content) and aside (right). It knows nothing about the app's data. It decides how the nav and aside behave at the current width.</p>
 <table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>see <code>src/modules/MODULES.json</code></td></tr><tr><td>Status</td><td>Standalone (D-31 Stage A)</td></tr><tr><td>Global</td><td><code>window.SRETShell</code>, also <code>module.exports</code></td></tr><tr><td>Requires</td><td><code>ui-tokens</code></td></tr></tbody></table>
@@ -2199,6 +2300,10 @@ button.ui-nav__label:hover { color: var(--ui-on-brand); }
   &lt;aside class=&quot;ui-shell__aside&quot;&gt;…&lt;/aside&gt;
 &lt;/div&gt;</code></pre>
 <p>The host gives <code>.ui-shell</code> a height, for example <code>height: 100dvh</code>.</p>
+<h2>Page variant</h2>
+<p>For a host whose document scrolls (the dashboard app keeps the body as the page scroller for sticky table headers and print preview):</p>
+<pre><code>SRETShell.mount(document.body, { variant: &#x27;page&#x27;, nav: navHostEl, inert: () =&gt; [contentEls] })</code></pre>
+<ul><li>The host element gets class <code>.ui-shell-page</code> and the same <code>data-*</code> state attributes.</li><li>The nav region is fixed at the left, with the same widths and drawer and overlay behaviour as the grid variant.</li><li><code>--ui-nav-col</code> (240, 60 or 0 px) is written on <code>&lt;html&gt;</code>. The host offsets its own content with it, for example <code>body { margin-left: var(--ui-nav-col) }</code>.</li><li>The width bands use the viewport width.</li></ul>
 <h2>Behaviour by width</h2>
 <table><thead><tr><th>Band</th><th>Nav</th><th>Aside</th><th>Scrim</th></tr></thead><tbody><tr><td>Phone, up to 640 px</td><td>Off-canvas drawer (288 px or 86 vw). Opened by the header menu button.</td><td>Overlay from the right, full width up to 380 px</td><td>Yes, while the drawer or aside is open</td></tr><tr><td>Tablet, 641 to 1024 px</td><td>Icon rail (60 px). Expanding it slides the full nav over the content.</td><td>Overlay</td><td>Yes, while the expanded nav or aside is open</td></tr><tr><td>Desktop, from 1025 px</td><td>The user's choice: expanded (240 px) or rail (60 px). Remembered through <code>opts.persist</code>.</td><td>Pushes the content (380 px)</td><td>No</td></tr></tbody></table>
 <p>When the drawer or overlay nav is up, the header and main are marked <code>inert</code>, so keyboard focus cannot reach what is behind the scrim. Esc closes the topmost overlay, and so does a scrim click.</p>
@@ -2206,11 +2311,11 @@ button.ui-nav__label:hover { color: var(--ui-on-brand); }
 <table><thead><tr><th>Region</th><th>Direction and wrap</th><th>Padding</th><th>Gap</th><th>Overflow and content</th></tr></thead><tbody><tr><td><code>.ui-shell</code></td><td>CSS grid: columns nav, main, aside; rows header, body</td><td>none</td><td>none</td><td><code>overflow: hidden</code>; regions scroll, never the page</td></tr><tr><td><code>__nav</code></td><td>column, no wrap</td><td>none (the nav component pads itself)</td><td>none</td><td><code>overflow: hidden</code>; the nav's own list scrolls</td></tr><tr><td><code>__header</code></td><td>row, <b>no wrap</b></td><td>0 <code>--ui-gutter</code> inline</td><td><code>--ui-space-3</code></td><td><code>overflow: hidden</code>. The start group (<code>flex: 1 1 auto; min-width: 0</code>) shrinks first and the title truncates with an ellipsis. The end group never shrinks, so on narrow screens hosts move secondary actions into a More menu instead of letting them wrap.</td></tr><tr><td><code>__main</code></td><td>block</td><td><code>--ui-gutter</code> (16 px phone and tablet, 24 px desktop); <code>data-flush</code> removes it for full-bleed content such as a board</td><td>none</td><td><code>overflow: auto</code>; scroll stays inside main</td></tr><tr><td><code>__aside</code></td><td>column, no wrap</td><td>none (the panel component pads itself)</td><td>none</td><td><code>overflow: hidden</code>; the panel body scrolls</td></tr></tbody></table>
 <h2>Motion</h2>
 <table><thead><tr><th>Change</th><th>Animation</th><th>Duration and easing</th></tr></thead><tbody><tr><td>Nav expanded and rail (desktop)</td><td>Grid column width</td><td>200 ms, standard</td></tr><tr><td>Drawer or overlay opens</td><td>Slide in (transform)</td><td>240 ms, decelerate</td></tr><tr><td>Drawer or overlay closes</td><td>Slide out</td><td>200 ms, accelerate</td></tr><tr><td>Aside push open and close</td><td>Grid column width</td><td>200 ms, standard</td></tr><tr><td>Scrim</td><td>Fade</td><td>200 ms, standard</td></tr></tbody></table>
-<p>All within budget: one animation per action and no stagger. The content does not reflow when a milestone is selected, only when the aside or nav changes width.</p>
+<p>All within budget: one animation per action and no stagger. Nothing animates at boot: transitions wait for <code>data-ui-ready</code>, set two frames after mount, so a page that opens on a phone or on the rail does not slide in from the default width. Page-variant hosts gate their own offset transition the same way (<code>body:not([data-ui-ready])</code>). The content does not reflow when a milestone is selected, only when the aside or nav changes width.</p>
 <h2>Tests</h2>
 <ul><li><code>tools/ui_kit_test.mjs</code>: <code>layoutFor</code> across the band edges.</li><li><code>tools/ui_kit_check.mjs</code>: the gallery at 390, 768 and 1440.</li></ul>
 <h2>Changelog</h2>
-<table><thead><tr><th>Version</th><th>App version</th><th>Change</th></tr></thead><tbody><tr><td>0.1.0</td><td>none (standalone)</td><td>First version, D-31 Stage A.</td></tr></tbody></table></div>
+<table><thead><tr><th>Version</th><th>App version</th><th>Change</th></tr></thead><tbody><tr><td>0.1.0</td><td>none (standalone)</td><td>First version, D-31 Stage A.</td></tr><tr><td>0.2.0</td><td>3.1.0-P79</td><td>No motion before <code>data-ui-ready</code> (boot). Page variant (<code>variant:'page'</code>, class <code>.ui-shell-page</code>) for hosts whose document scrolls: fixed nav, <code>--ui-nav-col</code> written on <code>&lt;html&gt;</code> for the host to offset its content. Esc listener in the capture phase, stops the event only when it closed something.</td></tr></tbody></table></div>
         <div class="ui-tabpanel g-doc" id="dp-surfaces" hidden><h1>ui-surfaces (<code>SRETSurfaces</code>)</h1>
 <p>The internal cards and content containers (D-31): card, section, panel header, toolbar, tabs, fold, list, empty state and toast.</p>
 <table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>see <code>src/modules/MODULES.json</code></td></tr><tr><td>Status</td><td>Standalone (D-31 Stage A)</td></tr><tr><td>Global</td><td><code>window.SRETSurfaces</code> (<code>tabs</code>, <code>toast</code>), also <code>module.exports</code></td></tr><tr><td>Requires</td><td><code>ui-tokens</code>; <code>ui-icons</code> for the fold chevron</td></tr></tbody></table>
@@ -2221,7 +2326,7 @@ button.ui-nav__label:hover { color: var(--ui-on-brand); }
 <h2>Tests</h2>
 <p><code>tools/ui_kit_check.mjs</code> covers padding and gaps against this table, tab keyboard behaviour, and toast timing.</p>
 <h2>Changelog</h2>
-<table><thead><tr><th>Version</th><th>App version</th><th>Change</th></tr></thead><tbody><tr><td>0.1.0</td><td>none (standalone)</td><td>First version, D-31 Stage A.</td></tr></tbody></table></div>
+<table><thead><tr><th>Version</th><th>App version</th><th>Change</th></tr></thead><tbody><tr><td>0.1.0</td><td>none (standalone)</td><td>First version, D-31 Stage A.</td></tr><tr><td>0.1.1</td><td>3.1.0-P79</td><td>Same spacing-token pass as ui-controls 0.1.1.</td></tr></tbody></table></div>
         <div class="ui-tabpanel g-doc" id="dp-controls" hidden><h1>ui-controls (<code>SRETControls</code>)</h1>
 <p>The form and action controls (D-31): button variants, text input, textarea, select, field, field grid, switch, segmented control, radio cards, chips, badges and counts. The markup carries state in ARIA attributes, and <code>SRETControls.bind</code> keeps it in step and emits events.</p>
 <table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>see <code>src/modules/MODULES.json</code></td></tr><tr><td>Status</td><td>Standalone (D-31 Stage A)</td></tr><tr><td>Global</td><td><code>window.SRETControls</code>, also <code>module.exports</code></td></tr><tr><td>Requires</td><td><code>ui-tokens</code>; <code>ui-icons</code> where a control shows an icon</td></tr></tbody></table>
@@ -2234,7 +2339,7 @@ button.ui-nav__label:hover { color: var(--ui-on-brand); }
 <h2>Tests</h2>
 <p><code>tools/ui_kit_check.mjs</code>: control heights, the 40 px hit area, switch and segmented events, the chip remove event, and the field grid going to one column at 390 px.</p>
 <h2>Changelog</h2>
-<table><thead><tr><th>Version</th><th>App version</th><th>Change</th></tr></thead><tbody><tr><td>0.1.0</td><td>none (standalone)</td><td>First version, D-31 Stage A.</td></tr></tbody></table></div>
+<table><thead><tr><th>Version</th><th>App version</th><th>Change</th></tr></thead><tbody><tr><td>0.1.0</td><td>none (standalone)</td><td>First version, D-31 Stage A.</td></tr><tr><td>0.1.1</td><td>3.1.0-P79</td><td>Sub-scale spacing on the token scale: <code>--ui-space-0</code> (2 px) for the segmented track, the count badge padding on <code>--ui-space-1</code>. No literal px in padding, margin or gap (the app's spacing_audit).</td></tr></tbody></table></div>
         <div class="ui-tabpanel g-doc" id="dp-nav" hidden><h1>ui-nav (<code>SRETNav</code>)</h1>
 <p>The generic left navigation panel (D-31). It renders from a config of groups and items and calls the host back when an item is chosen. It has no knowledge of the app's data; counts arrive as badges from the host.</p>
 <table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>see <code>src/modules/MODULES.json</code></td></tr><tr><td>Status</td><td>Standalone (D-31 Stage A)</td></tr><tr><td>Global</td><td><code>window.SRETNav</code>, also <code>module.exports</code></td></tr><tr><td>Requires</td><td><code>ui-tokens</code>, <code>ui-icons</code>; <code>ui-controls</code> for the drawer close button</td></tr><tr><td>Works with</td><td><code>ui-shell</code>: pass <code>opts.shell</code> and the nav follows its mode and context</td></tr></tbody></table>
@@ -2252,7 +2357,7 @@ button.ui-nav__label:hover { color: var(--ui-on-brand); }
 <h2>Tests</h2>
 <p><code>tools/ui_kit_check.mjs</code>: mode and context per band, the tooltip in rail, keyboard movement, badge update, the collapse callback, padding and gaps against this table, and no horizontal overflow.</p>
 <h2>Changelog</h2>
-<table><thead><tr><th>Version</th><th>App version</th><th>Change</th></tr></thead><tbody><tr><td>0.1.0</td><td>none (standalone)</td><td>First version, D-31 Stage A.</td></tr></tbody></table></div>
+<table><thead><tr><th>Version</th><th>App version</th><th>Change</th></tr></thead><tbody><tr><td>0.1.0</td><td>none (standalone)</td><td>First version, D-31 Stage A.</td></tr><tr><td>0.1.1</td><td>3.1.0-P79</td><td><code>setActive(null)</code> clears the current item. Spacing literals moved onto <code>--ui-space-0</code> and <code>--ui-space-1</code>.</td></tr></tbody></table></div>
         <div class="ui-tabpanel g-doc" id="dp-icons" hidden><h1>ui-icons (<code>SRETIcons</code>)</h1>
 <p>The kit's inline SVG icon set (D-31). 24 by 24 stroke icons drawn with <code>currentColor</code>. No icon font, no network.</p>
 <table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>see <code>src/modules/MODULES.json</code></td></tr><tr><td>Status</td><td>Standalone (D-31 Stage A)</td></tr><tr><td>Global</td><td><code>window.SRETIcons</code>, also <code>module.exports</code></td></tr><tr><td>Requires</td><td>none</td></tr></tbody></table>

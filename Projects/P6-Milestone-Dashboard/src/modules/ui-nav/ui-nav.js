@@ -145,8 +145,8 @@
 
     var ctl = {
       el: el,
-      setActive: function (id) {
-        active = id;
+      setActive: function (id) {   // null clears the current item
+        active = id == null ? null : id;
         el.querySelectorAll('.ui-nav__item[data-id]').forEach(function (b) {
           if (b.getAttribute('data-id') === id) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
         });

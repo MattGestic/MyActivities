@@ -218,7 +218,9 @@ def order_findings(man, src, findings):
            for m in embedded(man)}
     for m in embedded(man):
         for dep in m.get("deps", []):
-            if dep in pos and pos[dep] > pos[m["id"]] and pos[m["id"]] < 10**12:
+            # A CSS-only dependency (ui-tokens) has no js position; its load order is
+            # the CSS slot order, checked above, so it is not compared here.
+            if dep in pos and pos[dep] < 10**12 and pos[dep] > pos[m["id"]] and pos[m["id"]] < 10**12:
                 findings.append(("STALE", f"{m['id']} loads before its dependency {dep}"))
 
 
@@ -248,6 +250,14 @@ def embed(man, src, only):
                     if src.count(slot) != 1:
                         sys.exit(f"{m['id']} {kind}: slot marker {slot!r} must appear exactly once in the app.")
                     a = b = src.index(slot)
+                    # Keep manifest order inside the slot: go in front of the first
+                    # region of the same slot with a higher order, not at the slot end.
+                    spec = m["embed"][kind]
+                    later = [regions[o["id"]][0] for o in embedded(man)
+                             if o["id"] in regions and o.get("embed", {}).get(kind, {}).get("slot") == spec["slot"]
+                             and o["embed"][kind].get("order", 0) > spec.get("order", 0)]
+                    if later:
+                        a = b = min(later)
                     new += "\n"
                 src = src[:a] + new + src[b:]
                 changed.append(f"{m['id']} {kind}: lines {line_of(src, a)}-{line_of(src, a + len(new))}")

@@ -3472,3 +3472,52 @@ This test covers TD-245 and TASK-64. It changes tooling only, so the app code is
 - **Module versions:** P78 changed four module sources by hand, before D-30 existed. They were versioned when the two branches met: `notes-store`, `notes-card` and `notes-history` go to 1.1.0, and `notes-export` to 0.2.0.
 - **App file:** the base's pasted modules matched their sources exactly and were adopted unchanged. Against P78, the app differs only by the markers and three comment lines.
 - **Tests:** `modules_embed_test.py` passed 14/14 and `--check` was clean. `run_checks.py --jobs 4` selected 69 checks and all 69 passed (15.9 min).
+
+## TEST-82: D-31 Stage A, the kit's left nav in the app (v3.1.0-P79)
+
+This test covers TD-248. The left nav is the `ui-nav` module, hosted in `#ws-rail` and laid out by the `ui-shell` page variant. The base-screen tidy covers:
+- the board height is measured;
+- the header uses one gutter;
+- More actions is a labelled menu at every width.
+
+The figures below are measured by class and computed style, not screenshots.
+
+**`tools/p79_nav_check.py` (new): 190/190 passed** at 1440, 1440 with a legacy `sret-rail` value, 1024, 768 and 390.
+- Band state per width: expanded above 1024, rail to 1024, drawer at 640 and below. `--ui-nav-col` and the body offset match (240, 60, 0).
+- Every nav item reaches its entry point: the Workspace sections, Grid in and out, Print preview in and out, and the four Data & view tabs.
+- The docked Workspace panel pushes the board by nav plus panel width.
+- Collapse is remembered. The P59 `collapsed` value migrates to `rail`, and `sret-rail` is removed.
+- Phone and tablet: the menu button opens the nav. Esc and the scrim close it, focus returns, and the rest of the page is inert while it is open.
+- Badges match the stores.
+- The board ends one gutter above the viewport bottom.
+- More actions is a labelled dropdown at every width.
+- The version literal appears once.
+
+**Checks updated for the deliberate changes:**
+- p59: rail states rewritten as nav states (B-01, B-02, X-02).
+- p57 and p61: nav badges and the first My work item.
+- p29: the drawer's own `--sd-rail-w`.
+- p36 and p38: More actions is a dropdown at every width.
+- p39, p53 and p75_strip_header: the filter row's one-line and row-count expectations now follow the bar's own width (`fb-narrow`), not the viewport, because the 240 px nav narrows the bar at 1440.
+- p72_filter_scroll: the measured board height replaces `100vh - 150px`.
+
+**`tools/modules_embed.py` fixes, found while embedding:**
+- A CSS-only dependency (`ui-tokens`) no longer reads as a load-order error.
+- A region re-inserted by `--embed` goes in manifest order inside its slot, not at the slot end.
+- `modules_embed_test.py`: all scenarios pass.
+
+**`run_checks.py --all --jobs 4`:** 71 selected, 71 passed, 12.2 min, on the final source.
+- The first full run on the integration found 4 failures: p39, p53, p72_filter_scroll and spacing_audit. Each was a direct consequence of the shell change:
+  - p39, p53 and p72_filter_scroll: the check updates above.
+  - spacing_audit: the kit's sub-scale 2 px and 6 px literals were moved onto `--ui-space-0` and `--ui-space-1`, so the audit is back at its ceiling of 129. The ceiling was not raised.
+
+**Other checks:**
+- `colour_audit.py --strict`: 0 violations. The kit's palette is not embedded; the app's `--pal-*` blocks stay the only literal colours.
+- `palette_swap_check.py`: 0 escapes.
+- `modules_embed.py --check`: clean, 9 embedded modules.
+- Kit, standalone: `ui_kit_test.mjs` all passed; `ui_kit_check.mjs` 115 passed, 0 failed (grid and page variants).
+
+**Accepted changes in behaviour:**
+- On desktop the default nav is 240 px, against the old 44 px icon rail. Collapse gives a 60 px rail and is remembered.
+- At 1440 the filter bar is therefore narrow and Find and Date range stack, so there is one more row. D-31 Stage D re-hosts the filters.
+- Before and after PNGs were not committed: every board view carries the client fixture (R7). The `prototypes/ui-kit/` gallery shows the nav on illustrative data.

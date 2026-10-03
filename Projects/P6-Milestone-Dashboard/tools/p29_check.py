@@ -170,7 +170,9 @@ PROBE = r"""
     // 360px content column, so its own width grew by the rail's width rather
     // than staying 360px. Read the rail's own width token instead of
     // hardcoding the sum, so this does not need editing if the rail widens.
-    const railW=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ws-rail-w'))||0;
+    // D-31 (P79): the drawer's own tab rail has its own token, --sd-rail-w;
+    // --ws-rail-w now follows the left nav.
+    const railW=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sd-rail-w'))||0;
     R.notes.drawerWidth=getComputedStyle(DR).width;
     ck('layout: the drawer is the content column plus the rail width',
        Math.abs(parseFloat(R.notes.drawerWidth)-(360+railW))<1,

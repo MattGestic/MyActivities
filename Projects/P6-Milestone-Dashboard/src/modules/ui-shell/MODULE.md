@@ -30,6 +30,19 @@ Markup:
 ```
 The host gives `.ui-shell` a height, for example `height: 100dvh`.
 
+## Page variant
+
+For a host whose document scrolls (the dashboard app keeps the body as the page scroller for sticky table headers and print preview):
+
+```js
+SRETShell.mount(document.body, { variant: 'page', nav: navHostEl, inert: () => [contentEls] })
+```
+
+- The host element gets class `.ui-shell-page` and the same `data-*` state attributes.
+- The nav region is fixed at the left, with the same widths and drawer and overlay behaviour as the grid variant.
+- `--ui-nav-col` (240, 60 or 0 px) is written on `<html>`. The host offsets its own content with it, for example `body { margin-left: var(--ui-nav-col) }`.
+- The width bands use the viewport width.
+
 ## Behaviour by width
 
 | Band | Nav | Aside | Scrim |
@@ -60,7 +73,7 @@ When the drawer or overlay nav is up, the header and main are marked `inert`, so
 | Aside push open and close | Grid column width | 200 ms, standard |
 | Scrim | Fade | 200 ms, standard |
 
-All within budget: one animation per action and no stagger. The content does not reflow when a milestone is selected, only when the aside or nav changes width.
+All within budget: one animation per action and no stagger. Nothing animates at boot: transitions wait for `data-ui-ready`, set two frames after mount, so a page that opens on a phone or on the rail does not slide in from the default width. Page-variant hosts gate their own offset transition the same way (`body:not([data-ui-ready])`). The content does not reflow when a milestone is selected, only when the aside or nav changes width.
 
 ## Tests
 
@@ -72,3 +85,4 @@ All within budget: one animation per action and no stagger. The content does not
 | Version | App version | Change |
 |---|---|---|
 | 0.1.0 | none (standalone) | First version, D-31 Stage A. |
+| 0.2.0 | 3.1.0-P79 | No motion before `data-ui-ready` (boot). Page variant (`variant:'page'`, class `.ui-shell-page`) for hosts whose document scrolls: fixed nav, `--ui-nav-col` written on `<html>` for the host to offset its content. Esc listener in the capture phase, stops the event only when it closed something. |

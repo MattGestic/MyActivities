@@ -57,9 +57,9 @@ STAGE1 = r"""
     ck('the board has at least three milestone ids to link', !!(A&&B&&C), ids.length);
 
     // ---- rail and section ----
-    // P59: the rail's first button is the collapse control, not a section.
-    const rail=qa('#ws-rail .ws-ri:not(.ws-ri-collapse)').map(function(b){ return b.id; });
-    ck('Notes is the first Workspace rail icon', rail[0]==='ws-tab-notes', rail.join(','));
+    // D-31 (P79): the left nav's My work group, Notes first.
+    const rail=qa('#ws-rail .ui-nav__group[data-group="work"] .ui-nav__item').map(function(b){ return b.dataset.id; });
+    ck('Notes is the first item under My work in the nav', rail[0]==='notes', rail.join(','));
     setWorkspaceSection('notes',true);
     ck('the Notes section is showing', !$('ws-sec-notes').hidden&&$('ws-panel').classList.contains('open')&&
        $('ws-hd-title').textContent==='Notes', $('ws-hd-title').textContent);
@@ -85,13 +85,14 @@ STAGE1 = r"""
     ck('all three render, newest first', cards.length===3&&cards[0].getAttribute('data-nid')===NOTES[2].nid,
        cards.map(function(c){ return c.getAttribute('data-nid'); }).join(','));
     ck('bullets render as a list', !!document.querySelector('#notes-list .note-card[data-nid="'+NOTES[1].nid+'"] ul li'));
-    ck('the rail badge counts open notes in this period', $('ws-notes-count').textContent==='3', $('ws-notes-count').textContent);
+    const nb=()=>{ const b=document.querySelector('#ws-rail .ui-nav__item[data-id="notes"] .ui-nav__badge'); return b?b.textContent:''; };
+    ck('the nav badge counts open notes in this period', nb()==='3', nb());
 
     // ---- status ----
     setNoteStatus(NOTES[0].nid,'sent'); setNoteStatus(NOTES[1].nid,'closed');
     const sel=document.querySelector('#notes-list .note-card[data-nid="'+NOTES[0].nid+'"] select.note-status');
     ck('status shows on the note (class and value)', sel&&sel.value==='sent'&&sel.classList.contains('st-sent'));
-    ck('a closed note drops out of the badge count', $('ws-notes-count').textContent==='2', $('ws-notes-count').textContent);
+    ck('a closed note drops out of the badge count', nb()==='2', nb());
 
     // ---- filters ----
     setNotesStatus('sent');

@@ -1,6 +1,6 @@
 # D-31: One left nav, slim command bar, milestone side panel or dialog
 
-**Status:** Option 1 chosen by Matt, 2026-10-03. Built as a modular UI kit in stages (below). Stage A kit is built standalone and is waiting for Matt's review; no app code changed yet. TD-247, TD-248.
+**Status:** Option 1 chosen by Matt, 2026-10-03. Built as a modular UI kit in stages (below). Stage A is built and in the app from v3.1.0-P79 (left nav, base-screen tidy). Stages B to D are next. TD-247, TD-248.
 **Directed by:** Matt, 2026-10-03.
 - **Round 1:** two side panels plus a stacked header read as confusing. He asked for one segmented left panel in the style of a model-driven app, with Settings, Import and Info at the bottom, dedicated screens where a panel is too cramped, and a pinned right pane for milestone editing that shows an empty state rather than collapsing.
 - **Round 2:** Matt chose Option 1 and approved the empty state, Import, Settings and phone views. He asked for four things:
@@ -32,7 +32,7 @@ The redesign is built as a **modular UI kit**: components developed on their own
 
 | Stage | Kit modules | App change | Status |
 |---|---|---|---|
-| A | `ui-tokens`, `ui-icons`, `ui-shell` (containers), `ui-surfaces` (cards), `ui-controls`, `ui-nav` (generic left nav) | After Matt's review: nav in the app on the existing entry points, base-screen tidy, P79 | Kit built and tested standalone; gallery `prototypes/ui-kit/` |
+| A | `ui-tokens`, `ui-icons`, `ui-shell` (containers; page variant for the app), `ui-surfaces` (cards), `ui-controls`, `ui-nav` (generic left nav) | Nav in the app on the existing entry points; base-screen tidy (measured board height, one header gutter, More actions as a labelled menu at every width) | **Built, v3.1.0-P79** (gallery approved by Matt, 2026-10-03) |
 | B | `ui-dialog`: generic dialog form with the typical controls around a dialog | The current milestone form hosted by it, not redesigned | Next |
 | C | `ui-sidepanel`: right panel, pinned, with an empty state | "Open milestones in: Dialog or Side panel" setting | Planned |
 | D | `ui-filterbar` (after a short D-32 design round) | Filters re-hosted; state and `applyFilter` kept | Planned |
@@ -58,7 +58,7 @@ Both are generated from the mockup by `docs/mockups/D-31/registers_to_md.mjs`. E
 
 ## Open decisions (Matt)
 
-1. **Project `CLAUDE.md` rule.** The "two sides plus the filter bar" bullet (the D-20 left/right split) still stands. Option 1 retires it. Proposed replacement: *left nav holds navigation and the annotation layer; the right pane holds the selected milestone (or the dialog, per the setting) and live display; admin work gets full screens; entry points and old ids are kept.* Not edited until Matt approves the wording. It must change before the build starts.
+1. ~~Project `CLAUDE.md` rule.~~ Done in P79 with the approved Stage A plan: the shell rule replaces the D-20 two-sides rule.
 2. **Three periods** are taken as baseline, plus one chosen comparison (default: the previous update), plus the current update. More than one comparison at a time is out of scope [CONFIRM].
 3. **Free float alias.** The importer maps "free float" to total float, which can understate criticality. Keep or drop the alias [CONFIRM].
 4. **Default open mode** for a new user: side panel (proposed) or dialog.

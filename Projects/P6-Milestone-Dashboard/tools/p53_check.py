@@ -413,7 +413,10 @@ LAYOUT_PROBE = r"""
       return [Math.round(k.getBoundingClientRect().top)];
     }));
     const distinctRows=Array.from(new Set(tops));
-    const ceiling=(window.innerWidth>=1440)?3:4;
+    // D-31 (P79): the ceiling follows the bar's own width, not the viewport: the
+    // left nav takes 240px, so at 1440 the bar is narrow (syncFbNarrow) and Find
+    // and Date range stack, as below 1280 before. Stage D re-hosts the filters.
+    const ceiling=(window.innerWidth>=1440&&!bar.classList.contains('fb-narrow'))?3:4;
     ck('desktop control-row ceiling at '+window.innerWidth+' (<='+ceiling+')',
        distinctRows.length<=ceiling, distinctRows.length+' rows: '+distinctRows.join(','));
   }

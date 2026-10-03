@@ -136,3 +136,46 @@
   transition: opacity var(--ui-dur-base) var(--ui-ease-standard);
 }
 .ui-shell[data-scrim="true"] .ui-shell__scrim { opacity: 1; pointer-events: auto; }
+
+/* ============================================================
+   Page variant (.ui-shell-page on the scrolling host, usually body).
+   The document scrolls; the nav is fixed at the left. The host offsets its
+   own content with margin-left: var(--ui-nav-col), which SRETShell writes.
+   Header, main and aside are the host's own markup in this variant.
+   ============================================================ */
+.ui-shell-page .ui-shell__nav {
+  position: fixed; left: 0; top: 0; bottom: 0;
+  width: var(--ui-nav-col);
+  z-index: var(--ui-z-nav);
+  display: flex; flex-direction: column;
+  min-height: 0; overflow: hidden;
+  transition: width var(--ui-dur-base) var(--ui-ease-standard);
+}
+.ui-shell-page[data-nav="overlay"] .ui-shell__nav {
+  width: var(--ui-nav-w-expanded);
+  z-index: var(--ui-z-drawer);
+  box-shadow: var(--ui-shadow-3);
+}
+.ui-shell-page[data-nav="drawer"] .ui-shell__nav {
+  width: min(var(--ui-nav-w-drawer), 86vw);
+  z-index: var(--ui-z-drawer);
+  transform: translateX(-100%);
+  visibility: hidden;
+  transition: transform var(--ui-dur-base) var(--ui-ease-exit), visibility 0s linear var(--ui-dur-base);
+}
+.ui-shell-page[data-nav="drawer"][data-nav-open="true"] .ui-shell__nav {
+  transform: none; visibility: visible; box-shadow: var(--ui-shadow-3);
+  transition: transform var(--ui-dur-slow) var(--ui-ease-enter), visibility 0s;
+}
+.ui-shell-page > .ui-shell__scrim { position: fixed; }
+.ui-shell-page .ui-shell__menu { display: none; }
+.ui-shell-page[data-nav="drawer"] .ui-shell__menu { display: inline-flex; }
+.ui-shell-page[data-scrim="true"] > .ui-shell__scrim { opacity: 1; pointer-events: auto; }
+
+/* No motion until the shell has painted in its real state (SRETShell sets
+   data-ui-ready two frames after mount). Hosts gate their own offset
+   transitions the same way. */
+.ui-shell:not([data-ui-ready]),
+.ui-shell:not([data-ui-ready]) .ui-shell__nav,
+.ui-shell:not([data-ui-ready]) .ui-shell__aside,
+.ui-shell-page:not([data-ui-ready]) .ui-shell__nav { transition: none; }

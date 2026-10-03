@@ -265,7 +265,8 @@ PROBE = r"""
        !document.querySelector('tr[data-type="row"][data-ref="'+B+'"]')&&!!document.querySelector('tr[data-type="row"][data-ref="'+nextId+'"]'));
     ck('the board milestones follow the store',
        !!findMilestoneById(A)&&findMilestoneById(A).actName==='Renamed in grid'&&!findMilestoneById(B)&&!!findMilestoneById(nextId));
-    ck('the User milestones count follows (3)', ($('ws-userms-count')||{}).textContent==='3', ($('ws-userms-count')||{}).textContent);
+    const ub=document.querySelector('#ws-rail .ui-nav__item[data-id="userms"] .ui-nav__badge');
+    ck('the User milestones count follows (3)', !!ub&&ub.textContent==='3', ub&&ub.textContent);
 
     const net=performance.getEntriesByType('resource').map(e=>e.name).filter(u=>/^https?:/i.test(u));
     ck('the page made zero http(s) requests', net.length===0, net.join(', '));

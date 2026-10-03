@@ -101,7 +101,7 @@
 /* ---- Segmented control (role=radiogroup) ---- */
 .ui-segmented {
   display: inline-flex; flex-wrap: nowrap;
-  padding: 2px; gap: 2px;
+  padding: var(--ui-space-0); gap: var(--ui-space-0);
   border-radius: var(--ui-radius-md);
   background: var(--ui-border-soft);
 }
@@ -164,7 +164,7 @@
 .ui-badge--warn { background: var(--ui-warn-tint); color: var(--ui-warn-ink); }
 .ui-badge--danger { background: var(--ui-danger-tint); color: var(--ui-danger-ink); }
 .ui-count {
-  display: inline-grid; place-items: center; min-width: 20px; height: 18px; padding: 0 6px;
+  display: inline-grid; place-items: center; min-width: 20px; height: 18px; padding: 0 var(--ui-space-1);
   border-radius: var(--ui-radius-pill);
   font-size: var(--ui-text-xs); line-height: 1; font-weight: var(--ui-weight-semibold); font-variant-numeric: tabular-nums;
   background: var(--ui-border-soft); color: var(--ui-text-2);

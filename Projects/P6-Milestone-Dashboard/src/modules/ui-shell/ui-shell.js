@@ -14,6 +14,14 @@
    API
      SRETShell.layoutFor(width, pref, navOpen, asideOpen) -> state   (pure)
      SRETShell.mount(el, opts) -> controller
+        opts.variant       'grid' (default): el is a .ui-shell grid holding the regions.
+                           'page': el is the scrolling host (for example body) with
+                           class .ui-shell-page; the nav is fixed at the left and the
+                           host offsets its content by var(--ui-nav-col). For apps
+                           whose document is the scroller.
+        opts.nav           page variant: the nav region element
+        opts.inert         page variant: fn() -> elements to make inert while a
+                           drawer or overlay nav is open (optional)
         opts.navPref       'expanded' | 'rail' (default 'expanded')
         opts.persist       { get(): pref|null, set(pref) }   optional
         opts.onChange      fn(state)                          optional
@@ -23,8 +31,13 @@
      controller.openAside() / closeAside() / toggleAside()
      controller.state() -> { band, nav, navOpen, aside, asideOpen, scrim, pref }
      controller.destroy()
+   Writes on el: data-band, data-nav, data-nav-open, data-aside, data-aside-open,
+   data-scrim, data-ui-ready (two frames after mount; transitions wait for it),
+   and the custom property --ui-nav-col (the nav column in use).
    Events: 'ui-shell:change' (CustomEvent, detail = state) on the element.
    Keyboard: Esc closes the topmost overlay (nav drawer, then aside overlay).
+   It listens in the capture phase and stops the event only when it closed
+   something, so a host's own Esc handling is untouched otherwise.
    ============================================================ */
 (function (root) {
   'use strict';
@@ -44,16 +57,20 @@
 
   function mount(el, opts) {
     opts = opts || {};
-    var widthFn = opts.width || function () { return el.getBoundingClientRect().width || root.innerWidth; };
+    var page = opts.variant === 'page';
+    var widthFn = opts.width || (page ? function () { return root.innerWidth; }
+                                      : function () { return el.getBoundingClientRect().width || root.innerWidth; });
+    if (page) el.classList.add('ui-shell-page');
     var pref = (opts.persist && opts.persist.get && opts.persist.get()) || opts.navPref || 'expanded';
     var navOpen = false, asideOpen = false, lastBand = null, state = null, lastFocus = null;
 
     var scrim = el.querySelector(':scope > .ui-shell__scrim');
     if (!scrim) { scrim = document.createElement('div'); scrim.className = 'ui-shell__scrim'; el.appendChild(scrim); }
     scrim.setAttribute('aria-hidden', 'true');
-    var nav = el.querySelector(':scope > .ui-shell__nav');
-    var main = el.querySelector(':scope > .ui-shell__main');
-    var header = el.querySelector(':scope > .ui-shell__header');
+    var nav = page ? opts.nav : el.querySelector(':scope > .ui-shell__nav');
+    var main = page ? null : el.querySelector(':scope > .ui-shell__main');
+    var header = page ? null : el.querySelector(':scope > .ui-shell__header');
+    var COL = { expanded: 'var(--ui-nav-w-expanded)', rail: 'var(--ui-nav-w-rail)', overlay: 'var(--ui-nav-w-rail)', drawer: '0px' };
 
     function apply() {
       var w = widthFn();
@@ -67,9 +84,12 @@
       el.setAttribute('data-aside', state.aside);
       el.setAttribute('data-aside-open', String(state.asideOpen));
       el.setAttribute('data-scrim', String(state.scrim));
+      // Page variant: on <html>, so host tokens declared at :root can use it too.
+      (page ? document.documentElement : el).style.setProperty('--ui-nav-col', COL[state.nav]);
       // While a drawer or overlay nav is up, the content behind it is inert.
       var modalNav = state.navOpen && (state.nav === 'drawer' || state.nav === 'overlay');
-      [main, header].forEach(function (n) { if (n) { if (modalNav) n.setAttribute('inert', ''); else n.removeAttribute('inert'); } });
+      var inertEls = page ? (opts.inert ? opts.inert() : []) : [main, header];
+      inertEls.forEach(function (n) { if (n) { if (modalNav) n.setAttribute('inert', ''); else n.removeAttribute('inert'); } });
       if (nav && state.nav === 'drawer' && !state.navOpen) nav.setAttribute('aria-hidden', 'true');
       else if (nav) nav.removeAttribute('aria-hidden');
       if (!prev || JSON.stringify(prev) !== JSON.stringify(state)) {
@@ -110,27 +130,35 @@
       toggleAside: function () { asideOpen = !asideOpen; apply(); },
       refresh: apply,
       destroy: function () {
-        ro.disconnect();
-        document.removeEventListener('keydown', onKey);
+        if (ro) ro.disconnect();
+        root.removeEventListener('resize', apply);
+        document.removeEventListener('keydown', onKey, true);
         scrim.removeEventListener('click', onScrim);
       }
     };
 
     function onKey(e) {
       if (e.key !== 'Escape') return;
-      if (navOpen) { ctl.closeNav(); e.stopPropagation(); return; }
+      if (navOpen && (state.nav === 'drawer' || state.nav === 'overlay')) { ctl.closeNav(); e.stopPropagation(); return; }
       if (state.aside === 'overlay' && asideOpen) { ctl.closeAside(); e.stopPropagation(); }
     }
     function onScrim() {
       if (navOpen) ctl.closeNav();
       if (state.aside === 'overlay' && asideOpen) ctl.closeAside();
     }
-    // On the document, so Esc works wherever focus is while an overlay is up.
-    document.addEventListener('keydown', onKey);
+    // On the document in the capture phase, so Esc works wherever focus is
+    // while an overlay is up, ahead of the host's own handlers.
+    document.addEventListener('keydown', onKey, true);
     scrim.addEventListener('click', onScrim);
-    var ro = new ResizeObserver(function () { apply(); });
-    ro.observe(el);
+    var ro = null;
+    if (page) root.addEventListener('resize', apply);
+    else { ro = new ResizeObserver(function () { apply(); }); ro.observe(el); }
     apply();
+    // The first layout is applied without motion: transitions start only once
+    // the shell has painted in its real state (data-ui-ready), so a page that
+    // boots on a phone or on the rail does not slide in from the default width.
+    var raf = root.requestAnimationFrame || function (f) { return setTimeout(f, 16); };
+    raf(function () { raf(function () { el.setAttribute('data-ui-ready', ''); }); });
     return ctl;
   }
 

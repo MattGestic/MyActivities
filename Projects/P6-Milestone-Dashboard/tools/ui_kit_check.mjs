@@ -176,6 +176,41 @@ const noPageOverflow = (p) => p.evaluate(() => document.documentElement.scrollWi
   await ctx.close();
 }
 
+// ---------- Page variant (how the dashboard app hosts the nav) ----------
+{
+  const PAGE = 'file://' + path.join(root, 'prototypes/ui-kit/demo-page.html');
+  for (const [w, nav, col] of [[1440, 'expanded', 240], [768, 'rail', 60], [390, 'drawer', 0]]) {
+    const ctx = await browser.newContext({ viewport: { width: w, height: 800 } });
+    const p = await ctx.newPage();
+    const errs = [];
+    p.on('pageerror', e => errs.push(e.message));
+    await p.goto(PAGE); await settle(p);
+    const bodyAttr = (a) => p.evaluate(a => document.body.getAttribute(a), a);
+    check(`page ${w} nav ${nav}`, await bodyAttr('data-nav') === nav);
+    check(`page ${w} body offset ${col}`, Math.round(parseFloat(await p.evaluate(() => getComputedStyle(document.body).marginLeft))) === col);
+    check(`page ${w} nav is fixed`, await p.$eval('#nav-host', e => getComputedStyle(e).position) === 'fixed');
+    await p.mouse.wheel(0, 600); await settle(p);
+    check(`page ${w} document scrolls, nav stays`, await p.evaluate(() => scrollY > 0) && Math.round((await box(p, '#nav-host')).y) === 0);
+    check(`page ${w} no page overflow`, await noPageOverflow(p));
+    if (w === 390) {
+      await p.evaluate(() => scrollTo(0, 0));
+      await p.click('#menu-btn'); await settle(p);
+      check('page 390 drawer opens', await bodyAttr('data-nav-open') === 'true' && await p.$eval('#host-content', e => e.hasAttribute('inert')));
+      await p.keyboard.press('Escape'); await settle(p);
+      check('page 390 Esc closes drawer', await bodyAttr('data-nav-open') === 'false' && !(await p.$eval('#host-content', e => e.hasAttribute('inert'))));
+    }
+    if (w === 1440) {
+      await p.click('.ui-nav__collapse'); await settle(p);
+      check('page 1440 collapse to rail offsets 60', await bodyAttr('data-nav') === 'rail' && Math.round(parseFloat(await p.evaluate(() => getComputedStyle(document.body).marginLeft))) === 60);
+      let other = 0; await p.evaluate(() => document.addEventListener('keydown', () => { window.__esc = (window.__esc || 0) + 1; }));
+      await p.keyboard.press('Escape');
+      check('page 1440 Esc passes through when nothing to close', await p.evaluate(() => window.__esc) === 1);
+    }
+    check(`page ${w} no console errors`, errs.length === 0, errs.join(' | '));
+    await ctx.close();
+  }
+}
+
 // ---------- Rules over the module sources ----------
 {
   const fs = await import('fs');
@@ -185,7 +220,7 @@ const noPageOverflow = (p) => p.evaluate(() => document.documentElement.scrollWi
     for (const f of fs.readdirSync(dir).filter(f => /\.(css|js)$/.test(f))) {
       const t = fs.readFileSync(path.join(dir, f), 'utf8');
       check(`${d}/${f} has no network reference`, !/https?:\/\//.test(t));
-      if (d !== 'ui-tokens' && f.endsWith('.css')) {
+      if (f !== 'ui-palette.css' && f.endsWith('.css')) {
         const lit = t.replace(/\/\*[\s\S]*?\*\//g, '').match(/#[0-9a-fA-F]{3,8}\b|rgba?\(|hsla?\(/g);
         check(`${d}/${f} has no literal colour`, !lit, lit ? lit.join(',') : '');
       }

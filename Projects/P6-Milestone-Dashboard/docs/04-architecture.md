@@ -69,17 +69,22 @@ Export is currently one-directional. There is no import path that reads the JSON
 
 ## Panel Systems
 
-Two sides plus the filter bar, since P56 (D-20, directed by Matt 2026-09-25/26). Do not conflate them.
+One left nav plus the Data & view drawer and the filter bar, since P79 (D-31 Stage A, directed by Matt 2026-10-03). It replaced the P56 two-sided layout (D-20).
 
-| Side | Element | Opened from | Scope |
+| Part | Element | Opened from | Scope |
 |---|---|---|---|
-| Workspace (left): your annotations | `#ws-rail` (always visible, full height, slate) + `#ws-panel` | Rail icons; `setWorkspaceSection()` / `toggleWorkspace()` | Notes (D-19/D-19a: `NOTES` with status and #ID links, grouped into collections by reporting period, `NOTE_COLLECTIONS` details, bulk status, collection export), Comments & markups (annotation layers, the three exports, Reset row marks), User milestones. Lists (D-06) joins the rail when built |
-| Data & view (right): schedule and format | `#settings-drawer` with a vertical rail `.sd-rail` | Header Colour & theme (`toggleFilterBar()`, opens View controls) and Import & settings (`toggleSettingsDrawer()`) | View controls (the former Customize sidebar, `#filter-bar` moved in), Sources (schedules only), Import, Data settings, Diagnostics, Help, About |
-| Top filter bar | `#top-filter-bar` | Always shown; collapsible from its own control | Row filtering |
+| Left nav | `#ws-rail`, rendered by `SRETNav` (`src/modules/ui-nav`) and laid out by `SRETShell` page variant (`src/modules/ui-shell`) | Always present: expanded (240px) or rail (60px) above 1024px, the user's choice remembered in `sret-nav`; rail with a slide-over from 641 to 1024px; a drawer from the header menu button (`#ws-toggle`) at 640px and below | Views: Timeline, Grid (`openGridView('sched-ms')` through `gridBegin`), Print preview (`togglePrintMode`). My work: Notes, Comments and markups, User milestones (`setWorkspaceSection`), with badges from `renderNotes` and `renderMounts` through `navBadge`. Bottom: Display options, Import and data, Settings, Help and about (`setSettingsTab` then `toggleSettingsDrawer(true)`). Only functions the app already has |
+| Workspace panel: your annotations | `#ws-panel` | My work items in the nav | Notes (D-19/D-19a), Comments & markups (annotation layers, exports, Reset row marks), User milestones |
+| Data & view (right): schedule and format | `#settings-drawer` with its own tab rail `.sd-rail` (`--sd-rail-w`) | The nav's bottom group; the header's More actions menu | View controls, Sources, Import, Data settings, Diagnostics, Backups, Help, Info, About |
+| Top filter bar | `#top-filter-bar` | Always shown; collapsible from its own control | Row filtering (re-hosted in D-31 Stage D) |
 
-Both side panels push the board above 1024px (`body.ws-open`, `body.dv-open` margins) and overlay below it. The header's five actions (Light/Dark, Print, Save as, Colour & theme, Import & settings) are one set of buttons: a row of icons above 1024px, the More actions menu at and below it.
+The adapter is in-file beside the Workspace code (`initNav`, `onNavSelect`, `syncNavActive`, `navBadge`, `navPrefStore`, `setRailState`). It is not a module, because it wires app globals.
 
-Plus the sticky-corner quick search in the top-left sticky table cell, two-way synced with the Top Filter Bar Title field.
+- **Scrolling.** The body stays the page scroller: sticky table headers, print preview and the scroll-away header depend on it. So the shell's page variant fixes the nav and writes `--ui-nav-col` on `<html>`. `--ws-rail-w` is defined as `var(--ui-nav-col)`, so the body offset, the Workspace panel's left edge and the docked margins follow the nav.
+- **Panels docking.** The Workspace panel and Data & view push the board above 1024px (`body.ws-open`, `body.dv-open`) and overlay it below.
+- **Header actions.** The five actions (Light/Dark, Print, Save as, Colour & theme, Import & settings) are the labelled More actions menu at every width (the P56 inline icon row is retired).
+- **Board height.** It is measured: `sizeBoardHeight()` writes `--board-max-h` on `#scroll-wrap` (viewport less the chrome above the board, less one gutter). It runs on resize, body-class changes, and a ResizeObserver on the header rows.
+- **Boot.** Nothing slides at boot: the shell sets `data-ui-ready` two frames after mount, and the body's margin transition waits for it.
 
 Before P56 the Customize sidebar docked via a `body.cv-open` class toggle (retired; `body.ws-open`/`body.dv-open` follow the same pattern) rather than a DOM restructure, because `position:fixed` overlays (the sidebar included) are unaffected by an ancestor's margin. That is what lets it dock without disturbing the rest of the page.
 

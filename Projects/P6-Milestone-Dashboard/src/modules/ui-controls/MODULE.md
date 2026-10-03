@@ -47,3 +47,4 @@ The header comment of `ui-controls.js` is the API reference. Events: `ui-change`
 | Version | App version | Change |
 |---|---|---|
 | 0.1.0 | none (standalone) | First version, D-31 Stage A. |
+| 0.1.1 | 3.1.0-P79 | Sub-scale spacing on the token scale: `--ui-space-0` (2 px) for the segmented track, the count badge padding on `--ui-space-1`. No literal px in padding, margin or gap (the app's spacing_audit). |

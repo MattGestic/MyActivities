@@ -65,3 +65,4 @@ Within budget. **Flag:** the group-collapse animation is the most involved effec
 | Version | App version | Change |
 |---|---|---|
 | 0.1.0 | none (standalone) | First version, D-31 Stage A. |
+| 0.1.1 | 3.1.0-P79 | `setActive(null)` clears the current item. Spacing literals moved onto `--ui-space-0` and `--ui-space-1`. |

@@ -27,5 +27,9 @@ eq('unknown pref falls back to expanded', shell.layoutFor(1440, 'bogus', false, 
 eq('icon renders svg', /^<svg class="ui-icon"/.test(icons.svg('menu')), true);
 eq('unknown icon is an empty box, not a throw', icons.svg('nope').includes('viewBox="0 0 24 24"'), true);
 eq('icon names include nav set', ['menu','collapse','expand','close'].every(n => icons.has(n)), true);
+const fs = await import('fs');
+const tok = fs.readFileSync(new URL('../src/modules/ui-tokens/ui-tokens.css', import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+eq('ui-tokens.css holds no literal colour (palette lives in ui-palette.css or the host)', /#[0-9a-fA-F]{3,8}\b|rgba?\(/.test(tok), false);
+eq('touch control height stays 32 (design-standard)', /pointer: coarse\)\s*\{\s*:root \{ --ui-ctl-h: 32px/.test(tok), true);
 console.log(fail ? `${fail} FAILED` : 'all passed');
 process.exit(fail ? 1 : 0);

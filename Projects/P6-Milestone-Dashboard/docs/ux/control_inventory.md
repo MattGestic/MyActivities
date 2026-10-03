@@ -12,12 +12,32 @@ Two shared rules apply across every surface and are not repeated per row:
   44px at `pointer:coarse`, via `min-width`/`min-height` only, so glyphs are
   unchanged).
 
+## Left nav (D-31 Stage A, v3.1.0-P79)
+
+Rendered by `SRETNav` into `#ws-rail`. Every item is a `button.ui-nav__item` with `data-id`; the current one has `aria-current="page"`. Keyboard: Tab into the nav, Arrow Up/Down and Home/End between items, Enter/Space to choose. In rail mode each label shows as a tooltip on hover and focus.
+
+| data-id | Label | Calls | Notes |
+|---|---|---|---|
+| `timeline` | Timeline | leaves the grid and print preview, closes the Workspace panel | current by default |
+| `grid` | Grid | `gridBegin` then `openGridView('sched-ms')` | |
+| `print` | Print preview | `togglePrintMode()` | the nav hides in print preview |
+| `notes` | Notes | `setWorkspaceSection('notes')` | badge: open notes in this period |
+| `comments` | Comments and markups | `setWorkspaceSection('comments')` | |
+| `userms` | User milestones | `setWorkspaceSection('userms')` | badge: user milestone count |
+| `view` | Display options | `setSettingsTab('view')`, `toggleSettingsDrawer(true)` | |
+| `import` | Import and data | `setSettingsTab('import')`, `toggleSettingsDrawer(true)` | |
+| `defaults` | Settings | `setSettingsTab('defaults')`, `toggleSettingsDrawer(true)` | |
+| `help` | Help and about | `setSettingsTab('help')`, `toggleSettingsDrawer(true)` | |
+| `.ui-nav__collapse` | Collapse / Expand | `APP_SHELL.toggleNav()` | desktop: expanded and 60px rail, remembered; tablet: opens the slide-over |
+| `.ui-nav__close` | icon (close) | `APP_SHELL.closeNav()` | phone drawer only; `aria-label="Close navigation"` |
+| `#ws-toggle` | icon (menu) | `setRailState('open')` | in `#icon-bar`, shown only where the nav is a drawer; `aria-label="Open navigation"`, `aria-expanded`, `aria-controls="ws-rail"` |
+
 ## Icon bar / top chrome
 
 | Id/class | Label | Role | Issue(s) | Action taken |
 |---|---|---|---|---|
 | `#btn-remove-all-filters` | "Remove all filters" | secondary (conditional) | none | |
-| `#btn-more-actions` | icon (kebab) | icon | had `title` but no `aria-label` | added `aria-label="More actions"` |
+| `#btn-more-actions` | icon (kebab) | icon | had `title` but no `aria-label` | added `aria-label="More actions"`. P79: the labelled dropdown at every width (the P56 inline icon row above 1024px is retired) |
 | `#btn-fit-screen`, `#btn-theme-toggle`, `#btn-print-mode`, `#btn-export-comments`, `#btn-filter-toggle`, `#btn-style-icon`, `#btn-settings-icon` | icon + text label (menu items) | menu item | none, has icon + visible label + title | |
 
 ## Top filter bar (rebuilt at D-16b, v3.1.0-P49, `docs/03-todo.md` TD-191+)
