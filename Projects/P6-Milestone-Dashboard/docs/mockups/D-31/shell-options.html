@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>D-31 Shell and Navigation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+/* Layout concept: a review document wrapping scaled, live app frames. The app frames are drawn
+   in the current light theme only (deliberate single look: this is a picture of the app, not a
+   themed page). Every colour below is a --pal-* value copied verbatim from
+   src/milestone-dashboard.html html[data-theme="light"]. No invented colours. */
+:root{
+  color-scheme:light;
+  --pal-navy:#2b4a7a;--pal-navy-strong:#1f3a63;--pal-slate:#3d4b66;
+  --pal-on-header:#f4f5f8;--pal-on-header-muted:#c6d2e6;--pal-on-strong:#ffffff;
+  --pal-page:#f3f4f7;--pal-surface:#ffffff;--pal-surface-2:#fafbfc;
+  --pal-ink:#1b2230;--pal-ink-2:#475063;--pal-muted:#667085;--pal-faint:#8a93a3;
+  --pal-line:#dde1e8;--pal-line-soft:#e9ecf1;--pal-line-strong:#b8c0d0;
+  --pal-teal:#0e7c86;--pal-teal-deep:#0b6570;--pal-teal-tint:#e1f1f2;
+  --pal-done:#2e8b57;--pal-track:#2f6fdb;--pal-risk:#c98a0b;--pal-crit:#c2413a;--pal-future:#a3aab5;
+  --pal-done-ink:#1f6b43;--pal-risk-ink:#7a5306;--pal-crit-ink:#8f2a24;
+  --pal-done-tint:#e6f2eb;--pal-risk-tint:#fbf1dc;--pal-crit-tint:#fbeceb;
+  --pal-month-a:#2f4468;--pal-month-b:#3e5680;--pal-band-2:#3f4c85;
+  --pal-scrim:#0a0c1e;--shadow-color:#0f172a;
+  --font-sans:'Segoe UI Variable Text','Segoe UI',-apple-system,BlinkMacSystemFont,Roboto,'Helvetica Neue',Arial,sans-serif;
+  --font-mono:ui-monospace,'Cascadia Mono',Consolas,Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{background:var(--pal-page);color:var(--pal-ink);font-family:var(--font-sans);margin:0;padding-inline:16px}
+.wrap{max-width:1480px;margin:0 auto;padding-block:20px 48px;display:flex;flex-direction:column;gap:18px}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--pal-teal);outline-offset:2px}
+
+/* ---------- Review document chrome ---------- */
+.doc-hd{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between}
+.doc-hd h1{margin:0;font-size:22px;line-height:1.25;text-wrap:balance}
+.doc-hd p{margin:6px 0 0;color:var(--pal-ink-2);font-size:13.5px;line-height:1.55;max-width:80ch}
+.tag{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--pal-teal-deep);background:var(--pal-teal-tint);border-radius:999px;padding:3px 10px}
+.tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--pal-line);scrollbar-width:thin}
+.tabs button{border:0;background:none;padding:10px 12px;font-size:13px;color:var(--pal-muted);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button[aria-selected="true"]{color:var(--pal-navy-strong);font-weight:600;border-bottom-color:var(--pal-teal)}
+.tabs .grp{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--pal-faint);align-self:center;padding:0 4px 0 12px;white-space:nowrap}
+.panel{display:flex;flex-direction:column;gap:14px}
+.panel[hidden]{display:none!important}
+.frame-hd{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between}
+.frame-hd h2{margin:0;font-size:17px}
+.frame-hd .hint{font-size:12.5px;color:var(--pal-muted)}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:12px}
+.note{background:var(--pal-surface);border:1px solid var(--pal-line);border-radius:8px;padding:14px 16px;min-width:0}
+.note h3{margin:0 0 8px;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--pal-muted)}
+.note ul,.note ol{margin:0;padding-left:18px;font-size:13px;line-height:1.55;color:var(--pal-ink-2)}
+.note li+li{margin-top:4px}
+.note.good h3{color:var(--pal-done-ink)}.note.bad h3{color:var(--pal-crit-ink)}
+.legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr));gap:6px 18px;font-size:13px;line-height:1.5;color:var(--pal-ink-2);background:var(--pal-surface);border:1px solid var(--pal-line);border-radius:8px;padding:14px 16px}
+.legend div{display:flex;gap:10px}
+.legend b{flex:none}
+.tbl-wrap{overflow-x:auto;background:var(--pal-surface);border:1px solid var(--pal-line);border-radius:8px}
+table.cmp{border-collapse:collapse;width:100%;min-width:760px;font-size:13px}
+table.cmp th,table.cmp td{padding:9px 12px;border-bottom:1px solid var(--pal-line-soft);text-align:left;vertical-align:top;line-height:1.45}
+table.cmp thead th{background:var(--pal-surface-2);font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--pal-muted)}
+table.cmp td.score{font-variant-numeric:tabular-nums;white-space:nowrap}
+.pill{display:inline-block;font-size:11.5px;font-weight:600;border-radius:999px;padding:2px 9px;white-space:nowrap}
+.pill.g{background:var(--pal-done-tint);color:var(--pal-done-ink)}
+.pill.a{background:var(--pal-risk-tint);color:var(--pal-risk-ink)}
+.pill.r{background:var(--pal-crit-tint);color:var(--pal-crit-ink)}
+.pill.t{background:var(--pal-teal-tint);color:var(--pal-teal-deep)}
+code{font-family:var(--font-mono);font-size:.92em;background:var(--pal-line-soft);padding:1px 5px;border-radius:4px}
+
+/* ---------- Stage: scales a fixed-size app frame to the column width ---------- */
+.stage{position:relative;width:100%;overflow:hidden;border-radius:10px;box-shadow:0 1px 2px color-mix(in srgb,var(--shadow-color) 10%,transparent),0 8px 28px color-mix(in srgb,var(--shadow-color) 12%,transparent);background:var(--pal-surface)}
+.stage>.app{position:absolute;left:0;top:0;transform-origin:0 0;transform:scale(var(--s,1))}
+.phones{display:flex;flex-wrap:wrap;gap:24px;justify-content:center}
+.phones>div{width:min(340px,100%)}
+.phone-stage{position:relative;width:100%;overflow:hidden;border-radius:28px;border:8px solid var(--pal-ink);background:var(--pal-surface)}
+.phone-stage>.app{position:absolute;left:0;top:0;transform-origin:0 0;transform:scale(var(--s,1))}
+.cap{font-size:12px;color:var(--pal-muted);text-align:center;margin-top:8px}
+
+/* ---------- The app (fixed 1280 x 800 canvas) ---------- */
+.app{width:1280px;height:800px;display:grid;grid-template-columns:auto 1fr;grid-template-rows:100%;font-size:13px;background:var(--pal-page);color:var(--pal-ink);overflow:hidden}
+.app.phone{width:390px;height:800px;grid-template-columns:1fr}
+.ico{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.ico.sm{width:15px;height:15px}
+
+/* Left nav */
+.nav{width:236px;background:var(--pal-navy-strong);color:var(--pal-on-header);display:flex;flex-direction:column;padding:12px 10px;gap:2px;transition:width .18s ease;overflow:hidden}
+.nav.col{width:60px}
+.nav .brand{display:flex;align-items:center;gap:10px;padding:4px 6px 12px;min-height:44px}
+.nav .logo{width:30px;height:30px;border-radius:8px;background:var(--pal-teal);display:grid;place-items:center;flex:none}
+.nav .logo i{width:11px;height:11px;background:var(--pal-on-strong);transform:rotate(45deg);display:block}
+.nav .bt{display:flex;flex-direction:column;min-width:0;white-space:nowrap}
+.nav .bt b{font-size:14px}
+.nav .bt span{font-size:11px;color:var(--pal-on-header-muted)}
+.nav .proj{display:flex;align-items:center;gap:8px;margin:0 2px 10px;padding:7px 10px;border-radius:8px;background:color-mix(in srgb,var(--pal-on-strong) 8%,transparent);font-size:12px;white-space:nowrap}
+.nav .proj span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.nav .sec{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--pal-on-header-muted);padding:12px 10px 4px;white-space:nowrap;display:flex;justify-content:space-between;align-items:center}
+.nav .div{height:1px;background:color-mix(in srgb,var(--pal-on-strong) 14%,transparent);margin:8px 6px}
+.nav .it{display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:7px;cursor:pointer;white-space:nowrap;color:var(--pal-on-header);border:0;background:none;width:100%;text-align:left;font-size:13px}
+.nav .it:hover{background:color-mix(in srgb,var(--pal-on-strong) 8%,transparent)}
+.nav .it.on{background:color-mix(in srgb,var(--pal-on-strong) 15%,transparent);font-weight:600}
+.nav .it.on .ico{color:var(--pal-on-strong)}
+.nav .it .lbl{flex:1;min-width:0}
+.nav .it.sub{padding-left:39px;font-size:12.5px;color:var(--pal-on-header-muted)}
+.nav .cnt{font-size:11px;font-variant-numeric:tabular-nums;border-radius:999px;padding:1px 8px;background:color-mix(in srgb,var(--pal-on-strong) 12%,transparent);color:var(--pal-on-header)}
+.nav .cnt.risk{background:var(--pal-risk);color:var(--pal-on-strong)}
+.nav .cnt.crit{background:var(--pal-crit);color:var(--pal-on-strong)}
+.nav .grow{flex:1}
+.nav.col .lbl,.nav.col .cnt,.nav.col .bt,.nav.col .proj span,.nav.col .proj .ico+.ico,.nav.col .sec span,.nav.col .it.sub{display:none}
+.nav.col .sec{height:9px;padding:0}
+.nav.col .proj{justify-content:center;padding:7px 0}
+.nav .user{display:flex;align-items:center;gap:10px;padding:8px 8px 2px;white-space:nowrap;font-size:12px}
+.nav .av{width:28px;height:28px;border-radius:50%;background:var(--pal-teal-tint);color:var(--pal-teal-deep);display:grid;place-items:center;font-weight:700;font-size:11px;flex:none}
+
+/* Main column */
+.main{display:flex;flex-direction:column;min-width:0;min-height:0}
+.cmd{height:52px;flex:none;background:var(--pal-navy);color:var(--pal-on-header);display:flex;align-items:center;gap:10px;padding:0 14px}
+.crumb{display:flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap}
+.crumb .m{color:var(--pal-on-header-muted)}
+.crumb b{font-size:14px}
+.rdate{font-size:11.5px;color:var(--pal-on-header-muted);border:1px solid color-mix(in srgb,var(--pal-on-strong) 25%,transparent);border-radius:999px;padding:2px 9px;white-space:nowrap}
+.seg{display:inline-flex;border-radius:7px;background:color-mix(in srgb,var(--pal-scrim) 22%,transparent);padding:2px}
+.seg span{padding:4px 11px;border-radius:5px;font-size:12px;color:var(--pal-on-header-muted);white-space:nowrap}
+.seg span.on{background:var(--pal-surface);color:var(--pal-navy-strong);font-weight:600}
+.srch{display:flex;align-items:center;gap:7px;width:230px;height:32px;border-radius:7px;background:color-mix(in srgb,var(--pal-on-strong) 12%,transparent);padding:0 10px;color:var(--pal-on-header-muted);font-size:12.5px}
+.sp{flex:1}
+.hbtn{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 11px;border-radius:7px;border:1px solid color-mix(in srgb,var(--pal-on-strong) 30%,transparent);background:none;color:var(--pal-on-header);font-size:12.5px;white-space:nowrap;cursor:pointer}
+.hbtn.pri{background:var(--pal-teal);border-color:var(--pal-teal);color:var(--pal-on-strong);font-weight:600}
+.hbtn.ic{width:32px;padding:0;justify-content:center;border-color:transparent}
+.hbtn .b{background:var(--pal-teal);color:var(--pal-on-strong);border-radius:999px;font-size:10.5px;padding:0 6px;font-weight:700}
+
+.chips{height:46px;flex:none;background:var(--pal-surface);border-bottom:1px solid var(--pal-line);display:flex;align-items:center;gap:8px;padding:0 14px;white-space:nowrap}
+.chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 6px 0 10px;border-radius:999px;background:var(--pal-teal-tint);color:var(--pal-teal-deep);font-size:12px;font-weight:500}
+.chip .k{color:var(--pal-ink-2);font-weight:400}
+.chip .x{width:18px;height:18px;border-radius:50%;display:grid;place-items:center}
+.chip.add{background:none;border:1px dashed var(--pal-line-strong);color:var(--pal-ink-2);padding:0 10px}
+.tb{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:6px;border:1px solid var(--pal-line);background:var(--pal-surface);color:var(--pal-ink-2);font-size:12px;cursor:pointer}
+.tb.on{border-color:var(--pal-teal);color:var(--pal-teal-deep);background:var(--pal-teal-tint)}
+.lseg{display:inline-flex;border:1px solid var(--pal-line);border-radius:6px;overflow:hidden}
+.lseg span{padding:4px 10px;font-size:12px;color:var(--pal-ink-2)}
+.lseg span.on{background:var(--pal-navy-strong);color:var(--pal-on-strong)}
+.muted{color:var(--pal-muted)}
+
+.body{flex:1;display:flex;min-height:0}
+.board{flex:1;min-width:0;overflow:hidden;background:var(--pal-surface);display:flex;flex-direction:column}
+
+/* Timeline (the fixed dashboard frame, drawn like today's board) */
+.ihdr{display:flex;justify-content:space-between;align-items:center;background:var(--pal-navy-strong);color:var(--pal-on-header);font-size:11px;padding:5px 10px}
+.ihdr .emb{background:var(--pal-teal);color:var(--pal-on-strong);border-radius:999px;padding:1px 9px;font-weight:600}
+.tl{display:grid;font-size:11.5px}
+.tl .mh{background:var(--pal-month-a);color:var(--pal-on-header);font-weight:600;padding:3px 6px;text-align:center;border-right:1px solid color-mix(in srgb,var(--pal-on-strong) 18%,transparent)}
+.tl .mh.b{background:var(--pal-month-b)}
+.tl .wk{background:var(--pal-navy);color:var(--pal-on-header-muted);font-size:10px;text-align:center;padding:3px 0;line-height:1.15}
+.tl .wk b{display:block;color:var(--pal-on-header);font-size:11px}
+.tl .wk.now{background:var(--pal-teal);color:var(--pal-on-strong)}
+.tl .corner{background:var(--pal-navy-strong);color:var(--pal-on-header-muted);display:flex;align-items:end;padding:4px 10px;font-size:10.5px;grid-row:span 2}
+.tl .band{grid-column:1/-1;background:var(--pal-band-2);color:var(--pal-on-strong);font-weight:600;font-size:11px;padding:3px 10px;letter-spacing:.02em}
+.tl .nm{display:flex;align-items:center;gap:7px;padding:0 10px;height:36px;border-bottom:1px solid var(--pal-line-soft);white-space:nowrap;overflow:hidden}
+.tl .nm .n{color:var(--pal-faint);font-variant-numeric:tabular-nums;width:16px;text-align:right;font-size:10.5px}
+.tl .nm .dot{width:8px;height:8px;border-radius:50%;flex:none}
+.tl .nm .t{overflow:hidden;text-overflow:ellipsis}
+.tl .row{grid-column:2/-1;position:relative;height:36px;border-bottom:1px solid var(--pal-line-soft);background-image:linear-gradient(to right,var(--pal-line-soft) 1px,transparent 1px);background-size:var(--cw) 100%}
+.tl .row.sel,.tl .nm.sel{background-color:var(--pal-teal-tint)}
+.tl .nowcol{position:absolute;top:0;bottom:0;width:var(--cw);background:color-mix(in srgb,var(--pal-teal) 9%,transparent);border-left:1.5px solid var(--pal-teal);pointer-events:none}
+.mk{position:absolute;top:50%;display:flex;align-items:center;gap:6px;transform:translate(-6px,-50%);cursor:pointer;border:0;background:none;padding:0}
+.mk i{width:12px;height:12px;transform:rotate(45deg);display:block;flex:none}
+.mk.done i{background:var(--pal-done)}.mk.track i{background:var(--pal-track)}
+.mk.risk i{background:var(--pal-surface);border:2.5px solid var(--pal-risk)}
+.mk.crit i{background:var(--pal-surface);border:2.5px solid var(--pal-crit)}
+.mk.future i{background:var(--pal-surface);border:2px solid var(--pal-future)}
+.mk .s{font-family:var(--font-mono);font-size:10.5px;font-weight:700;color:var(--pal-ink);background:var(--pal-surface);padding:0 3px;border-radius:3px;white-space:nowrap}
+.mk .r{font-size:10.5px;background:var(--pal-surface);border:1px solid var(--pal-line);border-left:3px solid var(--pal-risk);padding:1px 6px;border-radius:3px;white-space:nowrap;color:var(--pal-ink-2)}
+.mk.crit .r{border-left-color:var(--pal-crit)}
+.mk.sel i{outline:2px solid var(--pal-teal);outline-offset:3px}
+.ghost{position:absolute;top:50%;width:10px;height:10px;transform:translate(-5px,-50%) rotate(45deg);border:1.5px dashed var(--pal-faint)}
+.mk.noid .s{display:none}
+.mk.nonote .r{display:none}
+
+/* Right pane (pinned) */
+.pane{width:360px;flex:none;background:var(--pal-surface);border-left:1px solid var(--pal-line);display:flex;flex-direction:column;min-height:0}
+.pane .ph{display:flex;align-items:center;gap:8px;padding:10px 12px 0 16px}
+.pane .ph b{font-size:14px;flex:1}
+.pane .ptabs{display:flex;gap:2px;padding:6px 12px 0;border-bottom:1px solid var(--pal-line)}
+.pane .ptabs span{padding:8px 10px;font-size:12.5px;color:var(--pal-muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.pane .ptabs span.on{color:var(--pal-navy-strong);border-bottom-color:var(--pal-teal);font-weight:600}
+.pane .pb{flex:1;overflow:hidden;padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.pane .pf{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--pal-line);background:var(--pal-surface-2)}
+.ibtn{width:28px;height:28px;display:grid;place-items:center;border-radius:6px;color:var(--pal-muted);border:0;background:none;cursor:pointer}
+.ibtn.on{color:var(--pal-teal-deep);background:var(--pal-teal-tint)}
+.f{display:flex;flex-direction:column;gap:4px}
+.f label{font-size:11px;color:var(--pal-muted);letter-spacing:.03em;text-transform:uppercase}
+.inp{border:1px solid var(--pal-line-strong);border-radius:6px;padding:6px 9px;font-size:12.5px;background:var(--pal-surface);min-height:31px;display:flex;align-items:center;justify-content:space-between}
+.inp.ta{min-height:64px;align-items:flex-start;color:var(--pal-ink-2);line-height:1.45}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:32px;padding:0 13px;border-radius:7px;font-size:12.5px;border:1px solid var(--pal-line-strong);background:var(--pal-surface);color:var(--pal-navy-strong);cursor:pointer;white-space:nowrap}
+.btn.pri{background:var(--pal-navy-strong);border-color:var(--pal-navy-strong);color:var(--pal-on-strong);font-weight:600}
+.btn.grow{flex:1}
+.stat{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;border-radius:999px;padding:2px 10px}
+.stat.risk{background:var(--pal-risk-tint);color:var(--pal-risk-ink)}
+.stat.crit{background:var(--pal-crit-tint);color:var(--pal-crit-ink)}
+.stat.done{background:var(--pal-done-tint);color:var(--pal-done-ink)}
+.stat.track{background:var(--pal-teal-tint);color:var(--pal-teal-deep)}
+.stat.future{background:var(--pal-line-soft);color:var(--pal-ink-2)}
+.mid{display:flex;align-items:center;gap:8px}
+.mid .id{font-family:var(--font-mono);font-size:12px;color:var(--pal-muted)}
+.mid h4{margin:0;font-size:16px;line-height:1.3}
+.dates{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--pal-line);border-radius:8px;overflow:hidden}
+.dates div{padding:8px 10px;display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--pal-muted)}
+.dates div+div{border-left:1px solid var(--pal-line)}
+.dates b{font-size:13px;color:var(--pal-ink);font-variant-numeric:tabular-nums}
+.dates b.late{color:var(--pal-crit-ink)}
+.cmt{display:flex;gap:9px;font-size:12px;line-height:1.45}
+.cmt .av{width:24px;height:24px;border-radius:50%;background:var(--pal-teal-tint);color:var(--pal-teal-deep);display:grid;place-items:center;font-weight:700;font-size:10px;flex:none}
+.cmt .w{color:var(--pal-muted);font-size:11px}
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;padding:24px;color:var(--pal-ink-2)}
+.empty .glyph{width:64px;height:64px;border-radius:16px;background:var(--pal-surface-2);border:1px dashed var(--pal-line-strong);display:grid;place-items:center}
+.empty .glyph i{width:18px;height:18px;border:2.5px solid var(--pal-faint);transform:rotate(45deg)}
+.empty b{font-size:14px;color:var(--pal-ink)}
+.empty p{margin:0;font-size:12.5px;line-height:1.5;max-width:34ch}
+.kbd{font-family:var(--font-mono);font-size:11px;border:1px solid var(--pal-line-strong);border-bottom-width:2px;border-radius:4px;padding:0 5px;background:var(--pal-surface)}
+.sw{display:flex;align-items:center;justify-content:space-between;padding:7px 0;font-size:12.5px;border-bottom:1px solid var(--pal-line-soft)}
+.tog{width:30px;height:17px;border-radius:999px;background:var(--pal-line-strong);position:relative;flex:none}
+.tog::after{content:"";position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:var(--pal-surface)}
+.tog.on{background:var(--pal-teal)}
+.tog.on::after{left:15px}
+.grp-h{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--pal-muted);margin-top:4px}
+.livebadge{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--pal-done-ink);background:var(--pal-done-tint);border-radius:999px;padding:2px 9px}
+.livebadge::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--pal-done)}
+
+/* Dedicated screens */
+.screen{flex:1;overflow:hidden;padding:24px 28px;display:flex;flex-direction:column;gap:18px;background:var(--pal-page)}
+.screen h3{margin:0;font-size:20px}
+.screen .sub{margin:4px 0 0;color:var(--pal-ink-2);font-size:13px}
+.steps{display:flex;gap:8px;align-items:center;font-size:12.5px}
+.steps span{display:inline-flex;align-items:center;gap:7px;color:var(--pal-muted)}
+.steps span i{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;border:1.5px solid var(--pal-line-strong);font-style:normal;font-size:11px;font-weight:700}
+.steps span.on{color:var(--pal-navy-strong);font-weight:600}
+.steps span.on i{background:var(--pal-navy-strong);border-color:var(--pal-navy-strong);color:var(--pal-on-strong)}
+.steps span.ok i{background:var(--pal-done);border-color:var(--pal-done);color:var(--pal-on-strong)}
+.steps .ln{width:36px;height:1.5px;background:var(--pal-line-strong)}
+.card{background:var(--pal-surface);border:1px solid var(--pal-line);border-radius:10px;padding:16px 18px}
+.card h4{margin:0 0 10px;font-size:13.5px}
+.drop{border:1.5px dashed var(--pal-line-strong);border-radius:10px;padding:22px;display:flex;align-items:center;gap:16px;background:var(--pal-surface-2)}
+.drop .di{width:44px;height:44px;border-radius:10px;background:var(--pal-teal-tint);color:var(--pal-teal-deep);display:grid;place-items:center}
+table.src{border-collapse:collapse;width:100%;font-size:12.5px}
+table.src th{font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--pal-muted);text-align:left;padding:7px 10px;border-bottom:1px solid var(--pal-line);font-weight:600}
+table.src td{padding:9px 10px;border-bottom:1px solid var(--pal-line-soft);font-variant-numeric:tabular-nums}
+.setgrid{display:grid;grid-template-columns:200px 1fr;gap:18px;min-height:0;flex:1}
+.subnav{display:flex;flex-direction:column;gap:2px}
+.subnav span{padding:8px 12px;border-radius:7px;font-size:13px;color:var(--pal-ink-2)}
+.subnav span.on{background:var(--pal-surface);color:var(--pal-navy-strong);font-weight:600;box-shadow:0 0 0 1px var(--pal-line)}
+
+/* Option 2: activity rail + single context panel */
+.rail{width:56px;background:var(--pal-navy-strong);color:var(--pal-on-header-muted);display:flex;flex-direction:column;align-items:center;padding:12px 0;gap:6px}
+.rail .ri{width:40px;height:40px;border-radius:9px;display:grid;place-items:center}
+.rail .ri.on{background:color-mix(in srgb,var(--pal-on-strong) 15%,transparent);color:var(--pal-on-strong)}
+.ctx{width:290px;flex:none;background:var(--pal-surface);border-right:1px solid var(--pal-line);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.ctx h5{margin:0;font-size:14px}
+.ovl{position:absolute;right:16px;top:118px;width:340px;background:var(--pal-surface);border-radius:10px;box-shadow:0 12px 40px color-mix(in srgb,var(--shadow-color) 28%,transparent);border:1px solid var(--pal-line)}
+
+/* Option 3 / current: top header styles */
+.topbar{background:var(--pal-navy);color:var(--pal-on-header);padding:10px 16px 0;display:flex;flex-direction:column;gap:6px}
+.topbar .r1{display:flex;align-items:center;gap:12px}
+.topbar .ttabs{display:flex;gap:2px}
+.topbar .ttabs span{padding:8px 14px;font-size:13px;color:var(--pal-on-header-muted);border-bottom:3px solid transparent}
+.topbar .ttabs span.on{color:var(--pal-on-strong);border-bottom-color:var(--pal-teal);font-weight:600}
+.modal-scrim{position:absolute;inset:0;background:color-mix(in srgb,var(--pal-scrim) 45%,transparent);display:grid;place-items:center}
+.modal{width:440px;background:var(--pal-surface);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:12px;box-shadow:0 20px 60px color-mix(in srgb,var(--shadow-color) 35%,transparent)}
+
+/* Pain-point callouts on the current-state frame */
+.co{position:absolute;width:26px;height:26px;border-radius:50%;background:var(--pal-crit);color:var(--pal-on-strong);font-weight:700;font-size:13px;display:grid;place-items:center;box-shadow:0 0 0 3px var(--pal-surface)}
+.cur-rail{width:44px;background:var(--pal-slate);display:flex;flex-direction:column;align-items:center;padding-top:12px;gap:14px;color:var(--pal-on-header)}
+.fcard{background:var(--pal-surface);border:1px solid var(--pal-line);border-radius:8px;padding:10px 14px;display:flex;flex-direction:column;gap:8px}
+.fcard h6{margin:0;font-size:11px;letter-spacing:.06em;color:var(--pal-teal-deep);text-transform:uppercase}
+.fake{height:26px;border:1px solid var(--pal-line-strong);border-radius:5px;background:var(--pal-surface);flex:1}
+.drawer-r{position:absolute;right:0;top:0;bottom:0;width:340px;background:var(--pal-surface);box-shadow:-10px 0 30px color-mix(in srgb,var(--shadow-color) 18%,transparent);display:flex}
+.drawer-r .vt{width:46px;background:var(--pal-surface-2);border-right:1px solid var(--pal-line);display:flex;flex-direction:column;align-items:center;gap:12px;padding-top:14px;color:var(--pal-muted)}
+
+/* Phone */
+.ptop{height:52px;background:var(--pal-navy);color:var(--pal-on-header);display:flex;align-items:center;gap:10px;padding:0 12px}
+.ptop b{flex:1;font-size:14px}
+.pchips{display:flex;gap:6px;padding:8px 10px;overflow:hidden;background:var(--pal-surface);border-bottom:1px solid var(--pal-line);white-space:nowrap}
+.sheet.pane{width:auto;border-left:0;padding:8px 0 0;gap:0}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--pal-surface);border-radius:16px 16px 0 0;box-shadow:0 -8px 30px color-mix(in srgb,var(--shadow-color) 22%,transparent);padding:8px 16px 18px;display:flex;flex-direction:column;gap:10px}
+.sheet .grab{width:40px;height:4px;border-radius:2px;background:var(--pal-line-strong);align-self:center;margin-bottom:4px}
+.pscrim{position:absolute;inset:0;background:color-mix(in srgb,var(--pal-scrim) 40%,transparent)}
+.pdrawer{position:absolute;left:0;top:0;bottom:0;width:290px}
+.pdrawer .nav{width:290px;height:100%}
+
+@media (prefers-reduced-motion:reduce){.nav{transition:none}}
+</style>
+
+<div class="wrap">
+  <header class="doc-hd">
+    <div>
+      <span class="tag">D-31 · Proposed · mockups only</span>
+      <h1 style="margin-top:8px">Shell and navigation redesign: options for review</h1>
+      <p>One segmented left panel replaces the two side panels. A slim command bar and a single filter row replace the stacked header and filter cards. The timeline board in the middle stays as it is. Milestone editing moves to a pinned right pane. Option 1 frames are clickable: select a marker, collapse the nav, open Display, Import or Settings.</p>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist" id="tabs"></nav>
+  <main id="panels"></main>
+</div>
+
+<script>
+/* ---------------- Icons (24px stroke set) ---------------- */
+const P={
+ timeline:'<path d="M3 6h18M3 12h18M3 18h18"/><path d="M8 4v4M15 10v4M11 16v4"/>',
+ grid:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/>',
+ report:'<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/>',
+ note:'<path d="M5 4h14v11l-5 5H5z"/><path d="M14 20v-5h5M8 9h8M8 13h5"/>',
+ comment:'<path d="M4 5h16v11H9l-5 4z"/>',
+ diamond:'<path d="M12 3l9 9-9 9-9-9z"/>',
+ list:'<path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/>',
+ import:'<path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 17v3h16v-3"/>',
+ settings:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>',
+ help:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7M12 17h.01"/>',
+ chev:'<path d="M9 6l6 6-6 6"/>', chevd:'<path d="M6 9l6 6 6-6"/>', chevl:'<path d="M15 6l-6 6 6 6"/>',
+ search:'<circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/>',
+ filter:'<path d="M4 5h16l-6 7v6l-4 2v-8z"/>',
+ plus:'<path d="M12 5v14M5 12h14"/>', x:'<path d="M6 6l12 12M18 6L6 18"/>',
+ share:'<path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 13v7h14v-7"/>',
+ more:'<circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/>',
+ pin:'<path d="M9 3h6l-1 6 4 4H6l4-4z"/><path d="M12 13v8"/>',
+ menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',
+ collapse:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M15 10l-2 2 2 2"/>',
+ sliders:'<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
+ data:'<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
+ sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/>',
+ print:'<path d="M7 9V3h10v6M7 17H4v-7h16v7h-3"/><rect x="7" y="14" width="10" height="7"/>',
+ save:'<path d="M5 3h11l3 3v15H5z"/><path d="M8 3v5h7V3M8 21v-7h8v7"/>',
+ palette:'<path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 2-2s-1-1.5-1-2.5 1-1.5 2-1.5h2a4 4 0 0 0 4-4c0-4.4-4-8-9-8z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="15" cy="7" r="1"/>',
+ eye:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+ file:'<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/>',
+ next:'<path d="M5 12h14M13 6l6 6-6 6"/>', prev:'<path d="M19 12H5M11 6l-6 6 6 6"/>',
+ history:'<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>'
+};
+const I=(n,c='')=>`<svg class="ico ${c}" viewBox="0 0 24 24" aria-hidden="true">${P[n]||''}</svg>`;
+
+/* ---------------- Example data (illustrative, no client data) ---------------- */
+const WEEKS=['03','10','17','24','31','07','14','21','28','05','12','19','26','02','09','16'];
+const MONTHS=[['Aug 2026',5],['Sep 2026',4],['Oct 2026',4],['Nov 2026',3]];
+const NOW=8; /* week index of report date (w/e 04-Oct) */
+const ROWS=[
+ {band:'Engineering'},
+ {id:'M-1010',n:'Design criteria issued',w:2,st:'done'},
+ {id:'M-1020',n:'Layout review complete',w:4,st:'track'},
+ {id:'M-1030',n:'Equipment list rev B',w:9,st:'risk',g:6,r:'Vendor data late'},
+ {id:'M-1040',n:'P&ID issued for review',w:10,st:'track'},
+ {id:'M-1050',n:'P&ID issued for construction',w:13,st:'future'},
+ {band:'Procurement'},
+ {id:'M-2010',n:'Long-lead ITT issued',w:3,st:'done'},
+ {id:'M-2020',n:'Tender evaluation complete',w:8,st:'risk'},
+ {id:'M-2030',n:'Long-lead PO award',w:11,st:'crit',g:9,r:'Award slipping'},
+ {band:'Study deliverables'},
+ {id:'M-3010',n:'Schedule basis memo',w:5,st:'done'},
+ {id:'M-3020',n:'Cost estimate draft',w:10,st:'track'},
+ {id:'M-3030',n:'Report issued for review',w:13,st:'future'},
+ {id:'M-3040',n:'Final report issued',w:15,st:'future'}
+];
+const STL={done:'Complete',track:'On track',risk:'At risk',crit:'Critical',future:'Future'};
+const DOT={done:'var(--pal-done)',track:'var(--pal-track)',risk:'var(--pal-risk)',crit:'var(--pal-crit)',future:'var(--pal-future)'};
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const wkDate=i=>{const d=new Date(2026,7,3+7*i);return String(d.getDate()).padStart(2,'0')+'-'+MON[d.getMonth()]+'-26'};
+
+/* ---------------- Timeline (unchanged dashboard frame) ---------------- */
+function timeline(o={}){
+  const nameW=o.nameW||240, cw=o.cw||((o.width-nameW)/16);
+  let h=`<div class="ihdr"><span>Project <b>[Demo project]</b> · Report date <b>01-Oct-26</b></span><span class="emb">Baseline DD · 15-Aug-26</span></div>`;
+  h+=`<div class="tl" style="--cw:${cw}px;grid-template-columns:${nameW}px repeat(16,${cw}px)">`;
+  h+=`<div class="corner">Milestone</div>`;
+  MONTHS.forEach(([m,s],i)=>h+=`<div class="mh ${i%2?'b':''}" style="grid-column:span ${s}">${m}</div>`);
+  WEEKS.forEach((w,i)=>h+=`<div class="wk ${i===NOW?'now':''}"><b>${w}</b>${['Aug','Sep','Oct','Nov'][i<5?0:i<9?1:i<13?2:3]}</div>`);
+  let k=0;
+  ROWS.forEach(r=>{
+    if(r.band){h+=`<div class="band">${r.band}</div>`;return}
+    k++; const sel=o.sel===r.id?'sel':'';
+    h+=`<div class="nm ${sel}"><span class="n">${k}</span><span class="dot" style="background:${DOT[r.st]}"></span><span class="t">${r.n}</span></div>`;
+    h+=`<div class="row ${sel}"><span class="nowcol" style="left:${NOW*cw}px"></span>`;
+    if(r.g!=null&&o.ghost!==false) h+=`<span class="ghost" style="left:${r.g*cw+cw/2}px"></span>`;
+    h+=`<button class="mk ${r.st} ${sel} ${o.ids===false?'noid':''} ${o.notes===false?'nonote':''}" data-id="${r.id}" style="left:${r.w*cw+cw/2}px" aria-label="${r.id}"><i></i><span class="s">${r.id}</span>${r.r?`<span class="r">${r.r}</span>`:''}</button></div>`;
+  });
+  return h+'</div>';
+}
+
+/* ---------------- Option 1 building blocks ---------------- */
+function nav(s){
+  const it=(ic,l,key,c='',cls='')=>`<button class="it ${s.view===key?'on':''} ${cls}" data-nav="${key}">${I(ic)}<span class="lbl">${l}</span>${c}</button>`;
+  return `<aside class="nav ${s.col?'col':''}">
+   <div class="brand"><span class="logo"><i></i></span><span class="bt"><b>Milestone Dashboard</b><span>P6 schedule tracker</span></span></div>
+   <div class="proj">${I('report','sm')}<span>[Demo project] · PFS</span>${I('chevd','sm')}</div>
+   <div class="sec"><span>Views</span></div>
+   ${it('timeline','Timeline','timeline')}
+   ${it('grid','Grid','grid')}
+   ${it('report','Report preview','report')}
+   <div class="div"></div>
+   <div class="sec"><span>My work</span></div>
+   ${it('note','Notes','notes','<span class="cnt">7</span>')}
+   ${it('comment','Comments','comments','<span class="cnt">12</span>')}
+   ${it('diamond','My milestones','mine','<span class="cnt">3</span>')}
+   <div class="sec"><span>Saved views</span>${s.col?'':I('chevd','sm')}</div>
+   ${it('list','Critical','v-crit','<span class="cnt crit">1</span>','sub')}
+   ${it('list','At risk','v-risk','<span class="cnt risk">2</span>','sub')}
+   ${it('list','Edited this week','v-edit','<span class="cnt">5</span>','sub')}
+   <div class="grow"></div>
+   <div class="div"></div>
+   ${it('import','Import and data','import')}
+   ${it('settings','Settings','settings')}
+   ${it('help','Help and about','help')}
+   <button class="it" data-act="col">${I('collapse')}<span class="lbl">Collapse</span></button>
+   <div class="user"><span class="av">MG</span><span class="lbl">Signed in as [User]</span></div>
+  </aside>`;
+}
+function cmd(s){
+  const title={timeline:'Timeline',grid:'Grid',import:'Import and data',settings:'Settings',help:'Help and about'}[s.view]||'Timeline';
+  const onBoard=!['import','settings','help'].includes(s.view);
+  return `<div class="cmd">
+    <span class="crumb"><span class="m">[Demo project]</span>${I('chev','sm')}<b>${title}</b></span>
+    ${onBoard?`<span class="rdate">Report 01-Oct-26</span><span class="seg"><span class="on">Baseline</span><span>Update</span></span>`:''}
+    <span class="sp"></span>
+    ${onBoard?`<span class="srch">${I('search','sm')}Search milestones</span>
+    <button class="hbtn" data-act="display">${I('sliders','sm')}Display</button>
+    <button class="hbtn">${I('plus','sm')}Milestone</button>
+    <button class="hbtn pri">${I('share','sm')}Share report</button>`:''}
+    <button class="hbtn ic" aria-label="More">${I('more')}</button>
+  </div>`;
+}
+function chips(){
+  return `<div class="chips">
+    <span class="chip"><span class="k">Status</span> At risk, Critical <span class="x">${I('x','sm')}</span></span>
+    <span class="chip"><span class="k">Float</span> under 3 wk <span class="x">${I('x','sm')}</span></span>
+    <span class="chip"><span class="k">Weeks</span> 03-Aug to 16-Nov <span class="x">${I('x','sm')}</span></span>
+    <span class="chip add">${I('plus','sm')} Add filter</span>
+    <span class="tb muted" style="border:0">Clear all</span>
+    <span class="sp" style="flex:1"></span>
+    <span class="lseg"><span class="on">Highlight</span><span>Show only</span></span>
+    <span class="tb">Fit</span>
+  </div>`;
+}
+function paneMilestone(id){
+  const r=ROWS.find(x=>x.id===id);
+  const late=r.g!=null;
+  return `<div class="ph"><b>Milestone</b>
+      <button class="ibtn" aria-label="Previous">${I('prev','sm')}</button><button class="ibtn" aria-label="Next">${I('next','sm')}</button>
+      <button class="ibtn on" title="Pinned">${I('pin','sm')}</button><button class="ibtn" data-act="clear" aria-label="Clear selection">${I('x','sm')}</button></div>
+    <div class="ptabs"><span class="on">Details</span><span>Comments 3</span><span>History</span></div>
+    <div class="pb">
+      <div class="mid"><span class="id">${r.id}</span><span class="stat ${r.st}">${STL[r.st]}</span></div>
+      <h4 style="margin:-4px 0 0;font-size:16px">${r.n}</h4>
+      <div class="dates"><div>Baseline<b>${wkDate(r.g??r.w)}</b></div><div>Forecast<b class="${late?'late':''}">${wkDate(r.w)}</b></div><div>Variance<b class="${late?'late':''}">${late?'+'+(r.w-r.g)*7+'d':'0d'}</b></div></div>
+      <div class="two"><div class="f"><label>Health</label><div class="inp">${STL[r.st]} ${I('chevd','sm')}</div></div><div class="f"><label>Progress</label><div class="inp">${r.st==='done'?'100':'60'} % ${I('chevd','sm')}</div></div></div>
+      <div class="f"><label>Remark (shows on the board)</label><div class="inp ta">${r.r||'Add a short remark'}</div></div>
+      <div class="grp-h">Latest comment</div>
+      <div class="cmt"><span class="av">JD</span><div><b>J. Doe</b> <span class="w">2 days ago</span><br>Awaiting vendor GA drawings. Forecast held to ${wkDate(r.w)} pending confirmation.</div></div>
+    </div>
+    <div class="pf"><button class="btn">Discard</button><button class="btn pri grow">Save and next ${I('next','sm')}</button></div>`;
+}
+function paneEmpty(){
+  return `<div class="ph"><b>Milestone</b><button class="ibtn on" title="Pinned">${I('pin','sm')}</button></div>
+    <div class="ptabs"><span class="on">Details</span><span>Comments</span><span>History</span></div>
+    <div class="empty"><span class="glyph"><i></i></span><b>No milestone selected</b>
+      <p>Click a marker on the timeline to see and edit it here. The pane stays open, so the board does not shift as you move between milestones.</p>
+      <p class="muted" style="font-size:12px">Move with <span class="kbd">J</span> and <span class="kbd">K</span>, save with <span class="kbd">Ctrl</span> <span class="kbd">Enter</span></p></div>`;
+}
+function paneDisplay(s){
+  const t=(l,on,key)=>`<div class="sw"><span>${l}</span><span class="tog ${on?'on':''}" ${key?`data-tog="${key}"`:''} role="switch" aria-checked="${on}"></span></div>`;
+  return `<div class="ph"><b>Display</b><span class="livebadge">Live on board</span><button class="ibtn" data-act="display" aria-label="Close">${I('x','sm')}</button></div>
+    <div class="ptabs"><span class="on">Board</span><span>Datasets</span><span>Columns</span></div>
+    <div class="pb" style="gap:4px">
+      <div class="grp-h">Marker labels</div>
+      ${t('Activity ID',s.ids!==false,'ids')}
+      ${t('Remark stickers',s.notes!==false,'notes')}
+      ${t('Baseline ghost markers',s.ghost!==false,'ghost')}
+      <div class="grp-h" style="margin-top:10px">Layers</div>
+      ${t('Dependency lines',false)}
+      ${t('Histogram',false)}
+      ${t('Comment markers',true)}
+      <div class="grp-h" style="margin-top:10px">Datasets</div>
+      ${t('Baseline DD 15-Aug-26',true)}
+      ${t('Update 29-Aug-26',true)}
+      <p class="muted" style="font-size:12px;margin:10px 0 0;line-height:1.5">Try the first three switches: the board on the left updates as you change them.</p>
+    </div>`;
+}
+function screenImport(){
+  return `<div class="screen">
+    <div><h3>Import and data</h3><p class="sub">Bring in a P6 export, check what changed, then apply it. The file is read on this device and never uploaded.</p></div>
+    <div class="steps"><span class="ok"><i>✓</i>Choose file</span><span class="ln"></span><span class="on"><i>2</i>Review changes</span><span class="ln"></span><span><i>3</i>Apply</span></div>
+    <div class="drop"><span class="di">${I('file')}</span><div><b>Update_DD_2026-09-26.xlsx</b><div class="muted" style="font-size:12px">Read just now · treated as an Update against Baseline DD 15-Aug-26</div></div><span class="sp" style="flex:1"></span><button class="btn">Choose another file</button></div>
+    <div class="card"><h4>What changes on the board</h4>
+      <table class="src"><thead><tr><th>Milestone</th><th>Change</th><th>Was</th><th>Now</th><th>Your notes kept</th></tr></thead><tbody>
+      <tr><td>M-1030 Equipment list rev B</td><td><span class="stat crit">Moved later</span></td><td>14-Sep-26</td><td>05-Oct-26</td><td>Yes</td></tr>
+      <tr><td>M-2030 Long-lead PO award</td><td><span class="stat crit">Moved later</span></td><td>05-Oct-26</td><td>26-Oct-26</td><td>Yes</td></tr>
+      <tr><td>M-2010 Long-lead ITT issued</td><td><span class="stat done">Completed</span></td><td>24-Aug-26</td><td>24-Aug-26</td><td>Yes</td></tr>
+      <tr><td>M-3040 Final report issued</td><td><span class="stat track">New</span></td><td>None</td><td>16-Nov-26</td><td>None yet</td></tr>
+      </tbody></table></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn">Cancel</button><button class="btn pri">Apply to board</button></div>
+  </div>`;
+}
+function screenSettings(){
+  const r=(l,v)=>`<div class="f"><label>${l}</label><div class="inp">${v} ${I('chevd','sm')}</div></div>`;
+  return `<div class="screen">
+    <div><h3>Settings</h3><p class="sub">Report, thresholds and parsing. These do not need the board in view, so they get the full width.</p></div>
+    <div class="setgrid"><div class="subnav"><span class="on">Report</span><span>Thresholds</span><span>Parsing</span><span>Theme and colour</span><span>Backups</span><span>Diagnostics</span></div>
+    <div class="card" style="display:flex;flex-direction:column;gap:14px;max-width:640px">
+      <h4 style="margin:0">Report</h4>
+      <div class="two">${r('Report title','[Demo project] Deliverables')}${r('Report date','01-Oct-26')}</div>
+      <div class="two">${r('Week ending','Sunday')}${r('Page size for print','A3 landscape')}</div>
+      ${r('Prepared by','[User]')}
+      <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn">Reset</button><button class="btn pri">Save settings</button></div>
+    </div></div>
+  </div>`;
+}
+
+/* Option 1 app: state-driven, re-renders on click */
+function opt1(s){
+  const board=['timeline','grid','report','notes','comments','mine','v-crit','v-risk','v-edit'].includes(s.view);
+  const navW=s.col?60:236, paneW=(s.pane==='none'||!board)?0:360;
+  const bw=1280-navW-paneW;
+  let content;
+  if(s.view==='import') content=screenImport();
+  else if(s.view==='settings'||s.view==='help') content=screenSettings();
+  else{
+    const pane=s.pane==='display'?paneDisplay(s):s.sel?paneMilestone(s.sel):paneEmpty();
+    content=`<div class="board">${timeline({width:bw,nameW:220,sel:s.sel,ids:s.ids,notes:s.notes,ghost:s.ghost})}</div>${paneW?`<aside class="pane">${pane}</aside>`:''}`;
+  }
+  return `<div class="app">${nav(s)}<div class="main">${cmd(s)}${board?chips():''}<div class="body">${content}</div></div></div>`;
+}
+
+/* ---------------- Option 2: activity rail + one context panel ---------------- */
+function opt2(){
+  const ri=(n,on)=>`<span class="ri ${on?'on':''}">${I(n)}</span>`;
+  return `<div class="app" style="position:relative"><aside class="rail">
+    <span class="logo" style="width:30px;height:30px;border-radius:8px;background:var(--pal-teal);display:grid;place-items:center;margin-bottom:8px"><i style="width:11px;height:11px;background:var(--pal-on-strong);transform:rotate(45deg);display:block"></i></span>
+    ${ri('timeline',0)}${ri('filter',1)}${ri('sliders',0)}${ri('note',0)}${ri('comment',0)}
+    <span style="flex:1"></span>${ri('import',0)}${ri('settings',0)}${ri('help',0)}</aside>
+   <div class="main">${cmd({view:'timeline'})}
+    <div class="body"><aside class="ctx"><h5>Filters</h5>
+      <div class="f"><label>Find</label><div class="inp">${I('search','sm')}</div></div>
+      <div class="f"><label>Activity IDs</label><div class="inp muted">e.g. M-1010, M-2030</div></div>
+      <div class="f"><label>Weeks</label><div class="inp">03-Aug to 16-Nov ${I('chevd','sm')}</div></div>
+      <div class="grp-h">Status</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px"><span class="chip">At risk</span><span class="chip">Critical</span><span class="tb">On track</span><span class="tb">Done</span><span class="tb">Future</span></div>
+      <div class="grp-h">Total float</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px"><span class="tb">Any</span><span class="tb">0d</span><span class="tb on">under 3 wk</span><span class="tb">under 5 wk</span></div>
+      <div class="grp-h">Annotations</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px"><span class="tb on">Any</span><span class="tb">Commented</span><span class="tb">Edited</span></div>
+    </aside><div class="board">${timeline({width:1280-56-290,nameW:200,sel:'M-1030'})}</div></div></div>
+    <div class="ovl">${paneMilestone('M-1030').replace('class="ibtn on" title="Pinned"','class="ibtn" title="Pin"')}</div>
+  </div>`;
+}
+
+/* ---------------- Option 3: top tabs, filters left, modal edit ---------------- */
+function opt3(){
+  return `<div class="app" style="grid-template-columns:1fr;position:relative"><div class="main">
+    <div class="topbar"><div class="r1"><span class="logo" style="width:26px;height:26px;border-radius:7px;background:var(--pal-teal);display:grid;place-items:center"><i style="width:9px;height:9px;background:var(--pal-on-strong);transform:rotate(45deg);display:block"></i></span><b style="font-size:15px">[Demo project] Deliverables Dashboard</b><span class="rdate">Report 01-Oct-26</span><span class="sp"></span><span class="srch">${I('search','sm')}Search milestones</span><button class="hbtn">${I('plus','sm')}Milestone</button><button class="hbtn pri">${I('share','sm')}Share report</button></div>
+    <div class="ttabs"><span class="on">Timeline</span><span>Grid</span><span>Notes</span><span>Comments</span><span>Import and data</span><span>Settings</span></div></div>
+    ${chips()}
+    <div class="body"><div class="board">${timeline({width:1280,nameW:240})}</div></div></div>
+    <div class="modal-scrim"><div class="modal">${paneMilestone('M-1030').replace(/<div class="ptabs">[\s\S]*?<\/div>/,'')}</div></div>
+  </div>`;
+}
+
+/* ---------------- Current state with numbered pain points ---------------- */
+function current(){
+  const co=(n,x,y)=>`<span class="co" style="left:${x}px;top:${y}px">${n}</span>`;
+  return `<div class="app" style="grid-template-columns:44px 1fr;position:relative">
+   <aside class="cur-rail">${I('menu')}${I('note')}${I('comment')}${I('diamond')}</aside>
+   <div class="main">
+    <div class="topbar" style="padding-bottom:8px"><div class="r1"><b style="font-size:15px">[Demo project] Deliverables Dashboard</b><span class="sp"></span>${I('sun')}${I('print')}${I('save')}${I('palette')}${I('settings')}</div>
+     <div style="font-size:12px;font-style:italic;color:var(--pal-on-header-muted)">P6 Milestone Dashboard · Project Schedule Displayed by Activity End Dates</div>
+     <div class="r1" style="font-size:12px"><span>View:</span><span class="seg"><span class="on">Baseline</span><span>Update</span></span><span class="muted" style="color:var(--pal-on-header-muted)">Baseline shadow</span><span class="tog"></span><span class="sp"></span><button class="hbtn ic">${I('filter','sm')}</button><button class="hbtn">${I('plus','sm')}Milestone</button></div></div>
+    <div style="display:flex;gap:10px;padding:10px 12px;background:var(--pal-page)">
+      <div class="fcard" style="flex:1.4"><h6>Find</h6><div style="display:flex;gap:8px;align-items:center;font-size:12px"><b>Activity name</b><span class="fake"></span><b>Banding</b><span class="fake" style="flex:.5"></span></div><div style="display:flex;gap:8px;align-items:center;font-size:12px"><b>Activity ID(s)</b><span class="fake"></span></div></div>
+      <div class="fcard" style="flex:1"><h6>Date range</h6><div style="display:flex;gap:8px;align-items:center;font-size:12px"><b>Weeks</b><span class="fake"></span><b>Mode</b><span class="lseg"><span class="on">Highlight</span><span>Show only</span></span></div></div></div>
+    <div style="display:flex;gap:8px;align-items:center;padding:0 12px 10px;font-size:12px;background:var(--pal-page);white-space:nowrap"><b>Status</b><span class="tb">Critical</span><span class="tb">At risk</span><span class="tb">On track</span><span class="tb">Done</span><b style="margin-left:8px">Total float</b><span class="tb on">Any</span><span class="tb">0d</span><span class="tb">under 10d</span><b style="margin-left:8px">Annotations</b><span class="tb on">Any</span><span class="tb">Commented</span></div>
+    <div class="body"><div class="board">${timeline({width:1236,nameW:220})}</div></div>
+   </div>
+   <div class="drawer-r"><div class="vt">${I('sliders')}${I('data')}${I('import')}${I('settings')}${I('help')}</div><div style="padding:14px;flex:1;display:flex;flex-direction:column;gap:10px"><b>Data and view</b><div class="grp-h">View controls</div><div class="sw"><span>Labels</span><span class="tog on"></span></div><div class="sw"><span>Histogram</span><span class="tog"></span></div><div class="sw"><span>Dependencies</span><span class="tog"></span></div><div class="grp-h">Fields and columns</div><div class="fake" style="flex:none"></div><div class="fake" style="flex:none"></div></div></div>
+   ${co(1,12,8)}${co(2,560,6)}${co(3,520,96)}${co(4,640,150)}${co(5,904,10)}${co(6,600,420)}
+  </div>`;
+}
+
+/* ---------------- Phone ---------------- */
+function phoneSheet(){
+  return `<div class="app phone" style="position:relative"><div class="main">
+    <div class="ptop">${I('menu')}<b>Timeline</b>${I('search')}${I('filter')}</div>
+    <div class="pchips"><span class="chip">At risk, Critical</span><span class="chip">Float under 3 wk</span><span class="chip add">${I('plus','sm')}</span></div>
+    <div class="body"><div class="board">${timeline({width:640,nameW:150,cw:30,sel:'M-1030'})}</div></div></div>
+    <div class="sheet pane"><span class="grab"></span>${paneMilestone('M-1030').replace(/<div class="ph">[\s\S]*?<\/div>/,'').replace(/<div class="grp-h">Latest comment[\s\S]*?<\/div><\/div>/,'')}</div>
+  </div>`;
+}
+function phoneDrawer(){
+  return `<div class="app phone" style="position:relative"><div class="main">
+    <div class="ptop">${I('menu')}<b>Timeline</b>${I('search')}${I('filter')}</div>
+    <div class="body"><div class="board">${timeline({width:640,nameW:150,cw:30})}</div></div></div>
+    <div class="pscrim"></div><div class="pdrawer">${nav({view:'timeline'})}</div>
+  </div>`;
+}
+
+/* ---------------- Tabs and panels ---------------- */
+const PANELS=[
+ {grp:'Compare'},
+ {id:'current',t:'Current',h:'Current shell, with the problems numbered',hint:'Static. Numbers refer to the list below.',make:()=>current(),
+  after:`<div class="legend">
+   <div><b>1</b><span>Two side panels. Annotations open from the left rail, schedule and format controls from the right drawer. Users have to learn which side holds what.</span></div>
+   <div><b>2</b><span>Five unlabelled icon buttons in the header (theme, print, save, colour, settings). Purpose is not clear without hovering.</span></div>
+   <div><b>3</b><span>The header carries a title, a subtitle, the dataset toggle, a shadow switch, a filter toggle and Add milestone. That is three rows of chrome before any data.</span></div>
+   <div><b>4</b><span>Filters take two cards plus a chip row, all visible at once, even when only one filter is in use.</span></div>
+   <div><b>5</b><span>The right drawer mixes live view settings with data admin (Import, Sources, Diagnostics, Backups) in narrow tabs.</span></div>
+   <div><b>6</b><span>Milestone edit is a modal. Every click opens and closes a dialog, which covers the board.</span></div></div>`},
+ {id:'opt1',t:'Option 1 · Recommended',h:'Option 1: model-driven style left nav with a pinned right pane',hint:'Clickable: markers, nav items, Display, Collapse.',state:{view:'timeline',sel:'M-1030',pane:'ms'},
+  after:`<div class="notes">
+   <div class="note good"><h3>Why it works</h3><ul><li>One place to navigate. Sections follow intent: Views, My work, Saved views, then Import, Settings and Help at the bottom, as in a model-driven app.</li><li>The header shrinks to one 52 px bar. Filters shrink to one row of active chips.</li><li>The milestone pane is pinned. Selection swaps its content only, so the board never reflows on click.</li><li>Saved views with counts surface the work that needs attention without filtering by hand.</li></ul></div>
+   <div class="note bad"><h3>Costs and risks</h3><ul><li>Pinned pane takes 360 px from the board. It can be unpinned when not editing, and the nav collapses to 60 px to give width back.</li><li>Retires the D-20 left/right split. Needs Matt to change the CLAUDE.md rule first.</li><li>Largest build of the three. The existing entry-point functions stay as the seam.</li></ul></div>
+   <div class="note"><h3>Rules in this option</h3><ul><li>See the effect while changing it: open in the right pane beside the live board (Display, Datasets).</li><li>Set once or admin work: give it a full screen (Import, Settings, Help).</li><li>The board resizes only on pin, unpin or nav collapse. Never on selection.</li></ul></div></div>`},
+ {id:'opt2',t:'Option 2',h:'Option 2: activity rail with one context panel',hint:'Static. VS Code and Figma style.',make:()=>opt2(),
+  after:`<div class="notes"><div class="note good"><h3>Strengths</h3><ul><li>The thinnest permanent chrome (56 px). One panel at a time, always on the left.</li><li>Filters get a full panel when needed and vanish when not.</li></ul></div>
+  <div class="note bad"><h3>Weaknesses</h3><ul><li>Icon-only rail relies on tooltips, which is the same discoverability problem as today's icon buttons.</li><li>Milestone edit is an overlay, so it covers the right of the timeline where current and future weeks sit.</li><li>The board reflows each time a context panel opens or closes.</li></ul></div></div>`},
+ {id:'opt3',t:'Option 3',h:'Option 3: top tabs, modal edit kept',hint:'Static. The smallest change.',make:()=>opt3(),
+  after:`<div class="notes"><div class="note good"><h3>Strengths</h3><ul><li>No side panels at all. The board gets the full width.</li><li>The cheapest build. The P66 dialog is kept.</li></ul></div>
+  <div class="note bad"><h3>Weaknesses</h3><ul><li>Tabs scale badly once saved views and lists arrive.</li><li>Keeps the modal on every click, which is the friction you raised.</li><li>Notes and Comments as tabs take the board out of view, so you lose context.</li></ul></div></div>`},
+ {grp:'Option 1 states'},
+ {id:'s-empty',t:'Pane empty',h:'Pinned pane, nothing selected',hint:'The pane holds its width and shows an empty state instead of collapsing.',state:{view:'timeline',pane:'ms'}},
+ {id:'s-display',t:'Display, live',h:'Display settings beside the live board',hint:'Clickable: flip Activity ID, Remark stickers or Baseline ghosts and watch the board.',state:{view:'timeline',pane:'display'}},
+ {id:'s-col',t:'Nav collapsed',h:'Nav collapsed to icons, pane unpinned',hint:'Maximum board width for presenting. Hover labels on the icons.',state:{view:'timeline',col:true,pane:'none'}},
+ {id:'s-import',t:'Import screen',h:'Import and data as a dedicated screen',hint:'A guided flow with room for the change table, instead of a narrow drawer tab.',state:{view:'import'}},
+ {id:'s-settings',t:'Settings screen',h:'Settings as a dedicated screen',hint:'Report, thresholds and parsing with a sub-nav. Not tied to the board.',state:{view:'settings'}},
+ {id:'phone',t:'Phone',h:'Phone: nav becomes a drawer, the pane becomes a bottom sheet',hint:'Static. Follows the D-01 phone sheet pattern.',phone:true},
+ {grp:'Decide'},
+ {id:'cmp',t:'Comparison',h:'Comparison',table:true},
+ {id:'map',t:'Where things move',h:'Where each current control lands in Option 1',map:true}
+];
+
+const tabs=document.getElementById('tabs'), host=document.getElementById('panels');
+const STATES={};
+PANELS.forEach(p=>{
+  if(p.grp){tabs.insertAdjacentHTML('beforeend',`<span class="grp">${p.grp}</span>`);return}
+  tabs.insertAdjacentHTML('beforeend',`<button role="tab" id="tab-${p.id}" aria-selected="false" data-tab="${p.id}">${p.t}</button>`);
+  let inner='';
+  if(p.table) inner=compareTable();
+  else if(p.map) inner=mapTable();
+  else if(p.phone) inner=`<div class="phones"><div><div class="phone-stage" data-w="390" data-h="800">${phoneSheet()}</div><div class="cap">Milestone in a bottom sheet</div></div><div><div class="phone-stage" data-w="390" data-h="800">${phoneDrawer()}</div><div class="cap">Nav as a drawer</div></div></div>`;
+  else inner=`<div class="stage" data-w="1280" data-h="800" data-p="${p.id}"></div>`;
+  host.insertAdjacentHTML('beforeend',`<section class="panel" role="tabpanel" id="p-${p.id}" hidden><div class="frame-hd"><h2>${p.h}</h2>${p.hint?`<span class="hint">${p.hint}</span>`:''}</div>${inner}${p.after||''}</section>`);
+  const st=host.querySelector(`.stage[data-p="${p.id}"]`);
+  if(st){ if(p.state){STATES[p.id]={...p.state};st.innerHTML=opt1(STATES[p.id])} else st.innerHTML=p.make(); }
+});
+
+/* Option 1 interactions */
+host.addEventListener('click',e=>{
+  const st=e.target.closest('.stage'); if(!st||!STATES[st.dataset.p]) return;
+  const s=STATES[st.dataset.p];
+  const mk=e.target.closest('.mk'), nv=e.target.closest('[data-nav]'), act=e.target.closest('[data-act]'), tg=e.target.closest('[data-tog]');
+  if(mk){s.sel=mk.dataset.id; if(s.pane!=='display') s.pane='ms'; if(s.pane==='display'){s.pane='ms'}}
+  else if(nv){const v=nv.dataset.nav; s.view=['grid','report','notes','comments','mine','v-crit','v-risk','v-edit'].includes(v)?v:v; if(s.pane==='none'&&!['import','settings','help'].includes(v)) s.pane='ms';}
+  else if(tg){const k=tg.dataset.tog; s[k]=s[k]===false?true:false;}
+  else if(act){const a=act.dataset.act; if(a==='col') s.col=!s.col; if(a==='display') s.pane=s.pane==='display'?'ms':'display'; if(a==='clear') s.sel=null;}
+  else return;
+  st.innerHTML=opt1(s); fit(st);
+});
+
+/* Scale fixed-size frames to their container */
+function fit(st){const w=+st.dataset.w,h=+st.dataset.h,s=st.clientWidth/w;st.style.height=(h*s)+'px';st.style.setProperty('--s',s)}
+const ro=new ResizeObserver(es=>es.forEach(e=>fit(e.target)));
+document.querySelectorAll('.stage,.phone-stage').forEach(st=>{ro.observe(st);fit(st)});
+
+function select(id){
+  tabs.querySelectorAll('[role=tab]').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===id));
+  host.querySelectorAll('.panel').forEach(p=>p.hidden=p.id!=='p-'+id);
+  host.querySelectorAll('#p-'+id+' .stage,#p-'+id+' .phone-stage').forEach(fit);
+  try{localStorage.setItem('d31-tab',id)}catch(_){}
+}
+tabs.addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b)select(b.dataset.tab)});
+let start='opt1';
+const hash=location.hash.slice(1); if(hash&&document.getElementById('p-'+hash)) start=hash;
+else{try{const v=localStorage.getItem('d31-tab');if(v&&document.getElementById('p-'+v))start=v}catch(_){}}
+select(start);
+
+function compareTable(){
+  const R=[
+   ['Finding a function','<span class="pill g">One labelled nav</span>','<span class="pill a">Icon rail, tooltips</span>','<span class="pill g">Labelled tabs</span>','<span class="pill r">Two panels, icons</span>'],
+   ['Clicks to edit the next milestone','<span class="pill g">1 (click marker or J)</span>','<span class="pill a">1, overlay covers board</span>','<span class="pill r">3 (open, save, close)</span>','<span class="pill r">3</span>'],
+   ['Board reflow on selection','<span class="pill g">None</span>','<span class="pill g">None (overlay)</span>','<span class="pill g">None (modal)</span>','<span class="pill g">None (modal)</span>'],
+   ['See settings take effect','<span class="pill g">Yes, pane beside board</span>','<span class="pill g">Yes</span>','<span class="pill a">Partly</span>','<span class="pill g">Yes</span>'],
+   ['Chrome above the board','<span class="pill g">2 rows</span>','<span class="pill g">1 row</span>','<span class="pill a">3 rows</span>','<span class="pill r">5 rows</span>'],
+   ['Room for saved views and lists','<span class="pill g">Built in</span>','<span class="pill a">Inside a panel</span>','<span class="pill r">Tabs overflow</span>','<span class="pill r">None</span>'],
+   ['Phone','<span class="pill g">Drawer and sheet</span>','<span class="pill a">Rail becomes a bottom bar</span>','<span class="pill a">Tabs scroll</span>','<span class="pill a">As today</span>'],
+   ['Build effort [CONFIRM after spike]','<span class="pill r">High</span>','<span class="pill a">Medium</span>','<span class="pill g">Low</span>','<span class="pill t">None</span>'],
+   ['Rule change needed (D-20 split)','<span class="pill a">Yes</span>','<span class="pill a">Yes</span>','<span class="pill a">Yes</span>','<span class="pill t">No</span>']
+  ];
+  return `<div class="tbl-wrap"><table class="cmp"><thead><tr><th>Criterion</th><th>Option 1 · Recommended</th><th>Option 2</th><th>Option 3</th><th>Current</th></tr></thead><tbody>${R.map(r=>`<tr>${r.map((c,i)=>i?`<td class="score">${c}</td>`:`<th scope="row">${c}</th>`).join('')}</tr>`).join('')}</tbody></table></div>
+  <div class="notes"><div class="note"><h3>Decisions for Matt</h3><ol>
+   <li>Pick an option. Recommended: Option 1.</li>
+   <li>Approve retiring the D-20 left/right split in the project CLAUDE.md. It has to change before any build.</li>
+   <li>Filters: a chip row with Add filter (shown), or a Filters tab in the right pane. Recommended: the chip row.</li>
+   <li>Right pane default: pinned, or pinned only after the first selection. Recommended: pinned, with the empty state.</li>
+   <li>Saved views: which ones ship first. Shown: Critical, At risk, Edited this week.</li></ol></div>
+   <div class="note"><h3>Not in this pack</h3><ul><li>Pixel spec, component redlines or motion.</li><li>Dark theme frames. The palette already has a dark set, so it carries over.</li><li>Any change to the app. This is a design proposal only.</li></ul></div></div>`;
+}
+function mapTable(){
+  const M=[
+   ['Workspace: Notes','Left rail <code>#ws-panel</code>','Nav · My work · Notes (opens a list beside the board)','<code>toggleWorkspace</code>, <code>setWorkspaceSection</code>'],
+   ['Workspace: Comments and markups, exports','Left rail','Nav · My work · Comments. Exports move to the More menu','<code>setWorkspaceSection</code>'],
+   ['Workspace: User milestones','Left rail','Nav · My work · My milestones','<code>setWorkspaceSection</code>'],
+   ['View controls: Layout, Labels, Histogram, Dependencies','Right drawer tab','Right pane · Display, live beside the board','<code>toggleSettingsDrawer</code>, <code>setSettingsTab</code>'],
+   ['Fields and columns, Row comments','Right drawer tab','Right pane · Display · Columns','<code>setSettingsTab</code>'],
+   ['Baseline and Update toggle, Baseline shadow','Report heading','Command bar segment, and Display · Datasets','<code>setViewMode</code>'],
+   ['Sources, Import','Right drawer tabs','Nav bottom · Import and data (full screen)','<code>setSettingsTab</code>'],
+   ['Data settings, Diagnostics, Backups','Right drawer tabs','Nav bottom · Settings (full screen, sub-nav)','<code>setSettingsTab</code>'],
+   ['Help, Info, About','Right drawer tabs','Nav bottom · Help and about','<code>setSettingsTab</code>'],
+   ['Theme, Print, Save as, Colour','Header icons or More menu','More menu, and Settings · Theme and colour','existing handlers'],
+   ['Find, When, Status, Float, Annotations','Top filter bar','Chip row with Add filter. Search stays in the command bar','<code>toggleFilterBar</code>'],
+   ['Add milestone, Share report','Report heading','Command bar','existing handlers'],
+   ['Milestone edit (P66)','Modal <code>openMsDialog</code>','Pinned right pane, Details, Comments and History tabs','<code>openMsDialog</code> renders into the pane'],
+   ['Grid view','<code>openGridView</code>','Nav · Views · Grid','<code>openGridView</code>'],
+   ['Timeline board <code>#page-frame</code>','Centre','Centre, unchanged','none']
+  ];
+  return `<div class="tbl-wrap"><table class="cmp"><thead><tr><th>Control</th><th>Where it is now</th><th>Where it goes</th><th>Entry point kept</th></tr></thead><tbody>${M.map(r=>`<tr>${r.map((c,i)=>i?`<td>${c}</td>`:`<th scope="row">${c}</th>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+}
+</script>
