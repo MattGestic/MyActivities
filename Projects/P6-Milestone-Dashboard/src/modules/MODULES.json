@@ -215,6 +215,80 @@
       }
     },
     {
+      "id": "continue-file",
+      "dir": "continue-file",
+      "version": "1.0.0",
+      "status": "embedded",
+      "global": "SRETContinue",
+      "summary": "Reads a previously saved dashboard (.html state block or a whole-state .json) so a blank copy can continue from it (P79). Back end only: no DOM, never runs the file's scripts.",
+      "files": {
+        "js": [
+          "continue-file.js"
+        ]
+      },
+      "embed": {
+        "js": {
+          "slot": "app-script-modules",
+          "order": 50,
+          "header": "// ============================================================\n// CONTINUE-FILE MODULE (P79, TD-247): src/modules/continue-file/continue-file.js,\n// pasted unchanged. Defines window.SRETContinue only and reads no app global.\n// The app's adapter (continueRead / continueApply) sits beside the P76 backups.\n// ============================================================",
+          "footer": "// ============ END CONTINUE-FILE MODULE ============"
+        }
+      },
+      "deps": [],
+      "uses": [],
+      "tests": [
+        "tools/continue_file_test.mjs",
+        "tools/p79_continue_check.py"
+      ],
+      "docs": [
+        "src/modules/continue-file/MODULE.md",
+        "docs/decisions/D-31-continue-from-saved.md"
+      ],
+      "recorded": {
+        "version": "1.0.0",
+        "sources": {
+          "continue-file.js": "e8c23a4470a3df17"
+        }
+      }
+    },
+    {
+      "id": "quick-links",
+      "dir": "quick-links",
+      "version": "1.0.0",
+      "status": "embedded",
+      "global": "SRETQuickLinks",
+      "summary": "Two named links to where the dashboard's files are kept, validated (http, https or file only) and carried in every saved file (P80). Back end only: no DOM.",
+      "files": {
+        "js": [
+          "quick-links.js"
+        ]
+      },
+      "embed": {
+        "js": {
+          "slot": "app-script-modules",
+          "order": 60,
+          "header": "// ============================================================\n// QUICK-LINKS MODULE (P80, TD-248): src/modules/quick-links/quick-links.js,\n// pasted unchanged. Defines window.SRETQuickLinks only and reads no app global.\n// The app's adapter (quickLinksGet / quickLinksSet) sits beside the continue adapter.\n// ============================================================",
+          "footer": "// ============ END QUICK-LINKS MODULE ============"
+        }
+      },
+      "deps": [],
+      "uses": [],
+      "tests": [
+        "tools/quick_links_test.mjs",
+        "tools/p80_quick_links_check.py"
+      ],
+      "docs": [
+        "src/modules/quick-links/MODULE.md",
+        "docs/decisions/D-31-continue-from-saved.md"
+      ],
+      "recorded": {
+        "version": "1.0.0",
+        "sources": {
+          "quick-links.js": "f1b8c4fc24b50363"
+        }
+      }
+    },
+    {
       "id": "collections",
       "dir": "collections",
       "version": "0.1.0",
