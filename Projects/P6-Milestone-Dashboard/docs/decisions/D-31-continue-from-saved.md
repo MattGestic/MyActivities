@@ -82,3 +82,41 @@ Optional: dropping a file on the empty state (the interim UI does this for `.htm
 - `tools/continue_file_test.mjs`: the module alone.
 - `tools/p79_continue_check.py`: end to end in the browser.
 - Results: `docs/05-test-log.md`, TEST-82.
+
+## 8. Quick links (P80, TD-248)
+
+Matt, 2026-10-03: "In the blank version include two fields for two URLs or links that can be added as quick links to the storage location so these can be displayed in the future on the form. If there is a link available and being provided, then it'd be shown as a link to open whatever the title of the saved URL is."
+
+**What it is.** Up to two `{title, url}` links, usually to the SharePoint folder where the saved dashboards are kept. They are set once in the blank copy, which is then saved and distributed. They travel in the state block (`quickLinks`) of every file saved from it, in the backups, and through Continue from saved. A file with no `quickLinks` key leaves the current links as they are.
+
+**Rules.**
+- Only `http:`, `https:` and `file:` addresses are allowed.
+- A Windows or UNC path is turned into a `file:` URL.
+- A link with no title shows the host name, or the last folder of a path.
+- Links are re-checked whenever a file is loaded.
+- Links open in a new tab with `noopener`. The app still makes no request of its own.
+
+**Adapter contract** (module `SRETQuickLinks`, `src/modules/quick-links/`):
+
+```
+quickLinksGet()     -> [{title, url, label}]   0 to 2; label is what to display
+quickLinksSet(list) -> {ok, errors[], links}   list: [{title, url}] in slot order;
+                                               all or nothing; errors name the
+                                               slot ("Link 1: ..."); marks the
+                                               work unsaved when it changes
+document event 'sret:quicklinks'               fired on every change, including
+                                               a file, backup or continue load
+```
+
+**What the redesign provides.**
+1. A display of `quickLinksGet()` as links using `label`, wherever the form puts it.
+2. An edit form with two title and address pairs, which calls `quickLinksSet()` and shows `errors`.
+3. A redraw on `sret:quicklinks`.
+
+**Interim UI (to delete with §5).**
+- On the empty state: `#es-links`, holding `#ql-list` (the links) and the `#ql-edit` fold (four fields and Save links).
+- Functions `qlRender` and `qlSave`, and the `.ql-*` and `.es-links` CSS.
+- `ql-list` and `ql-msg` in `PUBLISH_CLEAR_IDS`.
+- The `#ql-edit` open-attribute strip in `publishDashboard()`.
+
+**Decision: shown on the empty state only (interim).** The use is getting to last period's file before choosing Continue from saved, which happens on the empty state. Showing them on a board with work is the redesign's call; the adapter already serves it.
