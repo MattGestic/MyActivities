@@ -3507,3 +3507,30 @@ This test covers TD-247 and D-31. The contract and the hand-off are in `docs/dec
 - No literal script start tag was added (the reader spells `<` as `\x3C`).
 
 **Not tested:** a real Android or Windows device. Every check is headless Chromium on Linux.
+
+## TEST-83: P80 quick links in the blank copy (v3.1.0-P80)
+
+This test covers TD-248 (D-31 §8).
+
+**New checks**
+- `quick_links_test.mjs`: 27/27.
+- `p80_quick_links_check.py`: 45/45.
+  - Blank app at 1440 and 390 wide.
+  - A saved blank copy opened as a file.
+  - Continue from a saved file, including one hand-edited to carry a `javascript:` link, which is dropped.
+
+**Pre-existing defect fixed:** every saved copy opened with the Unsaved changes pill lit. `publishDashboard()` cloned the page while the pill was showing; the clone now has it removed. Found by `p80_quick_links_check` C.
+
+**Selection: targeted, not the change-scoped default (Matt, 2026-10-03).**
+- **Why not the default:** the default selected 73 of 74 checks, because embedding a module re-selects every browser check (TD-246) and the version bump touches a region every check reads. Neither means a check is affected.
+- **What was chosen instead:** the checks covering what P80 touched:
+  - the feature checks: `p80`, `p79`;
+  - the Save, backup and saved-copy paths whose functions changed: `p76_loss_check`, `p71_check`, `p74_check`, `persist_check`;
+  - no network, for the links: `d23_check`;
+  - the new CSS: `theme_check`, `palette_swap_check`, `colour_audit`, `spacing_audit`;
+  - the module tooling: `modules_embed`, `modules_embed_test`;
+  - the node tests.
+- **Command:** `run_checks.py --all --only <those 16>`.
+- **Result:** 16 selected / 16 passed / 0 failed, 1.2 min.
+- **Not run:** the other browser checks. They exercise the board, card, grid, filters and import, and P80 changed none of that code.
+- **Exceptions accepted:** TD-246, until region splitting makes the default selection this narrow on its own.
