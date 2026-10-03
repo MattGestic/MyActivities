@@ -1,6 +1,6 @@
 # D-31: One left nav, slim command bar, milestone side panel or dialog
 
-**Status:** Option 1 chosen by Matt, 2026-10-03. Detailed design (round 2) in review. Mockups only, no app code changed. TD-247.
+**Status:** Option 1 chosen by Matt, 2026-10-03. Built as a modular UI kit in stages (below). Stage A kit is built standalone and is waiting for Matt's review; no app code changed yet. TD-247, TD-248.
 **Directed by:** Matt, 2026-10-03.
 - **Round 1:** two side panels plus a stacked header read as confusing. He asked for one segmented left panel in the style of a model-driven app, with Settings, Import and Info at the bottom, dedicated screens where a panel is too cramped, and a pinned right pane for milestone editing that shows an empty state rather than collapsing.
 - **Round 2:** Matt chose Option 1 and approved the empty state, Import, Settings and phone views. He asked for four things:
@@ -16,6 +16,29 @@
 Option 1: a labelled left nav (Views, My work, Saved views; Import and data, Settings, Help at the bottom), a 52 px command bar, a chip filter row, and the milestone card in a side panel or a dialog.
 
 Options 2 (icon rail) and 3 (top tabs) were considered and not chosen. They are kept in the mockup under "Considered".
+
+## Delivery stages (Matt, 2026-10-03)
+
+The redesign is built as a **modular UI kit**: components developed on their own with no app data, reusable in other instances, embedded into the app only through `tools/modules_embed.py` (D-30). Order: external containers, then internal cards, then app-specific components.
+
+**Kit rules, for every module:**
+- One shared token resource (`ui-tokens`) for colour, spacing, type, shape, elevation and motion.
+- `ui-` class prefix. No external classes, fonts, icons or network references.
+- Responsive for phone (up to 640 px), tablet (641 to 1024 px) and desktop.
+- Light theme only for now.
+- Containers own their padding; children never set outer margins.
+- Each module's `MODULE.md` records a **layout contract** (direction, wrap, padding, gap, and what truncates or scrolls) and a **motion** table.
+- Motion follows Material 3 and Fluent 2 durations and easing: one animation per action, no staggers, no motion on data. Anything that pushes past that budget is flagged instead of built.
+
+| Stage | Kit modules | App change | Status |
+|---|---|---|---|
+| A | `ui-tokens`, `ui-icons`, `ui-shell` (containers), `ui-surfaces` (cards), `ui-controls`, `ui-nav` (generic left nav) | After Matt's review: nav in the app on the existing entry points, base-screen tidy, P79 | Kit built and tested standalone; gallery `prototypes/ui-kit/` |
+| B | `ui-dialog`: generic dialog form with the typical controls around a dialog | The current milestone form hosted by it, not redesigned | Next |
+| C | `ui-sidepanel`: right panel, pinned, with an empty state | "Open milestones in: Dialog or Side panel" setting | Planned |
+| D | `ui-filterbar` (after a short D-32 design round) | Filters re-hosted; state and `applyFilter` kept | Planned |
+| Balance | Built from the same kit | Report date in the command bar, Display pane, Import and Settings screens, form refinement, schedule versions, saved views and Lists, phone sheet, CSV people fields (build register IDs) | Roadmap |
+
+**Correction (verified in code):** several schedules can already be uploaded. Append mode keeps them as `PRIMARY_SOURCES`, each with on/off, rename and remove, and they are shown together on one merged board, with source chips, a Source filter and source columns. What is not built is comparing versions of the same schedule (shared IDs are renamed on Append) and re-baselining. Build register B6 and B7 now say this.
 
 ## Rules the design follows
 

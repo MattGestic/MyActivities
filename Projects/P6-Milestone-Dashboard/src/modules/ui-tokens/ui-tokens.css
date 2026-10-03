@@ -1,0 +1,178 @@
+/* ============================================================
+   ui-tokens: the one shared resource for the SRET UI kit (D-31).
+   Every ui-* module reads only these custom properties. No ui-* module
+   writes a literal colour, size or duration of its own.
+
+   Light theme only for now (Matt, 2026-10-03). Dark is a later slot.
+
+   Palette values are copied from src/milestone-dashboard.html
+   html[data-theme="light"] (P55, palette Option A). They are declared at
+   :where(:root) so a host page that already defines --pal-* (the app does)
+   wins, and the kit and the app share one palette.
+   ============================================================ */
+:where(:root) {
+  /* ---- Palette (literal values live only here) ---- */
+  --pal-navy: #2b4a7a;
+  --pal-navy-strong: #1f3a63;
+  --pal-slate: #3d4b66;
+  --pal-on-header: #f4f5f8;
+  --pal-on-header-muted: #c6d2e6;
+  --pal-on-strong: #ffffff;
+  --pal-page: #f3f4f7;
+  --pal-surface: #ffffff;
+  --pal-surface-2: #fafbfc;
+  --pal-ink: #1b2230;
+  --pal-ink-2: #475063;
+  --pal-muted: #667085;
+  --pal-faint: #8a93a3;
+  --pal-line: #dde1e8;
+  --pal-line-soft: #e9ecf1;
+  --pal-line-strong: #b8c0d0;
+  --pal-teal: #0e7c86;
+  --pal-teal-deep: #0b6570;
+  --pal-teal-tint: #e1f1f2;
+  --pal-done: #2e8b57;
+  --pal-track: #2f6fdb;
+  --pal-risk: #c98a0b;
+  --pal-crit: #c2413a;
+  --pal-done-ink: #1f6b43;
+  --pal-risk-ink: #7a5306;
+  --pal-crit-ink: #8f2a24;
+  --pal-done-tint: #e6f2eb;
+  --pal-risk-tint: #fbf1dc;
+  --pal-crit-tint: #fbeceb;
+  --shadow-color: #0f172a;
+  --pal-scrim: #0a0c1e;
+}
+
+:root {
+  /* ---- Colour roles (components use these, never --pal-* directly) ---- */
+  --ui-bg-page: var(--pal-page);
+  --ui-bg-surface: var(--pal-surface);
+  --ui-bg-subtle: var(--pal-surface-2);
+  --ui-bg-hover: color-mix(in srgb, var(--pal-navy) 6%, var(--pal-surface));
+  --ui-bg-selected: var(--pal-teal-tint);
+  --ui-text: var(--pal-ink);
+  --ui-text-2: var(--pal-ink-2);
+  --ui-text-muted: var(--pal-muted);
+  --ui-text-faint: var(--pal-faint);
+  --ui-border: var(--pal-line);
+  --ui-border-soft: var(--pal-line-soft);
+  --ui-border-strong: var(--pal-line-strong);
+  --ui-accent: var(--pal-teal);
+  --ui-accent-strong: var(--pal-teal-deep);
+  --ui-accent-tint: var(--pal-teal-tint);
+  --ui-on-accent: var(--pal-on-strong);
+  --ui-brand: var(--pal-navy);
+  --ui-brand-strong: var(--pal-navy-strong);
+  --ui-on-brand: var(--pal-on-header);
+  --ui-on-brand-muted: var(--pal-on-header-muted);
+  --ui-on-brand-hover: color-mix(in srgb, var(--pal-on-strong) 9%, transparent);
+  --ui-on-brand-selected: color-mix(in srgb, var(--pal-on-strong) 16%, transparent);
+  --ui-on-brand-line: color-mix(in srgb, var(--pal-on-strong) 14%, transparent);
+  --ui-ok: var(--pal-done);       --ui-ok-ink: var(--pal-done-ink);   --ui-ok-tint: var(--pal-done-tint);
+  --ui-warn: var(--pal-risk);     --ui-warn-ink: var(--pal-risk-ink); --ui-warn-tint: var(--pal-risk-tint);
+  --ui-danger: var(--pal-crit);   --ui-danger-ink: var(--pal-crit-ink); --ui-danger-tint: var(--pal-crit-tint);
+  --ui-info: var(--pal-track);
+  --ui-scrim: color-mix(in srgb, var(--pal-scrim) 42%, transparent);
+  --ui-focus: 0 0 0 2px var(--pal-surface), 0 0 0 4px var(--pal-teal);
+
+  /* ---- Spacing scale (4 px base). Containers own padding; siblings use gap. ---- */
+  --ui-space-1: 4px;
+  --ui-space-2: 8px;
+  --ui-space-3: 12px;
+  --ui-space-4: 16px;
+  --ui-space-5: 20px;
+  --ui-space-6: 24px;
+  --ui-space-7: 32px;
+  --ui-space-8: 40px;
+  --ui-gutter: var(--ui-space-4);           /* page side gutter, phone */
+
+  /* ---- Type ---- */
+  --ui-font: 'Segoe UI Variable Text', 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --ui-font-mono: ui-monospace, 'Cascadia Mono', Consolas, Menlo, monospace;
+  --ui-text-xs: 11px;   --ui-lh-xs: 16px;   /* captions, group labels */
+  --ui-text-sm: 12px;   --ui-lh-sm: 16px;   /* help text, badges */
+  --ui-text-md: 13px;   --ui-lh-md: 20px;   /* body, controls */
+  --ui-text-lg: 14px;   --ui-lh-lg: 20px;   /* emphasised body, panel titles */
+  --ui-text-xl: 16px;   --ui-lh-xl: 24px;   /* dialog titles */
+  --ui-text-2xl: 20px;  --ui-lh-2xl: 28px;  /* screen titles */
+  --ui-weight-regular: 400;
+  --ui-weight-medium: 500;
+  --ui-weight-semibold: 600;
+  --ui-tracking-label: .06em;
+
+  /* ---- Shape ---- */
+  --ui-radius-sm: 4px;
+  --ui-radius-md: 6px;
+  --ui-radius-lg: 8px;
+  --ui-radius-xl: 12px;
+  --ui-radius-pill: 999px;
+
+  /* ---- Elevation (design-standard levels 0-3) ---- */
+  --ui-shadow-1: 0 1px 2px color-mix(in srgb, var(--shadow-color) 8%, transparent);
+  --ui-shadow-2: 0 4px 12px color-mix(in srgb, var(--shadow-color) 12%, transparent), 0 1px 3px color-mix(in srgb, var(--shadow-color) 8%, transparent);
+  --ui-shadow-3: 0 12px 32px color-mix(in srgb, var(--shadow-color) 18%, transparent), 0 2px 6px color-mix(in srgb, var(--shadow-color) 8%, transparent);
+
+  /* ---- Controls ---- */
+  --ui-ctl-h: 32px;          /* visible height of buttons, inputs, nav items */
+  --ui-ctl-h-sm: 24px;       /* compact (chips, badges row) */
+  --ui-hit: 40px;            /* minimum touch hit area, via padding or ::after */
+  --ui-icon: 18px;
+  --ui-icon-sm: 15px;
+
+  /* ---- Motion (Material 3 / Fluent 2 guidance) ----
+     Enter: decelerate. Exit: accelerate. Small state changes: standard.
+     Only transform and opacity animate, plus the one deliberate nav width change.
+     Budget: one animation per user action, no staggers, no motion on data. */
+  --ui-dur-fast: 120ms;      /* hover, toggles, small state changes */
+  --ui-dur-base: 200ms;      /* panels and nav width, exits */
+  --ui-dur-slow: 240ms;      /* dialogs and drawers entering */
+  --ui-ease-standard: cubic-bezier(.2, 0, 0, 1);
+  --ui-ease-enter: cubic-bezier(0, 0, 0, 1);       /* decelerate */
+  --ui-ease-exit: cubic-bezier(.3, 0, 1, 1);       /* accelerate */
+
+  /* ---- Layers ---- */
+  --ui-z-nav: 40;
+  --ui-z-aside: 50;
+  --ui-z-scrim: 60;
+  --ui-z-drawer: 70;
+  --ui-z-dialog: 80;
+  --ui-z-popover: 90;
+  --ui-z-toast: 100;
+
+  /* ---- Shell sizes ---- */
+  --ui-nav-w-expanded: 240px;
+  --ui-nav-w-rail: 60px;
+  --ui-nav-w-drawer: 288px;
+  --ui-header-h: 52px;
+  --ui-aside-w: 380px;
+
+  /* Breakpoints (documented constants; CSS cannot read variables in media queries):
+     phone <= 640px, tablet 641-1024px, desktop >= 1025px, wide >= 1280px. */
+}
+
+@media (min-width: 1025px) {
+  :root { --ui-gutter: var(--ui-space-6); }
+}
+@media (pointer: coarse) {
+  :root { --ui-ctl-h: 40px; }
+}
+/* The OS "reduce motion" accessibility setting is honoured automatically. */
+@media (prefers-reduced-motion: reduce) {
+  :root { --ui-dur-fast: 0ms; --ui-dur-base: 0ms; --ui-dur-slow: 0ms; }
+}
+
+/* Base for any kit root. Hosts that already style body are left alone. */
+.ui-root, .ui-root * { box-sizing: border-box; }
+.ui-root {
+  font-family: var(--ui-font);
+  font-size: var(--ui-text-md);
+  line-height: var(--ui-lh-md);
+  color: var(--ui-text);
+}
+.ui-root :focus-visible { outline: none; box-shadow: var(--ui-focus); }
+.ui-visually-hidden {
+  position: absolute !important; width: 1px; height: 1px; margin: -1px; padding: 0;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}

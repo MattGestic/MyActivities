@@ -10,8 +10,8 @@ Part of [D-31](D-31-shell-navigation.md). Functions the round-2 mockup shows tha
 | B3 | Setting: open in side panel or dialog | Dialog only | Setting in Settings, Behaviour; router in openMsDialog | Settings store | S |
 | B4 | Save and next; J and K keys | None | Visible-row order, key handler, unsaved-change check | renderRows order | S |
 | B5 | Report date in the top bar | Import step 4 only | Period control popover calling the existing setter | setReportDate, recomputeNowColFromReportDate | S |
-| B6 | Keep previous uploads as periods | Replace discards the previous import | Keep full copies per upload (decided 2026-09-28) | PRIMARY_SOURCES, TD-226 | M |
-| B7 | Compare with a chosen schedule | Baseline vs current only | Designation table, outline markers, on and off | src/modules/compare (standalone 0.1.0), TD-226 | L |
+| B6 | Keep previous uploads as periods of the same schedule | Several schedules can be uploaded (Append) and are shown together on one merged board, each with on/off, rename and remove. Shared Activity IDs are renamed on Append, so two versions of one schedule land as separate rows. Replace discards the previous import | Keep each upload as a dated period matched by Activity ID instead of renaming (full copies per upload, decided 2026-09-28) | PRIMARY_SOURCES, dedupeIncomingIds, TD-226 | M |
+| B7 | Compare with a chosen schedule | Baseline shadow against the merged current schedule only. No version-against-version comparison, no re-baseline control | Designation table (primary, secondary, alternate), outline markers, on and off | src/modules/compare (standalone 0.1.0), TD-226, needs B6 | L |
 | B8 | Period legend and movement line | Baseline ghost only, no line | Legend strip; connector layer between periods | showBaselineGhosts html:10470 | M |
 | B9 | Baseline finish and movement in the pane | Tooltip only | Derive by Activity ID | Ghost tooltip sum html:10502 | S |
 | B10 | Chip filter row with Add filter | Top filter bar | Chips reflect active filters; popover hosts the existing controls | toggleFilterBar, filter state | M |

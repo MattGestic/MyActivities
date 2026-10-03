@@ -416,6 +416,183 @@
           "user.css": "3bdbeefcb14d5bbd"
         }
       }
+    },
+    {
+      "id": "ui-tokens",
+      "dir": "ui-tokens",
+      "version": "0.1.0",
+      "status": "standalone",
+      "summary": "Shared design tokens for the UI kit (D-31): palette, colour roles, spacing, type, shape, elevation, motion, layers.",
+      "files": {
+        "css": [
+          "ui-tokens.css"
+        ]
+      },
+      "deps": [],
+      "uses": [],
+      "tests": [
+        "tools/ui_kit_test.mjs",
+        "tools/ui_kit_check.mjs"
+      ],
+      "recorded": {
+        "version": "0.1.0",
+        "sources": {
+          "ui-tokens.css": "4a0b5503ed862d72"
+        }
+      }
+    },
+    {
+      "id": "ui-icons",
+      "dir": "ui-icons",
+      "version": "0.1.0",
+      "status": "standalone",
+      "global": "SRETIcons",
+      "summary": "Inline SVG icon set for the UI kit (D-31).",
+      "files": {
+        "js": [
+          "ui-icons.js"
+        ]
+      },
+      "deps": [],
+      "uses": [],
+      "tests": [
+        "tools/ui_kit_test.mjs",
+        "tools/ui_kit_check.mjs"
+      ],
+      "recorded": {
+        "version": "0.1.0",
+        "sources": {
+          "ui-icons.js": "5bbd5b4f3f054fb6"
+        }
+      }
+    },
+    {
+      "id": "ui-shell",
+      "dir": "ui-shell",
+      "version": "0.1.0",
+      "status": "standalone",
+      "global": "SRETShell",
+      "summary": "App frame containers (D-31): nav, header, main, aside regions with phone, tablet and desktop behaviour.",
+      "files": {
+        "js": [
+          "ui-shell.js"
+        ],
+        "css": [
+          "ui-shell.css"
+        ]
+      },
+      "deps": [
+        "ui-tokens"
+      ],
+      "uses": [],
+      "tests": [
+        "tools/ui_kit_test.mjs",
+        "tools/ui_kit_check.mjs"
+      ],
+      "recorded": {
+        "version": "0.1.0",
+        "sources": {
+          "ui-shell.js": "840cd4eb2af8dccd",
+          "ui-shell.css": "b8dcdf73bbbfaa8b"
+        }
+      }
+    },
+    {
+      "id": "ui-surfaces",
+      "dir": "ui-surfaces",
+      "version": "0.1.0",
+      "status": "standalone",
+      "global": "SRETSurfaces",
+      "summary": "Cards and content containers (D-31): card, section, panel header, toolbar, tabs, fold, list, empty state, toast.",
+      "files": {
+        "js": [
+          "ui-surfaces.js"
+        ],
+        "css": [
+          "ui-surfaces.css"
+        ]
+      },
+      "deps": [
+        "ui-tokens",
+        "ui-icons"
+      ],
+      "uses": [],
+      "tests": [
+        "tools/ui_kit_test.mjs",
+        "tools/ui_kit_check.mjs"
+      ],
+      "recorded": {
+        "version": "0.1.0",
+        "sources": {
+          "ui-surfaces.js": "80945cab084f6373",
+          "ui-surfaces.css": "9a8f238e22a8447d"
+        }
+      }
+    },
+    {
+      "id": "ui-controls",
+      "dir": "ui-controls",
+      "version": "0.1.0",
+      "status": "standalone",
+      "global": "SRETControls",
+      "summary": "Form and action controls (D-31): buttons, inputs, select, switch, segmented, radio cards, chips, badges.",
+      "files": {
+        "js": [
+          "ui-controls.js"
+        ],
+        "css": [
+          "ui-controls.css"
+        ]
+      },
+      "deps": [
+        "ui-tokens"
+      ],
+      "uses": [],
+      "tests": [
+        "tools/ui_kit_test.mjs",
+        "tools/ui_kit_check.mjs"
+      ],
+      "recorded": {
+        "version": "0.1.0",
+        "sources": {
+          "ui-controls.js": "554b609a190b96d2",
+          "ui-controls.css": "be89a44dd26e1426"
+        }
+      }
+    },
+    {
+      "id": "ui-nav",
+      "dir": "ui-nav",
+      "version": "0.1.0",
+      "status": "standalone",
+      "global": "SRETNav",
+      "summary": "Generic left navigation panel (D-31): expanded, rail and drawer modes, groups, badges, keyboard.",
+      "files": {
+        "js": [
+          "ui-nav.js"
+        ],
+        "css": [
+          "ui-nav.css"
+        ]
+      },
+      "deps": [
+        "ui-tokens",
+        "ui-icons",
+        "ui-controls",
+        "ui-shell"
+      ],
+      "uses": [],
+      "tests": [
+        "tools/ui_kit_test.mjs",
+        "tools/ui_kit_check.mjs"
+      ],
+      "recorded": {
+        "version": "0.1.0",
+        "sources": {
+          "ui-nav.js": "dee3697e67b1e6ea",
+          "ui-nav.css": "7c73a538e46b9a98"
+        }
+      }
     }
   ]
 }

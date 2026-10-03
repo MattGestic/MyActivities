@@ -1,0 +1,2530 @@
+<title>SRET UI Kit</title>
+<style>/* src/modules/ui-tokens/ui-tokens.css */
+/* ============================================================
+   ui-tokens: the one shared resource for the SRET UI kit (D-31).
+   Every ui-* module reads only these custom properties. No ui-* module
+   writes a literal colour, size or duration of its own.
+
+   Light theme only for now (Matt, 2026-10-03). Dark is a later slot.
+
+   Palette values are copied from src/milestone-dashboard.html
+   html[data-theme="light"] (P55, palette Option A). They are declared at
+   :where(:root) so a host page that already defines --pal-* (the app does)
+   wins, and the kit and the app share one palette.
+   ============================================================ */
+:where(:root) {
+  /* ---- Palette (literal values live only here) ---- */
+  --pal-navy: #2b4a7a;
+  --pal-navy-strong: #1f3a63;
+  --pal-slate: #3d4b66;
+  --pal-on-header: #f4f5f8;
+  --pal-on-header-muted: #c6d2e6;
+  --pal-on-strong: #ffffff;
+  --pal-page: #f3f4f7;
+  --pal-surface: #ffffff;
+  --pal-surface-2: #fafbfc;
+  --pal-ink: #1b2230;
+  --pal-ink-2: #475063;
+  --pal-muted: #667085;
+  --pal-faint: #8a93a3;
+  --pal-line: #dde1e8;
+  --pal-line-soft: #e9ecf1;
+  --pal-line-strong: #b8c0d0;
+  --pal-teal: #0e7c86;
+  --pal-teal-deep: #0b6570;
+  --pal-teal-tint: #e1f1f2;
+  --pal-done: #2e8b57;
+  --pal-track: #2f6fdb;
+  --pal-risk: #c98a0b;
+  --pal-crit: #c2413a;
+  --pal-done-ink: #1f6b43;
+  --pal-risk-ink: #7a5306;
+  --pal-crit-ink: #8f2a24;
+  --pal-done-tint: #e6f2eb;
+  --pal-risk-tint: #fbf1dc;
+  --pal-crit-tint: #fbeceb;
+  --shadow-color: #0f172a;
+  --pal-scrim: #0a0c1e;
+}
+
+:root {
+  /* ---- Colour roles (components use these, never --pal-* directly) ---- */
+  --ui-bg-page: var(--pal-page);
+  --ui-bg-surface: var(--pal-surface);
+  --ui-bg-subtle: var(--pal-surface-2);
+  --ui-bg-hover: color-mix(in srgb, var(--pal-navy) 6%, var(--pal-surface));
+  --ui-bg-selected: var(--pal-teal-tint);
+  --ui-text: var(--pal-ink);
+  --ui-text-2: var(--pal-ink-2);
+  --ui-text-muted: var(--pal-muted);
+  --ui-text-faint: var(--pal-faint);
+  --ui-border: var(--pal-line);
+  --ui-border-soft: var(--pal-line-soft);
+  --ui-border-strong: var(--pal-line-strong);
+  --ui-accent: var(--pal-teal);
+  --ui-accent-strong: var(--pal-teal-deep);
+  --ui-accent-tint: var(--pal-teal-tint);
+  --ui-on-accent: var(--pal-on-strong);
+  --ui-brand: var(--pal-navy);
+  --ui-brand-strong: var(--pal-navy-strong);
+  --ui-on-brand: var(--pal-on-header);
+  --ui-on-brand-muted: var(--pal-on-header-muted);
+  --ui-on-brand-hover: color-mix(in srgb, var(--pal-on-strong) 9%, transparent);
+  --ui-on-brand-selected: color-mix(in srgb, var(--pal-on-strong) 16%, transparent);
+  --ui-on-brand-line: color-mix(in srgb, var(--pal-on-strong) 14%, transparent);
+  --ui-ok: var(--pal-done);       --ui-ok-ink: var(--pal-done-ink);   --ui-ok-tint: var(--pal-done-tint);
+  --ui-warn: var(--pal-risk);     --ui-warn-ink: var(--pal-risk-ink); --ui-warn-tint: var(--pal-risk-tint);
+  --ui-danger: var(--pal-crit);   --ui-danger-ink: var(--pal-crit-ink); --ui-danger-tint: var(--pal-crit-tint);
+  --ui-info: var(--pal-track);
+  --ui-scrim: color-mix(in srgb, var(--pal-scrim) 42%, transparent);
+  --ui-focus: 0 0 0 2px var(--pal-surface), 0 0 0 4px var(--pal-teal);
+
+  /* ---- Spacing scale (4 px base). Containers own padding; siblings use gap. ---- */
+  --ui-space-1: 4px;
+  --ui-space-2: 8px;
+  --ui-space-3: 12px;
+  --ui-space-4: 16px;
+  --ui-space-5: 20px;
+  --ui-space-6: 24px;
+  --ui-space-7: 32px;
+  --ui-space-8: 40px;
+  --ui-gutter: var(--ui-space-4);           /* page side gutter, phone */
+
+  /* ---- Type ---- */
+  --ui-font: 'Segoe UI Variable Text', 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --ui-font-mono: ui-monospace, 'Cascadia Mono', Consolas, Menlo, monospace;
+  --ui-text-xs: 11px;   --ui-lh-xs: 16px;   /* captions, group labels */
+  --ui-text-sm: 12px;   --ui-lh-sm: 16px;   /* help text, badges */
+  --ui-text-md: 13px;   --ui-lh-md: 20px;   /* body, controls */
+  --ui-text-lg: 14px;   --ui-lh-lg: 20px;   /* emphasised body, panel titles */
+  --ui-text-xl: 16px;   --ui-lh-xl: 24px;   /* dialog titles */
+  --ui-text-2xl: 20px;  --ui-lh-2xl: 28px;  /* screen titles */
+  --ui-weight-regular: 400;
+  --ui-weight-medium: 500;
+  --ui-weight-semibold: 600;
+  --ui-tracking-label: .06em;
+
+  /* ---- Shape ---- */
+  --ui-radius-sm: 4px;
+  --ui-radius-md: 6px;
+  --ui-radius-lg: 8px;
+  --ui-radius-xl: 12px;
+  --ui-radius-pill: 999px;
+
+  /* ---- Elevation (design-standard levels 0-3) ---- */
+  --ui-shadow-1: 0 1px 2px color-mix(in srgb, var(--shadow-color) 8%, transparent);
+  --ui-shadow-2: 0 4px 12px color-mix(in srgb, var(--shadow-color) 12%, transparent), 0 1px 3px color-mix(in srgb, var(--shadow-color) 8%, transparent);
+  --ui-shadow-3: 0 12px 32px color-mix(in srgb, var(--shadow-color) 18%, transparent), 0 2px 6px color-mix(in srgb, var(--shadow-color) 8%, transparent);
+
+  /* ---- Controls ---- */
+  --ui-ctl-h: 32px;          /* visible height of buttons, inputs, nav items */
+  --ui-ctl-h-sm: 24px;       /* compact (chips, badges row) */
+  --ui-hit: 40px;            /* minimum touch hit area, via padding or ::after */
+  --ui-icon: 18px;
+  --ui-icon-sm: 15px;
+
+  /* ---- Motion (Material 3 / Fluent 2 guidance) ----
+     Enter: decelerate. Exit: accelerate. Small state changes: standard.
+     Only transform and opacity animate, plus the one deliberate nav width change.
+     Budget: one animation per user action, no staggers, no motion on data. */
+  --ui-dur-fast: 120ms;      /* hover, toggles, small state changes */
+  --ui-dur-base: 200ms;      /* panels and nav width, exits */
+  --ui-dur-slow: 240ms;      /* dialogs and drawers entering */
+  --ui-ease-standard: cubic-bezier(.2, 0, 0, 1);
+  --ui-ease-enter: cubic-bezier(0, 0, 0, 1);       /* decelerate */
+  --ui-ease-exit: cubic-bezier(.3, 0, 1, 1);       /* accelerate */
+
+  /* ---- Layers ---- */
+  --ui-z-nav: 40;
+  --ui-z-aside: 50;
+  --ui-z-scrim: 60;
+  --ui-z-drawer: 70;
+  --ui-z-dialog: 80;
+  --ui-z-popover: 90;
+  --ui-z-toast: 100;
+
+  /* ---- Shell sizes ---- */
+  --ui-nav-w-expanded: 240px;
+  --ui-nav-w-rail: 60px;
+  --ui-nav-w-drawer: 288px;
+  --ui-header-h: 52px;
+  --ui-aside-w: 380px;
+
+  /* Breakpoints (documented constants; CSS cannot read variables in media queries):
+     phone <= 640px, tablet 641-1024px, desktop >= 1025px, wide >= 1280px. */
+}
+
+@media (min-width: 1025px) {
+  :root { --ui-gutter: var(--ui-space-6); }
+}
+@media (pointer: coarse) {
+  :root { --ui-ctl-h: 40px; }
+}
+/* The OS "reduce motion" accessibility setting is honoured automatically. */
+@media (prefers-reduced-motion: reduce) {
+  :root { --ui-dur-fast: 0ms; --ui-dur-base: 0ms; --ui-dur-slow: 0ms; }
+}
+
+/* Base for any kit root. Hosts that already style body are left alone. */
+.ui-root, .ui-root * { box-sizing: border-box; }
+.ui-root {
+  font-family: var(--ui-font);
+  font-size: var(--ui-text-md);
+  line-height: var(--ui-lh-md);
+  color: var(--ui-text);
+}
+.ui-root :focus-visible { outline: none; box-shadow: var(--ui-focus); }
+.ui-visually-hidden {
+  position: absolute !important; width: 1px; height: 1px; margin: -1px; padding: 0;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+</style><style>/* src/modules/ui-surfaces/ui-surfaces.css */
+/* ============================================================
+   ui-surfaces: internal cards and content containers (D-31).
+   card, section, panel header, toolbar, tabs, fold, list, empty state, toast.
+   Containers own their padding; children are spaced with gap. Uses only
+   ui-tokens. Layout contract in MODULE.md.
+   ============================================================ */
+
+/* ---- Card ---- */
+.ui-card {
+  display: flex; flex-direction: column;
+  min-width: 0;
+  background: var(--ui-bg-surface);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-lg);
+  box-shadow: var(--ui-shadow-1);
+}
+.ui-card__header {
+  display: flex; flex-direction: row; flex-wrap: nowrap; align-items: center;
+  gap: var(--ui-space-2);
+  padding: var(--ui-space-3) var(--ui-space-4);
+  border-bottom: 1px solid var(--ui-border-soft);
+  min-width: 0;
+}
+.ui-card__title {
+  flex: 1 1 auto; min-width: 0; margin: 0;
+  font-size: var(--ui-text-lg); line-height: var(--ui-lh-lg); font-weight: var(--ui-weight-semibold);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ui-card__body {
+  display: flex; flex-direction: column; gap: var(--ui-space-3);
+  padding: var(--ui-space-4);
+  min-width: 0;
+}
+.ui-card__footer {
+  display: flex; flex-direction: row; flex-wrap: wrap; justify-content: flex-end; align-items: center;
+  gap: var(--ui-space-2);
+  padding: var(--ui-space-3) var(--ui-space-4);
+  border-top: 1px solid var(--ui-border-soft);
+  background: var(--ui-bg-subtle);
+  border-radius: 0 0 var(--ui-radius-lg) var(--ui-radius-lg);
+}
+.ui-card--flat { box-shadow: none; }
+.ui-card--interactive { transition: box-shadow var(--ui-dur-fast) var(--ui-ease-standard), border-color var(--ui-dur-fast) var(--ui-ease-standard); cursor: pointer; }
+.ui-card--interactive:hover { box-shadow: var(--ui-shadow-2); border-color: var(--ui-border-strong); }
+
+/* ---- Section (a titled group inside a card or panel) ---- */
+.ui-section { display: flex; flex-direction: column; gap: var(--ui-space-2); min-width: 0; }
+.ui-section__label {
+  margin: 0;
+  font-size: var(--ui-text-xs); line-height: var(--ui-lh-xs); font-weight: var(--ui-weight-semibold);
+  letter-spacing: var(--ui-tracking-label); text-transform: uppercase; color: var(--ui-text-muted);
+}
+
+/* ---- Panel header (title row of a pane, drawer or screen) ---- */
+.ui-panel-header {
+  display: flex; flex-direction: row; flex-wrap: nowrap; align-items: center;
+  gap: var(--ui-space-2);
+  min-height: var(--ui-header-h);
+  padding: var(--ui-space-2) var(--ui-space-3) var(--ui-space-2) var(--ui-space-4);
+  border-bottom: 1px solid var(--ui-border);
+  min-width: 0;
+}
+.ui-panel-header__title {
+  flex: 1 1 auto; min-width: 0; margin: 0;
+  font-size: var(--ui-text-lg); line-height: var(--ui-lh-lg); font-weight: var(--ui-weight-semibold);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ui-panel-header__actions { display: flex; flex: 0 0 auto; gap: var(--ui-space-1); }
+
+/* ---- Toolbar (a row of controls; wraps on narrow widths) ---- */
+.ui-toolbar {
+  display: flex; flex-direction: row; flex-wrap: wrap; align-items: center;
+  gap: var(--ui-space-2);
+  min-width: 0;
+}
+.ui-toolbar__spacer { flex: 1 1 auto; }
+.ui-toolbar--scroll { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; }
+
+/* ---- Tabs (role=tablist; SRETSurfaces.tabs wires keyboard and selection) ---- */
+.ui-tabs {
+  display: flex; flex-direction: row; flex-wrap: nowrap;
+  gap: var(--ui-space-1);
+  padding-inline: var(--ui-space-3);
+  border-bottom: 1px solid var(--ui-border);
+  overflow-x: auto; scrollbar-width: none;
+}
+.ui-tab {
+  position: relative; flex: 0 0 auto;
+  height: 40px; padding: 0 var(--ui-space-3);
+  border: 0; background: none; cursor: pointer;
+  font: inherit; font-size: var(--ui-text-md); color: var(--ui-text-muted); white-space: nowrap;
+  transition: color var(--ui-dur-fast) var(--ui-ease-standard);
+}
+.ui-tab:hover { color: var(--ui-text); }
+.ui-tab::after {
+  content: ""; position: absolute; left: var(--ui-space-2); right: var(--ui-space-2); bottom: -1px; height: 2px;
+  border-radius: 2px 2px 0 0; background: var(--ui-accent);
+  transform: scaleX(0); transition: transform var(--ui-dur-base) var(--ui-ease-standard);
+}
+.ui-tab[aria-selected="true"] { color: var(--ui-brand-strong); font-weight: var(--ui-weight-semibold); }
+.ui-tab[aria-selected="true"]::after { transform: scaleX(1); }
+.ui-tabpanel[hidden] { display: none; }
+
+/* ---- Fold (disclosure built on details/summary) ---- */
+.ui-fold { border-top: 1px solid var(--ui-border-soft); }
+.ui-fold > summary {
+  display: flex; align-items: center; gap: var(--ui-space-2);
+  min-height: var(--ui-ctl-h); padding: var(--ui-space-2) 0;
+  cursor: pointer; list-style: none; color: var(--ui-text-2);
+}
+.ui-fold > summary::-webkit-details-marker { display: none; }
+.ui-fold > summary .ui-icon { margin-left: auto; width: var(--ui-icon-sm); height: var(--ui-icon-sm); transition: transform var(--ui-dur-base) var(--ui-ease-standard); }
+.ui-fold[open] > summary .ui-icon { transform: rotate(180deg); }
+.ui-fold__body { display: flex; flex-direction: column; gap: var(--ui-space-3); padding-bottom: var(--ui-space-3); }
+
+/* ---- List ---- */
+.ui-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.ui-list-item {
+  display: flex; flex-direction: row; flex-wrap: nowrap; align-items: center;
+  gap: var(--ui-space-3);
+  min-height: 44px; padding: var(--ui-space-2) var(--ui-space-4);
+  border-bottom: 1px solid var(--ui-border-soft);
+  min-width: 0;
+}
+.ui-list-item__main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.ui-list-item__title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ui-list-item__meta { font-size: var(--ui-text-sm); line-height: var(--ui-lh-sm); color: var(--ui-text-muted); }
+.ui-list-item__end { flex: 0 0 auto; display: flex; gap: var(--ui-space-2); align-items: center; }
+button.ui-list-item, .ui-list-item--action { width: 100%; border: 0; border-bottom: 1px solid var(--ui-border-soft); background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; transition: background-color var(--ui-dur-fast) var(--ui-ease-standard); }
+button.ui-list-item:hover, .ui-list-item--action:hover { background: var(--ui-bg-hover); }
+
+/* ---- Empty state ---- */
+.ui-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--ui-space-3);
+  padding: var(--ui-space-7) var(--ui-space-5);
+  text-align: center; color: var(--ui-text-2);
+}
+.ui-empty__glyph {
+  width: 56px; height: 56px; border-radius: var(--ui-radius-xl);
+  display: grid; place-items: center;
+  background: var(--ui-bg-subtle); border: 1px dashed var(--ui-border-strong); color: var(--ui-text-faint);
+}
+.ui-empty__title { margin: 0; font-size: var(--ui-text-lg); line-height: var(--ui-lh-lg); font-weight: var(--ui-weight-semibold); color: var(--ui-text); }
+.ui-empty__text { margin: 0; max-width: 36ch; }
+
+/* ---- Toast (SRETSurfaces.toast) ---- */
+.ui-toast-region {
+  position: fixed; left: 50%; bottom: var(--ui-space-5); transform: translateX(-50%);
+  z-index: var(--ui-z-toast);
+  display: flex; flex-direction: column; align-items: center; gap: var(--ui-space-2);
+  width: min(420px, calc(100vw - 2 * var(--ui-space-4)));
+  pointer-events: none;
+}
+.ui-toast {
+  display: flex; align-items: center; gap: var(--ui-space-3);
+  width: 100%; padding: var(--ui-space-3) var(--ui-space-4);
+  border-radius: var(--ui-radius-lg);
+  background: var(--ui-text); color: var(--ui-bg-surface);
+  box-shadow: var(--ui-shadow-3);
+  pointer-events: auto;
+  opacity: 0; transform: translateY(8px);
+  transition: opacity var(--ui-dur-base) var(--ui-ease-enter), transform var(--ui-dur-base) var(--ui-ease-enter);
+}
+.ui-toast[data-show="true"] { opacity: 1; transform: none; }
+.ui-toast__text { flex: 1 1 auto; min-width: 0; }
+</style><style>/* src/modules/ui-controls/ui-controls.css */
+/* ============================================================
+   ui-controls: form and action controls (D-31).
+   button, icon button, input, textarea, select, switch, segmented control,
+   radio card, chip, badge, count, field, field grid.
+   Visible control height is --ui-ctl-h; touch hit area is --ui-hit,
+   reached with ::after, never by growing the visible box.
+   Uses only ui-tokens. Layout contract in MODULE.md.
+   ============================================================ */
+
+/* ---- Buttons ---- */
+.ui-btn {
+  position: relative;
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--ui-space-2);
+  height: var(--ui-ctl-h); padding: 0 var(--ui-space-3);
+  border: 1px solid var(--ui-border-strong); border-radius: var(--ui-radius-md);
+  background: var(--ui-bg-surface); color: var(--ui-brand-strong);
+  font: inherit; font-size: var(--ui-text-md); font-weight: var(--ui-weight-medium); white-space: nowrap;
+  cursor: pointer; user-select: none;
+  transition: background-color var(--ui-dur-fast) var(--ui-ease-standard), border-color var(--ui-dur-fast) var(--ui-ease-standard), color var(--ui-dur-fast) var(--ui-ease-standard), transform var(--ui-dur-fast) var(--ui-ease-standard);
+}
+.ui-btn::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: max(100%, var(--ui-hit)); transform: translateY(-50%); }
+.ui-btn:hover { background: var(--ui-bg-hover); }
+.ui-btn:active { transform: scale(.98); }
+.ui-btn[disabled], .ui-btn[aria-disabled="true"] { opacity: .5; cursor: not-allowed; transform: none; }
+.ui-btn .ui-icon { width: var(--ui-icon-sm); height: var(--ui-icon-sm); flex: none; }
+.ui-btn--primary { background: var(--ui-brand-strong); border-color: var(--ui-brand-strong); color: var(--ui-on-accent); }
+.ui-btn--primary:hover { background: var(--ui-brand); border-color: var(--ui-brand); }
+.ui-btn--accent { background: var(--ui-accent); border-color: var(--ui-accent); color: var(--ui-on-accent); }
+.ui-btn--accent:hover { background: var(--ui-accent-strong); border-color: var(--ui-accent-strong); }
+.ui-btn--ghost { border-color: transparent; background: transparent; color: var(--ui-text-2); }
+.ui-btn--ghost:hover { background: var(--ui-bg-hover); color: var(--ui-text); }
+.ui-btn--danger { color: var(--ui-danger-ink); border-color: var(--ui-danger); }
+.ui-btn--danger:hover { background: var(--ui-danger-tint); }
+.ui-btn--block { width: 100%; }
+.ui-btn--icon { width: var(--ui-ctl-h); padding: 0; }
+.ui-btn--icon::after { left: 50%; width: max(100%, var(--ui-hit)); transform: translate(-50%, -50%); }
+.ui-btn--icon .ui-icon { width: var(--ui-icon); height: var(--ui-icon); }
+/* Buttons on a brand-coloured bar (header, nav) */
+.ui-on-brand .ui-btn { background: transparent; color: var(--ui-on-brand); border-color: var(--ui-on-brand-line); }
+.ui-on-brand .ui-btn:hover { background: var(--ui-on-brand-hover); }
+.ui-on-brand .ui-btn--ghost { border-color: transparent; }
+.ui-on-brand .ui-btn--accent { background: var(--ui-accent); border-color: var(--ui-accent); color: var(--ui-on-accent); }
+
+/* ---- Text inputs ---- */
+.ui-input, .ui-textarea, .ui-select {
+  width: 100%; min-width: 0;
+  height: var(--ui-ctl-h); padding: 0 var(--ui-space-3);
+  border: 1px solid var(--ui-border-strong); border-radius: var(--ui-radius-md);
+  background: var(--ui-bg-surface); color: var(--ui-text);
+  font: inherit; font-size: var(--ui-text-md);
+  transition: border-color var(--ui-dur-fast) var(--ui-ease-standard), box-shadow var(--ui-dur-fast) var(--ui-ease-standard);
+}
+.ui-input::placeholder, .ui-textarea::placeholder { color: var(--ui-text-faint); }
+.ui-input:hover, .ui-textarea:hover, .ui-select:hover { border-color: var(--ui-text-faint); }
+.ui-input:focus, .ui-textarea:focus, .ui-select:focus { outline: none; border-color: var(--ui-accent); box-shadow: 0 0 0 3px var(--ui-accent-tint); }
+.ui-input[aria-invalid="true"], .ui-textarea[aria-invalid="true"] { border-color: var(--ui-danger); }
+.ui-input[readonly] { background: var(--ui-bg-subtle); color: var(--ui-text-2); }
+.ui-textarea { height: auto; min-height: 80px; padding: var(--ui-space-2) var(--ui-space-3); line-height: var(--ui-lh-md); resize: vertical; }
+.ui-select {
+  appearance: none; padding-right: var(--ui-space-7); cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, var(--ui-text-muted) 50%), linear-gradient(135deg, var(--ui-text-muted) 50%, transparent 50%);
+  background-position: calc(100% - 17px) 50%, calc(100% - 12px) 50%;
+  background-size: 5px 5px; background-repeat: no-repeat;
+}
+.ui-input-wrap { position: relative; display: flex; align-items: center; min-width: 0; }
+.ui-input-wrap > .ui-icon { position: absolute; left: var(--ui-space-3); width: var(--ui-icon-sm); height: var(--ui-icon-sm); color: var(--ui-text-muted); pointer-events: none; }
+.ui-input-wrap > .ui-input { padding-left: var(--ui-space-8); }
+
+/* ---- Field (label, control, help, error) ---- */
+.ui-field { display: flex; flex-direction: column; gap: var(--ui-space-1); min-width: 0; }
+.ui-field__label { font-size: var(--ui-text-sm); line-height: var(--ui-lh-sm); font-weight: var(--ui-weight-medium); color: var(--ui-text-2); }
+.ui-field__help { font-size: var(--ui-text-sm); line-height: var(--ui-lh-sm); color: var(--ui-text-muted); }
+.ui-field__error { font-size: var(--ui-text-sm); line-height: var(--ui-lh-sm); color: var(--ui-danger-ink); }
+.ui-field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--ui-space-3) var(--ui-space-4); }
+.ui-field-grid > .ui-field--full { grid-column: 1 / -1; }
+@media (max-width: 640px) { .ui-field-grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---- Switch (button role=switch; SRETControls toggles aria-checked) ---- */
+.ui-switch {
+  position: relative; flex: none;
+  width: 36px; height: 20px; padding: 0;
+  border: 0; border-radius: var(--ui-radius-pill);
+  background: var(--ui-border-strong); cursor: pointer;
+  transition: background-color var(--ui-dur-fast) var(--ui-ease-standard);
+}
+.ui-switch::before {
+  content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%;
+  background: var(--ui-bg-surface); box-shadow: var(--ui-shadow-1);
+  transition: transform var(--ui-dur-fast) var(--ui-ease-standard);
+}
+.ui-switch::after { content: ""; position: absolute; left: 50%; top: 50%; width: var(--ui-hit); height: var(--ui-hit); transform: translate(-50%, -50%); }
+.ui-switch[aria-checked="true"] { background: var(--ui-accent); }
+.ui-switch[aria-checked="true"]::before { transform: translateX(16px); }
+.ui-switch-row {
+  display: flex; flex-direction: row; flex-wrap: nowrap; align-items: center; justify-content: space-between;
+  gap: var(--ui-space-3); min-height: var(--ui-hit);
+  border-bottom: 1px solid var(--ui-border-soft);
+}
+.ui-switch-row__label { flex: 1 1 auto; min-width: 0; }
+
+/* ---- Segmented control (role=radiogroup) ---- */
+.ui-segmented {
+  display: inline-flex; flex-wrap: nowrap;
+  padding: 2px; gap: 2px;
+  border-radius: var(--ui-radius-md);
+  background: var(--ui-border-soft);
+}
+.ui-segmented__opt {
+  position: relative;
+  height: calc(var(--ui-ctl-h) - 4px); padding: 0 var(--ui-space-3);
+  border: 0; border-radius: var(--ui-radius-sm);
+  background: transparent; color: var(--ui-text-2);
+  font: inherit; font-size: var(--ui-text-md); white-space: nowrap; cursor: pointer;
+  transition: background-color var(--ui-dur-fast) var(--ui-ease-standard), color var(--ui-dur-fast) var(--ui-ease-standard), box-shadow var(--ui-dur-fast) var(--ui-ease-standard);
+}
+.ui-segmented__opt[aria-checked="true"] { background: var(--ui-bg-surface); color: var(--ui-brand-strong); font-weight: var(--ui-weight-semibold); box-shadow: var(--ui-shadow-1); }
+
+/* ---- Radio card (choice with description) ---- */
+.ui-radio-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: var(--ui-space-3); }
+.ui-radio-card {
+  display: flex; flex-direction: column; gap: var(--ui-space-2);
+  padding: var(--ui-space-3) var(--ui-space-4);
+  border: 1.5px solid var(--ui-border); border-radius: var(--ui-radius-lg);
+  background: var(--ui-bg-surface); color: var(--ui-text-2);
+  font: inherit; text-align: left; cursor: pointer; min-width: 0;
+  transition: border-color var(--ui-dur-fast) var(--ui-ease-standard), background-color var(--ui-dur-fast) var(--ui-ease-standard);
+}
+.ui-radio-card__title { display: flex; align-items: center; gap: var(--ui-space-2); color: var(--ui-text); font-weight: var(--ui-weight-semibold); }
+.ui-radio-card__title::before {
+  content: ""; width: 16px; height: 16px; border-radius: 50%; flex: none; box-sizing: border-box;
+  border: 1.5px solid var(--ui-border-strong);
+  transition: border-width var(--ui-dur-fast) var(--ui-ease-standard), border-color var(--ui-dur-fast) var(--ui-ease-standard);
+}
+.ui-radio-card[aria-checked="true"] { border-color: var(--ui-accent); background: var(--ui-accent-tint); }
+.ui-radio-card[aria-checked="true"] .ui-radio-card__title::before { border: 5px solid var(--ui-accent); }
+
+/* ---- Chip ---- */
+.ui-chips { display: flex; flex-direction: row; flex-wrap: wrap; gap: var(--ui-space-2); min-width: 0; }
+.ui-chip {
+  display: inline-flex; align-items: center; gap: var(--ui-space-1);
+  height: 28px; padding: 0 var(--ui-space-3);
+  border: 1px solid var(--ui-border); border-radius: var(--ui-radius-pill);
+  background: var(--ui-bg-surface); color: var(--ui-text-2);
+  font: inherit; font-size: var(--ui-text-sm); white-space: nowrap; max-width: 100%;
+  cursor: pointer;
+  transition: background-color var(--ui-dur-fast) var(--ui-ease-standard), border-color var(--ui-dur-fast) var(--ui-ease-standard);
+}
+.ui-chip > span { overflow: hidden; text-overflow: ellipsis; }
+.ui-chip[aria-pressed="true"], .ui-chip--active { background: var(--ui-accent-tint); border-color: transparent; color: var(--ui-accent-strong); font-weight: var(--ui-weight-medium); }
+.ui-chip__remove { display: inline-grid; place-items: center; width: 18px; height: 18px; margin-right: calc(-1 * var(--ui-space-1)); border: 0; border-radius: 50%; background: none; color: inherit; cursor: pointer; }
+.ui-chip__remove:hover { background: color-mix(in srgb, currentColor 14%, transparent); }
+.ui-chip__remove .ui-icon { width: 12px; height: 12px; }
+.ui-chip--add { border-style: dashed; color: var(--ui-text-2); }
+
+/* ---- Badge and count ---- */
+.ui-badge {
+  display: inline-flex; align-items: center; gap: var(--ui-space-1);
+  height: 20px; padding: 0 var(--ui-space-2); border-radius: var(--ui-radius-pill);
+  font-size: var(--ui-text-xs); line-height: var(--ui-lh-xs); font-weight: var(--ui-weight-semibold); white-space: nowrap;
+  background: var(--ui-border-soft); color: var(--ui-text-2);
+}
+.ui-badge--accent { background: var(--ui-accent-tint); color: var(--ui-accent-strong); }
+.ui-badge--ok { background: var(--ui-ok-tint); color: var(--ui-ok-ink); }
+.ui-badge--warn { background: var(--ui-warn-tint); color: var(--ui-warn-ink); }
+.ui-badge--danger { background: var(--ui-danger-tint); color: var(--ui-danger-ink); }
+.ui-count {
+  display: inline-grid; place-items: center; min-width: 20px; height: 18px; padding: 0 6px;
+  border-radius: var(--ui-radius-pill);
+  font-size: var(--ui-text-xs); line-height: 1; font-weight: var(--ui-weight-semibold); font-variant-numeric: tabular-nums;
+  background: var(--ui-border-soft); color: var(--ui-text-2);
+}
+.ui-count--warn { background: var(--ui-warn); color: var(--ui-on-accent); }
+.ui-count--danger { background: var(--ui-danger); color: var(--ui-on-accent); }
+.ui-count--accent { background: var(--ui-accent); color: var(--ui-on-accent); }
+</style><style>
+  /* Gallery page only. Built from the kit's own tokens and components. */
+  body { margin: 0; background: var(--ui-bg-page); }
+  .g-wrap { max-width: 1480px; margin: 0 auto; padding: var(--ui-space-5) var(--ui-gutter) var(--ui-space-8); display: flex; flex-direction: column; gap: var(--ui-space-6); }
+  .g-hd { display: flex; flex-direction: column; gap: var(--ui-space-2); }
+  .g-hd h1 { margin: 0; font-size: var(--ui-text-2xl); line-height: var(--ui-lh-2xl); font-weight: var(--ui-weight-semibold); }
+  .g-hd p { margin: 0; color: var(--ui-text-2); max-width: 88ch; }
+  .g-sec { display: flex; flex-direction: column; gap: var(--ui-space-3); min-width: 0; }
+  .g-sec > h2 { margin: 0; font-size: var(--ui-text-xl); line-height: var(--ui-lh-xl); font-weight: var(--ui-weight-semibold); }
+  .g-sec > p { margin: 0; color: var(--ui-text-2); max-width: 88ch; }
+  .g-stage { position: relative; width: 100%; overflow: hidden; border-radius: var(--ui-radius-xl); background: var(--ui-bg-surface); box-shadow: var(--ui-shadow-2); border: 1px solid var(--ui-border); }
+  .g-stage iframe { position: absolute; left: 0; top: 0; border: 0; transform-origin: 0 0; background: var(--ui-bg-page); }
+  .g-cap { font-size: var(--ui-text-sm); color: var(--ui-text-muted); }
+  .g-swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(180px, 100%), 1fr)); gap: var(--ui-space-3); }
+  .g-sw { display: flex; flex-direction: row; align-items: center; gap: var(--ui-space-3); min-width: 0; }
+  .g-sw i { width: 36px; height: 36px; border-radius: var(--ui-radius-md); border: 1px solid var(--ui-border); flex: none; }
+  .g-sw span { display: flex; flex-direction: column; min-width: 0; font-size: var(--ui-text-sm); line-height: var(--ui-lh-sm); }
+  .g-sw code, .g-doc code { font-family: var(--ui-font-mono); font-size: 11.5px; color: var(--ui-text-2); overflow-wrap: anywhere; }
+  .g-scale { display: flex; flex-direction: column; gap: var(--ui-space-2); }
+  .g-scale div { display: flex; align-items: center; gap: var(--ui-space-3); font-size: var(--ui-text-sm); }
+  .g-scale b { display: block; height: 12px; background: var(--ui-accent); border-radius: 2px; flex: none; }
+  .g-scale code { width: 120px; flex: none; }
+  .g-type { display: flex; flex-direction: column; gap: var(--ui-space-2); }
+  .g-doc { overflow-x: auto; }
+  .g-doc h1 { display: none; }
+  .g-doc h2 { font-size: var(--ui-text-lg); line-height: var(--ui-lh-lg); margin: var(--ui-space-5) 0 var(--ui-space-2); }
+  .g-doc h2:first-of-type { margin-top: 0; }
+  .g-doc p, .g-doc li { color: var(--ui-text-2); max-width: 90ch; }
+  .g-doc table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: var(--ui-text-sm); line-height: var(--ui-lh-sm); }
+  .g-doc th, .g-doc td { text-align: left; vertical-align: top; padding: var(--ui-space-2) var(--ui-space-3); border-bottom: 1px solid var(--ui-border-soft); }
+  .g-doc thead th { background: var(--ui-bg-subtle); font-size: var(--ui-text-xs); text-transform: uppercase; letter-spacing: var(--ui-tracking-label); color: var(--ui-text-muted); }
+  .g-doc pre { background: var(--ui-bg-subtle); border: 1px solid var(--ui-border); border-radius: var(--ui-radius-md); padding: var(--ui-space-3); overflow-x: auto; font-size: 11.5px; }
+</style>
+<div class="ui-root">
+<div class="g-wrap">
+  <header class="g-hd">
+    <span class="ui-badge ui-badge--accent" style="align-self:flex-start">D-31 Stage A · standalone · light theme</span>
+    <h1>SRET UI kit</h1>
+    <p>The shared building blocks for the dashboard redesign. They are built here on their own, with no app data, so they can be reviewed, reused and redeployed. They cover the containers (shell), cards and controls, and the left navigation. The dialog form, right panel and filter bar follow in Stages B to D, on these same tokens.</p>
+  </header>
+
+  <section class="g-sec">
+    <h2>Live demo</h2>
+    <p>The full shell with the left nav, running on sample data. Switch the width to see the phone drawer, the tablet rail and the desktop layout. Try the Collapse control at the bottom of the nav, the menu button on phone, Details (opens the right region), the tabs, the switches and the chip remove.</p>
+    <div class="ui-toolbar">
+      <div class="ui-segmented" id="width-switch" aria-label="Preview width">
+        <button type="button" class="ui-segmented__opt" data-value="390" aria-checked="false">Phone 390</button>
+        <button type="button" class="ui-segmented__opt" data-value="768" aria-checked="false">Tablet 768</button>
+        <button type="button" class="ui-segmented__opt" data-value="1440" aria-checked="true">Desktop 1440</button>
+      </div>
+      <span class="g-cap" id="width-cap"></span>
+    </div>
+    <div class="g-stage" id="stage"><iframe id="demo" title="UI kit demo" srcdoc="&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+&lt;meta charset=&quot;utf-8&quot;&gt;
+&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+&lt;title&gt;UI kit demo shell&lt;/title&gt;
+&lt;!-- Kit modules (build.py inlines these for the single-file gallery) --&gt;
+&lt;style&gt;/* src/modules/ui-tokens/ui-tokens.css */
+/* ============================================================
+   ui-tokens: the one shared resource for the SRET UI kit (D-31).
+   Every ui-* module reads only these custom properties. No ui-* module
+   writes a literal colour, size or duration of its own.
+
+   Light theme only for now (Matt, 2026-10-03). Dark is a later slot.
+
+   Palette values are copied from src/milestone-dashboard.html
+   html[data-theme=&quot;light&quot;] (P55, palette Option A). They are declared at
+   :where(:root) so a host page that already defines --pal-* (the app does)
+   wins, and the kit and the app share one palette.
+   ============================================================ */
+:where(:root) {
+  /* ---- Palette (literal values live only here) ---- */
+  --pal-navy: #2b4a7a;
+  --pal-navy-strong: #1f3a63;
+  --pal-slate: #3d4b66;
+  --pal-on-header: #f4f5f8;
+  --pal-on-header-muted: #c6d2e6;
+  --pal-on-strong: #ffffff;
+  --pal-page: #f3f4f7;
+  --pal-surface: #ffffff;
+  --pal-surface-2: #fafbfc;
+  --pal-ink: #1b2230;
+  --pal-ink-2: #475063;
+  --pal-muted: #667085;
+  --pal-faint: #8a93a3;
+  --pal-line: #dde1e8;
+  --pal-line-soft: #e9ecf1;
+  --pal-line-strong: #b8c0d0;
+  --pal-teal: #0e7c86;
+  --pal-teal-deep: #0b6570;
+  --pal-teal-tint: #e1f1f2;
+  --pal-done: #2e8b57;
+  --pal-track: #2f6fdb;
+  --pal-risk: #c98a0b;
+  --pal-crit: #c2413a;
+  --pal-done-ink: #1f6b43;
+  --pal-risk-ink: #7a5306;
+  --pal-crit-ink: #8f2a24;
+  --pal-done-tint: #e6f2eb;
+  --pal-risk-tint: #fbf1dc;
+  --pal-crit-tint: #fbeceb;
+  --shadow-color: #0f172a;
+  --pal-scrim: #0a0c1e;
+}
+
+:root {
+  /* ---- Colour roles (components use these, never --pal-* directly) ---- */
+  --ui-bg-page: var(--pal-page);
+  --ui-bg-surface: var(--pal-surface);
+  --ui-bg-subtle: var(--pal-surface-2);
+  --ui-bg-hover: color-mix(in srgb, var(--pal-navy) 6%, var(--pal-surface));
+  --ui-bg-selected: var(--pal-teal-tint);
+  --ui-text: var(--pal-ink);
+  --ui-text-2: var(--pal-ink-2);
+  --ui-text-muted: var(--pal-muted);
+  --ui-text-faint: var(--pal-faint);
+  --ui-border: var(--pal-line);
+  --ui-border-soft: var(--pal-line-soft);
+  --ui-border-strong: var(--pal-line-strong);
+  --ui-accent: var(--pal-teal);
+  --ui-accent-strong: var(--pal-teal-deep);
+  --ui-accent-tint: var(--pal-teal-tint);
+  --ui-on-accent: var(--pal-on-strong);
+  --ui-brand: var(--pal-navy);
+  --ui-brand-strong: var(--pal-navy-strong);
+  --ui-on-brand: var(--pal-on-header);
+  --ui-on-brand-muted: var(--pal-on-header-muted);
+  --ui-on-brand-hover: color-mix(in srgb, var(--pal-on-strong) 9%, transparent);
+  --ui-on-brand-selected: color-mix(in srgb, var(--pal-on-strong) 16%, transparent);
+  --ui-on-brand-line: color-mix(in srgb, var(--pal-on-strong) 14%, transparent);
+  --ui-ok: var(--pal-done);       --ui-ok-ink: var(--pal-done-ink);   --ui-ok-tint: var(--pal-done-tint);
+  --ui-warn: var(--pal-risk);     --ui-warn-ink: var(--pal-risk-ink); --ui-warn-tint: var(--pal-risk-tint);
+  --ui-danger: var(--pal-crit);   --ui-danger-ink: var(--pal-crit-ink); --ui-danger-tint: var(--pal-crit-tint);
+  --ui-info: var(--pal-track);
+  --ui-scrim: color-mix(in srgb, var(--pal-scrim) 42%, transparent);
+  --ui-focus: 0 0 0 2px var(--pal-surface), 0 0 0 4px var(--pal-teal);
+
+  /* ---- Spacing scale (4 px base). Containers own padding; siblings use gap. ---- */
+  --ui-space-1: 4px;
+  --ui-space-2: 8px;
+  --ui-space-3: 12px;
+  --ui-space-4: 16px;
+  --ui-space-5: 20px;
+  --ui-space-6: 24px;
+  --ui-space-7: 32px;
+  --ui-space-8: 40px;
+  --ui-gutter: var(--ui-space-4);           /* page side gutter, phone */
+
+  /* ---- Type ---- */
+  --ui-font: &#x27;Segoe UI Variable Text&#x27;, &#x27;Segoe UI&#x27;, -apple-system, BlinkMacSystemFont, Roboto, &#x27;Helvetica Neue&#x27;, Arial, sans-serif;
+  --ui-font-mono: ui-monospace, &#x27;Cascadia Mono&#x27;, Consolas, Menlo, monospace;
+  --ui-text-xs: 11px;   --ui-lh-xs: 16px;   /* captions, group labels */
+  --ui-text-sm: 12px;   --ui-lh-sm: 16px;   /* help text, badges */
+  --ui-text-md: 13px;   --ui-lh-md: 20px;   /* body, controls */
+  --ui-text-lg: 14px;   --ui-lh-lg: 20px;   /* emphasised body, panel titles */
+  --ui-text-xl: 16px;   --ui-lh-xl: 24px;   /* dialog titles */
+  --ui-text-2xl: 20px;  --ui-lh-2xl: 28px;  /* screen titles */
+  --ui-weight-regular: 400;
+  --ui-weight-medium: 500;
+  --ui-weight-semibold: 600;
+  --ui-tracking-label: .06em;
+
+  /* ---- Shape ---- */
+  --ui-radius-sm: 4px;
+  --ui-radius-md: 6px;
+  --ui-radius-lg: 8px;
+  --ui-radius-xl: 12px;
+  --ui-radius-pill: 999px;
+
+  /* ---- Elevation (design-standard levels 0-3) ---- */
+  --ui-shadow-1: 0 1px 2px color-mix(in srgb, var(--shadow-color) 8%, transparent);
+  --ui-shadow-2: 0 4px 12px color-mix(in srgb, var(--shadow-color) 12%, transparent), 0 1px 3px color-mix(in srgb, var(--shadow-color) 8%, transparent);
+  --ui-shadow-3: 0 12px 32px color-mix(in srgb, var(--shadow-color) 18%, transparent), 0 2px 6px color-mix(in srgb, var(--shadow-color) 8%, transparent);
+
+  /* ---- Controls ---- */
+  --ui-ctl-h: 32px;          /* visible height of buttons, inputs, nav items */
+  --ui-ctl-h-sm: 24px;       /* compact (chips, badges row) */
+  --ui-hit: 40px;            /* minimum touch hit area, via padding or ::after */
+  --ui-icon: 18px;
+  --ui-icon-sm: 15px;
+
+  /* ---- Motion (Material 3 / Fluent 2 guidance) ----
+     Enter: decelerate. Exit: accelerate. Small state changes: standard.
+     Only transform and opacity animate, plus the one deliberate nav width change.
+     Budget: one animation per user action, no staggers, no motion on data. */
+  --ui-dur-fast: 120ms;      /* hover, toggles, small state changes */
+  --ui-dur-base: 200ms;      /* panels and nav width, exits */
+  --ui-dur-slow: 240ms;      /* dialogs and drawers entering */
+  --ui-ease-standard: cubic-bezier(.2, 0, 0, 1);
+  --ui-ease-enter: cubic-bezier(0, 0, 0, 1);       /* decelerate */
+  --ui-ease-exit: cubic-bezier(.3, 0, 1, 1);       /* accelerate */
+
+  /* ---- Layers ---- */
+  --ui-z-nav: 40;
+  --ui-z-aside: 50;
+  --ui-z-scrim: 60;
+  --ui-z-drawer: 70;
+  --ui-z-dialog: 80;
+  --ui-z-popover: 90;
+  --ui-z-toast: 100;
+
+  /* ---- Shell sizes ---- */
+  --ui-nav-w-expanded: 240px;
+  --ui-nav-w-rail: 60px;
+  --ui-nav-w-drawer: 288px;
+  --ui-header-h: 52px;
+  --ui-aside-w: 380px;
+
+  /* Breakpoints (documented constants; CSS cannot read variables in media queries):
+     phone &lt;= 640px, tablet 641-1024px, desktop &gt;= 1025px, wide &gt;= 1280px. */
+}
+
+@media (min-width: 1025px) {
+  :root { --ui-gutter: var(--ui-space-6); }
+}
+@media (pointer: coarse) {
+  :root { --ui-ctl-h: 40px; }
+}
+/* The OS &quot;reduce motion&quot; accessibility setting is honoured automatically. */
+@media (prefers-reduced-motion: reduce) {
+  :root { --ui-dur-fast: 0ms; --ui-dur-base: 0ms; --ui-dur-slow: 0ms; }
+}
+
+/* Base for any kit root. Hosts that already style body are left alone. */
+.ui-root, .ui-root * { box-sizing: border-box; }
+.ui-root {
+  font-family: var(--ui-font);
+  font-size: var(--ui-text-md);
+  line-height: var(--ui-lh-md);
+  color: var(--ui-text);
+}
+.ui-root :focus-visible { outline: none; box-shadow: var(--ui-focus); }
+.ui-visually-hidden {
+  position: absolute !important; width: 1px; height: 1px; margin: -1px; padding: 0;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+&lt;/style&gt;
+&lt;style&gt;/* src/modules/ui-shell/ui-shell.css */
+/* ============================================================
+   ui-shell: the external containers of an app screen (D-31).
+   Regions: nav (left), header (command bar), main (content), aside (right).
+   Layout state is written by SRETShell as data attributes on .ui-shell:
+     data-nav       expanded | rail | overlay | drawer
+     data-nav-open  true when an overlay or drawer nav is showing
+     data-aside     push | overlay
+     data-aside-open true when the aside is showing
+   Uses only ui-tokens. See MODULE.md for the layout contract.
+   ============================================================ */
+.ui-shell {
+  --_nav-col: var(--ui-nav-w-expanded);
+  --_aside-col: 0px;
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--_nav-col) minmax(0, 1fr) var(--_aside-col);
+  grid-template-rows: var(--ui-header-h) minmax(0, 1fr);
+  grid-template-areas: &quot;nav header header&quot; &quot;nav main aside&quot;;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--ui-bg-page);
+  color: var(--ui-text);
+  font-family: var(--ui-font);
+  font-size: var(--ui-text-md);
+  line-height: var(--ui-lh-md);
+  transition: grid-template-columns var(--ui-dur-base) var(--ui-ease-standard);
+}
+.ui-shell[data-nav=&quot;rail&quot;],
+.ui-shell[data-nav=&quot;overlay&quot;] { --_nav-col: var(--ui-nav-w-rail); }
+.ui-shell[data-nav=&quot;drawer&quot;] { --_nav-col: 0px; }
+.ui-shell[data-aside=&quot;push&quot;][data-aside-open=&quot;true&quot;] { --_aside-col: var(--ui-aside-w); }
+
+/* ---- nav region ---- */
+.ui-shell__nav {
+  grid-area: nav;
+  position: relative;
+  z-index: var(--ui-z-nav);
+  width: var(--_nav-col);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+/* Tablet: the rail column stays; the expanded nav slides over the content. */
+.ui-shell[data-nav=&quot;overlay&quot;] .ui-shell__nav {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: var(--ui-nav-w-expanded);
+  z-index: var(--ui-z-drawer);
+  box-shadow: var(--ui-shadow-3);
+}
+/* Phone: off-canvas drawer. */
+.ui-shell[data-nav=&quot;drawer&quot;] .ui-shell__nav {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: min(var(--ui-nav-w-drawer), 86vw);
+  z-index: var(--ui-z-drawer);
+  transform: translateX(-100%);
+  visibility: hidden;
+  transition: transform var(--ui-dur-base) var(--ui-ease-exit), visibility 0s linear var(--ui-dur-base);
+}
+.ui-shell[data-nav=&quot;drawer&quot;][data-nav-open=&quot;true&quot;] .ui-shell__nav {
+  transform: none;
+  visibility: visible;
+  box-shadow: var(--ui-shadow-3);
+  transition: transform var(--ui-dur-slow) var(--ui-ease-enter), visibility 0s;
+}
+
+/* ---- header region (command bar) ---- */
+.ui-shell__header {
+  grid-area: header;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--ui-space-3);
+  min-width: 0;
+  padding-inline: var(--ui-gutter);
+  background: var(--ui-brand);
+  color: var(--ui-on-brand);
+  overflow: hidden;
+}
+.ui-shell__header-start { display: flex; align-items: center; gap: var(--ui-space-2); flex: 1 1 auto; min-width: 0; }
+.ui-shell__header-end { display: flex; align-items: center; gap: var(--ui-space-2); flex: 0 0 auto; }
+.ui-shell__title {
+  font-size: var(--ui-text-lg); line-height: var(--ui-lh-lg); font-weight: var(--ui-weight-semibold);
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* Two-class selectors so the button styles from ui-controls cannot re-show it. */
+.ui-shell .ui-shell__menu { display: none; }
+.ui-shell[data-nav=&quot;drawer&quot;] .ui-shell__menu { display: inline-flex; }
+
+/* ---- main region ---- */
+.ui-shell__main {
+  grid-area: main;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: var(--ui-gutter);
+}
+.ui-shell__main[data-flush] { padding: 0; }
+
+/* ---- aside region ---- */
+.ui-shell__aside {
+  grid-area: aside;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--ui-bg-surface);
+  border-left: 1px solid var(--ui-border);
+  display: flex;
+  flex-direction: column;
+}
+.ui-shell[data-aside=&quot;push&quot;]:not([data-aside-open=&quot;true&quot;]) .ui-shell__aside { visibility: hidden; border-left: 0; }
+.ui-shell[data-aside=&quot;overlay&quot;] .ui-shell__aside {
+  position: absolute; right: 0; top: var(--ui-header-h); bottom: 0;
+  width: min(var(--ui-aside-w), 100%);
+  z-index: var(--ui-z-drawer);
+  transform: translateX(100%);
+  visibility: hidden;
+  transition: transform var(--ui-dur-base) var(--ui-ease-exit), visibility 0s linear var(--ui-dur-base);
+}
+.ui-shell[data-aside=&quot;overlay&quot;][data-aside-open=&quot;true&quot;] .ui-shell__aside {
+  transform: none; visibility: visible; box-shadow: var(--ui-shadow-3);
+  transition: transform var(--ui-dur-slow) var(--ui-ease-enter), visibility 0s;
+}
+
+/* ---- scrim ---- */
+.ui-shell__scrim {
+  position: absolute; inset: 0;
+  z-index: var(--ui-z-scrim);
+  background: var(--ui-scrim);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--ui-dur-base) var(--ui-ease-standard);
+}
+.ui-shell[data-scrim=&quot;true&quot;] .ui-shell__scrim { opacity: 1; pointer-events: auto; }
+&lt;/style&gt;
+&lt;style&gt;/* src/modules/ui-surfaces/ui-surfaces.css */
+/* ============================================================
+   ui-surfaces: internal cards and content containers (D-31).
+   card, section, panel header, toolbar, tabs, fold, list, empty state, toast.
+   Containers own their padding; children are spaced with gap. Uses only
+   ui-tokens. Layout contract in MODULE.md.
+   ============================================================ */
+
+/* ---- Card ---- */
+.ui-card {
+  display: flex; flex-direction: column;
+  min-width: 0;
+  background: var(--ui-bg-surface);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-lg);
+  box-shadow: var(--ui-shadow-1);
+}
+.ui-card__header {
+  display: flex; flex-direction: row; flex-wrap: nowrap; align-items: center;
+  gap: var(--ui-space-2);
+  padding: var(--ui-space-3) var(--ui-space-4);
+  border-bottom: 1px solid var(--ui-border-soft);
+  min-width: 0;
+}
+.ui-card__title {
+  flex: 1 1 auto; min-width: 0; margin: 0;
+  font-size: var(--ui-text-lg); line-height: var(--ui-lh-lg); font-weight: var(--ui-weight-semibold);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ui-card__body {
+  display: flex; flex-direction: column; gap: var(--ui-space-3);
+  padding: var(--ui-space-4);
+  min-width: 0;
+}
+.ui-card__footer {
+  display: flex; flex-direction: row; flex-wrap: wrap; justify-content: flex-end; align-items: center;
+  gap: var(--ui-space-2);
+  padding: var(--ui-space-3) var(--ui-space-4);
+  border-top: 1px solid var(--ui-border-soft);
+  background: var(--ui-bg-subtle);
+  border-radius: 0 0 var(--ui-radius-lg) var(--ui-radius-lg);
+}
+.ui-card--flat { box-shadow: none; }
+.ui-card--interactive { transition: box-shadow var(--ui-dur-fast) var(--ui-ease-standard), border-color var(--ui-dur-fast) var(--ui-ease-standard); cursor: pointer; }
+.ui-card--interactive:hover { box-shadow: var(--ui-shadow-2); border-color: var(--ui-border-strong); }
+
+/* ---- Section (a titled group inside a card or panel) ---- */
+.ui-section { display: flex; flex-direction: column; gap: var(--ui-space-2); min-width: 0; }
+.ui-section__label {
+  margin: 0;
+  font-size: var(--ui-text-xs); line-height: var(--ui-lh-xs); font-weight: var(--ui-weight-semibold);
+  letter-spacing: var(--ui-tracking-label); text-transform: uppercase; color: var(--ui-text-muted);
+}
+
+/* ---- Panel header (title row of a pane, drawer or screen) ---- */
+.ui-panel-header {
+  display: flex; flex-direction: row; flex-wrap: nowrap; align-items: center;
+  gap: var(--ui-space-2);
+  min-height: var(--ui-header-h);
+  padding: var(--ui-space-2) var(--ui-space-3) var(--ui-space-2) var(--ui-space-4);
+  border-bottom: 1px solid var(--ui-border);
+  min-width: 0;
+}
+.ui-panel-header__title {
+  flex: 1 1 auto; min-width: 0; margin: 0;
+  font-size: var(--ui-text-lg); line-height: var(--ui-lh-lg); font-weight: var(--ui-weight-semibold);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ui-panel-header__actions { display: flex; flex: 0 0 auto; gap: var(--ui-space-1); }
+
+/* ---- Toolbar (a row of controls; wraps on narrow widths) ---- */
+.ui-toolbar {
+  display: flex; flex-direction: row; flex-wrap: wrap; align-items: center;
+  gap: var(--ui-space-2);
+  min-width: 0;
+}
+.ui-toolbar__spacer { flex: 1 1 auto; }
+.ui-toolbar--scroll { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; }
+
+/* ---- Tabs (role=tablist; SRETSurfaces.tabs wires keyboard and selection) ---- */
+.ui-tabs {
+  display: flex; flex-direction: row; flex-wrap: nowrap;
+  gap: var(--ui-space-1);
+  padding-inline: var(--ui-space-3);
+  border-bottom: 1px solid var(--ui-border);
+  overflow-x: auto; scrollbar-width: none;
+}
+.ui-tab {
+  position: relative; flex: 0 0 auto;
+  height: 40px; padding: 0 var(--ui-space-3);
+  border: 0; background: none; cursor: pointer;
+  font: inherit; font-size: var(--ui-text-md); color: var(--ui-text-muted); white-space: nowrap;
+  transition: color var(--ui-dur-fast) var(--ui-ease-standard);
+}
+.ui-tab:hover { color: var(--ui-text); }
+.ui-tab::after {
+  content: &quot;&quot;; position: absolute; left: var(--ui-space-2); right: var(--ui-space-2); bottom: -1px; height: 2px;
+  border-radius: 2px 2px 0 0; background: var(--ui-accent);
+  transform: scaleX(0); transition: transform var(--ui-dur-base) var(--ui-ease-standard);
+}
+.ui-tab[aria-selected=&quot;true&quot;] { color: var(--ui-brand-strong); font-weight: var(--ui-weight-semibold); }
+.ui-tab[aria-selected=&quot;true&quot;]::after { transform: scaleX(1); }
+.ui-tabpanel[hidden] { display: none; }
+
+/* ---- Fold (disclosure built on details/summary) ---- */
+.ui-fold { border-top: 1px solid var(--ui-border-soft); }
+.ui-fold &gt; summary {
+  display: flex; align-items: center; gap: var(--ui-space-2);
+  min-height: var(--ui-ctl-h); padding: var(--ui-space-2) 0;
+  cursor: pointer; list-style: none; color: var(--ui-text-2);
+}
+.ui-fold &gt; summary::-webkit-details-marker { display: none; }
+.ui-fold &gt; summary .ui-icon { margin-left: auto; width: var(--ui-icon-sm); height: var(--ui-icon-sm); transition: transform var(--ui-dur-base) var(--ui-ease-standard); }
+.ui-fold[open] &gt; summary .ui-icon { transform: rotate(180deg); }
+.ui-fold__body { display: flex; flex-direction: column; gap: var(--ui-space-3); padding-bottom: var(--ui-space-3); }
+
+/* ---- List ---- */
+.ui-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.ui-list-item {
+  display: flex; flex-direction: row; flex-wrap: nowrap; align-items: center;
+  gap: var(--ui-space-3);
+  min-height: 44px; padding: var(--ui-space-2) var(--ui-space-4);
+  border-bottom: 1px solid var(--ui-border-soft);
+  min-width: 0;
+}
+.ui-list-item__main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.ui-list-item__title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ui-list-item__meta { font-size: var(--ui-text-sm); line-height: var(--ui-lh-sm); color: var(--ui-text-muted); }
+.ui-list-item__end { flex: 0 0 auto; display: flex; gap: var(--ui-space-2); align-items: center; }
+button.ui-list-item, .ui-list-item--action { width: 100%; border: 0; border-bottom: 1px solid var(--ui-border-soft); background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; transition: background-color var(--ui-dur-fast) var(--ui-ease-standard); }
+button.ui-list-item:hover, .ui-list-item--action:hover { background: var(--ui-bg-hover); }
+
+/* ---- Empty state ---- */
+.ui-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--ui-space-3);
+  padding: var(--ui-space-7) var(--ui-space-5);
+  text-align: center; color: var(--ui-text-2);
+}
+.ui-empty__glyph {
+  width: 56px; height: 56px; border-radius: var(--ui-radius-xl);
+  display: grid; place-items: center;
+  background: var(--ui-bg-subtle); border: 1px dashed var(--ui-border-strong); color: var(--ui-text-faint);
+}
+.ui-empty__title { margin: 0; font-size: var(--ui-text-lg); line-height: var(--ui-lh-lg); font-weight: var(--ui-weight-semibold); color: var(--ui-text); }
+.ui-empty__text { margin: 0; max-width: 36ch; }
+
+/* ---- Toast (SRETSurfaces.toast) ---- */
+.ui-toast-region {
+  position: fixed; left: 50%; bottom: var(--ui-space-5); transform: translateX(-50%);
+  z-index: var(--ui-z-toast);
+  display: flex; flex-direction: column; align-items: center; gap: var(--ui-space-2);
+  width: min(420px, calc(100vw - 2 * var(--ui-space-4)));
+  pointer-events: none;
+}
+.ui-toast {
+  display: flex; align-items: center; gap: var(--ui-space-3);
+  width: 100%; padding: var(--ui-space-3) var(--ui-space-4);
+  border-radius: var(--ui-radius-lg);
+  background: var(--ui-text); color: var(--ui-bg-surface);
+  box-shadow: var(--ui-shadow-3);
+  pointer-events: auto;
+  opacity: 0; transform: translateY(8px);
+  transition: opacity var(--ui-dur-base) var(--ui-ease-enter), transform var(--ui-dur-base) var(--ui-ease-enter);
+}
+.ui-toast[data-show=&quot;true&quot;] { opacity: 1; transform: none; }
+.ui-toast__text { flex: 1 1 auto; min-width: 0; }
+&lt;/style&gt;
+&lt;style&gt;/* src/modules/ui-controls/ui-controls.css */
+/* ============================================================
+   ui-controls: form and action controls (D-31).
+   button, icon button, input, textarea, select, switch, segmented control,
+   radio card, chip, badge, count, field, field grid.
+   Visible control height is --ui-ctl-h; touch hit area is --ui-hit,
+   reached with ::after, never by growing the visible box.
+   Uses only ui-tokens. Layout contract in MODULE.md.
+   ============================================================ */
+
+/* ---- Buttons ---- */
+.ui-btn {
+  position: relative;
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--ui-space-2);
+  height: var(--ui-ctl-h); padding: 0 var(--ui-space-3);
+  border: 1px solid var(--ui-border-strong); border-radius: var(--ui-radius-md);
+  background: var(--ui-bg-surface); color: var(--ui-brand-strong);
+  font: inherit; font-size: var(--ui-text-md); font-weight: var(--ui-weight-medium); white-space: nowrap;
+  cursor: pointer; user-select: none;
+  transition: background-color var(--ui-dur-fast) var(--ui-ease-standard), border-color var(--ui-dur-fast) var(--ui-ease-standard), color var(--ui-dur-fast) var(--ui-ease-standard), transform var(--ui-dur-fast) var(--ui-ease-standard);
+}
+.ui-btn::after { content: &quot;&quot;; position: absolute; left: 0; right: 0; top: 50%; height: max(100%, var(--ui-hit)); transform: translateY(-50%); }
+.ui-btn:hover { background: var(--ui-bg-hover); }
+.ui-btn:active { transform: scale(.98); }
+.ui-btn[disabled], .ui-btn[aria-disabled=&quot;true&quot;] { opacity: .5; cursor: not-allowed; transform: none; }
+.ui-btn .ui-icon { width: var(--ui-icon-sm); height: var(--ui-icon-sm); flex: none; }
+.ui-btn--primary { background: var(--ui-brand-strong); border-color: var(--ui-brand-strong); color: var(--ui-on-accent); }
+.ui-btn--primary:hover { background: var(--ui-brand); border-color: var(--ui-brand); }
+.ui-btn--accent { background: var(--ui-accent); border-color: var(--ui-accent); color: var(--ui-on-accent); }
+.ui-btn--accent:hover { background: var(--ui-accent-strong); border-color: var(--ui-accent-strong); }
+.ui-btn--ghost { border-color: transparent; background: transparent; color: var(--ui-text-2); }
+.ui-btn--ghost:hover { background: var(--ui-bg-hover); color: var(--ui-text); }
+.ui-btn--danger { color: var(--ui-danger-ink); border-color: var(--ui-danger); }
+.ui-btn--danger:hover { background: var(--ui-danger-tint); }
+.ui-btn--block { width: 100%; }
+.ui-btn--icon { width: var(--ui-ctl-h); padding: 0; }
+.ui-btn--icon::after { left: 50%; width: max(100%, var(--ui-hit)); transform: translate(-50%, -50%); }
+.ui-btn--icon .ui-icon { width: var(--ui-icon); height: var(--ui-icon); }
+/* Buttons on a brand-coloured bar (header, nav) */
+.ui-on-brand .ui-btn { background: transparent; color: var(--ui-on-brand); border-color: var(--ui-on-brand-line); }
+.ui-on-brand .ui-btn:hover { background: var(--ui-on-brand-hover); }
+.ui-on-brand .ui-btn--ghost { border-color: transparent; }
+.ui-on-brand .ui-btn--accent { background: var(--ui-accent); border-color: var(--ui-accent); color: var(--ui-on-accent); }
+
+/* ---- Text inputs ---- */
+.ui-input, .ui-textarea, .ui-select {
+  width: 100%; min-width: 0;
+  height: var(--ui-ctl-h); padding: 0 var(--ui-space-3);
+  border: 1px solid var(--ui-border-strong); border-radius: var(--ui-radius-md);
+  background: var(--ui-bg-surface); color: var(--ui-text);
+  font: inherit; font-size: var(--ui-text-md);
+  transition: border-color var(--ui-dur-fast) var(--ui-ease-standard), box-shadow var(--ui-dur-fast) var(--ui-ease-standard);
+}
+.ui-input::placeholder, .ui-textarea::placeholder { color: var(--ui-text-faint); }
+.ui-input:hover, .ui-textarea:hover, .ui-select:hover { border-color: var(--ui-text-faint); }
+.ui-input:focus, .ui-textarea:focus, .ui-select:focus { outline: none; border-color: var(--ui-accent); box-shadow: 0 0 0 3px var(--ui-accent-tint); }
+.ui-input[aria-invalid=&quot;true&quot;], .ui-textarea[aria-invalid=&quot;true&quot;] { border-color: var(--ui-danger); }
+.ui-input[readonly] { background: var(--ui-bg-subtle); color: var(--ui-text-2); }
+.ui-textarea { height: auto; min-height: 80px; padding: var(--ui-space-2) var(--ui-space-3); line-height: var(--ui-lh-md); resize: vertical; }
+.ui-select {
+  appearance: none; padding-right: var(--ui-space-7); cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, var(--ui-text-muted) 50%), linear-gradient(135deg, var(--ui-text-muted) 50%, transparent 50%);
+  background-position: calc(100% - 17px) 50%, calc(100% - 12px) 50%;
+  background-size: 5px 5px; background-repeat: no-repeat;
+}
+.ui-input-wrap { position: relative; display: flex; align-items: center; min-width: 0; }
+.ui-input-wrap &gt; .ui-icon { position: absolute; left: var(--ui-space-3); width: var(--ui-icon-sm); height: var(--ui-icon-sm); color: var(--ui-text-muted); pointer-events: none; }
+.ui-input-wrap &gt; .ui-input { padding-left: var(--ui-space-8); }
+
+/* ---- Field (label, control, help, error) ---- */
+.ui-field { display: flex; flex-direction: column; gap: var(--ui-space-1); min-width: 0; }
+.ui-field__label { font-size: var(--ui-text-sm); line-height: var(--ui-lh-sm); font-weight: var(--ui-weight-medium); color: var(--ui-text-2); }
+.ui-field__help { font-size: var(--ui-text-sm); line-height: var(--ui-lh-sm); color: var(--ui-text-muted); }
+.ui-field__error { font-size: var(--ui-text-sm); line-height: var(--ui-lh-sm); color: var(--ui-danger-ink); }
+.ui-field-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--ui-space-3) var(--ui-space-4); }
+.ui-field-grid &gt; .ui-field--full { grid-column: 1 / -1; }
+@media (max-width: 640px) { .ui-field-grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---- Switch (button role=switch; SRETControls toggles aria-checked) ---- */
+.ui-switch {
+  position: relative; flex: none;
+  width: 36px; height: 20px; padding: 0;
+  border: 0; border-radius: var(--ui-radius-pill);
+  background: var(--ui-border-strong); cursor: pointer;
+  transition: background-color var(--ui-dur-fast) var(--ui-ease-standard);
+}
+.ui-switch::before {
+  content: &quot;&quot;; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%;
+  background: var(--ui-bg-surface); box-shadow: var(--ui-shadow-1);
+  transition: transform var(--ui-dur-fast) var(--ui-ease-standard);
+}
+.ui-switch::after { content: &quot;&quot;; position: absolute; left: 50%; top: 50%; width: var(--ui-hit); height: var(--ui-hit); transform: translate(-50%, -50%); }
+.ui-switch[aria-checked=&quot;true&quot;] { background: var(--ui-accent); }
+.ui-switch[aria-checked=&quot;true&quot;]::before { transform: translateX(16px); }
+.ui-switch-row {
+  display: flex; flex-direction: row; flex-wrap: nowrap; align-items: center; justify-content: space-between;
+  gap: var(--ui-space-3); min-height: var(--ui-hit);
+  border-bottom: 1px solid var(--ui-border-soft);
+}
+.ui-switch-row__label { flex: 1 1 auto; min-width: 0; }
+
+/* ---- Segmented control (role=radiogroup) ---- */
+.ui-segmented {
+  display: inline-flex; flex-wrap: nowrap;
+  padding: 2px; gap: 2px;
+  border-radius: var(--ui-radius-md);
+  background: var(--ui-border-soft);
+}
+.ui-segmented__opt {
+  position: relative;
+  height: calc(var(--ui-ctl-h) - 4px); padding: 0 var(--ui-space-3);
+  border: 0; border-radius: var(--ui-radius-sm);
+  background: transparent; color: var(--ui-text-2);
+  font: inherit; font-size: var(--ui-text-md); white-space: nowrap; cursor: pointer;
+  transition: background-color var(--ui-dur-fast) var(--ui-ease-standard), color var(--ui-dur-fast) var(--ui-ease-standard), box-shadow var(--ui-dur-fast) var(--ui-ease-standard);
+}
+.ui-segmented__opt[aria-checked=&quot;true&quot;] { background: var(--ui-bg-surface); color: var(--ui-brand-strong); font-weight: var(--ui-weight-semibold); box-shadow: var(--ui-shadow-1); }
+
+/* ---- Radio card (choice with description) ---- */
+.ui-radio-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); gap: var(--ui-space-3); }
+.ui-radio-card {
+  display: flex; flex-direction: column; gap: var(--ui-space-2);
+  padding: var(--ui-space-3) var(--ui-space-4);
+  border: 1.5px solid var(--ui-border); border-radius: var(--ui-radius-lg);
+  background: var(--ui-bg-surface); color: var(--ui-text-2);
+  font: inherit; text-align: left; cursor: pointer; min-width: 0;
+  transition: border-color var(--ui-dur-fast) var(--ui-ease-standard), background-color var(--ui-dur-fast) var(--ui-ease-standard);
+}
+.ui-radio-card__title { display: flex; align-items: center; gap: var(--ui-space-2); color: var(--ui-text); font-weight: var(--ui-weight-semibold); }
+.ui-radio-card__title::before {
+  content: &quot;&quot;; width: 16px; height: 16px; border-radius: 50%; flex: none; box-sizing: border-box;
+  border: 1.5px solid var(--ui-border-strong);
+  transition: border-width var(--ui-dur-fast) var(--ui-ease-standard), border-color var(--ui-dur-fast) var(--ui-ease-standard);
+}
+.ui-radio-card[aria-checked=&quot;true&quot;] { border-color: var(--ui-accent); background: var(--ui-accent-tint); }
+.ui-radio-card[aria-checked=&quot;true&quot;] .ui-radio-card__title::before { border: 5px solid var(--ui-accent); }
+
+/* ---- Chip ---- */
+.ui-chips { display: flex; flex-direction: row; flex-wrap: wrap; gap: var(--ui-space-2); min-width: 0; }
+.ui-chip {
+  display: inline-flex; align-items: center; gap: var(--ui-space-1);
+  height: 28px; padding: 0 var(--ui-space-3);
+  border: 1px solid var(--ui-border); border-radius: var(--ui-radius-pill);
+  background: var(--ui-bg-surface); color: var(--ui-text-2);
+  font: inherit; font-size: var(--ui-text-sm); white-space: nowrap; max-width: 100%;
+  cursor: pointer;
+  transition: background-color var(--ui-dur-fast) var(--ui-ease-standard), border-color var(--ui-dur-fast) var(--ui-ease-standard);
+}
+.ui-chip &gt; span { overflow: hidden; text-overflow: ellipsis; }
+.ui-chip[aria-pressed=&quot;true&quot;], .ui-chip--active { background: var(--ui-accent-tint); border-color: transparent; color: var(--ui-accent-strong); font-weight: var(--ui-weight-medium); }
+.ui-chip__remove { display: inline-grid; place-items: center; width: 18px; height: 18px; margin-right: calc(-1 * var(--ui-space-1)); border: 0; border-radius: 50%; background: none; color: inherit; cursor: pointer; }
+.ui-chip__remove:hover { background: color-mix(in srgb, currentColor 14%, transparent); }
+.ui-chip__remove .ui-icon { width: 12px; height: 12px; }
+.ui-chip--add { border-style: dashed; color: var(--ui-text-2); }
+
+/* ---- Badge and count ---- */
+.ui-badge {
+  display: inline-flex; align-items: center; gap: var(--ui-space-1);
+  height: 20px; padding: 0 var(--ui-space-2); border-radius: var(--ui-radius-pill);
+  font-size: var(--ui-text-xs); line-height: var(--ui-lh-xs); font-weight: var(--ui-weight-semibold); white-space: nowrap;
+  background: var(--ui-border-soft); color: var(--ui-text-2);
+}
+.ui-badge--accent { background: var(--ui-accent-tint); color: var(--ui-accent-strong); }
+.ui-badge--ok { background: var(--ui-ok-tint); color: var(--ui-ok-ink); }
+.ui-badge--warn { background: var(--ui-warn-tint); color: var(--ui-warn-ink); }
+.ui-badge--danger { background: var(--ui-danger-tint); color: var(--ui-danger-ink); }
+.ui-count {
+  display: inline-grid; place-items: center; min-width: 20px; height: 18px; padding: 0 6px;
+  border-radius: var(--ui-radius-pill);
+  font-size: var(--ui-text-xs); line-height: 1; font-weight: var(--ui-weight-semibold); font-variant-numeric: tabular-nums;
+  background: var(--ui-border-soft); color: var(--ui-text-2);
+}
+.ui-count--warn { background: var(--ui-warn); color: var(--ui-on-accent); }
+.ui-count--danger { background: var(--ui-danger); color: var(--ui-on-accent); }
+.ui-count--accent { background: var(--ui-accent); color: var(--ui-on-accent); }
+&lt;/style&gt;
+&lt;style&gt;/* src/modules/ui-nav/ui-nav.css */
+/* ============================================================
+   ui-nav: generic left navigation panel (D-31).
+   Modes (data-mode on .ui-nav, set by SRETNav): expanded | rail.
+   Context (data-context): docked | overlay | drawer, from the shell.
+   Uses only ui-tokens. Layout contract in MODULE.md.
+   ============================================================ */
+.ui-nav {
+  display: flex; flex-direction: column; flex-wrap: nowrap;
+  gap: var(--ui-space-1);
+  width: 100%; height: 100%; min-height: 0;
+  padding: var(--ui-space-3) var(--ui-space-2);
+  background: var(--ui-brand-strong);
+  color: var(--ui-on-brand);
+  font-family: var(--ui-font); font-size: var(--ui-text-md); line-height: var(--ui-lh-md);
+  overflow: hidden;
+}
+
+/* ---- Brand row ---- */
+.ui-nav__brand {
+  display: flex; flex-direction: row; flex-wrap: nowrap; align-items: center;
+  gap: var(--ui-space-3);
+  min-height: 44px; padding: 0 var(--ui-space-2) var(--ui-space-2);
+  min-width: 0;
+}
+.ui-nav__mark {
+  flex: none; width: 28px; height: 28px; border-radius: var(--ui-radius-lg);
+  display: grid; place-items: center;
+  background: var(--ui-accent); color: var(--ui-on-accent);
+}
+.ui-nav__mark .ui-icon { width: 16px; height: 16px; }
+.ui-nav__brand-text { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; }
+.ui-nav__brand-title { font-size: var(--ui-text-lg); line-height: var(--ui-lh-lg); font-weight: var(--ui-weight-semibold); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ui-nav__brand-sub { font-size: var(--ui-text-xs); line-height: var(--ui-lh-xs); color: var(--ui-on-brand-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ui-nav .ui-nav__close { display: none; flex: none; }
+.ui-nav[data-context=&quot;drawer&quot;] .ui-nav__close { display: inline-flex; }
+
+/* ---- Scroll area and groups ---- */
+.ui-nav__scroll {
+  flex: 1 1 auto; min-height: 0;
+  display: flex; flex-direction: column; flex-wrap: nowrap; gap: var(--ui-space-2);
+  overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain;
+  scrollbar-width: thin; scrollbar-color: var(--ui-on-brand-line) transparent;
+}
+.ui-nav__group { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ui-nav__label {
+  display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: var(--ui-space-2);
+  height: 28px; padding: 0 var(--ui-space-3);
+  border: 0; background: none; width: 100%;
+  font: inherit; font-size: var(--ui-text-xs); line-height: var(--ui-lh-xs); font-weight: var(--ui-weight-semibold);
+  letter-spacing: var(--ui-tracking-label); text-transform: uppercase; color: var(--ui-on-brand-muted);
+  white-space: nowrap; text-align: left;
+}
+button.ui-nav__label { cursor: pointer; border-radius: var(--ui-radius-md); }
+button.ui-nav__label:hover { color: var(--ui-on-brand); }
+.ui-nav__label .ui-icon { width: 14px; height: 14px; flex: none; transition: transform var(--ui-dur-base) var(--ui-ease-standard); }
+.ui-nav__group[data-collapsed=&quot;true&quot;] .ui-nav__label .ui-icon { transform: rotate(-90deg); }
+/* Group body collapses by animating the row track, not height, so content never jumps. */
+.ui-nav__items {
+  display: grid; grid-template-rows: 1fr;
+  transition: grid-template-rows var(--ui-dur-base) var(--ui-ease-standard);
+  list-style: none; margin: 0; padding: 0;
+}
+.ui-nav__items &gt; div { min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 2px; }
+.ui-nav__group[data-collapsed=&quot;true&quot;] .ui-nav__items { grid-template-rows: 0fr; }
+.ui-nav__divider { height: 1px; margin: var(--ui-space-1) var(--ui-space-2); background: var(--ui-on-brand-line); flex: none; }
+
+/* ---- Item ---- */
+.ui-nav__item {
+  position: relative;
+  display: flex; flex-direction: row; flex-wrap: nowrap; align-items: center;
+  gap: var(--ui-space-3);
+  width: 100%; height: 40px; padding: 0 var(--ui-space-3);
+  border: 0; border-radius: var(--ui-radius-md);
+  background: transparent; color: var(--ui-on-brand);
+  font: inherit; font-size: var(--ui-text-md); text-align: left; text-decoration: none; white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--ui-dur-fast) var(--ui-ease-standard);
+}
+.ui-nav__item:hover { background: var(--ui-on-brand-hover); }
+.ui-nav__item:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--ui-accent); }
+.ui-nav__item[aria-current=&quot;page&quot;] { background: var(--ui-on-brand-selected); font-weight: var(--ui-weight-semibold); }
+.ui-nav__item::before {
+  content: &quot;&quot;; position: absolute; left: 0; top: 10px; bottom: 10px; width: 3px; border-radius: 0 3px 3px 0;
+  background: var(--ui-accent); transform: scaleY(0);
+  transition: transform var(--ui-dur-base) var(--ui-ease-standard);
+}
+.ui-nav__item[aria-current=&quot;page&quot;]::before { transform: scaleY(1); }
+.ui-nav__item &gt; .ui-icon { width: var(--ui-icon); height: var(--ui-icon); flex: none; }
+.ui-nav__text { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.ui-nav__badge {
+  flex: none; display: inline-grid; place-items: center; min-width: 20px; height: 18px; padding: 0 6px;
+  border-radius: var(--ui-radius-pill);
+  font-size: var(--ui-text-xs); line-height: 1; font-weight: var(--ui-weight-semibold); font-variant-numeric: tabular-nums;
+  background: var(--ui-on-brand-selected); color: var(--ui-on-brand);
+}
+.ui-nav__badge[data-tone=&quot;warn&quot;] { background: var(--ui-warn); color: var(--ui-on-accent); }
+.ui-nav__badge[data-tone=&quot;danger&quot;] { background: var(--ui-danger); color: var(--ui-on-accent); }
+.ui-nav__badge[data-tone=&quot;accent&quot;] { background: var(--ui-accent); color: var(--ui-on-accent); }
+.ui-nav__item--sub { padding-left: calc(var(--ui-space-3) + var(--ui-icon) + var(--ui-space-3)); color: var(--ui-on-brand-muted); }
+.ui-nav__item--sub &gt; .ui-icon { display: none; }
+
+/* ---- Footer ---- */
+.ui-nav__footer {
+  flex: none; display: flex; flex-direction: column; gap: 2px;
+  padding-top: var(--ui-space-2);
+  border-top: 1px solid var(--ui-on-brand-line);
+}
+.ui-nav[data-context=&quot;drawer&quot;] .ui-nav__collapse { display: none; }
+
+/* ---- Rail mode: icons only. Labels fade; the nav width animates in the shell. ---- */
+.ui-nav__text, .ui-nav__brand-text, .ui-nav__label &gt; span {
+  transition: opacity var(--ui-dur-fast) var(--ui-ease-standard);
+}
+.ui-nav[data-mode=&quot;rail&quot;] .ui-nav__text,
+.ui-nav[data-mode=&quot;rail&quot;] .ui-nav__brand-text,
+.ui-nav[data-mode=&quot;rail&quot;] .ui-nav__label &gt; span { opacity: 0; }
+.ui-nav[data-mode=&quot;rail&quot;] .ui-nav__label { height: 9px; pointer-events: none; }
+.ui-nav[data-mode=&quot;rail&quot;] .ui-nav__label .ui-icon { display: none; }
+.ui-nav[data-mode=&quot;rail&quot;] .ui-nav__group[data-collapsed=&quot;true&quot;] .ui-nav__items { grid-template-rows: 1fr; }
+.ui-nav[data-mode=&quot;rail&quot;] .ui-nav__item--sub { padding-left: var(--ui-space-3); }
+.ui-nav[data-mode=&quot;rail&quot;] .ui-nav__item--sub &gt; .ui-icon { display: block; }
+.ui-nav[data-mode=&quot;rail&quot;] .ui-nav__badge {
+  position: absolute; left: 26px; top: 7px; min-width: 8px; width: 8px; height: 8px; padding: 0; font-size: 0;
+  box-shadow: 0 0 0 2px var(--ui-brand-strong);
+}
+
+/* ---- Rail tooltip (one element, positioned by SRETNav) ---- */
+.ui-nav-tip {
+  position: fixed; z-index: var(--ui-z-popover);
+  padding: var(--ui-space-1) var(--ui-space-2); border-radius: var(--ui-radius-sm);
+  background: var(--ui-text); color: var(--ui-bg-surface);
+  font-family: var(--ui-font); font-size: var(--ui-text-sm); line-height: var(--ui-lh-sm); white-space: nowrap;
+  box-shadow: var(--ui-shadow-2); pointer-events: none;
+  opacity: 0; transform: translateX(-4px);
+  transition: opacity var(--ui-dur-fast) var(--ui-ease-standard), transform var(--ui-dur-fast) var(--ui-ease-standard);
+}
+.ui-nav-tip[data-show=&quot;true&quot;] { opacity: 1; transform: none; }
+
+/* Ghost buttons inside the nav (the drawer close button) sit on the brand colour. */
+.ui-nav .ui-btn--ghost { color: var(--ui-on-brand); }
+.ui-nav .ui-btn--ghost:hover { background: var(--ui-on-brand-hover); color: var(--ui-on-brand); }
+&lt;/style&gt;
+&lt;style&gt;
+  /* Demo page only: give the shell the full viewport. Sample content layout uses kit tokens. */
+  html, body { height: 100%; margin: 0; background: var(--ui-bg-page); }
+  .demo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr)); gap: var(--ui-space-4); align-items: start; }
+  .demo-stack { display: flex; flex-direction: column; gap: var(--ui-space-4); min-width: 0; }
+  .demo-h1 { margin: 0; font-size: var(--ui-text-2xl); line-height: var(--ui-lh-2xl); font-weight: var(--ui-weight-semibold); }
+  .demo-sub { margin: var(--ui-space-1) 0 0; color: var(--ui-text-2); }
+  .demo-pane-body { flex: 1 1 auto; min-height: 0; overflow: auto; padding: var(--ui-space-4); display: flex; flex-direction: column; gap: var(--ui-space-3); }
+  .demo-pane-foot { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--ui-space-2); padding: var(--ui-space-3) var(--ui-space-4); border-top: 1px solid var(--ui-border); background: var(--ui-bg-subtle); }
+  @media (max-width: 640px) { .demo-hide-phone { display: none; } }
+&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;div class=&quot;ui-shell ui-root&quot; id=&quot;shell&quot;&gt;
+  &lt;aside class=&quot;ui-shell__nav&quot; id=&quot;nav-host&quot;&gt;&lt;/aside&gt;
+
+  &lt;header class=&quot;ui-shell__header ui-on-brand&quot;&gt;
+    &lt;div class=&quot;ui-shell__header-start&quot;&gt;
+      &lt;button type=&quot;button&quot; class=&quot;ui-btn ui-btn--ghost ui-btn--icon ui-shell__menu&quot; id=&quot;menu-btn&quot; aria-label=&quot;Open navigation&quot; data-icon=&quot;menu&quot;&gt;&lt;/button&gt;
+      &lt;span class=&quot;ui-shell__title&quot; id=&quot;page-title&quot;&gt;Dashboard&lt;/span&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;ui-shell__header-end&quot;&gt;
+      &lt;button type=&quot;button&quot; class=&quot;ui-btn&quot; id=&quot;aside-btn&quot; aria-expanded=&quot;false&quot; data-icon=&quot;sliders&quot;&gt;&lt;span class=&quot;demo-hide-phone&quot;&gt;Details&lt;/span&gt;&lt;/button&gt;
+      &lt;button type=&quot;button&quot; class=&quot;ui-btn ui-btn--accent demo-hide-phone&quot; data-icon=&quot;share&quot;&gt;Share&lt;/button&gt;
+      &lt;button type=&quot;button&quot; class=&quot;ui-btn ui-btn--ghost ui-btn--icon&quot; aria-label=&quot;More actions&quot; data-icon=&quot;more&quot;&gt;&lt;/button&gt;
+    &lt;/div&gt;
+  &lt;/header&gt;
+
+  &lt;main class=&quot;ui-shell__main&quot; id=&quot;main&quot;&gt;
+    &lt;div class=&quot;demo-stack&quot;&gt;
+      &lt;div&gt;
+        &lt;h1 class=&quot;demo-h1&quot;&gt;Sample workspace&lt;/h1&gt;
+        &lt;p class=&quot;demo-sub&quot;&gt;Illustrative data only. Every container, card and control on this page comes from the kit modules.&lt;/p&gt;
+      &lt;/div&gt;
+
+      &lt;div class=&quot;ui-toolbar&quot; id=&quot;toolbar&quot;&gt;
+        &lt;div class=&quot;ui-input-wrap&quot; style=&quot;flex: 1 1 220px; max-width: 320px;&quot;&gt;
+          &lt;span data-icon=&quot;search&quot; data-replace&gt;&lt;/span&gt;
+          &lt;input class=&quot;ui-input&quot; id=&quot;search&quot; type=&quot;search&quot; placeholder=&quot;Search items&quot; aria-label=&quot;Search items&quot;&gt;
+        &lt;/div&gt;
+        &lt;div class=&quot;ui-chips&quot;&gt;
+          &lt;span class=&quot;ui-chip ui-chip--active&quot;&gt;&lt;span&gt;Status: At risk&lt;/span&gt;&lt;button type=&quot;button&quot; class=&quot;ui-chip__remove&quot; aria-label=&quot;Remove filter&quot; data-icon=&quot;close&quot;&gt;&lt;/button&gt;&lt;/span&gt;
+          &lt;button type=&quot;button&quot; class=&quot;ui-chip&quot; aria-pressed=&quot;false&quot;&gt;Commented&lt;/button&gt;
+          &lt;button type=&quot;button&quot; class=&quot;ui-chip ui-chip--add&quot; data-icon=&quot;plus&quot;&gt;Add filter&lt;/button&gt;
+        &lt;/div&gt;
+        &lt;span class=&quot;ui-toolbar__spacer&quot;&gt;&lt;/span&gt;
+        &lt;div class=&quot;ui-segmented&quot; aria-label=&quot;Mode&quot;&gt;
+          &lt;button type=&quot;button&quot; class=&quot;ui-segmented__opt&quot; aria-checked=&quot;true&quot; data-value=&quot;highlight&quot;&gt;Highlight&lt;/button&gt;
+          &lt;button type=&quot;button&quot; class=&quot;ui-segmented__opt&quot; aria-checked=&quot;false&quot; data-value=&quot;only&quot;&gt;Show only&lt;/button&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+
+      &lt;div class=&quot;demo-grid&quot;&gt;
+        &lt;section class=&quot;ui-card&quot; id=&quot;card-form&quot;&gt;
+          &lt;div class=&quot;ui-card__header&quot;&gt;&lt;h2 class=&quot;ui-card__title&quot;&gt;Edit item&lt;/h2&gt;&lt;span class=&quot;ui-badge ui-badge--warn&quot;&gt;At risk&lt;/span&gt;&lt;/div&gt;
+          &lt;div class=&quot;ui-card__body&quot;&gt;
+            &lt;div class=&quot;ui-field-grid&quot;&gt;
+              &lt;label class=&quot;ui-field ui-field--full&quot;&gt;&lt;span class=&quot;ui-field__label&quot;&gt;Title&lt;/span&gt;&lt;input class=&quot;ui-input&quot; value=&quot;Equipment list revision B&quot;&gt;&lt;/label&gt;
+              &lt;label class=&quot;ui-field&quot;&gt;&lt;span class=&quot;ui-field__label&quot;&gt;Start&lt;/span&gt;&lt;input class=&quot;ui-input&quot; value=&quot;14-Aug-26&quot;&gt;&lt;/label&gt;
+              &lt;label class=&quot;ui-field&quot;&gt;&lt;span class=&quot;ui-field__label&quot;&gt;Finish&lt;/span&gt;&lt;input class=&quot;ui-input&quot; value=&quot;09-Oct-26&quot;&gt;&lt;/label&gt;
+              &lt;label class=&quot;ui-field&quot;&gt;&lt;span class=&quot;ui-field__label&quot;&gt;Owner&lt;/span&gt;&lt;select class=&quot;ui-select&quot;&gt;&lt;option&gt;Mechanical&lt;/option&gt;&lt;option&gt;Electrical&lt;/option&gt;&lt;/select&gt;&lt;/label&gt;
+              &lt;label class=&quot;ui-field&quot;&gt;&lt;span class=&quot;ui-field__label&quot;&gt;Float&lt;/span&gt;&lt;input class=&quot;ui-input&quot; value=&quot;6d&quot; readonly&gt;&lt;/label&gt;
+              &lt;label class=&quot;ui-field ui-field--full&quot;&gt;&lt;span class=&quot;ui-field__label&quot;&gt;Update&lt;/span&gt;&lt;textarea class=&quot;ui-textarea&quot; placeholder=&quot;Write an update for this period&quot;&gt;&lt;/textarea&gt;&lt;span class=&quot;ui-field__help&quot;&gt;Saved to the update history with today&#x27;s date.&lt;/span&gt;&lt;/label&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;ui-switch-row&quot;&gt;&lt;span class=&quot;ui-switch-row__label&quot;&gt;Follow up next period&lt;/span&gt;&lt;button type=&quot;button&quot; class=&quot;ui-switch&quot; aria-checked=&quot;true&quot; aria-label=&quot;Follow up next period&quot;&gt;&lt;/button&gt;&lt;/div&gt;
+            &lt;details class=&quot;ui-fold&quot;&gt;&lt;summary&gt;More fields &lt;span data-icon=&quot;chevronDown&quot;&gt;&lt;/span&gt;&lt;/summary&gt;&lt;div class=&quot;ui-fold__body&quot;&gt;&lt;label class=&quot;ui-field&quot;&gt;&lt;span class=&quot;ui-field__label&quot;&gt;Display label&lt;/span&gt;&lt;input class=&quot;ui-input&quot; value=&quot;Equip list B&quot;&gt;&lt;/label&gt;&lt;/div&gt;&lt;/details&gt;
+          &lt;/div&gt;
+          &lt;div class=&quot;ui-card__footer&quot;&gt;&lt;button type=&quot;button&quot; class=&quot;ui-btn&quot;&gt;Discard&lt;/button&gt;&lt;button type=&quot;button&quot; class=&quot;ui-btn ui-btn--primary&quot; id=&quot;save-btn&quot;&gt;Save&lt;/button&gt;&lt;/div&gt;
+        &lt;/section&gt;
+
+        &lt;div class=&quot;demo-stack&quot;&gt;
+          &lt;section class=&quot;ui-card&quot;&gt;
+            &lt;div class=&quot;ui-tabs&quot; id=&quot;tabs&quot;&gt;
+              &lt;button type=&quot;button&quot; class=&quot;ui-tab&quot; id=&quot;t-recent&quot; aria-controls=&quot;p-recent&quot; aria-selected=&quot;true&quot;&gt;Recent&lt;/button&gt;
+              &lt;button type=&quot;button&quot; class=&quot;ui-tab&quot; id=&quot;t-assigned&quot; aria-controls=&quot;p-assigned&quot;&gt;Assigned&lt;/button&gt;
+              &lt;button type=&quot;button&quot; class=&quot;ui-tab&quot; id=&quot;t-empty&quot; aria-controls=&quot;p-empty&quot;&gt;Archived&lt;/button&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;ui-tabpanel&quot; id=&quot;p-recent&quot;&gt;
+              &lt;ul class=&quot;ui-list&quot;&gt;
+                &lt;li class=&quot;ui-list-item&quot;&gt;&lt;div class=&quot;ui-list-item__main&quot;&gt;&lt;span class=&quot;ui-list-item__title&quot;&gt;Design criteria issued&lt;/span&gt;&lt;span class=&quot;ui-list-item__meta&quot;&gt;Complete · 07-Aug-26&lt;/span&gt;&lt;/div&gt;&lt;span class=&quot;ui-list-item__end&quot;&gt;&lt;span class=&quot;ui-badge ui-badge--ok&quot;&gt;Complete&lt;/span&gt;&lt;/span&gt;&lt;/li&gt;
+                &lt;li class=&quot;ui-list-item&quot;&gt;&lt;div class=&quot;ui-list-item__main&quot;&gt;&lt;span class=&quot;ui-list-item__title&quot;&gt;Long-lead purchase order award with a deliberately long title that truncates&lt;/span&gt;&lt;span class=&quot;ui-list-item__meta&quot;&gt;Critical · 23-Oct-26&lt;/span&gt;&lt;/div&gt;&lt;span class=&quot;ui-list-item__end&quot;&gt;&lt;span class=&quot;ui-badge ui-badge--danger&quot;&gt;Critical&lt;/span&gt;&lt;/span&gt;&lt;/li&gt;
+                &lt;li class=&quot;ui-list-item&quot;&gt;&lt;div class=&quot;ui-list-item__main&quot;&gt;&lt;span class=&quot;ui-list-item__title&quot;&gt;Cost estimate draft&lt;/span&gt;&lt;span class=&quot;ui-list-item__meta&quot;&gt;On track · 16-Oct-26&lt;/span&gt;&lt;/div&gt;&lt;span class=&quot;ui-list-item__end&quot;&gt;&lt;span class=&quot;ui-badge ui-badge--accent&quot;&gt;On track&lt;/span&gt;&lt;/span&gt;&lt;/li&gt;
+              &lt;/ul&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;ui-tabpanel&quot; id=&quot;p-assigned&quot; hidden&gt;
+              &lt;ul class=&quot;ui-list&quot;&gt;&lt;li class=&quot;ui-list-item&quot;&gt;&lt;div class=&quot;ui-list-item__main&quot;&gt;&lt;span class=&quot;ui-list-item__title&quot;&gt;Layout review complete&lt;/span&gt;&lt;span class=&quot;ui-list-item__meta&quot;&gt;Assigned to you&lt;/span&gt;&lt;/div&gt;&lt;/li&gt;&lt;/ul&gt;
+            &lt;/div&gt;
+            &lt;div class=&quot;ui-tabpanel&quot; id=&quot;p-empty&quot; hidden&gt;
+              &lt;div class=&quot;ui-empty&quot;&gt;&lt;span class=&quot;ui-empty__glyph&quot; data-icon=&quot;list&quot;&gt;&lt;/span&gt;&lt;p class=&quot;ui-empty__title&quot;&gt;Nothing archived&lt;/p&gt;&lt;p class=&quot;ui-empty__text&quot;&gt;Archived items appear here. Archive an item from its menu.&lt;/p&gt;&lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/section&gt;
+
+          &lt;section class=&quot;ui-card&quot;&gt;
+            &lt;div class=&quot;ui-card__header&quot;&gt;&lt;h2 class=&quot;ui-card__title&quot;&gt;Open items in&lt;/h2&gt;&lt;/div&gt;
+            &lt;div class=&quot;ui-card__body&quot;&gt;
+              &lt;div class=&quot;ui-radio-cards&quot; aria-label=&quot;Open items in&quot;&gt;
+                &lt;button type=&quot;button&quot; class=&quot;ui-radio-card&quot; aria-checked=&quot;true&quot; data-value=&quot;panel&quot;&gt;&lt;span class=&quot;ui-radio-card__title&quot;&gt;Side panel&lt;/span&gt;Stays open beside the content. Selecting another item swaps it in place.&lt;/button&gt;
+                &lt;button type=&quot;button&quot; class=&quot;ui-radio-card&quot; aria-checked=&quot;false&quot; data-value=&quot;dialog&quot;&gt;&lt;span class=&quot;ui-radio-card__title&quot;&gt;Dialog&lt;/span&gt;Opens over the content and closes when you save.&lt;/button&gt;
+              &lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/section&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/main&gt;
+
+  &lt;aside class=&quot;ui-shell__aside&quot; id=&quot;aside&quot; aria-label=&quot;Details&quot;&gt;
+    &lt;div class=&quot;ui-panel-header&quot;&gt;&lt;h2 class=&quot;ui-panel-header__title&quot;&gt;Details&lt;/h2&gt;&lt;div class=&quot;ui-panel-header__actions&quot;&gt;&lt;button type=&quot;button&quot; class=&quot;ui-btn ui-btn--ghost ui-btn--icon&quot; id=&quot;aside-close&quot; aria-label=&quot;Close details&quot; data-icon=&quot;close&quot;&gt;&lt;/button&gt;&lt;/div&gt;&lt;/div&gt;
+    &lt;div class=&quot;demo-pane-body&quot;&gt;
+      &lt;div class=&quot;ui-section&quot;&gt;&lt;p class=&quot;ui-section__label&quot;&gt;Summary&lt;/p&gt;&lt;p style=&quot;margin:0&quot;&gt;The right region is a container only. The side panel component (Stage C) fills it.&lt;/p&gt;&lt;/div&gt;
+      &lt;div class=&quot;ui-section&quot;&gt;&lt;p class=&quot;ui-section__label&quot;&gt;Layers&lt;/p&gt;
+        &lt;div class=&quot;ui-switch-row&quot;&gt;&lt;span class=&quot;ui-switch-row__label&quot;&gt;Dependency lines&lt;/span&gt;&lt;button type=&quot;button&quot; class=&quot;ui-switch&quot; aria-label=&quot;Dependency lines&quot;&gt;&lt;/button&gt;&lt;/div&gt;
+        &lt;div class=&quot;ui-switch-row&quot;&gt;&lt;span class=&quot;ui-switch-row__label&quot;&gt;Comment markers&lt;/span&gt;&lt;button type=&quot;button&quot; class=&quot;ui-switch&quot; aria-checked=&quot;true&quot; aria-label=&quot;Comment markers&quot;&gt;&lt;/button&gt;&lt;/div&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;demo-pane-foot&quot;&gt;&lt;button type=&quot;button&quot; class=&quot;ui-btn&quot;&gt;Reset&lt;/button&gt;&lt;button type=&quot;button&quot; class=&quot;ui-btn ui-btn--primary&quot;&gt;Apply&lt;/button&gt;&lt;/div&gt;
+  &lt;/aside&gt;
+&lt;/div&gt;
+
+&lt;script&gt;/* src/modules/ui-icons/ui-icons.js */
+/* ============================================================
+   ui-icons (SRETIcons): the kit&#x27;s inline SVG icon set (D-31).
+   24 x 24 stroke icons drawn with currentColor, so they take the text
+   colour of whatever holds them. No icon font, no network.
+
+   API
+     SRETIcons.svg(name, opts?) -&gt; string   SVG markup; opts.size (px), opts.cls
+     SRETIcons.has(name)        -&gt; boolean
+     SRETIcons.names()          -&gt; string[]
+   Unknown names render an empty 24 x 24 box rather than throwing, so a
+   typo shows as a gap, not a crash.
+   ============================================================ */
+(function (root) {
+  &#x27;use strict&#x27;;
+  var P = {
+    timeline: &#x27;&lt;path d=&quot;M3 6h18M3 12h18M3 18h18&quot;/&gt;&lt;path d=&quot;M8 4v4M15 10v4M11 16v4&quot;/&gt;&#x27;,
+    grid: &#x27;&lt;rect x=&quot;3&quot; y=&quot;4&quot; width=&quot;18&quot; height=&quot;16&quot; rx=&quot;2&quot;/&gt;&lt;path d=&quot;M3 10h18M3 15h18M9 4v16&quot;/&gt;&#x27;,
+    report: &#x27;&lt;path d=&quot;M6 3h9l4 4v14H6z&quot;/&gt;&lt;path d=&quot;M14 3v5h5M9 13h7M9 17h5&quot;/&gt;&#x27;,
+    print: &#x27;&lt;path d=&quot;M7 9V3h10v6M7 17H4v-7h16v7h-3&quot;/&gt;&lt;rect x=&quot;7&quot; y=&quot;14&quot; width=&quot;10&quot; height=&quot;7&quot;/&gt;&#x27;,
+    note: &#x27;&lt;path d=&quot;M5 4h14v11l-5 5H5z&quot;/&gt;&lt;path d=&quot;M14 20v-5h5M8 9h8M8 13h5&quot;/&gt;&#x27;,
+    comment: &#x27;&lt;path d=&quot;M4 5h16v11H9l-5 4z&quot;/&gt;&#x27;,
+    diamond: &#x27;&lt;path d=&quot;M12 3l9 9-9 9-9-9z&quot;/&gt;&#x27;,
+    list: &#x27;&lt;path d=&quot;M9 6h11M9 12h11M9 18h11&quot;/&gt;&lt;circle cx=&quot;4.5&quot; cy=&quot;6&quot; r=&quot;1&quot;/&gt;&lt;circle cx=&quot;4.5&quot; cy=&quot;12&quot; r=&quot;1&quot;/&gt;&lt;circle cx=&quot;4.5&quot; cy=&quot;18&quot; r=&quot;1&quot;/&gt;&#x27;,
+    import: &#x27;&lt;path d=&quot;M12 3v12M7 10l5 5 5-5&quot;/&gt;&lt;path d=&quot;M4 17v3h16v-3&quot;/&gt;&#x27;,
+    settings: &#x27;&lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;3&quot;/&gt;&lt;path d=&quot;M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1&quot;/&gt;&#x27;,
+    help: &#x27;&lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;9&quot;/&gt;&lt;path d=&quot;M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7M12 17h.01&quot;/&gt;&#x27;,
+    chevronRight: &#x27;&lt;path d=&quot;M9 6l6 6-6 6&quot;/&gt;&#x27;,
+    chevronDown: &#x27;&lt;path d=&quot;M6 9l6 6 6-6&quot;/&gt;&#x27;,
+    chevronLeft: &#x27;&lt;path d=&quot;M15 6l-6 6 6 6&quot;/&gt;&#x27;,
+    search: &#x27;&lt;circle cx=&quot;11&quot; cy=&quot;11&quot; r=&quot;6&quot;/&gt;&lt;path d=&quot;M20 20l-4.5-4.5&quot;/&gt;&#x27;,
+    filter: &#x27;&lt;path d=&quot;M4 5h16l-6 7v6l-4 2v-8z&quot;/&gt;&#x27;,
+    plus: &#x27;&lt;path d=&quot;M12 5v14M5 12h14&quot;/&gt;&#x27;,
+    close: &#x27;&lt;path d=&quot;M6 6l12 12M18 6L6 18&quot;/&gt;&#x27;,
+    share: &#x27;&lt;path d=&quot;M12 15V3M7 8l5-5 5 5&quot;/&gt;&lt;path d=&quot;M5 13v7h14v-7&quot;/&gt;&#x27;,
+    more: &#x27;&lt;circle cx=&quot;5&quot; cy=&quot;12&quot; r=&quot;1.2&quot;/&gt;&lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;1.2&quot;/&gt;&lt;circle cx=&quot;19&quot; cy=&quot;12&quot; r=&quot;1.2&quot;/&gt;&#x27;,
+    pin: &#x27;&lt;path d=&quot;M9 3h6l-1 6 4 4H6l4-4z&quot;/&gt;&lt;path d=&quot;M12 13v8&quot;/&gt;&#x27;,
+    menu: &#x27;&lt;path d=&quot;M4 6h16M4 12h16M4 18h16&quot;/&gt;&#x27;,
+    collapse: &#x27;&lt;rect x=&quot;3&quot; y=&quot;4&quot; width=&quot;18&quot; height=&quot;16&quot; rx=&quot;2&quot;/&gt;&lt;path d=&quot;M9 4v16M15 10l-2 2 2 2&quot;/&gt;&#x27;,
+    expand: &#x27;&lt;rect x=&quot;3&quot; y=&quot;4&quot; width=&quot;18&quot; height=&quot;16&quot; rx=&quot;2&quot;/&gt;&lt;path d=&quot;M9 4v16M13 10l2 2-2 2&quot;/&gt;&#x27;,
+    sliders: &#x27;&lt;path d=&quot;M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12&quot;/&gt;&lt;circle cx=&quot;16&quot; cy=&quot;6&quot; r=&quot;2&quot;/&gt;&lt;circle cx=&quot;10&quot; cy=&quot;12&quot; r=&quot;2&quot;/&gt;&lt;circle cx=&quot;18&quot; cy=&quot;18&quot; r=&quot;2&quot;/&gt;&#x27;,
+    calendar: &#x27;&lt;rect x=&quot;3&quot; y=&quot;5&quot; width=&quot;18&quot; height=&quot;16&quot; rx=&quot;2&quot;/&gt;&lt;path d=&quot;M3 10h18M8 3v4M16 3v4&quot;/&gt;&#x27;,
+    lock: &#x27;&lt;rect x=&quot;5&quot; y=&quot;11&quot; width=&quot;14&quot; height=&quot;10&quot; rx=&quot;2&quot;/&gt;&lt;path d=&quot;M8 11V8a4 4 0 0 1 8 0v3&quot;/&gt;&#x27;,
+    user: &#x27;&lt;circle cx=&quot;12&quot; cy=&quot;8&quot; r=&quot;4&quot;/&gt;&lt;path d=&quot;M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6&quot;/&gt;&#x27;,
+    check: &#x27;&lt;path d=&quot;M5 12l5 5 9-10&quot;/&gt;&#x27;,
+    info: &#x27;&lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;9&quot;/&gt;&lt;path d=&quot;M12 11v5M12 8h.01&quot;/&gt;&#x27;,
+    warning: &#x27;&lt;path d=&quot;M12 3l10 18H2z&quot;/&gt;&lt;path d=&quot;M12 10v5M12 18h.01&quot;/&gt;&#x27;,
+    arrowLeft: &#x27;&lt;path d=&quot;M19 12H5M11 6l-6 6 6 6&quot;/&gt;&#x27;,
+    arrowRight: &#x27;&lt;path d=&quot;M5 12h14M13 6l6 6-6 6&quot;/&gt;&#x27;,
+    file: &#x27;&lt;path d=&quot;M6 3h9l4 4v14H6z&quot;/&gt;&lt;path d=&quot;M14 3v5h5&quot;/&gt;&#x27;,
+    sun: &#x27;&lt;circle cx=&quot;12&quot; cy=&quot;12&quot; r=&quot;4&quot;/&gt;&lt;path d=&quot;M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5&quot;/&gt;&#x27;
+  };
+  function svg(name, opts) {
+    opts = opts || {};
+    var s = opts.size ? &#x27; width=&quot;&#x27; + opts.size + &#x27;&quot; height=&quot;&#x27; + opts.size + &#x27;&quot;&#x27; : &#x27;&#x27;;
+    return &#x27;&lt;svg class=&quot;ui-icon&#x27; + (opts.cls ? &#x27; &#x27; + opts.cls : &#x27;&#x27;) + &#x27;&quot; viewBox=&quot;0 0 24 24&quot;&#x27; + s +
+      &#x27; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;1.7&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot; aria-hidden=&quot;true&quot; focusable=&quot;false&quot;&gt;&#x27; +
+      (P[name] || &#x27;&#x27;) + &#x27;&lt;/svg&gt;&#x27;;
+  }
+  var api = {
+    svg: svg,
+    has: function (n) { return Object.prototype.hasOwnProperty.call(P, n); },
+    names: function () { return Object.keys(P); }
+  };
+  root.SRETIcons = api;
+  if (typeof module !== &#x27;undefined&#x27; &amp;&amp; module.exports) module.exports = api;
+})(typeof window !== &#x27;undefined&#x27; ? window : globalThis);
+&lt;/script&gt;
+&lt;script&gt;/* src/modules/ui-shell/ui-shell.js */
+/* ============================================================
+   ui-shell (SRETShell): layout controller for the app frame (D-31).
+   Knows nothing about the app&#x27;s data. It only decides how the nav and
+   aside regions behave at the current width and writes that state as
+   data attributes on the .ui-shell element (CSS does the rest).
+
+   Width bands (match ui-tokens):
+     phone   &lt;= 640    nav = drawer (off-canvas), aside = overlay
+     tablet  641-1024  nav = rail, opening it slides the expanded nav over
+                       the content (overlay); aside = overlay
+     desktop &gt;= 1025   nav = the user&#x27;s preference (expanded | rail),
+                       aside = push (content reflows only on open/close)
+
+   API
+     SRETShell.layoutFor(width, pref, navOpen, asideOpen) -&gt; state   (pure)
+     SRETShell.mount(el, opts) -&gt; controller
+        opts.navPref       &#x27;expanded&#x27; | &#x27;rail&#x27; (default &#x27;expanded&#x27;)
+        opts.persist       { get(): pref|null, set(pref) }   optional
+        opts.onChange      fn(state)                          optional
+        opts.width         fn() -&gt; number, for tests          optional
+     controller.toggleNav()  desktop: flips the preference; else opens/closes
+     controller.openNav() / closeNav()
+     controller.openAside() / closeAside() / toggleAside()
+     controller.state() -&gt; { band, nav, navOpen, aside, asideOpen, scrim, pref }
+     controller.destroy()
+   Events: &#x27;ui-shell:change&#x27; (CustomEvent, detail = state) on the element.
+   Keyboard: Esc closes the topmost overlay (nav drawer, then aside overlay).
+   ============================================================ */
+(function (root) {
+  &#x27;use strict&#x27;;
+  var PHONE_MAX = 640, TABLET_MAX = 1024;
+
+  function bandFor(w) { return w &lt;= PHONE_MAX ? &#x27;phone&#x27; : (w &lt;= TABLET_MAX ? &#x27;tablet&#x27; : &#x27;desktop&#x27;); }
+
+  function layoutFor(width, pref, navOpen, asideOpen) {
+    var band = bandFor(width);
+    var s = { band: band, pref: pref === &#x27;rail&#x27; ? &#x27;rail&#x27; : &#x27;expanded&#x27;, asideOpen: !!asideOpen };
+    if (band === &#x27;phone&#x27;) { s.nav = &#x27;drawer&#x27;; s.navOpen = !!navOpen; s.aside = &#x27;overlay&#x27;; }
+    else if (band === &#x27;tablet&#x27;) { s.nav = navOpen ? &#x27;overlay&#x27; : &#x27;rail&#x27;; s.navOpen = !!navOpen; s.aside = &#x27;overlay&#x27;; }
+    else { s.nav = s.pref; s.navOpen = false; s.aside = &#x27;push&#x27;; }
+    s.scrim = !!((s.nav === &#x27;drawer&#x27; &amp;&amp; s.navOpen) || s.nav === &#x27;overlay&#x27; || (s.aside === &#x27;overlay&#x27; &amp;&amp; s.asideOpen));
+    return s;
+  }
+
+  function mount(el, opts) {
+    opts = opts || {};
+    var widthFn = opts.width || function () { return el.getBoundingClientRect().width || root.innerWidth; };
+    var pref = (opts.persist &amp;&amp; opts.persist.get &amp;&amp; opts.persist.get()) || opts.navPref || &#x27;expanded&#x27;;
+    var navOpen = false, asideOpen = false, lastBand = null, state = null, lastFocus = null;
+
+    var scrim = el.querySelector(&#x27;:scope &gt; .ui-shell__scrim&#x27;);
+    if (!scrim) { scrim = document.createElement(&#x27;div&#x27;); scrim.className = &#x27;ui-shell__scrim&#x27;; el.appendChild(scrim); }
+    scrim.setAttribute(&#x27;aria-hidden&#x27;, &#x27;true&#x27;);
+    var nav = el.querySelector(&#x27;:scope &gt; .ui-shell__nav&#x27;);
+    var main = el.querySelector(&#x27;:scope &gt; .ui-shell__main&#x27;);
+    var header = el.querySelector(&#x27;:scope &gt; .ui-shell__header&#x27;);
+
+    function apply() {
+      var w = widthFn();
+      var band = bandFor(w);
+      if (band !== lastBand) { navOpen = false; lastBand = band; }
+      var prev = state;
+      state = layoutFor(w, pref, navOpen, asideOpen);
+      el.setAttribute(&#x27;data-band&#x27;, state.band);
+      el.setAttribute(&#x27;data-nav&#x27;, state.nav);
+      el.setAttribute(&#x27;data-nav-open&#x27;, String(state.navOpen));
+      el.setAttribute(&#x27;data-aside&#x27;, state.aside);
+      el.setAttribute(&#x27;data-aside-open&#x27;, String(state.asideOpen));
+      el.setAttribute(&#x27;data-scrim&#x27;, String(state.scrim));
+      // While a drawer or overlay nav is up, the content behind it is inert.
+      var modalNav = state.navOpen &amp;&amp; (state.nav === &#x27;drawer&#x27; || state.nav === &#x27;overlay&#x27;);
+      [main, header].forEach(function (n) { if (n) { if (modalNav) n.setAttribute(&#x27;inert&#x27;, &#x27;&#x27;); else n.removeAttribute(&#x27;inert&#x27;); } });
+      if (nav &amp;&amp; state.nav === &#x27;drawer&#x27; &amp;&amp; !state.navOpen) nav.setAttribute(&#x27;aria-hidden&#x27;, &#x27;true&#x27;);
+      else if (nav) nav.removeAttribute(&#x27;aria-hidden&#x27;);
+      if (!prev || JSON.stringify(prev) !== JSON.stringify(state)) {
+        el.dispatchEvent(new CustomEvent(&#x27;ui-shell:change&#x27;, { detail: state }));
+        if (opts.onChange) opts.onChange(state);
+      }
+    }
+
+    function focusFirstNavItem() {
+      if (!nav) return;
+      var f = nav.querySelector(&#x27;[aria-current=&quot;page&quot;], button, a[href]&#x27;);
+      if (f) f.focus({ preventScroll: true });
+    }
+
+    var ctl = {
+      state: function () { return Object.assign({}, state); },
+      openNav: function () {
+        if (state.band === &#x27;desktop&#x27;) { ctl.setPref(&#x27;expanded&#x27;); return; }
+        lastFocus = document.activeElement; navOpen = true; apply();
+        setTimeout(focusFirstNavItem, 0);
+      },
+      closeNav: function () {
+        if (!navOpen) return;
+        navOpen = false; apply();
+        if (lastFocus &amp;&amp; lastFocus.focus) lastFocus.focus({ preventScroll: true });
+      },
+      toggleNav: function () {
+        if (state.band === &#x27;desktop&#x27;) ctl.setPref(pref === &#x27;expanded&#x27; ? &#x27;rail&#x27; : &#x27;expanded&#x27;);
+        else if (navOpen) ctl.closeNav(); else ctl.openNav();
+      },
+      setPref: function (p) {
+        pref = p === &#x27;rail&#x27; ? &#x27;rail&#x27; : &#x27;expanded&#x27;;
+        if (opts.persist &amp;&amp; opts.persist.set) opts.persist.set(pref);
+        apply();
+      },
+      openAside: function () { asideOpen = true; apply(); },
+      closeAside: function () { asideOpen = false; apply(); },
+      toggleAside: function () { asideOpen = !asideOpen; apply(); },
+      refresh: apply,
+      destroy: function () {
+        ro.disconnect();
+        document.removeEventListener(&#x27;keydown&#x27;, onKey);
+        scrim.removeEventListener(&#x27;click&#x27;, onScrim);
+      }
+    };
+
+    function onKey(e) {
+      if (e.key !== &#x27;Escape&#x27;) return;
+      if (navOpen) { ctl.closeNav(); e.stopPropagation(); return; }
+      if (state.aside === &#x27;overlay&#x27; &amp;&amp; asideOpen) { ctl.closeAside(); e.stopPropagation(); }
+    }
+    function onScrim() {
+      if (navOpen) ctl.closeNav();
+      if (state.aside === &#x27;overlay&#x27; &amp;&amp; asideOpen) ctl.closeAside();
+    }
+    // On the document, so Esc works wherever focus is while an overlay is up.
+    document.addEventListener(&#x27;keydown&#x27;, onKey);
+    scrim.addEventListener(&#x27;click&#x27;, onScrim);
+    var ro = new ResizeObserver(function () { apply(); });
+    ro.observe(el);
+    apply();
+    return ctl;
+  }
+
+  var api = { mount: mount, layoutFor: layoutFor, bandFor: bandFor, PHONE_MAX: PHONE_MAX, TABLET_MAX: TABLET_MAX };
+  root.SRETShell = api;
+  if (typeof module !== &#x27;undefined&#x27; &amp;&amp; module.exports) module.exports = api;
+})(typeof window !== &#x27;undefined&#x27; ? window : globalThis);
+&lt;/script&gt;
+&lt;script&gt;/* src/modules/ui-surfaces/ui-surfaces.js */
+/* ============================================================
+   ui-surfaces (SRETSurfaces): behaviour for the surface primitives (D-31).
+
+   API
+     SRETSurfaces.tabs(tablistEl, opts?) -&gt; { select(id) }
+        Wires a role=tablist of .ui-tab buttons (each aria-controls a
+        .ui-tabpanel). Arrow Left/Right, Home and End move between tabs
+        (APG tabs pattern, automatic activation). opts.onChange(id).
+     SRETSurfaces.toast(text, opts?) -&gt; void
+        Shows a short message at the bottom centre for opts.ms (default
+        3000). One region per page, created on first use.
+   ============================================================ */
+(function (root) {
+  &#x27;use strict&#x27;;
+  function tabs(list, opts) {
+    opts = opts || {};
+    var btns = Array.prototype.slice.call(list.querySelectorAll(&#x27;.ui-tab&#x27;));
+    function select(id, focus) {
+      btns.forEach(function (b) {
+        var on = b.id === id || b.getAttribute(&#x27;aria-controls&#x27;) === id;
+        b.setAttribute(&#x27;aria-selected&#x27;, String(on));
+        b.tabIndex = on ? 0 : -1;
+        var p = document.getElementById(b.getAttribute(&#x27;aria-controls&#x27;));
+        if (p) p.hidden = !on;
+        if (on &amp;&amp; focus) b.focus();
+      });
+      if (opts.onChange) opts.onChange(id);
+    }
+    list.setAttribute(&#x27;role&#x27;, &#x27;tablist&#x27;);
+    btns.forEach(function (b, i) {
+      b.setAttribute(&#x27;role&#x27;, &#x27;tab&#x27;);
+      b.addEventListener(&#x27;click&#x27;, function () { select(b.id); });
+      b.addEventListener(&#x27;keydown&#x27;, function (e) {
+        var j = null;
+        if (e.key === &#x27;ArrowRight&#x27;) j = (i + 1) % btns.length;
+        else if (e.key === &#x27;ArrowLeft&#x27;) j = (i - 1 + btns.length) % btns.length;
+        else if (e.key === &#x27;Home&#x27;) j = 0;
+        else if (e.key === &#x27;End&#x27;) j = btns.length - 1;
+        if (j !== null) { e.preventDefault(); select(btns[j].id, true); }
+      });
+    });
+    var start = btns.filter(function (b) { return b.getAttribute(&#x27;aria-selected&#x27;) === &#x27;true&#x27;; })[0] || btns[0];
+    if (start) select(start.id);
+    return { select: function (id) { select(id); } };
+  }
+
+  var region = null;
+  function toast(text, opts) {
+    opts = opts || {};
+    if (!region) {
+      region = document.createElement(&#x27;div&#x27;);
+      region.className = &#x27;ui-toast-region ui-root&#x27;;
+      region.setAttribute(&#x27;role&#x27;, &#x27;status&#x27;);
+      region.setAttribute(&#x27;aria-live&#x27;, &#x27;polite&#x27;);
+      document.body.appendChild(region);
+    }
+    var t = document.createElement(&#x27;div&#x27;);
+    t.className = &#x27;ui-toast&#x27;;
+    var s = document.createElement(&#x27;span&#x27;);
+    s.className = &#x27;ui-toast__text&#x27;;
+    s.textContent = text;
+    t.appendChild(s);
+    region.appendChild(t);
+    requestAnimationFrame(function () { t.setAttribute(&#x27;data-show&#x27;, &#x27;true&#x27;); });
+    setTimeout(function () {
+      t.setAttribute(&#x27;data-show&#x27;, &#x27;false&#x27;);
+      setTimeout(function () { t.remove(); }, 260);
+    }, opts.ms || 3000);
+  }
+
+  var api = { tabs: tabs, toast: toast };
+  root.SRETSurfaces = api;
+  if (typeof module !== &#x27;undefined&#x27; &amp;&amp; module.exports) module.exports = api;
+})(typeof window !== &#x27;undefined&#x27; ? window : globalThis);
+&lt;/script&gt;
+&lt;script&gt;/* src/modules/ui-controls/ui-controls.js */
+/* ============================================================
+   ui-controls (SRETControls): behaviour for stateful controls (D-31).
+   Markup-first: the HTML carries the state in ARIA attributes; this
+   module only keeps them in step with clicks and keys, and reports.
+
+   API
+     SRETControls.bind(rootEl) -&gt; unbind()
+        Delegated handling inside rootEl for:
+          .ui-switch           aria-checked flips; emits &#x27;ui-change&#x27; {value:boolean}
+          .ui-segmented        radio group; arrow keys move; emits {value}
+          .ui-radio-cards      same, for .ui-radio-card children
+          .ui-chip[aria-pressed] toggles pressed; emits {value:boolean}
+          .ui-chip__remove     emits &#x27;ui-remove&#x27; on its chip, then removes it
+     &#x27;ui-change&#x27; and &#x27;ui-remove&#x27; bubble and carry detail.value / detail.id
+     (the control&#x27;s data-id or id).
+   ============================================================ */
+(function (root) {
+  &#x27;use strict&#x27;;
+  function emit(el, type, value) {
+    el.dispatchEvent(new CustomEvent(type, { bubbles: true, detail: { id: el.dataset.id || el.id || null, value: value } }));
+  }
+  function groupOf(el) { return el.closest(&#x27;.ui-segmented, .ui-radio-cards&#x27;); }
+  function optsOf(g) { return Array.prototype.slice.call(g.querySelectorAll(&#x27;.ui-segmented__opt, .ui-radio-card&#x27;)); }
+  function choose(g, opt, focus) {
+    optsOf(g).forEach(function (o) {
+      var on = o === opt;
+      o.setAttribute(&#x27;aria-checked&#x27;, String(on));
+      o.tabIndex = on ? 0 : -1;
+    });
+    if (focus) opt.focus();
+    emit(g, &#x27;ui-change&#x27;, opt.dataset.value || opt.textContent.trim());
+  }
+  function init(rootEl) {
+    rootEl.querySelectorAll(&#x27;.ui-segmented, .ui-radio-cards&#x27;).forEach(function (g) {
+      g.setAttribute(&#x27;role&#x27;, &#x27;radiogroup&#x27;);
+      var os = optsOf(g), any = false;
+      os.forEach(function (o) { o.setAttribute(&#x27;role&#x27;, &#x27;radio&#x27;); if (o.getAttribute(&#x27;aria-checked&#x27;) === &#x27;true&#x27;) any = true; });
+      os.forEach(function (o, i) { o.tabIndex = (o.getAttribute(&#x27;aria-checked&#x27;) === &#x27;true&#x27; || (!any &amp;&amp; i === 0)) ? 0 : -1; });
+    });
+    rootEl.querySelectorAll(&#x27;.ui-switch&#x27;).forEach(function (s) {
+      s.setAttribute(&#x27;role&#x27;, &#x27;switch&#x27;);
+      if (!s.hasAttribute(&#x27;aria-checked&#x27;)) s.setAttribute(&#x27;aria-checked&#x27;, &#x27;false&#x27;);
+    });
+  }
+  function bind(rootEl) {
+    init(rootEl);
+    function onClick(e) {
+      var rm = e.target.closest(&#x27;.ui-chip__remove&#x27;);
+      if (rm &amp;&amp; rootEl.contains(rm)) {
+        var chip = rm.closest(&#x27;.ui-chip&#x27;);
+        emit(chip, &#x27;ui-remove&#x27;, null);
+        chip.remove();
+        return;
+      }
+      var sw = e.target.closest(&#x27;.ui-switch&#x27;);
+      if (sw &amp;&amp; rootEl.contains(sw)) {
+        var v = sw.getAttribute(&#x27;aria-checked&#x27;) !== &#x27;true&#x27;;
+        sw.setAttribute(&#x27;aria-checked&#x27;, String(v));
+        emit(sw, &#x27;ui-change&#x27;, v);
+        return;
+      }
+      var opt = e.target.closest(&#x27;.ui-segmented__opt, .ui-radio-card&#x27;);
+      if (opt &amp;&amp; rootEl.contains(opt)) { choose(groupOf(opt), opt); return; }
+      var chp = e.target.closest(&#x27;.ui-chip[aria-pressed]&#x27;);
+      if (chp &amp;&amp; rootEl.contains(chp)) {
+        var p = chp.getAttribute(&#x27;aria-pressed&#x27;) !== &#x27;true&#x27;;
+        chp.setAttribute(&#x27;aria-pressed&#x27;, String(p));
+        emit(chp, &#x27;ui-change&#x27;, p);
+      }
+    }
+    function onKey(e) {
+      var opt = e.target.closest &amp;&amp; e.target.closest(&#x27;.ui-segmented__opt, .ui-radio-card&#x27;);
+      if (!opt) return;
+      var g = groupOf(opt), os = optsOf(g), i = os.indexOf(opt), j = null;
+      if (e.key === &#x27;ArrowRight&#x27; || e.key === &#x27;ArrowDown&#x27;) j = (i + 1) % os.length;
+      else if (e.key === &#x27;ArrowLeft&#x27; || e.key === &#x27;ArrowUp&#x27;) j = (i - 1 + os.length) % os.length;
+      if (j !== null) { e.preventDefault(); choose(g, os[j], true); }
+    }
+    rootEl.addEventListener(&#x27;click&#x27;, onClick);
+    rootEl.addEventListener(&#x27;keydown&#x27;, onKey);
+    return function unbind() { rootEl.removeEventListener(&#x27;click&#x27;, onClick); rootEl.removeEventListener(&#x27;keydown&#x27;, onKey); };
+  }
+  var api = { bind: bind };
+  root.SRETControls = api;
+  if (typeof module !== &#x27;undefined&#x27; &amp;&amp; module.exports) module.exports = api;
+})(typeof window !== &#x27;undefined&#x27; ? window : globalThis);
+&lt;/script&gt;
+&lt;script&gt;/* src/modules/ui-nav/ui-nav.js */
+/* ============================================================
+   ui-nav (SRETNav): generic left navigation panel (D-31).
+   Renders from a config object; knows nothing about the app&#x27;s data.
+   Selecting an item calls back to the host; the host decides what opens.
+
+   Config
+     {
+       ariaLabel: &#x27;Main&#x27;,
+       brand:  { title, subtitle?, icon? },             // icon: SRETIcons name
+       groups: [ { id, label?, collapsible?, collapsed?,
+                   items: [ { id, label, icon?, badge?: {value, tone?}, sub? } ] } ],
+       footer: [ { id, label, icon, badge? } ],          // pinned to the bottom
+       collapseControl: true                             // adds Collapse/Expand
+     }
+     badge.tone: neutral (default) | warn | danger | accent
+
+   API
+     SRETNav.mount(hostEl, config, opts) -&gt; nav
+        opts.active            id of the current item
+        opts.onSelect(id, item)
+        opts.onCollapseToggle()   the Collapse/Expand control was pressed
+        opts.onClose()            the drawer close button was pressed
+        opts.shell             an element with class ui-shell to follow
+                               (mode and context come from its ui-shell:change)
+     nav.setActive(id)
+     nav.setBadge(id, badge|null)
+     nav.setMode(&#x27;expanded&#x27;|&#x27;rail&#x27;)     when not following a shell
+     nav.setContext(&#x27;docked&#x27;|&#x27;overlay&#x27;|&#x27;drawer&#x27;)
+     nav.update(config)
+     nav.el, nav.destroy()
+   Keyboard: Arrow Up/Down and Home/End move between items; Enter/Space select.
+   Rail mode shows each label as a tooltip on hover and keyboard focus.
+   ============================================================ */
+(function (root) {
+  &#x27;use strict&#x27;;
+  function icon(n) { return root.SRETIcons ? root.SRETIcons.svg(n) : &#x27;&#x27;; }
+  function esc(s) { return String(s == null ? &#x27;&#x27; : s).replace(/[&amp;&lt;&gt;&quot;]/g, function (c) { return { &#x27;&amp;&#x27;: &#x27;&amp;amp;&#x27;, &#x27;&lt;&#x27;: &#x27;&amp;lt;&#x27;, &#x27;&gt;&#x27;: &#x27;&amp;gt;&#x27;, &#x27;&quot;&#x27;: &#x27;&amp;quot;&#x27; }[c]; }); }
+  function badgeHtml(b) {
+    if (!b || b.value == null || b.value === &#x27;&#x27;) return &#x27;&#x27;;
+    return &#x27;&lt;span class=&quot;ui-nav__badge&quot; data-tone=&quot;&#x27; + esc(b.tone || &#x27;neutral&#x27;) + &#x27;&quot;&gt;&#x27; + esc(b.value) + &#x27;&lt;/span&gt;&#x27;;
+  }
+  function itemHtml(it, active) {
+    return &#x27;&lt;button type=&quot;button&quot; class=&quot;ui-nav__item&#x27; + (it.sub ? &#x27; ui-nav__item--sub&#x27; : &#x27;&#x27;) + &#x27;&quot; data-id=&quot;&#x27; + esc(it.id) + &#x27;&quot; data-label=&quot;&#x27; + esc(it.label) + &#x27;&quot;&#x27; +
+      (it.id === active ? &#x27; aria-current=&quot;page&quot;&#x27; : &#x27;&#x27;) + &#x27;&gt;&#x27; +
+      icon(it.icon || &#x27;list&#x27;) + &#x27;&lt;span class=&quot;ui-nav__text&quot;&gt;&#x27; + esc(it.label) + &#x27;&lt;/span&gt;&#x27; + badgeHtml(it.badge) + &#x27;&lt;/button&gt;&#x27;;
+  }
+  function render(cfg, active, mode) {
+    var b = cfg.brand || {};
+    var h = &#x27;&lt;div class=&quot;ui-nav__brand&quot;&gt;&lt;span class=&quot;ui-nav__mark&quot;&gt;&#x27; + icon(b.icon || &#x27;diamond&#x27;) + &#x27;&lt;/span&gt;&#x27; +
+      &#x27;&lt;span class=&quot;ui-nav__brand-text&quot;&gt;&lt;span class=&quot;ui-nav__brand-title&quot;&gt;&#x27; + esc(b.title || &#x27;&#x27;) + &#x27;&lt;/span&gt;&#x27; +
+      (b.subtitle ? &#x27;&lt;span class=&quot;ui-nav__brand-sub&quot;&gt;&#x27; + esc(b.subtitle) + &#x27;&lt;/span&gt;&#x27; : &#x27;&#x27;) + &#x27;&lt;/span&gt;&#x27; +
+      &#x27;&lt;button type=&quot;button&quot; class=&quot;ui-btn ui-btn--ghost ui-btn--icon ui-nav__close&quot; data-act=&quot;close&quot; aria-label=&quot;Close navigation&quot;&gt;&#x27; + icon(&#x27;close&#x27;) + &#x27;&lt;/button&gt;&lt;/div&gt;&#x27;;
+    h += &#x27;&lt;div class=&quot;ui-nav__scroll&quot;&gt;&#x27;;
+    (cfg.groups || []).forEach(function (g, gi) {
+      if (gi &gt; 0 &amp;&amp; g.divider !== false) h += &#x27;&lt;div class=&quot;ui-nav__divider&quot; role=&quot;presentation&quot;&gt;&lt;/div&gt;&#x27;;
+      var gid = &#x27;ui-nav-g-&#x27; + esc(g.id || gi);
+      h += &#x27;&lt;div class=&quot;ui-nav__group&quot; data-group=&quot;&#x27; + esc(g.id || gi) + &#x27;&quot; data-collapsed=&quot;&#x27; + (!!g.collapsed) + &#x27;&quot;&gt;&#x27;;
+      if (g.label) {
+        h += g.collapsible
+          ? &#x27;&lt;button type=&quot;button&quot; class=&quot;ui-nav__label&quot; data-act=&quot;group&quot; aria-expanded=&quot;&#x27; + (!g.collapsed) + &#x27;&quot; aria-controls=&quot;&#x27; + gid + &#x27;&quot;&gt;&lt;span&gt;&#x27; + esc(g.label) + &#x27;&lt;/span&gt;&#x27; + icon(&#x27;chevronDown&#x27;) + &#x27;&lt;/button&gt;&#x27;
+          : &#x27;&lt;div class=&quot;ui-nav__label&quot;&gt;&lt;span&gt;&#x27; + esc(g.label) + &#x27;&lt;/span&gt;&lt;/div&gt;&#x27;;
+      }
+      h += &#x27;&lt;div class=&quot;ui-nav__items&quot; id=&quot;&#x27; + gid + &#x27;&quot;&gt;&lt;div&gt;&#x27; + (g.items || []).map(function (it) { return itemHtml(it, active); }).join(&#x27;&#x27;) + &#x27;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&#x27;;
+    });
+    h += &#x27;&lt;/div&gt;&#x27;;
+    var foot = (cfg.footer || []).map(function (it) { return itemHtml(it, active); }).join(&#x27;&#x27;);
+    if (cfg.collapseControl !== false) {
+      var rail = mode === &#x27;rail&#x27;;
+      foot += &#x27;&lt;button type=&quot;button&quot; class=&quot;ui-nav__item ui-nav__collapse&quot; data-act=&quot;collapse&quot; data-label=&quot;&#x27; + (rail ? &#x27;Expand&#x27; : &#x27;Collapse&#x27;) + &#x27;&quot; aria-label=&quot;&#x27; + (rail ? &#x27;Expand navigation&#x27; : &#x27;Collapse navigation&#x27;) + &#x27;&quot;&gt;&#x27; +
+        icon(rail ? &#x27;expand&#x27; : &#x27;collapse&#x27;) + &#x27;&lt;span class=&quot;ui-nav__text&quot;&gt;&#x27; + (rail ? &#x27;Expand&#x27; : &#x27;Collapse&#x27;) + &#x27;&lt;/span&gt;&lt;/button&gt;&#x27;;
+    }
+    if (foot) h += &#x27;&lt;div class=&quot;ui-nav__footer&quot;&gt;&#x27; + foot + &#x27;&lt;/div&gt;&#x27;;
+    return h;
+  }
+
+  var tip = null;
+  function showTip(btn) {
+    if (!tip) { tip = document.createElement(&#x27;div&#x27;); tip.className = &#x27;ui-nav-tip ui-root&#x27;; tip.setAttribute(&#x27;role&#x27;, &#x27;tooltip&#x27;); document.body.appendChild(tip); }
+    var r = btn.getBoundingClientRect();
+    tip.textContent = btn.getAttribute(&#x27;data-label&#x27;) || &#x27;&#x27;;
+    tip.style.left = (r.right + 8) + &#x27;px&#x27;;
+    tip.style.top = (r.top + r.height / 2 - 12) + &#x27;px&#x27;;
+    tip.setAttribute(&#x27;data-show&#x27;, &#x27;true&#x27;);
+  }
+  function hideTip() { if (tip) tip.setAttribute(&#x27;data-show&#x27;, &#x27;false&#x27;); }
+
+  function mount(host, config, opts) {
+    opts = opts || {};
+    var cfg = config, active = opts.active || null, mode = &#x27;expanded&#x27;, context = &#x27;docked&#x27;;
+    var el = document.createElement(&#x27;nav&#x27;);
+    el.className = &#x27;ui-nav&#x27;;
+    el.setAttribute(&#x27;aria-label&#x27;, cfg.ariaLabel || &#x27;Main&#x27;);
+    host.appendChild(el);
+
+    function paint() {
+      el.innerHTML = render(cfg, active, mode);
+      el.setAttribute(&#x27;data-mode&#x27;, mode);
+      el.setAttribute(&#x27;data-context&#x27;, context);
+    }
+    function findItem(id) {
+      var all = [];
+      (cfg.groups || []).forEach(function (g) { all = all.concat(g.items || []); });
+      all = all.concat(cfg.footer || []);
+      return all.filter(function (i) { return i.id === id; })[0] || null;
+    }
+    function items() { return Array.prototype.slice.call(el.querySelectorAll(&#x27;.ui-nav__item&#x27;)).filter(function (b) { return b.offsetParent !== null; }); }
+
+    function onClick(e) {
+      var b = e.target.closest(&#x27;button&#x27;); if (!b || !el.contains(b)) return;
+      var act = b.getAttribute(&#x27;data-act&#x27;);
+      if (act === &#x27;group&#x27;) {
+        var g = b.closest(&#x27;.ui-nav__group&#x27;);
+        var c = g.getAttribute(&#x27;data-collapsed&#x27;) !== &#x27;true&#x27;;
+        g.setAttribute(&#x27;data-collapsed&#x27;, String(c));
+        b.setAttribute(&#x27;aria-expanded&#x27;, String(!c));
+        var gc = (cfg.groups || []).filter(function (x) { return String(x.id) === g.getAttribute(&#x27;data-group&#x27;); })[0];
+        if (gc) gc.collapsed = c;
+        return;
+      }
+      if (act === &#x27;collapse&#x27;) { hideTip(); if (opts.onCollapseToggle) opts.onCollapseToggle(); return; }
+      if (act === &#x27;close&#x27;) { if (opts.onClose) opts.onClose(); return; }
+      var id = b.getAttribute(&#x27;data-id&#x27;);
+      if (id) { ctl.setActive(id); if (opts.onSelect) opts.onSelect(id, findItem(id)); }
+    }
+    function onKey(e) {
+      if (!e.target.classList || !e.target.classList.contains(&#x27;ui-nav__item&#x27;)) return;
+      var list = items(), i = list.indexOf(e.target), j = null;
+      if (e.key === &#x27;ArrowDown&#x27;) j = Math.min(i + 1, list.length - 1);
+      else if (e.key === &#x27;ArrowUp&#x27;) j = Math.max(i - 1, 0);
+      else if (e.key === &#x27;Home&#x27;) j = 0;
+      else if (e.key === &#x27;End&#x27;) j = list.length - 1;
+      if (j !== null) { e.preventDefault(); list[j].focus(); }
+    }
+    function onOver(e) {
+      if (mode !== &#x27;rail&#x27;) return;
+      var b = e.target.closest(&#x27;.ui-nav__item&#x27;);
+      if (b &amp;&amp; el.contains(b)) showTip(b); else hideTip();
+    }
+    el.addEventListener(&#x27;click&#x27;, onClick);
+    el.addEventListener(&#x27;keydown&#x27;, onKey);
+    el.addEventListener(&#x27;mouseover&#x27;, onOver);
+    el.addEventListener(&#x27;focusin&#x27;, onOver);
+    el.addEventListener(&#x27;mouseleave&#x27;, hideTip);
+    el.addEventListener(&#x27;focusout&#x27;, hideTip);
+
+    var ctl = {
+      el: el,
+      setActive: function (id) {
+        active = id;
+        el.querySelectorAll(&#x27;.ui-nav__item[data-id]&#x27;).forEach(function (b) {
+          if (b.getAttribute(&#x27;data-id&#x27;) === id) b.setAttribute(&#x27;aria-current&#x27;, &#x27;page&#x27;); else b.removeAttribute(&#x27;aria-current&#x27;);
+        });
+      },
+      setBadge: function (id, badge) {
+        var it = findItem(id); if (it) it.badge = badge;
+        var b = el.querySelector(&#x27;.ui-nav__item[data-id=&quot;&#x27; + String(id).replace(/&quot;/g, &#x27;&#x27;) + &#x27;&quot;]&#x27;);
+        if (!b) return;
+        var old = b.querySelector(&#x27;.ui-nav__badge&#x27;); if (old) old.remove();
+        if (badge) b.insertAdjacentHTML(&#x27;beforeend&#x27;, badgeHtml(badge));
+      },
+      setMode: function (m) { m = m === &#x27;rail&#x27; ? &#x27;rail&#x27; : &#x27;expanded&#x27;; if (m !== mode) { mode = m; paint(); if (m !== &#x27;rail&#x27;) hideTip(); } },
+      setContext: function (c) { context = c || &#x27;docked&#x27;; el.setAttribute(&#x27;data-context&#x27;, context); },
+      update: function (c) { cfg = c; paint(); },
+      destroy: function () { if (shellEl) shellEl.removeEventListener(&#x27;ui-shell:change&#x27;, onShell); hideTip(); el.remove(); }
+    };
+
+    var shellEl = opts.shell || null;
+    function onShell(e) {
+      var s = e.detail;
+      ctl.setMode(s.nav === &#x27;rail&#x27; ? &#x27;rail&#x27; : &#x27;expanded&#x27;);
+      ctl.setContext(s.nav === &#x27;drawer&#x27; ? &#x27;drawer&#x27; : (s.nav === &#x27;overlay&#x27; ? &#x27;overlay&#x27; : &#x27;docked&#x27;));
+    }
+    paint();
+    if (shellEl) {
+      shellEl.addEventListener(&#x27;ui-shell:change&#x27;, onShell);
+      var dn = shellEl.getAttribute(&#x27;data-nav&#x27;);   // the shell may have mounted first
+      if (dn) onShell({ detail: { nav: dn } });
+    }
+    return ctl;
+  }
+
+  var api = { mount: mount };
+  root.SRETNav = api;
+  if (typeof module !== &#x27;undefined&#x27; &amp;&amp; module.exports) module.exports = api;
+})(typeof window !== &#x27;undefined&#x27; ? window : globalThis);
+&lt;/script&gt;
+&lt;script&gt;
+(function () {
+  // Icons: any element with data-icon gets the SVG prepended.
+  document.querySelectorAll(&#x27;[data-icon]&#x27;).forEach(function (el) {
+    var svg = SRETIcons.svg(el.getAttribute(&#x27;data-icon&#x27;));
+    if (el.hasAttribute(&#x27;data-replace&#x27;)) el.outerHTML = svg; else el.insertAdjacentHTML(&#x27;afterbegin&#x27;, svg);
+  });
+
+  var store = { get: function () { try { return localStorage.getItem(&#x27;ui-kit-nav&#x27;); } catch (e) { return null; } },
+                set: function (v) { try { localStorage.setItem(&#x27;ui-kit-nav&#x27;, v); } catch (e) {} } };
+  var shellEl = document.getElementById(&#x27;shell&#x27;);
+  var shell = SRETShell.mount(shellEl, { persist: store });
+
+  var config = {
+    ariaLabel: &#x27;Main&#x27;,
+    brand: { title: &#x27;Project Hub&#x27;, subtitle: &#x27;Sample workspace&#x27;, icon: &#x27;diamond&#x27; },
+    groups: [
+      { id: &#x27;views&#x27;, label: &#x27;Views&#x27;, items: [
+        { id: &#x27;dashboard&#x27;, label: &#x27;Dashboard&#x27;, icon: &#x27;grid&#x27; },
+        { id: &#x27;timeline&#x27;, label: &#x27;Timeline&#x27;, icon: &#x27;timeline&#x27; },
+        { id: &#x27;reports&#x27;, label: &#x27;Reports&#x27;, icon: &#x27;report&#x27; } ] },
+      { id: &#x27;work&#x27;, label: &#x27;My work&#x27;, items: [
+        { id: &#x27;notes&#x27;, label: &#x27;Notes&#x27;, icon: &#x27;note&#x27;, badge: { value: 7 } },
+        { id: &#x27;comments&#x27;, label: &#x27;Comments and markups&#x27;, icon: &#x27;comment&#x27;, badge: { value: 12 } },
+        { id: &#x27;tasks&#x27;, label: &#x27;My tasks&#x27;, icon: &#x27;diamond&#x27;, badge: { value: 3, tone: &#x27;warn&#x27; } } ] },
+      { id: &#x27;lists&#x27;, label: &#x27;Lists&#x27;, collapsible: true, items: [
+        { id: &#x27;l-crit&#x27;, label: &#x27;Critical&#x27;, icon: &#x27;list&#x27;, badge: { value: 1, tone: &#x27;danger&#x27; }, sub: true },
+        { id: &#x27;l-risk&#x27;, label: &#x27;At risk&#x27;, icon: &#x27;list&#x27;, badge: { value: 3, tone: &#x27;warn&#x27; }, sub: true },
+        { id: &#x27;l-edit&#x27;, label: &#x27;Edited this week&#x27;, icon: &#x27;list&#x27;, badge: { value: 5 }, sub: true } ] }
+    ],
+    footer: [
+      { id: &#x27;import&#x27;, label: &#x27;Import and data&#x27;, icon: &#x27;import&#x27; },
+      { id: &#x27;settings&#x27;, label: &#x27;Settings&#x27;, icon: &#x27;settings&#x27; },
+      { id: &#x27;help&#x27;, label: &#x27;Help and about&#x27;, icon: &#x27;help&#x27; } ],
+    collapseControl: true
+  };
+  var nav = SRETNav.mount(document.getElementById(&#x27;nav-host&#x27;), config, {
+    active: &#x27;dashboard&#x27;,
+    shell: shellEl,
+    onSelect: function (id, item) {
+      document.getElementById(&#x27;page-title&#x27;).textContent = item ? item.label : id;
+      var s = shell.state();
+      if (s.navOpen) shell.closeNav();
+    },
+    onCollapseToggle: function () { shell.toggleNav(); },
+    onClose: function () { shell.closeNav(); }
+  });
+
+  document.getElementById(&#x27;menu-btn&#x27;).addEventListener(&#x27;click&#x27;, function () { shell.openNav(); });
+  var asideBtn = document.getElementById(&#x27;aside-btn&#x27;);
+  function syncAside() { asideBtn.setAttribute(&#x27;aria-expanded&#x27;, String(shell.state().asideOpen)); }
+  asideBtn.addEventListener(&#x27;click&#x27;, function () { shell.toggleAside(); syncAside(); });
+  document.getElementById(&#x27;aside-close&#x27;).addEventListener(&#x27;click&#x27;, function () { shell.closeAside(); syncAside(); });
+  shellEl.addEventListener(&#x27;ui-shell:change&#x27;, syncAside);
+
+  SRETControls.bind(shellEl);
+  SRETSurfaces.tabs(document.getElementById(&#x27;tabs&#x27;));
+  document.getElementById(&#x27;save-btn&#x27;).addEventListener(&#x27;click&#x27;, function () { SRETSurfaces.toast(&#x27;Saved&#x27;); });
+
+  // Exposed for the gallery checks only.
+  window.__kit = { shell: shell, nav: nav };
+})();
+&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+"></iframe></div>
+  </section>
+
+  <section class="g-sec">
+    <h2>Tokens</h2>
+    <p>One resource for colour, spacing, type, shape, elevation and motion (<code>ui-tokens</code>). Components read only these.</p>
+    <div class="ui-card"><div class="ui-card__body">
+      <div class="ui-section"><p class="ui-section__label">Colour roles</p><div class="g-swatches" id="swatches"></div></div>
+      <div class="ui-section"><p class="ui-section__label">Spacing scale</p><div class="g-scale" id="spacing"></div></div>
+      <div class="ui-section"><p class="ui-section__label">Type scale</p><div class="g-type" id="type"></div></div>
+    </div></div>
+  </section>
+
+  <section class="g-sec">
+    <h2>Modules</h2>
+    <p>Each module's own documentation, embedded from its <code>MODULE.md</code>. It covers the layout contract (direction, wrap, padding, gap and what truncates or scrolls) and the motion table.</p>
+    <section class="ui-card">
+      <div class="ui-tabs" id="doc-tabs">
+        <button type="button" class="ui-tab" id="dt-tokens" aria-controls="dp-tokens" aria-selected="true">ui-tokens</button>
+        <button type="button" class="ui-tab" id="dt-shell" aria-controls="dp-shell">ui-shell</button>
+        <button type="button" class="ui-tab" id="dt-surfaces" aria-controls="dp-surfaces">ui-surfaces</button>
+        <button type="button" class="ui-tab" id="dt-controls" aria-controls="dp-controls">ui-controls</button>
+        <button type="button" class="ui-tab" id="dt-nav" aria-controls="dp-nav">ui-nav</button>
+        <button type="button" class="ui-tab" id="dt-icons" aria-controls="dp-icons">ui-icons</button>
+      </div>
+      <div class="ui-card__body">
+        <div class="ui-tabpanel g-doc" id="dp-tokens"><h1>ui-tokens</h1>
+<p>The one shared styling resource for the SRET UI kit (D-31). Every <code>ui-*</code> module reads only these custom properties.</p>
+<table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>see <code>src/modules/MODULES.json</code> (the only place it is written)</td></tr><tr><td>Status</td><td>Standalone (D-31 Stage A). Not embedded in the app yet.</td></tr><tr><td>Global</td><td>none (CSS only)</td></tr><tr><td>Requires</td><td>none</td></tr><tr><td>Theme</td><td>Light only for now. Dark is a later slot.</td></tr></tbody></table>
+<h2>What it defines</h2>
+<table><thead><tr><th>Group</th><th>Tokens</th><th>Notes</th></tr></thead><tbody><tr><td>Palette</td><td><code>--pal-*</code></td><td>Copied from the app's light palette (P55). Declared at <code>:where(:root)</code>, so a host that already defines <code>--pal-*</code> (the app) wins and both share one palette. The only literal colours in the kit.</td></tr><tr><td>Colour roles</td><td><code>--ui-bg-*</code>, <code>--ui-text*</code>, <code>--ui-border*</code>, <code>--ui-accent*</code>, <code>--ui-brand*</code>, <code>--ui-on-brand*</code>, <code>--ui-ok/warn/danger*</code>, <code>--ui-scrim</code>, <code>--ui-focus</code></td><td>Components use roles, never <code>--pal-*</code> directly.</td></tr><tr><td>Spacing</td><td><code>--ui-space-1..8</code> = 4, 8, 12, 16, 20, 24, 32, 40 px; <code>--ui-gutter</code></td><td>Gutter is 16 px on phone and tablet, 24 px from 1025 px.</td></tr><tr><td>Type</td><td><code>--ui-font</code>, <code>--ui-font-mono</code>, <code>--ui-text-xs..2xl</code> with matching <code>--ui-lh-*</code>, weights, <code>--ui-tracking-label</code></td><td>11, 12, 13, 14, 16, 20 px. Body is 13/20.</td></tr><tr><td>Shape</td><td><code>--ui-radius-sm/md/lg/xl/pill</code></td><td>4, 6, 8, 12 px.</td></tr><tr><td>Elevation</td><td><code>--ui-shadow-1/2/3</code></td><td>Level 1 cards, 2 popovers, 3 drawers and dialogs (design-standard levels).</td></tr><tr><td>Controls</td><td><code>--ui-ctl-h</code> (32 px, 40 px on touch), <code>--ui-ctl-h-sm</code>, <code>--ui-hit</code> (40 px), <code>--ui-icon</code>, <code>--ui-icon-sm</code></td><td>Touch targets reach 40 px through <code>::after</code>, never by growing the visible box.</td></tr><tr><td>Motion</td><td><code>--ui-dur-fast/base/slow</code> = 120/200/240 ms; <code>--ui-ease-standard/enter/exit</code></td><td>See Motion below.</td></tr><tr><td>Layers</td><td><code>--ui-z-nav</code> up to <code>--ui-z-toast</code></td><td>Fixed order: nav, aside, scrim, drawer, dialog, popover, toast.</td></tr><tr><td>Shell sizes</td><td><code>--ui-nav-w-expanded/rail/drawer</code>, <code>--ui-header-h</code>, <code>--ui-aside-w</code></td><td>240, 60, 288, 52, 380 px.</td></tr><tr><td>Breakpoints</td><td>documented constants</td><td>Phone up to 640, tablet 641 to 1024, desktop from 1025, wide from 1280. CSS cannot read variables in media queries, so each module repeats these numbers.</td></tr></tbody></table>
+<h2>Layout contract</h2>
+<table><thead><tr><th>Rule</th><th>Value</th></tr></thead><tbody><tr><td>Who owns spacing</td><td>Containers own their padding. Children never set outer margins; siblings are spaced with <code>gap</code>.</td></tr><tr><td>Text in flex rows</td><td>Every flex child that holds text gets <code>min-width: 0</code>, so it can truncate or wrap instead of pushing its row wider.</td></tr><tr><td>Long content</td><td>Scrolls inside its region. The page itself never scrolls sideways.</td></tr><tr><td><code>.ui-root</code></td><td>Sets <code>box-sizing: border-box</code>, the font, body size and colour, and the focus ring for everything inside it.</td></tr></tbody></table>
+<h2>Motion</h2>
+<table><thead><tr><th>Use</th><th>Duration</th><th>Easing</th><th>Industry reference</th></tr></thead><tbody><tr><td>Hover, toggles, small state changes</td><td>120 ms (<code>--ui-dur-fast</code>)</td><td>standard</td><td>Material 3 "short", Fluent "faster"</td></tr><tr><td>Panels, nav width, exits</td><td>200 ms (<code>--ui-dur-base</code>)</td><td>exit: accelerate</td><td>Material 3 "medium", Fluent "normal"</td></tr><tr><td>Drawers and dialogs entering</td><td>240 ms (<code>--ui-dur-slow</code>)</td><td>enter: decelerate</td><td>Material 3 "medium", Fluent "slow"</td></tr></tbody></table>
+<p>Budget for every module:</p>
+<ul><li>One animation per user action.</li><li>No staggers or chained sequences.</li><li>No motion on data.</li><li>Only transform and opacity animate, except deliberate width changes (nav, pinned aside).</li></ul>
+<p>The OS "reduce motion" accessibility setting sets every duration to 0 automatically. There is no control for it in the UI.</p>
+<h2>Changelog</h2>
+<table><thead><tr><th>Version</th><th>App version</th><th>Change</th></tr></thead><tbody><tr><td>0.1.0</td><td>none (standalone)</td><td>First version, D-31 Stage A.</td></tr></tbody></table></div>
+        <div class="ui-tabpanel g-doc" id="dp-shell" hidden><h1>ui-shell (<code>SRETShell</code>)</h1>
+<p>The external containers of an app screen (D-31): nav (left), header (command bar), main (content) and aside (right). It knows nothing about the app's data. It decides how the nav and aside behave at the current width.</p>
+<table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>see <code>src/modules/MODULES.json</code></td></tr><tr><td>Status</td><td>Standalone (D-31 Stage A)</td></tr><tr><td>Global</td><td><code>window.SRETShell</code>, also <code>module.exports</code></td></tr><tr><td>Requires</td><td><code>ui-tokens</code></td></tr></tbody></table>
+<h2>Interface</h2>
+<p>The header comment of <code>ui-shell.js</code> is the API reference (<code>mount</code>, <code>layoutFor</code>, controller methods, the <code>ui-shell:change</code> event).</p>
+<p>Markup:</p>
+<pre><code>&lt;div class=&quot;ui-shell ui-root&quot;&gt;
+  &lt;aside class=&quot;ui-shell__nav&quot;&gt;…nav goes here…&lt;/aside&gt;
+  &lt;header class=&quot;ui-shell__header ui-on-brand&quot;&gt;
+    &lt;div class=&quot;ui-shell__header-start&quot;&gt;
+      &lt;button class=&quot;ui-btn ui-btn--ghost ui-btn--icon ui-shell__menu&quot;&gt;…&lt;/button&gt;
+      &lt;span class=&quot;ui-shell__title&quot;&gt;…&lt;/span&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;ui-shell__header-end&quot;&gt;…actions…&lt;/div&gt;
+  &lt;/header&gt;
+  &lt;main class=&quot;ui-shell__main&quot;&gt;…&lt;/main&gt;
+  &lt;aside class=&quot;ui-shell__aside&quot;&gt;…&lt;/aside&gt;
+&lt;/div&gt;</code></pre>
+<p>The host gives <code>.ui-shell</code> a height, for example <code>height: 100dvh</code>.</p>
+<h2>Behaviour by width</h2>
+<table><thead><tr><th>Band</th><th>Nav</th><th>Aside</th><th>Scrim</th></tr></thead><tbody><tr><td>Phone, up to 640 px</td><td>Off-canvas drawer (288 px or 86 vw). Opened by the header menu button.</td><td>Overlay from the right, full width up to 380 px</td><td>Yes, while the drawer or aside is open</td></tr><tr><td>Tablet, 641 to 1024 px</td><td>Icon rail (60 px). Expanding it slides the full nav over the content.</td><td>Overlay</td><td>Yes, while the expanded nav or aside is open</td></tr><tr><td>Desktop, from 1025 px</td><td>The user's choice: expanded (240 px) or rail (60 px). Remembered through <code>opts.persist</code>.</td><td>Pushes the content (380 px)</td><td>No</td></tr></tbody></table>
+<p>When the drawer or overlay nav is up, the header and main are marked <code>inert</code>, so keyboard focus cannot reach what is behind the scrim. Esc closes the topmost overlay, and so does a scrim click.</p>
+<h2>Layout contract</h2>
+<table><thead><tr><th>Region</th><th>Direction and wrap</th><th>Padding</th><th>Gap</th><th>Overflow and content</th></tr></thead><tbody><tr><td><code>.ui-shell</code></td><td>CSS grid: columns nav, main, aside; rows header, body</td><td>none</td><td>none</td><td><code>overflow: hidden</code>; regions scroll, never the page</td></tr><tr><td><code>__nav</code></td><td>column, no wrap</td><td>none (the nav component pads itself)</td><td>none</td><td><code>overflow: hidden</code>; the nav's own list scrolls</td></tr><tr><td><code>__header</code></td><td>row, <b>no wrap</b></td><td>0 <code>--ui-gutter</code> inline</td><td><code>--ui-space-3</code></td><td><code>overflow: hidden</code>. The start group (<code>flex: 1 1 auto; min-width: 0</code>) shrinks first and the title truncates with an ellipsis. The end group never shrinks, so on narrow screens hosts move secondary actions into a More menu instead of letting them wrap.</td></tr><tr><td><code>__main</code></td><td>block</td><td><code>--ui-gutter</code> (16 px phone and tablet, 24 px desktop); <code>data-flush</code> removes it for full-bleed content such as a board</td><td>none</td><td><code>overflow: auto</code>; scroll stays inside main</td></tr><tr><td><code>__aside</code></td><td>column, no wrap</td><td>none (the panel component pads itself)</td><td>none</td><td><code>overflow: hidden</code>; the panel body scrolls</td></tr></tbody></table>
+<h2>Motion</h2>
+<table><thead><tr><th>Change</th><th>Animation</th><th>Duration and easing</th></tr></thead><tbody><tr><td>Nav expanded and rail (desktop)</td><td>Grid column width</td><td>200 ms, standard</td></tr><tr><td>Drawer or overlay opens</td><td>Slide in (transform)</td><td>240 ms, decelerate</td></tr><tr><td>Drawer or overlay closes</td><td>Slide out</td><td>200 ms, accelerate</td></tr><tr><td>Aside push open and close</td><td>Grid column width</td><td>200 ms, standard</td></tr><tr><td>Scrim</td><td>Fade</td><td>200 ms, standard</td></tr></tbody></table>
+<p>All within budget: one animation per action and no stagger. The content does not reflow when a milestone is selected, only when the aside or nav changes width.</p>
+<h2>Tests</h2>
+<ul><li><code>tools/ui_kit_test.mjs</code>: <code>layoutFor</code> across the band edges.</li><li><code>tools/ui_kit_check.mjs</code>: the gallery at 390, 768 and 1440.</li></ul>
+<h2>Changelog</h2>
+<table><thead><tr><th>Version</th><th>App version</th><th>Change</th></tr></thead><tbody><tr><td>0.1.0</td><td>none (standalone)</td><td>First version, D-31 Stage A.</td></tr></tbody></table></div>
+        <div class="ui-tabpanel g-doc" id="dp-surfaces" hidden><h1>ui-surfaces (<code>SRETSurfaces</code>)</h1>
+<p>The internal cards and content containers (D-31): card, section, panel header, toolbar, tabs, fold, list, empty state and toast.</p>
+<table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>see <code>src/modules/MODULES.json</code></td></tr><tr><td>Status</td><td>Standalone (D-31 Stage A)</td></tr><tr><td>Global</td><td><code>window.SRETSurfaces</code> (<code>tabs</code>, <code>toast</code>), also <code>module.exports</code></td></tr><tr><td>Requires</td><td><code>ui-tokens</code>; <code>ui-icons</code> for the fold chevron</td></tr></tbody></table>
+<h2>Layout contract</h2>
+<table><thead><tr><th>Part</th><th>Direction and wrap</th><th>Padding</th><th>Gap</th><th>Content behaviour</th></tr></thead><tbody><tr><td><code>.ui-card</code></td><td>column</td><td>none (its parts pad)</td><td>none</td><td><code>min-width: 0</code>. Border 1 px, radius 8, elevation 1</td></tr><tr><td><code>.ui-card__header</code></td><td>row, no wrap</td><td>12 px 16 px</td><td>8 px</td><td>Title truncates with an ellipsis; actions keep their size</td></tr><tr><td><code>.ui-card__body</code></td><td>column</td><td>16 px</td><td>12 px</td><td>Children stack; text wraps</td></tr><tr><td><code>.ui-card__footer</code></td><td>row, <b>wraps</b>, right-aligned</td><td>12 px 16 px</td><td>8 px</td><td>Buttons wrap to a new line on narrow widths, never squeezed</td></tr><tr><td><code>.ui-section</code></td><td>column</td><td>none</td><td>8 px</td><td>Uppercase 11 px label, then content</td></tr><tr><td><code>.ui-panel-header</code></td><td>row, no wrap</td><td>8 px 12 px 8 px 16 px; min height 52 px</td><td>8 px</td><td>Title truncates; actions keep their size</td></tr><tr><td><code>.ui-toolbar</code></td><td>row, <b>wraps</b></td><td>none</td><td>8 px</td><td><code>--scroll</code> variant: no wrap, scrolls sideways (use where a second line would push content down, such as a filter row on desktop)</td></tr><tr><td><code>.ui-tabs</code></td><td>row, no wrap</td><td>0 12 px</td><td>4 px</td><td>Scrolls sideways when the tabs do not fit; tabs never wrap or truncate</td></tr><tr><td><code>.ui-fold</code></td><td>summary row; body column</td><td>body 0 0 12 px</td><td>12 px</td><td>Native <code>details</code>, so it works without script</td></tr><tr><td><code>.ui-list-item</code></td><td>row, no wrap</td><td>8 px 16 px; min height 44 px</td><td>12 px</td><td>Title truncates; meta line is 12 px muted; the end slot keeps its size</td></tr><tr><td><code>.ui-empty</code></td><td>column, centred</td><td>32 px 20 px</td><td>12 px</td><td>Text wraps at 36 characters</td></tr><tr><td><code>.ui-toast</code></td><td>row</td><td>12 px 16 px</td><td>12 px</td><td>Max 420 px wide or the viewport minus 32 px; text wraps</td></tr></tbody></table>
+<h2>Motion</h2>
+<table><thead><tr><th>Change</th><th>Animation</th><th>Duration and easing</th></tr></thead><tbody><tr><td>Tab selected</td><td>Indicator grows (<code>scaleX</code>)</td><td>200 ms, standard</td></tr><tr><td>Fold opened</td><td>Chevron rotates</td><td>200 ms, standard. The body appears without animation (native <code>details</code>), on purpose</td></tr><tr><td>Interactive card hover</td><td>Shadow and border</td><td>120 ms</td></tr><tr><td>Toast in and out</td><td>Fade plus 8 px rise</td><td>200 ms, decelerate</td></tr></tbody></table>
+<h2>Tests</h2>
+<p><code>tools/ui_kit_check.mjs</code> covers padding and gaps against this table, tab keyboard behaviour, and toast timing.</p>
+<h2>Changelog</h2>
+<table><thead><tr><th>Version</th><th>App version</th><th>Change</th></tr></thead><tbody><tr><td>0.1.0</td><td>none (standalone)</td><td>First version, D-31 Stage A.</td></tr></tbody></table></div>
+        <div class="ui-tabpanel g-doc" id="dp-controls" hidden><h1>ui-controls (<code>SRETControls</code>)</h1>
+<p>The form and action controls (D-31): button variants, text input, textarea, select, field, field grid, switch, segmented control, radio cards, chips, badges and counts. The markup carries state in ARIA attributes, and <code>SRETControls.bind</code> keeps it in step and emits events.</p>
+<table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>see <code>src/modules/MODULES.json</code></td></tr><tr><td>Status</td><td>Standalone (D-31 Stage A)</td></tr><tr><td>Global</td><td><code>window.SRETControls</code>, also <code>module.exports</code></td></tr><tr><td>Requires</td><td><code>ui-tokens</code>; <code>ui-icons</code> where a control shows an icon</td></tr></tbody></table>
+<h2>Interface</h2>
+<p>The header comment of <code>ui-controls.js</code> is the API reference. Events: <code>ui-change</code> (<code>detail.id</code>, <code>detail.value</code>) and <code>ui-remove</code>.</p>
+<h2>Layout contract</h2>
+<table><thead><tr><th>Control</th><th>Size</th><th>Padding</th><th>Content behaviour</th></tr></thead><tbody><tr><td><code>.ui-btn</code></td><td>Height <code>--ui-ctl-h</code> (32 px; 40 px on touch); hit area at least 40 px</td><td>0 12 px; 8 px gap between icon and label</td><td>Label never wraps (<code>nowrap</code>). Put buttons in a wrapping row (<code>.ui-card__footer</code>, <code>.ui-toolbar</code>) so they move to the next line rather than squeeze</td></tr><tr><td><code>.ui-btn--icon</code></td><td>Square, <code>--ui-ctl-h</code></td><td>none</td><td>Needs an <code>aria-label</code></td></tr><tr><td><code>.ui-input</code>, <code>.ui-select</code></td><td>Height <code>--ui-ctl-h</code>; full width of their field</td><td>0 12 px</td><td><code>min-width: 0</code>, so they shrink in grids. Long values scroll inside the box</td></tr><tr><td><code>.ui-textarea</code></td><td>Min 80 px, grows by vertical resize</td><td>8 px 12 px</td><td>Text wraps</td></tr><tr><td><code>.ui-field</code></td><td>column</td><td>none; gap 4 px</td><td>Label 12 px. Help and error text wrap</td></tr><tr><td><code>.ui-field-grid</code></td><td>2 columns, 1 column at 640 px and below</td><td>none; gap 12 px rows, 16 px columns</td><td><code>--full</code> spans both columns</td></tr><tr><td><code>.ui-switch</code></td><td>36 by 20 px visible; 40 px hit area</td><td>none</td><td>Pair it with <code>.ui-switch-row</code> (label left and truncates, switch right; min height 40 px)</td></tr><tr><td><code>.ui-segmented</code></td><td>Options at <code>--ui-ctl-h</code> minus 4 px</td><td>2 px track, 0 12 px option</td><td>No wrap; keep to 2 to 4 short options</td></tr><tr><td><code>.ui-radio-cards</code></td><td>Auto-fit columns, min 220 px each</td><td>12 px 16 px</td><td>Wraps to one column on phones; description text wraps</td></tr><tr><td><code>.ui-chips</code></td><td>row, <b>wraps</b></td><td>none; gap 8 px</td><td>Chip label truncates at the row width (<code>max-width: 100%</code>)</td></tr><tr><td><code>.ui-badge</code>, <code>.ui-count</code></td><td>20 and 18 px high</td><td>0 8 px and 0 6 px</td><td>Never wrap; numbers use tabular figures</td></tr></tbody></table>
+<h2>Motion</h2>
+<table><thead><tr><th>Change</th><th>Animation</th><th>Duration</th></tr></thead><tbody><tr><td>Hover and pressed on buttons, chips, inputs</td><td>Colour, border; pressed scales to 0.98</td><td>120 ms, standard</td></tr><tr><td>Switch</td><td>Thumb slides (<code>translateX</code>)</td><td>120 ms</td></tr><tr><td>Segmented and radio card selection</td><td>Background and border</td><td>120 ms</td></tr><tr><td>Input focus</td><td>Border plus a 3 px tint ring</td><td>120 ms</td></tr></tbody></table>
+<h2>Tests</h2>
+<p><code>tools/ui_kit_check.mjs</code>: control heights, the 40 px hit area, switch and segmented events, the chip remove event, and the field grid going to one column at 390 px.</p>
+<h2>Changelog</h2>
+<table><thead><tr><th>Version</th><th>App version</th><th>Change</th></tr></thead><tbody><tr><td>0.1.0</td><td>none (standalone)</td><td>First version, D-31 Stage A.</td></tr></tbody></table></div>
+        <div class="ui-tabpanel g-doc" id="dp-nav" hidden><h1>ui-nav (<code>SRETNav</code>)</h1>
+<p>The generic left navigation panel (D-31). It renders from a config of groups and items and calls the host back when an item is chosen. It has no knowledge of the app's data; counts arrive as badges from the host.</p>
+<table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>see <code>src/modules/MODULES.json</code></td></tr><tr><td>Status</td><td>Standalone (D-31 Stage A)</td></tr><tr><td>Global</td><td><code>window.SRETNav</code>, also <code>module.exports</code></td></tr><tr><td>Requires</td><td><code>ui-tokens</code>, <code>ui-icons</code>; <code>ui-controls</code> for the drawer close button</td></tr><tr><td>Works with</td><td><code>ui-shell</code>: pass <code>opts.shell</code> and the nav follows its mode and context</td></tr></tbody></table>
+<h2>Interface</h2>
+<p>The header comment of <code>ui-nav.js</code> is the API reference: config shape, <code>mount</code>, <code>setActive</code>, <code>setBadge</code>, <code>setMode</code>, <code>setContext</code>, <code>update</code>.</p>
+<h2>Modes and context</h2>
+<table><thead><tr><th>Shell state</th><th>Nav mode</th><th>Context</th><th>What the user sees</th></tr></thead><tbody><tr><td>Desktop expanded</td><td>expanded</td><td>docked</td><td>Icons, labels, group labels, badges, a Collapse control</td></tr><tr><td>Desktop rail</td><td>rail</td><td>docked</td><td>Icons only; badges become 8 px dots; labels show as tooltips on hover and keyboard focus; the control reads Expand</td></tr><tr><td>Tablet rail</td><td>rail</td><td>docked</td><td>Same as desktop rail; Expand slides the full nav over the content</td></tr><tr><td>Tablet expanded</td><td>expanded</td><td>overlay</td><td>Full nav over the content, with a scrim</td></tr><tr><td>Phone</td><td>expanded</td><td>drawer</td><td>Full nav as a drawer with a close button; no Collapse control</td></tr></tbody></table>
+<h2>Layout contract</h2>
+<table><thead><tr><th>Part</th><th>Direction and wrap</th><th>Padding</th><th>Gap</th><th>Content behaviour</th></tr></thead><tbody><tr><td><code>.ui-nav</code></td><td>column, no wrap</td><td>12 px 8 px</td><td>4 px</td><td>Fills the shell nav region</td></tr><tr><td><code>__brand</code></td><td>row, no wrap; min height 44 px</td><td>0 8 px 8 px</td><td>12 px</td><td>Title and subtitle truncate with an ellipsis</td></tr><tr><td><code>__scroll</code></td><td>column, no wrap</td><td>none</td><td>8 px between groups</td><td>Scrolls vertically when the groups are taller than the panel; never scrolls sideways</td></tr><tr><td><code>__group</code></td><td>column</td><td>none</td><td>2 px between items</td><td>A divider (1 px with 4 px 8 px margin) sits between groups</td></tr><tr><td><code>__label</code></td><td>row, no wrap; 28 px high</td><td>0 12 px</td><td>8 px</td><td>11 px uppercase. In rail mode it collapses to a 9 px spacer</td></tr><tr><td><code>__item</code></td><td>row, no wrap; 40 px high</td><td>0 12 px; sub-items indent to the label line</td><td>12 px</td><td>Label truncates with an ellipsis; the badge never shrinks</td></tr><tr><td><code>__footer</code></td><td>column, no wrap</td><td>8 px top, plus a 1 px top border</td><td>2 px</td><td>Pinned below the scroll area</td></tr></tbody></table>
+<h2>Motion</h2>
+<table><thead><tr><th>Change</th><th>Animation</th><th>Duration and easing</th></tr></thead><tbody><tr><td>Expanded and rail</td><td>The shell animates the width; labels fade</td><td>200 ms width; 120 ms fade</td></tr><tr><td>Active item</td><td>The left accent bar grows (<code>scaleY</code>); background tint</td><td>200 ms and 120 ms</td></tr><tr><td>Group collapse</td><td>Row track animates from 1fr to 0fr (no height jump); chevron rotates</td><td>200 ms, standard</td></tr><tr><td>Rail tooltip</td><td>Fade plus 4 px slide</td><td>120 ms</td></tr><tr><td>Hover</td><td>Background tint</td><td>120 ms</td></tr></tbody></table>
+<p>Within budget. <b>Flag:</b> the group-collapse animation is the most involved effect in the nav. If it ever stutters on a slow device, drop it to an instant toggle. It is decoration, not function.</p>
+<h2>Accessibility</h2>
+<ul><li>A <code>nav</code> landmark with <code>aria-label</code>.</li><li>The active item has <code>aria-current="page"</code>.</li><li>Collapsible group labels are buttons with <code>aria-expanded</code>.</li><li>Arrow Up and Down, Home and End move between visible items.</li><li>The drawer close button has an <code>aria-label</code>.</li></ul>
+<h2>Tests</h2>
+<p><code>tools/ui_kit_check.mjs</code>: mode and context per band, the tooltip in rail, keyboard movement, badge update, the collapse callback, padding and gaps against this table, and no horizontal overflow.</p>
+<h2>Changelog</h2>
+<table><thead><tr><th>Version</th><th>App version</th><th>Change</th></tr></thead><tbody><tr><td>0.1.0</td><td>none (standalone)</td><td>First version, D-31 Stage A.</td></tr></tbody></table></div>
+        <div class="ui-tabpanel g-doc" id="dp-icons" hidden><h1>ui-icons (<code>SRETIcons</code>)</h1>
+<p>The kit's inline SVG icon set (D-31). 24 by 24 stroke icons drawn with <code>currentColor</code>. No icon font, no network.</p>
+<table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Version</td><td>see <code>src/modules/MODULES.json</code></td></tr><tr><td>Status</td><td>Standalone (D-31 Stage A)</td></tr><tr><td>Global</td><td><code>window.SRETIcons</code>, also <code>module.exports</code></td></tr><tr><td>Requires</td><td>none</td></tr></tbody></table>
+<h2>Interface</h2>
+<p>The header comment of <code>ui-icons.js</code> is the API reference: <code>svg(name, opts)</code>, <code>has(name)</code>, <code>names()</code>. An unknown name renders an empty box instead of throwing.</p>
+<h2>Layout contract</h2>
+<table><thead><tr><th>Rule</th><th>Value</th></tr></thead><tbody><tr><td>Size</td><td>Takes the size its container gives <code>.ui-icon</code> (18 px default, 15 px small, via tokens).</td></tr><tr><td>Colour</td><td>Inherits the text colour.</td></tr><tr><td>Flex</td><td>Always <code>flex: none</code> inside rows, so it never shrinks.</td></tr></tbody></table>
+<h2>Motion</h2>
+<p>None.</p>
+<h2>Changelog</h2>
+<table><thead><tr><th>Version</th><th>App version</th><th>Change</th></tr></thead><tbody><tr><td>0.1.0</td><td>none (standalone)</td><td>First version, D-31 Stage A.</td></tr></tbody></table><div id="icon-grid" class="ui-chips" style="margin-top:var(--ui-space-4)"></div></div>
+      </div>
+    </section>
+  </section>
+</div>
+
+<script>/* src/modules/ui-icons/ui-icons.js */
+/* ============================================================
+   ui-icons (SRETIcons): the kit's inline SVG icon set (D-31).
+   24 x 24 stroke icons drawn with currentColor, so they take the text
+   colour of whatever holds them. No icon font, no network.
+
+   API
+     SRETIcons.svg(name, opts?) -> string   SVG markup; opts.size (px), opts.cls
+     SRETIcons.has(name)        -> boolean
+     SRETIcons.names()          -> string[]
+   Unknown names render an empty 24 x 24 box rather than throwing, so a
+   typo shows as a gap, not a crash.
+   ============================================================ */
+(function (root) {
+  'use strict';
+  var P = {
+    timeline: '<path d="M3 6h18M3 12h18M3 18h18"/><path d="M8 4v4M15 10v4M11 16v4"/>',
+    grid: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/>',
+    report: '<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/>',
+    print: '<path d="M7 9V3h10v6M7 17H4v-7h16v7h-3"/><rect x="7" y="14" width="10" height="7"/>',
+    note: '<path d="M5 4h14v11l-5 5H5z"/><path d="M14 20v-5h5M8 9h8M8 13h5"/>',
+    comment: '<path d="M4 5h16v11H9l-5 4z"/>',
+    diamond: '<path d="M12 3l9 9-9 9-9-9z"/>',
+    list: '<path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/>',
+    import: '<path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 17v3h16v-3"/>',
+    settings: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>',
+    help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7M12 17h.01"/>',
+    chevronRight: '<path d="M9 6l6 6-6 6"/>',
+    chevronDown: '<path d="M6 9l6 6 6-6"/>',
+    chevronLeft: '<path d="M15 6l-6 6 6 6"/>',
+    search: '<circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/>',
+    filter: '<path d="M4 5h16l-6 7v6l-4 2v-8z"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    close: '<path d="M6 6l12 12M18 6L6 18"/>',
+    share: '<path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 13v7h14v-7"/>',
+    more: '<circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/>',
+    pin: '<path d="M9 3h6l-1 6 4 4H6l4-4z"/><path d="M12 13v8"/>',
+    menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
+    collapse: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M15 10l-2 2 2 2"/>',
+    expand: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M13 10l2 2-2 2"/>',
+    sliders: '<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
+    calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+    lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+    user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>',
+    check: '<path d="M5 12l5 5 9-10"/>',
+    info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
+    warning: '<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/>',
+    arrowLeft: '<path d="M19 12H5M11 6l-6 6 6 6"/>',
+    arrowRight: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+    file: '<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/>'
+  };
+  function svg(name, opts) {
+    opts = opts || {};
+    var s = opts.size ? ' width="' + opts.size + '" height="' + opts.size + '"' : '';
+    return '<svg class="ui-icon' + (opts.cls ? ' ' + opts.cls : '') + '" viewBox="0 0 24 24"' + s +
+      ' fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' +
+      (P[name] || '') + '</svg>';
+  }
+  var api = {
+    svg: svg,
+    has: function (n) { return Object.prototype.hasOwnProperty.call(P, n); },
+    names: function () { return Object.keys(P); }
+  };
+  root.SRETIcons = api;
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>/* src/modules/ui-surfaces/ui-surfaces.js */
+/* ============================================================
+   ui-surfaces (SRETSurfaces): behaviour for the surface primitives (D-31).
+
+   API
+     SRETSurfaces.tabs(tablistEl, opts?) -> { select(id) }
+        Wires a role=tablist of .ui-tab buttons (each aria-controls a
+        .ui-tabpanel). Arrow Left/Right, Home and End move between tabs
+        (APG tabs pattern, automatic activation). opts.onChange(id).
+     SRETSurfaces.toast(text, opts?) -> void
+        Shows a short message at the bottom centre for opts.ms (default
+        3000). One region per page, created on first use.
+   ============================================================ */
+(function (root) {
+  'use strict';
+  function tabs(list, opts) {
+    opts = opts || {};
+    var btns = Array.prototype.slice.call(list.querySelectorAll('.ui-tab'));
+    function select(id, focus) {
+      btns.forEach(function (b) {
+        var on = b.id === id || b.getAttribute('aria-controls') === id;
+        b.setAttribute('aria-selected', String(on));
+        b.tabIndex = on ? 0 : -1;
+        var p = document.getElementById(b.getAttribute('aria-controls'));
+        if (p) p.hidden = !on;
+        if (on && focus) b.focus();
+      });
+      if (opts.onChange) opts.onChange(id);
+    }
+    list.setAttribute('role', 'tablist');
+    btns.forEach(function (b, i) {
+      b.setAttribute('role', 'tab');
+      b.addEventListener('click', function () { select(b.id); });
+      b.addEventListener('keydown', function (e) {
+        var j = null;
+        if (e.key === 'ArrowRight') j = (i + 1) % btns.length;
+        else if (e.key === 'ArrowLeft') j = (i - 1 + btns.length) % btns.length;
+        else if (e.key === 'Home') j = 0;
+        else if (e.key === 'End') j = btns.length - 1;
+        if (j !== null) { e.preventDefault(); select(btns[j].id, true); }
+      });
+    });
+    var start = btns.filter(function (b) { return b.getAttribute('aria-selected') === 'true'; })[0] || btns[0];
+    if (start) select(start.id);
+    return { select: function (id) { select(id); } };
+  }
+
+  var region = null;
+  function toast(text, opts) {
+    opts = opts || {};
+    if (!region) {
+      region = document.createElement('div');
+      region.className = 'ui-toast-region ui-root';
+      region.setAttribute('role', 'status');
+      region.setAttribute('aria-live', 'polite');
+      document.body.appendChild(region);
+    }
+    var t = document.createElement('div');
+    t.className = 'ui-toast';
+    var s = document.createElement('span');
+    s.className = 'ui-toast__text';
+    s.textContent = text;
+    t.appendChild(s);
+    region.appendChild(t);
+    requestAnimationFrame(function () { t.setAttribute('data-show', 'true'); });
+    setTimeout(function () {
+      t.setAttribute('data-show', 'false');
+      setTimeout(function () { t.remove(); }, 260);
+    }, opts.ms || 3000);
+  }
+
+  var api = { tabs: tabs, toast: toast };
+  root.SRETSurfaces = api;
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>/* src/modules/ui-controls/ui-controls.js */
+/* ============================================================
+   ui-controls (SRETControls): behaviour for stateful controls (D-31).
+   Markup-first: the HTML carries the state in ARIA attributes; this
+   module only keeps them in step with clicks and keys, and reports.
+
+   API
+     SRETControls.bind(rootEl) -> unbind()
+        Delegated handling inside rootEl for:
+          .ui-switch           aria-checked flips; emits 'ui-change' {value:boolean}
+          .ui-segmented        radio group; arrow keys move; emits {value}
+          .ui-radio-cards      same, for .ui-radio-card children
+          .ui-chip[aria-pressed] toggles pressed; emits {value:boolean}
+          .ui-chip__remove     emits 'ui-remove' on its chip, then removes it
+     'ui-change' and 'ui-remove' bubble and carry detail.value / detail.id
+     (the control's data-id or id).
+   ============================================================ */
+(function (root) {
+  'use strict';
+  function emit(el, type, value) {
+    el.dispatchEvent(new CustomEvent(type, { bubbles: true, detail: { id: el.dataset.id || el.id || null, value: value } }));
+  }
+  function groupOf(el) { return el.closest('.ui-segmented, .ui-radio-cards'); }
+  function optsOf(g) { return Array.prototype.slice.call(g.querySelectorAll('.ui-segmented__opt, .ui-radio-card')); }
+  function choose(g, opt, focus) {
+    optsOf(g).forEach(function (o) {
+      var on = o === opt;
+      o.setAttribute('aria-checked', String(on));
+      o.tabIndex = on ? 0 : -1;
+    });
+    if (focus) opt.focus();
+    emit(g, 'ui-change', opt.dataset.value || opt.textContent.trim());
+  }
+  function init(rootEl) {
+    rootEl.querySelectorAll('.ui-segmented, .ui-radio-cards').forEach(function (g) {
+      g.setAttribute('role', 'radiogroup');
+      var os = optsOf(g), any = false;
+      os.forEach(function (o) { o.setAttribute('role', 'radio'); if (o.getAttribute('aria-checked') === 'true') any = true; });
+      os.forEach(function (o, i) { o.tabIndex = (o.getAttribute('aria-checked') === 'true' || (!any && i === 0)) ? 0 : -1; });
+    });
+    rootEl.querySelectorAll('.ui-switch').forEach(function (s) {
+      s.setAttribute('role', 'switch');
+      if (!s.hasAttribute('aria-checked')) s.setAttribute('aria-checked', 'false');
+    });
+  }
+  function bind(rootEl) {
+    init(rootEl);
+    function onClick(e) {
+      var rm = e.target.closest('.ui-chip__remove');
+      if (rm && rootEl.contains(rm)) {
+        var chip = rm.closest('.ui-chip');
+        emit(chip, 'ui-remove', null);
+        chip.remove();
+        return;
+      }
+      var sw = e.target.closest('.ui-switch');
+      if (sw && rootEl.contains(sw)) {
+        var v = sw.getAttribute('aria-checked') !== 'true';
+        sw.setAttribute('aria-checked', String(v));
+        emit(sw, 'ui-change', v);
+        return;
+      }
+      var opt = e.target.closest('.ui-segmented__opt, .ui-radio-card');
+      if (opt && rootEl.contains(opt)) { choose(groupOf(opt), opt); return; }
+      var chp = e.target.closest('.ui-chip[aria-pressed]');
+      if (chp && rootEl.contains(chp)) {
+        var p = chp.getAttribute('aria-pressed') !== 'true';
+        chp.setAttribute('aria-pressed', String(p));
+        emit(chp, 'ui-change', p);
+      }
+    }
+    function onKey(e) {
+      var opt = e.target.closest && e.target.closest('.ui-segmented__opt, .ui-radio-card');
+      if (!opt) return;
+      var g = groupOf(opt), os = optsOf(g), i = os.indexOf(opt), j = null;
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') j = (i + 1) % os.length;
+      else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') j = (i - 1 + os.length) % os.length;
+      if (j !== null) { e.preventDefault(); choose(g, os[j], true); }
+    }
+    rootEl.addEventListener('click', onClick);
+    rootEl.addEventListener('keydown', onKey);
+    return function unbind() { rootEl.removeEventListener('click', onClick); rootEl.removeEventListener('keydown', onKey); };
+  }
+  var api = { bind: bind };
+  root.SRETControls = api;
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>
+(function () {
+  var W = 1440, H = 820;
+  var stage = document.getElementById('stage'), frame = document.getElementById('demo'), cap = document.getElementById('width-cap');
+  function fit() {
+    var avail = stage.clientWidth, s = Math.min(1, avail / W);
+    frame.style.width = W + 'px'; frame.style.height = H + 'px';
+    frame.style.transform = 'scale(' + s + ')';
+    stage.style.height = Math.round(H * s) + 'px';
+    if (W < avail) { frame.style.left = Math.round((avail - W) / 2) + 'px'; } else { frame.style.left = '0'; }
+    cap.textContent = 'Rendering at ' + W + ' px' + (s < 1 ? ', shown at ' + Math.round(s * 100) + '%' : '');
+  }
+  SRETControls.bind(document.body);
+  document.getElementById('width-switch').addEventListener('ui-change', function (e) { W = +e.detail.value; fit(); });
+  new ResizeObserver(fit).observe(stage);
+  fit();
+
+  var cs = getComputedStyle(document.documentElement);
+  var roles = ['--ui-bg-page','--ui-bg-surface','--ui-bg-subtle','--ui-text','--ui-text-2','--ui-text-muted','--ui-border','--ui-border-strong','--ui-brand','--ui-brand-strong','--ui-accent','--ui-accent-tint','--ui-ok','--ui-warn','--ui-danger','--ui-info'];
+  document.getElementById('swatches').innerHTML = roles.map(function (r) {
+    return '<div class="g-sw"><i style="background:var(' + r + ')"></i><span><code>' + r + '</code></span></div>';
+  }).join('');
+  document.getElementById('spacing').innerHTML = [1,2,3,4,5,6,7,8].map(function (n) {
+    var v = cs.getPropertyValue('--ui-space-' + n).trim();
+    return '<div><code>--ui-space-' + n + '</code><b style="width:' + v + '"></b><span>' + v + '</span></div>';
+  }).join('');
+  document.getElementById('type').innerHTML = ['2xl','xl','lg','md','sm','xs'].map(function (k) {
+    return '<div style="font-size:var(--ui-text-' + k + ');line-height:var(--ui-lh-' + k + ')"><code>--ui-text-' + k + '</code> ' + cs.getPropertyValue('--ui-text-' + k).trim() + ' Equipment list revision B</div>';
+  }).join('');
+  SRETSurfaces.tabs(document.getElementById('doc-tabs'));
+  document.getElementById('icon-grid').innerHTML = SRETIcons.names().map(function (n) {
+    return '<span class="ui-chip" title="' + n + '">' + SRETIcons.svg(n, { size: 16 }) + '<span>' + n + '</span></span>';
+  }).join('');
+})();
+</script>
+</div>

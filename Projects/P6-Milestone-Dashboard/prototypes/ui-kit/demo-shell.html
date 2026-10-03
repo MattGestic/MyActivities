@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UI kit demo shell</title>
+<!-- Kit modules (build.py inlines these for the single-file gallery) -->
+<link rel="stylesheet" href="../../src/modules/ui-tokens/ui-tokens.css">
+<link rel="stylesheet" href="../../src/modules/ui-shell/ui-shell.css">
+<link rel="stylesheet" href="../../src/modules/ui-surfaces/ui-surfaces.css">
+<link rel="stylesheet" href="../../src/modules/ui-controls/ui-controls.css">
+<link rel="stylesheet" href="../../src/modules/ui-nav/ui-nav.css">
+<style>
+  /* Demo page only: give the shell the full viewport. Sample content layout uses kit tokens. */
+  html, body { height: 100%; margin: 0; background: var(--ui-bg-page); }
+  .demo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr)); gap: var(--ui-space-4); align-items: start; }
+  .demo-stack { display: flex; flex-direction: column; gap: var(--ui-space-4); min-width: 0; }
+  .demo-h1 { margin: 0; font-size: var(--ui-text-2xl); line-height: var(--ui-lh-2xl); font-weight: var(--ui-weight-semibold); }
+  .demo-sub { margin: var(--ui-space-1) 0 0; color: var(--ui-text-2); }
+  .demo-pane-body { flex: 1 1 auto; min-height: 0; overflow: auto; padding: var(--ui-space-4); display: flex; flex-direction: column; gap: var(--ui-space-3); }
+  .demo-pane-foot { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--ui-space-2); padding: var(--ui-space-3) var(--ui-space-4); border-top: 1px solid var(--ui-border); background: var(--ui-bg-subtle); }
+  @media (max-width: 640px) { .demo-hide-phone { display: none; } }
+</style>
+</head>
+<body>
+<div class="ui-shell ui-root" id="shell">
+  <aside class="ui-shell__nav" id="nav-host"></aside>
+
+  <header class="ui-shell__header ui-on-brand">
+    <div class="ui-shell__header-start">
+      <button type="button" class="ui-btn ui-btn--ghost ui-btn--icon ui-shell__menu" id="menu-btn" aria-label="Open navigation" data-icon="menu"></button>
+      <span class="ui-shell__title" id="page-title">Dashboard</span>
+    </div>
+    <div class="ui-shell__header-end">
+      <button type="button" class="ui-btn" id="aside-btn" aria-expanded="false" data-icon="sliders"><span class="demo-hide-phone">Details</span></button>
+      <button type="button" class="ui-btn ui-btn--accent demo-hide-phone" data-icon="share">Share</button>
+      <button type="button" class="ui-btn ui-btn--ghost ui-btn--icon" aria-label="More actions" data-icon="more"></button>
+    </div>
+  </header>
+
+  <main class="ui-shell__main" id="main">
+    <div class="demo-stack">
+      <div>
+        <h1 class="demo-h1">Sample workspace</h1>
+        <p class="demo-sub">Illustrative data only. Every container, card and control on this page comes from the kit modules.</p>
+      </div>
+
+      <div class="ui-toolbar" id="toolbar">
+        <div class="ui-input-wrap" style="flex: 1 1 220px; max-width: 320px;">
+          <span data-icon="search" data-replace></span>
+          <input class="ui-input" id="search" type="search" placeholder="Search items" aria-label="Search items">
+        </div>
+        <div class="ui-chips">
+          <span class="ui-chip ui-chip--active"><span>Status: At risk</span><button type="button" class="ui-chip__remove" aria-label="Remove filter" data-icon="close"></button></span>
+          <button type="button" class="ui-chip" aria-pressed="false">Commented</button>
+          <button type="button" class="ui-chip ui-chip--add" data-icon="plus">Add filter</button>
+        </div>
+        <span class="ui-toolbar__spacer"></span>
+        <div class="ui-segmented" aria-label="Mode">
+          <button type="button" class="ui-segmented__opt" aria-checked="true" data-value="highlight">Highlight</button>
+          <button type="button" class="ui-segmented__opt" aria-checked="false" data-value="only">Show only</button>
+        </div>
+      </div>
+
+      <div class="demo-grid">
+        <section class="ui-card" id="card-form">
+          <div class="ui-card__header"><h2 class="ui-card__title">Edit item</h2><span class="ui-badge ui-badge--warn">At risk</span></div>
+          <div class="ui-card__body">
+            <div class="ui-field-grid">
+              <label class="ui-field ui-field--full"><span class="ui-field__label">Title</span><input class="ui-input" value="Equipment list revision B"></label>
+              <label class="ui-field"><span class="ui-field__label">Start</span><input class="ui-input" value="14-Aug-26"></label>
+              <label class="ui-field"><span class="ui-field__label">Finish</span><input class="ui-input" value="09-Oct-26"></label>
+              <label class="ui-field"><span class="ui-field__label">Owner</span><select class="ui-select"><option>Mechanical</option><option>Electrical</option></select></label>
+              <label class="ui-field"><span class="ui-field__label">Float</span><input class="ui-input" value="6d" readonly></label>
+              <label class="ui-field ui-field--full"><span class="ui-field__label">Update</span><textarea class="ui-textarea" placeholder="Write an update for this period"></textarea><span class="ui-field__help">Saved to the update history with today's date.</span></label>
+            </div>
+            <div class="ui-switch-row"><span class="ui-switch-row__label">Follow up next period</span><button type="button" class="ui-switch" aria-checked="true" aria-label="Follow up next period"></button></div>
+            <details class="ui-fold"><summary>More fields <span data-icon="chevronDown"></span></summary><div class="ui-fold__body"><label class="ui-field"><span class="ui-field__label">Display label</span><input class="ui-input" value="Equip list B"></label></div></details>
+          </div>
+          <div class="ui-card__footer"><button type="button" class="ui-btn">Discard</button><button type="button" class="ui-btn ui-btn--primary" id="save-btn">Save</button></div>
+        </section>
+
+        <div class="demo-stack">
+          <section class="ui-card">
+            <div class="ui-tabs" id="tabs">
+              <button type="button" class="ui-tab" id="t-recent" aria-controls="p-recent" aria-selected="true">Recent</button>
+              <button type="button" class="ui-tab" id="t-assigned" aria-controls="p-assigned">Assigned</button>
+              <button type="button" class="ui-tab" id="t-empty" aria-controls="p-empty">Archived</button>
+            </div>
+            <div class="ui-tabpanel" id="p-recent">
+              <ul class="ui-list">
+                <li class="ui-list-item"><div class="ui-list-item__main"><span class="ui-list-item__title">Design criteria issued</span><span class="ui-list-item__meta">Complete · 07-Aug-26</span></div><span class="ui-list-item__end"><span class="ui-badge ui-badge--ok">Complete</span></span></li>
+                <li class="ui-list-item"><div class="ui-list-item__main"><span class="ui-list-item__title">Long-lead purchase order award with a deliberately long title that truncates</span><span class="ui-list-item__meta">Critical · 23-Oct-26</span></div><span class="ui-list-item__end"><span class="ui-badge ui-badge--danger">Critical</span></span></li>
+                <li class="ui-list-item"><div class="ui-list-item__main"><span class="ui-list-item__title">Cost estimate draft</span><span class="ui-list-item__meta">On track · 16-Oct-26</span></div><span class="ui-list-item__end"><span class="ui-badge ui-badge--accent">On track</span></span></li>
+              </ul>
+            </div>
+            <div class="ui-tabpanel" id="p-assigned" hidden>
+              <ul class="ui-list"><li class="ui-list-item"><div class="ui-list-item__main"><span class="ui-list-item__title">Layout review complete</span><span class="ui-list-item__meta">Assigned to you</span></div></li></ul>
+            </div>
+            <div class="ui-tabpanel" id="p-empty" hidden>
+              <div class="ui-empty"><span class="ui-empty__glyph" data-icon="list"></span><p class="ui-empty__title">Nothing archived</p><p class="ui-empty__text">Archived items appear here. Archive an item from its menu.</p></div>
+            </div>
+          </section>
+
+          <section class="ui-card">
+            <div class="ui-card__header"><h2 class="ui-card__title">Open items in</h2></div>
+            <div class="ui-card__body">
+              <div class="ui-radio-cards" aria-label="Open items in">
+                <button type="button" class="ui-radio-card" aria-checked="true" data-value="panel"><span class="ui-radio-card__title">Side panel</span>Stays open beside the content. Selecting another item swaps it in place.</button>
+                <button type="button" class="ui-radio-card" aria-checked="false" data-value="dialog"><span class="ui-radio-card__title">Dialog</span>Opens over the content and closes when you save.</button>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <aside class="ui-shell__aside" id="aside" aria-label="Details">
+    <div class="ui-panel-header"><h2 class="ui-panel-header__title">Details</h2><div class="ui-panel-header__actions"><button type="button" class="ui-btn ui-btn--ghost ui-btn--icon" id="aside-close" aria-label="Close details" data-icon="close"></button></div></div>
+    <div class="demo-pane-body">
+      <div class="ui-section"><p class="ui-section__label">Summary</p><p style="margin:0">The right region is a container only. The side panel component (Stage C) fills it.</p></div>
+      <div class="ui-section"><p class="ui-section__label">Layers</p>
+        <div class="ui-switch-row"><span class="ui-switch-row__label">Dependency lines</span><button type="button" class="ui-switch" aria-label="Dependency lines"></button></div>
+        <div class="ui-switch-row"><span class="ui-switch-row__label">Comment markers</span><button type="button" class="ui-switch" aria-checked="true" aria-label="Comment markers"></button></div>
+      </div>
+    </div>
+    <div class="demo-pane-foot"><button type="button" class="ui-btn">Reset</button><button type="button" class="ui-btn ui-btn--primary">Apply</button></div>
+  </aside>
+</div>
+
+<script src="../../src/modules/ui-icons/ui-icons.js"></script>
+<script src="../../src/modules/ui-shell/ui-shell.js"></script>
+<script src="../../src/modules/ui-surfaces/ui-surfaces.js"></script>
+<script src="../../src/modules/ui-controls/ui-controls.js"></script>
+<script src="../../src/modules/ui-nav/ui-nav.js"></script>
+<script>
+(function () {
+  // Icons: any element with data-icon gets the SVG prepended.
+  document.querySelectorAll('[data-icon]').forEach(function (el) {
+    var svg = SRETIcons.svg(el.getAttribute('data-icon'));
+    if (el.hasAttribute('data-replace')) el.outerHTML = svg; else el.insertAdjacentHTML('afterbegin', svg);
+  });
+
+  var store = { get: function () { try { return localStorage.getItem('ui-kit-nav'); } catch (e) { return null; } },
+                set: function (v) { try { localStorage.setItem('ui-kit-nav', v); } catch (e) {} } };
+  var shellEl = document.getElementById('shell');
+  var shell = SRETShell.mount(shellEl, { persist: store });
+
+  var config = {
+    ariaLabel: 'Main',
+    brand: { title: 'Project Hub', subtitle: 'Sample workspace', icon: 'diamond' },
+    groups: [
+      { id: 'views', label: 'Views', items: [
+        { id: 'dashboard', label: 'Dashboard', icon: 'grid' },
+        { id: 'timeline', label: 'Timeline', icon: 'timeline' },
+        { id: 'reports', label: 'Reports', icon: 'report' } ] },
+      { id: 'work', label: 'My work', items: [
+        { id: 'notes', label: 'Notes', icon: 'note', badge: { value: 7 } },
+        { id: 'comments', label: 'Comments and markups', icon: 'comment', badge: { value: 12 } },
+        { id: 'tasks', label: 'My tasks', icon: 'diamond', badge: { value: 3, tone: 'warn' } } ] },
+      { id: 'lists', label: 'Lists', collapsible: true, items: [
+        { id: 'l-crit', label: 'Critical', icon: 'list', badge: { value: 1, tone: 'danger' }, sub: true },
+        { id: 'l-risk', label: 'At risk', icon: 'list', badge: { value: 3, tone: 'warn' }, sub: true },
+        { id: 'l-edit', label: 'Edited this week', icon: 'list', badge: { value: 5 }, sub: true } ] }
+    ],
+    footer: [
+      { id: 'import', label: 'Import and data', icon: 'import' },
+      { id: 'settings', label: 'Settings', icon: 'settings' },
+      { id: 'help', label: 'Help and about', icon: 'help' } ],
+    collapseControl: true
+  };
+  var nav = SRETNav.mount(document.getElementById('nav-host'), config, {
+    active: 'dashboard',
+    shell: shellEl,
+    onSelect: function (id, item) {
+      document.getElementById('page-title').textContent = item ? item.label : id;
+      var s = shell.state();
+      if (s.navOpen) shell.closeNav();
+    },
+    onCollapseToggle: function () { shell.toggleNav(); },
+    onClose: function () { shell.closeNav(); }
+  });
+
+  document.getElementById('menu-btn').addEventListener('click', function () { shell.openNav(); });
+  var asideBtn = document.getElementById('aside-btn');
+  function syncAside() { asideBtn.setAttribute('aria-expanded', String(shell.state().asideOpen)); }
+  asideBtn.addEventListener('click', function () { shell.toggleAside(); syncAside(); });
+  document.getElementById('aside-close').addEventListener('click', function () { shell.closeAside(); syncAside(); });
+  shellEl.addEventListener('ui-shell:change', syncAside);
+
+  SRETControls.bind(shellEl);
+  SRETSurfaces.tabs(document.getElementById('tabs'));
+  document.getElementById('save-btn').addEventListener('click', function () { SRETSurfaces.toast('Saved'); });
+
+  // Exposed for the gallery checks only.
+  window.__kit = { shell: shell, nav: nav };
+})();
+</script>
+</body>
+</html>
